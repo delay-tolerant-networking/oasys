@@ -124,6 +124,38 @@ IPSocket::bind(in_addr_t local_addr, u_int16_t local_port)
     return 0;
 }
 
+int
+IPSocket::connect(in_addr_t remote_addr, u_int16_t remote_port)
+{
+    struct sockaddr_in sa;
+    
+    if (fd_ == -1) init_socket();
+    
+    remote_addr_ = remote_addr;
+    remote_port_ = remote_port;
+
+    log_debug("connecting to %s:%d", intoa(remote_addr), remote_port);
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sin_family = AF_INET;
+    sa.sin_addr.s_addr = remote_addr;
+    sa.sin_port = htons(remote_port);
+    
+    set_state(CONNECTING);
+    
+    if (::connect(fd_, (struct sockaddr*)&sa, sizeof(sa)) < 0) {
+        if (errno != EINPROGRESS) {
+            logf(LOG_ERR, "error connecting to %s:%d: %s",
+                 intoa(remote_addr_), remote_port_, strerror(errno));
+        }
+        return -1;
+    }
+
+    set_state(ESTABLISHED);
+
+    return 0;
+}
+
 void
 IPSocket::configure()
 {

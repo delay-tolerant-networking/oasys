@@ -14,11 +14,6 @@ public:
               const char* logbase = "/tcpclient");
 
     /**
-     * System call wrapper
-     */
-    virtual int connect(in_addr_t remote_addr, u_int16_t remote_port);
-
-    /**
      * Try to connect to the remote host, but don't block for more
      * than timeout milliseconds. If there was an error (either
      * immediate or delayed), return it in *errp.
