@@ -327,7 +327,7 @@ TclCommand::exec(int objc, Tcl_Obj** objv, Tcl_Interp* interp)
 int
 TclCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
 {
-    resultf("command %s not implemented", argv[0]);
+    resultf("command %s unknown argument", argv[0]);
     return TCL_ERROR;
 }
 
