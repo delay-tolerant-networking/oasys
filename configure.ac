@@ -139,7 +139,7 @@ dnl -------------------------------------------------------------------------
 dnl Checks for header files.
 dnl -------------------------------------------------------------------------
 AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h float.h limits.h locale.h netdb.h netinet/in.h stddef.h stdint.h stdlib.h string.h synch.h sys/cdefs.h sys/ioctl.h sys/socket.h sys/time.h unistd.h wchar.h])
+AC_CHECK_HEADERS([arpa/inet.h err.h fcntl.h float.h limits.h locale.h netdb.h netinet/in.h stddef.h stdint.h stdlib.h string.h synch.h sys/cdefs.h sys/ioctl.h sys/socket.h sys/time.h unistd.h wchar.h])
 
 dnl -------------------------------------------------------------------------
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -189,7 +189,7 @@ else
   AC_MSG_RESULT([no])
 fi
 
-AC_CHECK_FUNCS([getaddrinfo gethostbyname gethostbyname_r getopt_long gettimeofday inet_pton isascii localeconv memchr memmove memset pthread_yield sched_yield setenv socket strcasecmp strcspn strdup strerror strspn strtol strtoul])
+AC_CHECK_FUNCS([getaddrinfo gethostbyname gethostbyname_r getopt_long gettimeofday inet_pton isascii localeconv memchr memmove memset pthread_yield sched_yield setenv socket strcasecmp strchr strcspn strdup strerror strspn strtol strtoul])
 
 dnl -------------------------------------------------------------------------
 dnl Output
