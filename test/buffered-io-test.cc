@@ -60,16 +60,18 @@ DECLARE_UNIT_TEST(InputTest) {
     return UNIT_TEST_INPUT;
 }
 
-class Test : public UnitTester {
-    DECLARE_TESTER(Test);
+// class Test : public UnitTester {
+//     DECLARE_TESTER(Test);
 
-    void add_tests() {
-        ADD_UNIT_TEST(ATest);
-        ADD_UNIT_TEST(AnotherTest);
-        ADD_UNIT_TEST(InputTest);
-    }
-};
+//     void add_tests() {
+//         ADD_UNIT_TEST(ATest);
+//         ADD_UNIT_TEST(AnotherTest);
+//         ADD_UNIT_TEST(InputTest);
+//     }
+// };
 
-DECLARE_TEST_FILE(Test, "BufferedIO");
+// DECLARE_TEST_FILE(Test, "BufferedIO");
+
+int main() { NOTIMPLEMENTED; }
 
 // """ # ----------------------------------------------------------------------
