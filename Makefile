@@ -50,6 +50,7 @@ THREAD_SRCS :=					\
 	thread/Timer.cc				\
 
 UTIL_SRCS :=					\
+	util/CRC32.cc				\
 	util/jenkins_hash.c			\
 	util/md5-rsa.c				\
 	util/jenkins_hash.cc			\
