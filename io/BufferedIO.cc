@@ -319,8 +319,16 @@ BufferedOutput::flush()
 
             return cc;
         }
+
+#ifndef NDEBUG
+        PrettyPrintBuf pretty(buf_.start(), cc);
+
+        log_debug("flush wrote \"%s\", %d bytes", 
+                  pretty.c_str(), cc);
+#else
         log_debug("flush wrote \"%s\", %d bytes", 
                   buf_.start(), cc);
+#endif
 
 	buf_.consume(cc);
 	total += cc;
