@@ -5,6 +5,7 @@
 #include "debug/Debug.h"
 #include "io/NetUtils.h"
 #include "thread/SpinLock.h"
+#include "util/StringBuffer.h"
 
 /******************************************************************************
  *
@@ -227,19 +228,13 @@ TclCommandInterp::append_result(const char* result)
 void
 TclCommandInterp::vresultf(const char* fmt, va_list ap, bool append)
 {
-    size_t sz = 256;
-    char buf[sz];
+    StringBuffer buf;
+    buf.vappendf(fmt, ap);
     
-    size_t n = vsnprintf(buf, sz, fmt, ap);
-    
-    if (n >= sz) {
-        NOTIMPLEMENTED; // XXX/demmer handle this
-    }
-
     if (append) {
-        Tcl_AppendResult(interp_, buf, NULL);
+        Tcl_AppendResult(interp_, buf.c_str(), NULL);
     } else {
-        Tcl_SetResult(interp_, buf, TCL_VOLATILE);
+        Tcl_SetResult(interp_, buf.c_str(), TCL_VOLATILE);
     }
 }
 
@@ -263,7 +258,7 @@ TclCommandInterp::append_resultf(const char* fmt, ...)
 
 void
 TclCommandInterp::wrong_num_args(int argc, const char** argv, int parsed,
-                              int min, int max)
+                                 int min, int max)
 {
     set_result("wrong number of arguments to '");
     append_result(argv[0]);

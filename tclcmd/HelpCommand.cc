@@ -30,7 +30,11 @@ HelpCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
     } else if (argc == 2) {
         for (iter = cmdlist->begin(); iter != cmdlist->end(); iter++) {
             if (!strcmp((*iter)->name(), argv[1])) {
-                resultf("%s", ((*iter)->help_string()));
+                if ((*iter)->help_string()[0] != '\0')
+                    resultf("%s", ((*iter)->help_string()));
+                else
+                    resultf("(no help, sorry)");
+                
                 return TCL_OK;
             }
         }

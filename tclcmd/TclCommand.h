@@ -245,11 +245,6 @@ public:
     virtual int exec(int objc, const char** objv, Tcl_Interp* interp);
 
     /**
-     * Return the help string for this command.
-     */
-    virtual const char* help_string() { return "(no help, sorry)"; }
-
-    /**
      * Internal handling of the "set" command.
      *
      * @param objc Argument count 
@@ -265,10 +260,16 @@ public:
      */
     const char* name() const { return name_; }
 
+    /**
+     * Return the help string for this command.
+     */
+    virtual const char* help_string() { return help_.c_str(); }
+
 protected:
     friend class TclCommandInterp;
     
-    const char* name_;          ///< Name of the module.
+    const char* name_;          ///< Name of the module
+    std::string help_;		///< Help string
     bool do_builtins_;		///< Set to false if a module doesn't want
                                 ///< builtin commands like "set"
 
@@ -429,7 +430,20 @@ protected:
      * This allows commands (particularly AutoTclCommand instances)
      * to do any post-registration activities like binding their vars.
      */
-    virtual void at_reg() {} 
+    virtual void at_reg() {}
+
+    /**
+     * Append the given information to the current help string,
+     * typically used for a set of alternatives for subcommands.
+     */
+    void add_to_help(const char* subcmd, const char* help_str)
+    {
+        help_.append(name());
+        help_.append(" ");
+        help_.append(subcmd);
+        help_.append(": ");
+        help_.append(help_str);
+    }
 };
 
 /**
