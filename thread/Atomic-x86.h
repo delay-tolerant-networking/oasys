@@ -2,7 +2,7 @@
 #ifndef _ATOMIC_X86_H_
 #define _ATOMIC_X86_H_
 
-#include "debug/Debug.h"
+#include "../debug/Debug.h"
 
 /**
  * When we're not on a SMP platform, there's no need to lock the bus.

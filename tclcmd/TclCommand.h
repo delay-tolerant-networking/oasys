@@ -10,6 +10,8 @@
 
 #include <netinet/in.h>
 
+#include "../debug/Debug.h"
+
 /*
  * In tcl8.4, the objv to commands is const, but not so in tcl8.3, so
  * we need this stupid define, and force cast everything to const in
@@ -20,9 +22,6 @@
 #else
 #define CONSTTCL84
 #endif
-
-#include <string>
-#include "debug/Debug.h"
 
 // forward decls
 class TclCommandInterp;

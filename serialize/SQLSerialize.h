@@ -9,7 +9,7 @@
  */
 
 #include "Serialize.h"
-#include "util/StringBuffer.h"
+#include "../util/StringBuffer.h"
 
 class SQLImplementation;
 

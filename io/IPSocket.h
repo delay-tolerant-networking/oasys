@@ -10,7 +10,7 @@
 #include <errno.h>
 
 #include "IO.h"
-#include "debug/Log.h"
+#include "../debug/Log.h"
 
 // XXX/demmer this should be in some system header somewhere
 #define MAX_UDP_PACKET 65536

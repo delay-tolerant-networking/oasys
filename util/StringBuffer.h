@@ -2,7 +2,7 @@
 #ifndef _STRING_BUFFER_H_
 #define _STRING_BUFFER_H_
 
-#include "debug/Log.h"
+#include "../debug/Log.h" 	// for PRINTFLIKE macro
 
 /**
  * Utility class that wraps a growable string buffer, similar to

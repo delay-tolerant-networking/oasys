@@ -2,7 +2,7 @@
 #ifndef _SPINLOCK_H_
 #define _SPINLOCK_H_
 
-#include "debug/Debug.h"
+#include "../debug/Debug.h"
 #include "Atomic.h"
 #include "Lock.h"
 #include "Thread.h"

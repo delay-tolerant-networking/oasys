@@ -3,7 +3,7 @@
 #define _TCP_SERVER_H_
 
 #include "IPSocket.h"
-#include "thread/Thread.h"
+#include "../thread/Thread.h"
 
 /**
  * \class TCPServer

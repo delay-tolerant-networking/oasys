@@ -1,7 +1,8 @@
 // XXX/demmer add copyright
 
-#include "StringBuffer.h"
 #include <stdlib.h>
+
+#include "StringBuffer.h"
 
 StringBuffer::StringBuffer(size_t initsz, const char* initstr)
 {

@@ -9,8 +9,8 @@
 
 #include "Notifier.h"
 #include "SpinLock.h"
-#include "debug/Log.h"
-#include "debug/Debug.h"
+#include "../debug/Log.h"
+#include "../debug/Debug.h"
 
 /**
  * A producer/consumer queue for passing data between threads in the

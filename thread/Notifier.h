@@ -2,7 +2,7 @@
 #ifndef _NOTIFIER_H_
 #define _NOTIFIER_H_
 
-#include "debug/Log.h"
+#include "../debug/Log.h"
 
 class SpinLock;
 

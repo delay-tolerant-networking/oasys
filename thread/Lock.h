@@ -2,7 +2,7 @@
 #ifndef _LOCK_H_
 #define _LOCK_H_
 
-#include "debug/Debug.h"
+#include "../debug/Debug.h"
 #include "Thread.h"
 
 /**

@@ -4,7 +4,7 @@
 
 #include <pthread.h>
 #include <signal.h>
-#include "debug/Debug.h"
+#include "../debug/Debug.h"
 
 /**
  * Class to wrap a thread of execution using pthreads. Similar to the

@@ -2,7 +2,7 @@
 #ifndef _RATE_ESTIMATOR_H_
 #define _RATE_ESTIMATOR_H_
 
-#include "thread/Timer.h"
+#include "../thread/Timer.h"
 
 /**
  * Simple rate estimation class that does a weighted filter of

@@ -4,12 +4,12 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <queue>
 
-#include "debug/Debug.h"
-#include "debug/Log.h"
+#include "../debug/Debug.h"
+#include "../debug/Log.h"
 #include "MsgQueue.h"
 #include "Thread.h"
-#include <queue>
 
 /**
  * Miscellaneous timeval macros.
