@@ -101,3 +101,42 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC, [
 
     AC_SUBST(DEPFLAGS)
 ])
+
+AC_DEFUN(AC_OASYS_FIX_APPLE_DEBUG_H, [
+   AC_MSG_CHECKING([whether a conflicting debug/debug.h exists (Apple OSX only)])
+   if test `uname` = 'Darwin' ; then
+   AC_LANG_PUSH(C++)
+       AC_LINK_IFELSE(
+       AC_LANG_PROGRAM([#include <debug/Debug.h>], []),
+       [
+           AC_MSG_RESULT(yes)
+	   echo "***"
+	   echo "*** The C++ compiler installation on this host contains a file"
+	   echo "*** debug/debug.h which, when included by the preprocessor,"
+	   echo "*** conflicts with debug/Debug.h from the oasys source."
+	   echo "***"
+	   echo "*** To fix the problem, this configure script can rename the"
+	   echo "*** file debug.h to apple-debug.h, and will change all"
+	   echo "*** #include references using the script fix-apple-debug-header.sh."
+	   echo "***"
+	   echo $ECHO_N "*** Should this script run 'sudo sh fix-apple-debug-header.sh'... [[no]] $ECHO_C"
+	   read response
+	   if test x$response = x'yes' -o x$response = x'y' ; then
+	       echo "*** Running sudo sh fix-apple-debug-header.sh..."
+	       sudo sh fix-apple-debug-header.sh
+	       if test ! $? = 0 ; then
+	           AC_MSG_ERROR(running fix-apple-debug-header.sh. must reconcile manually)
+	       fi
+           else
+	       AC_MSG_ERROR(conflict in debug/debug.h exists. must reconcile manually)
+           fi
+       ],
+       [
+	   AC_MSG_RESULT(no)
+       ]
+       AC_LANG_POP(C++)
+   )
+   else
+      AC_MSG_RESULT(no check needed)
+   fi
+])
