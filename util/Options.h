@@ -150,6 +150,44 @@ protected:
 };
 
 /**
+ * Unsigned integer option class.
+ */
+class UIntOpt : public Opt {
+public:
+    /**
+     * Basic constructor.
+     *
+     * @param opt     the option string
+     * @param valp    pointer to the value
+     * @param valdesc short description for the value 
+     * @param desc    descriptive string
+     * @param setp    optional pointer to indicate whether or not
+                      the option was set
+     */
+    UIntOpt(const char* opt, u_int* valp,
+            const char* valdesc = "", const char* desc = "",
+            bool* setp = NULL);
+    
+    /**
+     * Alternative constructor with both short and long options,
+     * suitable for getopt calls.
+     *
+     * @param shortopt  short option character
+     * @param longopt   long option string
+     * @param valp      pointer to the value
+     * @param desc      descriptive string
+     * @param setp      optional pointer to indicate whether or not
+                        the option was set
+     */
+    UIntOpt(char shortopt, const char* longopt, u_int* valp,
+            const char* valdesc = "", const char* desc = "",
+            bool* setp = NULL);
+    
+protected:
+    int set(const char* val, size_t len);
+};
+
+/**
  * String option class.
  */
 class StringOpt : public Opt {
