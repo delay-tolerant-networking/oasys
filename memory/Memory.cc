@@ -74,7 +74,7 @@ DbgMemInfo::dump_to_file(int fd)
     char buf[256];
 
     gettimeofday(&time, 0);
-    ctime_r(&time.tv_sec, buf);
+    ctime_r((const time_t*)&time.tv_sec, buf);
     write(fd, buf, strlen(buf));
 
     for(int i=0; i<_DBG_MEM_TABLE_SIZE; ++i)

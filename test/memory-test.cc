@@ -57,7 +57,7 @@ main(int argc, char* argv[])
     Alloc_1();
 
     DbgMemInfo::debug_dump();
-    FILE* f = fopen("/tmp/dump", "w");
+    FILE* f = fopen("dump", "w");
     ASSERT(f != 0);
 
     // Delete all Foo_1 objects

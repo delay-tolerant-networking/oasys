@@ -251,7 +251,7 @@ set_frame_info(void** frames)
  * Regular new call. Untyped allocations have type _UNKNOWN_TYPE.
  */
 inline void*
-operator new(size_t size)
+operator new(size_t size) throw (std::bad_alloc)
 {
     // The reason for these two code paths is the prescence of static
     // initializers which allocate memory on the heap. Memory
@@ -284,7 +284,7 @@ operator new(size_t size)
  * allocation is ignored.
  */ 
 inline void
-operator delete(void *ptr)
+operator delete(void *ptr) throw ()
 {
     dbg_mem_t* b = PARENT_PTR(ptr, dbg_mem_t, block_);
 

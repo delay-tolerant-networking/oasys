@@ -71,27 +71,40 @@ _intoa(u_int32_t addr, char* buf, size_t bufsize)
 int
 gethostbyname(const char* name, in_addr_t* addr)
 {
+    // name is a numerical address
+    if (inet_aton(name, (struct in_addr*)addr) != 0) {
+        return 0;
+    }
+
+#ifdef __FreeBSD__
+    struct addrinfo *res;
+    int              err;
+
+    err = getaddrinfo(name, 0, 0, &res);
+    if(err != 0) 
+        return -1;
+    
+    ASSERT(res != 0);
+    *addr = ((struct in_addr*) &res->ai_addr)->s_addr;
+    
+    freeaddrinfo(res);
+    return 0;
+#else // linux
     struct hostent h;
     char buf[2048];
     struct hostent* ret;
     int h_err;
-    
-    // first check if it's a valid ip address, in which case just
-    // return immediately
-    if (inet_aton(name, (struct in_addr*)addr) != 0) {
-        return 0;
-    }
-        
+
     if (::gethostbyname_r(name, &h, buf, sizeof(buf), &ret, &h_err) < 0) {
         ::logf("/net", LOG_ERR, "error return from gethostbyname_r: %s",
                strerror(h_err));
         return -1;
     }
-
     if (ret == NULL) {
         return -1;
     }
 
     *addr = ((struct in_addr**)h.h_addr_list)[0]->s_addr;
     return 0;
+#endif    
 }

@@ -4,6 +4,11 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+
+#ifdef __FreeBSD__
+#include <netinet/in_systm.h>
+#endif // __FreeBSD
+
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
@@ -93,7 +98,7 @@ public:
         
         u_int32_t reuseaddr_:1;		// default: on
         u_int32_t tcp_nodelay_:1;	// default: off
-        u_int32_t __unused:29;
+        u_int32_t _unused:29;
         
         int recv_bufsize_;		// default: system setting
         int send_bufsize_;		// default: system setting

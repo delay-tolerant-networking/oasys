@@ -51,6 +51,7 @@ pthreadincdir=''
 pthreadlibdir=''
 pthreadlib='-lpthread'
 pthreadstaticlib=''
+pthreadflag=''			# for FreeBSD, gcc needs -pthread
 
 tclver='8.3'
 tcldir=''
@@ -306,6 +307,9 @@ if [ "$capriccio" = "y" ]; then
 	fi
 	pthreadlib=''
 	pthreadstaticlib=$capricciodir/src/lib/libpthread.a
+elif [ "$platform" = FreeBSD ] ; then
+    pthreadlib=''
+    pthreadflag='-pthread'
 fi
 
 #
@@ -361,6 +365,7 @@ s%@INCDIRS@%$incdirs%g
 s%@LIBDIRS@%$libdirs%g
 s%@LIBS@%$libs%g
 s%@STATIC_LIBS@%$staticlibs%g
+s%@PTHREAD_FLAG@%$pthreadflag%g
 
 " $srcdir/Rules.make.in >> Rules.make
 
