@@ -440,7 +440,7 @@ BerkeleyTable::get(const SerializableObject& key,
     }
     
     Unmarshal unmarshaller(Serialize::CONTEXT_LOCAL, 
-                           static_cast<const u_char*>(d.data),  d.size);
+                           static_cast<const u_char*>((u_char *)d.data),  d.size);
     data->serialize(&unmarshaller);
 
     return 0;

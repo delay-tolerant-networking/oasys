@@ -42,6 +42,7 @@
 #include "../config.h"
 
 #include <pthread.h>
+
 #ifdef HAVE_SCHED_YIELD
 #include <sched.h>
 #endif
