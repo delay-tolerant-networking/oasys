@@ -57,7 +57,7 @@ set g_silent 0
 parse_args
 
 # set tests [glob "*-test"]
-set tests {sample-test timer-test}
+set tests {sample-test timer-test serialize-test}
 
 foreach test_exe $tests {
     exec   "mkdir" "output/$test_exe"

@@ -34,7 +34,7 @@ namespace oasys {
  * the tests.
  *
  * Each *-test in the directory is run and output is placed in
- * output/*-test/std[out|err].
+ * output/ *-test/std[out|err].
  *
  * TODO: save and rerun only those that failed
  */
@@ -86,6 +86,10 @@ public:
     virtual ~UnitTester() {}
 
     int run_tests(int argc, char* argv[]) {
+        if(argc < 2 || (strcmp(argv[1], "-test") != 0)) {
+            fprintf(stderr, "Please run this test from UnitTest.tcl\n");
+            exit(-1);
+        }
         // XXX/bowei parse arguments for test
         // for running just a single test
 
@@ -152,10 +156,10 @@ private:
 };
 
 /// @{ Helper macros for implementing unit tests
-#define ADD_UNIT_TEST(_name)                    \
+#define ADD_TEST(_name)                         \
         add(new UnitTest ## _name())
 
-#define DECLARE_UNIT_TEST(_name)                        \
+#define DECLARE_TEST(_name)                             \
     struct UnitTest ## _name : public UnitTest {        \
         UnitTest ## _name() : UnitTest(#_name) {}       \
         int run();                                      \
