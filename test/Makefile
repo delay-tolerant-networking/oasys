@@ -17,6 +17,7 @@ TESTS += \
 	tcp-timeout-read-test 	\
 	tcp-writeall-test 	\
 	thread-test 		\
+	thread-interrupt-test	\
 	timer-test 		\
 	url-test 		\
 
