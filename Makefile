@@ -54,6 +54,7 @@ UTIL_SRCS :=					\
 	util/jenkins_hash.cc			\
 	util/Options.cc				\
 	util/RateEstimator.cc			\
+	util/ScratchBuffer.cc			\
 	util/StreamBuffer.cc			\
 	util/StringBuffer.cc			\
 	util/URL.cc				\
