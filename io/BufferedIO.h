@@ -85,11 +85,12 @@ public:
     BufferedOutput(IOClient* client, const char* logbase = "/bufferedOutput");
 
     /*!
-     * Write len bytes from bp. Output may be buffered.
+     * Write len bytes from bp. Output may be buffered. If len is zero,
+     * calls strlen() to determine the length
      *
      * \return the number of bytes successfully written.
      */
-    int write(const char* bp, int len);
+    int write(const char* bp, size_t len = 0);
 
     /*!
      * Clears the buffer contents without writing.

@@ -231,8 +231,11 @@ BufferedOutput::BufferedOutput(IOClient* client,
 {}
 
 int
-BufferedOutput::write(const char* bp, int len) 
+BufferedOutput::write(const char* bp, size_t len)
 {
+    if (len == 0)
+        len = strlen(bp);
+              
     buf_.reserve(len);
     memcpy(buf_.end(), bp, len);
     buf_.fill(len);
