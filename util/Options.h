@@ -2,6 +2,7 @@
 #define _OPTIONS_H_
 
 #include <string>
+#include <vector>
 
 /*
  * Wrapper class for getopt calls.
@@ -14,21 +15,25 @@ public:
     static void usage(const char* progname);
     
 protected:
+    typedef std::vector<Opt*> List;
+    
     static Opt* opts_[];	// indexed by option character
-    static Opt* head_;		// list of all registered Opts
+    static List allopts_;	// list of all options
 };
 
 class Opt {
     friend class Options;
     
 protected:
-    Opt(const char* opts, void* valp, bool* setp, bool hasval,
+    Opt(char shortopt, const char* longopt,
+        void* valp, bool* setp, bool hasval,
         const char* valdesc, const char* desc);
     virtual ~Opt();
     
     virtual int set(char* val) = 0;
     
-    const char* opts_;
+    char shortopt_;
+    const char* longopt_;
     void* valp_;
     bool* setp_;
     bool hasval_;
@@ -39,8 +44,10 @@ protected:
 
 class BoolOpt : public Opt {
 public:
-    BoolOpt(const char* opts, bool* valp, const char* desc);
-    BoolOpt(const char* opts, bool* valp, bool* setp, const char* desc);
+    BoolOpt(char shortopt, const char* longopt,
+            bool* valp, const char* desc);
+    BoolOpt(char shortopt, const char* longopt,
+            bool* valp, bool* setp, const char* desc);
 
 protected:
     int set(char* val);
@@ -48,9 +55,12 @@ protected:
 
 class IntOpt : public Opt {
 public:
-    IntOpt(const char* opts, int* valp,
+    IntOpt(char shortopt, const char* longopt,
+           int* valp,
            const char* valdesc, const char* desc);
-    IntOpt(const char* opts, int* valp, bool* setp,
+
+    IntOpt(char shortopt, const char* longopt,
+           int* valp, bool* setp,
            const char* valdesc, const char* desc);
 
 protected:
@@ -59,9 +69,12 @@ protected:
 
 class StringOpt : public Opt {
 public:
-    StringOpt(const char* opts, std::string* valp,
+    StringOpt(char shortopt, const char* longopt,
+              std::string* valp,
               const char* valdesc, const char* desc);
-    StringOpt(const char* opts, std::string* valp, bool* setp,
+    
+    StringOpt(char shortopt, const char* longopt,
+              std::string* valp, bool* setp,
               const char* valdesc, const char* desc);
 
 protected:
