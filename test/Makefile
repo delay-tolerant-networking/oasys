@@ -10,6 +10,7 @@ TESTS += \
 	msg-queue-test 		\
 	mutex-test 		\
 	options-test 		\
+	optparser-test 		\
 	serialize-test          \
 	spin-lock-test          \
 	tcp-socket-test 	\

@@ -43,45 +43,28 @@
 
 namespace oasys {
 
-/*
- * Wrapper class for getopt calls.
+/**
+ * Base class for options. These can be used either with the Getopt
+ * class for parsing argv-style declarations or with the OptParser
+ * class for parsing argument strings or arrays of strings.
  */
-class Opt;
-class Options {
-public:
-    /**
-     * Register a new option binding.
-     */
-    static void addopt(Opt* opt);
-
-    /**
-     * Parse argv, processing all registered options. Returns the
-     * index of the first non-option argument in argv
-     */
-    static int getopt(const char* progname, int argc, char* const argv[]);
-
-    /**
-     * Prints a nicely formatted usage string to stderr.
-     */
-    static void usage(const char* progname);
-    
-protected:
-    typedef std::vector<Opt*> List;
-    
-    static Opt* opts_[];	// indexed by option character
-    static List allopts_;	// list of all options
-};
-
 class Opt {
-    friend class Options;
+    friend class Getopt;
+    friend class OptParser;
     
 protected:
+    /**
+     * Private constructor.
+     */
     Opt(char shortopt, const char* longopt,
         void* valp, bool* setp, bool hasval,
         const char* valdesc, const char* desc);
     virtual ~Opt();
-    
-    virtual int set(char* val) = 0;
+
+    /**
+     * Virtual callback to set the option to the given string value.
+     */
+    virtual int set(const char* val, size_t len) = 0;
     
     char shortopt_;
     const char* longopt_;
@@ -93,43 +76,115 @@ protected:
     Opt*  next_;
 };
 
+/**
+ * Boolean option class.
+ */
 class BoolOpt : public Opt {
 public:
-    BoolOpt(char shortopt, const char* longopt,
-            bool* valp, const char* desc);
-    BoolOpt(char shortopt, const char* longopt,
-            bool* valp, bool* setp, const char* desc);
+    /**
+     * Basic constructor.
+     *
+     * @param opt   the option string
+     * @param valp  pointer to the value
+     * @param desc  descriptive string
+     * @param setp  optional pointer to indicate whether or not
+                    the option was set
+     */
+    BoolOpt(const char* opt, bool* valp,
+            const char* desc = "", bool* setp = NULL);
+
+    /**
+     * Alternative constructor with both short and long options,
+     * suitable for getopt calls.
+     *
+     * @param shortopt  short option character
+     * @param longopt   long option string
+     * @param valp      pointer to the value
+     * @param desc      descriptive string
+     * @param setp      optional pointer to indicate whether or not
+                        the option was set
+     */
+    BoolOpt(char shortopt, const char* longopt, bool* valp,
+            const char* desc = "", bool* setp = NULL);
 
 protected:
-    int set(char* val);
+    int set(const char* val, size_t len);
 };
 
+/**
+ * Integer option class.
+ */
 class IntOpt : public Opt {
 public:
-    IntOpt(char shortopt, const char* longopt,
-           int* valp,
-           const char* valdesc, const char* desc);
-
-    IntOpt(char shortopt, const char* longopt,
-           int* valp, bool* setp,
-           const char* valdesc, const char* desc);
-
+    /**
+     * Basic constructor.
+     *
+     * @param opt     the option string
+     * @param valp    pointer to the value
+     * @param valdesc short description for the value 
+     * @param desc    descriptive string
+     * @param setp    optional pointer to indicate whether or not
+                      the option was set
+     */
+    IntOpt(const char* opt, int* valp,
+           const char* valdesc = "", const char* desc = "",
+           bool* setp = NULL);
+    
+    /**
+     * Alternative constructor with both short and long options,
+     * suitable for getopt calls.
+     *
+     * @param shortopt  short option character
+     * @param longopt   long option string
+     * @param valp      pointer to the value
+     * @param desc      descriptive string
+     * @param setp      optional pointer to indicate whether or not
+                        the option was set
+     */
+    IntOpt(char shortopt, const char* longopt, int* valp,
+           const char* valdesc = "", const char* desc = "",
+           bool* setp = NULL);
+    
 protected:
-    int set(char* val);
+    int set(const char* val, size_t len);
 };
 
+/**
+ * String option class.
+ */
 class StringOpt : public Opt {
 public:
-    StringOpt(char shortopt, const char* longopt,
-              std::string* valp,
-              const char* valdesc, const char* desc);
+    /**
+     * Basic constructor.
+     *
+     * @param opt     the option string
+     * @param valp    pointer to the value
+     * @param valdesc short description for the value 
+     * @param desc    descriptive string
+     * @param setp    optional pointer to indicate whether or not
+                      the option was set
+     */
+    StringOpt(const char* opt, std::string* valp,
+              const char* valdesc = "", const char* desc = "",
+              bool* setp = NULL);
     
-    StringOpt(char shortopt, const char* longopt,
-              std::string* valp, bool* setp,
-              const char* valdesc, const char* desc);
+    /**
+     * Alternative constructor with both short and long options,
+     * suitable for getopt calls.
+     *
+     * @param shortopt  short option character
+     * @param longopt   long option string
+     * @param valp      pointer to the value
+     * @param desc      descriptive string
+     * @param setp      optional pointer to indicate whether or not
+                        the option was set
+     */
+    StringOpt(char shortopt, const char* longopt, std::string* valp,
+              const char* valdesc = "", const char* desc = "",
+              bool* setp = NULL);
 
 protected:
-    int set(char* val);
+    int set(const char* val, size_t len);
 };
 
 } // namespace oasys

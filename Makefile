@@ -55,8 +55,10 @@ UTIL_SRCS :=					\
 	util/jenkins_hash.c			\
 	util/md5-rsa.c				\
 	util/jenkins_hash.cc			\
+	util/Getopt.cc				\
 	util/HexDumpBuffer.cc			\
 	util/Options.cc				\
+	util/OptParser.cc			\
 	util/RateEstimator.cc			\
 	util/ScratchBuffer.cc			\
 	util/StreamBuffer.cc			\
