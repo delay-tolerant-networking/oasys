@@ -73,7 +73,7 @@ gethostbyname(const char* name, in_addr_t* addr)
     ASSERT(addr);
 
     // name is a numerical address
-    if (inet_aton(name, (struct in_addr*)addr) != 0) {
+    if (inet_pton(AF_INET, name, (struct in_addr*)addr) != 0) {
         return 0;
     }
 
