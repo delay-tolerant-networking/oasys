@@ -200,10 +200,29 @@ int main(int argc, char* argv[]) {                      \
 }                                               
 
 #define DECLARE_TESTER(_name)                                   \
+class _name : public UnitTester {                               \
 public:                                                         \
     _name::_name(std::string name) : UnitTester(name) {}        \
 protected:                                                      \
-    void add_tests()
+    void add_tests();                                           \
+};                                                              \
+void _name::add_tests()                                         \
+
+#define CHECK(x)                                                \
+    do { if (! (x)) {                                           \
+        oasys::logf("/test", oasys::LOG_CRIT,                   \
+                    "CHECK FAILED (" #x ") at %s:%d",           \
+                    __FILE__, __LINE__);                        \
+        return UNIT_TEST_FAILED;                                \
+    } } while(0)
+
+#define CHECK_EQUAL(a, b)                                                       \
+    do { if ((a) != (b)) {                                                      \
+        oasys::logf("/test", oasys::LOG_CRIT,                                   \
+                    "CHECK FAILED: '" #a "' (%d) != '" #b "' (%d) at %s:%d",    \
+                    (int)(a), (int)(b), __FILE__, __LINE__);                    \
+        return UNIT_TEST_FAILED;                                                \
+    } } while(0)
 
 /// @}
 

@@ -132,11 +132,9 @@ DECLARE_TEST(TimerTest1) {
     return UNIT_TEST_INPUT;
 }
 
-class TimerTest : public UnitTester {
-    DECLARE_TESTER(TimerTest) {
-        ADD_TEST(TimerTest1);
-    }
-};
+DECLARE_TESTER(TimerTest) {
+    ADD_TEST(TimerTest1);
+}
 
 DECLARE_TEST_FILE(TimerTest, "timer test");
 

@@ -66,12 +66,10 @@ DECLARE_TEST(InputTest) {
     }
 #endif
 
-class Test : public UnitTester {
-    DECLARE_TESTER(Test) {
-        ADD_TEST(ATest);
-        ADD_TEST(AnotherTest);
-        ADD_TEST(InputTest);
-    }
-};
+DECLARE_TESTER(Test) {
+    ADD_TEST(ATest);
+    ADD_TEST(AnotherTest);
+    ADD_TEST(InputTest);
+}
 
 DECLARE_TEST_FILE(Test, "sample test");

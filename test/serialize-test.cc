@@ -135,28 +135,23 @@ DECLARE_TEST(SizeTest) {
 	        2 + 
 	        4 +
 		4 + 5 +
-	        4 + 32;
+	        32;
 
     oasys::MarshalSize sizer1(Serialize::CONTEXT_NETWORK, 0);
-    o.serialize(&sizer1);    
-    if (sizer1.size() != sz) {
-	return UNIT_TEST_FAILED;
-    }
+    sizer1.action(&o);
+    CHECK_EQUAL(sizer1.size(), sz);
     
     oasys::MarshalSize sizer2(Serialize::CONTEXT_NETWORK, Serialize::USE_CRC);
-    if (sizer1.size() != sz + 4) {
-	return UNIT_TEST_FAILED;
-    }
+    sizer2.action(&o);
+    CHECK_EQUAL(sizer2.size(), sz + 4);
 
     return 0;
 }
 
-class MarshalTester : public UnitTester {
-    DECLARE_TESTER(MarshalTester) {
-	ADD_TEST(SizeTest);
-	ADD_TEST(CompareTest_NOCRC);
-	ADD_TEST(CompareTest_CRC);
-    }
+DECLARE_TESTER(MarshalTester) {
+    ADD_TEST(SizeTest);
+    ADD_TEST(CompareTest_NOCRC);
+    ADD_TEST(CompareTest_CRC);
 };
 
 DECLARE_TEST_FILE(MarshalTester, "marshalling test");
