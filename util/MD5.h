@@ -62,37 +62,44 @@ public:
     }
     ~MD5() {}
 
+    /*! MD5 initialization. Begins an MD5 operation, writing a new context. */
     void init()
     {
         MD5Init(&ctx_);
     }
     
+    /*! Update the md5 hash with data bytes */ 
     void update(const u_char* data, size_t len)
     {
         MD5Update(&ctx_, (u_char*)data, len);
     }
 
+    /*! Update the md5 hash with data bytes */ 
     void update(const char* data, size_t len)
     {
         MD5Update(&ctx_, (u_char*)data, len);
     }
 
+    /*! Finish up the md5 hashing process */
     void finalize()
     {
         MD5Final(digest_, &ctx_);
     }
     
+    /*! \return MD5 hash value. */
     const u_char* digest()
     {
         return digest_;
     }
 
+    /*! \return MD5 hash value in ascii, std::string varient */
     static void digest_ascii(std::string* str,
                              const u_char* digest)
     {
         hex2str(str, digest, MD5LEN);
     }
 
+    /*! \return MD5 hash value in ascii */
     static std::string digest_ascii(const u_char* digest)
     {
         std::string str;
@@ -100,16 +107,19 @@ public:
         return str;
     }
 
+    /*! \return MD5 hash value in ascii */
     void digest_ascii(std::string* str)
     {
         digest_ascii(str, digest_);
     }
 
+    /*! \return MD5 hash value in ascii, std::string varient */
     std::string digest_ascii()
     {
         return digest_ascii(digest_);
     }
 
+    /*! Obtain the digest from ascii */
     static void digest_fromascii(const char* str, u_char* digest)
     {
         str2hex(str, digest, MD5LEN);
