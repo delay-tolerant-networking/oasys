@@ -16,12 +16,14 @@ DEBUG_SRCS :=					\
 	debug/Log.cc				\
 
 IO_SRCS :=					\
+	io/BufferedIO.cc			\
 	io/IO.cc				\
-	io/NetUtils.cc				\
 	io/FdIOClient.cc			\
 	io/FileIOClient.cc			\
 	io/IPSocket.cc				\
 	io/IPClient.cc				\
+	io/NetUtils.cc				\
+	io/PrettyPrintBuffer.cc			\
 	io/TCPClient.cc				\
 	io/TCPServer.cc				\
 	io/UDPClient.cc				\

@@ -1,10 +1,9 @@
 #include <algorithm>
 #include <errno.h>
 
-#include <oasys/io/IO.h>
-
-#include "lib/PrettyPrintBuffer.h"
 #include "BufferedIO.h"
+#include "IO.h"
+#include "PrettyPrintBuffer.h"
 
 /******************************************************************
  *

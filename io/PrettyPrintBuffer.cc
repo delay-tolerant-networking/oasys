@@ -1,7 +1,6 @@
 
-#include <oasys/util/StringBuffer.h>
-
 #include "PrettyPrintBuffer.h"
+#include "util/StringBuffer.h"
 
 const int PrettyPrintBuf::MAX_COL = 40;
 

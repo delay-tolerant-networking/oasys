@@ -4,7 +4,7 @@
 #include <string>
 #include <utility>              // for std::pair
 
-/*!
+/**
  * Class for generating pretty printed text. Somewhat inefficient.
  */
 class PrettyPrintBuf {
@@ -21,4 +21,4 @@ private:
     int len_;
 };
 
-#endif //__PRETTY_PRINT_BUFFER_H__
+#endif /* __PRETTY_PRINT_BUFFER_H__ */
