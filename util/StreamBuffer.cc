@@ -60,7 +60,8 @@ StreamBuffer::reserve(size_t amount)
     else
     {
         moveup();
-        realloc((amount > size_*2) ? amount : (size_*2));
+        realloc(((amount + fullbytes())> size_*2) ? 
+                (amount + fullbytes()): (size_*2));
     }
 }
 
@@ -109,7 +110,7 @@ StreamBuffer::realloc(size_t size)
         return;
 
     buf_ = (char*)::realloc(buf_, size);
-    if(buf_ == 0) 
+    if(buf_ == 0)
     {
         logf("/StreamBuffer", LOG_CRIT, "Out of memory");
         ASSERT(0);
