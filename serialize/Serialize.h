@@ -8,8 +8,35 @@
  * This file defines the core set of objects that define the
  * Serialization layer.
  */
-class SerializableObject;
+class Serialize;
 class SerializeAction;
+class SerializableObject;
+
+/**
+ * Empty base class that's just used for name scoping of the action
+ * and context enumerated types.
+ */
+class Serialize {
+public:
+    /**
+     * Action type codes, one for each basic type of SerializeAction.
+     */
+    typedef enum {
+        MARSHAL = 1,	/// in-memory  -> serialized representation
+        UNMARSHAL,	/// serialized -> in-memory  representation
+        INFO		/// informative scan (e.g. size, table schema)
+    } action_t;
+    
+    /**
+     * Context type codes, one for each general context in which
+     * serialization occurs. 
+     */
+    typedef enum {
+        CONTEXT_UNKNOWN = 1,	/// no specified context (default)
+        CONTEXT_NETWORK,	/// serialization to/from the network
+        CONTEXT_LOCAL		/// serialization to/from local disk
+    } context_t;
+};    
 
 /**
  * Inherit from this class to add serialization capability to a class.
@@ -39,8 +66,16 @@ typedef std::vector<SerializableObject*> SerializableObjectVector;
  * ability is used to be able to string several Marshallable objects
  * together, either for writing or reading).
  */
-class SerializeAction {
+class SerializeAction : public Serialize {
 public:
+    /**
+     * Create a SerializeAction with the specified type code and context
+     *
+     * @param type serialization action type code
+     * @param context serialization context
+     */
+    SerializeAction(action_t action, context_t context);
+
     /**
      * Perform the serialization or deserialization action on the object.
      *
@@ -59,22 +94,20 @@ public:
     virtual void end_action();
 
     /**
-     * Action type codes, one for each action type of SerializeAction.
-     */
-    typedef enum {
-        MARSHAL = 1,	/// in-memory  -> serialized representation
-        UNMARSHAL,	/// serialized -> in-memory  representation
-        INFO		/// informative scan (e.g. size, table schema)
-    } action_t;
-    
-    /**
      * Accessor for the action type.
      */
-    action_t type() { return type_; }
+    action_t action() { return action_; }
     
     /**
-     * Processor functions, one for each type.
+     * Accessor for the context.
      */
+    context_t context() { return context_; }
+    
+    /***********************************************************************
+     *
+     * Processor functions, one for each type.
+     *
+     ***********************************************************************/
 
     /**
      * Process function for a contained SerializableObject.
@@ -150,6 +183,7 @@ public:
     {
         process(name, (u_char*)bp, len);
     }
+
     /// @}
     
     /** Set a log target for verbose serialization */
@@ -161,13 +195,8 @@ public:
     virtual ~SerializeAction();
 
 protected:
-    /**
-     * Create a SerializeAction with the specified type code.
-     * \param type Action type code for the marshal context
-     */
-    SerializeAction(action_t type);
-
-    action_t type_;	///< Serialization action code
+    action_t action_;	///< Serialization action code
+    context_t context_;	///< Serialization context
     bool  error_;	///< Indication of whether an error occurred
     const char* log_;	///< Optional log for verbose marshalling
 
