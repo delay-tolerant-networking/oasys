@@ -95,8 +95,16 @@ public:
      * their own init methods.
      */
     static void init(DurableTableStore* instance) {
-        ASSERT(instance_ != 0);
+        ASSERT(instance_ == 0);
         instance_ = instance;
+    }
+
+    // XXX/bowei should be virtualized
+    static void shutdown() {
+        ASSERT(instance_ != 0);
+        delete instance_;
+
+        instance_ = 0;
     }
 
     /**
@@ -155,13 +163,21 @@ public:
      * @return DS_OK, DS_ERR // XXX/bowei
      */
     virtual int put(const SerializableObject& key, 
-                    const SerializableObject* data) = 0;
+                    const SerializableObject& data) = 0;
 
     /**
      * Delete a (key,data) pair from the database
      * @return DS_OK, DS_NOTFOUND if key is not found
      */
     virtual int del(const SerializableObject& key) = 0;
+
+    /**
+     * Get an iterator to this table.
+     *
+     * @param itr Iterator pointer to be set. Caller deletes this
+     * pointer.
+     */
+    virtual int itr(DurableTableItr** itr) = 0;
 
     /** Return table id. */
     DurableTableId id() { return id_; }
@@ -195,8 +211,8 @@ public:
      */
     virtual int next() = 0;
 
-    /** Unserialize the object in obj. */
-    virtual int get(SerializableObject* obj) = 0;
+    /** Unserialize the data. */
+    virtual int get(SerializableObject* key, SerializableObject* data) = 0;
 };
 
 }; // namespace oasys

@@ -23,6 +23,8 @@ class BerkeleyStore : public DurableTableStore, public Logger {
     friend class BerkeleyTable;
 
 public:
+    ~BerkeleyStore();
+
     /** 
      * Do initialization. Must do this once before you try to obtain
      * an instance of this object. This is separated out from the
@@ -31,7 +33,19 @@ public:
      */
     static void init();
 
-    ~BerkeleyStore();
+    /**
+     * Initialization routine for debugging purposes. Allows bringing
+     * up/down of BerkeleyDB to test for persistence of the data.
+     */
+    static void init_for_debug(const std::string& db_name,
+                               const char*        config_dir,
+                               const char*        err_log_name,
+                               bool               tidy_db,
+                               int                tidy_wait);
+    /**
+     * Shutdown BerkeleyDB and free associated resources.
+     */
+    static void shutdown_for_debug();
 
     /**
      * Create a new table. Caller deletes the pointer.
@@ -83,7 +97,11 @@ private:
      * real initialization code
      * @return 0 if no error
      */
-    int do_init();
+    int do_init(const std::string& db_name,
+                const char*        config_dir,
+                const char*        err_log_name,
+                bool               tidy_db,
+                int                tidy_wait);
 };
 
 
@@ -100,8 +118,9 @@ public:
 
     /// @{ virtual from DurableTable 
     int get(const SerializableObject& key, SerializableObject* data);
-    int put(const SerializableObject& key, const SerializableObject* data);
+    int put(const SerializableObject& key, const SerializableObject& data);
     int del(const SerializableObject& key);
+    int itr(DurableTableItr** itr);
     /// @}
 
 private:
@@ -123,18 +142,26 @@ private:
 };
 
 class BerkeleyTableItr : public DurableTableItr, public Logger {
-public:
-    /** Create an iterator for table t */
+    friend class BerkeleyTable;
+private:
+    /** Create an iterator for table t. These should not be called
+     * except by BerkeleyTable. */
     BerkeleyTableItr(DurableTable* t);
+    BerkeleyTableItr(DurableTable* t, void* k, int len); // UNIMPLEMENTED for now
 
-    /** UNIMPLEMENTED */
-    BerkeleyTableItr(DurableTable* t, void* k, int len);
-
+public:
     ~BerkeleyTableItr();
+    
+    /// @{ Obtain the raw byte representations of the key and data.
+    // Buffers are only valid until the next invocation of the
+    // iterator.
+    int raw_key(void** key, size_t* len);
+    int raw_data(void** data, size_t* len);
+    /// @}
     
     /// @{ virtual from DurableTableItr
     int next();
-    int get(SerializableObject* obj);
+    int get(SerializableObject* key, SerializableObject* data);
     /// @}
 
 

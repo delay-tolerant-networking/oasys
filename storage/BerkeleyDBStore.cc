@@ -41,9 +41,10 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "debug/Debug.h"
-#include "util/StringBuffer.h"
-#include "serialize/MarshalSerialize.h"
+#include <debug/Debug.h>
+#include <util/StringBuffer.h>
+#include <serialize/MarshalSerialize.h>
+#include <serialize/TypeShims.h>
 
 #include "DurableTable.h"
 #include "BerkeleyTable.h"
@@ -105,25 +106,61 @@ BerkeleyStore::init()
 {
     BerkeleyStore* s = new BerkeleyStore();
     DurableTableStore::init(s);
-    if(s->do_init() != 0) {
+
+    BerkeleyStoreCommand* config = BerkeleyStoreCommand::instance();
+    
+    int err = s->do_init(config->db_name_,
+                         config->dir_.c_str(),
+                         config->err_log_.c_str(),
+                         config->tidy_db_,
+                         config->tidy_wait_);
+    if(err != 0) {
+        PANIC("Can't init() BerkeleyDB");
+    } else {
+        config->ds_ = s;
+    }
+}
+
+void 
+BerkeleyStore::init_for_debug(const std::string& db_name,
+                              const char*        config_dir,
+                              const char*        err_log_name,
+                              bool               tidy_db,
+                              int                tidy_wait)
+{
+    BerkeleyStore* s = new BerkeleyStore();
+    DurableTableStore::init(s);
+
+    int err;
+    err = s->do_init(db_name, 
+                     config_dir, 
+                     err_log_name, 
+                     tidy_db, 
+                     tidy_wait);
+    if(err != 0) {
         PANIC("Can't init() BerkeleyDB");
     }
 }
 
+void BerkeleyStore::shutdown_for_debug()
+{
+    DurableTableStore::shutdown();
+}
+
 int 
-BerkeleyStore::do_init()
+BerkeleyStore::do_init(const std::string& db_name,
+                       const char*        config_dir,
+                       const char*        err_log_name,
+                       bool               tidy_db,
+                       int                tidy_wait)
 {
     int err;
 
-    BerkeleyStoreCommand* config = BerkeleyStoreCommand::instance();
-    config->ds_ = this;
-    
-    // cache database name
-    db_name_ = config->db_name_;
+    db_name_ = db_name;
 
     // create database directory
     struct stat f_stat;
-    const char* config_dir = config->dir_.c_str();
+
     if(stat(config_dir, &f_stat) == -1)
     {
         if(errno == ENOENT)
@@ -146,7 +183,7 @@ BerkeleyStore::do_init()
         return DS_ERR;
     }
 
-    err_log_ = ::fopen(config->err_log_.c_str(), "w");
+    err_log_ = ::fopen(err_log_name, "w");
 
     if(err_log_ == NULL) 
     {
@@ -157,12 +194,11 @@ BerkeleyStore::do_init()
         dbenv_->set_errfile(dbenv_, err_log_);
     }
 
-    log_info("Using dbdir = %s, errlog = %s", config_dir, config->err_log_.c_str());
-    
-    if(config->tidy_db_)
+    log_info("Using dbdir = %s, errlog = %s", config_dir, err_log_name);
+    if(tidy_db)
     {
         char cmd[256];
-        for(int i = config->tidy_wait_; i > 0; --i) {
+        for(int i = tidy_wait; i > 0; --i) {
             log_warn("PRUNING CONTENTS OF %s IN %d SECONDS",
                      config_dir, i);
             sleep(1);
@@ -209,7 +245,7 @@ BerkeleyStore::do_init()
     // storing general global metadata.
     std::string dbpath = config_dir;
     dbpath += "/";
-    dbpath += config->db_name_;
+    dbpath += db_name_;
 
     if(stat(dbpath.c_str(), &f_stat) == -1) 
     {
@@ -220,7 +256,7 @@ BerkeleyStore::do_init()
             db_create(&db, dbenv_, 0);
             log_info("Creating new database file");
             
-            err = db->open(db, NO_TX, config->db_name_.c_str(),
+            err = db->open(db, NO_TX, db_name_.c_str(),
                            "0", DB_HASH ,DB_CREATE, 0);
             if(err != 0) {
                 log_crit("Can't create database file");
@@ -248,20 +284,37 @@ BerkeleyStore::do_init()
         return DS_ERR;
     }
 
-    /*
-    DurableTableItr* itr = new BerkeleyTableItr(metatable);
-    int max_id = 0;
+    DurableTableItr* dItr;
+    err = metatable->itr(&dItr);
+    BerkeleyTableItr* pItr = static_cast<BerkeleyTableItr*>(dItr);
+    
+    if(err != 0) {
+        PANIC("Unable to create metatable iterator");
+    }
 
-    while(itr->next() == 0)
+    int max_id = 0;
+    while(pItr->next() == 0)
     {
-        int id = atoi(static_cast<const char*>(itr->key()));
-        max_id = (max_id < id) ? id : max_id;
+	char raw_key_value[256];
+	void* raw_key;
+	size_t raw_key_len;
+	
+	err = pItr->raw_key(&raw_key, &raw_key_len);
+	if(err != 0) {
+	    PANIC("Iterator to metatable is unusable!");
+	}
+
+	memcpy(raw_key_value, raw_key, raw_key_len);
+	raw_key_value[raw_key_len] = '\0';
+
+	int cur_id = atoi(raw_key_value);
+        max_id = (max_id < cur_id) ? cur_id : max_id;
+        
+        log_debug("metatable has %s", raw_key_value);
     }
     next_id_ = max_id + 1;
 
-    delete itr;
-    */
-
+    delete pItr;
     delete metatable;
 
     return 0;
@@ -445,8 +498,6 @@ BerkeleyTable::~BerkeleyTable()
         log_debug("closing Db %d", id());
         db_->close(db_, 0);
     }
-
-    delete db_;
 }
 
 int 
@@ -464,6 +515,8 @@ BerkeleyTable::get(const SerializableObject& key,
     }
 
     DBT k, d;
+    bzero(&d, sizeof(d));
+
     MAKE_DBT(k, key_buf, key_buf_len);
 
     int err = db_->get(db_, NO_TX, &k, &d, 0);
@@ -472,7 +525,7 @@ BerkeleyTable::get(const SerializableObject& key,
     {
         return DS_NOTFOUND;
     }
-    else 
+    else if(err != 0)
     {
         log_err("DB: %s", db_strerror(err));
         return DS_ERR;
@@ -487,7 +540,7 @@ BerkeleyTable::get(const SerializableObject& key,
 
 int 
 BerkeleyTable::put(const SerializableObject& key, 
-                   const SerializableObject* data)
+                   const SerializableObject& data)
 {
     u_char key_buf[256];
     size_t key_buf_len;
@@ -500,7 +553,7 @@ BerkeleyTable::put(const SerializableObject& key,
     }
 
     MarshalSize sizer(Serialize::CONTEXT_LOCAL);
-    const_cast<SerializableObject*>(data)->serialize(&sizer);
+    sizer.action(const_cast<SerializableObject*>(&data));
     
     { // lock
         ScopeLock lock(&scratch_mutex_);
@@ -509,7 +562,7 @@ BerkeleyTable::put(const SerializableObject& key,
         int err;
         
         Marshal m(Serialize::CONTEXT_LOCAL, buf, scratch_.size());
-        const_cast<SerializableObject*>(data)->serialize(&m);
+	m.action(const_cast<SerializableObject*>(&data));
         
         DBT k, d;
         MAKE_DBT(k, key_buf, key_buf_len);
@@ -557,13 +610,23 @@ BerkeleyTable::del(const SerializableObject& key)
     return 0;
 }
 
+int 
+BerkeleyTable::itr(DurableTableItr** itr)
+{
+    *itr = new BerkeleyTableItr(this);
+    ASSERT(*itr);
+    
+    return 0;
+}
+
 size_t
 BerkeleyTable::flatten_key(const SerializableObject& key, 
                            u_char* key_buf, size_t size)
 {
     MarshalSize sizer(Serialize::CONTEXT_LOCAL);
-    const_cast<SerializableObject&>(key).serialize(&sizer);
-    if(sizer.size() < size)
+    sizer.action(const_cast<SerializableObject*>(&key));
+
+    if(sizer.size() > size)
     {
         return 0;
     }
@@ -617,31 +680,79 @@ BerkeleyTableItr::next()
 {
     ASSERT(valid_);
 
+    bzero(&key_, sizeof(DBT));
+    bzero(&data_, sizeof(DBT));
+
     int err = cur_->c_get(cur_, &key_, &data_, DB_NEXT);
-    if(err != 0) {
-        log_err("DB: %s", db_strerror(err));
-        valid_ = false;
-        
-        return DS_ERR;
-    }
-    
-    if(err == DB_NOTFOUND)
+    if(err == DB_NOTFOUND) 
     {
         valid_ = false;
 
         return DS_NOTFOUND;
+    } 
+    else if(err != 0) 
+    {
+        log_err("next() DB: %s", db_strerror(err));
+        valid_ = false;
+        
+        return DS_ERR;
     }
 
     return 0;
 }
 
 int 
-BerkeleyTableItr::get(SerializableObject* obj)
+BerkeleyTableItr::get(SerializableObject* keyObj, 
+                      SerializableObject* dataObj)
 {
-    return 0; // XXX/bowei
+    if(!valid_)
+        return DS_ERR;
+
+    if(keyObj != 0) {
+        oasys::Unmarshal un(oasys::Serialize::CONTEXT_LOCAL,
+                            static_cast<u_char*>(key_.data),
+                            key_.size, 0);
+        if(un.action(keyObj) != 0) {
+            log_debug("Can't unmarshal key");
+            return DS_ERR;
+        }
+    }
+    
+    if(dataObj != 0) {
+        oasys::Unmarshal un(oasys::Serialize::CONTEXT_LOCAL,
+                            static_cast<u_char*>(data_.data),
+                            data_.size, 0);
+        if(un.action(dataObj) != 0) {
+            log_debug("Can't unmarshal data");
+            return DS_ERR;
+        }
+    }
+
+    return 0;
 }
 
+int 
+BerkeleyTableItr::raw_key(void** key, size_t* len)
+{
+    if(!valid_) return DS_ERR;
 
+    *key = key_.data;
+    *len = key_.size;
+
+    return 0;
+}
+
+int 
+BerkeleyTableItr::raw_data(void** data, size_t* len)
+{
+    if(!valid_) return DS_ERR;
+
+    *data = data_.data;
+    *len  = data_.size;
+
+    return 0;
+}
+    
 /******************************************************************************
  *
  * BerkeleyStoreCommand
