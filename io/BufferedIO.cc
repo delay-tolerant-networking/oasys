@@ -57,7 +57,9 @@ BufferedInput::read_bytes(size_t len, char** buf, int timeout)
     while (total < len)
     {
         // fill up the buffer (if possible)
-	int cc = internal_read(len - total, timeout);
+        logf(LOG_DEBUG, "read_bytes calling internal_read for %d needed bytes",
+             len - total);
+	int cc = internal_read(len, timeout);
         if(cc <= 0)
         {
             logf(LOG_DEBUG, "%s: read %s", 
@@ -139,6 +141,7 @@ BufferedInput::eof()
 int
 BufferedInput::internal_read(size_t len, int timeout_ms)
 {
+    int cc;
     ASSERT(len > 0);
     ASSERT(len > buf_.fullbytes());
 
@@ -146,23 +149,28 @@ BufferedInput::internal_read(size_t len, int timeout_ms)
     buf_.reserve(len);
 
     // but always try to fill up as much as possible into tailbytes
-    int cc = client_->timeout_read(buf_.end(), buf_.tailbytes(), timeout_ms);
+    if (timeout_ms > 0) {
+        cc = client_->timeout_read(buf_.end(), buf_.tailbytes(), timeout_ms);
+    } else {
+        cc = client_->read(buf_.end(), buf_.tailbytes());
+    }
+    
     if (cc == IOTIMEOUT)
     {
-        logf(LOG_DEBUG, "read %d (timeout %d) timed out",
+        logf(LOG_DEBUG, "internal_read %d (timeout %d) timed out",
              len, timeout_ms);
         return cc;
     }
     else if (cc == IOERROR)
     {
-        logf(LOG_ERR, "read %d (timeout %d) error in read: %s",
+        logf(LOG_ERR, "internal_read %d (timeout %d) error in read: %s",
              len, timeout_ms, strerror(errno));
         
         return cc;
     }
     else if (cc == 0) 
     {
-        logf(LOG_DEBUG, "read %d (timeout %d) eof",
+        logf(LOG_DEBUG, "internal_read %d (timeout %d) eof",
              len, timeout_ms);
         seen_eof_ = true;
         return cc;
@@ -173,7 +181,7 @@ BufferedInput::internal_read(size_t len, int timeout_ms)
     int ret;
     ret = MIN(buf_.fullbytes(), len);
     
-    logf(LOG_DEBUG, "read %d (timeout %d): cc=%d ret %d",
+    logf(LOG_DEBUG, "internal_read %d (timeout %d): cc=%d ret %d",
          len, timeout_ms, cc, ret);
 
     return ret;
@@ -252,6 +260,8 @@ BufferedOutput::vformat_buf(const char* fmt, va_list ap)
         ASSERT(len <= nfree);
     }
 
+    buf_.fill(len);
+    
     if ((flush_limit_) > 0 && (buf_.fullbytes() > flush_limit_))
     {
 	flush();
