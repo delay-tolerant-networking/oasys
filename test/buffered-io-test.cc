@@ -1,11 +1,4 @@
-#if 0  // Python part ---------------------------------------------------------
 
-def InputTest():
-    print "XXX not done yet";
-
-# C++ part --------------------------------------------------------------------
-CC=""" # "
-#endif // 0
 
 #include <vector>
 
@@ -48,17 +41,17 @@ struct TestClient : public IOClient {
 };
 */
 
-DECLARE_UNIT_TEST(ATest) {
-    return 0;
-}
+// DECLARE_UNIT_TEST(ATest) {
+//     return 0;
+// }
 
-DECLARE_UNIT_TEST(AnotherTest) {
-    return UNIT_TEST_FAILED;
-}
+// DECLARE_UNIT_TEST(AnotherTest) {
+//     return UNIT_TEST_FAILED;
+// }
 
-DECLARE_UNIT_TEST(InputTest) {
-    return UNIT_TEST_INPUT;
-}
+// DECLARE_UNIT_TEST(InputTest) {
+//     return UNIT_TEST_INPUT;
+// }
 
 // class Test : public UnitTester {
 //     DECLARE_TESTER(Test);
