@@ -29,14 +29,19 @@ public:
      * Read len bytes. Blocking until specified amount of bytes is
      * read.
      *
-     * \param len Amount to drain. If zero, return the current buffer
-     * contents (if any), or issue a call to read() to get some.
      * \param buf buf is valid until next fcn call to BufferedInput
      * \return Length of segment read. <0 upon error, 0 on eof. Return 
      * will only be < len if eof is reached before fully read len
      * bytes.
      */
     int read_bytes(size_t len, char** buf, int timeout = -1);
+
+
+    /*!
+     * Read some bytes. 
+     *
+     */
+    int read_some_bytes(char** buf, int timeout = -1);
 
     /*!
      * Read in a single character from the protocol stream. Returns 0
@@ -54,7 +59,7 @@ private:
      * Read in len bytes into the buffer. If there are enough bytes
      * already present in buf_, no call to read will occur.
      *
-     * \param len If len = 0, then read() will try to fill buf_.
+     * \param len The amount to read
      * \param timeout_ms Timeout to the read call. UNIMPLEMENTED
      * \return Bytes available, can be less than len.
      */

@@ -24,14 +24,16 @@ BufferedInput::read_line(const char* nl, char** buf, int timeout)
     int endl;
     while((endl = find_nl(nl)) == -1)
     {
-        int cc = internal_read(0, timeout);
+        // can't find a newline, so read in another chunk of data
+        int cc = internal_read(buf_.fullbytes() + BufferedInput::READ_AHEAD,
+                               timeout);
         
 	logf(LOG_DEBUG, "readline: cc = %d", cc);
         if(cc <= 0)
         {
             logf(LOG_DEBUG, "%s: read %s", 
                  __func__, (cc == 0) ? "eof" : strerror(errno));
-            return (cc < 0) ? -1 : 0;
+            return cc;
         }
     }
 
@@ -46,65 +48,80 @@ BufferedInput::read_line(const char* nl, char** buf, int timeout)
 int 
 BufferedInput::read_bytes(size_t len, char** buf, int timeout)
 {
-    int cc, total = 0;
-
-    logf(LOG_DEBUG, "read_bytes %d (timeout %d)", len, timeout);
-
-    // if len is zero and there's bytes in the buffer, drain them
-    if ((len == 0) && (buf_.fullbytes() > 0)) {
-        *buf = buf_.start();
-        cc = buf_.fullbytes();
-        buf_.consume(cc);
-        return cc;
-    }
+    ASSERT(len > 0);
     
-    while (len == 0 || buf_.fullbytes() < len)
+    logf(LOG_DEBUG, "read_bytes %d (timeout %d)", len, timeout);
+    
+    size_t total = buf_.fullbytes();
+    
+    while (total < len)
     {
-        // fill the buffer as much as possible
-	cc = internal_read(buf_.emptybytes(), timeout);
-	
-	if (cc == 0)
-	{
-	    break; // eof
-	}
-	else if (cc < 0)
-	{
-	    return cc;
-	}
+        // fill up the buffer (if possible)
+	int cc = internal_read(len - total, timeout);
+        if(cc <= 0)
+        {
+            logf(LOG_DEBUG, "%s: read %s", 
+                 __func__, (cc == 0) ? "eof" : strerror(errno));
+            return cc;
+        }
         
 	total += cc;
-
-        // a zero len argument means just do one read, so pretend that
-        // we asked for what we got
-        if (len == 0) {
-            len = cc;
-            break;
-        }
     }
-    
+
     *buf = buf_.start();
 
     // don't consume more than the user asked for
-    cc = MIN(len, buf_.fullbytes());
+    buf_.consume(len);
+    
+    return len;
+}
+
+int 
+BufferedInput::read_some_bytes(char** buf, int timeout)
+{
+    int cc;
+
+    // if there's nothing in the buffer, then issue one call to read,
+    // trying to fill up as much as possible
+    if (buf_.fullbytes() == 0) {
+        ASSERT(buf_.start() == buf_.end());
+        
+        cc = internal_read(buf_.tailbytes(), timeout);
+
+        if (cc <= 0) {
+            logf(LOG_ERR, "%s: read %s", 
+                 __func__, (cc == 0) ? "eof" : strerror(errno));
+            return cc;
+        }
+
+        ASSERT(buf_.fullbytes() > 0);
+    }
+
+    *buf = buf_.start();
+    
+    cc = buf_.fullbytes();
     buf_.consume(cc);
     
+    logf(LOG_DEBUG, "read_some_bytes ret %d (timeout %d)", cc, timeout);
+
     return cc;
 }
 
 char
 BufferedInput::getc(int timeout)
 {
-    if(buf_.fullbytes() == 0) 
+    if (buf_.fullbytes() == 0) 
     {
-        int cc = internal_read(0, timeout);
-
-        if(cc <= 0) 
-        {
+        int cc = internal_read(buf_.tailbytes(), timeout);
+        
+        if (cc <= 0) {
             logf(LOG_ERR, "%s: read %s", 
                  __func__, (cc == 0) ? "eof" : strerror(errno));
             
             return 0;
         }
+
+        ASSERT(buf_.fullbytes() > 0);
     }
 
     char ret = *buf_.start();
@@ -122,50 +139,42 @@ BufferedInput::eof()
 int
 BufferedInput::internal_read(size_t len, int timeout_ms)
 {
-    size_t toread;
+    ASSERT(len > 0);
+    ASSERT(len > buf_.fullbytes());
 
-    if (len == 0) 
+    // make sure there's at least len space in buf's tailbytes
+    buf_.reserve(len);
+
+    // but always try to fill up as much as possible into tailbytes
+    int cc = client_->timeout_read(buf_.end(), buf_.tailbytes(), timeout_ms);
+    if (cc == IOTIMEOUT)
     {
-        toread = (buf_.emptybytes() == 0) ? BufferedInput::READ_AHEAD : 
-                 buf_.emptybytes();
-    } 
-    else 
-    {
-        toread = len - buf_.fullbytes();
+        logf(LOG_DEBUG, "read %d (timeout %d) timed out",
+             len, timeout_ms);
+        return cc;
     }
-    buf_.reserve(toread);
-    
-    int cc = 0;
-    if (toread > 0)
+    else if (cc == IOERROR)
     {
-        cc = client_->read(buf_.end(), toread); // XXX/bowei timeout?
-        if(cc < 0)
-        {
-            logf(LOG_ERR, "read %d (timeout %d) error in read: %s",
-                 len, timeout_ms, strerror(errno));
+        logf(LOG_ERR, "read %d (timeout %d) error in read: %s",
+             len, timeout_ms, strerror(errno));
         
-            return -1;
-        }
-        else if(cc == 0) 
-        {
-            seen_eof_ = true;
-        }
+        return cc;
     }
-
+    else if (cc == 0) 
+    {
+        logf(LOG_DEBUG, "read %d (timeout %d) eof",
+             len, timeout_ms);
+        seen_eof_ = true;
+        return cc;
+    }
+    
     buf_.fill(cc);
 
     int ret;
-    if (len == 0)
-    {
-	ret = buf_.fullbytes();
-    }
-    else
-    {
-	ret = (buf_.fullbytes() < len) ? buf_.fullbytes() : len;
-    }
+    ret = MIN(buf_.fullbytes(), len);
     
-    logf(LOG_DEBUG, "read %d (timeout %d): toread=%d cc=%d ret %d",
-         len, timeout_ms, toread, cc, ret);
+    logf(LOG_DEBUG, "read %d (timeout %d): cc=%d ret %d",
+         len, timeout_ms, cc, ret);
 
     return ret;
 }
@@ -185,10 +194,10 @@ BufferedInput::find_nl(const char* nl)
         bytes_left -= new_offset - offset;
         offset = new_offset;
 
-        if(offset == 0 || static_cast<int>(bytes_left) < nl_len)
+        if (offset == 0 || static_cast<int>(bytes_left) < nl_len)
             return -1;
         
-        if(memcmp(offset, nl, nl_len) == 0)
+        if (memcmp(offset, nl, nl_len) == 0)
         {
             return offset - buf_.start();
         }
@@ -233,7 +242,7 @@ BufferedOutput::clear_buf()
 int
 BufferedOutput::vformat_buf(const char* fmt, va_list ap)
 {
-    int nfree = buf_.emptybytes();
+    int nfree = buf_.tailbytes();
     int len = vsnprintf(buf_.end(), nfree, fmt, ap);
 
     if (len >= nfree) {
