@@ -63,11 +63,12 @@ Thread::start()
         signals_inited_ = true;
     }
     
-    // XXX implement create_detached
-    ASSERT(! (flags_ & CREATE_DETACHED));
-    
     if (pthread_create(&pthread_, 0, Thread::thread_run, this) != 0) {
         PANIC("error in pthread_create");
+    }
+
+    if (flags_ & CREATE_DETACHED) {
+	pthread_detach(pthread_);
     }
 }
 
