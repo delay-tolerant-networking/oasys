@@ -45,22 +45,22 @@ namespace oasys {
 /**
  * This is a class which caches a reusable scratch buffer, obviating
  * the need to constantly malloc, the free a buffer in order to
- * serialize into/out of.
+ * serialize into/out of. Warning: multi-threaded use.
  */
 class ScratchBuffer {
 public:
     ScratchBuffer(size_t size = 0);
     ~ScratchBuffer();
     
-    char*  buf(size_t size);
-    char*  buf()  { return buf_; }
+    u_char* buf(size_t size);
+    u_char* buf() { return buf_; }
     size_t size() { return size_; }
     
 private:
     static const int INIT_SIZE = 256;
     
-    char*  buf_;
-    size_t size_;
+    u_char* buf_;
+    size_t  size_;
 };
 
 }; // namespace oasys

@@ -46,16 +46,16 @@ ScratchBuffer::ScratchBuffer(size_t size)
     if(size_ == 0)
         size_ = INIT_SIZE;
 
-    buf_ = static_cast<char*>(malloc(size_));
+    buf_ = static_cast<u_char*>(malloc(size_));
 }
 
 
-char*
+u_char*
 ScratchBuffer::buf(size_t size)
 {
     if(size > size_)
     {
-        buf_ = static_cast<char*>(realloc(buf_, size));        
+        buf_ = static_cast<u_char*>(realloc(buf_, size));        
     }
 
     return buf_;
