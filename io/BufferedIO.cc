@@ -114,7 +114,7 @@ BufferedInput::read_some_bytes(char** buf, int timeout)
 }
 
 char
-BufferedInput::getc(int timeout)
+BufferedInput::get_char(int timeout)
 {
     if (buf_.fullbytes() == 0) 
     {

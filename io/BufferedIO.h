@@ -47,7 +47,7 @@ public:
      * Read in a single character from the protocol stream. Returns 0
      * if at the end of the stream or error.
      */
-    char getc(int timeout = -1);
+    char get_char(int timeout = -1);
 
     /*!
      * Returns true if at the end of file.
