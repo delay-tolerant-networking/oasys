@@ -60,7 +60,9 @@ UTIL_SRCS :=					\
 	util/StringBuffer.cc			\
 	util/URL.cc				\
 
-SRCS := $(DEBUG_SRCS) 				\
+SRCS := \
+	version.c				\
+	$(DEBUG_SRCS) 				\
 	$(IO_SRCS) 				\
 	$(MEMORY_SRCS)                          \
 	$(SERIALIZE_SRCS)			\
