@@ -134,7 +134,6 @@ public:
     int printf(const char* format, ...) PRINTFLIKE(2, 3);
 
 private:
-    Logger       log_;
     IOClient*    client_;
     StreamBuffer buf_;
 
