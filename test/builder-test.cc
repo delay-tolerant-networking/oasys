@@ -46,7 +46,9 @@ struct TestC {};
 
 Builder<TestC>* Builder<TestC>::instance_;
 
-struct Foo : public SerializableObject {
+struct Obj : public SerializableObject {};
+
+struct Foo : public Obj {
     Foo(Builder<TestC>* b) {}
     void serialize(SerializeAction* a) {
         a->process("int", &i_);
@@ -55,7 +57,7 @@ struct Foo : public SerializableObject {
     int i_;
 };
 
-struct Bar : public SerializableObject {
+struct Bar : public Obj {
     Bar(Builder<TestC>* b) {}
     void serialize(SerializeAction* a) {
         a->process("int", &i_);
@@ -64,8 +66,9 @@ struct Bar : public SerializableObject {
     int i_;
 };
 
-BUILDER_CLASS(Foo, TestC, 1);
-BUILDER_CLASS(Bar, TestC, 2);
+BUILDER_CLASS(TestC, Foo, 1);
+BUILDER_CLASS(TestC, Bar, 2);
+BUILDER_TYPECODE_AGGREGATE(TestC, Obj, 1, 2);
 
 DECLARE_TEST(Builder1) {
     u_char buf[4];
@@ -75,7 +78,7 @@ DECLARE_TEST(Builder1) {
 
     Foo* foo;
     CHECK(Builder<TestC>::instance()->
-          new_object(BuilderType2Code<TestC, Foo>::TYPECODE, 
+          new_object(BuilderCode<TestC, Foo>::TYPECODE, 
                      &foo, buf, 4, Serialize::CONTEXT_LOCAL) == 0);
     
     CHECK(foo->i_ == 99);
@@ -92,7 +95,7 @@ DECLARE_TEST(Builder2) {
 
     Bar* bar;
     CHECK(Builder<TestC>::instance()->
-          new_object(BuilderType2Code<TestC, Bar>::TYPECODE, 
+          new_object(BuilderCode<TestC, Bar>::TYPECODE, 
                      &bar, buf, 4, Serialize::CONTEXT_LOCAL) == 0);
     
     CHECK(bar->i_ == 55);
@@ -108,7 +111,7 @@ DECLARE_TEST(BuilderTypeCode) {
 
     Bar* bar;
     CHECK(Builder<TestC>::instance()->
-          new_object(BuilderType2Code<TestC, Foo>::TYPECODE, 
+          new_object(BuilderCode<TestC, Foo>::TYPECODE, 
                      &bar, buf, 4, Serialize::CONTEXT_LOCAL) == BuilderErr::TYPECODE);
     
     return 0;
@@ -122,9 +125,26 @@ DECLARE_TEST(BuilderCorrupt) {
 
     Bar* bar;
     CHECK(Builder<TestC>::instance()->
-          new_object(BuilderType2Code<TestC, Bar>::TYPECODE, 
+          new_object(BuilderCode<TestC, Bar>::TYPECODE, 
                      &bar, buf, 2, Serialize::CONTEXT_LOCAL) == BuilderErr::CORRUPT);
     
+    return 0;
+}
+
+DECLARE_TEST(BuilderAgg) {
+    u_char buf[4];
+    Marshal m(Serialize::CONTEXT_LOCAL, buf, 4);
+    IntShim i(99);
+    m.action(&i);
+
+    Obj* obj = 0;
+    CHECK(Builder<TestC>::instance()->
+          new_object(BuilderCode<TestC, Foo>::TYPECODE, 
+                     &obj, buf, 4, Serialize::CONTEXT_LOCAL) == 0);
+    
+    CHECK(obj != 0);
+    CHECK(static_cast<Foo*>(obj)->i_ == 99);
+
     return 0;
 }
 
@@ -133,6 +153,7 @@ DECLARE_TESTER(BuilderTest) {
     ADD_TEST(Builder2);
     ADD_TEST(BuilderTypeCode);
     ADD_TEST(BuilderCorrupt);
+    ADD_TEST(BuilderAgg);
 }
 
 DECLARE_TEST_FILE(BuilderTest, "builder test");

@@ -56,9 +56,57 @@ enum {
 };
 };
 
-template<typename _TypeCollection, typename _Type>
-class BuilderType2Code;
+/**
+ * Conversion class from C++ types to their associated type codes. See
+ * BUILDER_TYPECODE macro below for a instantiation (specialization)
+ * of this template to define the types.
+ */
+template<typename _TypeCollection, typename _Type> class BuilderCode;
 
+/**
+ * This templated builder accomplishes severals things:
+ *
+ * - Enables different collections of type codes which can have the
+ *   same numeric value, e.g. the same type codes can be reused in
+ *   different projects that are then linked together.
+ * - Type checked object creation from raw bits.
+ * - Abstract aggregate types, e.g. Object* deserialized from concrete
+ *   instantiations A, B, C who inherited from Object.
+ * 
+ * Example of use:
+ * @code
+ * // Type declaration for the Dtn collection of type codes
+ * struct DtnC {};
+ * 
+ * // Instantiate a builder for this collection (this goes in the .cc file)
+ * Builder<DtnC>* Builder<DtnC>::instance_;
+ * 
+ * // An aggregate class Obj and concrete classes Foo, Bar
+ * struct Obj : public SerializableObject {};
+ * struct Foo : public Obj {
+ *     Foo(Builder<DtnC>* b) {}
+ *     void serialize(SerializeAction* a) {}
+ * };
+ * struct Bar : public Obj {
+ *     Bar(Builder<DtnC>* b) {}
+ *     void serialize(SerializeAction* a) {}
+ * };
+ * 
+ * // in the .h file
+ * BUILDER_TYPECODE(DtnC, Foo, 1);
+ * BUILDER_TYPECODE(DtnC, Foo, 1);
+ * BUILDER_TYPECODE_AGGREGATE(DtnC, Obj, 1, 2);
+ * 
+ * // in the .cc file
+ * BUILDER_CLASS(DtnC, Foo, 1);
+ * BUILDER_CLASS(DtnC, Bar, 2);
+ * 
+ * // example of use
+ * Builder<DtnC>* b = Builder<DtnC>::instance();
+ * int err = b->new_object(BuilderCode<TestC, Foo>::TYPECODE, 
+ *                         &obj, buf, len, Serialize::CONTEXT_LOCAL)
+ * @endcode
+ */
 template<typename _TypeCollection>
 class Builder : public Logger {
 public:    
@@ -96,8 +144,8 @@ public:
                    int length, Serialize::context_t context)
     {
         // Check that the typecodes are within bounds
-        if(BuilderType2Code<_TypeCollection, _Type>::TYPECODE_LOW  > typecode ||
-            BuilderType2Code<_TypeCollection, _Type>::TYPECODE_HIGH < typecode)
+        if(BuilderCode<_TypeCollection, _Type>::TYPECODE_LOW  > typecode ||
+            BuilderCode<_TypeCollection, _Type>::TYPECODE_HIGH < typecode)
         {
             return BuilderErr::TYPECODE;
         }
@@ -135,15 +183,15 @@ public:
 };
 
 /**
- * Instantiate a template with the specific  class and create a
- * static instance of this to register the class. Use the
- * DECLARE_BUILDER macros below.
+ * Instantiate a template with the specific class and create a static
+ * instance of this to register the class. Use the BUILDER_CLASS macro
+ * below.
  */
-template<typename _Class, typename _TypeCollection>
+template<typename _TypeCollection, typename _Class>
 class BuilderDispatch : public BuilderHelper {
 public:
     /** Register upon creation. */
-    BuilderDispatch<_Class, _TypeCollection>
+    BuilderDispatch<_TypeCollection, _Class>
     (typename Builder<_TypeCollection>::TypeCode_t typecode) 
     {
         Builder<_TypeCollection>::instance()->reg(typecode, this);
@@ -155,8 +203,8 @@ public:
      * serializable object via a builder.
      *
      * @return The reason for the void* is to be able to virtualize
-     * this class, yet not have the problem of potentially slicing the
-     * object.
+     * this class yet not have the problem of potentially slicing the
+     * object via casting.
      */
     void* new_object() {
         return static_cast<void*>
@@ -165,16 +213,18 @@ public:
 };
 
 /**
- * Utility macro for encapsulation.
+ * Macro to use to define a class to be used by the builder.
  */
-#define BUILDER_CLASS(_class, _collection, _typecode)                           \
-    BuilderDispatch<_class, _collection> _class ## Builder(_typecode);   \
-    BUILDER_TYPECODE(_collection, _class, _typecode)
+#define BUILDER_CLASS(_collection, _class, _typecode)                   \
+    BuilderDispatch<_collection, _class> _class ## Builder(_typecode);  \
 
+/**
+ * Define the builder C++ type -> typecode converter
+ */
 #define BUILDER_TYPECODE(_Collection, _Class, _code)    \
 namespace oasys {                                       \
     template<>                                          \
-    struct BuilderType2Code<_Collection, _Class> {      \
+    struct BuilderCode<_Collection, _Class> {           \
         enum {                                          \
             TYPECODE_LOW  = _code,                      \
             TYPECODE_HIGH = _code,                      \
@@ -185,10 +235,20 @@ namespace oasys {                                       \
     };                                                  \
 }
 
+/**
+ * Define an aggregate supertype, e.g. if a range of type codes {1, 2,
+ * 3} are assigned to classes A, B, C and they have a common abstract
+ * serializable supertype S, then to unserialize an S object (which
+ * could potentially be of concrete types A, B, C), you need to use
+ * this macro in the type codes header:
+ * @code
+ * BUILDER_TYPECODE_AGGREGATE(Collection, S, 1, 3);
+ * @endcode
+ */
 #define BUILDER_TYPECODE_AGGREGATE(_Collection, _Class, _low, _high)    \
 namespace oasys {                                                       \
     template<>                                                          \
-    struct BuilderType2Code<_Collection, _Class> {                      \
+    struct BuilderCode<_Collection, _Class> {                           \
         enum {                                                          \
             TYPECODE_LOW  = _low,                                       \
             TYPECODE_HIGH = _high,                                      \
