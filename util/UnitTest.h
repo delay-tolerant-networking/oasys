@@ -5,7 +5,7 @@
 #include <vector>
 #include <stdio.h>
 
-#include "debug/Log.h"
+#include "../debug/Log.h"
 
 namespace oasys {
 
@@ -88,7 +88,7 @@ public:
     }
     virtual ~UnitTester() {}
 
-    int run_tests(int argc, char* argv[]) {
+    int run_tests(int argc, const char* argv[]) {
         bool in_tcl = false;
         
         if (argc >= 2 && (strcmp(argv[1], "-test") == 0)) {
@@ -193,7 +193,7 @@ private:
     int _name ## UnitTest::run()
 
 #define DECLARE_TEST_FILE(_UnitTesterClass, testname)   \
-int main(int argc, char* argv[]) {                      \
+int main(int argc, const char* argv[]) {                \
     _UnitTesterClass test(testname);                    \
                                                         \
     return test.run_tests(argc, argv);                  \
@@ -223,6 +223,23 @@ void _name::add_tests()                                         \
                     (int)(a), (int)(b), __FILE__, __LINE__);                    \
         return UNIT_TEST_FAILED;                                                \
     } } while(0)
+
+#define CHECK_EQUALSTR(a, b)                                                    \
+    do { if (strcmp((a), (b)) != 0) {                                           \
+        oasys::logf("/test", oasys::LOG_CRIT,                                   \
+                    "CHECK FAILED: '" #a "' (%s) != '" #b "' (%s) at %s:%d",    \
+                    (a), (b), __FILE__, __LINE__);                              \
+        return UNIT_TEST_FAILED;                                                \
+    } } while(0)
+
+#define CHECK_EQUALSTRN(a, b, len)                                              \
+    do { if (strncmp((a), (b), (len)) != 0) {                                   \
+        oasys::logf("/test", oasys::LOG_CRIT,                                   \
+                    "CHECK FAILED: '" #a "' (%s) != '" #b "' (%s) at %s:%d",    \
+                    (a), (b), __FILE__, __LINE__);                              \
+        return UNIT_TEST_FAILED;                                                \
+    } } while(0)
+
 
 /// @}
 
