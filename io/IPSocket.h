@@ -1,4 +1,3 @@
-// XXX/demmer add copyright
 #ifndef _IP_SOCKET_H_
 #define _IP_SOCKET_H_
 
@@ -20,7 +19,7 @@
  * for TCPClient, TCPServer, and UDPSocket.
  */
 class IPSocket : public Logger {
-  public:
+public:
     // Constructor / destructor
     IPSocket(const char* logbase, int socktype);
     IPSocket(int fd, in_addr_t remote_addr, u_int16_t remote_port,
@@ -28,18 +27,40 @@ class IPSocket : public Logger {
     virtual ~IPSocket();
 
     /// Set the socket parameters
-    void configure();
+        void configure();
 
     //@{
     /// System call wrapper
     virtual int bind(in_addr_t local_addr, u_int16_t local_port);
     virtual int close();
     virtual int shutdown(int how);
+    
+    int send(int *fd, char* packet, size_t packet_len);
+    int sendmsg(int *fd, char* packet, size_t packet_len);
+    int sendto(int *fd, in_addr_t *addr, u_int16_t *port, 
+               char* packet, size_t packet_len); 
+    int recv(int *fd, char** pt_payload, size_t* payload_len);
+    int recvmsg(int *fd, char** pt_payload, size_t* payload_len);
+    int recvfrom(int *fd, in_addr_t *addr, u_int16_t *port, 
+                 char** pt_payload, size_t* payload_len);      
     //@}
-
+    
+    /**
+     * @brief Try to receive messages on binded port, but don't 
+     * block for more than the timeout milliseconds.
+     *
+     * @return 0 on timeout, 1 on success, -1 on error
+     */
+    int timeout_recvfrom(int *fd, in_addr_t *addr, u_int16_t *port, char** pt_payload,
+                         size_t* payload_len, int timeout_ms);
+    int timeout_recv(int *fd, char** pt_payload, size_t* payload_len, int timeout_ms);
+    int timeout_recvmsg(int *fd, char** pt_payload, size_t* payload_len, int timeout_ms);
+    
+    
+    
     /// Wrapper around poll() for this socket's fd
     virtual inline int poll(int events, int* revents, int timeout_ms);
-
+    
     /// Socket State values
     enum state_t {
         INIT, 		/* initial state */
@@ -51,10 +72,10 @@ class IPSocket : public Logger {
         CLOSED,		/* shutdown called for both read and write */
         FINI		/* close() called on the socket */
     };
-
+        
     /// Return the current state
-    state_t state() { return state_; }
-
+        state_t state() { return state_; }
+        
     /**
      * Socket parameters are public fields that should be set after
      * creating the socket but before the socket is used.
@@ -67,42 +88,42 @@ class IPSocket : public Logger {
             send_bufsize_ (0)
         {
         }
-            
+        
         u_int32_t reuseaddr_:1;		// default: on
         u_int32_t tcp_nodelay_:1;	// default: off
         u_int32_t __unused:29;
-
+        
         int recv_bufsize_;		// default: system setting
         int send_bufsize_;		// default: system setting
     } params_;
-
+    
     /// The socket file descriptor
     inline int fd();
     
     /// The local address that the socket is bound to
     inline in_addr_t local_addr();
-
+                
     /// The local port that the socket is bound to
     inline u_int16_t local_port();
-    
+                          
     /// The remote address that the socket is connected to
     inline in_addr_t remote_addr();
-
+                              
     /// The remote port that the socket is connected to
     inline u_int16_t remote_port();
-
+                                  
     /// Set the local address that the socket is bound to
     inline void set_local_addr(in_addr_t addr);
-
+                                      
     /// Set the local port that the socket is bound to
     inline void set_local_port(u_int16_t port);
-    
+                                          
     /// Set the remote address that the socket is connected to
     inline void set_remote_addr(in_addr_t addr);
-
+                                              
     /// Set the remote port that the socket is connected to
     inline void set_remote_port(u_int16_t port);
-
+                                                  
     /**
      * Hook to abort a test if any unexpected errors occur within the
      * socket. Implemented by trapping all the logf calls and aborting
@@ -111,19 +132,21 @@ class IPSocket : public Logger {
     static void abort_on_error() {
         abort_on_error_ = 1;
     }
-
+    
     /// Wrapper around the logging function needed for abort_on_error
     inline int logf(log_level_t level, const char *fmt, ...) PRINTFLIKE(3, 4);
-
+     
     /// logfd can be set to false to disable the appending of the
     /// socket file descriptor
     void set_logfd(bool logfd) { logfd_ = logfd; }
-
-  protected:
+     
+    static ssize_t max_udp_packet_size_;
+                                                          
+protected:
     void init_socket();
-
-    static int abort_on_error_;
-
+    
+    static int abort_on_error_;    
+    
     int fd_;
     int socktype_;
     state_t state_;
@@ -133,10 +156,10 @@ class IPSocket : public Logger {
     u_int16_t local_port_;
     in_addr_t remote_addr_;
     u_int16_t remote_port_;
-
+    
     void set_state(state_t state);
     const char* statetoa(state_t state);
-
+    
     inline void get_local();
     inline void get_remote();
     
