@@ -1,7 +1,8 @@
-
-#include "MarshalSerialize.h"
+#include "debug/Debug.h"
 #include "debug/Log.h"
 #include "util/StringUtils.h"
+
+#include "MarshalSerialize.h"
 
 /******************************************************************************
  *
@@ -9,8 +10,10 @@
  *
  *****************************************************************************/
 BufferedSerializeAction::BufferedSerializeAction(action_t action,
+                                                 context_t context,
                                                  u_char* buf, size_t length)
-    : SerializeAction(action), buf_(buf), length_(length), offset_(0)
+    : SerializeAction(action, context),
+      buf_(buf), length_(length), offset_(0)
 {
 }
 
@@ -41,8 +44,8 @@ BufferedSerializeAction::next_slice(size_t length)
  * Marshal
  *
  *****************************************************************************/
-Marshal::Marshal(u_char* buf, size_t length)
-    : BufferedSerializeAction(MARSHAL, buf, length)
+Marshal::Marshal(context_t context, u_char* buf, size_t length)
+    : BufferedSerializeAction(MARSHAL, context, buf, length)
 {
 }
 
@@ -150,8 +153,8 @@ Marshal::process(const char* name, std::string* s)
  * Unmarshal
  *
  *****************************************************************************/
-Unmarshal::Unmarshal(const u_char* buf, size_t length)
-    : BufferedSerializeAction(UNMARSHAL, (u_char*)(buf), length)
+Unmarshal::Unmarshal(context_t context, const u_char* buf, size_t length)
+    : BufferedSerializeAction(UNMARSHAL, context, (u_char*)(buf), length)
 {
 }
 

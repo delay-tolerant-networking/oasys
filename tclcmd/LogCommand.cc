@@ -1,5 +1,7 @@
 
 #include "LogCommand.h"
+
+#include "memory/Memory.h"
 #include "debug/Log.h"
 
 LogCommand::LogCommand()

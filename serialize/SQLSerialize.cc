@@ -1,5 +1,7 @@
 #include "SQLSerialize.h"
 #include "SQLImplementation.h"
+
+#include "debug/Debug.h"
 #include "debug/Log.h"
 #include "util/StringUtils.h"
 
@@ -15,7 +17,7 @@
 SQLQuery::SQLQuery(action_t type, const char* table_name,
                    SQLImplementation* impl, const char* initial_query)
     
-    : SerializeAction(type),
+    : SerializeAction(type, CONTEXT_LOCAL),
       table_name_(table_name),
       sql_impl_(impl),
       query_(256, initial_query)
@@ -332,7 +334,7 @@ SQLTableFormat::process(const char* name, u_char** bp, size_t* lenp, bool alloc_
  */
 
 SQLExtract::SQLExtract(SQLImplementation* impl)
-    : SerializeAction(UNMARSHAL)
+    : SerializeAction(UNMARSHAL, CONTEXT_LOCAL)
 {
     field_ = 0;
     sql_impl_ = impl;

@@ -1,5 +1,7 @@
 
 #include "HelpCommand.h"
+
+#include "memory/Memory.h"
 #include "util/StringBuffer.h"
 
 HelpCommand::HelpCommand()

@@ -2,8 +2,9 @@
 #ifndef _DEBUG_H_
 #define _DEBUG_H_
 
-#include "Log.h"
 #include <stdlib.h>
+
+#include "Log.h"
 
 #define ASSERT(x)  			                                      \
     do { if (! (x)) {                                                         \
@@ -37,5 +38,7 @@ do {                                            \
     char _what[ (_x) ? 0 : -1 ];                \
     (void)_what;				\
 } while(0)
+
+#include "../memory/Memory.h"
 
 #endif /* _DEBUG_H_ */
