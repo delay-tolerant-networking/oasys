@@ -156,6 +156,11 @@ public:
      * Set the given thread flag.
      */
     void set_flag(thread_flags_t flag) { flags_ |= flag; }
+
+    /**
+     * Clear the given thread flag.
+     */
+    void clear_flag(thread_flags_t flag) { flags_ &= ~flag; }
     
     /**
      * Return a pointer to the Thread object's id. Note that this may
