@@ -61,13 +61,20 @@ public:
 
     /**
      * Since the Marshal operation doesn't actually modify the
-     * SerializableObject, define a variant of process() that allows a
-     * const SerializableObject* as the object parameter.
+     * SerializableObject, define a variant of action() and process()
+     * that allows a const SerializableObject* as the object
+     * parameter.
      */
     int action(const SerializableObject* const_object)
     {
         SerializableObject* object = (SerializableObject*)const_object;
         return SerializeAction::action(object);
+    }
+
+    void process(const char* name, SerializableObject* const_object)
+    {
+        SerializableObject* object = (SerializableObject*)const_object;
+        return SerializeAction::process(name, object);
     }
 
     // Virtual functions inherited from SerializeAction
@@ -127,6 +134,12 @@ public:
         return action(object);
     }
     
+    void process(const char* name, SerializableObject* const_object)
+    {
+        SerializableObject* object = (SerializableObject*)const_object;
+        return SerializeAction::process(name, object);
+    }
+
     /** @return Measured size */
     size_t size() { return size_; }
     
