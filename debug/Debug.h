@@ -80,11 +80,11 @@ template <int x> struct static_assert_test{};
 template <bool>  struct STATIC_ASSERTION_FAILURE;
 template <>      struct STATIC_ASSERTION_FAILURE<true>{};
 
-#define STATIC_ASSERT(_x, _what, _line)            \
+#define STATIC_ASSERT(_x, _what)                   \
     typedef static_assert_test                     \
     <                                              \
-	sizeof(STATIC_ASSERTION_FAILURE<(bool)_x>) \
-    > static_assert_typedef_ ## _what ## _line; 
+	sizeof(STATIC_ASSERTION_FAILURE<(bool)(_x)>) \
+    > static_assert_typedef_ ## _what;
 /** @} */
 
 #include "../memory/Memory.h"
