@@ -8,6 +8,8 @@
 
 COMPAT_SRCS :=					\
 	compat/fpclassify.c			\
+	compat/getopt.c				\
+	compat/getopt_long.c			\
 
 DEBUG_SRCS :=					\
 	debug/gdtoa-dmisc.c			\
@@ -99,12 +101,7 @@ doxygen:
 # And a rule to make sure that configure has been run recently enough.
 #
 .PHONY: checkconfigure
-checkconfigure: configure config.h Rules.make
-
-configure: configure.ac
-	@[ ! -z `echo "$(MAKECMDGOALS)" | grep clean` ] || \
-	(echo "$@ is out of date, need to rerun build-configure.sh" && \
-	exit 1)
+checkconfigure: config.h Rules.make
 
 Rules.make: Rules.make.in configure
 	@[ ! -z `echo "$(MAKECMDGOALS)" | grep clean` ] || \
