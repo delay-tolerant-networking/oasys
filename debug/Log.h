@@ -136,6 +136,7 @@ public:
      */
     static void init(int logfd,
                      log_level_t defaultlvl = LOG_DEFAULT_THRESHOLD,
+                     const char *prefix = NULL,
                      const char *debug_path = LOG_DEFAULT_DBGFILE);
 
     /**
@@ -174,7 +175,8 @@ protected:
      * Initialize logging, should be called exactly once from the
      * static Log::init or LogSim::init.
      */
-    void do_init(int logfd, log_level_t defaultlvl, const char* debug_path);
+    void do_init(int logfd, log_level_t defaultlvl,
+                 const char* prefix, const char* debug_path);
 
     /**
      * Singleton instance of the Logging system
@@ -234,6 +236,7 @@ private:
     RuleList* rule_list_;	///< List of logging rules
     SpinLock* lock_;		///< Lock for logf and re-parsing
     std::string debug_path_;    ///< Path to the debug file
+    std::string prefix_;	///< String to prefix log messages
     log_level_t default_threshold_; ///< The default threshold for log messages
 };
 

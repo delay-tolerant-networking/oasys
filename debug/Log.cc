@@ -49,20 +49,24 @@ Log::Log()
 }
 
 void
-Log::init(int logfd, log_level_t defaultlvl, const char* debug_path)
+Log::init(int logfd, log_level_t defaultlvl,
+          const char* prefix, const char* debug_path)
 {
     Log* log = new Log();
-    log->do_init(logfd, defaultlvl, debug_path);
+    log->do_init(logfd, defaultlvl, prefix, debug_path);
 }
 
 void
-Log::do_init(int logfd, log_level_t defaultlvl, const char *debug_path)
+Log::do_init(int logfd, log_level_t defaultlvl,
+             const char* prefix, const char *debug_path)
 {
     ASSERT(instance_ == NULL);
     ASSERT(!inited_);
 
     instance_ = this;
     logfd_ = logfd;
+    if (prefix)
+        prefix_.assign(prefix);
 
     ASSERT(lock_);
     ScopeLock lock(lock_);
@@ -355,8 +359,9 @@ Log::vlogf(const char *path, log_level_t level, const char *fmt, va_list ap)
     // tack on a timestamp
     struct timeval tv;
     getlogtime(&tv);
-    len = snprintf(ptr, buflen, "[%ld.%06ld %s %s] ",
-                   tv.tv_sec, tv.tv_usec, path, level2str(level));
+    len = snprintf(ptr, buflen, "[%s%ld.%06ld %s %s] ",
+                   prefix_.c_str(), tv.tv_sec, tv.tv_usec,
+                   path, level2str(level));
 
     buflen -= len;
     ptr += len;
