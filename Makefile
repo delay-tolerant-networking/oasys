@@ -44,6 +44,7 @@ TCLCMD_SRCS :=					\
 THREAD_SRCS :=					\
 	thread/Mutex.cc				\
 	thread/Notifier.cc			\
+	thread/SpinLock.cc			\
 	thread/Thread.cc			\
 	thread/Timer.cc				\
 
