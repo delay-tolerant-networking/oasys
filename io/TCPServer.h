@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #ifndef _TCP_SERVER_H_
 #define _TCP_SERVER_H_
 

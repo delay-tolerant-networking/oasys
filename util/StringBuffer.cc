@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 
 #include "StringBuffer.h"
 #include <stdlib.h>

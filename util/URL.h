@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #ifndef _URL_H_
 #define _URL_H_
 

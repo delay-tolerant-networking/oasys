@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 /* MD5.H - header file for MD5C.C
  */
 

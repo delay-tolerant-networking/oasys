@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 
 #include "NetUtils.h"
 #include "UDPServer.h"

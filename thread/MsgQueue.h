@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #ifndef _MSG_QUEUE_H_
 #define _MSG_QUEUE_H_
 

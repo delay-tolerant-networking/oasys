@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #ifndef _STRING_UTILS_H_
 #define _STRING_UTILS_H_
 

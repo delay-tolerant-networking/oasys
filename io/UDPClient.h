@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #ifndef _UDP_CLIENT_H_
 #define _UDP_CLIENT_H_
 

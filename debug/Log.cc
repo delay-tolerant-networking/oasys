@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #include <ctype.h>
 #include <stdlib.h>
 #include <sys/time.h>

@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 
 #include "Thread.h"
 #include "debug/Debug.h"

@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #include <unistd.h>
 #include <errno.h>
 

@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #ifndef _ATOMIC_X86_H_
 #define _ATOMIC_X86_H_
 

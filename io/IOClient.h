@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #ifndef __IOCLIENT_H__
 #define __IOCLIENT_H__
 

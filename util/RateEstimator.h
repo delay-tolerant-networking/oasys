@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #ifndef _RATE_ESTIMATOR_H_
 #define _RATE_ESTIMATOR_H_
 

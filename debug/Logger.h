@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #ifndef _LOGGER_H_
 #define _LOGGER_H_
 

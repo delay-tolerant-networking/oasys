@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #ifndef _NOTIFIER_H_
 #define _NOTIFIER_H_
 

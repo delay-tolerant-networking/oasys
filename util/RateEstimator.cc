@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #include "RateEstimator.h"
 
 RateEstimator::RateEstimator(int *var, int interval, double weight)

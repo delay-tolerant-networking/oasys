@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #ifndef _IP_CLIENT_H_
 #define _IP_CLIENT_H_
 

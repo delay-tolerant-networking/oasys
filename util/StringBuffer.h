@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #ifndef _STRING_BUFFER_H_
 #define _STRING_BUFFER_H_
 

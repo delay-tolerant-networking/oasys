@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #ifndef _FORMATTER_H_
 #define _FORMATTER_H_
 

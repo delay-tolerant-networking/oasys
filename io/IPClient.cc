@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 
 #include <stdlib.h>
 #include <sys/poll.h>

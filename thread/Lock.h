@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #ifndef _LOCK_H_
 #define _LOCK_H_
 

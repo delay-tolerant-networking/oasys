@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 #ifndef tier_timer_h
 #define tier_timer_h
 

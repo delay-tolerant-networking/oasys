@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 
 #include "Formatter.h"
 #include <stdarg.h>

@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 
 #include "IPSocket.h"
 #include "NetUtils.h"

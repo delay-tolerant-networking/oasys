@@ -1,3 +1,4 @@
+// XXX/demmer add copyright
 
 #include "URL.h"
 #include "StringBuffer.h"
