@@ -102,7 +102,7 @@ public:
      * should never happen, so issue an assertion. Under pthreads,
      * however, actually call thread_yield() to give up the processor.
      */
-    static inline void spin_yield();
+    static void spin_yield();
 
     /**
      * Return a pointer to the currently running thread.
@@ -203,7 +203,7 @@ Thread::yield()
     pthread_yield();
 }
 
-void
+inline void
 Thread::spin_yield()
 {
     // XXX/bowei: 
