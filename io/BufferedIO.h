@@ -56,7 +56,7 @@ private:
      * \param timeout_ms Timeout to the read call. UNIMPLEMENTED
      * \return Bytes available, can be less than len.
      */
-    int read(size_t len = 0, int timeout_ms = -1);
+    int internal_read(size_t len = 0, int timeout_ms = -1);
 
     /*!
      * \return Index of the start of the sequence of the newline
@@ -67,7 +67,7 @@ private:
     IOClient*    client_;
     StreamBuffer buf_;
 
-    bool seen_eof;
+    bool seen_eof_;
 
     static const size_t READ_AHEAD = 256;  //! Amount to read when buffer is full
     static const size_t MAX_LINE   = 4096; //! Maximum line length

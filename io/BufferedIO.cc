@@ -1,5 +1,6 @@
 #include "errno.h"
 #include "lib/IO.h"
+#include "lib/Utils.h"
 #include "BufferedIO.h"
 
 /******************************************************************
@@ -11,7 +12,7 @@
 
 BufferedInput::BufferedInput(IOClient* client, const char* logbase)
     : Logger(logbase), client_(client), buf_(DEFAULT_BUFSIZE), 
-      seen_eof(false)
+      seen_eof_(false)
  {}
 
 BufferedInput::~BufferedInput()
@@ -23,7 +24,7 @@ BufferedInput::read_line(const char* nl, char** buf, int timeout)
     int endl;
     while((endl = find_nl(nl)) == -1)
     {
-        int cc = read(0, timeout);
+        int cc = internal_read(0, timeout);
         
 	logf(LOG_DEBUG, "readline: cc = %d", cc);
         if(cc <= 0)
@@ -45,28 +46,33 @@ BufferedInput::read_line(const char* nl, char** buf, int timeout)
 int 
 BufferedInput::read_bytes(size_t len, char** buf, int timeout)
 {
-    int total = 0;
+    int cc, total = 0;
+
+    logf(LOG_DEBUG, "read_bytes %d (timeout %d)", len, timeout);
     
-    while(buf_.fullbytes() < len)
+    while (buf_.fullbytes() < len)
     {
-	int cc = read(len - buf_.fullbytes(), timeout);
+        // fill the buffer as much as possible
+	cc = internal_read(buf_.emptybytes(), timeout);
 	
-	if(cc == 0)
+	if (cc == 0)
 	{
-	    break;
+	    break; // eof
 	}
-	else if(cc < 0)
+	else if (cc < 0)
 	{
 	    return cc;
 	}
-
+        
 	total += cc;
     }
 
     *buf = buf_.start();
-    buf_.consume(total);
-    
-    return total;
+
+    // don't consume more than the user asked for
+    cc = MIN(len, buf_.fullbytes());
+    buf_.consume(cc);
+    return cc;
 }
 
 char
@@ -74,7 +80,7 @@ BufferedInput::getc(int timeout)
 {
     if(buf_.fullbytes() == 0) 
     {
-        int cc = read(0, timeout);
+        int cc = internal_read(0, timeout);
 
         if(cc <= 0) 
         {
@@ -94,20 +100,18 @@ BufferedInput::getc(int timeout)
 bool
 BufferedInput::eof()
 {
-    return buf_.fullbytes() == 0 && seen_eof;
+    return buf_.fullbytes() == 0 && seen_eof_;
 }
 
 int
-BufferedInput::read(size_t len, int timeout_ms)
+BufferedInput::internal_read(size_t len, int timeout_ms)
 {
     size_t toread;
 
-    logf(LOG_DEBUG, "read(%u, %d)", len, timeout_ms);
-
-    if(len == 0) 
+    if (len == 0) 
     {
         toread = (buf_.emptybytes() == 0) ? BufferedInput::READ_AHEAD : 
-            buf_.emptybytes();
+                 buf_.emptybytes();
     } 
     else 
     {
@@ -116,32 +120,38 @@ BufferedInput::read(size_t len, int timeout_ms)
     buf_.reserve(toread);
     
     int cc = 0;
-    if(toread > 0)
+    if (toread > 0)
     {
         cc = client_->read(buf_.end(), toread); // XXX/bowei timeout?
         if(cc < 0)
         {
-            logf(LOG_ERR, "fill(): error in read: %s", strerror(errno));
+            logf(LOG_ERR, "read %d (timeout %d) error in read: %s",
+                 len, timeout_ms, strerror(errno));
         
             return -1;
         }
         else if(cc == 0) 
         {
-            seen_eof = true;
+            seen_eof_ = true;
         }
     }
 
-    logf(LOG_DEBUG, "cc = %d", cc);
     buf_.fill(cc);
 
-    if(len == 0)
+    int ret;
+    if (len == 0)
     {
-	return buf_.fullbytes();
+	ret = buf_.fullbytes();
     }
     else
     {
-	return (buf_.fullbytes() < len) ? buf_.fullbytes() : len;
+	ret = (buf_.fullbytes() < len) ? buf_.fullbytes() : len;
     }
+    
+    logf(LOG_DEBUG, "read %d (timeout %d): toread=%d cc=%d ret %d",
+         len, timeout_ms, toread, cc, ret);
+
+    return ret;
 }
 
 int
