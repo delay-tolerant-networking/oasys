@@ -6,9 +6,9 @@
 #include <cstring>
 #include <sys/mman.h>
 
-#include "debug/Debug.h"
-#include "debug/Log.h"
-#include "util/jenkins_hash.h"
+#include "../debug/Debug.h"
+#include "../debug/Log.h"
+#include "../util/jenkins_hash.h"
 
 /**
  * @file Debug memory allocator that keep track of different object
@@ -37,6 +37,7 @@
 #endif 
 
 #define _BYTE             char
+#define _DBG_MEM_MAGIC      0xabcdefab
 
 #define _DBG_MEM_FRAMES     3
 #define _DBG_MEM_TABLE_EXP  10
@@ -62,8 +63,9 @@ struct dbg_mem_entry_t {
  * dbg_mem_entry_t of the type of the allocation.
  */
 struct dbg_mem_t {
+    unsigned long    magic_;
     dbg_mem_entry_t* entry_; 
-    _BYTE  block_ _ALIGNED;     ///< actual memory block
+    _BYTE            block_ _ALIGNED; ///< actual memory block
 };
 
 /**
@@ -233,6 +235,7 @@ operator new(size_t size)
     
     void* frames[_DBG_MEM_FRAMES];
     memset(b, 0, sizeof(dbg_mem_t));
+    b->magic_ = _DBG_MEM_MAGIC;
 
     // non-init allocations have frame == 0
     if(DbgMemInfo::initialized()) {
@@ -254,13 +257,15 @@ inline void
 operator delete(void *ptr)
 {
     dbg_mem_t* b = PARENT_PTR(ptr, dbg_mem_t, block_);
-    
-    log_debug("/memory", "delete a=%p, f=[%p %p %p]\n", 
-	      &b->block_, 
-	      b->entry_->frames_[0], b->entry_->frames_[1], 
-	      b->entry_->frames_[2]);
-    
-    if(b->entry_->frames_[0] != 0) {
+
+    ASSERT(b->magic_ == _DBG_MEM_MAGIC);    
+
+    if(b->entry_ != 0) {
+	log_debug("/memory", "delete a=%p, f=[%p %p %p]\n", 
+		  &b->block_, 
+		  b->entry_->frames_[0], b->entry_->frames_[1], 
+		  b->entry_->frames_[2]);
+
 	DbgMemInfo::dec(b->entry_->frames_);
     }
     
@@ -273,13 +278,14 @@ operator delete(void *ptr)
 
 #endif // NDEBUG_MEMORY
 
-// clean up namespace ////////////////////////////////////////////////////////
+// clean up namespace
 #undef _ALIGNED
 #undef _BYTE
+#undef _DBG_MEM_MAGIC
 #undef _UNKNOWN_TYPE
 #undef _EMPTY_SLOT
-#undef PARENT_PTR
 
+#undef PARENT_PTR
 #undef MATCH
 #undef MOD
 
