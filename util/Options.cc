@@ -43,14 +43,14 @@
 namespace oasys {
 
 Opt::Opt(char shortopt, const char* longopt,
-         void* valp, bool* setp, bool hasval,
+         void* valp, bool* setp, bool needval,
          const char* valdesc, const char* desc)
     
     : shortopt_(shortopt),
       longopt_(longopt),
       valp_(valp),
       setp_(setp),
-      hasval_(hasval),
+      needval_(needval),
       valdesc_(valdesc),
       desc_(desc),
       next_(0)
@@ -77,7 +77,23 @@ BoolOpt::BoolOpt(char shortopt, const char* longopt, bool* valp,
 int
 BoolOpt::set(const char* val, size_t len)
 {
-    *((bool*)valp_) = true;
+    if ((val == 0) ||
+        (strncasecmp(val, "t", len) == 0)     ||
+        (strncasecmp(val, "true", len) == 0) ||
+        (strncasecmp(val, "1", len) == 0))
+    {
+        *((bool*)valp_) = true;
+    }
+    else if ((strncasecmp(val, "f", len) == 0)     ||
+             (strncasecmp(val, "false", len) == 0) ||
+             (strncasecmp(val, "0", len) == 0))
+    {
+        *((bool*)valp_) = false;
+    }
+    else
+    {
+        return -1;
+    }
 
     if (setp_)
         *setp_ = true;

@@ -67,6 +67,32 @@ main(int argc, char *const* argv)
     ASSERT(port == 100);
     ASSERT(name.compare("mike") == 0);
     ASSERT(xyz == 10);
+
+    testfn("test=false", true);
+    ASSERT(test == false);
+    ASSERT(test_set == true);
+    
+    testfn("test=F", true);
+    ASSERT(test == false);
+    ASSERT(test_set == true);
+    
+    testfn("test=0", true);
+    ASSERT(test == false);
+    ASSERT(test_set == true);
+    
+    testfn("test=TRUE", true);
+    ASSERT(test == true);
+    ASSERT(test_set == true);
+
+    testfn("test=T", true);
+    ASSERT(test == true);
+    ASSERT(test_set == true);
+    
+    testfn("test=1", true);
+    ASSERT(test == true);
+    ASSERT(test_set == true);
+    
+    testfn("test=abc", false);
     
     testfn("", true);
     ASSERT(test == true);

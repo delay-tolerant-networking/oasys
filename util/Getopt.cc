@@ -90,14 +90,14 @@ Getopt::getopt(const char* progname, int argc, char* const argv[])
         
         if (opt->shortopt_) {
             *optstring++ = opt->shortopt_;
-            if (opt->hasval_) {
+            if (opt->needval_) {
                 *optstring++ = ':';
             }
         }
 
         if (opt->longopt_) {
             long_opts[i].name = opt->longopt_;
-            long_opts[i].has_arg = opt->hasval_;
+            long_opts[i].has_arg = opt->needval_;
         } else {
             // ignore this slot
             long_opts[i].name = "help";

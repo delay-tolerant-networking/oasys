@@ -57,7 +57,7 @@ protected:
      * Private constructor.
      */
     Opt(char shortopt, const char* longopt,
-        void* valp, bool* setp, bool hasval,
+        void* valp, bool* setp, bool needval,
         const char* valdesc, const char* desc);
     virtual ~Opt();
 
@@ -70,7 +70,7 @@ protected:
     const char* longopt_;
     void* valp_;
     bool* setp_;
-    bool hasval_;
+    bool needval_;
     const char* valdesc_;
     const char* desc_;
     Opt*  next_;

@@ -75,12 +75,8 @@ OptParser::parse_opt(const char* opt_str, size_t len)
 
         if (strncmp(opt_str, opt->longopt_, opt_len) == 0)
         {
-            if (opt->hasval_ && (val_str == NULL)) {
+            if (opt->needval_ && (val_str == NULL)) {
                 return false; // missing value
-            }
-
-            if (!opt->hasval_ && (val_str != NULL)) {
-                return false; // erroneous value
             }
 
             if (opt->set(val_str, val_len) != 0) {
