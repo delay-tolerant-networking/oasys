@@ -226,11 +226,20 @@ IO::poll(int fd, int events, int* revents, int timeout_ms, const char* log)
             logf(log, LOG_ERR, "error in poll: %s", strerror(errno));
         return -1;
     }
-
     
     if (revents)
         *revents = pollfd.revents;
-    
+
+#ifdef __APPLE__
+    // there's some strange race condition bug in the poll emulation
+    if (cc > 1) {
+        logf(log, LOG_WARN,
+             "poll: returned bogus high value %d, flooring to 1", cc);
+        cc = 1;
+    }
+#endif
+
+    ASSERT(cc == 0 || cc == 1);
     return cc; // 0 or 1
 }
 
