@@ -55,7 +55,7 @@ class SpinLock : public Lock {
 public:
 
 public:
-    SpinLock() : Lock(), lock_count_(0) {}
+    SpinLock() : Lock(), lock_count_(0), lock_waiters_(0) {}
     virtual ~SpinLock() {}
 
     /// @{
@@ -66,7 +66,14 @@ public:
     /// @}
     
 private:
-    unsigned int lock_count_; ///< count for recursive locking
+    unsigned int lock_count_;   ///< count for recursive locking
+    unsigned int lock_waiters_; ///< count of waiting threads
+
+#ifndef NDEBUG
+public:
+    static unsigned int total_spins_;	///< debugging variable
+    static unsigned int total_yields_;	///< debugging variable
+#endif
 };
 
 } // namespace oasys

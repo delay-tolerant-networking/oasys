@@ -43,6 +43,9 @@ namespace oasys {
 
 #ifndef __NO_ATOMIC__
 
+unsigned int SpinLock::total_spins_  = 0;
+unsigned int SpinLock::total_yields_ = 0;
+
 int
 SpinLock::lock()
 {
@@ -53,18 +56,25 @@ SpinLock::lock()
         lock_count_++;
         return 0;
     }
+
+    atomic_incr(&lock_waiters_);
     
     nspins = 0;
     while (atomic_cmpxchg32(&lock_holder_, 0, (unsigned int)me) != 0)
     {
         Thread::spin_yield();
+        
 #ifndef NDEBUG
+        atomic_incr(&total_spins_);
         if (++nspins > 1000000) {
             PANIC("SpinLock reached spin limit");
         }
 #endif
     }
 
+    atomic_decr(&lock_waiters_);
+
+    ASSERT(lock_holder_ == me);
     ASSERT(lock_count_ == 0);
     lock_count_ = 1;
     return 0;
@@ -78,6 +88,12 @@ SpinLock::unlock() {
     lock_count_--;
     if (lock_count_ == 0) {
         lock_holder_ = 0;
+        if (__noalias__(&lock_waiters_).value != 0) {
+#ifndef NDEBUG
+            atomic_incr(&total_yields_);
+#endif
+            Thread::spin_yield();
+        }
     }
     
     return 0;
