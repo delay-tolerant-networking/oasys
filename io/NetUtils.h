@@ -40,6 +40,7 @@
 #define _OASYS_NET_UTILS_H_
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "../compat/inttypes.h"
