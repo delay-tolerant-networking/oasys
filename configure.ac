@@ -124,14 +124,15 @@ dnl -------------------------------------------------------------------------
 AC_MSG_CHECKING([for a C compiler (trying $ac_try_cc)])
 AC_MSG_RESULT([])
 AC_PROG_CC($ac_try_cc)
-
 AC_MSG_CHECKING([for a C++ compiler (trying $ac_try_cxx)])
 AC_MSG_RESULT([])
 AC_PROG_CXX($ac_try_cxx)
 AC_PROG_RANLIB
 AC_OASYS_CONFIG_GCC
-AC_OASYS_TCLCONFIG
 AC_CHECK_LIB(pthread, pthread_create)
+AC_CHECK_LIB(socket, socket)
+AC_CHECK_LIB(nsl, gethostbyname)
+AC_OASYS_TCLCONFIG
 
 dnl -------------------------------------------------------------------------
 dnl Checks for header files.
