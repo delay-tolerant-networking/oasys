@@ -166,14 +166,27 @@ AC_TYPE_SIGNAL
 AC_FUNC_STAT
 AC_FUNC_STRTOD
 AC_FUNC_VPRINTF
+
 # This is most likely not the best "autoconfy" way of doing this...
 AC_MSG_CHECKING([whether math.h defines fpclassify])
-grep fpclassify /usr/include/math.h > /dev/null 2> /dev/null
-if test $? = 0 ; then
-    AC_DEFINE(HAVE_FPCLASSIFY, [], [Whether math.h defines fpclassify])
-    AC_MSG_RESULT([yes])
+
+AC_CACHE_VAL([dtn_cv_func_fpclassify], [
+  dtn_cv_func_fpclassify=0
+  AC_TRY_COMPILE([
+    #define _GNU_SOURCE 1
+    #include <math.h>
+    #ifndef fpclassify
+    #error no fpclassify
+    #endif
+    ], 
+    [int main() {}], 
+    [dtn_cv_func_fpclassify=1])])
+
+if test $dtn_cv_func_fpclassify = 1 ; then
+  AC_DEFINE(HAVE_FPCLASSIFY, [], [Whether math.h defines fpclassify])
+  AC_MSG_RESULT([yes])
 else
-    AC_MSG_RESULT([no])
+  AC_MSG_RESULT([no])
 fi
 
 AC_CHECK_FUNCS([getaddrinfo gethostbyname gethostbyname_r getopt_long gettimeofday inet_pton isascii localeconv memchr memmove memset pthread_yield sched_yield setenv socket strcasecmp strcspn strdup strerror strspn strtol strtoul])
