@@ -45,6 +45,7 @@
 #include <fcntl.h>
 #include <algorithm>
 
+#include "config.h"
 #include "Debug.h"
 #include "Log.h"
 #include "compat/inttypes.h"
@@ -370,7 +371,7 @@ Log::add_rotate_handler(int sig)
     TimerSystem::instance()->add_sighandler(sig, rotate_handler);
 }
 
-static void
+static RETSIGTYPE
 reparse_handler(int sig)
 {
     Log::instance()->parse_debug_file();

@@ -45,13 +45,14 @@
 #include <queue>
 #include <signal.h>
 
+#include "../config.h"
 #include "../debug/Debug.h"
 #include "../debug/Log.h"
 #include "MsgQueue.h"
 #include "Notifier.h"
 #include "Thread.h"
 
-typedef void (*__sighandler_t) (int);
+typedef RETSIGTYPE (*__sighandler_t) (int);
 
 namespace oasys {
 
