@@ -248,6 +248,8 @@ public:
     /** @return length */
     size_t size() const { return len_; }
     
+    /** Clear the buffer */
+    void clear() { len_ = 0; }
     
 private:
     mutable char buf_[_sz + 1];

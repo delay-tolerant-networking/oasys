@@ -156,7 +156,7 @@ StringBuffer::vappendf(const char* fmt, va_list ap)
             
             ret = vsnprintf(&buf_[len_], nfree, fmt, ap);
 
-            logf("/stringbuffer", LOG_DEBUG, "ret = %d", ret);
+            log_debug("/stringbuffer", "ret = %d", ret);
         }
     }
     else if(ret >= nfree)
