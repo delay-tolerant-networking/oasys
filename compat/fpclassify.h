@@ -47,6 +47,10 @@
 
 #ifndef HAVE_FPCLASSIFY
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <ieeefp.h>
 
 // fpclassify returns one of the following:
@@ -87,6 +91,10 @@ int fpclassify(double x);
 #define isnan(x) (fpclassify(x) == FP_NAN) 
      
 #define isinf(x) (fpclassify(x) == FP_INFINITE)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* HAVE_FPCLASSIFY */
 
