@@ -73,8 +73,12 @@ Thread::thread_run(void* t)
 
     thr->flags_ &= ~STOPPED;
     thr->flags_ &= ~SHOULD_STOP;
-    
-    thr->run();
+
+    try {
+        thr->run();
+    } catch (...) {
+        PANIC("unexpected exception caught from Thread::run");
+    }
     
     thr->flags_ |= STOPPED;
     
