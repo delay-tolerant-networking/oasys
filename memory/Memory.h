@@ -50,8 +50,6 @@
 #endif 
 
 #define _BYTE               char
-#define _DBG_MEM_MAGIC      0xabcdefab
-
 #define _DBG_MEM_FRAMES     3
 
 #ifndef _DBG_MEM_TABLE_EXP
@@ -250,57 +248,13 @@ set_frame_info(void** frames)
 /** 
  * Regular new call. Untyped allocations have type _UNKNOWN_TYPE.
  */
-inline void*
-operator new(size_t size) throw (std::bad_alloc)
-{
-    // The reason for these two code paths is the prescence of static
-    // initializers which allocate memory on the heap. Memory
-    // allocated before init is called is not tracked.
-    dbg_mem_t* b = static_cast<dbg_mem_t*>                  
-	(malloc(sizeof(dbg_mem_t) + size));                 
-
-    if(b == 0) {
-	throw std::bad_alloc();
-    }
-    
-    void* frames[_DBG_MEM_FRAMES];
-    memset(b, 0, sizeof(dbg_mem_t));
-    b->magic_ = _DBG_MEM_MAGIC;
-
-    // non-init allocations have frame == 0
-    if(DbgMemInfo::initialized()) {
-	set_frame_info(frames);
-	b->entry_ = DbgMemInfo::inc(frames, size);
-
-	log_debug("/memory", "new a=%p, f=[%p %p %p]\n",              
-		  &b->block_, frames[0], frames[1], frames[2]);     
-    }
-								
-    return (void*)&b->block_;                               
-}
+void* operator new(size_t size) throw (std::bad_alloc);
 
 /**
  * Delete operator. If the memory frame info is 0, then this memory
  * allocation is ignored.
  */ 
-inline void
-operator delete(void *ptr) throw ()
-{
-    dbg_mem_t* b = PARENT_PTR(ptr, dbg_mem_t, block_);
-
-    ASSERT(b->magic_ == _DBG_MEM_MAGIC);    
-
-    if(b->entry_ != 0) {
-	log_debug("/memory", "delete a=%p, f=[%p %p %p]\n", 
-		  &b->block_, 
-		  b->entry_->frames_[0], b->entry_->frames_[1], 
-		  b->entry_->frames_[2]);
-
-	DbgMemInfo::dec(b);
-    }
-    
-    free(b);
-}
+void operator delete(void *ptr) throw ();
 
 #else // NDEBUG_MEMORY
 
@@ -311,11 +265,7 @@ operator delete(void *ptr) throw ()
 // clean up namespace
 #undef _ALIGNED
 #undef _BYTE
-#undef _DBG_MEM_MAGIC
-#undef _UNKNOWN_TYPE
-#undef _EMPTY_SLOT
 
-#undef PARENT_PTR
 #undef MATCH
 #undef MOD
 
