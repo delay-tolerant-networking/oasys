@@ -68,10 +68,11 @@ level2str_t log_levelnames[] =
 {
     { "debug",   LOG_DEBUG },
     { "info",    LOG_INFO },
-    { "warn",    LOG_WARN },
     { "warning", LOG_WARN },
-    { "err",     LOG_ERR },
+    { "warn",    LOG_WARN },
     { "error",   LOG_ERR },
+    { "err",     LOG_ERR },
+    { "critical",LOG_CRIT },
     { "crit",    LOG_CRIT },
     { NULL,      LOG_INVALID }
 };
