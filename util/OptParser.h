@@ -60,7 +60,7 @@ public:
      * opts.
      *
      * Returns true if the argument string was successfully parsed,
-     * false otherwise. If non-null, <invalidp> is set to point to the
+     * false otherwise. If non-null, invalidp is set to point to the
      * invalid option string.
      */
     bool parse(const char* args, const char** invalidp = NULL);
@@ -70,7 +70,7 @@ public:
      * opts.
      *
      * Returns true if the argument string was successfully parsed,
-     * false otherwise. If non-null, <invalidp> is set to point to the
+     * false otherwise. If non-null, invalidp is set to point to the
      * invalid option string.
      */
     bool parse(int argc, const char* const argv[],
