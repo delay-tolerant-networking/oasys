@@ -39,13 +39,12 @@
 #ifndef _THREAD_H_
 #define _THREAD_H_
 
-#include <pthread.h>
-
 #if (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)
 // 2.95 doesn't define pthread_yield
-extern int pthread_yield (void) __THROW;
-extern int pthread_mutexattr_settype (pthread_mutexattr_t *__attr, int __kind) __THROW;
+#define pthread_yield sched_yield
 #endif
+
+#include <pthread.h>
 
 #include <signal.h>
 #include "../debug/Debug.h"

@@ -59,17 +59,15 @@ Mutex::Mutex(const char* name, lock_type_t type, bool keep_quiet)
     }
 
     case TYPE_RECURSIVE: {
-#ifdef PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
-        pthread_mutex_t m = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
-#else
-        pthread_mutexattr_t attr;
-        pthread_mutex_t m;
 
-        pthread_mutexattr_init(&attr);
-        pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE_NP);
-
-        pthread_mutex_init(&m, &attr);
+// XXX/demmer this is a big hack but it seems necessary to work with
+// gcc 2.9x and i don't have patience to deal with it any more
+#ifndef PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
+# define PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP \
+  {0, 0, 0, PTHREAD_MUTEX_RECURSIVE_NP, __LOCK_INITIALIZER}
 #endif
+        
+        pthread_mutex_t m = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
         mutex_ = m;
         break;
