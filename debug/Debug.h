@@ -46,8 +46,16 @@
 #define ASSERT(x)                                               \
     do { if (! (x)) {                                           \
         oasys::logf("/assert", oasys::LOG_CRIT,                 \
-                    "ASSERTION FAILED (" #x ") at %s:%d\n",     \
+                    "ASSERTION FAILED (" #x ") at %s:%d",       \
                     __FILE__, __LINE__);                        \
+        abort();                                                \
+    } } while(0)
+
+#define ASSERTF(x, fmt, args...)                                \
+    do { if (! (x)) {                                           \
+        oasys::logf("/assert", oasys::LOG_CRIT,                 \
+                    "ASSERTION FAILED (" #x ") at %s:%d: " fmt, \
+                    __FILE__, __LINE__, ## args);               \
         abort();                                                \
     } } while(0)
 
