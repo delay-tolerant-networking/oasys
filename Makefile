@@ -34,6 +34,7 @@ THREAD_SRCS :=					\
 	thread/Timer.cc				\
 
 UTIL_SRCS :=					\
+	util/md5.c				\
 	util/RateEstimator.cc			\
 	util/StringBuffer.cc			\
 	util/URL.cc				\
