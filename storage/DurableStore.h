@@ -4,11 +4,9 @@
 #include <new>
 #include <string>
 
-#include "db_cxx.h"			// berkeley DB
-
 #include "debug/Debug.h"
 #include "debug/Log.h"
-#include "tclcmd/TclCommand.h"
+#include "serialize/SerializableObject.h"
 
 namespace oasys {
 
@@ -66,7 +64,6 @@ protected:
     static DurableTableStore* instance_; //< singleton instance
 };
 
-
 /// Object that encapsulates a single table.
 class DurableTable {
 public:
@@ -83,7 +80,8 @@ public:
     /// \return DS_OK, DS_NOTFOUND if key is not found, DS_BUFSIZE if
     /// the given buffer is too small to store the data.
     ///
-    virtual int get(const void* key, int key_len, void* data, int *data_len) = 0;
+    virtual int get(const SerializableObject* key, 
+                    SerializableObject* data) = 0;
 
     /// Put data for key in the database
     ///
@@ -93,13 +91,14 @@ public:
     /// \param data_len Length of data buffer
     /// \return DS_OK, DS_ERR // XXX/bowei
     ///
-    virtual int put(const void* key, int key_len, const void* data, int data_len) = 0;
+    virtual int put(const SerializableObject* key, 
+                    const SerializableObject* data);
 
     /// Delete a (key,data) pair from the database
     ///
     /// \return DS_OK, DS_NOTFOUND if key is not found
     ///
-    virtual int del(const void* key, int key_len) = 0;
+    virtual int del(const SerializableObject* key) = 0;
 
     /// Return table id.
     DurableTableId id() { return id_; }
@@ -107,7 +106,6 @@ public:
 protected:
     DurableTableId id_;
 };
-
 
 /// Table iterator object. Just like Java. Note: It is important that
 /// iterators do NOT outlive the tables they point into.
@@ -131,53 +129,9 @@ public:
     /// error occurred while iterating.
     virtual int next() = 0;
 
-    /// Return a buffer to the key.
-    virtual const void* key() = 0;
-
-    /// Return the length of the key buffer.
-    virtual int key_len() = 0;
-    
-    /// Return a pointer to the data buf.
-    virtual const void* data() = 0;
-    
-    /// Return the length fo the data buffer.
-    virtual int data_len() = 0;
+    /// Unserialize the object in obj
+    virtual int get(SerialiableObject* obj) = 0;
 };
-
-/*
-/// data store configuration module.
-class DataStoreCommand : public oasys::AutoTclCommand { 
-    friend class DataStore;
-
-public:
-    DataStoreCommand();
-
-    static DataStoreCommand* instance() {
-	if(instance_ == 0)
-	{
-	    instance_ = new DataStoreCommand();
-	}
-
-        return instance_;
-    }
-
-    void bind_vars();
-
-    virtual int exec(int argc, const char** argv, Tcl_Interp* interp);
-    
-protected:
-    DataStore* ds_;      //!< datastore configuration is attached to
-
-public:
-    bool tidy_db_;		//!< tidy up the db on init
-    int tidy_wait_;		//!< num seconds to wait before tidying
-    std::string dir_;		//!< Database directory
-    std::string errlog_;	//!< Error log
-
-private:
-    static DataStoreCommand* instance_;
-};
-*/
 
 }; // oasys
 
