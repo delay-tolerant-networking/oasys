@@ -43,7 +43,10 @@ main(int argc, char* argv[])
 {
     Log::init(1, LOG_DEBUG, "memory-test.debug");
     DbgMemInfo::init();
-    
+
+    log_info("/memory", "offset of data=%u\n", 
+	     offsetof(dbg_mem_t, block_));
+
     // Create 11 Foo_1 object in different places
     Alloc_3();
     Alloc_3();
@@ -51,9 +54,25 @@ main(int argc, char* argv[])
     Alloc_2();
     Alloc_1();
 
-    DbgMemInfo::dump();
+    DbgMemInfo::debug_dump();
+    FILE* f = fopen("/tmp/dump", "w");
+    ASSERT(f != 0);
+
+    DbgMemInfo::dump_to_file(f);
 
     // Delete all Foo_1 objects
     delete_all_foo();
-    DbgMemInfo::dump();
+    DbgMemInfo::debug_dump();
+
+    std::list<int> l;
+    l.push_back(2);
+    l.push_back(3);
+    l.push_back(4);
+    l.push_back(5);
+    l.push_back(6);
+    l.push_back(7);
+    l.push_back(8);
+    l.push_back(9);
+    l.push_back(1);
+    DbgMemInfo::debug_dump(); 
 }
