@@ -39,12 +39,12 @@
 #ifndef _THREAD_H_
 #define _THREAD_H_
 
-#if (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)
-// 2.95 doesn't define pthread_yield
-#define pthread_yield sched_yield
-#endif
+#include "../config.h"
 
 #include <pthread.h>
+#ifdef HAVE_SCHED_YIELD
+#include <sched.h>
+#endif
 
 #include <signal.h>
 #include "../debug/Debug.h"
@@ -204,10 +204,12 @@ Thread::current()
 inline void
 Thread::yield()
 {
-#ifdef __CYGWIN__
+#ifdef HAVE_PTHREAD_YIELD
+    pthread_yield();
+#elif  HAVE_SCHED_YIELD
     sched_yield();
 #else
-    pthread_yield();
+#error MUST EITHER HAVE PTHREAD_YIELD OR SCHED_YIELD
 #endif
 }
 

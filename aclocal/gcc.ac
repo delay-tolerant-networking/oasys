@@ -1,0 +1,43 @@
+dnl
+dnl Figure out which version of gcc/g++ to use.
+dnl
+
+AC_DEFUN(AC_OASYS_CONFIG_GCC, [
+    AC_CACHE_CHECK(for the version of the gcc compiler, oasys_cv_prog_gccver, [
+      oasys_cv_prog_gccver=`$CC --version | head -1`
+      oasys_cv_prog_gccver=`echo $oasys_cv_prog_gccver | sed 's/gcc (GCC) //'`
+      oasys_cv_prog_gccver=`echo $oasys_cv_prog_gccver | sed 's/ .*//'`
+    ])      
+
+    # 
+    # Set version-specific compiler options
+    #
+    case "$oasys_cv_prog_gccver" in
+        #
+        # for gcc 2.9.X and 3.1, the auto-dependency features don't work, and 
+        # _GNU_SOURCE isn't defined, so do both those things here
+        #
+        3.1*|2.9*)
+            DEFS="$DEFS -D_GNU_SOURCE"
+	    DEPFLAGS=""
+            echo "*** warning: using old compiler $cc version $oasys_cv_prog_gccver,"
+	    echo "             automatic dependency generation will not work"
+	    ;;
+	#
+	# For 3.2 and beyond, use auto-dependency flags. 
+	# Note that for m4 to output a '$' requires the '@S|@' heinosity below.
+	#
+	3.*)
+	    DEPFLAGS=['-MMD -MP -MT "@S|@*.o @S|@*.E @S|@*.po"']
+	    ;;
+	#
+	# Otherwise bail
+	#
+        *)
+	    echo "error: unsupported compiler version $oasys_cv_prog_gccver"
+	    exit  1
+	    ;;
+    esac
+
+    AC_SUBST(DEPFLAGS)
+])

@@ -25,4 +25,4 @@ TESTS += \
 # default rule for tests
 #
 test/%-test: test/%-test.cc liboasys.a
-	$(CPP) $^ -o $@ $(CFLAGS) $(LIBS) liboasys.a
+	$(CXX) $^ -o $@ $(CFLAGS) $(LIBS) liboasys.a

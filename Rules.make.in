@@ -3,23 +3,22 @@
 #
 
 #
+# Targets are "native" and "arm"
+# 
+TARGET = @TARGET@
+
+#
 # Common settings extracted from the configure script
 #
-PLATFORM	= @PLATFORM@
 SRCDIR		= @SRCDIR@
-INCDIRS		= -I$(SRCDIR) @INCDIRS@
-LIBDIRS		= @LIBDIRS@
-LIBS		= @LIBS@ @PTHREAD_FLAG@
-STATIC_LIBS	= @STATIC_LIBS@ 
 CC		= @CC@
-CPP		= @CPP@
+CXX		= @CXX@
 DEPFLAGS	= @DEPFLAGS@
-DEBUG		= @DEBUG@
+DEBUG 		= @DEBUG@
 OPTIMIZE	= @OPTIMIZE@
+CPPFLAGS	= -I$(SRCDIR) -I$(SRCDIR)/servlib @CPPFLAGS@
 WARN		= -Wall -Werror @OPTIMIZE_WARN@
-CFLAGS		= $(INCDIRS) $(DEBUG) $(OPTIMIZE) $(DEPFLAGS) $(WARN)
-LFLAGS		= $(LIBDIRS) @STATIC@
-TARGET          = @TARGET@
+CFLAGS		= $(CPPFLAGS) $(DEBUG) $(OPTIMIZE) $(DEPFLAGS) $(WARN)
 
 #
 # Add a phony rule to make sure this isn't included before the default
@@ -35,7 +34,7 @@ catchdefault:
 #
 %.o: %.cc
 	@rm -f $@; mkdir -p $(@D)
-	$(CPP) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CFLAGS) -c $< -o $@
 
 %.o: %.c
 	@rm -f $@; mkdir -p $(@D)
@@ -46,11 +45,11 @@ catchdefault:
 #
 %.E: %.cc
 	@rm -f $@; mkdir -p $(@D)
-	$(CPP) $(CFLAGS) -c $< -E -o $@
+	$(CXX) $(CFLAGS) -c $< -E -o $@
 
 %.E: %.c
 	@rm -f $@; mkdir -p $(@D)
-	$(CPP) $(CFLAGS) -c $< -E -o $@
+	$(CXX) $(CFLAGS) -c $< -E -o $@
 
 #
 # Always include all the .d files that we can find, based on all the

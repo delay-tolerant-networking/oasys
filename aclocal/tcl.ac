@@ -1,0 +1,98 @@
+dnl
+dnl Autoconf support for finding tcl
+dnl
+
+dnl
+dnl Main macro for finding a usable tcl installation 
+dnl
+AC_DEFUN(AC_OASYS_TCLCONFIG, [
+
+    ac_tclver='8.4 8.3'
+    ac_tcldir='system'
+
+    AC_ARG_WITH(tcl,
+        AC_HELP_STRING([--with-tcl=DIR],
+    		   [location of a tcl installation (default system)]),
+        ac_tcldir=$withval) 
+
+    AC_ARG_WITH(tclver,
+        AC_HELP_STRING([--with-tclver=VERSION],
+    		   [tcl version to use (default $ac_tclver)]),
+        ac_tclver=$withval)
+
+    dnl
+    dnl Tcl include file
+    dnl
+    
+    if test x$oasys_cv_path_tcl_h = x ; then
+        echo "checking for tcl header file..."
+        AC_OASYS_FIND_TCLINCLUDE
+    else
+        echo "checking for tcl header... (cached) $oasys_cv_path_tcl_h"
+    fi
+        
+    if test ! $oasys_cv_path_tcl_h = /usr/include ; then
+        CPPFLAGS="$CPPFLAGS -I$oasys_cv_path_tcl_h"
+    fi
+
+    dnl
+    dnl Tcl library file
+    dnl
+    
+    if test ! x"$ac_tcldir" = x"system" ; then
+        LDFLAGS="$LDFLAGS -L$ac_tcldir/lib"
+    fi
+
+    if test x$oasys_cv_lib_tcl = x ; then
+        echo "checking for tcl library..."
+        AC_OASYS_FIND_TCLLIB
+    else
+        echo "checking for tcl library... (cached) $oasys_cv_lib_tcl"
+    fi
+        
+    LIBS="$LIBS -l$oasys_cv_lib_tcl"
+])
+
+dnl
+dnl Find tcl.h
+dnl
+AC_DEFUN(AC_OASYS_FIND_TCLINCLUDE, [
+  AC_CACHE_VAL([oasys_cv_path_tcl_h], [
+    oasys_cv_path_tcl_h=
+
+    if test ! x"$ac_tcldir" = x"system" ; then
+        ac_tclincdirs=$ac_tcldir/include/
+    else
+        ac_tclincdirs="/usr/include /usr/local/include"
+	for tclver in $ac_tclver ; do
+           ac_tcl_incdirs="$ac_tclincdirs /usr/include/tcl$tclver"
+        done
+    fi
+
+    for ac_tclincdir in $ac_tclincdirs; do
+        AC_CHECK_FILE($ac_tclincdir/tcl.h,
+	              [oasys_cv_path_tcl_h=$ac_tclincdir; break])
+    done
+  ])
+
+  if test x$oasys_cv_path_tcl_h = x ; then
+        AC_MSG_ERROR([can't find usable tcl.h])
+  fi
+])
+
+
+dnl
+dnl Find libtcl
+dnl
+AC_DEFUN(AC_OASYS_FIND_TCLLIB, [
+    AC_CACHE_VAL(oasys_cv_lib_tcl,[
+        for tclver in "" $ac_tclver; do
+            oasys_cv_lib_tcl=tcl$tclver
+            AC_CHECK_LIB($oasys_cv_lib_tcl, Tcl_Init, [break], [oasys_cv_lib_tcl=])
+        done
+    ])
+
+    if test x$oasys_cv_lib_tcl = x ; then
+        AC_MSG_ERROR([can't find usable tcl library])
+    fi
+])
