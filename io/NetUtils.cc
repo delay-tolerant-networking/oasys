@@ -109,16 +109,21 @@ gethostbyname(const char* name, in_addr_t* addr)
     return 0;
 
 #elif defined(HAVE_GETADDRINFO)
-    
+
+    struct addrinfo hints;
     struct addrinfo *res;
     int              err;
 
-    err = getaddrinfo(name, 0, 0, &res);
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_INET;
+    
+    err = getaddrinfo(name, 0, &hints, &res);
     if(err != 0) 
         return -1;
     
     ASSERT(res != 0);
-    *addr = ((struct in_addr*) &res->ai_addr)->s_addr;
+    ASSERT(res->ai_family == PF_INET);
+    *addr = ((struct sockaddr_in*) res->ai_addr)->sin_addr.s_addr;
     
     freeaddrinfo(res);
     return 0;
