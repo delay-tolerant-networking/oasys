@@ -67,7 +67,7 @@ namespace oasys {
 struct StringHash {
     size_t operator()(const std::string& str) const
     {
-        return _std::__stl_hash_string(str.data());
+        return _std::__stl_hash_string(str.c_str());
     }
 };
 
