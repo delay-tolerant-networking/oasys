@@ -36,9 +36,13 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/errno.h>
+
 #include "Thread.h"
 #include "debug/Debug.h"
 #include "debug/Log.h"
+
+#include "memory/Memory.h"
 
 namespace oasys {
 
@@ -77,7 +81,10 @@ Thread::thread_run(void* t)
     if (thr->flags_ & DELETE_ON_EXIT) {
         delete thr;
     }
-    return 0;
+
+    pthread_exit(0);
+
+    NOTREACHED;
 }
 
 Thread::Thread(int flags)
@@ -100,9 +107,16 @@ Thread::start()
         siginterrupt(SIGURG, 1);
         signals_inited_ = true;
     }
-    
-    if (pthread_create(&pthread_, 0, Thread::thread_run, this) != 0) {
-        PANIC("error in pthread_create");
+
+    int ntries = 0;
+    while (pthread_create(&pthread_, 0, Thread::thread_run, this) != 0) {
+        if (++ntries == 10000) {
+            PANIC("maximum thread creation attempts");
+            DbgMemInfo::debug_dump();
+        }
+        
+        log_err("/thread", "error in pthread_create: %s, retrying",
+                strerror(errno));
     }
 
     if (flags_ & CREATE_DETACHED) {
