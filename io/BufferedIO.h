@@ -29,6 +29,8 @@ public:
      * Read len bytes. Blocking until specified amount of bytes is
      * read.
      *
+     * \param len Amount to drain. If zero, return the current buffer
+     * contents (if any), or issue a call to read() to get some.
      * \param buf buf is valid until next fcn call to BufferedInput
      * \return Length of segment read. <0 upon error, 0 on eof. Return 
      * will only be < len if eof is reached before fully read len
@@ -84,8 +86,10 @@ public:
      */
     int write(const char* bp, int len);
 
-    //! Write that always flushes
-    int writef(const char* bp, int len);
+    /*!
+     * Clears the buffer contents without writing.
+     */
+    void clear_buf();
 
     /*!
      * Fills the buffer via printf style args, returning the length or
@@ -101,8 +105,9 @@ public:
     int flush();
     
     /*!
-     * If the buffer reaches size > limit, then the buffer is automatically
-     * flushed
+     * If the buffer reaches size > limit, then the buffer is
+     * automatically flushed. If the limit is 0, then it never
+     * auto-flushes.
      */
     void set_flush_limit(size_t limit);
     

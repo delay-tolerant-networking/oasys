@@ -49,8 +49,16 @@ BufferedInput::read_bytes(size_t len, char** buf, int timeout)
     int cc, total = 0;
 
     logf(LOG_DEBUG, "read_bytes %d (timeout %d)", len, timeout);
+
+    // if len is zero and there's bytes in the buffer, drain them
+    if ((len == 0) && (buf_.fullbytes() > 0)) {
+        *buf = buf_.start();
+        cc = buf_.fullbytes();
+        buf_.consume(cc);
+        return cc;
+    }
     
-    while (buf_.fullbytes() < len)
+    while (len == 0 || buf_.fullbytes() < len)
     {
         // fill the buffer as much as possible
 	cc = internal_read(buf_.emptybytes(), timeout);
@@ -65,13 +73,21 @@ BufferedInput::read_bytes(size_t len, char** buf, int timeout)
 	}
         
 	total += cc;
-    }
 
+        // a zero len argument means just do one read, so pretend that
+        // we asked for what we got
+        if (len == 0) {
+            len = cc;
+            break;
+        }
+    }
+    
     *buf = buf_.start();
 
     // don't consume more than the user asked for
     cc = MIN(len, buf_.fullbytes());
     buf_.consume(cc);
+    
     return cc;
 }
 
@@ -200,7 +216,7 @@ BufferedOutput::write(const char* bp, int len)
     memcpy(buf_.end(), bp, len);
     buf_.fill(len);
     
-    if(buf_.fullbytes() > flush_limit_)
+    if ((flush_limit_) > 0 && (buf_.fullbytes() > flush_limit_))
     {
 	flush();
     }
@@ -208,22 +224,29 @@ BufferedOutput::write(const char* bp, int len)
     return len;
 }
 
-int 
-BufferedOutput::writef(const char* bp, int len)
+void
+BufferedOutput::clear_buf()
 {
-    int ret = write(bp, len);
-    flush();
-
-    return ret;
+    buf_.clear();
 }
 
 int
 BufferedOutput::vformat_buf(const char* fmt, va_list ap)
 {
-    int len = vsnprintf(buf_.end(), 0, fmt, ap);
-    buf_.reserve(len);
+    int nfree = buf_.emptybytes();
+    int len = vsnprintf(buf_.end(), nfree, fmt, ap);
 
-    len = vsnprintf(buf_.end(), len, fmt, ap);
+    if (len >= nfree) {
+        buf_.reserve(len);
+        nfree = len;
+        len = vsnprintf(buf_.end(), nfree, fmt, ap);
+        ASSERT(len <= nfree);
+    }
+
+    if ((flush_limit_) > 0 && (buf_.fullbytes() > flush_limit_))
+    {
+	flush();
+    }
 
     return len;
 }
