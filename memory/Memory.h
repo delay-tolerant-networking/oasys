@@ -38,6 +38,8 @@
 #ifndef __MEMORY_H__
 #define __MEMORY_H__
 
+#if (__GNUC__ >= 3)
+
 #ifndef NDEBUG_MEMORY
 
 #include <cstddef>
@@ -279,5 +281,7 @@ private:
 
 } // namespace oasys
 #endif // NDEBUG_MEMORY
+
+#endif // (__GNUC__ >= 3)
 
 #endif //__MEMORY_H__

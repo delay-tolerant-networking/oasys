@@ -147,13 +147,22 @@ struct __suio {
 #endif 
 
 #ifdef __FORMATTER__
+
+#ifndef INTMAX_MAX
+
 #include <limits.h>
 
-#ifndef LLONG_MAX
+#if   defined(LLONG_MAX)
+#define INTMAX_MAX LLONG_MAX
+#elif defined(LONG_LONG_MAX)
 #define INTMAX_MAX LONG_LONG_MAX
 #else
-#define INTMAX_MAX LLONG_MAX
-#endif /* LLONG_MAX */
+#if __GLIBC_HAVE_LONG_LONG != 1
+#define INTMAX_MAX LONG_MAX
+#endif
+#endif 
+
+#endif
 
 #define reallocf realloc
 #endif
@@ -515,6 +524,11 @@ vfprintf(FILE * __restrict fp, const char * __restrict fmt0, va_list ap)
 #define	dtoa		__dtoa
 #define	freedtoa	__freedtoa
 */
+
+// need to define __USE_ISOC99 for 2.9X compilers
+#if (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)
+#define __USE_ISOC99
+#endif
 
 #include <float.h>
 #include <math.h>

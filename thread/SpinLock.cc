@@ -41,7 +41,7 @@
 
 namespace oasys {
 
-#ifndef NO_ATOMIC
+#ifndef __NO_ATOMIC__
 
 int
 SpinLock::lock()
@@ -98,6 +98,6 @@ SpinLock::try_lock()
     }
 };
 
-#endif
+#endif // __NO_ATOMIC__
 
 } // namespace oasys

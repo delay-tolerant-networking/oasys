@@ -91,7 +91,7 @@ HexDumpBuffer::hexify()
         append("  ");
     }
 
-    appendf(" |  %.*s\n", len % 16, strbuf);
+    appendf(" |  %.*s\n", (int)len % 16, strbuf);
 }
 
 } // namespace oasys

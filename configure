@@ -209,10 +209,14 @@ rm -f ./a.out
 
 fi
 
-elif [ "$target" = "arm" ]; then
-ccver=2.95
-mysql_enabled=0
-postgres_enabled=0
+else 
+
+if [ $ccver = "auto" ]; then
+   echo "Non-native target $target:"
+   echo " must specify compiler version using --with-ccver"
+   exit 1
+fi
+
 fi
 
 #
