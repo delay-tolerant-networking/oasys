@@ -50,6 +50,8 @@
 #include "thread/Timer.h"
 #include "io/IO.h"
 
+namespace oasys {
+
 // we can't use the ASSERT from Debug.h since that one calls logf :-)
 #undef ASSERT
 #define ASSERT(x) __log_assert(x, #x, __FILE__, __LINE__)
@@ -502,4 +504,4 @@ Log::vlogf(const char *path, log_level_t level, const char *fmt, va_list ap)
     return buflen;
 };
 
-
+} // namespace oasys

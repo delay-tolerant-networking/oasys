@@ -41,6 +41,8 @@
 
 #include "../debug/Debug.h"
 
+namespace oasys {
+
 /**
  * When we're not on a SMP platform, there's no need to lock the bus.
  */
@@ -223,5 +225,7 @@ atomic_add32_ret(volatile void* v, unsigned int i)
     NOTREACHED;
     return 0;
 }
+
+} // namespace oasys
 
 #endif /* _ATOMIC_X86_H_ */

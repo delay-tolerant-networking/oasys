@@ -40,6 +40,8 @@
 
 #include "TclCommand.h"
 
+namespace oasys {
+
 /**
  * Class to export the logging system to tcl scripts.
  */
@@ -54,5 +56,7 @@ public:
     virtual const char* help_string();
 };
 
+
+} // namespace oasys
 
 #endif //_LOG_COMMAND_H_

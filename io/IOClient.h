@@ -41,6 +41,8 @@
 
 #include <sys/uio.h>
 
+namespace oasys {
+
 /**
  * Abstract interface for any stream type output channel.
  */
@@ -88,5 +90,7 @@ public:
     /// Set the file descriptor's nonblocking status
     virtual int set_nonblocking(bool nonblocking) = 0;
 };
+
+} // namespace oasys
 
 #endif // __IOCLIENT_H__

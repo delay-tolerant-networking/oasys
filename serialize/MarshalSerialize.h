@@ -40,6 +40,8 @@
 
 #include "Serialize.h"
 
+namespace oasys {
+
 /**
  * Common base class for Marshal and Unmarshal that manages the flat
  * buffer.
@@ -192,5 +194,7 @@ public:
 private:
     size_t size_;
 };
+
+} // namespace oasys
 
 #endif /* _MARSHAL_SERIALIZE_H_ */

@@ -44,6 +44,8 @@
 #include "IO.h"
 #include "debug/Log.h"
 
+namespace oasys {
+
 int
 IO::open(const char* path, int flags, const char* log)
 {
@@ -484,3 +486,5 @@ IO::set_nonblocking(int fd, bool nonblocking)
     
     return 0;
 }
+
+} // namespace oasys

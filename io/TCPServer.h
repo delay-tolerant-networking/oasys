@@ -42,6 +42,8 @@
 #include "IPSocket.h"
 #include "../thread/Thread.h"
 
+namespace oasys {
+
 /**
  * \class TCPServer
  *
@@ -109,5 +111,7 @@ public:
      */
     int bind_listen_start(in_addr_t local_addr, u_int16_t local_port);
 };
+
+} // namespace oasys
                         
 #endif /* _TCP_SERVER_H_ */

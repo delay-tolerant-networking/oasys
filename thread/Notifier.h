@@ -41,6 +41,8 @@
 
 #include "../debug/Log.h"
 
+namespace oasys {
+
 class SpinLock;
 
 /**
@@ -97,5 +99,7 @@ protected:
     bool waiter_; // for debugging only
     int pipe_[2];
 };
+
+} // namespace oasys
 
 #endif /* _NOTIFIER_H_ */

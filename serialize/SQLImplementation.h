@@ -42,6 +42,8 @@
 #include <string.h>
 #include "Serialize.h"
 
+namespace oasys {
+
 /**
  * Class to encapsulate particular database specific operations.
  */
@@ -119,5 +121,7 @@ protected:
 private:
     SQLImplementation();		///< default constructor isn't used
 };
+
+} // namespace oasys
 
 #endif /* _SQL_IMPLEMENTATION_H_ */

@@ -47,6 +47,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+namespace oasys {
+
 TCPServer::TCPServer(char* logbase)
     : IPSocket(logbase, SOCK_STREAM)
 {
@@ -151,3 +153,5 @@ TCPServerThread::bind_listen_start(in_addr_t local_addr,
 
     return ret;
 }
+
+} // namespace oasys

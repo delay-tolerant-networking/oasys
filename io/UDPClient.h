@@ -40,6 +40,8 @@
 
 #include "IPClient.h"
 
+namespace oasys {
+
 /**
  * Wrapper class for a udp client socket.
  */
@@ -47,5 +49,7 @@ class UDPClient : public IPClient {
 public:
     UDPClient(const char* logbase = "/udpclient");
 };
+
+} // namespace oasys
 
 #endif /* _UDP_CLIENT_H_ */

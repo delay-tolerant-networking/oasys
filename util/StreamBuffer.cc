@@ -39,6 +39,8 @@
 #include "debug/Debug.h"
 #include "StreamBuffer.h"
 
+namespace oasys {
+
 /***************************************************************************
  *
  * StreamBuffer
@@ -164,3 +166,5 @@ StreamBuffer::moveup()
     end_   = end_ - start_;
     start_ = 0;
 }
+
+} // namespace oasys

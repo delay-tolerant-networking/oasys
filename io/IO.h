@@ -44,6 +44,8 @@
 #include <sys/uio.h>
 #include <sys/socket.h>
 
+namespace oasys {
+
 /**
  * Return code values for the timeout enabled functions such as
  * timeout_read() and timeout_accept(). Note that the functions return
@@ -176,6 +178,8 @@ private:
                       const struct iovec* iov, int iovcnt,
                       const char* log_func, const char* log);
 };
+
+} // namespace oasys
 
 #endif /* _IO_H_ */
 

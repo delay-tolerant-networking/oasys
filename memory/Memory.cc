@@ -43,9 +43,10 @@
 
 #include "Memory.h"
 
+namespace oasys {
+
 #define _BYTE char
 #define _DBG_MEM_MAGIC      0xf00dbeef
-
 
 int              DbgMemInfo::entries_   = 0;
 dbg_mem_entry_t* DbgMemInfo::table_     = 0;
@@ -149,30 +150,55 @@ DbgMemInfo::signal_handler(
     dump_to_file(dump_file_);
 }
 
+} // namespace oasys
+
+/** 
+ * Put the previous stack frame information into frames
+ */
+static inline void 
+set_frame_info(void** frames)
+{
+#ifdef __GNUC__
+#define FILL_FRAME(_x)                                  \
+    if(__builtin_frame_address(_x) == 0) {              \
+        return;                                         \
+    } else {                                            \
+        frames[_x-1] = __builtin_return_address(_x);    \
+    }
+
+    FILL_FRAME(1);
+    FILL_FRAME(2);
+    FILL_FRAME(3);
+    FILL_FRAME(4);
+#undef FILL_FRAME
+#else
+#error Depends on compiler implementation, implement me.
+#endif
+}
+
 void* 
 operator new(size_t size) throw (std::bad_alloc)
 {
     // The reason for these two code paths is the prescence of static
     // initializers which allocate memory on the heap. Memory
     // allocated before init is called is not tracked.
-    dbg_mem_t* b = static_cast<dbg_mem_t*>                  
-	(malloc(sizeof(dbg_mem_t) + size));                 
+    oasys::dbg_mem_t* b = static_cast<oasys::dbg_mem_t*>
+                          (malloc(sizeof(oasys::dbg_mem_t) + size));
 
     if(b == 0) {
 	throw std::bad_alloc();
     }
     
-
-    memset(b, 0, sizeof(dbg_mem_t));
+    memset(b, 0, sizeof(oasys::dbg_mem_t));
     b->magic_ = _DBG_MEM_MAGIC;
     b->size_  = size;
 
     // non-init allocations have frame == 0
-    if(DbgMemInfo::initialized()) {
+    if (oasys::DbgMemInfo::initialized()) {
         void* frames[_DBG_MEM_FRAMES];
 	
         set_frame_info(frames);
-	b->entry_ = DbgMemInfo::inc(frames, size);
+	b->entry_ = oasys::DbgMemInfo::inc(frames, size);
 
 	log_debug("/memory", "new a=%p, f=[%p %p %p]\n",              
 		  &b->block_, frames[0], frames[1], frames[2]);     
@@ -181,19 +207,20 @@ operator new(size_t size) throw (std::bad_alloc)
     return (void*)&b->block_;                               
 }
 
-void operator delete(void *ptr) throw ()
+void
+operator delete(void *ptr) throw ()
 {
-    dbg_mem_t* b = PARENT_PTR(ptr, dbg_mem_t, block_);
+    oasys::dbg_mem_t* b = PARENT_PTR(ptr, oasys::dbg_mem_t, block_);
 
-    ASSERT(b->magic_ == _DBG_MEM_MAGIC);    
+    ASSERT(b->magic_ == _DBG_MEM_MAGIC);
 
-    if(b->entry_ != 0) {
+    if (b->entry_ != 0) {
 	log_debug("/memory", "delete a=%p, f=[%p %p %p]\n", 
 		  &b->block_, 
 		  b->entry_->frames_[0], b->entry_->frames_[1], 
 		  b->entry_->frames_[2]);
 
-	DbgMemInfo::dec(b);
+	oasys::DbgMemInfo::dec(b);
     }
     
     char* bp = (char*)(b);

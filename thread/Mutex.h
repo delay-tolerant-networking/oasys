@@ -43,6 +43,8 @@
 #include "Lock.h"
 #include "../debug/Logger.h"
 
+namespace oasys {
+
 /// Mutex wrapper class for pthread_mutex_t.
 class Mutex : public Lock, public Logger {
     friend class Monitor; // Monitor needs access to mutex_.
@@ -85,6 +87,8 @@ protected:
     lock_type_t     type_;
     bool	    keep_quiet_;
 };
+
+} // namespace oasys
 
 #endif /* _MUTEX_H_ */
 

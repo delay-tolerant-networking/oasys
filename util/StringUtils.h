@@ -59,6 +59,8 @@
 #define _std __gnu_cxx
 #endif
 
+namespace oasys {
+
 /**
  * Hashing function class for std::strings.
  */
@@ -143,5 +145,7 @@ str_isascii(const u_char* bp, size_t len)
 
     return true;
 }
+
+} // namespace oasys
 
 #endif /* _STRING_UTILS_H_ */

@@ -38,6 +38,8 @@
 #include "Serialize.h"
 #include "debug/Debug.h"
 
+namespace oasys {
+
 /**
  * Create a SerializeAction with the specified type code and context
  *
@@ -90,3 +92,5 @@ void
 SerializeAction::end_action()
 {
 }
+
+} // namespace oasys

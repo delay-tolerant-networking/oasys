@@ -38,6 +38,8 @@
 
 #include "jenkins_hash.h"
 
+namespace oasys {
+
 /*
  * Fast general purpose hash function from Bob Jenkins:
  * http://burtleburtle.net/bob/hash/doobs.html
@@ -160,3 +162,5 @@ jenkins_hash(u_int8_t *k,        /* the key */
    /*-------------------------------------------- report the result */
    return c;
 }
+
+} // namespace oasys

@@ -54,6 +54,8 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 
+namespace oasys {
+
 int IPSocket::abort_on_error_ = 0;
 
 IPSocket::IPSocket(const char* logbase, int socktype)
@@ -379,3 +381,5 @@ IPSocket::recvmsg(struct msghdr* msg, int flags)
     return IO::recvmsg(fd_, msg, flags, logpath_);
 }
 
+
+} // namespace oasys

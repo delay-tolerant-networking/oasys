@@ -40,6 +40,8 @@
 #include "IO.h"
 #include "debug/Debug.h"
 
+namespace oasys {
+
 FdIOClient::FdIOClient(int fd)
     : Logger("/fdio"), fd_(fd)
 {}
@@ -123,3 +125,5 @@ FdIOClient::set_nonblocking(bool nonblocking)
 {
     return IO::set_nonblocking(fd_, nonblocking);
 }
+
+} // namespace oasys

@@ -42,6 +42,8 @@
 
 #include "IPClient.h"
 
+namespace oasys {
+
 IPClient::IPClient(const char* logbase, int socktype)
     : IPSocket(logbase, socktype)
 {
@@ -149,3 +151,5 @@ IPClient::set_nonblocking(bool nonblocking)
 {
     return IO::set_nonblocking(fd_, nonblocking);
 }
+
+} // namespace oasys

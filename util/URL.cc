@@ -40,8 +40,7 @@
 #include "StringBuffer.h"
 #include "debug/Debug.h"
 
-// XXX/namespace
-using oasys::StringBuffer;
+namespace oasys {
 
 urlerr_t
 URL::parse_internal()
@@ -157,3 +156,5 @@ URL::format(const std::string& proto, const std::string& host, u_int16_t port,
     url_.assign(buf.data(), buf.length());
     err_ = URLPARSE_OK;
 }
+
+} // namespace oasys

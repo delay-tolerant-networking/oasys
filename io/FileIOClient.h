@@ -43,11 +43,7 @@
 #include <fcntl.h>
 #include <string.h>
 
-//XXX/namespace
-class FileIOClient;
 namespace oasys {
-typedef ::FileIOClient FileIOClient;
-};
 
 /**
  * IOClient derivative for real files -- not sockets. Unlike the base
@@ -88,5 +84,7 @@ protected:
     /// Path to the file
     std::string path_;
 };
+
+} // namespace oasys
 
 #endif /* _FILE_IOCLIENT_H_ */

@@ -35,10 +35,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef tier_jenkins_hash_h
-#define tier_jenkins_hash_h
+#ifndef _JENKINS_HASH_H_
+#define _JENKINS_HASH_H_
 
 #include <sys/types.h>
+
+namespace oasys {
 
 /*
  * Just one thing here, the jenkins hash function.
@@ -48,4 +50,6 @@ jenkins_hash(u_int8_t *k,        /* the key */
              u_int32_t length,   /* the length of the key */
              u_int32_t initval); /* the previous hash, or an arbitrary value */
 
-#endif
+} // namespace oasys
+
+#endif /* _JENKINS_HASH_H_ */

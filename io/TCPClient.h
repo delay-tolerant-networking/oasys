@@ -41,6 +41,8 @@
 
 #include "IPClient.h"
 
+namespace oasys {
+
 /**
  * Wrapper class for a tcp client socket.
  */
@@ -65,5 +67,7 @@ public:
 protected:
     int internal_connect(in_addr_t remote_attr, u_int16_t remote_port);
 };
+
+} // namespace oasys
 
 #endif /* _TCP_CLIENT_H_ */

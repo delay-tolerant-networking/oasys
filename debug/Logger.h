@@ -41,6 +41,8 @@
 
 #include "Debug.h"
 
+namespace oasys {
+
 /**
  * @class Logger
  *
@@ -129,7 +131,7 @@ public:
      */
     inline int vlogf(log_level_t level, const char *fmt, va_list args) const
     {
-        return ::vlogf(logpath_, level, fmt, args);
+        return oasys::vlogf(logpath_, level, fmt, args);
     }
 
     /**
@@ -164,7 +166,7 @@ public:
      */
     inline bool __log_enabled(log_level_t level, const char* path) const
     {
-        return ::__log_enabled(level, logpath_);
+        return oasys::__log_enabled(level, logpath_);
     }
 
 protected:
@@ -216,10 +218,12 @@ Logger::logf(const char* logpath, log_level_t level,
 {
     va_list ap;
     va_start(ap, fmt);
-    int ret = ::vlogf(logpath, level, fmt, ap);
+    int ret = oasys::vlogf(logpath, level, fmt, ap);
     va_end(ap);
     return ret;
 }
 
+
+} // namespace oasys
 
 #endif /* _LOGGER_H_ */

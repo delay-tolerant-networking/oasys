@@ -37,6 +37,8 @@
  */
 
 #include "Formatter.h"
+using oasys::Formatter;
+
 #include <stdarg.h>
 
 /**

@@ -46,7 +46,7 @@
 #include "Timer.h"
 #include "io/IO.h"
 
-// XXX/demmer rework to use Notifier and not MsgQueue
+namespace oasys {
 
 TimerSystem* TimerSystem::instance_;
 
@@ -299,3 +299,5 @@ TimerSystem::run()
     }
     // don't ever return
 }
+
+} // namespace oasys

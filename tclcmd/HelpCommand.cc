@@ -41,8 +41,7 @@
 #include "memory/Memory.h"
 #include "util/StringBuffer.h"
 
-// XXX/namespace
-using oasys::StringBuffer;
+namespace oasys {
 
 HelpCommand::HelpCommand()
     : TclCommand("help")
@@ -95,3 +94,5 @@ HelpCommand::help_string()
 {
     return("help <cmd?>");
 }
+
+} // namespace oasys

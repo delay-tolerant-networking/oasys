@@ -39,14 +39,11 @@
 #ifndef _URL_H_
 #define _URL_H_
 
-// XXX/namespace
-class URL;
-namespace oasys {
-typedef ::URL URL;
-}
 
 #include <list>
 #include <string>
+
+namespace oasys {
 
 typedef enum urlerr_t {
     URLPARSE_OK,	/* parsed ok */
@@ -57,7 +54,6 @@ typedef enum urlerr_t {
     URLPARSE_BADPORT,	/* bad port */
     URLPARSE_NOHOST,	/* no host */
 };
-
 
 /**
  * A simple class for managing urls that supports parsing, merging,
@@ -174,6 +170,8 @@ public:
 protected:
     urlerr_t parse_internal();
 };
+
+} // namespace oasys
 
 #endif /* _URL_H_ */
 

@@ -41,6 +41,8 @@
 #include <string>
 #include <vector>
 
+namespace oasys {
+
 /*
  * Wrapper class for getopt calls.
  */
@@ -117,5 +119,7 @@ public:
 protected:
     int set(char* val);
 };
+
+} // namespace oasys
 
 #endif /* _OPTIONS_H_ */

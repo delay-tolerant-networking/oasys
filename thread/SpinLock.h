@@ -43,17 +43,9 @@
 #include "Lock.h"
 #include "Thread.h"
 
-/**
- * If we know there are no atomic instructions for the architecture,
- * just use a Mutex.
- */
-#ifdef __NO_ATOMIC__
-#include "Mutex.h"
-class SpinLock : public Mutex {
-public:
-    SpinLock() : Mutex("spinlock", TYPE_RECURSIVE, true) {}
-};
-#else
+#ifndef __NO_ATOMIC__
+
+namespace oasys {
 
 /**
  * A SpinLock is a Lock that busy waits to get a lock. The
@@ -76,6 +68,24 @@ public:
 private:
     unsigned int lock_count_; ///< count for recursive locking
 };
+
+} // namespace oasys
+
+#else
+
+/**
+ * If we know there are no atomic instructions for the architecture,
+ * just use a Mutex.
+ */
+#include "Mutex.h"
+namespace oasys {
+
+class SpinLock : public Mutex {
+public:
+    SpinLock() : Mutex("spinlock", TYPE_RECURSIVE, true) {}
+};
+
+} // namespace oasys
 
 #endif /* __NO_ATOMIC__ */
 

@@ -43,7 +43,11 @@
 #include "debug/Debug.h"
 #include "debug/Log.h"
 
+namespace oasys {
+
 UDPClient::UDPClient(const char* logbase)
     : IPClient(logbase, SOCK_DGRAM)
 {
 }
+
+} // namespace oasys

@@ -40,6 +40,8 @@
 #include "debug/Debug.h"
 #include "debug/Log.h"
 
+namespace oasys {
+
 bool Thread::signals_inited_ = false;
 sigset_t Thread::interrupt_sigset_;
 
@@ -141,3 +143,5 @@ Thread::set_interruptable(bool interruptable)
         PANIC("error in pthread_sigmask");
     }
 }
+
+} // namespace oasys

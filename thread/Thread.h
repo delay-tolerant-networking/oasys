@@ -43,6 +43,8 @@
 #include <signal.h>
 #include "../debug/Debug.h"
 
+namespace oasys {
+
 /**
  * Class to wrap a thread of execution using pthreads. Similar to the
  * Java API.
@@ -201,5 +203,7 @@ Thread::spin_yield()
 #endif // _POSIX_THREAD_IS_CAPRICCIO
 //#endif // NO_SMP
 }
+
+} // namespace oasys
 
 #endif /* _THREAD_H_ */

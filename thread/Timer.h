@@ -50,6 +50,8 @@
 #include "Notifier.h"
 #include "Thread.h"
 
+namespace oasys {
+
 /**
  * Miscellaneous timeval macros.
  */
@@ -237,6 +239,8 @@ public:
 protected:
     TimerEventQueue* queue_;
 };
+
+} // namespace oasys
 
 #endif /* tier_timer_h */
 

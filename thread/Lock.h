@@ -42,6 +42,8 @@
 #include "../debug/Debug.h"
 #include "Thread.h"
 
+namespace oasys {
+
 /**
  * Abstract Lock base class.
  */
@@ -163,5 +165,7 @@ public:
 protected:
     Lock* lock_;
 };
+
+} // namespace oasys
 
 #endif /* LOCK_h */

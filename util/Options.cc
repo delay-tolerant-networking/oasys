@@ -40,6 +40,8 @@
 
 #include "Options.h"
 
+namespace oasys {
+
 Opt* Options::opts_[256];
 Options::List Options::allopts_;
 
@@ -282,3 +284,5 @@ StringOpt::set(char* val)
     ((std::string*)valp_)->assign(val);
     return 0;
 }
+
+} // namespace oasys

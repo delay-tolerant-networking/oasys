@@ -43,6 +43,7 @@
 #include "debug/Log.h"
 #include "Mutex.h"
 
+namespace oasys {
 
 Mutex::Mutex(const char* name, lock_type_t type, bool keep_quiet)
     : Lock(), type_(type), keep_quiet_(keep_quiet)
@@ -160,3 +161,5 @@ Mutex::logf(log_level_t level, const char *fmt, ...)
     va_end(ap);
     return ret;
 }
+
+} // namespace oasys

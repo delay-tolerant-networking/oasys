@@ -41,6 +41,8 @@
 
 #include "../thread/Timer.h"
 
+namespace oasys {
+
 /**
  * Simple rate estimation class that does a weighted filter of
  * samples.
@@ -60,5 +62,7 @@ protected:
     timeval lastts_;	///< last sample timestamp
     double weight_;	///< weighting factor for sample decay
 };
+
+} // namespace oasys
 
 #endif /* _RATE_ESTIMATOR_H_ */

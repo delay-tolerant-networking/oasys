@@ -42,6 +42,8 @@
 #include "../io/IOClient.h"
 #include "../util/StreamBuffer.h"
 
+namespace oasys {
+
 /**
  * Wrapper class for an IOClient that includes an in-memory
  * buffer for reading and/or writing.
@@ -177,5 +179,7 @@ private:
 
     static const size_t DEFAULT_FLUSH_LIMIT = 256;
 };
+
+} // namespace oasys
 
 #endif /* __BUFFERED_IO_H__ */

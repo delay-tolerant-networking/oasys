@@ -49,6 +49,8 @@
 #include "../debug/Log.h"
 #include "../debug/Debug.h"
 
+namespace oasys {
+
 /**
  * A producer/consumer queue for passing data between threads in the
  * system, using the Notifier functionality to block and wakeup
@@ -108,5 +110,7 @@ protected:
 };
 
 #include "MsgQueue.tcc"
+
+} // namespace oasys
 
 #endif //_MSG_QUEUE_H_

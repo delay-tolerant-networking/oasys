@@ -40,6 +40,8 @@
 
 #include "TclCommand.h"
 
+namespace oasys {
+
 /**
  * The "help" command.
  */
@@ -53,5 +55,7 @@ public:
     virtual int exec(int argc, const char** argv, Tcl_Interp* interp);
     virtual const char* help_string();
 };
+
+} // namespace oasys
 
 #endif /* _HELP_COMMAND_H_ */

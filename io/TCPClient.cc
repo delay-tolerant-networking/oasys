@@ -44,6 +44,8 @@
 #include "debug/Debug.h"
 #include "debug/Log.h"
 
+namespace oasys {
+
 TCPClient::TCPClient(const char* logbase)
     : IPClient(logbase, SOCK_STREAM)
 {
@@ -127,3 +129,5 @@ TCPClient::timeout_connect(in_addr_t remote_addr, u_int16_t remote_port,
 
     return ret;
 }
+
+} // namespace oasys

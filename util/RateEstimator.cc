@@ -38,6 +38,8 @@
 
 #include "RateEstimator.h"
 
+namespace oasys {
+
 RateEstimator::RateEstimator(int *var, int interval, double weight)
 {
     var_ = var;
@@ -74,3 +76,5 @@ RateEstimator::timeout(struct timeval* now)
 
     goto done;
 }
+
+} // namespace oasys

@@ -42,6 +42,8 @@
 #include "IPSocket.h"
 #include "IOClient.h"
 
+namespace oasys {
+
 /**
  * Base class that unifies the IPSocket and IOClient interfaces. Both
  * TCPClient and UDPClient derive from IPClient.
@@ -74,5 +76,7 @@ public:
 
     virtual int set_nonblocking(bool nonblocking);
 };
+
+} // namespace oasys
 
 #endif /* _IP_CLIENT_H_ */

@@ -39,6 +39,8 @@
 #include "FileIOClient.h"
 #include "IO.h"
 
+namespace oasys {
+
 FileIOClient::FileIOClient()
     : FdIOClient(-1)
 {
@@ -99,3 +101,5 @@ FileIOClient::lseek(off_t offset, int whence)
 {
     return IO::lseek(fd_, offset, whence, logpath_);
 }
+
+} // namespace oasys

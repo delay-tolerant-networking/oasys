@@ -38,24 +38,20 @@
 #ifndef _SERIALIZE_H_
 #define _SERIALIZE_H_
 
-#include <string>
-#include <vector>
-
 /**
+ * @file
  * This file defines the core set of objects that define the
  * Serialization layer.
  */
+
+#include <string>
+#include <vector>
+
+namespace oasys {
+
 class Serialize;
 class SerializeAction;
 class SerializableObject;
-
-
-//XXX/bowei namespace
-namespace oasys {
-    typedef ::Serialize          Serialize;
-    typedef ::SerializeAction    SerializeAction;
-    typedef ::SerializableObject SerializableObject;
-};
 
 /**
  * Empty base class that's just used for name scoping of the action
@@ -248,5 +244,7 @@ protected:
 private:
     SerializeAction();	/// Never called
 };
+
+} // namespace oasys
 
 #endif /* _SERIALIZE_H_ */

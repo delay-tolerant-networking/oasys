@@ -41,6 +41,8 @@
 
 #include "MarshalSerialize.h"
 
+namespace oasys {
+
 /******************************************************************************
  *
  * BufferedSerializeAction
@@ -357,3 +359,5 @@ MarshalSize::action(SerializableObject* object)
     object->serialize(this);
     return 0;
 }
+
+} // namespace oasys

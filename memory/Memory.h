@@ -38,6 +38,8 @@
 #ifndef __MEMORY_H__
 #define __MEMORY_H__
 
+#ifndef NDEBUG_MEMORY
+
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
@@ -48,6 +50,19 @@
 #include "../debug/Debug.h"
 #include "../debug/Log.h"
 #include "../util/jenkins_hash.h"
+
+/** 
+ * Regular new call. Untyped allocations have type _UNKNOWN_TYPE.
+ */
+void* operator new(size_t size) throw (std::bad_alloc);
+
+/**
+ * Delete operator. If the memory frame info is 0, then this memory
+ * allocation is ignored.
+ */ 
+void operator delete(void *ptr) throw ();
+
+namespace oasys {
 
 /**
  * @file Debug memory allocator that keep track of different object
@@ -255,55 +270,14 @@ private:
     static struct sigaction signal_;
 };
 
-#ifndef NDEBUG_MEMORY
-// new memory allocation functions ///////////////////////////////////////////
-/** 
- * Put the previous stack frame information into frames
- */
-static inline void 
-set_frame_info(void** frames)
-{
-#ifdef __GNUC__
-#define FILL_FRAME(_x)                                  \
-    if(__builtin_frame_address(_x) == 0) {              \
-        return;                                         \
-    } else {                                            \
-        frames[_x-1] = __builtin_return_address(_x);    \
-    }
-
-    FILL_FRAME(1);
-    FILL_FRAME(2);
-    FILL_FRAME(3);
-    FILL_FRAME(4);
-#undef FILL_FRAME
-
-#else
-#error Depends on compiler implementation, implement me.
-#endif
-}
-
-/** 
- * Regular new call. Untyped allocations have type _UNKNOWN_TYPE.
- */
-void* operator new(size_t size) throw (std::bad_alloc);
-
-/**
- * Delete operator. If the memory frame info is 0, then this memory
- * allocation is ignored.
- */ 
-void operator delete(void *ptr) throw ();
-
-#else // NDEBUG_MEMORY
-
-// XXX/bowei TODO
-
-#endif // NDEBUG_MEMORY
-
 // clean up namespace
 #undef _ALIGNED
 #undef _BYTE
 
 #undef MATCH
 #undef MOD
+
+} // namespace oasys
+#endif // NDEBUG_MEMORY
 
 #endif //__MEMORY_H__

@@ -44,8 +44,7 @@
 #include "thread/SpinLock.h"
 #include "util/StringBuffer.h"
 
-// XXX/namespace
-using oasys::StringBuffer;
+namespace oasys {
 
 /******************************************************************************
  *
@@ -545,3 +544,5 @@ TclCommand::bind_s(const char* name, std::string* val,
 
     bindings_[name] = new Binding(BINDING_STRING, val);
 }
+
+} // namespace oasys

@@ -54,6 +54,8 @@
 #include "IO.h"
 #include "../debug/Log.h"
 
+namespace oasys {
+
 // XXX/demmer this should be in some system header somewhere
 #define MAX_UDP_PACKET 65536
 
@@ -302,7 +304,7 @@ IPSocket::logf(log_level_t level, const char *fmt, ...)
     va_end(ap);
 
     if (abort_on_error_ && (level >= LOG_ERR)) {
-        ::logf(logpath_, LOG_CRIT, "aborting due to previous error");
+        Logger::logf(LOG_CRIT, "aborting due to previous error");
         abort();
     }
         
@@ -314,5 +316,7 @@ IPSocket::poll(int events, int* revents, int timeout_ms)
 {
     return IO::poll(fd_, events, revents, timeout_ms, logpath_);
 }
+
+} // namespace oasys
  
 #endif /* _IP_SOCKET_H_ */

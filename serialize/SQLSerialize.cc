@@ -42,6 +42,8 @@
 #include "debug/Log.h"
 #include "util/StringUtils.h"
 
+namespace oasys {
+
 /******************************************************************************
  *
  * SQLQuery
@@ -485,3 +487,5 @@ SQLExtract::process(const char* name, u_char** bp, size_t* lenp, bool alloc_copy
 {
     NOTIMPLEMENTED;
 }
+
+} // namespace oasys

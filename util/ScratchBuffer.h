@@ -41,6 +41,7 @@
 #include <cstdlib>
 
 namespace oasys {
+
 /**
  * This is a class which caches a reusable scratch buffer, obviating
  * the need to constantly malloc, the free a buffer in order to

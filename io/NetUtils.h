@@ -43,6 +43,15 @@
 #include <netinet/in.h>
 
 /**
+ * Wrapper macro to give the illusion that intoa() is a function call.
+ * Which it is, really... or more accurately two inlined calls and one
+ * function call.
+ */
+#define intoa(addr) oasys::Intoa(addr).buf()
+
+namespace oasys {
+
+/**
  * Faster wrapper around inet_ntoa.
  */
 extern const char* _intoa(u_int32_t addr, char* buf, size_t bufsize);
@@ -71,15 +80,10 @@ protected:
 };
 
 /**
- * Wrapper macro to give the illusion that intoa() is a function call.
- * Which it is, really... or more accurately two inlined calls and one
- * function call.
- */
-#define intoa(addr) Intoa(addr).buf()
-
-/**
  * Utility wrapper around the ::gethostbyname() system call
  */
 extern int gethostbyname(const char* name, in_addr_t* addrp);
+
+} // namespace oasys
 
 #endif /* _NET_UTILS_H_ */

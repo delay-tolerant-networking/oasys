@@ -40,6 +40,8 @@
 
 #include <stdlib.h>
 
+namespace oasys {
+
 /**
  * @brief Stream oriented resizable buffer.
  *
@@ -102,5 +104,7 @@ private:
 
     static const size_t DEFAULT_BUFSIZE = 512;
 };
+
+} // namespace oasys
  
 #endif //__STREAM_BUFFER_H__

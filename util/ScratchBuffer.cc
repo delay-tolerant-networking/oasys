@@ -38,8 +38,9 @@
 #include "../debug/Debug.h"
 #include "ScratchBuffer.h"
 
+namespace oasys {
 
-oasys::ScratchBuffer::ScratchBuffer(size_t size)
+ScratchBuffer::ScratchBuffer(size_t size)
     : buf_(0), size_(size)
 {
     if(size_ == 0)
@@ -50,7 +51,7 @@ oasys::ScratchBuffer::ScratchBuffer(size_t size)
 
 
 char*
-oasys::ScratchBuffer::buf(size_t size)
+ScratchBuffer::buf(size_t size)
 {
     if(size > size_)
     {
@@ -60,7 +61,9 @@ oasys::ScratchBuffer::buf(size_t size)
     return buf_;
 }
 
-oasys::ScratchBuffer::~ScratchBuffer()
+ScratchBuffer::~ScratchBuffer()
 {
     free(buf_);
 }
+
+} // namespace oasys

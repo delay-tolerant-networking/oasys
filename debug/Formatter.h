@@ -42,12 +42,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-// XXX/bowei namespace
-class Formatter;
 namespace oasys {
-    typedef ::Formatter Formatter;
-};
-
 
 /**
  * This class is intended to be used with a modified implementation of
@@ -112,5 +107,7 @@ Formatter::assert_valid(Formatter* obj)
                  __FILE__, __LINE__);
 #endif
 }
+
+} // namespace oasys
 
 #endif /* _FORMATTER_H_ */

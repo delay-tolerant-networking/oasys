@@ -30,6 +30,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+namespace oasys {
+
 /**
  * A faster replacement for inet_ntoa().
  * (Copied from the tcpdump source ).
@@ -95,8 +97,8 @@ gethostbyname(const char* name, in_addr_t* addr)
     int h_err;
 
     if (::gethostbyname_r(name, &h, buf, sizeof(buf), &ret, &h_err) < 0) {
-        ::logf("/net", LOG_ERR, "error return from gethostbyname_r: %s",
-               strerror(h_err));
+        logf("/net", LOG_ERR, "error return from gethostbyname_r: %s",
+             strerror(h_err));
         return -1;
     }
     if (ret == NULL) {
@@ -107,3 +109,5 @@ gethostbyname(const char* name, in_addr_t* addr)
     return 0;
 #endif    
 }
+
+} // namespace oasys

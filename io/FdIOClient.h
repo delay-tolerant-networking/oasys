@@ -42,6 +42,8 @@
 #include "IOClient.h"
 #include "../debug/Logger.h"
 
+namespace oasys {
+
 /**
  * IOClient which uses pure file descriptors.
  */
@@ -75,5 +77,7 @@ public:
 protected:
     int fd_;
 };
+
+} // namespace oasys
 
 #endif /* _FD_IOCLIENT_H_ */

@@ -43,6 +43,8 @@
 #include "SpinLock.h"
 #include "io/IO.h"
 
+namespace oasys {
+
 Notifier::Notifier(const char* logpath)
 {
     if (logpath) {
@@ -168,3 +170,5 @@ Notifier::notify()
         ASSERT(ret == 1);
     }
 }
+
+} // namespace oasys

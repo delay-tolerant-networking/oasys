@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef tier_md5_h
-#define tier_md5_h
+#ifndef _MD5_H_
+#define _MD5_H_
 
 #include <sys/types.h>
 #include <string>
@@ -49,6 +49,8 @@ extern "C" {
 }
 
 #define MD5LEN 16
+
+namespace oasys {
 
 /**
  * Simple wrapper class to calculate an MD5 digest.
@@ -118,4 +120,6 @@ private:
     u_char digest_[MD5LEN];
 };
 
-#endif
+} // namespace oasys
+
+#endif /* _MD5_H_ */

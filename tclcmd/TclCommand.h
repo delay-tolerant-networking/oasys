@@ -49,6 +49,8 @@
 
 #include "../debug/Debug.h"
 
+namespace oasys {
+
 /*
  * In tcl8.4, the objv to commands is const, but not so in tcl8.3, so
  * we need this stupid define, and force cast everything to const in
@@ -78,7 +80,7 @@ typedef std::list<TclCommand*> TclCommandList;
  * interpreter binds a new command with the module name.
  *
  */
-class TclCommandInterp : public Logger {    
+class TclCommandInterp : public Logger {
 public:
     /**
      * Return the singleton instance of config. This should only ever
@@ -490,6 +492,8 @@ public:
     {
         TclCommandInterp::auto_reg(this);
     }
-};   
+};
+
+} // namespace oasys
 
 #endif /* _TCL_COMMAND_H_ */

@@ -42,8 +42,7 @@
 #include "IO.h"
 #include "PrettyPrintBuffer.h"
 
-// XXX/namespace
-using oasys::PrettyPrintBuf;
+namespace oasys {
 
 /******************************************************************
  *
@@ -388,3 +387,5 @@ BufferedOutput::set_flush_limit(size_t limit)
 {
     flush_limit_ = limit;
 }
+
+} // namespace oasys

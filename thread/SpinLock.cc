@@ -39,6 +39,8 @@
 #include "SpinLock.h"
 #include "debug/Debug.h"
 
+namespace oasys {
+
 #ifndef NO_ATOMIC
 
 int
@@ -97,3 +99,5 @@ SpinLock::try_lock()
 };
 
 #endif
+
+} // namespace oasys

@@ -105,8 +105,10 @@
 # define PRINTFLIKE(a, b)
 #endif
 
-#define LOG_DEFAULT_THRESHOLD   LOG_INFO
-#define LOG_DEFAULT_DBGFILE "~/.debug"
+namespace oasys {
+
+#define LOG_DEFAULT_THRESHOLD oasys::LOG_INFO
+#define LOG_DEFAULT_DBGFILE   "~/.debug"
 
 #define LOG_MAX_PATHLEN (64)
 #define LOG_MAX_LINELEN (256)
@@ -335,6 +337,38 @@ logf(const char *path, log_level_t level, const char *fmt, ...)
 }
 
 /**
+ * See the big block comment below for an explanation of the __logf
+ * variant.
+ */
+inline int
+__logf(log_level_t level, const char *path, const char *fmt, ...)
+    PRINTFLIKE(3, 4);
+
+inline int
+__logf(log_level_t level, const char *path, const char *fmt, ...)
+{
+    if (!path) return -1;
+    va_list ap;
+    va_start(ap, fmt);
+    int ret = vlogf(path, level, fmt, ap);
+    va_end(ap);
+    return ret;
+}
+
+/**
+ * Global function to determine if the log path is enabled. Overridden
+ * by the Logger class.
+ */
+inline bool
+__log_enabled(log_level_t level, const char* path)
+{
+    log_level_t threshold = oasys::Log::instance()->log_level(path);
+    return (level >= threshold);
+}
+
+} // namespace oasys
+
+/**
  * The set of macros below are implemented for more efficient
  * implementation of logging functions. As noted in the comment above,
  * these macros first check whether logging is enabled on the path and
@@ -388,80 +422,47 @@ logf(const char *path, log_level_t level, const char *fmt, ...)
 #define log_debug(...)
 #define __log_debug(...)
 #else
-#define log_debug(p, args...)                     \
-    ((__log_enabled(LOG_DEBUG, (p))) ?            \
-     __logf(LOG_DEBUG, (p)  , ## args) : 0)
+#define log_debug(p, args...)                                   \
+    ((__log_enabled(oasys::LOG_DEBUG, (p))) ?                   \
+     __logf(oasys::LOG_DEBUG, (p)  , ## args) : 0)
 
-#define __log_debug(p, args...)                   \
-    ((::__log_enabled(LOG_DEBUG, (p))) ?          \
-     ::__logf(LOG_DEBUG, (p) , ## args) : 0)
+#define __log_debug(p, args...)                                 \
+    ((oasys::__log_enabled(oasys::LOG_DEBUG, (p))) ?            \
+     oasys::__logf(oasys::LOG_DEBUG, (p) , ## args) : 0)
 #endif // NDEBUG
 
-#define log_info(p, args...)                      \
-    ((__log_enabled(LOG_INFO, (p))) ?             \
-     __logf(LOG_INFO, (p) , ## args) : 0)
+#define log_info(p, args...)                                    \
+    ((__log_enabled(oasys::LOG_INFO, (p))) ?                    \
+     __logf(oasys::LOG_INFO, (p) , ## args) : 0)
 
-#define __log_info(p, args...)                    \
-    ((::__log_enabled(LOG_INFO, (p))) ?           \
-     ::__logf(LOG_INFO, (p) , ## args) : 0)
+#define __log_info(p, args...)                                  \
+    ((oasys::__log_enabled(oasys::LOG_INFO, (p))) ?             \
+     oasys::__logf(oasys::LOG_INFO, (p) , ## args) : 0)
 
-#define log_warn(p, args...)                      \
-    ((__log_enabled(LOG_WARN, (p))) ?             \
-     __logf(LOG_WARN, (p) , ## args) : 0)
+#define log_warn(p, args...)                                    \
+    ((__log_enabled(oasys::LOG_WARN, (p))) ?                    \
+     __logf(oasys::LOG_WARN, (p) , ## args) : 0)
 
-#define __log_warn(p, args...)                    \
-    ((::__log_enabled(LOG_WARN, (p))) ?           \
-     ::__logf(LOG_WARN, (p) , ## args) : 0)
+#define __log_warn(p, args...)                                  \
+    ((oasys::__log_enabled(oasys::LOG_WARN, (p))) ?             \
+     oasys::__logf(oasys::LOG_WARN, (p) , ## args) : 0)
 
-#define log_err(p, args...)                       \
-    ((__log_enabled(LOG_ERR, (p))) ?              \
-     __logf(LOG_ERR, (p) , ## args) : 0)
+#define log_err(p, args...)                                     \
+    ((__log_enabled(oasys::LOG_ERR, (p))) ?                     \
+     __logf(oasys::LOG_ERR, (p) , ## args) : 0)
 
-#define __log_err(p, args...)                     \
-    ((::__log_enabled(LOG_ERR, (p))) ?            \
-     ::__logf(LOG_ERR, (p) , ## args) : 0)
+#define __log_err(p, args...)                                   \
+    ((oasys::__log_enabled(oasys::LOG_ERR, (p))) ?              \
+     oasys::__logf(oasys::LOG_ERR, (p) , ## args) : 0)
 
-#define log_crit(p, args...)                      \
-    ((__log_enabled(LOG_CRIT, (p))) ?             \
-     __logf(LOG_CRIT, (p) , ## args) : 0)
+#define log_crit(p, args...)                                    \
+    ((__log_enabled(oasys::LOG_CRIT, (p))) ?                    \
+     __logf(oasys::LOG_CRIT, (p) , ## args) : 0)
 
-#define __log_crit(p, args...)                    \
-    ((::__log_enabled(LOG_CRIT, (p))) ?           \
-     ::__logf(LOG_CRIT, (p) , ## args) : 0)
+#define __log_crit(p, args...)                                  \
+    ((oasys::__log_enabled(oasys::LOG_CRIT, (p))) ?             \
+     oasys::__logf(oasys::LOG_CRIT, (p) , ## args) : 0)
 
-/**
- * As noted in the big comment above, the log_debug style macros call
- * this function which takes the level as the first parameter so it
- * can work with the Logger class as well.
- */
-inline int
-__logf(log_level_t level, const char *path, const char *fmt, ...)
-    PRINTFLIKE(3, 4);
-
-inline int
-__logf(log_level_t level, const char *path, const char *fmt, ...)
-{
-    if (!path) return -1;
-    va_list ap;
-    va_start(ap, fmt);
-    int ret = vlogf(path, level, fmt, ap);
-    va_end(ap);
-    return ret;
-}
-
-/**
- * Global function to determine if the log path is enabled. Overridden
- * by the Logger class.
- */
-inline bool
-__log_enabled(log_level_t level, const char* path)
-{
-    log_level_t threshold = Log::instance()->log_level(path);
-    return (level >= threshold);
-}
-
-
-// Include Logger.h here (after all the Log classes have been defined
 // of course) for simplicity.
 #include "Logger.h"
 
