@@ -114,11 +114,14 @@ GENFILES += debug/arith.h debug/arith-native.h debug/arithchk
 #
 # And a special rule to build the command-init-tcl.c file from command.tcl
 #
-cmd/Command.cc: cmd/command-init-tcl.c
-cmd/command-init-tcl.c: cmd/command-init.tcl
+tclcmd/TclCommand.o: tclcmd/command-init-tcl.c
+tclcmd/command-init-tcl.c: tclcmd/command-init.tcl
 	rm -f $@
 	echo "static const char* INIT_COMMAND = " > $@;
-	cat $^ | sed 's|"|\\"|g' | sed 's|^|"|g' | sed "s|$$|\\\\n\"|g" >> $@;
+	cat $^ | sed 's|\\|\\\\|g' |\
+		 sed 's|"|\\"|g' | \
+		 sed 's|^|"|g' | \
+		 sed "s|$$|\\\\n\"|g" >> $@;
 	echo ";">> $@
 
 #
