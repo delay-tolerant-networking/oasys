@@ -109,8 +109,10 @@ struct __suio {
 #endif 
 
 #ifdef __FORMATTER__
-#define INTMAX_MAX LONG_LONG_MAX
+#include <limits.h>
+#define INTMAX_MAX LLONG_MAX
 #define reallocf realloc
+#define __THROW
 #endif
 
 /* Define FLOATING_POINT to get floating point. */
