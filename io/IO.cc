@@ -487,20 +487,18 @@ IO::set_nonblocking(int fd, bool nonblocking)
     return 0;
 }
 
-#if 0
 int
-IO::get_nonblocking(int fd, bool *pRes)
+IO::get_nonblocking(int fd, bool *nonblockingp)
 {
     int flags = 0;
-    ASSERT(pRes);
+    ASSERT(nonblockingp);
     
     if ((flags = fcntl(fd, F_GETFL)) < 0) {
         return -1;
     }
 
-    *pRes = (flags & O_NONBLOCK);
+    *nonblockingp = (flags & O_NONBLOCK);
     return 0;
 }
-#endif
 
 } // namespace oasys

@@ -147,17 +147,15 @@ IPClient::timeout_readvall(const struct iovec* iov, int iovcnt, int timeout_ms)
 }
 
 int
+IPClient::get_nonblocking(bool *nonblockingp)
+{
+    return IO::get_nonblocking(fd_, nonblockingp);
+}
+
+int
 IPClient::set_nonblocking(bool nonblocking)
 {
     return IO::set_nonblocking(fd_, nonblocking);
 }
-
-#if 0
-int
-IPClient::get_nonblocking(bool *pRes)
-{
-    return IO::get_nonblocking(fd_, pRes);
-}
-#endif
 
 } // namespace oasys

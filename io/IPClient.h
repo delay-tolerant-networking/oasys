@@ -74,10 +74,8 @@ public:
     virtual int timeout_readvall(const struct iovec* iov, int iovcnt,
                                  int timeout_ms);
 
+    virtual int get_nonblocking(bool *nonblockingp);
     virtual int set_nonblocking(bool nonblocking);
-#if 0
-    virtual int get_nonblocking(bool *pRes);
-#endif
 };
 
 } // namespace oasys

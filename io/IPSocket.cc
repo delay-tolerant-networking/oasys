@@ -255,9 +255,9 @@ int
 IPSocket::close()
 {
     logf(LOG_DEBUG, "closing socket in state %s", statetoa(state_));
-    
-    if (state_ == FINI) {
-        ASSERT(fd_ == -1);
+
+    if (fd_ == -1) {
+        ASSERT(state_ == INIT || state_ == FINI);
         return 0;
     }
     

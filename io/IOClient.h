@@ -88,6 +88,7 @@ public:
     //@}
 
     /// Set the file descriptor's nonblocking status
+    virtual int get_nonblocking(bool* nonblockingp) = 0;
     virtual int set_nonblocking(bool nonblocking) = 0;
 };
 
