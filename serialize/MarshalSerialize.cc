@@ -60,7 +60,7 @@ Marshal::process(const char* name, u_int32_t* i)
     buf[2] = ((*i)>>8)  & 0xff;
     buf[3] = (*i)       & 0xff;
 
-    if (log_) logf(log_, LOG_DEBUG, "=>int32(%d)", *i);
+    if (log_) logf(log_, LOG_DEBUG, "int32  %s=>(%d)", name, *i);
 }
 
 void 
@@ -72,7 +72,7 @@ Marshal::process(const char* name, u_int16_t* i)
     buf[0] = ((*i)>>8) & 0xff;
     buf[1] = (*i)      & 0xff;
     
-    if (log_) logf(log_, LOG_DEBUG, "=>int16(%d)", *i);
+    if (log_) logf(log_, LOG_DEBUG, "int16  %s=>(%d)", name, *i);
 }
 
 void 
@@ -83,7 +83,7 @@ Marshal::process(const char* name, u_int8_t* i)
     
     buf[0] = (*i);
     
-    if (log_) logf(log_, LOG_DEBUG, "=>int8(%d)", *i);
+    if (log_) logf(log_, LOG_DEBUG, "int8   %s=>(%d)", name, *i);
 }
 
 void 
@@ -94,7 +94,7 @@ Marshal::process(const char* name, bool* b)
 
     buf[0] = (*b) ? 1 : 0;
     
-    if (log_) logf(log_, LOG_DEBUG, "=>int8(%c)", *b ? 'T' : 'F');
+    if (log_) logf(log_, LOG_DEBUG, "int8   %s=>(%c)", name, *b ? 'T' : 'F');
 }
 
 void 
@@ -107,8 +107,8 @@ Marshal::process(const char* name, u_char* bp, size_t len)
     if (log_) {
         std::string s;
         hex2str(&s, bp, len < 16 ? len : 16);
-        logf(log_, LOG_DEBUG, "=>bufc(%d: '%.*s')",
-             len, (int)s.length(), s.data());
+        logf(log_, LOG_DEBUG, "bufc   %s=>(%d: '%.*s')",
+             name, len, (int)s.length(), s.data());
     }
 }
     
@@ -129,8 +129,8 @@ Marshal::process(const char* name, u_char** bp,
     if (log_) {
         std::string s;
         hex2str(&s, *bp, *lenp < 16 ? *lenp : 16);
-        logf(log_, LOG_DEBUG, "=>bufc(%d: '%.*s')",
-             *lenp, (int)s.length(), s.data());
+        logf(log_, LOG_DEBUG, "bufc   %s=>(%d: '%.*s')",
+             name, *lenp, (int)s.length(), s.data());
     }
 }
 
@@ -145,8 +145,8 @@ Marshal::process(const char* name, std::string* s)
     
     memcpy(buf, s->data(), len);
     
-    if (log_) logf(log_, LOG_DEBUG, "=>string(%d: '%.*s')",
-                   len, (int)(len < 32 ? len : 32), s->data());
+    if (log_) logf(log_, LOG_DEBUG, "string %s=>(%d: '%.*s')",
+                   name, len, (int)(len < 32 ? len : 32), s->data());
 }
 /******************************************************************************
  *
@@ -165,7 +165,7 @@ Unmarshal::process(const char* name, u_int32_t* i)
     if (buf == NULL) return;
     
     *i = (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3];        
-    if (log_) logf(log_, LOG_DEBUG, "<=int32(%d)", *i);
+    if (log_) logf(log_, LOG_DEBUG, "int32  %s<=(%d)", name, *i);
 }
 
 void 
@@ -175,7 +175,7 @@ Unmarshal::process(const char* name, u_int16_t* i)
     if (buf == NULL) return;
     
     *i = (buf[0] << 8) | buf[1];        
-    if (log_) logf(log_, LOG_DEBUG, "<=int16(%d)", *i);
+    if (log_) logf(log_, LOG_DEBUG, "int16  %s<=(%d)", name, *i);
 }
 
 void 
@@ -185,7 +185,7 @@ Unmarshal::process(const char* name, u_int8_t* i)
     if (buf == NULL) return;
     
     *i = buf[0];        
-    if (log_) logf(log_, LOG_DEBUG, "<=int8(%d)", *i);
+    if (log_) logf(log_, LOG_DEBUG, "int8   %s<=(%d)", name, *i);
 }
 
 void 
@@ -195,7 +195,7 @@ Unmarshal::process(const char* name, bool* b)
     if (buf == NULL) return;
     
     *b = buf[1];
-    if (log_) logf(log_, LOG_DEBUG, "<=bool(%c)", *b ? 'T' : 'F');
+    if (log_) logf(log_, LOG_DEBUG, "bool   %s<=(%c)", name, *b ? 'T' : 'F');
 }
 
 void 
@@ -209,8 +209,8 @@ Unmarshal::process(const char* name, u_char* bp, size_t len)
     if (log_) {
         std::string s;
         hex2str(&s, bp, len < 16 ? len : 16);
-        logf(log_, LOG_DEBUG, "<=bufc(%d: '%.*s')",
-             len, (int)s.length(), s.data());
+        logf(log_, LOG_DEBUG, "bufc   %s<=(%d: '%.*s')",
+             name, len, (int)s.length(), s.data());
     }
 }
 
@@ -234,8 +234,8 @@ Unmarshal::process(const char* name, u_char** bp, size_t* lenp, bool alloc_copy)
     if (log_) {
         std::string s;
         hex2str(&s, *bp, *lenp < 16 ? *lenp : 16);
-        logf(log_, LOG_DEBUG, "<=bufc(%d: '%.*s')", *lenp,
-             (int)s.length(), s.data());
+        logf(log_, LOG_DEBUG, "bufc   %s<=(%d: '%.*s')",
+             name, *lenp, (int)s.length(), s.data());
     }
 }
 
@@ -249,8 +249,8 @@ Unmarshal::process(const char* name, std::string* s)
     if (buf == NULL) return;
     
     s->assign((char*)buf, len);
-    if (log_) logf(log_, LOG_DEBUG, "<=string(%d: '%.*s')",
-                   len, (int)(len < 32 ? len : 32), s->data());
+    if (log_) logf(log_, LOG_DEBUG, "string %s<=(%d: '%.*s')",
+                   name, len, (int)(len < 32 ? len : 32), s->data());
 }
 
 /******************************************************************************
