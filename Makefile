@@ -64,14 +64,10 @@ liboasys.a: $(OBJS)
 # Need special rules for the gdtoa sources adapted from the source
 # distribution.
 #
-debug/arith-native.h: debug/gdtoa-arithchk.c
+debug/arith.h: debug/gdtoa-arithchk.c
 	$(CC) $(DEBUG) $(OPTIMIZE) $< -o debug/arithchk
 	debug/arithchk > $@
 	rm -f debug/arithchk
-
-debug/arith.h:
-	$(MAKE) debug/arith-$(TARGET).h
-	cp debug/arith-$(TARGET).h $@
 
 debug/Formatter.cc: debug/arith.h
 
