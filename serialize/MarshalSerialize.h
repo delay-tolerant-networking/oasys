@@ -69,7 +69,7 @@ protected:
      */
     BufferedSerializeAction(action_t action, context_t context,
                             u_char* buf, size_t length, 
-                            int options);
+                            int options = 0);
 
     /**  
      * Get the next R/W length of the buffer.
