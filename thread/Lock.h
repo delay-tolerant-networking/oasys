@@ -103,7 +103,7 @@ public:
      */
     bool is_locked_by_me()
     {
-        return (lock_holder_ == Thread::current());
+        return pthread_equal(lock_holder_, Thread::current());
     }
 
 protected:
