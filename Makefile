@@ -81,7 +81,6 @@ Rules.make: Rules.make.in configure
 	@exit 1
 
 # XXX/demmer handle .so as well
-LIBFILES += liboasys.a
 liboasys: liboasys.a
 liboasys.a: $(OBJS)
 	rm -f $@

@@ -2,15 +2,12 @@
 
 #include "Serialize.h"
 
-/**
- * Create a SerializeAction with the specified type code and context
- *
- * @param type serialization action type code
- * @param context serialization context
- */
-SerializeAction::SerializeAction(action_t type, context_t context)
-    : type_(type), context_(context), error_(false), log_(0)
+
+
+SerializeAction::SerializeAction(action_t type)
+    : type_(type), error_(false), log_(0)
 {
+
 }
 
 SerializeAction::~SerializeAction()

@@ -15,7 +15,7 @@
 SQLQuery::SQLQuery(action_t type, const char* table_name,
                    SQLImplementation* impl, const char* initial_query)
     
-    : SerializeAction(type, CONTEXT_LOCAL),
+    : SerializeAction(type),
       table_name_(table_name),
       sql_impl_(impl),
       query_(256, initial_query)
@@ -332,7 +332,7 @@ SQLTableFormat::process(const char* name, u_char** bp, size_t* lenp, bool alloc_
  */
 
 SQLExtract::SQLExtract(SQLImplementation* impl)
-    : SerializeAction(UNMARSHAL, CONTEXT_LOCAL)
+    : SerializeAction(UNMARSHAL)
 {
     field_ = 0;
     sql_impl_ = impl;

@@ -59,7 +59,7 @@ public:
     virtual void end_action();
 
     /**
-     * Action type codes, one for each action type of SerializeAction.
+     * Action type codes, one for each basic type of SerializeAction.
      */
     typedef enum {
         MARSHAL = 1,	/// in-memory  -> serialized representation
@@ -73,8 +73,26 @@ public:
     action_t type() { return type_; }
     
     /**
-     * Processor functions, one for each type.
+     * Context type codes, one for each general context in which
+     * serialization occurs. 
      */
+    typedef enum {
+        CONTEXT_UNKNOWN = 1,	/// no specified context (default)
+        CONTEXT_NETWORK,	/// serialization to/from the network
+        CONTEXT_LOCAL		/// serialization to/from local disk
+    } context_t;
+    
+    /**
+     * Accessor for the context.
+     */
+    context_t context() { return context_; }
+    
+    
+    /***********************************************************************
+     *
+     * Processor functions, one for each type.
+     *
+     ***********************************************************************/
 
     /**
      * Process function for a contained SerializableObject.
@@ -165,9 +183,10 @@ protected:
      * Create a SerializeAction with the specified type code.
      * \param type Action type code for the marshal context
      */
-    SerializeAction(action_t type);
+    SerializeAction(action_t type, context_t context);
 
     action_t type_;	///< Serialization action code
+    context_t context_;	///< Serialization context
     bool  error_;	///< Indication of whether an error occurred
     const char* log_;	///< Optional log for verbose marshalling
 
