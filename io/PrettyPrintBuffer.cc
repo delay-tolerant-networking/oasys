@@ -57,7 +57,7 @@ PrettyPrintBuf::PrettyPrintBuf(const char* buf, int len)
 std::pair<std::string, bool>
 PrettyPrintBuf::next_str()
 {
-    oasys::StringBuffer buf;
+    StringBuffer buf;
 
     int bound = std::min(cur_ + MAX_COL, len_);
     for(int i = cur_; i<bound; ++i, ++cur_)
