@@ -89,7 +89,7 @@ SRCS := \
 OBJS := $(SRCS:.cc=.o)
 OBJS := $(OBJS:.c=.o)
 
-COMPAT_OBJS := $(COMPAT_SRCS:.c=.o)
+COMPAT_OBJS := $(COMPAT_SRCS:.c=.o) version.o
 
 ALLSRCS := $(SRCS)
 
