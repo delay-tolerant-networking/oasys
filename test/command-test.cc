@@ -36,9 +36,26 @@ main(int argc, char* argv[])
     TclCommand* mod = new TclCommand("mod1");
     TestModule* mod2 = new TestModule();
 
-    (void)mod;
-    
+    TclCommand* cmd;
+
+    if (! interp->lookup("file")) {
+        PANIC("lookup file failed");
+    }
+
+    if (interp->lookup("mod1")) {
+        PANIC("lookup mod1 succeeded when it shouldn't have");
+    }
+
     interp->reg(mod);
+
+    if (! interp->lookup("mod1", &cmd)) {
+        PANIC("lookup mod1 failed");
+    }
+
+    if (cmd != mod) {
+        PANIC("lookup mod1 failed to return mod1");
+    }
+    
     interp->reg(mod2);
 
     interp->exec_command("test set val 2");

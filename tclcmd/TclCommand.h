@@ -147,6 +147,13 @@ public:
     void reg(TclCommand* module);
 
     /**
+     * Check if there's a tcl command registered by the given name. If
+     * so, return true. If the command is an instance of TclCommand,
+     * return it as well in the commandp parameter.
+     */
+    bool lookup(const char* command, TclCommand** commandp = NULL);
+
+    /**
      * Schedule the auto-registration of a command module. This _must_
      * be called from a static initializer, before the Command
      * instance is actually created.
