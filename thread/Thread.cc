@@ -48,6 +48,8 @@ namespace oasys {
 
 bool Thread::signals_inited_ = false;
 sigset_t Thread::interrupt_sigset_;
+bool Thread::start_barrier_enabled_ = false;
+std::vector<Thread*> Thread::threads_in_barrier_;
 
 void
 Thread::interrupt_signal(int sig)
@@ -101,6 +103,31 @@ Thread::~Thread()
 }
 
 void
+Thread::activate_start_barrier()
+{
+    start_barrier_enabled_ = true;
+
+    log_debug("/thread", "activating thread creation barrier");
+}
+
+void
+Thread::release_start_barrier()
+{
+    start_barrier_enabled_ = false;
+
+    log_debug("/thread",
+              "releasing thread creation barrier -- %d queued threads",
+              threads_in_barrier_.size());
+    
+    for (size_t i = 0; i < threads_in_barrier_.size(); ++i) {
+        Thread* thr = threads_in_barrier_[i];
+        thr->start();
+    }
+
+    threads_in_barrier_.clear();
+}
+
+void
 Thread::start()
 {
     // if this is the first thread, set up signals
@@ -112,6 +139,16 @@ Thread::start()
         signals_inited_ = true;
     }
 
+    // check if the creation barrier is enabled
+    if (start_barrier_enabled_) {
+        log_debug("/thread", "delaying start of thread %p due to barrier",
+                  this);
+        threads_in_barrier_.push_back(this);
+        return;
+    }
+
+    log_debug("/thread", "starting thread %p", this);
+    
     int ntries = 0;
     while (pthread_create(&pthread_, 0, Thread::thread_run, this) != 0) {
         if (++ntries == 10000) {

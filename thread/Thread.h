@@ -42,6 +42,7 @@
 #include "../config.h"
 
 #include <pthread.h>
+#include <vector>
 
 #ifdef HAVE_SCHED_YIELD
 #include <sched.h>
@@ -85,6 +86,21 @@ public:
      * Join with this thread, blocking the caller until we quit.
      */
     void join();
+
+    /**
+     * Activate the thread creation barrier. No new threads will be
+     * created until release_start_barrier() is called.
+     *
+     * Note this should only be called in a single-threaded context,
+     * i.e. during initialization.
+     */
+    static void activate_start_barrier();
+    
+    /**
+     * Release the thread creation barrier and actually start up any
+     * pending threads.
+     */
+    static void release_start_barrier();
 
     /**
      * Yield the current process. Needed for capriccio to yield the
@@ -194,6 +210,9 @@ protected:
 
     static bool signals_inited_;
     static sigset_t interrupt_sigset_;
+
+    static bool start_barrier_enabled_;
+    static std::vector<Thread*> threads_in_barrier_;
 };
 
 inline pthread_t
