@@ -12,7 +12,11 @@
 
 /**
  * @file Debug memory allocator that keep track of different object
- * types and other memory usage accounting statistics.
+ * types and other memory usage accounting statistics. 
+ *
+ * Implementation note: When the tracking hash table gets near 95%
+ * full, new will stop adding entries into the hash table, and a
+ * warning will be signalled.
  *
  * Options:
  *
@@ -20,6 +24,9 @@
  * statistics at some loss of performance. Otherwise, there will be
  * occasional races in updating the number of live objects.
  *
+ * Define _DBG_MEM_TABLE_EXP to be power of 2 size of the number of
+ * memory entries.
+ * 
  * The region of memory in which the debugging information is stored
  * is mmapped to a high address which (hopefully) should not intersect
  * with the addresses in standard usage. The reason for this kind of
@@ -36,11 +43,15 @@
 #error Must define aligned attribute for this compiler.
 #endif 
 
-#define _BYTE             char
+#define _BYTE               char
 #define _DBG_MEM_MAGIC      0xabcdefab
 
 #define _DBG_MEM_FRAMES     3
+
+#ifndef _DBG_MEM_TABLE_EXP
 #define _DBG_MEM_TABLE_EXP  10
+#endif 
+
 #define _DBG_MEM_TABLE_SIZE 1<<_DBG_MEM_TABLE_EXP
 #define _DBG_MEM_MMAP_HIGH  
 
