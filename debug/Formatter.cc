@@ -110,8 +110,17 @@ struct __suio {
 
 #ifdef __FORMATTER__
 #include <limits.h>
+
+#ifndef LLONG_MAX
+#define INTMAX_MAX LONG_LONG_MAX
+#else
 #define INTMAX_MAX LLONG_MAX
+#endif /* LLONG_MAX */
+
 #define reallocf realloc
+#endif
+
+#ifndef __THROW
 #define __THROW
 #endif
 
