@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include <unistd.h>
 
 #include "debug/Debug.h"
@@ -11,6 +12,15 @@
 
 #define NO_TX  0 // for easily going back and changing TX id's later
 
+/// @{ Macros for dealing with Berkeley DB
+#define MAKE_DBT(_x, _data, _len)               \
+  do {                                          \
+    memset(&_x, 0, sizeof(_x));                 \
+    _x.data = static_cast<void*>(_data);        \
+    _x.size = _len;                             \
+  } while(0)
+/// @}
+
 namespace oasys {
 
 /******************************************************************************
@@ -18,13 +28,13 @@ namespace oasys {
  * BerkeleyDs
  *
  *****************************************************************************/
-BerkeleyTableStore::BerkeleyTableStore() 
+BerkeleyStore::BerkeleyStore() 
     : Logger("/berkeleydb/store")
 {
     // Real init code in do_init. 
 }
 
-BerkeleyTableStore::~BerkeleyTableStore()
+BerkeleyStore::~BerkeleyStore()
 {
     StringBuffer err_str;
 
@@ -46,18 +56,16 @@ BerkeleyTableStore::~BerkeleyTableStore()
     {
         log_err(err_str.c_str());
     }
-    dbenv_->close(0);
-    
-    delete dbenv_;
+    dbenv_->close(dbenv_, 0);
     dbenv_ = 0;
 
     fclose(err_log_);
 }
 
 void
-BerkeleyTableStore::init()
+BerkeleyStore::init()
 {
-    BerkeleyTableStore* s = new BerkeleyTableStore();
+    BerkeleyStore* s = new BerkeleyStore();
     DurableTableStore::init(s);
     if(s->do_init() != 0) {
         PANIC("Can't init() BerkeleyDB");
@@ -65,9 +73,11 @@ BerkeleyTableStore::init()
 }
 
 int 
-BerkeleyTableStore::do_init()
+BerkeleyStore::do_init()
 {
-    BerkeleyTableStoreCommand* config = BerkeleyTableStoreCommand::instance();
+    int err;
+
+    BerkeleyStoreCommand* config = BerkeleyStoreCommand::instance();
     config->ds_ = this;
     
     // cache database name
@@ -76,23 +86,28 @@ BerkeleyTableStore::do_init()
     // create database directory
     struct stat f_stat;
     const char* config_dir = config->dir_.c_str();
-    if (stat(config_dir, &f_stat) == -1)
+    if(stat(config_dir, &f_stat) == -1)
     {
-        if (errno == ENOENT)
+        if(errno == ENOENT)
         {
             log_info("creating new database directory %s", config_dir);
 
-            if (mkdir(config_dir, 0700) != 0) 
+            if(mkdir(config_dir, 0700) != 0) 
             {
                 log_crit("can't create datastore directory %s: %s",
                          config_dir, strerror(errno));
-                return -1;
+                return DS_ERR;
             }
         }
     }
 
     // Do real initialization
-    dbenv_   = new DbEnv(0);
+    db_env_create(&dbenv_, 0);
+    if(dbenv_ == 0) {
+        log_crit("Can't create db env");
+        return DS_ERR;
+    }
+
     err_log_ = ::fopen(config->err_log_.c_str(), "w");
 
     if(err_log_ == NULL) 
@@ -101,15 +116,15 @@ BerkeleyTableStore::do_init()
     }
     else 
     {
-        dbenv_->set_errfile(err_log_);
+        dbenv_->set_errfile(dbenv_, err_log_);
     }
 
     log_info("Using dbdir = %s, errlog = %s", config_dir, config->err_log_.c_str());
     
-    if (config->tidy_db_)
+    if(config->tidy_db_)
     {
         char cmd[256];
-        for (int i = config->tidy_wait_; i > 0; --i) {
+        for(int i = config->tidy_wait_; i > 0; --i) {
             log_warn("PRUNING CONTENTS OF %s IN %d SECONDS",
                      config_dir, i);
             sleep(1);
@@ -117,40 +132,41 @@ BerkeleyTableStore::do_init()
         sprintf(cmd, "/bin/rm -rf %s", config_dir);
         system(cmd);
     }
-
-    if (stat(config_dir, &f_stat) == -1)
+    if(stat(config_dir, &f_stat) == -1)
     {
-        if (errno == ENOENT)
+        if(errno == ENOENT)
         {
             log_info("creating new database directory %s", config_dir);
 
-            if (mkdir(config_dir, 0700) != 0) {
+            if(mkdir(config_dir, 0700) != 0) {
                 log_crit("can't create datastore directory: %s", strerror(errno));
-                return -1;
+                return DS_ERR;
             }
         }
     }
 
-    try 
-    {
-        dbenv_->open(config_dir,
-                     DB_CREATE     | // create new files
-                     DB_INIT_MPOOL | // initialize memory pool
-                     DB_INIT_LOG   | // use logging
-                     DB_INIT_TXN   | // use transactions
-                     DB_RECOVER    | // recover from previous crash (if any)
-                     DB_PRIVATE,     // only one process can access the db
-                     0);             // no flags
-
-        dbenv_->set_flags(DB_AUTO_COMMIT, // every op is automatically in a tx
-                          1);
-    } 
-    catch(DbException e) 
-    {
-        log_crit("DB: %s, cannot open database", e.what());
-        return -1;
+    err = dbenv_->open(dbenv_, 
+                       config_dir,
+                       DB_CREATE     | // create new files
+                       DB_INIT_MPOOL | // initialize memory pool
+                       DB_INIT_LOG   | // use logging
+                       DB_INIT_TXN   | // use transactions
+                       DB_RECOVER    | // recover from previous crash (if any)
+                       DB_PRIVATE,     // only one process can access the db
+                       0);             // no flags
+    if(err != 0) {
+        log_crit("DB: %s, cannot open database", db_strerror(err));
+        return DS_ERR;
     }
 
+    err = dbenv_->set_flags(dbenv_,
+                            DB_AUTO_COMMIT, // every op is automatically in a tx
+                            1);
+    if(err != 0) {
+        log_crit("DB: %s, cannot set flags", db_strerror(err));
+        return DS_ERR;
+    }
+    
     // Create database file if none exists. Table 0 is used for
     // storing general global metadata.
     std::string dbpath = config_dir;
@@ -161,25 +177,28 @@ BerkeleyTableStore::do_init()
     {
         if(errno == ENOENT)
         {
-            Db db(dbenv_, 0);
-            log_info("Creating new datafile file");
+            DB* db;
+
+            db_create(&db, dbenv_, 0);
+            log_info("Creating new database file");
             
-            try 
-            {
-                db.open(NO_TX, config->db_name_.c_str(),
-                        "0", DB_HASH ,DB_CREATE, 0);
-                db.close(0);
+            err = db->open(db, NO_TX, config->db_name_.c_str(),
+                           "0", DB_HASH ,DB_CREATE, 0);
+            if(err != 0) {
+                log_crit("Can't create database file");
+                return DS_ERR;
             }
-            catch(DbException e) 
-            {
-                log_err("DB: %s, could not create metatable", e.what());
-                return -1;
+            
+            err = db->close(db, 0);
+            if(err != 0) {
+                log_crit("Corrupt database file?!");
+                return DS_ERR;
             }
         }
         else
         {
             log_err("Unable to stat database file %d", errno);
-            return -1;
+            return DS_ERR;
         }
     }
 
@@ -188,59 +207,61 @@ BerkeleyTableStore::do_init()
     if(get_meta_table(&metatable) != 0) 
     {
         log_crit("Unable to open metatable!");
-        return -1;
+        return DS_ERR;
     }
-    
-    DurableTableItr* itr = new BerkeleyTableItr(metatable);
-//    int max_id = 0;
 
-/* XXX/bowei
-    while(itr->next() == DS_OK)
+/*  XXX/bowei
+    DurableTableItr* itr = new BerkeleyTableItr(metatable);
+    int max_id = 0;
+
+    while(itr->next() == 0)
     {
-        // XXX
         int id = atoi(static_cast<const char*>(itr->key()));
         max_id = (max_id < id) ? id : max_id;
     }
     next_id_ = max_id + 1;
-*/
 
     delete itr;
+*/
     delete metatable;
 
     return 0;
 }
 
 int
-BerkeleyTableStore::new_table(DurableTable** table)
+BerkeleyStore::new_table(DurableTable** table)
 {
+    DB* db;
+    int err;
     DurableTableId id = next_id_;
-    next_id_++;
-    
-    Db* db = new Db(dbenv_, 0);
 
-    try 
-    {
-        db->open(NO_TX, db_name_.c_str(), get_name(id).c_str(), 
-                 DB_HASH, DB_CREATE, 0);
-    } 
-    catch(DbException e)
-    {
-        // XXX/bowei - errors
-        log_err("DB: %s", e.what());
-        ASSERT(0);
+    next_id_++;
+    err = db_create(&db, dbenv_, 0);
+    if(err != 0) {
+        log_err("Can't create db pointer");
+        return DS_ERR;
+    }
+
+    err = db->open(db, NO_TX, db_name_.c_str(), get_name(id).c_str(), 
+                   DB_HASH, DB_CREATE, 0);
+    if(err != 0) {
+        log_err("DB: %s", db_strerror(err));
+        return DS_ERR;
     }
     
     log_debug("Creating new table %d", id);
 
     *table = new BerkeleyTable(id, db);
 
-    return DS_OK;
+    return 0;
 }
 
 
 int
-BerkeleyTableStore::del_table(int id)
+BerkeleyStore::del_table(int id)
 {
+    int err;
+    
     if(ref_count_[id] != 0)
     {
         log_info("Trying to delete table %d with %d refs still on it",
@@ -249,16 +270,13 @@ BerkeleyTableStore::del_table(int id)
         return DS_BUSY;
     }
 
-    try 
-    {
-        dbenv_->dbremove(NO_TX, db_name_.c_str(), get_name(id).c_str(), 0);
-        log_info("Deleting table %d", id);
-    } 
-    catch(DbException e)
-    {
-        log_err("DB: del_table %s", e.what());
+    log_info("Deleting table %d", id);
+    err = dbenv_->dbremove(dbenv_, NO_TX, db_name_.c_str(), 
+                           get_name(id).c_str(), 0);
+    if(err != 0) {
+        log_err("DB: del_table %s", db_strerror(err));
 
-        if(e.get_errno() == ENOENT) 
+        if(err == ENOENT) 
         {
             return DS_NOTFOUND;
         }
@@ -270,59 +288,66 @@ BerkeleyTableStore::del_table(int id)
     
     ref_count_.erase(id);
 
-    return DS_OK;
+    return 0;
 }
 
 
 int 
-BerkeleyTableStore::get_table(int id, DurableTable** table)
+BerkeleyStore::get_table(int id, DurableTable** table)
 {
-    Db* db = new Db(dbenv_, 0);
+    DB* db;
+    int err;
     
-    try 
-    {
-        db->open(NO_TX, db_name_.c_str(), get_name(id).c_str(), DB_UNKNOWN, 0, 0);
-    } 
-    catch(DbException e)
-    {
-        switch(e.get_errno()) 
+    err = db_create(&db, dbenv_, 0);
+    if(err != 0) {
+        log_err("Can't create db pointer");
+        return DS_ERR;
+    }
+    
+    err = db->open(db, NO_TX, db_name_.c_str(), 
+                   get_name(id).c_str(), DB_UNKNOWN, 0, 0);
+    if(err != 0) {
+        switch(err) 
         {
         case ENOENT:
             return DS_NOTFOUND;
         default:
-            log_err("DB: %s", e.what());
+            log_err("DB: %s", db_strerror(err));
             return DS_ERR;
         }
     }
     
     *table = new BerkeleyTable(id, db);
     
-    return DS_OK;
+    return 0;
 }
 
 int  
-BerkeleyTableStore::get_meta_table(DurableTable** table)
+BerkeleyStore::get_meta_table(DurableTable** table)
 {
-    Db* db = new Db(dbenv_, 0);
+    DB* db;
+    int err;
     
-    try 
-    {
-        db->open(NO_TX, db_name_.c_str(), 
-                 NULL, DB_UNKNOWN, DB_RDONLY, 0);
+    err = db_create(&db, dbenv_, 0);
+    if(err != 0) {
+        log_err("Can't create db pointer");
+        return DS_ERR;
     }
-    catch(DbException e) 
-    {
-        log_err("unable to open metatable - DB: %s", e.what());
+    
+    err = db->open(db, NO_TX, db_name_.c_str(), 
+                   NULL, DB_UNKNOWN, DB_RDONLY, 0);
+    if(err != 0) {
+        log_err("unable to open metatable - DB: %s", db_strerror(err));
         return DS_ERR;
     }
     
     *table = new BerkeleyTable(META_TABLE_ID, db);
     
-    return DS_OK;
+    return 0;
 }
 
 int
-BerkeleyTableStore::acquire_table(DurableTableId id)
+BerkeleyStore::acquire_table(DurableTableId id)
 {
     ++ref_count_[id];
     ASSERT(ref_count_[id] >= 0);
@@ -333,7 +358,7 @@ BerkeleyTableStore::acquire_table(DurableTableId id)
 }
 
 int
-BerkeleyTableStore::release_table(DurableTableId id)
+BerkeleyStore::release_table(DurableTableId id)
 {
     --ref_count_[id];
     ASSERT(ref_count_[id] >= 0);
@@ -344,7 +369,7 @@ BerkeleyTableStore::release_table(DurableTableId id)
 }
 
 std::string 
-BerkeleyTableStore::get_name(int id)
+BerkeleyStore::get_name(int id)
 {
     char buf[256];
     sprintf(buf, "%d", id);
@@ -357,13 +382,13 @@ BerkeleyTableStore::get_name(int id)
  * Dstable
  *
  *****************************************************************************/
-BerkeleyTable::BerkeleyTable(int id, Db* db)
+BerkeleyTable::BerkeleyTable(int id, DB* db)
     : DurableTable(id), db_(db)
 {
     logpathf("/berkeleydb/table(%d)", id);
 
-    BerkeleyTableStore* store = 
-        static_cast<BerkeleyTableStore*>(BerkeleyTableStore::instance()); 
+    BerkeleyStore* store = 
+        static_cast<BerkeleyStore*>(BerkeleyStore::instance()); 
     store->acquire_table(this->id());
 }
 
@@ -373,13 +398,13 @@ BerkeleyTable::~BerkeleyTable()
     // Note: If we are to multithread access to the same table, this
     // will have potential concurrency problems, because close can
     // only happen if no other instance of Db is around.
-    BerkeleyTableStore* store = 
-        static_cast<BerkeleyTableStore*>(BerkeleyTableStore::instance()); 
+    BerkeleyStore* store = 
+        static_cast<BerkeleyStore*>(BerkeleyStore::instance()); 
     
     if(store->release_table(id()) == 0)
     {
         log_debug("closing Db %d", id());
-        db_->close(0);
+        db_->close(db_, 0);
     }
 
     delete db_;
@@ -396,32 +421,26 @@ BerkeleyTable::get(const SerializableObject& key,
     if(key_buf_len == 0) 
     {
         log_err("zero or too long key length");
-        return -1;
-    }
-
-    Dbt k(static_cast<void*>(key_buf), key_buf_len);
-    Dbt d;
-
-    int err = 0;
-
-    try 
-    {
-        err = db_->get(NO_TX, &k, &d, 0);
-    } 
-    catch(DbException e)
-    {
-        log_err("DB: %s", e.what());
         return DS_ERR;
     }
+
+    DBT k, d;
+    MAKE_DBT(k, key_buf, key_buf_len);
+
+    int err = db_->get(db_, NO_TX, &k, &d, 0);
      
     if(err == DB_NOTFOUND) 
     {
         return DS_NOTFOUND;
     }
+    else 
+    {
+        log_err("DB: %s", db_strerror(err));
+        return DS_ERR;
+    }
     
     Unmarshal unmarshaller(Serialize::CONTEXT_LOCAL, 
-                           static_cast<const u_char*>(d.get_data()), 
-                           d.get_size());
+                           static_cast<const u_char*>(d.data),  d.size);
     data->serialize(&unmarshaller);
 
     return 0;
@@ -438,7 +457,7 @@ BerkeleyTable::put(const SerializableObject& key,
     if(key_buf_len == 0) 
     {
         log_err("zero or too long key length");
-        return -1;
+        return DS_ERR;
     }
 
     MarshalSize sizer(Serialize::CONTEXT_LOCAL);
@@ -448,19 +467,19 @@ BerkeleyTable::put(const SerializableObject& key,
         ScopeLock lock(&scratch_mutex_);
     
         u_char* buf = scratch_.buf(sizer.size());
+        int err;
         
         Marshal m(Serialize::CONTEXT_LOCAL, buf, scratch_.size());
         const_cast<SerializableObject*>(data)->serialize(&m);
         
-        try 
+        DBT k, d;
+        MAKE_DBT(k, key_buf, key_buf_len);
+        MAKE_DBT(d, buf, sizer.size());
+        err = db_->put(db_, NO_TX, &k, &d, 0);
+
+        if(err != 0) 
         {
-            Dbt k(static_cast<void*>(key_buf), key_buf_len);
-            Dbt d(static_cast<void*>(buf), sizer.size());
-            db_->put(NO_TX, &k, &d, 0);
-        } 
-        catch(DbException e)
-        {
-            log_err("DB: %s", e.what());
+            log_err("DB: %s", db_strerror(err));
             return DS_ERR;
         }
     } // unlock
@@ -481,18 +500,18 @@ BerkeleyTable::del(const SerializableObject& key)
         return DS_ERR;
     }
 
-    try 
+    DBT k;
+    MAKE_DBT(k, key_buf, key_buf_len);
+    
+    int err = db_->del(db_, NO_TX, &k, 0);
+    
+    if(err == DB_NOTFOUND) 
     {
-        Dbt k(static_cast<void*>(key_buf), key_buf_len);
-        int err = db_->del(NO_TX, &k, 0);
-        if(err == DB_NOTFOUND) 
-        {
-            return DS_NOTFOUND;
-        }
-    }
-    catch(DbException e)
+        return DS_NOTFOUND;
+    } 
+    else if(err != 0) 
     {
-        log_err("DB: %s", e.what());
+        log_err("DB: %s", db_strerror(err));
         return DS_ERR;
     }
 
@@ -522,18 +541,17 @@ BerkeleyTable::flatten_key(const SerializableObject& key,
  *
  *****************************************************************************/
 BerkeleyTableItr::BerkeleyTableItr(DurableTable* d)
-    : cur_(NULL), valid_(false)
+    : cur_(0), valid_(false)
 {
     logpathf("/berkeleydb/itr(%d)", d->id());
 
     BerkeleyTable* t = dynamic_cast<BerkeleyTable*>(d);
     ASSERT(t != 0);
 
-    try {
-        t->db_->cursor(NO_TX, &cur_, 0);
-    } catch(DbException e) {
-        log_err("DB: cannot create a DB iterator, err=%s", e.what());
-        cur_ = NULL;
+    int err = t->db_->cursor(t->db_, NO_TX, &cur_, 0);
+    if(err != 0) {
+        log_err("DB: cannot create a DB iterator, err=%s", db_strerror(err));
+        cur_ = 0;
     }
 
     if(cur_)
@@ -547,7 +565,11 @@ BerkeleyTableItr::~BerkeleyTableItr()
     valid_ = false;
     if(cur_) 
     {
-        cur_->close();
+        int err = cur_->c_close(cur_);
+
+        if(err != 0) {
+            log_err("Unable to close cursor, %s", db_strerror(err));
+        }
     }
 }
 
@@ -556,12 +578,9 @@ BerkeleyTableItr::next()
 {
     ASSERT(valid_);
 
-    int err;
-
-    try {
-        err = cur_->get(&key_, &data_, DB_NEXT);
-    } catch(DbException e) {
-        log_err("DB: %s", e.what());
+    int err = cur_->c_get(cur_, &key_, &data_, DB_NEXT);
+    if(err != 0) {
+        log_err("DB: %s", db_strerror(err));
         valid_ = false;
         
         return DS_ERR;
@@ -574,7 +593,7 @@ BerkeleyTableItr::next()
         return DS_NOTFOUND;
     }
 
-    return DS_OK;
+    return 0;
 }
 
 int 
@@ -586,12 +605,12 @@ BerkeleyTableItr::get(SerializableObject* obj)
 
 /******************************************************************************
  *
- * BerkeleyTableStoreCommand
+ * BerkeleyStoreCommand
  *
  *****************************************************************************/
-BerkeleyTableStoreCommand* BerkeleyTableStoreCommand::instance_;
+BerkeleyStoreCommand* BerkeleyStoreCommand::instance_;
 
-BerkeleyTableStoreCommand::BerkeleyTableStoreCommand()
+BerkeleyStoreCommand::BerkeleyStoreCommand()
     : oasys::AutoTclCommand("ds"), 
       tidy_db_(false),
       tidy_wait_(3),
@@ -602,7 +621,7 @@ BerkeleyTableStoreCommand::BerkeleyTableStoreCommand()
 }
 
 void
-BerkeleyTableStoreCommand::bind_vars()
+BerkeleyStoreCommand::bind_vars()
 {
     bind_b("tidy",   	&tidy_db_);
     bind_i("tidywait",	&tidy_wait_);
@@ -611,7 +630,7 @@ BerkeleyTableStoreCommand::bind_vars()
 }
 
 int
-BerkeleyTableStoreCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
+BerkeleyStoreCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
 {
 #if 0
     int err;
@@ -645,7 +664,7 @@ BerkeleyTableStoreCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
             {
                 BerkeleyTable* m;
                 err = ds_->get_meta_table(&m);
-                if (err != DS_OK) {
+                if(err != 0) {
                     resultf("unable to get metatable");
                     return TCL_ERROR;
                 }
@@ -653,7 +672,7 @@ BerkeleyTableStoreCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
                 BerkeleyTableItr* itr = new BerkeleyTableItr(m);
                 std::string result;
                 
-                while(itr->next() == DS_OK) 
+                while(itr->next() == 0) 
                 {
                     char buf[200];
                     memcpy(buf, itr->key(), itr->key_len());
@@ -687,7 +706,7 @@ BerkeleyTableStoreCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
             }
 
             int err;
-            if((err = ds_->del_table(id)) != DS_OK)
+            if((err = ds_->del_table(id)) != 0)
             {
                 if(err == DS_NOTFOUND)
                 {
@@ -714,8 +733,8 @@ BerkeleyTableStoreCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
                 DurableTable* t;
                 int table = atoi(argv[3]);
 
-                err = BerkeleyTableStore:instance()->get_table(table, &t);
-                if (err != DS_OK) {
+                err = BerkeleyStore:instance()->get_table(table, &t);
+                if(err != 0) {
                     set_result("Couldn't get table");
                     return -1;
                 }
@@ -723,7 +742,7 @@ BerkeleyTableStoreCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
              
                 oasys::StringBuffer result;
                     
-                while(itr->next() == DS_OK) {
+                while(itr->next() == 0) {
                     result.appendf("%.*s { %.*s }",
                                    itr->key_len(),
                                    (char*)itr->key(),
@@ -733,8 +752,8 @@ BerkeleyTableStoreCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
 
                 // make unprintable characters '?'
                 char* buf = result.data();
-                for (size_t i = 0; i < result.length(); i++) {
-                    if (buf[i] < 32 || buf[i] > 126)
+                for(size_t i = 0; i < result.length(); i++) {
+                    if(buf[i] < 32 || buf[i] > 126)
                         buf[i] = '?';
                 }
                 

@@ -2,8 +2,8 @@
 #define __BERKELEY_TABLE_STORE_H__
 
 #include <map>
+#include <db.h>
 
-#include "db_cxx.h"
 #include "tclcmd/TclCommand.h"
 #include "debug/Logger.h"
 #include "thread/Mutex.h"
@@ -19,7 +19,7 @@ class BerkeleyTable;
 /**
  * Interface for the generic datastore
  */
-class BerkeleyTableStore : public DurableTableStore, public Logger {
+class BerkeleyStore : public DurableTableStore, public Logger {
     friend class BerkeleyTable;
 
 public:
@@ -31,7 +31,7 @@ public:
      */
     static void init();
 
-    ~BerkeleyTableStore();
+    ~BerkeleyStore();
 
     /// @{ virtual from DataStore
     virtual int new_table(DurableTable** table);
@@ -43,7 +43,7 @@ public:
 private:
     FILE*       err_log_;     ///< db err log file
     std::string db_name_;     ///< Name of the database file
-    DbEnv*      dbenv_;       ///< database environment for all tables
+    DB_ENV*     dbenv_;       ///< database environment for all tables
 
     Mutex next_id_mutex_;
     DurableTableId next_id_;  ///< next table id to hand out
@@ -56,7 +56,7 @@ private:
     static const DurableTableId META_TABLE_ID = -1;
 
     /// Constructor - protected for singleton
-    BerkeleyTableStore();
+    BerkeleyStore();
     
     /// @{ Changes the ref count on the tables, used by BerkeleyTable 
     int acquire_table(DurableTableId id);
@@ -79,7 +79,7 @@ private:
  * this object represent multiple uses of the same table.
  */
 class BerkeleyTable : public DurableTable, public Logger {
-    friend class BerkeleyTableStore;
+    friend class BerkeleyStore;
     friend class BerkeleyTableItr;
 
 public:
@@ -95,7 +95,7 @@ private:
     /**
      * Only DataStore can create DsTables
      */
-    BerkeleyTable(DurableTableId id, Db* db);
+    BerkeleyTable(DurableTableId id, DB* db);
 
     /**
      * Helper method for flattening keys from the key objects.
@@ -103,7 +103,7 @@ private:
     size_t flatten_key(const SerializableObject& key, 
                     u_char* key_buf, size_t size);
 
-    Db* db_;
+    DB* db_;
 
     Mutex scratch_mutex_;   ///< This may cause performance problems.
     ScratchBuffer scratch_;
@@ -126,26 +126,28 @@ public:
 
 
 protected:
-    Dbc* cur_;                  ///< Current database cursor.
+    DBC* cur_;                  ///< Current database cursor.
     bool valid_;                ///< Status of the iterator.
-    Dbt key_, data_;            ///< Temporary storage for the current value.
+
+    DBT key_;
+    DBT data_;
 };
 
 
 /**
  * Data store configuration module.
  */
-class BerkeleyTableStoreCommand : public oasys::AutoTclCommand { 
-    friend class BerkeleyTableStore;
+class BerkeleyStoreCommand : public oasys::AutoTclCommand { 
+    friend class BerkeleyStore;
 
 public:
-    BerkeleyTableStoreCommand();
+    BerkeleyStoreCommand();
 
-    static BerkeleyTableStoreCommand* instance() 
+    static BerkeleyStoreCommand* instance() 
     {
 	if(instance_ == 0)
 	{
-	    instance_ = new BerkeleyTableStoreCommand();
+	    instance_ = new BerkeleyStoreCommand();
 	}
 
         return instance_;
@@ -163,9 +165,9 @@ public:
     std::string err_log_;	//!< Error log
 
 private:
-    static BerkeleyTableStoreCommand* instance_;
+    static BerkeleyStoreCommand* instance_;
 
-    BerkeleyTableStore* ds_;      //!< datastore configuration is attached to
+    BerkeleyStore* ds_;      //!< datastore configuration is attached to
 };
 
 }; // namespace oasys
