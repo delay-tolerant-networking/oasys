@@ -161,6 +161,36 @@ UIntOpt::set(const char* val, size_t len)
     return 0;
 }
 
+DoubleOpt::DoubleOpt(const char* opt, double* valp,
+                     const char* valdesc, const char* desc, bool* setp)
+    : Opt(0, opt, valp, setp, true, valdesc, desc)
+{
+}
+
+DoubleOpt::DoubleOpt(char shortopt, const char* longopt, double* valp,
+                     const char* valdesc, const char* desc, bool* setp)
+    : Opt(shortopt, longopt, valp, setp, true, valdesc, desc)
+{
+}
+
+int
+DoubleOpt::set(const char* val, size_t len)
+{
+    double newval;
+    char* endptr = 0;
+
+    newval = strtod(val, &endptr);
+    if (endptr != (val + len))
+        return -1;
+            
+    *((double*)valp_) = newval;
+    
+    if (setp_)
+        *setp_ = true;
+    
+    return 0;
+}
+
 StringOpt::StringOpt(const char* opt, std::string* valp,
                      const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)

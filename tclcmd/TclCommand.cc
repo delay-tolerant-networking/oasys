@@ -471,6 +471,15 @@ TclCommand::cmd_set(int objc, Tcl_Obj** objv, Tcl_Interp* interp)
             }
             break;
             
+        case BINDING_DOUBLE:
+            if (Tcl_GetDoubleFromObj(interp, val, b->val_.doubleval_) != TCL_OK) {
+                resultf("%s set: %s not an double value",
+                        Tcl_GetStringFromObj(objv[0], 0),
+                        Tcl_GetStringFromObj(val, 0));
+                return TCL_ERROR;
+            }
+            break;
+            
         case BINDING_BOOL:
             int boolval;
             if (Tcl_GetBooleanFromObj(interp, val, &boolval) != TCL_OK) {
@@ -507,6 +516,10 @@ TclCommand::cmd_set(int objc, Tcl_Obj** objv, Tcl_Interp* interp)
     {
     case BINDING_INT:
         resultf("%d", *(b->val_.intval_));
+        break;
+
+    case BINDING_DOUBLE:
+        resultf("%f", *(b->val_.doubleval_));
         break;
 
     case BINDING_BOOL:
@@ -562,6 +575,7 @@ _fn(const char* name, _type* val, _type initval)                        \
 }
 
 BIND_FUNCTIONS(TclCommand::bind_i, int, BINDING_INT);
+BIND_FUNCTIONS(TclCommand::bind_d, double, BINDING_DOUBLE);
 BIND_FUNCTIONS(TclCommand::bind_b, bool, BINDING_BOOL);
 BIND_FUNCTIONS(TclCommand::bind_addr, in_addr_t, BINDING_ADDR);
 

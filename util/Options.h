@@ -192,6 +192,45 @@ protected:
 };
 
 /**
+ * Doubleeger option class.
+ */
+class DoubleOpt : public Opt {
+public:
+    /**
+     * Basic constructor.
+     *
+     * @param opt     the option string
+     * @param valp    podoubleer to the value
+     * @param valdesc short description for the value 
+     * @param desc    descriptive string
+     * @param setp    optional podoubleer to indicate whether or not
+                      the option was set
+     */
+    DoubleOpt(const char* opt, double* valp,
+              const char* valdesc = "", const char* desc = "",
+              bool* setp = NULL);
+    
+    /**
+     * Alternative constructor with both short and long options,
+     * suitable for getopt calls.
+     *
+     * @param shortopt  short option character
+     * @param longopt   long option string
+     * @param valp      podoubleer to the value
+     * @param valdesc short description for the value 
+     * @param desc      descriptive string
+     * @param setp      optional podoubleer to indicate whether or not
+                        the option was set
+     */
+    DoubleOpt(char shortopt, const char* longopt, double* valp,
+              const char* valdesc = "", const char* desc = "",
+              bool* setp = NULL);
+    
+protected:
+    int set(const char* val, size_t len);
+};
+
+/**
  * String option class.
  */
 class StringOpt : public Opt {
@@ -200,10 +239,10 @@ public:
      * Basic constructor.
      *
      * @param opt     the option string
-     * @param valp    pointer to the value
+     * @param valp    podoubleer to the value
      * @param valdesc short description for the value 
      * @param desc    descriptive string
-     * @param setp    optional pointer to indicate whether or not
+     * @param setp    optional podoubleer to indicate whether or not
                       the option was set
      */
     StringOpt(const char* opt, std::string* valp,
@@ -216,10 +255,10 @@ public:
      *
      * @param shortopt  short option character
      * @param longopt   long option string
-     * @param valp      pointer to the value
+     * @param valp      podoubleer to the value
      * @param valdesc short description for the value 
      * @param desc      descriptive string
-     * @param setp      optional pointer to indicate whether or not
+     * @param setp      optional podoubleer to indicate whether or not
                         the option was set
      */
     StringOpt(char shortopt, const char* longopt, std::string* valp,

@@ -334,6 +334,7 @@ protected:
     enum type_t {
         BINDING_INVALID = -1,
         BINDING_INT = 1,
+        BINDING_DOUBLE, 
         BINDING_BOOL, 
         BINDING_STRING, 
         BINDING_ADDR
@@ -354,6 +355,7 @@ protected:
         union {
             void*	voidval_;
             int*	intval_;
+            double*	doubleval_;
             bool*	boolval_;
             in_addr_t*	addrval_;
             std::string* stringval_;
@@ -387,6 +389,12 @@ protected:
     void bind_i(const char* name, u_int8_t* val)  { bind_i(name, (int*)val); }
     ///@}
     
+    /**
+     * Bind a double to the set command
+     */
+    void bind_d(const char* name, double* val);
+    void bind_d(const char* name, double* val, double initval);
+
     /**
      * Bind a boolean to the set command
      */

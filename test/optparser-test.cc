@@ -11,6 +11,7 @@ bool test = 0;
 bool test_set = 0;
 int port = 10;
 int xyz = 50;
+double f = 10.5;
 std::string name("name");
 
 OptParser p;
@@ -43,6 +44,7 @@ main(int argc, char *const* argv)
     p.addopt(new BoolOpt("test", &test, "test flag", &test_set));
     p.addopt(new IntOpt("port", &port, "<port>", "listen port"));
     p.addopt(new IntOpt("xyz",  &xyz,  "<val>", "x y z"));
+    p.addopt(new DoubleOpt("f", &f, "<f>", "f"));
     p.addopt(new StringOpt("name", &name, "<name>", "app name"));
 
     const char* invalid;
@@ -61,12 +63,13 @@ main(int argc, char *const* argv)
     printf("  name: %s\n", name.c_str());
     printf("  xyz: %d\n", xyz);
 
-    testfn("test port=100 name=mike xyz=10", true);
+    testfn("test port=100 name=mike xyz=10 f=100.4", true);
     ASSERT(test == true);
     ASSERT(test_set == true);
     ASSERT(port == 100);
     ASSERT(name.compare("mike") == 0);
     ASSERT(xyz == 10);
+    ASSERT(f == 100.4);
 
     testfn("test=false", true);
     ASSERT(test == false);
@@ -104,7 +107,13 @@ main(int argc, char *const* argv)
     testfn("port", false);
     testfn("port=", false);
     testfn("port=foo", false);
+    testfn("port=10.5", false);
+
     testfn("test=", false);
     testfn("test=foo", false);
-    
+
+    testfn("f", false);
+    testfn("f=", false);
+    testfn("f=10", true);
+    testfn("f=10.5", true);
 }
