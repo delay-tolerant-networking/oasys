@@ -154,7 +154,7 @@ IO::truncate(int fd, off_t length, const char* log)
 {
     int ret = ftruncate(fd, length);
     if (log) {
-        logf(log, LOG_DEBUG, "truncate %u: %d", length, ret);
+        logf(log, LOG_DEBUG, "truncate %u: %d", (size_t)length, ret);
     }
     return ret;
 }
