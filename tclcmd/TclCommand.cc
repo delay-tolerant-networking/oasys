@@ -210,7 +210,12 @@ TclCommandInterp::reg(TclCommand *command)
     ScopeLock l(lock_);
     
     command->logf(LOG_DEBUG, "%s command registering", command->name());
-    
+
+    if (lookup(command->name())) {
+        log_warn("re-registering command %s over existing command",
+                 command->name());
+    }
+                 
     Tcl_CreateObjCommand(interp_, 
                          (char*)command->name(),
                          TclCommandInterp::tcl_cmd,
@@ -225,22 +230,21 @@ TclCommandInterp::lookup(const char* command, TclCommand** commandp)
 {
     Tcl_CmdInfo info;
 
-    log_debug("looking up tcl command %s...", command);
-    
     if (Tcl_GetCommandInfo(interp_, (char*)command, &info) == 0) {
-        log_debug("command %s does not exist", command);
+        log_debug("lookup tcl command %s: does not exist", command);
         return false;
     }
 
     if (info.objProc == TclCommandInterp::tcl_cmd) {
-        log_debug("tcl command %s exists and is TclCommand %p",
+        log_debug("lookup tcl command %s: exists and is TclCommand %p",
                   command, info.clientData);
         
         if (commandp)
             *commandp = (TclCommand*)info.objClientData;
         
     } else {
-        log_debug("tcl command %s exists but is not a TclCommand", command);
+        log_debug("lookup tcl command %s: exists but is not a TclCommand",
+                  command);
     }
 
     return true;
