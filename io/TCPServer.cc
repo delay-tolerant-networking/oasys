@@ -102,3 +102,16 @@ TCPServerThread::run()
         accepted(fd, addr, port);
     }
 }
+
+int
+TCPServerThread::bind_listen_start(in_addr_t local_addr,
+                                   u_int16_t local_port)
+{
+    int ret = bind(local_addr, local_port) || listen();
+    if(!ret)
+    {
+        start();
+    }
+
+    return ret;
+}

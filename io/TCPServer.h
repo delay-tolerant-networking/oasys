@@ -59,6 +59,18 @@ public:
      * for this guy, but instead just want to run the main loop.
      */
     void run();
+
+    /**
+     * @brief Bind to an address, open the port for listening and
+     * start the thread.
+     *
+     * Most uses of TcpServerThread will simply call these functions
+     * in sequence, so this helper function is to merge such
+     * redundancy.
+     *
+     * @return -1 on error, 0 otherwise.
+     */
+    int bind_listen_start(in_addr_t local_addr, u_int16_t local_port);
 };
                         
 #endif /* _TCP_SERVER_H_ */
