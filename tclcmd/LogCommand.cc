@@ -50,7 +50,10 @@ LogCommand::LogCommand()
 const char*
 LogCommand::help_string()
 {
-    return("log <path> <level> <string>");
+    return("log <path> <level> <string>\n"
+           "log prefix <prefix>\n"
+           "log rotate\n"
+           "log reparse_debug_file\n");
 }
 
 int
