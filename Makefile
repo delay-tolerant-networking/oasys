@@ -143,6 +143,7 @@ tclcmd/command-init-tcl.c: tclcmd/command-init.tcl
 # Include test files
 #
 include test/Makefile
+TESTS := $(patsubst %,test/%,$(TESTS))
 .PHONY: test tests
 test tests: $(TESTS)
 

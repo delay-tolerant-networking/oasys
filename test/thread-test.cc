@@ -1,0 +1,28 @@
+#include <unistd.h>
+#include <debug/Debug.h>
+#include <thread/Thread.h>
+
+#define THREADS_TO_CREATE 10
+
+using namespace oasys;
+
+class MyThread : public Thread {
+public:
+    MyThread() : Thread(DELETE_ON_EXIT | CREATE_DETACHED) {}
+protected:
+    void run() {}
+};
+
+int
+main()
+{
+    Log::init(LOG_DEBUG);
+
+    while(true) {
+	for(int i=0; i<THREADS_TO_CREATE; ++i) {
+	    MyThread* t = new MyThread();
+	    t->start();
+	}
+	::sleep(1);
+    }
+}

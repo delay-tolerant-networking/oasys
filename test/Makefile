@@ -1,15 +1,25 @@
-# test/memory-test
-TESTS += test/memory-test
-ALLSRCS += test/memory-test.cc
-test/memory-test: test/memory-test.o liboasys.a
-	$(CPP) $^ -o $@ $(LFLAGS) $(LIBS)
 
-TESTS += test/timer-test
-ALLSRCS += test/timer-test.cc
-test/timer-test: test/timer-test.o liboasys.a
-	$(CPP) $^ -o $@ $(LFLAGS) $(LIBS)
+TESTS += \
+	buffered-io-test	\
+	command-test		\
+	hexdump-test		\
+	log-test 		\
+	marshal-test 		\
+	md5-test 		\
+	memory-test 		\
+	msg-queue-test 		\
+	mutex-test 		\
+	options-test 		\
+	tcp-socket-test 	\
+	tcp-timeout-read-test 	\
+	tcp-writeall-test 	\
+	thread-test 		\
+	timer-test 		\
+	url-test 		\
 
-TESTS += test/hexdump-test
-ALLSRCS += test/hexdump-test.cc
-test/hexdump-test: test/hexdump-test.o liboasys.a
-	$(CPP) $^ -o $@ $(LFLAGS) $(LIBS)
+#
+# default rule for tests
+#
+test/%-test: test/%-test.cc
+	$(CPP) $^ -o $@ $(CFLAGS) $(LIBS) liboasys.a
+
