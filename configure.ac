@@ -78,6 +78,7 @@ AC_MSG_CHECKING([whether to compile with optimization])
 AC_MSG_RESULT($optimize)
 
 OPTIMIZE=
+OPTIMIZE_WARN=
 if test $optimize = yes ; then
    OPTIMIZE=-O2
    OPTIMIZE_WARN=-Wuninitialized
@@ -128,6 +129,9 @@ AC_PROG_CC($ac_try_cc)
 AC_MSG_CHECKING([for a C++ compiler (trying $ac_try_cxx)])
 AC_MSG_RESULT([])
 AC_PROG_CXX($ac_try_cxx)
+AC_PROG_AWK
+AC_PROG_INSTALL
+AC_PROG_MAKE_SET
 AC_PROG_RANLIB
 AC_OASYS_CONFIG_GCC
 AC_CHECK_LIB(pthread, pthread_create)
@@ -139,6 +143,7 @@ AC_OASYS_CONFIG_TCL
 dnl -------------------------------------------------------------------------
 dnl Checks for header files.
 dnl -------------------------------------------------------------------------
+AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h err.h fcntl.h float.h limits.h locale.h netdb.h netinet/in.h stddef.h stdint.h stdlib.h string.h synch.h sys/cdefs.h sys/ioctl.h sys/socket.h sys/time.h unistd.h wchar.h])
 
@@ -167,30 +172,8 @@ AC_TYPE_SIGNAL
 AC_FUNC_STAT
 AC_FUNC_STRTOD
 AC_FUNC_VPRINTF
-
-# This is most likely not the best "autoconfy" way of doing this...
-AC_MSG_CHECKING([whether math.h defines fpclassify])
-
-AC_CACHE_VAL([dtn_cv_func_fpclassify], [
-  dtn_cv_func_fpclassify=0
-  AC_TRY_COMPILE([
-    #define _GNU_SOURCE 1
-    #include <math.h>
-    #ifndef fpclassify
-    #error no fpclassify
-    #endif
-    ], 
-    [int main() {}], 
-    [dtn_cv_func_fpclassify=1])])
-
-if test $dtn_cv_func_fpclassify = 1 ; then
-  AC_DEFINE(HAVE_FPCLASSIFY, [], [Whether math.h defines fpclassify])
-  AC_MSG_RESULT([yes])
-else
-  AC_MSG_RESULT([no])
-fi
-
-AC_CHECK_FUNCS([getaddrinfo gethostbyname gethostbyname_r getopt_long gettimeofday inet_pton isascii localeconv memchr memmove memset pthread_yield sched_yield setenv socket strcasecmp strchr strcspn strdup strerror strspn strtol strtoul])
+AC_OASYS_FUNC_FPCLASSIFY
+AC_CHECK_FUNCS([bzero getaddrinfo gethostbyname gethostbyname_r getopt_long gettimeofday inet_pton isascii localeconv memchr memmove memset pthread_yield sched_yield mkdir setenv socket strcasecmp strchr strcspn strdup strerror strrchr strspn strstr strtol strtoul])
 
 dnl -------------------------------------------------------------------------
 dnl Output
