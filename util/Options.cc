@@ -1,7 +1,6 @@
 
 #include <unistd.h>
 #include "Options.h"
-#include "debug/Debug.h"
 
 Opt* Options::opts_[256];	// indexed by option character
 Opt* Options::head_;		// list of all registered Opts
@@ -12,22 +11,22 @@ Options::addopt(Opt* opt)
     for (unsigned int i = 0; i < strlen(opt->opts_); ++i) {
         int c = opt->opts_[i];
         if (opts_[c]) {
-            logf("/options", LOG_CRIT, "multiple addopt calls for char '%c'", c);
-            NOTIMPLEMENTED;
+            fprintf(stderr,
+                    "FATAL ERROR: multiple addopt calls for char '%c'", c);
+            abort();
         }
         
         opts_[c] = opt;
     }
 
     /*
-     * tack onto the tail to keep the usage order consistent with the
-     * registration order
+     * Tack the new option onto the tail to keep the usage order
+     * consistent with the registration order
      */
     Opt** p = &head_;
     while (*p)
         p = &((*p)->next_);
     *p = opt;
-    ASSERT(opt->next_ == 0);
 }
 
 void
@@ -52,8 +51,6 @@ Options::getopt(const char* progname, int argc, char* const argv[])
 
     *bp = '\0';
 
-    logf("/getopt", LOG_DEBUG, "optstring: %s", optstring);
-
     while (1) {
         c = ::getopt(argc, argv, optstring);
         switch(c) {
@@ -67,7 +64,10 @@ Options::getopt(const char* progname, int argc, char* const argv[])
         case -1:
             return;
         default:
-            ASSERT(c >= 0 && c < 256);
+            if (c < 0 || c > 256) {
+                fprintf(stderr, "FATAL ERROR: %d returned from getopt", c);
+                abort();
+            }
             opt = opts_[c];
 
             if (opt) {
@@ -75,8 +75,7 @@ Options::getopt(const char* progname, int argc, char* const argv[])
                 if (opt->setp_)
                     *opt->setp_ = true;
             } else {
-                logf("/getopt", LOG_ERR,
-                     "Unknown char '%c' returned from getopt", c);
+                fprintf(stderr, "unknown char '%c' returned from getopt", c);
             }
         }
     }
@@ -117,8 +116,8 @@ Opt::Opt(const char* opts, void* valp, bool* setp, bool hasval,
 
 Opt::~Opt()
 {
-    logf("/getopt", LOG_ERR, "opt classes should never be destroyed");
-    NOTREACHED;
+    fprintf(stderr, "FATAL ERROR: opt classes should never be destroyed");
+    abort();
 }
 
 BoolOpt::BoolOpt(const char* opts, bool* valp, const char* desc)
