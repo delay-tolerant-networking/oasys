@@ -134,9 +134,9 @@ public:
     /**
      * Initialize the logging system. Must be called exactly once.
      */
-    static void init(int logfd,
+    static void init(const char* logfile    = "-",
                      log_level_t defaultlvl = LOG_DEFAULT_THRESHOLD,
-                     const char *prefix = NULL,
+                     const char *prefix     = NULL,
                      const char *debug_path = LOG_DEFAULT_DBGFILE);
 
     /**
@@ -149,7 +149,8 @@ public:
      * all other variants. Returns the number of bytes written, i.e.
      * zero if the log line was suppressed.
      */
-    int vlogf(const char *path, log_level_t level, const char *fmt, va_list ap);
+    int vlogf(const char *path, log_level_t level,
+              const char *fmt, va_list ap);
 
     /**
      * Return the log level currently enabled for the path.
@@ -175,7 +176,26 @@ public:
         prefix_.assign(prefix);
     }
 
+    /**
+     * Close and reopen the log file.
+     */
+    void rotate();
+
+    /**
+     * Set up a signal handler for the given signal to do log
+     * rotation.
+     */
+    void add_rotate_handler(int sig);
+
+    /**
+     * Set up a signal handler for the given signal to re-parse the
+     * debug file.
+     */
+    void add_reparse_handler(int sig);
+
 protected:
+    friend class LogCommand;
+    
     Log();
     virtual ~Log() {} // never called
 
@@ -183,7 +203,7 @@ protected:
      * Initialize logging, should be called exactly once from the
      * static Log::init or LogSim::init.
      */
-    void do_init(int logfd, log_level_t defaultlvl,
+    void do_init(const char* logfile, log_level_t defaultlvl,
                  const char* prefix, const char* debug_path);
 
     /**
@@ -240,6 +260,7 @@ private:
     void print_rules();
 
     bool inited_;		///< Flag to ensure one-time intialization
+    std::string logfile_;	///< Log output file (- for stdout)
     int logfd_;			///< Output file descriptor
     RuleList* rule_list_;	///< List of logging rules
     SpinLock* lock_;		///< Lock for logf and re-parsing

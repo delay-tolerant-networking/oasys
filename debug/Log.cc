@@ -49,22 +49,37 @@ Log::Log()
 }
 
 void
-Log::init(int logfd, log_level_t defaultlvl,
+Log::init(const char* logfile, log_level_t defaultlvl,
           const char* prefix, const char* debug_path)
 {
     Log* log = new Log();
-    log->do_init(logfd, defaultlvl, prefix, debug_path);
+    log->do_init(logfile, defaultlvl, prefix, debug_path);
 }
 
 void
-Log::do_init(int logfd, log_level_t defaultlvl,
+Log::do_init(const char* logfile, log_level_t defaultlvl,
              const char* prefix, const char *debug_path)
 {
     ASSERT(instance_ == NULL);
     ASSERT(!inited_);
 
     instance_ = this;
-    logfd_ = logfd;
+
+    // Open the output file descriptor
+    logfile_.assign(logfile);
+    if (logfile_.compare("-") == 0) {
+        logfd_ = 1; // stdout
+    } else {
+        logfd_ = open(logfile_.c_str(), O_CREAT | O_WRONLY | O_APPEND,
+                      S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        
+        if (logfd_ < 0) {
+            fprintf(stderr, "fatal error opening log file '%s': %s\n",
+                    logfile_.c_str(), strerror(errno));
+            exit(1);
+        }
+    }
+
     if (prefix)
         prefix_.assign(prefix);
 
@@ -266,6 +281,33 @@ Log::add_debug_rule(const char* path, log_level_t threshold)
     ASSERT(path);
     rule_list_->push_back(Rule(path, threshold));
     sort_rules();
+}
+
+void
+Log::rotate()
+{
+    ScopeLock l(lock_);
+
+    if (logfd_ == 1) {
+        logf("/log", LOG_WARN, "can't rotate when using stdout for logging");
+        return;
+    }
+    
+    int newfd = open(logfile_.c_str(), O_CREAT | O_WRONLY | O_APPEND,
+                     S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+    if (newfd < 0) {
+        logf("/log", LOG_ERR, "error re-opening log file for rotate: %s",
+             strerror(errno));
+        logf("/log", LOG_INFO, "keeping old log file open");
+        return;
+    }
+
+    logf("/log", LOG_ERR, "closing log file for rotation");
+    close(logfd_);
+    
+    logfd_ = newfd;
+    logf("/log", LOG_ERR, "reopened log file after log rotate");
 }
 
 /**

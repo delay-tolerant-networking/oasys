@@ -5,7 +5,10 @@
 #include "debug/Log.h"
 
 LogCommand::LogCommand()
-    : TclCommand("log") {}
+    : TclCommand("log")
+{
+    bind_s("logfile", &Log::instance()->logfile_);
+}
 
 const char*
 LogCommand::help_string()
@@ -20,6 +23,12 @@ LogCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
     if (argc == 3 && !strcmp(argv[1], "prefix")) {
         Log::instance()->set_prefix(argv[2]);
         ::logf("/log", LOG_DEBUG, "set logging prefix to '%s'", argv[2]);
+        return TCL_OK;
+    }
+
+    // log rotate
+    if (argc == 2 && !strcmp(argv[1], "rotate")) {
+        Log::instance()->rotate();
         return TCL_OK;
     }
     
