@@ -19,6 +19,8 @@ public:
     size_t size() { return size_; }
     
 private:
+    static const int INIT_SIZE = 256;
+    
     char*  buf_;
     size_t size_;
 };
