@@ -39,6 +39,7 @@
 #ifndef _OASYS_IOCLIENT_H_
 #define _OASYS_IOCLIENT_H_
 
+#include <sys/types.h>
 #include <sys/uio.h>
 
 namespace oasys {
