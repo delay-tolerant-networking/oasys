@@ -6,12 +6,14 @@
 class StreamBuffer {
 public:
     StreamBuffer(size_t size = DEFAULT_BUFSIZE);
+    ~StreamBuffer();
 
     void set_size(size_t size);
 
-    char& operator[](size_t offset);
-    char* buffer();
+    char* start();
+    char* end();
     
+    void reserve(size_t amount);
     void fill(size_t amount);
     void consume(size_t amount);
     void clear();

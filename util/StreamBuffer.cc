@@ -15,6 +15,15 @@ StreamBuffer::StreamBuffer(size_t size) :
     buf_ = static_cast<char*>(malloc(size_));
 }
 
+StreamBuffer::~StreamBuffer()
+{
+    if(buf_) 
+    {
+        free(buf_);
+        buf_ = 0;
+    }
+}
+
 void
 StreamBuffer::set_size(size_t size)
 {
@@ -24,23 +33,20 @@ StreamBuffer::set_size(size_t size)
     realloc(size);
 }
 
-char&
-StreamBuffer::operator[](size_t offset)
-{
-    ASSERT(offset + start_ < end_);
-    ASSERT(buf_ != 0);
-   
-    return buf_[offset + start_];
-}
-
 char*
-StreamBuffer::buffer()
+StreamBuffer::start()
 {
     return &buf_[start_];
 }
 
+char*
+StreamBuffer::end()
+{
+    return &buf_[end_];
+}
+
 void
-StreamBuffer::fill(size_t amount)
+StreamBuffer::reserve(size_t amount)
 {
     if(amount <= size_ - end_) 
     {
@@ -55,7 +61,12 @@ StreamBuffer::fill(size_t amount)
         moveup();
         realloc((amount > size_*2) ? amount : (size_*2));
     }
+}
 
+void
+StreamBuffer::fill(size_t amount)
+{
+    reserve(amount);
     end_ += amount;
 }
 
