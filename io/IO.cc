@@ -148,6 +148,18 @@ IO::lseek(int fd, off_t offset, int whence, const char* log)
     return cc;
 }
 
+    
+int
+IO::truncate(int fd, off_t length, const char* log)
+{
+    int ret = ftruncate(fd, length);
+    if (log) {
+        logf(log, LOG_DEBUG, "truncate %u: %d", length, ret);
+    }
+    return ret;
+}
+
+
 int
 IO::send(int fd, const char* bp, size_t len, int flags,
          const char* log)

@@ -64,6 +64,7 @@ public:
     int close();
     int unlink();
     int lseek(off_t offset, int whence);
+    int truncate(off_t length);
     ///@}
 
     /// Set the path associated with this file handle

@@ -95,6 +95,9 @@ public:
     static int lseek(int fd, off_t offset, int whence,
                      const char* log = NULL);
     
+    static int truncate(int fd, off_t length,
+                        const char* log = NULL);
+    
     static int send(int fd, const char* bp, size_t len, int flags,
                     const char* log = NULL);
     

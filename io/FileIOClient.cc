@@ -102,4 +102,10 @@ FileIOClient::lseek(off_t offset, int whence)
     return IO::lseek(fd_, offset, whence, logpath_);
 }
 
+int
+FileIOClient::truncate(off_t length)
+{
+    return IO::truncate(fd_, length, logpath_);
+}
+
 } // namespace oasys
