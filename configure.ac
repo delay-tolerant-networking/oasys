@@ -178,5 +178,9 @@ AC_CHECK_FUNCS([bzero getaddrinfo gethostbyname gethostbyname_r getopt_long gett
 dnl -------------------------------------------------------------------------
 dnl Output
 dnl -------------------------------------------------------------------------
+CPPFLAGS="$CPPFLAGS $OASYS_CPPFLAGS"
+LDFLAGS="$LDFLAGS $OASYS_LDFLAGS"
+LIBS="$LIBS $OASYS_LIBS"
+
 AC_CONFIG_FILES([Rules.make])
 AC_OUTPUT
