@@ -139,6 +139,7 @@ AC_CHECK_LIB(socket, socket)
 AC_CHECK_LIB(nsl, gethostbyname)
 AC_CHECK_LIB(rt, sched_yield)
 AC_OASYS_CONFIG_TCL
+AC_OASYS_CONFIG_DB
 
 dnl -------------------------------------------------------------------------
 dnl Checks for header files.
