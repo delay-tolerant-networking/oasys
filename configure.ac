@@ -151,6 +151,8 @@ AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_C_VOLATILE
 AC_CHECK_TYPES([ptrdiff_t])
+AC_CHECK_TYPES([uint32_t])
+AC_CHECK_TYPES([u_int32_t])
 
 dnl -------------------------------------------------------------------------
 dnl Checks for library functions.
@@ -162,7 +164,17 @@ AC_TYPE_SIGNAL
 AC_FUNC_STAT
 AC_FUNC_STRTOD
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([fpclassify getaddrinfo gethostbyname gethostbyname_r gettimeofday isascii localeconv memchr memmove memset pthread_yield sched_yield setenv socket strcasecmp strcspn strdup strerror strspn strtol strtoul])
+# This is most likely not the best "autoconfy" way of doing this...
+AC_MSG_CHECKING([whether math.h defines fpclassify])
+grep fpclassify /usr/include/math.h > /dev/null 2> /dev/null
+if test $? = 0 ; then
+    AC_DEFINE(HAVE_FPCLASSIFY, [], [Whether math.h defines fpclassify])
+    AC_MSG_RESULT([yes])
+else
+    AC_MSG_RESULT([no])
+fi
+
+AC_CHECK_FUNCS([getaddrinfo gethostbyname gethostbyname_r gettimeofday isascii localeconv memchr memmove memset pthread_yield sched_yield setenv socket strcasecmp strcspn strdup strerror strspn strtol strtoul])
 
 dnl -------------------------------------------------------------------------
 dnl Output

@@ -12,7 +12,7 @@
 /* Define to 1 if you have the <float.h> header file. */
 #undef HAVE_FLOAT_H
 
-/* Define to 1 if you have the `fpclassify' function. */
+/* Whether math.h defines fpclassify */
 #undef HAVE_FPCLASSIFY
 
 /* Define to 1 if you have the `getaddrinfo' function. */
@@ -147,8 +147,14 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
+/* Define to 1 if the system has the type `uint32_t'. */
+#undef HAVE_UINT32_T
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Define to 1 if the system has the type `u_int32_t'. */
+#undef HAVE_U_INT32_T
 
 /* Define to 1 if you have the `vprintf' function. */
 #undef HAVE_VPRINTF

@@ -6,6 +6,9 @@
 # Source lists
 #
 
+COMPAT_SRCS :=					\
+	compat/fpclassify.c			\
+
 DEBUG_SRCS :=					\
 	debug/gdtoa-dmisc.c			\
 	debug/gdtoa-dtoa.c			\
@@ -67,6 +70,7 @@ UTIL_SRCS :=					\
 
 SRCS := \
 	version.c				\
+	$(COMPAT_SRCS) 				\
 	$(DEBUG_SRCS) 				\
 	$(IO_SRCS) 				\
 	$(MEMORY_SRCS)                          \

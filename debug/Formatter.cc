@@ -41,6 +41,7 @@ using oasys::Formatter;
 
 #include <stdarg.h>
 #include "config.h"
+#include "compat/fpclassify.h"
 
 /**
  * @file
