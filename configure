@@ -45,6 +45,7 @@ debug='-g'
 # optimizewarn='-Wuninitialized' # depends on -O
 optimize=''
 optimizewarn=''
+target='native'
 
 #
 # External libraries
@@ -125,6 +126,9 @@ do
   -with-tclver=* | --with-tclver=*)
     tclver="$ac_optarg" ;;
 
+  --target=*)
+    target="$ac_optarg";;
+
   -help | --help | -h)
     cat <<EOF
 Usage: configure [options]
@@ -176,6 +180,9 @@ if [ -z "$legal" ] ; then
     exit 1
 fi
 
+
+if [ $target = "native" ]; then
+
 #
 # Make sure the compiler a) works b) is some gcc variant and c) is an
 # acceptable version.
@@ -200,6 +207,12 @@ rm -f config.$$.c
 ccver=`./a.out`
 rm -f ./a.out
 
+fi
+
+elif [ "$target" = "arm" ]; then
+ccver=2.95
+mysql_enabled=0
+postgres_enabled=0
 fi
 
 #
@@ -332,6 +345,7 @@ done
 echo "oasys configure state:"
 echo "Platform:"
 echo "  OS: $platform"
+echo "  target: $target"
 echo "Target/Tools:"
 echo "  SRCDIR: $srcdir"
 echo "  CC: $cc"
@@ -370,6 +384,7 @@ s%@LIBDIRS@%$libdirs%g
 s%@LIBS@%$libs%g
 s%@STATIC_LIBS@%$staticlibs%g
 s%@PTHREAD_FLAG@%$pthreadflag%g
+s%@TARGET@%$target%g
 
 " $srcdir/Rules.make.in >> Rules.make
 chmod oag-w Rules.make

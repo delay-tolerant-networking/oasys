@@ -18,6 +18,7 @@ OPTIMIZE	= @OPTIMIZE@
 WARN		= -Wall -Werror @OPTIMIZE_WARN@
 CFLAGS		= $(INCDIRS) $(DEBUG) $(OPTIMIZE) $(DEPFLAGS) $(WARN)
 LFLAGS		= $(LIBDIRS) @STATIC@
+TARGET          = @TARGET@
 
 #
 # Add a phony rule to make sure this isn't included before the default
