@@ -42,12 +42,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#ifdef __FreeBSD__
-#include <netinet/in_systm.h>
-#endif // __FreeBSD
-
 #include <netinet/in.h>
-#include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <errno.h>
 
