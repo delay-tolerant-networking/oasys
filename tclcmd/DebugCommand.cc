@@ -60,7 +60,8 @@ DebugCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
         return TCL_ERROR;
     }
     const char* cmd = argv[1];
-    
+
+#ifdef OASYS_DEBUG_MEMORY_ENABLED
     // debug dump_memory
     if (!strcmp(cmd, "dump_memory")) {
         DbgMemInfo::debug_dump();
@@ -68,10 +69,11 @@ DebugCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
     } else if (!strcmp(cmd, "dump_memory_diffs")) {
         DbgMemInfo::debug_dump(true);
         return TCL_OK;
-    } else {
-        resultf("unimplemented debug subcommand %s", cmd);
-        return TCL_ERROR;
     }
+#endif // OASYS_DEBUG_MEMORY_ENABLED
+    
+    resultf("unimplemented debug subcommand %s", cmd);
+    return TCL_ERROR;
 }
 
 } // namespace oasys

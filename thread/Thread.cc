@@ -116,7 +116,9 @@ Thread::start()
     while (pthread_create(&pthread_, 0, Thread::thread_run, this) != 0) {
         if (++ntries == 10000) {
             PANIC("maximum thread creation attempts");
+#ifdef OASYS_DEBUG_MEMORY_ENABLED
             DbgMemInfo::debug_dump();
+#endif
         }
         
         log_err("/thread", "error in pthread_create: %s, retrying",

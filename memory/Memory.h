@@ -35,13 +35,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _OASYS__MEMORY_H__
-#define _OASYS__MEMORY_H__
+#ifndef _OASYS_MEMORY_H_
+#define _OASYS_MEMORY_H_
 
-// XXX/demmer fix this for gcc2
-#if (__GNUC__ >= 3)
+#include "../config.h"
 
-#ifndef NDEBUG_MEMORY
+#ifdef OASYS_DEBUG_MEMORY_ENABLED
 
 #include <cstddef>
 #include <cstdlib>
@@ -286,8 +285,7 @@ private:
 #undef MOD
 
 } // namespace oasys
-#endif // NDEBUG_MEMORY
 
-#endif // (__GNUC__ >= 3)
+#endif // OASYS_DEBUG_MEMORY_ENABLED
 
-#endif //_OASYS__MEMORY_H__
+#endif //_OASYS_MEMORY_H_
