@@ -47,6 +47,7 @@
 
 #include <netinet/in.h>
 
+#include "../compat/inttypes.h"
 #include "../debug/Debug.h"
 
 namespace oasys {

@@ -47,6 +47,7 @@
 #include <errno.h>
 
 #include "IO.h"
+#include "../compat/inttypes.h"
 #include "../debug/Log.h"
 
 namespace oasys {
