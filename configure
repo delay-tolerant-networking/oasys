@@ -2794,8 +2794,7 @@ echo "$as_me: error: cannot configure without tcl" >&2;}
     fi
 
                 if test ! x$oasys_cv_path_tcl_h = x ; then
-        echo "checking for tcl installation... (cached) \
-	      ($oasys_cv_path_tcl_h/tcl.h, $oasys_cv_path_tcl_lib -l$oasys_cv_lib_tcl)"
+        echo "checking for tcl installation... (cached) $oasys_cv_path_tcl_h/tcl.h, $oasys_cv_path_tcl_lib -l$oasys_cv_lib_tcl"
     else
 
     oasys_cv_path_tcl_h=
