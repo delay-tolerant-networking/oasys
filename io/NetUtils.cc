@@ -82,6 +82,7 @@ gethostbyname(const char* name, in_addr_t* addr)
     struct hostent h;
     char buf[2048];
     struct hostent* ret = 0;
+    (void)ret;
     int h_err;
 
     
