@@ -66,9 +66,12 @@ struct Bar : public Obj {
     int i_;
 };
 
+BUILDER_TYPECODE(TestC, Foo, 1);
+BUILDER_TYPECODE(TestC, Bar, 2);
+BUILDER_TYPECODE_AGGREGATE(TestC, Obj, 1, 2);
+
 BUILDER_CLASS(TestC, Foo, 1);
 BUILDER_CLASS(TestC, Bar, 2);
-BUILDER_TYPECODE_AGGREGATE(TestC, Obj, 1, 2);
 
 DECLARE_TEST(Builder1) {
     u_char buf[4];
@@ -148,12 +151,22 @@ DECLARE_TEST(BuilderAgg) {
     return 0;
 }
 
+DECLARE_TEST(BuilderNames) {
+    CHECK_EQUALSTR(Builder<TestC>::instance()->type_name(1),
+	           "TestC::Foo");
+    CHECK_EQUALSTR(Builder<TestC>::instance()->type_name(2),
+	           "TestC::Bar");
+    
+    return 0;
+}
+
 DECLARE_TESTER(BuilderTest) {
     ADD_TEST(Builder1);
     ADD_TEST(Builder2);
     ADD_TEST(BuilderTypeCode);
     ADD_TEST(BuilderCorrupt);
     ADD_TEST(BuilderAgg);
+    ADD_TEST(BuilderNames);
 }
 
 DECLARE_TEST_FILE(BuilderTest, "builder test");

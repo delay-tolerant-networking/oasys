@@ -169,9 +169,17 @@ public:
         return 0;
     }
 
+    const char* type_name(TypeCode_t typecode) {
+	if(dispatch_.find(typecode) == dispatch_.end()) {
+	    return "";
+	} 
+
+	return dispatch_[typecode]->name();
+    }
+
 private:
     std::map<TypeCode_t, BuilderHelper*> dispatch_;
-    static Builder<_TypeCollection>* instance_;
+    static Builder<_TypeCollection>*     instance_;
 };
 
 /**
@@ -181,6 +189,7 @@ private:
 class BuilderHelper {
 public:
     virtual void* new_object() = 0;
+    virtual const char* name() const = 0;
 };
 
 /**
@@ -193,7 +202,8 @@ class BuilderDispatch : public BuilderHelper {
 public:
     /** Register upon creation. */
     BuilderDispatch<_TypeCollection, _Class>
-    (typename Builder<_TypeCollection>::TypeCode_t typecode) 
+	(typename Builder<_TypeCollection>::TypeCode_t typecode,
+	 const char* name) : name_(name)
     {
         Builder<_TypeCollection>::instance()->reg(typecode, this);
     }
@@ -211,13 +221,19 @@ public:
         return static_cast<void*>
             (new _Class(Builder<_TypeCollection>::instance()));
     }
+
+    const char* name() const { return name_; }
+    
+private:
+    const char* name_;
 };
 
 /**
  * Macro to use to define a class to be used by the builder.
  */
-#define BUILDER_CLASS(_collection, _class, _typecode)                   \
-    BuilderDispatch<_collection, _class> _class ## Builder(_typecode);  \
+#define BUILDER_CLASS(_collection, _class, _typecode)             \
+    BuilderDispatch<_collection, _class>                          \
+        _class ## Builder(_typecode, #_collection "::" #_class);  \
 
 /**
  * Define the builder C++ type -> typecode converter
