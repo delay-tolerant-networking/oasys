@@ -47,6 +47,7 @@
 
 #include "Debug.h"
 #include "Log.h"
+#include "compat/inttypes.h"
 #include "thread/SpinLock.h"
 #include "thread/Timer.h"
 #include "io/IO.h"
