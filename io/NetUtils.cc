@@ -22,6 +22,7 @@
 
 #include "../config.h"
 #include "NetUtils.h"
+#include "compat/inet_aton.h"
 #include "debug/Debug.h"
 #include <stdlib.h>
 #include <string.h>
@@ -73,7 +74,7 @@ gethostbyname(const char* name, in_addr_t* addr)
     ASSERT(addr);
 
     // name is a numerical address
-    if (inet_pton(AF_INET, name, (struct in_addr*)addr) != 0) {
+    if (inet_aton(name, (struct in_addr*)addr) != 0) {
         return 0;
     }
 
@@ -120,24 +121,22 @@ gethostbyname(const char* name, in_addr_t* addr)
     
     freeaddrinfo(res);
     return 0;
-
-
-    // XXX/demmer see if this is needed...
     
-// #elif defined(HAVE_GETHOSTBYNAME)
+#elif defined(HAVE_GETHOSTBYNAME)
+    // make it thread-safe by using a global lock
+    static SpinLock gethostbyname_lock;
+    ScopeLock(&gethostbyname_lock);
     
-//     // XXX/jra can we really get away with using a non-reentrant one here?
-
-//     struct hostent *hent;
-//     hent = ::gethostbyname(name);
-//     if (hent == NULL) {
-//         logf("/net", LOG_ERR, "error return from gethostbyname: %s",
-//              strerror(h_errno));
-//         return -1;
-//     } else {
-//         *addr = ((struct in_addr**)hent->h_addr_list)[0]->s_addr;
-//         return 0;
-//     }
+    struct hostent *hent;
+    hent = ::gethostbyname(name);
+    if (hent == NULL) {
+        logf("/net", LOG_ERR, "error return from gethostbyname: %s",
+             strerror(h_errno));
+        return -1;
+    } else {
+        *addr = ((struct in_addr**)hent->h_addr_list)[0]->s_addr;
+        return 0;
+    }
     
 #else
 #error No gethostbyname equivalent available for this platform
