@@ -77,6 +77,7 @@ level2str_t log_levelnames[] =
     { "err",     LOG_ERR },
     { "critical",LOG_CRIT },
     { "crit",    LOG_CRIT },
+    { "always",  LOG_ALWAYS },
     { NULL,      LOG_INVALID }
 };
 
@@ -246,8 +247,8 @@ Log::parse_debug_file(const char* debug_path)
     old_rule_list = rule_list_;
     rule_list_ = new_rule_list;
     if (inited_) {
-        log_crit("/log", "reparsed debug file... found %d rules",
-                 new_rule_list->size());
+        logf("/log", LOG_ALWAYS, "reparsed debug file... found %d rules",
+             new_rule_list->size());
     }
     lock_->unlock();
 

@@ -119,7 +119,8 @@ typedef enum {
     LOG_INFO    = 2,
     LOG_WARN    = 3,
     LOG_ERR     = 4,
-    LOG_CRIT    = 5
+    LOG_CRIT    = 5,
+    LOG_ALWAYS  = 6
 } log_level_t;
 
 #ifndef DOXYGEN
