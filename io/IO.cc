@@ -19,6 +19,17 @@ IO::open(const char* path, int flags, const char* log)
 }
 
 int
+IO::open(const char* path, int flags, mode_t mode, const char* log)
+{
+    int fd = ::open(path, flags, mode);
+    if (log) {
+        logf(log, LOG_DEBUG, "open %s (flags 0x%x mode 0x%x): fd %d",
+             path, flags, mode, fd);
+    }
+    return fd;
+}
+    
+int
 IO::close(int fd, const char* log)
 {
     int ret = ::close(fd);
@@ -73,6 +84,16 @@ IO::writev(int fd, const struct iovec* iov, int iovcnt, const char* log)
 }
 
 int
+IO::unlink(const char* path, const char* log)
+{
+    int ret = ::unlink(path);
+    if (log) {
+        logf(log, LOG_DEBUG, "unlink %s: %d", path, ret);
+    }
+    return ret;
+}
+
+int
 IO::lseek(int fd, off_t offset, int whence, const char* log)
 {
     int cc = ::lseek(fd, offset, whence);
@@ -89,44 +110,79 @@ IO::lseek(int fd, off_t offset, int whence, const char* log)
 }
 
 int
-IO::open(const char* path, int flags, mode_t mode, const char* log)
+IO::send(int fd, const char* bp, size_t len, int flags,
+         const char* log)
 {
-    int fd = ::open(path, flags, mode);
-    if (log) {
-        logf(log, LOG_DEBUG, "open %s (flags 0x%x mode 0x%x): fd %d",
-             path, flags, mode, fd);
-    }
-    return fd;
+    int cc = ::send(fd, (void*)bp, len, flags);
+    if (log) logf(log, LOG_DEBUG, "send %d/%d", cc, len);
+    return cc;
 }
-    
+
 int
-IO::unlink(const char* path, const char* log)
+IO::sendto(int fd, char* bp, size_t len, int flags,
+           const struct sockaddr* to, socklen_t tolen,
+           const char* log)
 {
-    int ret = ::unlink(path);
-    if (log) {
-        logf(log, LOG_DEBUG, "unlink %s: %d", path, ret);
-    }
-    return ret;
+    int cc = ::sendto(fd, (void*)bp, len, flags, to, tolen);
+    if (log) logf(log, LOG_DEBUG, "sendto %d/%d", cc, len);
+    return cc;
+}
+
+int
+IO::sendmsg(int fd, const struct msghdr* msg, int flags,
+            const char* log)
+{
+    int cc = ::sendmsg(fd, msg, flags);
+    if (log) logf(log, LOG_DEBUG, "sendmsg: %d", cc);
+    return cc;
+}
+
+int
+IO::recv(int fd, char* bp, size_t len, int flags,
+            const char* log)
+{
+    int cc = ::recv(fd, (void*)(bp), len, flags);
+    if (log) logf(log, LOG_DEBUG, "recv %d/%d", cc, len);
+    return cc;
+}
+
+int
+IO::recvfrom(int fd, char* bp, size_t len, int flags,
+             struct sockaddr* from, socklen_t* fromlen,
+             const char* log)
+{
+    int cc = ::recvfrom(fd, (void*)bp, len, flags, from, fromlen);
+    if (log) logf(log, LOG_DEBUG, "recvfrom %d/%d", cc, len);
+    return cc;
+}
+
+int
+IO::recvmsg(int fd, struct msghdr* msg, int flags,
+            const char* log)
+{
+    int cc = ::recvmsg(fd, msg, flags);
+    if (log) logf(log, LOG_DEBUG, "recvmsg: %d", cc);
+    return cc;
 }
 
 int
 IO::poll(int fd, int events, int* revents, int timeout_ms, const char* log)
 {
-    int ret;
+    int cc;
     struct pollfd pollfd;
     
     pollfd.fd = fd;
     pollfd.events = events;
     pollfd.revents = 0;
 
-    ret = ::poll(&pollfd, 1, timeout_ms);
+    cc = ::poll(&pollfd, 1, timeout_ms);
 
     if (log)
         logf(log, LOG_DEBUG,
-             "poll: events 0x%x timeout %d revents 0x%x ret %d",
-             events, timeout_ms, pollfd.revents, ret);
+             "poll: events 0x%x timeout %d revents 0x%x cc %d",
+             events, timeout_ms, pollfd.revents, cc);
                   
-    if (ret < 0) {
+    if (cc < 0) {
         if (log && errno != EINTR)
             logf(log, LOG_ERR, "error in poll: %s", strerror(errno));
         return -1;
@@ -136,7 +192,7 @@ IO::poll(int fd, int events, int* revents, int timeout_ms, const char* log)
     if (revents)
         *revents = pollfd.revents;
     
-    return ret; // 0 or 1
+    return cc; // 0 or 1
 }
 
 int
@@ -278,29 +334,29 @@ IO::timeout_read(int fd, char* bp, size_t len, int timeout_ms,
 {
     ASSERT(timeout_ms >= 0);
     
-    int ret = poll(fd, POLLIN | POLLPRI, NULL, timeout_ms, log);
-    if (ret < 0)
+    int cc = poll(fd, POLLIN | POLLPRI, NULL, timeout_ms, log);
+    if (cc < 0)
         return IOERROR;
 
-    if (ret == 0) {
+    if (cc == 0) {
         if (log) logf(log, LOG_DEBUG, "poll timed out");
         return IOTIMEOUT;
     }
     
-    ASSERT(ret == 1);
+    ASSERT(cc == 1);
     
-    ret = read(fd, bp, len);
+    cc = read(fd, bp, len);
     
-    if (ret < 0) {
+    if (cc < 0) {
         if (log) logf(log, LOG_ERR, "timeout_read error: %s", strerror(errno));
         return IOERROR;
     }
 
-    if (ret == 0) {
+    if (cc == 0) {
         return IOEOF;
     }
 
-    return ret;
+    return cc;
 }
 
 int
@@ -309,30 +365,30 @@ IO::timeout_readv(int fd, const struct iovec* iov, int iovcnt, int timeout_ms,
 {
     ASSERT(timeout_ms >= 0);
     
-    int ret = poll(fd, POLLIN | POLLPRI, NULL, timeout_ms, log);
-    if (ret < 0)
+    int cc = poll(fd, POLLIN | POLLPRI, NULL, timeout_ms, log);
+    if (cc < 0)
         return IOERROR;
 
-    if (ret == 0) {
+    if (cc == 0) {
         if (log) logf(log, LOG_DEBUG, "poll timed out");
         return IOTIMEOUT;
     }
     
-    ASSERT(ret == 1);
+    ASSERT(cc == 1);
     
-    ret = ::readv(fd, iov, iovcnt);
+    cc = ::readv(fd, iov, iovcnt);
 
-    if (ret < 0) {
+    if (cc < 0) {
         if (log) logf(log, LOG_ERR, "timeout_readv error: %s",
                       strerror(errno));
         return IOERROR;
     }
 
-    if (ret == 0) {
+    if (cc == 0) {
         return IOEOF;
     }
 
-    return ret;
+    return cc;
 }
 
 int
@@ -340,21 +396,21 @@ IO::timeout_readall(int fd, char* bp, size_t len, int timeout_ms,
                     const char* log)
 {
     ASSERT(timeout_ms >= 0);
-    int ret;
+    int cc;
     int total = 0;
     while (len > 0) {
-        ret = timeout_read(fd, bp, len, timeout_ms, log);
-        if (ret <= 0)
-            return ret;
+        cc = timeout_read(fd, bp, len, timeout_ms, log);
+        if (cc <= 0)
+            return cc;
 
-        total += ret;
+        total += cc;
 
-        if (ret == (int)len) {
+        if (cc == (int)len) {
             return total;
             
         } else {
-            bp  += ret;
-            len -= ret;
+            bp  += cc;
+            len -= cc;
         }
     }
 

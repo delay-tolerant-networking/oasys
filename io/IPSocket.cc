@@ -17,10 +17,6 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 
-//Max UDP datagram size 
-//(for recv* functionality)
-ssize_t IPSocket::max_udp_packet_size_ = 65536;
-
 int IPSocket::abort_on_error_ = 0;
 
 IPSocket::IPSocket(const char* logbase, int socktype)
@@ -253,208 +249,64 @@ IPSocket::shutdown(int how)
 }
 
 int
-IPSocket::send(int *fd, char* packet, size_t packet_len)
+IPSocket::send(const char* bp, size_t len, int flags)
 {
-    // read the whole packet into local buffer
-    int ret = ::send(fd_, (void*)packet, packet_len, 0);
-
-    if (ret == -1) {   
-        if (errno != EINTR)
-            logf(LOG_ERR, "error in send(): %s", strerror(errno));
-        return ret;
-    }
-    // return the ACTUAL number of bytes sent
-    return ret;
-}
-
-int 
-IPSocket::sendmsg(int *fd, char* packet, size_t packet_len) 
-{
-    struct iovec iov[5];
-    ssize_t iov_len = 5;
-    iov[0].iov_base = packet;
-    iov[0].iov_len  = packet_len;
-    struct msghdr msg = { 0, 0, iov, iov_len, 0, 0, 0 };
-    // read the whole packet into local buffer
-    int ret = ::sendmsg(fd_, &msg, 0);
-
-    if (ret == -1) {   
-        if (errno != EINTR)
-            logf(LOG_ERR, "error in sendmsg(): %s", strerror(errno));
-        return ret;
-    }
-
-    // return the ACTUAL number of bytes sent
-    return ret;
-
+    return IO::send(fd_, bp, len, flags, logpath_);
 }
 
 int
-IPSocket::sendto(int *fd, in_addr_t *addr, u_int16_t *port, char* packet, size_t packet_len)
+IPSocket::sendto(char* bp, size_t len, int flags,
+                 in_addr_t addr, u_int16_t port)
 {
+    struct sockaddr_in sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sin_family = AF_INET;
+    sa.sin_addr.s_addr = addr;
+    sa.sin_port = htons(port);
 
+    return IO::sendto(fd_, bp, len, flags, (sockaddr*)&sa, sizeof(sa));
+}
+
+int
+IPSocket::sendmsg(const struct msghdr* msg, int flags)
+{
+    return IO::sendmsg(fd_, msg, flags, logpath_);
+}
+
+int
+IPSocket::recv(char* bp, size_t len, int flags)
+{
+    return IO::recv(fd_, bp, len, flags, logpath_);
+}
+
+int
+IPSocket::recvfrom(char* bp, size_t len, int flags,
+             in_addr_t *addr, u_int16_t *port)
+{
     struct sockaddr_in sa;
     socklen_t sl = sizeof(sa);
-    memset(&sa, 0, sizeof(sa));   
-    // read the whole packet into local buffer
-    int ret = ::sendto(fd_, (void*)packet, packet_len, 0, (sockaddr*)&sa, sl);
-
-    if (ret == -1) {   
-        if (errno != EINTR)
-            logf(LOG_ERR, "error in sendto(): %s", strerror(errno));
-        return ret;
-    }
+    memset(&sa, 0, sizeof(sa));
     
-    // return the ACTUAL number of bytes send
-    return ret;
-}
-
-int
-IPSocket::recv(int *fd, char** pt_payload, size_t* payload_len)
-{
-    int flags = MSG_TRUNC;
-    // read the whole packet into local buffer
-    int ret = ::recv(fd_, (void*)(*pt_payload), max_udp_packet_size_, flags);
-
-    if (ret == -1) {   
+    int cc = IO::recvfrom(fd_, bp, len, flags, (sockaddr*)&sa, &sl, logpath_);
+    
+    if (cc == -1) {   
         if (errno != EINTR)
             logf(LOG_ERR, "error in recv(): %s", strerror(errno));
-        return ret;
+        return cc;
     }
-    else if ( ret == 0 ) {
-        logf(LOG_ERR, "error in recv(): peer host has shutdown normally\n");
-        return ret;
-    }   
-    else if ( ret > max_udp_packet_size_ ) { //We have thrown away some bits
-        logf(LOG_ERR, "error in recv(): message too large to fit in buffer\n");
-        return -1;
-    }
-    
-    // return the ACTUAL number of bytes read
-    (*payload_len) = ret;
 
-    return ret;
-}
+    if (addr)
+        *addr = sa.sin_addr.s_addr;
 
-int 
-IPSocket::recvmsg(int *fd, char** pt_payload, size_t* payload_len) 
-{
-    //to check for bit discarding...
-    int flags = MSG_TRUNC;
-    struct iovec iov[5];
-    ssize_t iov_len = 5;
-    iov[0].iov_base = (*pt_payload);
-    iov[0].iov_len  = max_udp_packet_size_;
-    struct msghdr msg = { 0, 0, iov, iov_len, 0, 0, 0 };
-    // read the whole packet into local buffer
-    int ret = ::recvmsg(fd_, &msg, flags);
+    if (port)
+        *port = htons(sa.sin_port);
 
-    if (ret == -1) {   
-        if (errno != EINTR)
-            logf(LOG_ERR, "error in recvmsg(): %s", strerror(errno));
-        return ret;
-    }
-    else if ( ret == 0 ) {
-        logf(LOG_ERR, "error in recvmsg(): peer host has shutdown normally\n");
-        return ret;
-    }   
-    else if ( ret > max_udp_packet_size_ ) { //We have thrown away some bits
-        logf(LOG_ERR, "error in recvmsg(): message too large to fit in buffer\n");
-        return -1;
-    }
-    
-    // return the ACTUAL number of bytes read
-    (*payload_len) = ret;
-
-    return ret;
-
+    return cc;
 }
 
 int
-IPSocket::recvfrom(int *fd, in_addr_t *addr, u_int16_t *port, char** pt_payload, size_t* payload_len)
+IPSocket::recvmsg(struct msghdr* msg, int flags)
 {
-
-    struct sockaddr_in sa;
-    socklen_t sl = sizeof(sa);
-    memset(&sa, 0, sizeof(sa));   
-    //to check for bit discarding...
-    int flags = MSG_TRUNC;
-    // read the whole packet into local buffer
-    int ret = ::recvfrom(fd_, (void*)(*pt_payload), max_udp_packet_size_, flags, (sockaddr*)&sa, &sl);
-
-    if (ret == -1) {   
-        if (errno != EINTR)
-            logf(LOG_ERR, "error in recvfrom(): %s", strerror(errno));
-        return ret;
-    }
-    else if ( ret == 0 ) {
-        logf(LOG_ERR, "error in recvfrom(): peer host has shutdown normally\n");
-        return ret;
-    }   
-    else if ( ret > max_udp_packet_size_ ) { //We have thrown away some bits
-        logf(LOG_ERR, "error in recvfrom(): message too large to fit in buffer\n");
-        return -1;
-    }
-    
-    // return the ACTUAL number of bytes read
-    (*payload_len) = ret;
-    *addr = sa.sin_addr.s_addr;
-    *port = ntohs(sa.sin_port);
-
-    return ret;
+    return IO::recvmsg(fd_, msg, flags, logpath_);
 }
 
-int
-IPSocket::timeout_recv(int *fd, char** pt_payload, size_t* payload_len, int timeout_ms)
-{
-    int ret = poll(POLLIN, NULL, timeout_ms);
-
-    if (ret < 0)  return IOERROR;
-    if (ret == 0) return IOTIMEOUT;
-    ASSERT(ret == 1);
-
-    ret = recv(fd, pt_payload, payload_len);
-
-    if (ret < 0) {
-        return IOERROR;
-    }
-
-    return 1; // done!
-}
-
-int
-IPSocket::timeout_recvmsg(int *fd, char** pt_payload, size_t* payload_len, int timeout_ms)
-{
-    int ret = poll(POLLIN, NULL, timeout_ms);
-
-    if (ret < 0)  return IOERROR;
-    if (ret == 0) return IOTIMEOUT;
-    ASSERT(ret == 1);
-
-    ret = recvmsg(fd, pt_payload, payload_len);
-
-    if (ret < 0) {
-        return IOERROR;
-    }
-
-    return 1; // done!
-}
-
-int
-IPSocket::timeout_recvfrom(int *fd, in_addr_t *addr, u_int16_t *port,char** pt_payload, 
-                           size_t* payload_len, int timeout_ms)
-{
-    int ret = poll(POLLIN, NULL, timeout_ms);
-
-    if (ret < 0)  return IOERROR;
-    if (ret == 0) return IOTIMEOUT;
-    ASSERT(ret == 1);
-
-    ret = recvfrom(fd, addr, port, pt_payload, payload_len);
-
-    if (ret < 0) {
-        return IOERROR;
-    }
-
-    return 1; // done!
-}

@@ -12,6 +12,9 @@
 #include "IO.h"
 #include "debug/Log.h"
 
+// XXX/demmer this should be in some system header somewhere
+#define MAX_UDP_PACKET 65536
+
 /**
  * \class IPSocket
  *
@@ -30,19 +33,21 @@ public:
         void configure();
 
     //@{
-    /// System call wrapper
+    /// System call wrappers
     virtual int bind(in_addr_t local_addr, u_int16_t local_port);
     virtual int close();
     virtual int shutdown(int how);
     
-    int send(int *fd, char* packet, size_t packet_len);
-    int sendmsg(int *fd, char* packet, size_t packet_len);
-    int sendto(int *fd, in_addr_t *addr, u_int16_t *port, 
-               char* packet, size_t packet_len); 
-    int recv(int *fd, char** pt_payload, size_t* payload_len);
-    int recvmsg(int *fd, char** pt_payload, size_t* payload_len);
-    int recvfrom(int *fd, in_addr_t *addr, u_int16_t *port, 
-                 char** pt_payload, size_t* payload_len);      
+    virtual int send(const char* bp, size_t len, int flags);
+    virtual int sendto(char* bp, size_t len, int flags,
+                       in_addr_t addr, u_int16_t port);
+    virtual int sendmsg(const struct msghdr* msg, int flags);
+    
+    virtual int recv(char* bp, size_t len, int flags);
+    virtual int recvfrom(char* bp, size_t len, int flags,
+                         in_addr_t *addr, u_int16_t *port);
+    virtual int recvmsg(struct msghdr* msg, int flags);
+
     //@}
     
     /**
@@ -51,12 +56,6 @@ public:
      *
      * @return 0 on timeout, 1 on success, -1 on error
      */
-    int timeout_recvfrom(int *fd, in_addr_t *addr, u_int16_t *port, char** pt_payload,
-                         size_t* payload_len, int timeout_ms);
-    int timeout_recv(int *fd, char** pt_payload, size_t* payload_len, int timeout_ms);
-    int timeout_recvmsg(int *fd, char** pt_payload, size_t* payload_len, int timeout_ms);
-    
-    
     
     /// Wrapper around poll() for this socket's fd
     virtual inline int poll(int events, int* revents, int timeout_ms);
@@ -139,8 +138,6 @@ public:
     /// logfd can be set to false to disable the appending of the
     /// socket file descriptor
     void set_logfd(bool logfd) { logfd_ = logfd; }
-     
-    static ssize_t max_udp_packet_size_;
                                                           
 protected:
     void init_socket();

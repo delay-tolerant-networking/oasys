@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/uio.h>
+#include <sys/socket.h>
 
 /**
  * Return code values for the timeout enabled functions such as
@@ -18,6 +19,11 @@ enum IOTimeoutReturn_t {
     IOTIMEOUT 	= -2	/* timeout */
 };
 
+/**
+ * Static class (never instantiated) that provides simple wrappers for
+ * system calls as well as more complicated primitives to deal with
+ * short read/write operations and timeouts.
+ */
 class IO {
 public:
     //@{
@@ -47,7 +53,28 @@ public:
                       const char* log = NULL);
     
     static int lseek(int fd, off_t offset, int whence,
+                     const char* log = NULL);
+    
+    static int send(int fd, const char* bp, size_t len, int flags,
+                    const char* log = NULL);
+    
+    static int sendto(int fd, char* bp, size_t len, int flags,
+                      const struct sockaddr* to, socklen_t tolen,
                       const char* log = NULL);
+                      
+    static int sendmsg(int fd, const struct msghdr* msg, int flags,
+                       const char* log = NULL);
+    
+    static int recv(int fd, char* bp, size_t len, int flags,
+                    const char* log = NULL);
+    
+    static int recvfrom(int fd, char* bp, size_t len, int flags,
+                        struct sockaddr* from, socklen_t* fromlen,
+                        const char* log = NULL);
+    
+    static int recvmsg(int fd, struct msghdr* msg, int flags,
+                       const char* log = NULL);
+    
     //@}
     
     /// Wrapper around poll() for a single fd
@@ -62,7 +89,7 @@ public:
                        const char* log = NULL);
 
     static int readvall(int fd, const struct iovec* iov, int iovcnt,
-                         const char* log = NULL);
+                        const char* log = NULL);
     //@}
     
     //@{
@@ -77,8 +104,8 @@ public:
 
     //@{
     /**
-     * @brief Try to read the specified number of bytes, but don't
-     * block for more than timeout milliseconds.
+     * @brief Try to read or recv the specified number of bytes, but
+     * don't block for more than timeout milliseconds.
      *
      * @return the number of bytes read or the appropriate
      * IOTimeoutReturn_t code
@@ -92,6 +119,7 @@ public:
                                int timeout_ms, const char* log = NULL);
     static int timeout_readvall(int fd, const struct iovec* iov, int iovcnt,
                                 int timeout_ms, const char* log = NULL);
+
     //@}
     
     /// Set the file descriptor's nonblocking status
