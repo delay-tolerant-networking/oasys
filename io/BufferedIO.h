@@ -1,7 +1,7 @@
 #ifndef __BUFFERED_IO_H__
 #define __BUFFERED_IO_H__
 
-#include "lib/Logger.h"
+#include <debug/Logger.h>
 #include "lib/IOClient.h"
 #include "lib/StreamBuffer.h"
 

@@ -1,4 +1,4 @@
-#include "lib/Debug.h"
+#include <debug/Debug.h>
 #include "StreamBuffer.h"
 
 /***************************************************************************

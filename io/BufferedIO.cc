@@ -1,6 +1,7 @@
 #include "errno.h"
 #include "lib/IO.h"
 #include "lib/Utils.h"
+#include "lib/PrettyPrintBuffer.h"
 #include "BufferedIO.h"
 
 /******************************************************************
