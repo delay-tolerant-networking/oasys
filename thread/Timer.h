@@ -50,6 +50,12 @@
 #include "Notifier.h"
 #include "Thread.h"
 
+#ifdef __CYGWIN__
+typedef void (*__sighandler_t) __P ((int));
+// this is just a guess, but it seems to be safe to guess high
+#define _NSIG 64
+#endif
+
 namespace oasys {
 
 /**

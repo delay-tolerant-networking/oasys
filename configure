@@ -167,8 +167,13 @@ done
 # Get build platform (either linux or freebsd)
 #
 platform=`uname`
+cygwin=`uname | sed 's/_.*$//'`
+if [ "$cygwin" = "CYGWIN" ]; then
+    platform=CYGWIN
+fi
+
 legal=
-for legal_platform in Linux FreeBSD ; do
+for legal_platform in "Linux" "FreeBSD" "CYGWIN" ; do
     if [ $platform = $legal_platform ] ; then
 	legal=1
     fi
@@ -176,6 +181,11 @@ done
 if [ -z "$legal" ] ; then
     echo "error: building oasys on unsupported platform $platform"
     exit 1
+fi
+
+aout="./a.out"
+if [ $platform = "CYGWIN" ]; then
+    aout="./a.exe"
 fi
 
 
@@ -195,15 +205,15 @@ main(int argc, const char** argv) {
 }
 EOF
 $cc config.$$.c > /dev/null 2> /dev/null
-if [ $? != 0 -o ! -f ./a.out ]; then
+if [ $? != 0 -o ! -f $aout ]; then
     echo "error: non-functional or non-gnu compiler $cc"
     exit 1
 fi
 
 rm -f config.$$.c
 
-ccver=`./a.out`
-rm -f ./a.out
+ccver=`$aout`
+rm -f $aout
 
 fi
 
@@ -372,6 +382,7 @@ echo > Rules.make <<EOF
 EOF
 
 sed -e "
+s%@PLATFORM@%$platform%g
 s%@SRCDIR@%$srcdir%g
 s%@CFLAGS@%$cflags%g
 s%@STATIC@%$static%g

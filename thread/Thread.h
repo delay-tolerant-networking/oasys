@@ -204,7 +204,11 @@ Thread::current()
 inline void
 Thread::yield()
 {
+#ifdef __CYGWIN__
+    sched_yield();
+#else
     pthread_yield();
+#endif
 }
 
 inline void

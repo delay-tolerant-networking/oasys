@@ -5,6 +5,7 @@
 #
 # Common settings extracted from the configure script
 #
+PLATFORM	= @PLATFORM@
 SRCDIR		= @SRCDIR@
 INCDIRS		= -I$(SRCDIR) @INCDIRS@
 LIBDIRS		= @LIBDIRS@

@@ -70,17 +70,17 @@ TclCommandInterp::do_init(char* argv0, bool no_default_cmds)
     
     lock_ = new SpinLock();
 
+    // for some reason, this needs to be called to set up the various
+    // locale strings and get things like the "ascii" encoding defined
+    // for a file channel
+    Tcl_FindExecutable(argv0);
+    
     // run Tcl_Init to set up the local tcl package path
     if (Tcl_Init(interp_) != TCL_OK) {
         log_err("error in Tcl_Init: \"%s\"", interp_->result);
         return TCL_ERROR;
     }
 
-    // for some reason, this needs to be called to set up the various
-    // locale strings and get things like the "ascii" encoding defined
-    // for a file channel
-    Tcl_FindExecutable(argv0);
-    
     // do auto registration of commands (if any)
     if (auto_reg_) {
         ASSERT(auto_reg_); 
