@@ -113,11 +113,9 @@ typedef std::vector<SerializableObject*> SerializableObjectVector;
  * ability is used to be able to string several Marshallable objects
  * together, either for writing or reading).
  */
-class SerializeAction {
+class SerializeAction : public Serialize {
 public:
-    typedef Serialize::action_t action_t;
-    typedef Serialize::context_t context_t;
-
+    
     /**
      * Create a SerializeAction with the specified type code and context
      *

@@ -87,29 +87,24 @@ BufferedSerializeAction::next_slice(size_t length)
  * Marshal
  *
  *****************************************************************************/
-<<<<<<< MarshalSerialize.cc
-Marshal::Marshal(
-    context_t context, 
-    u_char*   buf, 
-    size_t    length, 
-    int       options
-    ) : BufferedSerializeAction(Serialize::MARSHAL, 
-                                context, buf, length, options)
-{}
+Marshal::Marshal(context_t context, u_char* buf, size_t length, int options)
+    : BufferedSerializeAction(MARSHAL, context, buf, length, options)
+{
+}
 
 Marshal::Marshal(u_char* buf, size_t length)
-    : BufferedSerializeAction(MARSHAL, CONTEXT_UNKNOWN, buf, length)
+    : BufferedSerializeAction(MARSHAL, CONTEXT_UNKNOWN, buf, length, 0)
 {
 }
 
 void
 Marshal::end_action()
 {
-    if(options_ & Serialize::USE_CRC)
+    if (options_ & USE_CRC)
     {
         CRC32 crc;
 
-        if(buf() != 0) 
+        if (buf() != 0) 
         {
             crc.update(buf(), offset());
             CRC32::CRC_t crc_val = crc.value();
@@ -233,24 +228,23 @@ Marshal::process(const char* name, std::string* s)
  * Unmarshal
  *
  *****************************************************************************/
-Unmarshal::Unmarshal(
-    context_t     context, 
-    const u_char* buf, 
-    size_t        length,
-    int           options
-    ) : BufferedSerializeAction(Serialize::UNMARSHAL, context, 
-                                (u_char*)(buf), length, options)
-{}
+Unmarshal::Unmarshal(context_t context, const u_char* buf, size_t length,
+                     int options)
+    : BufferedSerializeAction(UNMARSHAL, context, 
+                              (u_char*)(buf), length, options)
+{
+}
 
 Unmarshal::Unmarshal(const u_char* buf, size_t length)
-    : BufferedSerializeAction(UNMARSHAL, CONTEXT_UNKNOWN, (u_char*)(buf), length)
+    : BufferedSerializeAction(UNMARSHAL, CONTEXT_UNKNOWN,
+                              (u_char*)(buf), length, 0)
 {
 }
 
 void
 Unmarshal::begin_action()
 {
-    if(options_ & Serialize::USE_CRC)
+    if (options_ & USE_CRC)
     {
         CRC32 crc;
         CRC32::CRC_t crc_val;
@@ -259,9 +253,9 @@ Unmarshal::begin_action()
                                     sizeof(CRC32::CRC_t)); 
         crc.update(buf(), length() - sizeof(CRC32::CRC_t));
         
-        if(crc.value() != crc_val)
+        if (crc.value() != crc_val)
         {
-            if(log_)
+            if (log_)
             {
                 logf(log_, LOG_WARN, "crc32 mismatch, 0x%x != 0x%x",
                      crc.value(), crc_val);

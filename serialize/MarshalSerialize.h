@@ -103,12 +103,12 @@ public:
     /**
      * Constructor
      */
-    Marshal(
-	context_t context, 
-	u_char*   buf, 
-	size_t    length, 
-        int       options = 0
-    );
+    Marshal(context_t context, u_char* buf, size_t length, int options = 0);
+
+    /**
+     * Constructor
+     */
+    Marshal(u_char* buf, size_t length);
 
     /**
      * Since the Marshal operation doesn't actually modify the
@@ -153,13 +153,12 @@ public:
     /**
      * Constructor
      */
-    Unmarshal(
-	context_t     context, 
-	const u_char* buf, 
-	size_t        length,
-        int           options = 0
-    );
+    Unmarshal(context_t context, const u_char* buf, size_t length,
+              int options = 0);
 
+    /**
+     * Constructor
+     */
     Unmarshal(const u_char* buf, size_t length);
 
     // Virtual functions inherited from SerializeAction
@@ -187,11 +186,11 @@ public:
     /**
      * Constructor
      */
-    MarshalSize(
-	context_t context, 
-        int       options = 0
-    ) : SerializeAction(Serialize::INFO, context, options),
-	size_((options & Serialize::USE_CRC)?sizeof(u_int32_t):0) {}
+    MarshalSize(context_t context, int options = 0)
+        : SerializeAction(Serialize::INFO, context, options)
+    {
+        size_ = (options & Serialize::USE_CRC) ? sizeof(u_int32_t) : 0;
+    }
 
     /**
      * The virtual action function. Always succeeds.
