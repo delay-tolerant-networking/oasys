@@ -81,6 +81,17 @@ HexDumpBuffer::hexify()
             appendf(" |  %.*s\n", 16, strbuf);
         }
     }
+
+    // deal with the ending partial line
+    for (size_t i = len % 16; i < 16; ++i) {
+        if (i % 2 == 0) {
+            append(" ");
+        }
+
+        append("  ");
+    }
+
+    appendf(" |  %.*s\n", len % 16, strbuf);
 }
 
 } // namespace oasys
