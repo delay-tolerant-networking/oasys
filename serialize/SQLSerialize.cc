@@ -167,7 +167,7 @@ SQLInsert::process(const char* name, u_char* bp, size_t len)
 }
 
 void 
-SQLInsert::process(const char* name, u_char** bp, size_t* lenp, bool alloc_copy)
+SQLInsert::process(const char* name, u_char** bp, size_t* lenp, int flags)
 {
     NOTIMPLEMENTED;
 }
@@ -266,7 +266,7 @@ SQLUpdate::process(const char* name, u_char* bp, size_t len)
 }
 
 void 
-SQLUpdate::process(const char* name, u_char** bp, size_t* lenp, bool alloc_copy)
+SQLUpdate::process(const char* name, u_char** bp, size_t* lenp, int flags)
 {
     NOTIMPLEMENTED;
 }
@@ -365,8 +365,12 @@ SQLTableFormat::process(const char* name, u_char* bp, size_t len)
 }
     
 void 
-SQLTableFormat::process(const char* name, u_char** bp, size_t* lenp, bool alloc_copy)
+SQLTableFormat::process(const char* name, u_char** bp, size_t* lenp, int flags)
 {
+    if(flags & Serialize::NULL_TERMINATED) {
+        NOTIMPLEMENTED;
+    }
+
     append(name,sql_impl_->binary_datatype());
 }
 
@@ -492,7 +496,7 @@ SQLExtract::process(const char* name, u_char* bp, size_t len)
 
 
 void 
-SQLExtract::process(const char* name, u_char** bp, size_t* lenp, bool alloc_copy)
+SQLExtract::process(const char* name, u_char** bp, size_t* lenp, int flags)
 {
     NOTIMPLEMENTED;
 }

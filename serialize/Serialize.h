@@ -65,9 +65,9 @@ public:
      * Action type codes, one for each basic type of SerializeAction.
      */
     typedef enum {
-        MARSHAL = 1,	/// in-memory  -> serialized representation
-        UNMARSHAL,	/// serialized -> in-memory  representation
-        INFO		/// informative scan (e.g. size, table schema)
+        MARSHAL = 1,	///< in-memory  -> serialized representation
+        UNMARSHAL,	///< serialized -> in-memory  representation
+        INFO		///< informative scan (e.g. size, table schema)
     } action_t;
     
     /**
@@ -75,15 +75,20 @@ public:
      * serialization occurs. 
      */
     typedef enum {
-        CONTEXT_UNKNOWN = 1,	/// no specified context (default)
-        CONTEXT_NETWORK,	/// serialization to/from the network
-        CONTEXT_LOCAL		/// serialization to/from local disk
+        CONTEXT_UNKNOWN = 1,	///< no specified context (default)
+        CONTEXT_NETWORK,	///< serialization to/from the network
+        CONTEXT_LOCAL		///< serialization to/from local disk
     } context_t;
 
+    /** Options for un/marshaling. */
     enum {
-        /** Options for un/marshaling. */
-        NO_OPTS = 0,
         USE_CRC = 1 << 0,
+    };
+
+    /** Options for un/marshaling process() methods */
+    enum {
+        ALLOC_MEM       = 1<<0, ///< Allocated memory to be freed by the user 
+        NULL_TERMINATED = 1<<1, ///< Delim by '\0' instead of storing length
     };
 };    
 
@@ -97,6 +102,8 @@ public:
      * be serialized in the object.
      */
     virtual void serialize(SerializeAction* a) = 0;
+
+    virtual ~SerializableObject() {}
 };
 
 /**
@@ -199,12 +206,17 @@ public:
     virtual void process(const char* name, u_char* bp, size_t len) = 0;
 
     /**
-     * Process function for a variable length char buffer. The
-     * alloc_copy flag dictates whether the unmarshal variants should
-     * malloc() a new buffer in the target object.
+     * Process function for a variable length char buffer.
+     * 
+     * @param bp buffer, allocated by SerializeAction if ALLOC_MEM flag is
+     * set.
+     * @param len IN: If ALLOC_MEM flags is set, then len is the length of
+     * the buffer allocated.
+     * @param flags ALLOC_MEM, NULL_TERMINATED specifies that the data
+     * stored will be a null-terminated C-string. 
      */
     virtual void process(const char* name, u_char** bp,
-                         size_t* len, bool alloc_copy) = 0;
+                         size_t* len, int flags) = 0;
 
     /**
      * Process function for a c++ string.

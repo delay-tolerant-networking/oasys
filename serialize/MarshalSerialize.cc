@@ -182,23 +182,28 @@ Marshal::process(const char* name, u_char* bp, size_t len)
     
 void 
 Marshal::process(const char* name, u_char** bp,
-                 size_t* lenp, bool alloc_copy)
+                 size_t* lenp, int flags)
 {
-    ASSERT(*lenp > 0);
-    process(name, (u_int32_t*)lenp);
+    ASSERT(*lenp > 0 || (flags & Serialize::NULL_TERMINATED));
+    int str_len;
 
-    if (*lenp > 0) {
-        u_char* buf = next_slice(*lenp);
-        if (buf == NULL) return;
-        
-        memcpy(buf, *bp, *lenp);
+    if(flags & Serialize::NULL_TERMINATED) {
+        str_len = strlen(reinterpret_cast<char*>(*bp)) + 1;
+    } else {
+        process(name, (u_int32_t*)lenp);
+        str_len = *lenp;
     }
+
+    u_char* buf = next_slice(str_len);
+    if (buf == NULL) return;
+    
+    memcpy(buf, *bp, str_len);
     
     if (log_) {
         std::string s;
         hex2str(&s, *bp, *lenp < 16 ? *lenp : 16);
         logf(log_, LOG_DEBUG, "bufc   %s=>(%d: '%.*s')",
-             name, *lenp, (int)s.length(), s.data());
+             name, str_len, (int)s.length(), s.data());
     }
 }
 
@@ -326,16 +331,36 @@ Unmarshal::process(const char* name, u_char* bp, size_t len)
 }
 
 void 
-Unmarshal::process(const char* name, u_char** bp, size_t* lenp, bool alloc_copy)
+Unmarshal::process(const char* name, u_char** bp, size_t* lenp, int flags)
 {
-    process(name, (u_int32_t*)lenp);
+    if(flags & Serialize::NULL_TERMINATED) {
+        u_char* cbuf = buf() + offset();
+        int new_len = 0;
+	
+        while(cbuf != buf() + length()) {
+            if(*cbuf == '\0')
+                break;
+            cbuf++;
+            new_len++;
+        }
+        
+        if(cbuf == buf() + length()) {
+            // no null character found
+            error_ = true;
+            return;
+        }
+        *lenp = new_len + 1; // length of string + '\0'
+    } else {
+        process(name, (u_int32_t*)lenp);
+    }
+
     ASSERT(*lenp >= 0);
     ASSERT(*bp == 0);
     
     u_char* buf = next_slice(*lenp);
     if (buf == NULL) return;
     
-    if (alloc_copy) {
+    if (flags & Serialize::ALLOC_MEM) {
         *bp = (u_char*)malloc(*lenp);
         memcpy(*bp, buf, *lenp);
     } else {
@@ -416,9 +441,13 @@ MarshalSize::process(const char* name, u_char* bp, size_t len)
 
 void
 MarshalSize::process(const char* name, u_char** bp,
-                     size_t* lenp, bool alloc_copy)
+                     size_t* lenp, int flags)
 {
-    size_ += *lenp + 4;
+    if(flags & Serialize::NULL_TERMINATED) {
+        size_ += strlen(reinterpret_cast<char*>(*bp)) + sizeof('\0');
+    } else {
+        size_ += *lenp + sizeof(u_int32_t);
+    }
 }
 
 void
@@ -454,9 +483,13 @@ MarshalCRC::process(const char* name, u_char* bp, size_t len)
 
 void
 MarshalCRC::process(const char* name, u_char** bp,
-                     size_t* lenp, bool alloc_copy)
+                     size_t* lenp, int flags)
 {
-    crc_.update(*bp, *lenp);
+    if(flags & Serialize::NULL_TERMINATED) {
+        crc_.update(*bp, strlen(reinterpret_cast<char*>(*bp)));
+    } else {
+        crc_.update(*bp, *lenp);
+    }
 }
 
 void

@@ -112,7 +112,7 @@ public:
     void process(const char* name, int8_t* i);
     void process(const char* name, bool* b);
     void process(const char* name, u_char* bp, size_t len);
-    void process(const char* name, u_char** bp, size_t* lenp, bool alloc_copy);
+    void process(const char* name, u_char** bp, size_t* lenp, int flags);
     void process(const char* name, std::string* s);
 };
 
@@ -148,7 +148,7 @@ public:
     void process(const char* name, int8_t* i);
     void process(const char* name, bool* b);
     void process(const char* name, u_char* bp, size_t len);
-    void process(const char* name, u_char** bp, size_t* lenp, bool alloc_copy);
+    void process(const char* name, u_char** bp, size_t* lenp, int flags);
     void process(const char* name, std::string* s);
 };
 
@@ -182,7 +182,7 @@ public:
     void process(const char* name, u_int8_t* i);
     void process(const char* name, bool* b);
     void process(const char* name, u_char* bp, size_t len);
-    void process(const char* name, u_char** bp, size_t* lenp, bool alloc_copy);
+    void process(const char* name, u_char** bp, size_t* lenp, int flags);
     void process(const char* name, std::string* s);
 
  protected:
@@ -207,7 +207,7 @@ public:
     void process(const char* name, u_int8_t* i);
     void process(const char* name, bool* b);
     void process(const char* name, u_char* bp, size_t len);
-    void process(const char* name, u_char** bp, size_t* lenp, bool alloc_copy);
+    void process(const char* name, u_char** bp, size_t* lenp, int flags);
     void process(const char* name, std::string* s); 
 
  protected:
