@@ -15,8 +15,8 @@
 class FileIOClient : public FdIOClient {
 public:
     /// Basic constructor, leaves both path and fd unset
-    FileIOClient() : FdIOClient(-1) {}
-    virtual ~FileIOClient() {}
+    FileIOClient();
+    virtual ~FileIOClient();
 
     ///@{
     /// System call wrappers
@@ -26,6 +26,17 @@ public:
     int unlink();
     int lseek(off_t offset, int whence);
     ///@}
+
+    /// Set the path associated with this file handle
+    void set_path(const char* path) {
+        path_.assign(path);
+    }
+
+    /// Reopen a previously opened path
+    int reopen(int flags);
+
+    /// Check if the file descriptor is open
+    bool is_open() { return fd_ != -1; }
 
     /// Path accessor
     const char* path() { return path_.c_str(); }
