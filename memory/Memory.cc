@@ -82,16 +82,16 @@ DbgMemInfo::dump_to_file(int fd)
 	dbg_mem_entry_t* entry = &table_[i];
         if(entry->frames_[0] == 0)
             continue;
-   
-       snprintf(buf, 256,
-	       "%5d: [%p %p %p] live=%d size=%.2fkb\n",
-	       i,
-	       entry->frames_[0],
-	       entry->frames_[1],
-	       entry->frames_[2],
-	       entry->live_,
-	       (float)entry->size_/1000);
-   
+        
+        snprintf(buf, 256,
+                 "%5d: [%p %p %p] live=%d size=%.2fkb\n",
+                 i,
+                 entry->frames_[0],
+                 entry->frames_[1],
+                 entry->frames_[2],
+                 entry->live_,
+                 (float)entry->size_/1000);
+        
         write(fd, buf, strlen(buf));
     }
     fsync(fd);
