@@ -338,15 +338,15 @@ Log::rotate()
     if (newfd < 0) {
         logf("/log", LOG_ERR, "error re-opening log file for rotate: %s",
              strerror(errno));
-        logf("/log", LOG_INFO, "keeping old log file open");
+        logf("/log", LOG_ERR, "keeping old log file open");
         return;
     }
 
-    logf("/log", LOG_ERR, "closing log file for rotation");
+    logf("/log", LOG_INFO, "closing log file for rotation");
     close(logfd_);
     
     logfd_ = newfd;
-    logf("/log", LOG_ERR, "reopened log file after log rotate");
+    logf("/log", LOG_INFO, "reopened log file after log rotate");
 }
 
 static void
