@@ -425,13 +425,6 @@ protected:
     }
     
     /**
-     * Callback that's issued just after the command is registered.
-     * This allows commands (particularly AutoTclCommand instances)
-     * to do any post-registration activities like binding their vars.
-     */
-    virtual void at_reg() {}
-
-    /**
      * Append the given information to the current help string,
      * typically used for a set of alternatives for subcommands.
      */

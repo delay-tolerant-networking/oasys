@@ -164,8 +164,6 @@ TclCommandInterp::reg(TclCommand *command)
                          NULL);
     
     commands_.push_front(command);
-
-    command->at_reg();
 }
 
 void
