@@ -69,6 +69,7 @@ UTIL_SRCS :=					\
 	util/HexDumpBuffer.cc			\
 	util/Options.cc				\
 	util/OptParser.cc			\
+	util/Random.cc				\
 	util/RateEstimator.cc			\
 	util/ScratchBuffer.cc			\
 	util/StreamBuffer.cc			\
