@@ -24,7 +24,7 @@ documentation and/or software.
  */
 
 //#include "global.h"
-#include "md5.h"
+#include "md5-rsa.h"
 
 /* Constants for MD5Transform routine.
  */
