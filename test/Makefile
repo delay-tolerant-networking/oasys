@@ -16,6 +16,7 @@ TESTS += \
 	serialize-test          \
 	spin-lock-test          \
 	static-buffer-test      \
+	string-hash-test	\
 	tcp-socket-test 	\
 	tcp-timeout-read-test 	\
 	tcp-writeall-test 	\
