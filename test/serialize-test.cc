@@ -83,7 +83,7 @@ print_hex(u_char* buf, int len)
 int
 main()
 {
-    Log::init("-", oasys::LOG_DEBUG);
+    Log::init(LOG_DEBUG);
     OneOfEach o1, o2(false);
 
 #define LEN 256

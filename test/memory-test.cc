@@ -82,7 +82,7 @@ delete_all_foo()
 int
 main(int argc, char* argv[])
 {
-    Log::init("-", LOG_DEBUG, "memory-test.debug");
+    Log::init(LOG_DEBUG);
     DbgMemInfo::init(DbgMemInfo::USE_SIGNAL, "/tmp/dump");
 
     log_info("/memory", "offset of data=%u\n", 
