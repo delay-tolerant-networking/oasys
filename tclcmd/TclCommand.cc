@@ -211,7 +211,8 @@ TclCommandInterp::reg(TclCommand *command)
     
     command->logf(LOG_DEBUG, "%s command registering", command->name());
 
-    if (lookup(command->name())) {
+    Tcl_CmdInfo info;
+    if (Tcl_GetCommandInfo(interp_, (char*)command->name(), &info) != 0) {
         log_warn("re-registering command %s over existing command",
                  command->name());
     }
