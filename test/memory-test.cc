@@ -26,6 +26,8 @@ void Alloc_3()
     Alloc_2();
 }
 
+class Big { char buf[100000]; };
+
 void
 delete_all_foo()
 {
@@ -42,7 +44,7 @@ int
 main(int argc, char* argv[])
 {
     Log::init(1, LOG_DEBUG, "memory-test.debug");
-    DbgMemInfo::init();
+    DbgMemInfo::init(DbgMemInfo::USE_SIGNAL, "/tmp/dump");
 
     log_info("/memory", "offset of data=%u\n", 
 	     offsetof(dbg_mem_t, block_));
@@ -57,8 +59,6 @@ main(int argc, char* argv[])
     DbgMemInfo::debug_dump();
     FILE* f = fopen("/tmp/dump", "w");
     ASSERT(f != 0);
-
-    DbgMemInfo::dump_to_file(f);
 
     // Delete all Foo_1 objects
     delete_all_foo();
@@ -75,4 +75,8 @@ main(int argc, char* argv[])
     l.push_back(9);
     l.push_back(1);
     DbgMemInfo::debug_dump(); 
+
+    new Big();    
+
+    while(1);
 }

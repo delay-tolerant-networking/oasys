@@ -1,10 +1,15 @@
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
+
 #include "Memory.h"
 
 int              DbgMemInfo::entries_   = 0;
 dbg_mem_entry_t* DbgMemInfo::table_     = 0;
 bool             DbgMemInfo::init_      = false;
-FILE*            DbgMemInfo::dump_file_ = 0;
+int              DbgMemInfo::dump_file_ = -1;
 struct sigaction DbgMemInfo::signal_;
 
 void
@@ -32,10 +37,10 @@ DbgMemInfo::init(
     
     if(dump_file) 
     {
-	dump_file_ = fopen(dump_file, "w+");
+	dump_file_ = open(dump_file, 
+			  O_WRONLY | O_CREAT | O_APPEND);
     }
 
-    
     init_ = true;
 }
 
@@ -43,26 +48,25 @@ DbgMemInfo::init(
 void
 DbgMemInfo::debug_dump()
 {
-    for(int i=0; i<_DBG_MEM_TABLE_SIZE; ++i)
-    {
-	dbg_mem_entry_t* table = &table_[i];
-        if(table->frames_[0] == 0)
+    for(int i=0; i<_DBG_MEM_TABLE_SIZE; ++i) {
+	dbg_mem_entry_t* entry = &table_[i];
+        if(entry->frames_[0] == 0)
             continue;
 
-        log_info("/memory", "%5d: [%p %p %p] live=%d\n",
+        log_info("/memory", "%5d: [%p %p %p] live=%d size=%.2fkb\n",
 		 i,
-		 table->frames_[0],
-		 table->frames_[1],
-		 table->frames_[2],
-		 table->live_);
+		 entry->frames_[0],
+		 entry->frames_[1],
+		 entry->frames_[2],
+		 entry->live_,
+		 (float)entry->size_/1000);
     }
 }
 
 void
-DbgMemInfo::dump_to_file(FILE* f)
+DbgMemInfo::dump_to_file(int fd)
 {
-    if(f == 0) 
-    {
+    if(fd == -1) {
 	return;
     }
 
@@ -71,22 +75,26 @@ DbgMemInfo::dump_to_file(FILE* f)
 
     gettimeofday(&time, 0);
     ctime_r(&time.tv_sec, buf);
+    write(fd, buf, strlen(buf));
 
-    fprintf(f, "* %s", buf);
     for(int i=0; i<_DBG_MEM_TABLE_SIZE; ++i)
     {
-	dbg_mem_entry_t* table = &table_[i];
-        if(table->frames_[0] == 0)
+	dbg_mem_entry_t* entry = &table_[i];
+        if(entry->frames_[0] == 0)
             continue;
-
-	fprintf(f, "%d %p %p %p\n",
-		table->live_,
-		table->frames_[0],
-		table->frames_[1],
-		table->frames_[2]);
+   
+       snprintf(buf, 256,
+	       "%5d: [%p %p %p] live=%d size=%.2fkb\n",
+	       i,
+	       entry->frames_[0],
+	       entry->frames_[1],
+	       entry->frames_[2],
+	       entry->live_,
+	       (float)entry->size_/1000);
+   
+        write(fd, buf, strlen(buf));
     }
-
-    fflush(f);
+    fsync(fd);
 }
 
 void

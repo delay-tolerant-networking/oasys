@@ -72,7 +72,8 @@
  */ 
 struct dbg_mem_entry_t {
     void* frames_[_DBG_MEM_FRAMES]; ///< # of stack frames to snarf in LIFO order
-    int   live_;             ///< Objects of this type that are alive.
+    int       live_;       ///< Objects of this type that are alive.
+    u_int32_t size_;       ///< Size of objects
 };
 
 /** 
@@ -82,6 +83,8 @@ struct dbg_mem_entry_t {
 struct dbg_mem_t {
     unsigned long    magic_;
     dbg_mem_entry_t* entry_; 
+    u_int32_t        size_;
+    
     _BYTE            block_ _ALIGNED; ///< actual memory block
 };
 
@@ -136,19 +139,22 @@ public:
     /**
      * Increment the memory info.
      */ 
-    static inline dbg_mem_entry_t* inc(void** frames) {
+    static inline dbg_mem_entry_t* inc(
+	void**    frames,
+	u_int32_t size
+	)
+    {
         dbg_mem_entry_t* entry = find(frames);
 
-        if(entry->frames_[0] == 0)
-        {
+        if(entry->frames_[0] == 0) {
             memcpy(entry->frames_, frames, sizeof(void*) * _DBG_MEM_FRAMES);
-            entry->live_ = 1;
-            ++entries_;
-        }
-        else
-        {
+            entry->live_  = 1;
+	} else {
             ++(entry->live_);
         }
+
+	entry->size_ += size;
+	++entries_;
 
         return entry;
     }
@@ -156,18 +162,19 @@ public:
     /**
      * Decrement the memory info.
      */ 
-    static inline dbg_mem_entry_t* dec(void** frames) {
+    static inline dbg_mem_entry_t* dec(dbg_mem_t* mem) {
+	void**    frames = mem->entry_->frames_;
+	u_int32_t size   = mem->size_;
+
         dbg_mem_entry_t* entry = find(frames);
         
-        if(entry->frames_[0] == 0)
-        {
+        if(entry->frames_[0] == 0) {
 	    PANIC("Decrementing memory entry with no frame info");
-        }
-        else
-        {
-            --(entry->live_);
-	    if(entry->live_ < 0)
-	    {
+        } else {
+            entry->live_ -= 1;
+	    entry->size_ -= size;
+
+	    if(entry->live_ < 0) {
 		PANIC("Memory object live count < 0");
 	    }
         }
@@ -190,7 +197,7 @@ public:
      *
      * @param fd File to output to.
      */
-    static void dump_to_file(FILE* f);
+    static void dump_to_file(int fd);
 
     /**
      * Getter for init state
@@ -209,7 +216,7 @@ private:
     static int              entries_;
     static dbg_mem_entry_t* table_;
     static bool             init_;
-    static FILE*            dump_file_;
+    static int              dump_file_;
     static struct sigaction signal_;
 };
 
@@ -263,7 +270,7 @@ operator new(size_t size)
     // non-init allocations have frame == 0
     if(DbgMemInfo::initialized()) {
 	set_frame_info(frames);
-	b->entry_ = DbgMemInfo::inc(frames);
+	b->entry_ = DbgMemInfo::inc(frames, size);
 
 	log_debug("/memory", "new a=%p, f=[%p %p %p]\n",              
 		  &b->block_, frames[0], frames[1], frames[2]);     
@@ -289,7 +296,7 @@ operator delete(void *ptr)
 		  b->entry_->frames_[0], b->entry_->frames_[1], 
 		  b->entry_->frames_[2]);
 
-	DbgMemInfo::dec(b->entry_->frames_);
+	DbgMemInfo::dec(b);
     }
     
     free(b);
