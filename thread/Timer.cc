@@ -229,7 +229,7 @@ TimerSystem::run()
 
         if (sigfired_) {
             log_debug("sigfired_ set, calling registered handlers");
-            for (int i = 0; i < _NSIG; ++i) {
+            for (int i = 0; i < NSIG; ++i) {
                 if (signals_[i]) {
                     handlers_[i](i);
                     signals_[i] = 0;
