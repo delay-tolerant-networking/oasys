@@ -129,10 +129,11 @@ EOF
   ;;
   *)
     cat <<EOF
-configure: unrecognized option \`$ac_option'.
-Try \`configure --help' for more information.
+configure: unrecognized option by oasys \`$ac_option'.  Ignoring !!
 EOF
-  exit 1
+#  exit 1
+#  Try \`configure --help' for more information.
+# Commented by Sushant, to address incompatibility between configure options for DTN2 configure and this.
   ;;
   esac
 done
