@@ -54,6 +54,12 @@ ALLSRCS := $(SRCS)
 all: checkconfigure liboasys
 
 #
+# Rule to generate the doxygen documentation
+#
+doxygen:
+	doxygen doc/doxyfile
+
+#
 # And a rule to make sure that configure has been run recently enough.
 #
 .PHONY: checkconfigure
