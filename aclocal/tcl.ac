@@ -65,7 +65,7 @@ AC_DEFUN(AC_OASYS_FIND_TCLINCLUDE, [
     else
         ac_tclincdirs="/usr/include /usr/local/include"
 	for tclver in $ac_tclver ; do
-           ac_tcl_incdirs="$ac_tclincdirs /usr/include/tcl$tclver"
+           ac_tclincdirs="$ac_tclincdirs /usr/include/tcl$tclver"
         done
     fi
 
