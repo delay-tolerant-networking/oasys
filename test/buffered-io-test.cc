@@ -5,8 +5,6 @@
 #include <io/IOClient.h>
 #include <io/BufferedIO.h>
 
-#include <util/UnitTest.h>
-
 using namespace oasys;
 
 /*

@@ -67,6 +67,11 @@ proc parse_cc_file {test_exe} {
 
     set fd [open "$test_exe.cc"]
     set code [read $fd]
+
+    if [expr ! [regexp "UnitTest.h" $code]] {
+	return 0
+    }
+    
     while {1} {
 	set matched [regexp {.*?DECLARE_TEST_TCL(.*?)endif(.*)$} $code match tcl_code rest]
 	
@@ -78,6 +83,8 @@ proc parse_cc_file {test_exe} {
 	set code $rest
     } 
     close $fd
+
+    return 1
 }
 
 ##############################################################################
@@ -95,11 +102,12 @@ parse_args
 
 chkdirs $g_clobber
 
-# set tests [glob "*-test"] XXX
-set tests {sample-test timer-test serialize-test static-buffer-test builder-test}
+set tests [glob "*-test"]
 
 foreach test_exe $tests {
-    parse_cc_file $test_exe
+    if [expr ! [parse_cc_file $test_exe]] {
+	continue
+    }
 
     puts_reg -nonewline "* $test_exe: "
     flush stdout
