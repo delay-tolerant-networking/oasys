@@ -82,6 +82,7 @@ do
   case "$ac_option" in
   -verbose | --verbose | -v)
      ;;
+
   -target | --target | -t)
     ac_prev=target ;;
   -target=* | --target=* | -t=*)
@@ -125,9 +126,6 @@ do
     ac_prev=with-tclver ;;
   -with-tclver=* | --with-tclver=*)
     tclver="$ac_optarg" ;;
-
-  --target=*)
-    target="$ac_optarg";;
 
   -help | --help | -h)
     cat <<EOF
