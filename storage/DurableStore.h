@@ -63,6 +63,7 @@ enum DurableTableResult_t {
     DS_NOTFOUND  = 1,           ///< Database element not found.
     DS_BUFSIZE   = 2,           ///< Buffer too small.
     DS_BUSY      = 3,           ///< Table is still open, can't delete.
+    DS_EXISTS    = 4,           ///< Key already exists
     DS_ERR       = 1000,        ///< xxx/bowei placeholder for now
 };
 
@@ -114,8 +115,9 @@ public:
 
     /**
      * Create a new table. Caller deletes the pointer.
+     * @param id Specifies what the id of the table should be.
      */
-    virtual int new_table(DurableTable** table) = 0;
+    virtual int new_table(DurableTable** table, DurableTableId id = -1) = 0;
 
     /**
      * Delete (by id) from the datastore
@@ -127,11 +129,6 @@ public:
      */
     virtual int get_table(DurableTableId id, DurableTable** table) = 0;
     
-    /**
-     * Get meta-table
-     */
-    virtual int get_meta_table(DurableTable** table) = 0;
-
 private:
     static DurableTableStore* instance_; //< singleton instance
 };

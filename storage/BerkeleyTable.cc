@@ -43,6 +43,7 @@
 
 #include <debug/Debug.h>
 #include <util/StringBuffer.h>
+#include <util/Pointers.h>
 #include <serialize/MarshalSerialize.h>
 #include <serialize/TypeShims.h>
 
@@ -277,7 +278,7 @@ BerkeleyStore::do_init(const std::string& db_name,
     }
 
     // Initialize max id from meta-database.
-    DurableTable* metatable;
+    BerkeleyTable* metatable;
     if(get_meta_table(&metatable) != 0) 
     {
         log_crit("Unable to open metatable!");
@@ -321,13 +322,41 @@ BerkeleyStore::do_init(const std::string& db_name,
 }
 
 int
-BerkeleyStore::new_table(DurableTable** table)
+BerkeleyStore::new_table(DurableTable** table, DurableTableId new_id)
 {
     DB* db;
     int err;
-    DurableTableId id = next_id_;
+    DurableTableId id;
 
-    next_id_++;
+    if(new_id != -1) 
+    {
+        oasys::ScopePtr<BerkeleyTable> metatable;
+        if(get_meta_table(&(metatable.get())) != 0)
+        {
+            log_err("Can't open metatable");
+            return DS_ERR;
+        }
+
+        StaticStringBuffer<256> buf;
+        buf.appendf("%d", new_id);
+
+        if(metatable->key_exists(buf.c_str(), buf.size()) == 0) 
+        {
+            log_err("Table already exists");
+            return DS_EXISTS;
+        }
+        id = new_id;
+        if(next_id_ < id) 
+        {
+            next_id_ = id + 1;
+        }
+    } 
+    else 
+    {
+        id = next_id_;
+        next_id_++;
+    }
+
     err = db_create(&db, dbenv_, 0);
     if(err != 0) {
         log_err("Can't create db pointer");
@@ -415,7 +444,7 @@ BerkeleyStore::get_table(DurableTableId id, DurableTable** table)
 }
 
 int  
-BerkeleyStore::get_meta_table(DurableTable** table)
+BerkeleyStore::get_meta_table(BerkeleyTable** table)
 {
     DB* db;
     int err;
@@ -433,7 +462,8 @@ BerkeleyStore::get_meta_table(DurableTable** table)
         return DS_ERR;
     }
     
-    *table = new BerkeleyTable(META_TABLE_ID, db);
+    *table = static_cast<BerkeleyTable*>
+             (new BerkeleyTable(META_TABLE_ID, db));
     
     return 0;
 }
@@ -619,6 +649,28 @@ BerkeleyTable::itr(DurableTableItr** itr)
     return 0;
 }
 
+int 
+BerkeleyTable::key_exists(const void* key, size_t key_len)
+{
+    DBT k, d;
+    bzero(&d, sizeof(d));
+
+    MAKE_DBT(k, const_cast<void*>(key), key_len);
+
+    int err = db_->get(db_, NO_TX, &k, &d, 0);
+    if(err == DB_NOTFOUND) 
+    {
+        return DS_NOTFOUND;
+    }
+    else if(err != 0)
+    {
+        log_err("DB: %s", db_strerror(err));
+        return DS_ERR;
+    }
+
+    return 0;
+}
+
 size_t
 BerkeleyTable::flatten_key(const SerializableObject& key, 
                            u_char* key_buf, size_t size)
@@ -782,7 +834,8 @@ BerkeleyStoreCommand::bind_vars()
 int
 BerkeleyStoreCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
 {
-#if 0
+#if 0 // XXX/bowei - these functions are never used, so it's not
+      // really necessary to maintain them, should remove
     int err;
 
     switch(argc) 

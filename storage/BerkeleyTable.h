@@ -50,7 +50,7 @@ public:
     /**
      * Create a new table. Caller deletes the pointer.
      */
-    virtual int new_table(DurableTable** table);
+    virtual int new_table(DurableTable** table, DurableTableId new_id = -1);
     
     /**
      * Delete (by id) from the datastore
@@ -61,11 +61,6 @@ public:
      * Get a new table ptr to an id
      */
     virtual int get_table(DurableTableId id, DurableTable** table);
-    
-    /**
-     * Get meta-table
-     */
-    virtual int get_meta_table(DurableTable** table);
 
 private:
     FILE*       err_log_;     ///< db err log file
@@ -84,6 +79,9 @@ private:
 
     /// Constructor - protected for singleton
     BerkeleyStore();
+
+    /// Get meta-table
+    virtual int get_meta_table(BerkeleyTable** table);
     
     /// @{ Changes the ref count on the tables, used by BerkeleyTable 
     int acquire_table(DurableTableId id);
@@ -128,6 +126,9 @@ private:
      * Only DataStore can create DsTables
      */
     BerkeleyTable(DurableTableId id, DB* db);
+
+    /// Whether a specific key exists in the table.
+    int key_exists(const void* key, size_t key_len);
 
     /**
      * Helper method for flattening keys from the key objects.

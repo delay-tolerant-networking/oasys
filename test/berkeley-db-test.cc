@@ -34,6 +34,10 @@ DECLARE_TEST(TableCreate) {
     DurableTable* table2;
     DurableTableStore* store = DurableTableStore::instance();
 
+    CHECK(store->new_table(&table1, 10) == 0);
+    CHECK(store->new_table(&table2, 10) == DS_EXISTS);
+    delete table1;
+
     const int LIMIT = 1;
     for(int i=0; i<LIMIT; ++i) {
 	CHECK(store->new_table(&table1) == 0);
