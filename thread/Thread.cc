@@ -57,9 +57,9 @@ Thread::start()
     // if this is the first thread, set up signals
     if (!signals_inited_) {
         sigemptyset(&interrupt_sigset_);
-        sigaddset(&interrupt_sigset_, SIGUSR1);
-        signal(SIGUSR1, interrupt_signal);
-        siginterrupt(SIGUSR1, 1);
+        sigaddset(&interrupt_sigset_, SIGURG);
+        signal(SIGURG, interrupt_signal);
+        siginterrupt(SIGURG, 1);
         signals_inited_ = true;
     }
     
@@ -92,7 +92,7 @@ Thread::kill(int sig)
 void
 Thread::interrupt()
 {
-    kill(SIGUSR1);
+    kill(SIGURG);
 }
 
 void
