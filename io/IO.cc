@@ -62,7 +62,7 @@ IO::open(const char* path, int flags, mode_t mode, const char* log)
     int fd = ::open(path, flags, mode);
     if (log) {
         logf(log, LOG_DEBUG, "open %s (flags 0x%x mode 0x%x): fd %d",
-             path, flags, mode, fd);
+             path, flags, (u_int) mode, fd);
     }
     return fd;
 }
