@@ -25,7 +25,6 @@ IO_SRCS :=					\
 	io/TCPClient.cc				\
 	io/TCPServer.cc				\
 	io/UDPClient.cc				\
-	io/UDPServer.cc				\
 
 THREAD_SRCS :=					\
 	thread/Mutex.cc				\
