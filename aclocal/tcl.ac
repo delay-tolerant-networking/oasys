@@ -116,7 +116,7 @@ AC_DEFUN(AC_OASYS_FIND_TCL, [
           ])
 
       for ac_tcllibdir in $ac_tcllibdirs; do
-      for ac_tcllib in tcl tcl$ac_tclver tcl$ac_tclvermajor$ac_tclverminor; do
+      for ac_tcllib in tcl tcl$ac_tclver tcl$ac_tclver_major$ac_tclver_minor; do
 
         AC_MSG_CHECKING([for tcl library in $ac_tcllibdir, -l$ac_tcllib])
 	LDFLAGS="$ac_save_LDFLAGS -L$ac_tcllibdir"
