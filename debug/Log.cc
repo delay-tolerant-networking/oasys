@@ -84,10 +84,11 @@ level2str_t log_levelnames[] =
 Log* Log::instance_ = NULL;
 
 Log::Log()
-    : inited_(false), logfd_(-1), rule_list_(NULL),
+    : inited_(false), logfd_(-1),
       default_threshold_(LOG_DEFAULT_THRESHOLD)
 {
     lock_ = new SpinLock();
+    rule_list_ = new RuleList();
 }
 
 void
@@ -252,8 +253,7 @@ Log::parse_debug_file(const char* debug_path)
     }
     lock_->unlock();
 
-    if (old_rule_list)
-        delete old_rule_list;
+    delete old_rule_list;
 }
 
 void
