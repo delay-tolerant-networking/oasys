@@ -51,15 +51,15 @@ set __CC {
 #include <util/UnitTest.h>
 using namespace oasys;
 
-DECLARE_UNIT_TEST(ATest) {
+DECLARE_TEST(ATest) {
     return 0;
 }
 
-DECLARE_UNIT_TEST(AnotherTest) {
+DECLARE_TEST(AnotherTest) {
     return 0;
 }
 
-DECLARE_UNIT_TEST(InputTest) {
+DECLARE_TEST(InputTest) {
     log_debug("/test", "InputTest: should be foo");
     
     return UNIT_TEST_INPUT;
@@ -67,9 +67,9 @@ DECLARE_UNIT_TEST(InputTest) {
 
 class Test : public UnitTester {
     DECLARE_TESTER(Test) {
-        ADD_UNIT_TEST(ATest);
-        ADD_UNIT_TEST(AnotherTest);
-        ADD_UNIT_TEST(InputTest);
+        ADD_TEST(ATest);
+        ADD_TEST(AnotherTest);
+        ADD_TEST(InputTest);
     }
 };
 

@@ -38,6 +38,7 @@
 proc checkTimerTest1 {output} {
     while {[set line [gets $output]] != ""} {
         if [regexp {\(-?([0-9]+) usec late\)} $line match diff] {
+            # check for alarms that are off by 5 sec.
             if [expr $diff > 5000] {
                 puts "Timer off by more than 5000 usec"
                 return -1
@@ -119,7 +120,7 @@ protected:
     int count_;
 };
 
-DECLARE_UNIT_TEST(TimerTest1) {
+DECLARE_TEST(TimerTest1) {
     TimerSystem::init();
     TimerSystem::instance()->start();
 
@@ -149,7 +150,7 @@ DECLARE_UNIT_TEST(TimerTest1) {
 
 class TimerTest : public UnitTester {
     DECLARE_TESTER(TimerTest) {
-        ADD_UNIT_TEST(TimerTest1);
+        ADD_TEST(TimerTest1);
     }
 };
 
