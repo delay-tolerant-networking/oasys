@@ -46,7 +46,7 @@
 
 #if defined(__i386__)
 #include "Atomic-x86.h"
-#elif defined(__arm__) || defined(__sun__)
+#elif defined(__arm__) || defined(__sun__) || defined(__POWERPC__)
 // XXX/demmer revisit this question for sparc at least
 #define __NO_ATOMIC__
 #define NO_SMP
