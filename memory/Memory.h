@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
+
+#include <signal.h>
 #include <sys/mman.h>
 
 #include "../debug/Debug.h"
@@ -16,7 +18,11 @@
  *
  * Implementation note: When the tracking hash table gets near 95%
  * full, new will stop adding entries into the hash table, and a
- * warning will be signalled.
+ * warning will be signaled.
+ *
+ * Optionally, the allocator can be configured so that when it
+ * received a user signal, it dumps the current memory use information
+ * to dump file.
  *
  * Options:
  *
@@ -85,19 +91,18 @@ struct dbg_mem_t {
  */ 
 class DbgMemInfo {
 public:
+    enum {
+	NO_FLAGS   = 0,
+	USE_SIGNAL = 1,   // set up a signal handler for dumping memory information
+    };
+
+    
     /**
      * Set up the memory usage statistics table.
+     *
+     * @param dump_file Dump of the memory usage characteristics.
      */
-    static void init() {
-	// XXX/bowei Needs to be changed to MMAP
-        entries_ = 0;
-        table_   = (dbg_mem_entry_t*)
-            calloc(_DBG_MEM_TABLE_SIZE, sizeof(dbg_mem_entry_t));
-        
-        memset(table_, 0, sizeof(dbg_mem_entry_t) * _DBG_MEM_TABLE_SIZE);
-
-	init_ = true;
-    }
+    static void init(int flags, char* dump_file = 0);
 
 // Find a matching set of frames
 #define MATCH(_f1, _f2)                                                 \
@@ -192,6 +197,11 @@ public:
      */
     static bool initialized() { return init_; }
 
+    /**
+     * Signal handler for dump file
+     */
+    static void signal_handler(int signal, siginfo_t* info, void* context);
+
 private:
     /** 
      * Pointer to the allocated memory hash table.
@@ -199,6 +209,8 @@ private:
     static int              entries_;
     static dbg_mem_entry_t* table_;
     static bool             init_;
+    static FILE*            dump_file_;
+    static struct sigaction signal_;
 };
 
 #ifndef NDEBUG_MEMORY
