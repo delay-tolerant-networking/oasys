@@ -1,9 +1,11 @@
 #ifndef __BUFFERED_IO_H__
 #define __BUFFERED_IO_H__
 
-#include <debug/Logger.h>
-#include <io/IOClient.h>
-#include "lib/StreamBuffer.h"
+#include <oasys/debug/Logger.h>
+#include <oasys/io/IOClient.h>
+#include <oasys/util/StreamBuffer.h>
+
+// XXX/demmer move to oasys
 
 /**
  * Wrapper class for a tcp client socket that includes an in-memory

@@ -1,4 +1,5 @@
-#include <util/StringBuffer.h>
+
+#include <oasys/util/StringBuffer.h>
 
 #include "PrettyPrintBuffer.h"
 
