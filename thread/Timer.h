@@ -5,10 +5,12 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <queue>
+#include <signal.h>
 
 #include "../debug/Debug.h"
 #include "../debug/Log.h"
 #include "MsgQueue.h"
+#include "Notifier.h"
 #include "Thread.h"
 
 /**
@@ -69,6 +71,17 @@ public:
     void schedule_immediate(Timer* timer);
     bool cancel(Timer* timer);
 
+    /**
+     * Hook to use the timer thread to safely handle a signal.
+     */
+    void add_sighandler(int sig, __sighandler_t handler);
+
+    /**
+     * Hook called from an the actual signal handler that notifies the
+     * timer sysetem thread to call the signal handler function.
+     */
+    static void post_signal(int sig);
+                             
     void run();
 
 private:
@@ -79,8 +92,12 @@ private:
     static TimerSystem* instance_;
 
     SpinLock* system_lock_;
-    MsgQueue<char> signal_;
+    Notifier signal_;
     std::priority_queue<Timer*, std::vector<Timer*>, TimerCompare> timers_;
+
+    __sighandler_t handlers_[_NSIG];	///< handlers for signals
+    bool 	   signals_[_NSIG];	///< which signals have fired
+    bool	   sigfired_;		///< boolean to check if any fired
 };
 
 /**

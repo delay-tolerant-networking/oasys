@@ -9,14 +9,21 @@
 #include "Timer.h"
 #include "io/IO.h"
 
+// XXX/demmer rework to use Notifier and not MsgQueue
+
 TimerSystem* TimerSystem::instance_;
 
 TimerSystem::TimerSystem()
-    : Logger("/timer"),
+    : Thread(Thread::INTERRUPTABLE),
+      Logger("/timer"),
       system_lock_(new SpinLock()),
-      signal_("/timer/signal", system_lock_),
+      signal_("/timer/signal"),
       timers_()
 {
+
+    memset(handlers_, 0, sizeof(handlers_));
+    memset(signals_, 0, sizeof(signals_));
+    sigfired_ = false;
 }
 
 void
@@ -63,7 +70,7 @@ TimerSystem::schedule_at(struct timeval *when, Timer* timer)
 
     // notify the timer thread (which is likely blocked in poll) that
     // we've stuck something new on the queue
-    signal_.push('1');
+    signal_.notify();
 }
 
 void
@@ -102,7 +109,6 @@ TimerSystem::cancel(Timer* timer)
     return false;
 }
 
-
 /*
  * Pop the timer from the head of the heap and call its handler.
  */
@@ -137,6 +143,38 @@ TimerSystem::pop_timer(struct timeval* now)
 }
 
 /**
+ * Hook called from an the actual signal handler that notifies the
+ * timer sysetem thread to call the signal handler function.
+ *
+ * By setting the bit to indicate that the signal fired and calling
+ * the thread's interrupt routine, we make sure to wake up the timer
+ * thread if it's blocked in poll, causing it to actually execute the
+ * signal handler.
+ */
+void
+TimerSystem::post_signal(int sig)
+{
+    TimerSystem* _this = TimerSystem::instance();
+
+    fprintf(stderr, "post_signal %d\n", sig);
+    _this->sigfired_ = true;
+    _this->signals_[sig] = true;
+    _this->interrupt();
+}
+
+/**
+ * Hook to use the timer thread to safely handle a signal.
+ */
+void
+TimerSystem::add_sighandler(int sig, __sighandler_t handler)
+{
+    log_debug("adding signal handler 0x%x for signal %d",
+              (u_int)handler, sig);
+    handlers_[sig] = handler;
+    signal(sig, post_signal);
+}
+
+/**
  * The main system thread function that blocks in poll() waiting for
  * either the first timer to fire or for another thread to schedule a
  * timer.
@@ -152,6 +190,17 @@ TimerSystem::run()
         
     while (1) {
         timeout = -1; // default is to block forever
+
+        if (sigfired_) {
+            log_debug("sigfired_ set, calling registered handlers");
+            for (int i = 0; i < _NSIG; ++i) {
+                if (signals_[i]) {
+                    handlers_[i](i);
+                    signals_[i] = 0;
+                }
+            }
+            sigfired_ = 0;
+        }
 
         if (! timers_.empty()) {
             ::gettimeofday(&now, 0);
@@ -184,22 +233,17 @@ TimerSystem::run()
 
         // and re-take the lock on return
         system_lock_->lock();
+
+        if (cc == -1 && errno == EINTR) {
+            log_debug("poll interrupted, looping");
+        }
         
         if (cc == 0) {
             log_debug("poll returned due to timeout");
             
         } else if (cc == 1) {
             log_debug("poll returned due to signal");
-
             signal_.drain_pipe();
-            
-            bool ret;
-            char c;
-            ret = signal_.try_pop(&c);
-            ASSERT(ret); // must be at least one
-
-            // drain any others
-            while (signal_.try_pop(&c)) {}
         } else {
             if (errno == EINTR) continue;
             log_err("unexpected return of %d from poll errno %d", cc, errno);
