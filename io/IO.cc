@@ -37,6 +37,7 @@
  */
 
 #include <errno.h>
+#include <stdlib.h>
 #include <sys/poll.h>
 #include <sys/types.h>
 #include <sys/fcntl.h>
