@@ -254,6 +254,10 @@ protected:
  * Extend this class to provide the command hooks for a specific
  * module. Register commands with Command::instance()->reg() or use
  * the AutoTclCommand class.
+ *
+ * The "set" command is automatically defined for a module. Set is
+ * used to change the value of variable which are bound using the
+ * bind_* functions defined below.
  */
 class TclCommand : public Logger {
 public:
@@ -328,7 +332,7 @@ protected:
     };
     
     /** 
-     * storage types for bindings 
+     * Internal structure for bindings.
      */
     struct Binding {
         Binding(type_t type, void* val)
@@ -336,14 +340,9 @@ protected:
         {
             val_.voidval_ = val;
         }
-        
-        /**
-         * Add a destructor declaration with no implementation since
-         * this is never called.
-         */
-        ~Binding();
 
         type_t type_;             	///< Type of the binding
+        
         union {
             void*	voidval_;
             int*	intval_;
@@ -354,14 +353,14 @@ protected:
     };
     
     /** 
-     * Binding list.
-     *
-     * The "set" command is automatically defined for a module. Set is
-     * used to change the value of variable which are bound using the
-     * bind_* functions defined below.
-     * 
+     * Type for the table of bindings.
      */
-    std::map<std::string, Binding*> bindings_;
+    typedef std::map<std::string, Binding*> BindingTable;
+
+    /**
+     * The table of registered bindings.
+     */
+    BindingTable bindings_;
    
     /**
      * Bind an integer to the set command
@@ -400,6 +399,11 @@ protected:
     void bind_addr(const char* name, in_addr_t* addrp,
                    in_addr_t initval);
 
+    /**
+     * Unbind a variable.
+     */
+    void unbind(const char* name);
+    
     /**
      * Set the TclResult string.
      */

@@ -37,6 +37,7 @@
  */
 #include "TclCommand.h"
 #include "HelpCommand.h"
+#include "DebugCommand.h"
 #include "LogCommand.h"
 
 #include "debug/Debug.h"
@@ -100,6 +101,9 @@ TclCommandInterp::do_init(char* argv0, bool no_default_cmds)
 
         LogCommand* log = new LogCommand();
         reg(log);
+
+        DebugCommand* debug = new DebugCommand();
+        reg(debug);
     }
     
     // evaluate the boot-time tcl commands (copied since tcl may
@@ -240,7 +244,7 @@ TclCommandInterp::reg_atexit(void(*fn)(void*), void* data)
     
 int 
 TclCommandInterp::tcl_cmd(ClientData client_data, Tcl_Interp* interp,
-                       int objc, Tcl_Obj* const* objv)
+                          int objc, Tcl_Obj* const* objv)
 {
     TclCommand* command = (TclCommand*)client_data;
 
@@ -320,7 +324,7 @@ TclCommandInterp::wrong_num_args(int argc, const char** argv, int parsed,
     if (max == min) {
         append_resultf(" expected %d, got %d", min, argc);
     } else if (max == INT_MAX) {
-        append_resultf(" expected >%d, got %d", min, argc);
+        append_resultf(" expected at least %d, got %d", min, argc);
     } else {
         append_resultf(" expected %d - %d, got %d", min, max, argc);
     }
@@ -328,7 +332,7 @@ TclCommandInterp::wrong_num_args(int argc, const char** argv, int parsed,
 
 void
 TclCommandInterp::wrong_num_args(int objc, Tcl_Obj** objv, int parsed,
-                              int min, int max)
+                                 int min, int max)
 {
     char* argv[objc];
     for (int i = 0; i < objc; ++i) {
@@ -411,7 +415,7 @@ TclCommand::cmd_set(int objc, Tcl_Obj** objv, Tcl_Interp* interp)
     const char* var = Tcl_GetStringFromObj(objv[2], NULL);
     Tcl_Obj* val = objv[3];
     
-    std::map<std::string, Binding*>::iterator itr;
+    BindingTable::iterator itr;
     itr = bindings_.find(var);
     
     if (itr == bindings_.end()) {
@@ -531,7 +535,7 @@ BIND_FUNCTIONS(TclCommand::bind_addr, in_addr_t, BINDING_ADDR);
 
 void
 TclCommand::bind_s(const char* name, std::string* val,
-                      const char* initval)
+                   const char* initval)
 {
     if (initval)
         val->assign(initval);
@@ -543,6 +547,24 @@ TclCommand::bind_s(const char* name, std::string* val,
     log_debug("creating string binding for %s -> %p", name, val);
 
     bindings_[name] = new Binding(BINDING_STRING, val);
+}
+
+void
+TclCommand::unbind(const char* name)
+{
+    BindingTable::iterator iter = bindings_.find(name);
+
+    if (iter == bindings_.end()) {
+        log_warn("warning, binding for %s doesn't exist", name);
+        return;
+    }
+
+    log_debug("removing binding for %s", name);
+
+    Binding* old = iter->second;
+    bindings_.erase(iter);
+
+    delete old;
 }
 
 } // namespace oasys
