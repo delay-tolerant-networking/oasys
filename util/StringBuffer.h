@@ -104,6 +104,15 @@ public:
     size_t appendf(const char* fmt, ...) PRINTFLIKE(2, 3);
 
     /**
+     * Formatting append function.
+     *
+     * @param fmt the format string
+     * @param ap the format argument list
+     * @return the number of bytes written
+     */
+    size_t vappendf(const char* fmt, va_list ap);
+
+    /**
      * Trim cnt characters from the tail of the string.
      */
     void trim(size_t cnt)

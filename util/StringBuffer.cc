@@ -82,15 +82,10 @@ StringBuffer::append(char c)
 }
 
 size_t
-StringBuffer::appendf(const char* fmt, ...)
+StringBuffer::vappendf(const char* fmt, va_list ap)
 {
-    va_list ap;
-
     int nfree = buflen_ - len_;
-
-    va_start(ap, fmt);    
     int ret = vsnprintf(&buf_[len_], nfree, fmt, ap);
-    va_end(ap);
     
     if(ret == -1)
     {
@@ -105,9 +100,7 @@ StringBuffer::appendf(const char* fmt, ...)
             reserve(buflen_ * 2);
             nfree = buflen_ - len_;
             
-            va_start(ap, fmt);    
             ret = vsnprintf(&buf_[len_], nfree, fmt, ap);
-            va_end(ap);
 
             logf("/stringbuffer", LOG_DEBUG, "ret = %d", ret);
         }
@@ -120,13 +113,21 @@ StringBuffer::appendf(const char* fmt, ...)
             nfree = buflen_ - len_;
         }
         
-        va_start(ap, fmt);
         ret = vsnprintf(&buf_[len_], nfree, fmt, ap);
-        va_end(ap);
     }
 
     len_ += ret;
 
+    return ret;
+}
+
+size_t
+StringBuffer::appendf(const char* fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    size_t ret = vappendf(fmt, ap);
+    va_end(ap);
     return ret;
 }
 
