@@ -77,7 +77,7 @@ Mutex::unlock()
          err);
 
     if (err == 0)
-        lock_holder_ = Thread::current();
+        lock_holder_ = 0;
     
     return err;
 }
