@@ -186,7 +186,7 @@ public:
     /**
      * Constructor
      */
-    MarshalSize(context_t context, int options = 0)
+    MarshalSize(context_t context = CONTEXT_UNKNOWN, int options = 0)
         : SerializeAction(Serialize::INFO, context, options)
     {
         size_ = (options & Serialize::USE_CRC) ? sizeof(u_int32_t) : 0;
