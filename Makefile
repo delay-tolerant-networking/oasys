@@ -46,6 +46,7 @@ UTIL_SRCS :=					\
 	util/md5-rsa.c				\
 	util/Options.cc				\
 	util/RateEstimator.cc			\
+	util/StreamBuffer.cc			\
 	util/StringBuffer.cc			\
 	util/URL.cc				\
 

@@ -65,5 +65,5 @@ private:
 
     static const size_t DEFAULT_BUFSIZE = 512;
 };
-
+ 
 #endif //__STREAM_BUFFER_H__
