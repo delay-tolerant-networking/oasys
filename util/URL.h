@@ -2,6 +2,12 @@
 #ifndef _URL_H_
 #define _URL_H_
 
+// XXX/namespace
+class URL;
+namespace oasys {
+typedef ::URL URL;
+}
+
 #include <list>
 #include <string>
 
