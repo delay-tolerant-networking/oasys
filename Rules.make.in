@@ -20,6 +20,7 @@ CPPFLAGS	= -I$(SRCDIR) @CPPFLAGS@
 WARN		= -Wall -Werror @OPTIMIZE_WARN@
 CFLAGS		= $(CPPFLAGS) $(DEBUG) $(OPTIMIZE) $(DEPFLAGS) $(WARN)
 LIBS		= @LIBS@
+LDFLAGS		= @LDFLAGS@
 
 #
 # Add a phony rule to make sure this isn't included before the default

@@ -27,6 +27,6 @@ TESTS += \
 # default rule for tests
 #
 test/%test: test/%test.cc liboasys.a
-	$(CXX) $^ -o $@ $(CFLAGS) $(LIBS) liboasys.a
+	$(CXX) $^ -o $@ $(CFLAGS) $(LDFLAGS) $(LIBS) liboasys.a
 test/%Test: test/%Test.cc liboasys.a
-	$(CXX) $^ -o $@ $(CFLAGS) $(LIBS) liboasys.a
+	$(CXX) $^ -o $@ $(CFLAGS) $(LDFLAGS) $(LIBS) liboasys.a
