@@ -39,7 +39,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "config.h"
+#include "../config.h"
 
 #ifdef HAVE_SYNCH_H
 #include <synch.h>

@@ -38,7 +38,7 @@
 #ifndef _OASYS_INTTYPES_H_
 #define _OASYS_INTTYPES_H_
 
-#include "config.h"
+#include "../config.h"
 
 /*
  * See if we can define u_intxx_t in terms of uintxx_t.

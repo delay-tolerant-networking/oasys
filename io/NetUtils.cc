@@ -20,7 +20,7 @@
  *
  */
 
-#include "config.h"
+#include "../config.h"
 #include "NetUtils.h"
 #include "debug/Debug.h"
 #include <stdlib.h>
