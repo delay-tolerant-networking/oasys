@@ -38,6 +38,7 @@
 #ifndef _OASYS__MEMORY_H__
 #define _OASYS__MEMORY_H__
 
+// XXX/demmer fix this for gcc2
 #if (__GNUC__ >= 3)
 
 #ifndef NDEBUG_MEMORY

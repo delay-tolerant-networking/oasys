@@ -18,7 +18,7 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC, [
         # _GNU_SOURCE isn't defined, so do both those things here
         #
         3.1*|2.9*)
-            DEFS="$DEFS -D_GNU_SOURCE"
+            OASYS_CPPFLAGS="$OASYS_CPPFLAGS -D_GNU_SOURCE"
 	    DEPFLAGS=""
             echo "*** "
 	    echo "*** warning: using old compiler $cc version $oasys_cv_prog_gccver,"
