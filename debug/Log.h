@@ -179,6 +179,14 @@ public:
                      const char *debug_path = LOG_DEFAULT_DBGFILE);
 
     /**
+     * Initialize the logging system. Must be called exactly once.
+     */
+    static void init(log_level_t defaultlvl)
+    {
+        init("-", defaultlvl);
+    }
+    
+    /**
      *  Sets the time to print for the logging 
      */
     virtual void getlogtime(struct timeval* tv);
