@@ -3,6 +3,7 @@ TESTS += \
 	command-test		\
 	hexdump-test		\
 	log-test 		\
+	log-reparse-test	\
 	marshal-test 		\
 	md5-test 		\
 	memory-test 		\
@@ -10,6 +11,7 @@ TESTS += \
 	mutex-test 		\
 	options-test 		\
 	serialize-test          \
+	spin-lock-test          \
 	tcp-socket-test 	\
 	tcp-timeout-read-test 	\
 	tcp-writeall-test 	\
@@ -20,5 +22,5 @@ TESTS += \
 #
 # default rule for tests
 #
-test/%-test: test/%-test.cc
+test/%-test: test/%-test.cc liboasys.a
 	$(CPP) $^ -o $@ $(CFLAGS) $(LIBS) liboasys.a
