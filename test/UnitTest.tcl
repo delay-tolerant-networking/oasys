@@ -2,18 +2,45 @@
 
 #
 # Unit testing framework - (also see util/UnitTest.cc)
-#  
-# Creates a directory output/*-testname for each test run.
 #
+proc usage {} {
+    puts {Usage: UnitTest.tcl [OPTION]... [TESTUNIT]...
+Run the unit test suite.
+
+-e Don't clobber the test output and only rerun tests which have failed.
+-s Run in silent mode.
+    }
+}
+
+# parse arguments
+proc parse_args {} {
+    global argv g_clobber g_error_only g_silent 
+    
+    foreach arg $argv {
+	if [string equal $arg "-s"] {
+	    set g_silent 1
+	}
+	if [string equal $arg "-e"] {
+	    puts_reg "- Only running error cases"
+	    set g_clobber    0
+	    set g_error_only 1
+	}
+	if [expr [string equal $arg "-h"] || [string equal $arg "--help"]] {
+	    usage
+	    exit 0
+	}
+
+    }
+}
 
 # Check and create test output directories
 proc chkdirs {clobber} {
     if [expr [file exists output] && ! $clobber] {
-	puts "- no clobber set, not overwriting test results"
-	exit -1
+	puts_reg "- no clobber set, not overwriting test results"
+	return
     }
 
-#    puts "- clobbering output/ directory"
+    puts_reg "- clobbering output/ directory"
     exec "rm" "-rf" "output/"
     exec "mkdir" "output/"
 }
@@ -33,45 +60,14 @@ proc puts_reg {args} {
     }
 }
 
-# parse arguments
-proc parse_args {} {
-    global argv g_silent
-    
-    foreach arg $argv {
-	if [string equal $arg "--silent"] {
-	    set g_silent 1
-	}
-    }
-}
-
-#
-# Main
-#
-chkdirs 1
-
-set g_total  0
-set g_passed 0
-set g_failed 0
-set g_silent 0
-
-parse_args
-
-# set tests [glob "*-test"]
-set tests {sample-test timer-test serialize-test}
-
-foreach test_exe $tests {
-    if {[file exists "$test_exe.cc"]} {
-    } elseif {[file exists "test/$test_exe.cc"]} {
-	cd "test"
-    } else {
+# strip out and execute tcl code from CC file 
+proc parse_cc_file {test_exe} {
+    if [expr ! [file exists "$test_exe.cc"]] {
 	error "couldn't find $test_exe.cc or test/$test_exe.cc"
     }
 
-    file mkdir "output/$test_exe"
     set fd [open "$test_exe.cc"]
-
     set code [read $fd]
-
     while {1} {
 	set matched [regexp {.*?DECLARE_TEST_TCL(.*?)endif(.*)$} $code match tcl_code rest]
 	
@@ -82,16 +78,43 @@ foreach test_exe $tests {
 	eval $tcl_code
 	set code $rest
     } 
-
     close $fd
+}
+
+##############################################################################
+#
+# Main
+#
+set g_total   0
+set g_passed  0
+set g_failed  0
+
+set g_clobber    1;			# clobber directories
+set g_error_only 0;			# rerun only error cases
+set g_silent     0;			# run silently
+parse_args
+
+chkdirs $g_clobber
+
+# set tests [glob "*-test"] XXX
+set tests {sample-test timer-test serialize-test}
+
+foreach test_exe $tests {
+    parse_cc_file $test_exe
 
     puts_reg -nonewline "* $test_exe: "
     flush stdout
     
+    if [expr $g_error_only && [file exists output/$test_exe/PASSED]] {
+	puts_reg "- skipping $test_exe (cached)"
+	continue
+    }
+    
+    file mkdir "output/$test_exe"
     if [catch {exec "./$test_exe" "-test" ">output/$test_exe/stdout" "2>output/$test_exe/stderr"} err ] {
  	puts "$err"
-	set g_failed [expr $g_failed + 1 ]
-	set g_total  [expr $g_total + 1  ]
+	incr g_failed
+	incr g_total
     } else {
 	source "output/$test_exe/stderr"
 	lassign {test_suite unit_tests summary} $result
@@ -102,10 +125,10 @@ foreach test_exe $tests {
 	    lassign {number name status} $unit_test
 
 	    if [ string equal $status "P" ] {
-		set g_passed [expr $g_passed + 1 ]
+		incr g_passed
 	    } elseif [ string equal $status "F" ] {
 		puts "$name failed, output in output/$test_exe/stdout"
-		set g_failed [expr $g_failed + 1 ]
+		incr g_failed
 		set all_clear 0
 	    } elseif [ string equal $status "I" ] {
 		seek $output 0
@@ -113,18 +136,20 @@ foreach test_exe $tests {
 		
 		if [ expr $check_result < 0 ] {
 		    puts "$name failed, output in output/$test_exe/stdout"
-		    set g_failed [expr $g_failed + 1 ]
+		    incr g_failed
 		    set all_clear 0
 		} else {
-		    set g_passed [expr $g_passed + 1 ]
+		    incr g_passed
 		}
 	    }
-	    set g_total  [expr $g_total + 1 ]
+	    incr g_total
 	}
 	close $output
 
 	if {$all_clear} {
 	    puts_reg "passed"
+	    set passed_summary [open "output/$test_exe/PASSED" "w"]
+	    close $passed_summary
 	}
     }
 }
