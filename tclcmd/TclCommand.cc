@@ -75,10 +75,11 @@ TclCommandInterp::do_init(char* argv0, bool no_default_cmds)
     // for a file channel
     Tcl_FindExecutable(argv0);
     
-    // run Tcl_Init to set up the local tcl package path
+    // run Tcl_Init to set up the local tcl package path, but don't
+    // depend on it succeeding in case there's a strange tcl
+    // installation
     if (Tcl_Init(interp_) != TCL_OK) {
-        log_err("error in Tcl_Init: \"%s\"", interp_->result);
-        return TCL_ERROR;
+        log_warn("error in Tcl_Init: \"%s\", continuing...", interp_->result);
     }
 
     // do auto registration of commands (if any)
