@@ -209,7 +209,7 @@ rm -f ./a.out
 
 fi
 
-else 
+else # non-native target
 
 if [ $ccver = "auto" ]; then
    echo "Non-native target $target:"
