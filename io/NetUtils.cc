@@ -24,6 +24,7 @@
 #include "NetUtils.h"
 #include "compat/inet_aton.h"
 #include "debug/Debug.h"
+#include "thread/SpinLock.h"
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -125,7 +126,7 @@ gethostbyname(const char* name, in_addr_t* addr)
 #elif defined(HAVE_GETHOSTBYNAME)
     // make it thread-safe by using a global lock
     static SpinLock gethostbyname_lock;
-    ScopeLock(&gethostbyname_lock);
+    ScopeLock l(&gethostbyname_lock);
     
     struct hostent *hent;
     hent = ::gethostbyname(name);
