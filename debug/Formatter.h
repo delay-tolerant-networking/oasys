@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _FORMATTER_H_
-#define _FORMATTER_H_
+#ifndef _OASYS_FORMATTER_H_
+#define _OASYS_FORMATTER_H_
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -110,4 +110,4 @@ Formatter::assert_valid(Formatter* obj)
 
 } // namespace oasys
 
-#endif /* _FORMATTER_H_ */
+#endif /* _OASYS_FORMATTER_H_ */

@@ -35,8 +35,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _JENKINS_HASH_H_
-#define _JENKINS_HASH_H_
+#ifndef _OASYS_JENKINS_HASH_H_
+#define _OASYS_JENKINS_HASH_H_
 
 #include <sys/types.h>
 #include "../compat/inttypes.h"
@@ -53,4 +53,4 @@ jenkins_hash(u_int8_t *k,        /* the key */
 
 } // namespace oasys
 
-#endif /* _JENKINS_HASH_H_ */
+#endif /* _OASYS_JENKINS_HASH_H_ */

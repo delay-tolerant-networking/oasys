@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MUTEX_H_
-#define _MUTEX_H_
+#ifndef _OASYS_MUTEX_H_
+#define _OASYS_MUTEX_H_
 
 #include <pthread.h>
 #include "Lock.h"
@@ -90,5 +90,5 @@ protected:
 
 } // namespace oasys
 
-#endif /* _MUTEX_H_ */
+#endif /* _OASYS_MUTEX_H_ */
 

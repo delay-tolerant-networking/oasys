@@ -37,8 +37,8 @@
  */
 
 
-#ifndef __CRC_32_H__
-#define __CRC_32_H__
+#ifndef _OASYS_CRC32_H_
+#define _OASYS_CRC32_H_
 
 #include <sys/types.h>
 #include "../compat/inttypes.h"
@@ -69,4 +69,4 @@ private:
 };
 }; // namespace oasys
 
-#endif //__CRC_32_H__
+#endif //_OASYS_CRC32_H_

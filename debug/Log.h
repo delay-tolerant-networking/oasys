@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LOG_H_
-#define _LOG_H_
+#ifndef _OASYS_LOG_H_
+#define _OASYS_LOG_H_
 
 /**
  * @class Log
@@ -476,4 +476,4 @@ __log_enabled(log_level_t level, const char* path)
 // of course) for simplicity.
 #include "Logger.h"
 
-#endif /* _LOG_H_ */
+#endif /* _OASYS_LOG_H_ */

@@ -35,8 +35,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _IP_SOCKET_H_
-#define _IP_SOCKET_H_
+#ifndef _OASYS_IP_SOCKET_H_
+#define _OASYS_IP_SOCKET_H_
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -323,4 +323,4 @@ IPSocket::poll(int events, int* revents, int timeout_ms)
 
 } // namespace oasys
  
-#endif /* _IP_SOCKET_H_ */
+#endif /* _OASYS_IP_SOCKET_H_ */

@@ -35,8 +35,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _LOG_COMMAND_H_
-#define _LOG_COMMAND_H_
+#ifndef _OASYS_LOG_COMMAND_H_
+#define _OASYS_LOG_COMMAND_H_
 
 #include "TclCommand.h"
 
@@ -59,4 +59,4 @@ public:
 
 } // namespace oasys
 
-#endif //_LOG_COMMAND_H_
+#endif //_OASYS_LOG_COMMAND_H_

@@ -35,8 +35,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __PRETTY_PRINT_BUFFER_H__
-#define __PRETTY_PRINT_BUFFER_H__
+#ifndef _OASYS_PRETTY_PRINT_BUFFER_H_
+#define _OASYS_PRETTY_PRINT_BUFFER_H_
 
 #include <string>
 #include <utility>              // for std::pair
@@ -62,4 +62,4 @@ private:
 
 } // namespace oasys
 
-#endif /* __PRETTY_PRINT_BUFFER_H__ */
+#endif /* _OASYS_PRETTY_PRINT_BUFFER_H_ */

@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _IO_H_
-#define _IO_H_
+#ifndef _OASYS_IO_H_
+#define _OASYS_IO_H_
 
 #include <fcntl.h>
 #include <stdlib.h>
@@ -182,5 +182,5 @@ private:
 
 } // namespace oasys
 
-#endif /* _IO_H_ */
+#endif /* _OASYS_IO_H_ */
 

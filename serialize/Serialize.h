@@ -35,8 +35,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _SERIALIZE_H_
-#define _SERIALIZE_H_
+#ifndef _OASYS_SERIALIZE_H_
+#define _OASYS_SERIALIZE_H_
 
 /**
  * @file
@@ -258,4 +258,4 @@ private:
 
 } // namespace oasys
 
-#endif /* _SERIALIZE_H_ */
+#endif /* _OASYS_SERIALIZE_H_ */

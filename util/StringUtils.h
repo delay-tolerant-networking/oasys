@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _STRING_UTILS_H_
-#define _STRING_UTILS_H_
+#ifndef _OASYS_STRING_UTILS_H_
+#define _OASYS_STRING_UTILS_H_
 
 /**
  * Utilities and stl typedefs for basic_string.
@@ -148,4 +148,4 @@ str_isascii(const u_char* bp, size_t len)
 
 } // namespace oasys
 
-#endif /* _STRING_UTILS_H_ */
+#endif /* _OASYS_STRING_UTILS_H_ */

@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ATOMIC_H_
-#define _ATOMIC_H_
+#ifndef _OASYS_ATOMIC_H_
+#define _OASYS_ATOMIC_H_
 
 /**
  * Include the appropriate architecture-specific version of the atomic
@@ -54,4 +54,4 @@
 #error "Need to define an Atomic.h variant for your architecture"
 #endif
 
-#endif /* _ATOMIC_H_ */
+#endif /* _OASYS_ATOMIC_H_ */

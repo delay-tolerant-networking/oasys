@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NOTIFIER_H_
-#define _NOTIFIER_H_
+#ifndef _OASYS_NOTIFIER_H_
+#define _OASYS_NOTIFIER_H_
 
 #include "../debug/Log.h"
 
@@ -102,4 +102,4 @@ protected:
 
 } // namespace oasys
 
-#endif /* _NOTIFIER_H_ */
+#endif /* _OASYS_NOTIFIER_H_ */

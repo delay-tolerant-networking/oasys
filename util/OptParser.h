@@ -35,8 +35,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _OPTPARSER_H_
-#define _OPTPARSER_H_
+#ifndef _OASYS_OPTPARSER_H_
+#define _OASYS_OPTPARSER_H_
 
 #include <string>
 #include <vector>
@@ -85,4 +85,4 @@ protected:
 
 } // namespace oasys
 
-#endif /* _OPTPARSER_H_ */
+#endif /* _OASYS_OPTPARSER_H_ */

@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _FD_IOCLIENT_H_
-#define _FD_IOCLIENT_H_
+#ifndef _OASYS_FD_IOCLIENT_H_
+#define _OASYS_FD_IOCLIENT_H_
 
 #include "IOClient.h"
 #include "../debug/Logger.h"
@@ -82,4 +82,4 @@ protected:
 
 } // namespace oasys
 
-#endif /* _FD_IOCLIENT_H_ */
+#endif /* _OASYS_FD_IOCLIENT_H_ */

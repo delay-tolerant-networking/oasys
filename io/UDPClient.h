@@ -35,8 +35,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _UDP_CLIENT_H_
-#define _UDP_CLIENT_H_
+#ifndef _OASYS_UDP_CLIENT_H_
+#define _OASYS_UDP_CLIENT_H_
 
 #include "IPClient.h"
 
@@ -52,4 +52,4 @@ public:
 
 } // namespace oasys
 
-#endif /* _UDP_CLIENT_H_ */
+#endif /* _OASYS_UDP_CLIENT_H_ */

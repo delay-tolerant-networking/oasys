@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TCP_CLIENT_H_
-#define _TCP_CLIENT_H_
+#ifndef _OASYS_TCP_CLIENT_H_
+#define _OASYS_TCP_CLIENT_H_
 
 #include "IPClient.h"
 
@@ -70,4 +70,4 @@ protected:
 
 } // namespace oasys
 
-#endif /* _TCP_CLIENT_H_ */
+#endif /* _OASYS_TCP_CLIENT_H_ */

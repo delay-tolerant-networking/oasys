@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _STRING_BUFFER_H_
-#define _STRING_BUFFER_H_
+#ifndef _OASYS_STRING_BUFFER_H_
+#define _OASYS_STRING_BUFFER_H_
 
 #include "../debug/Log.h" 	// for PRINTFLIKE macro
 
@@ -184,4 +184,4 @@ protected:
 
 } // namespace oasys
 
-#endif /* _STRING_BUFFER_H_ */
+#endif /* _OASYS_STRING_BUFFER_H_ */

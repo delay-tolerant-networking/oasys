@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _URL_H_
-#define _URL_H_
+#ifndef _OASYS_URL_H_
+#define _OASYS_URL_H_
 
 
 #include <list>
@@ -175,5 +175,5 @@ protected:
 
 } // namespace oasys
 
-#endif /* _URL_H_ */
+#endif /* _OASYS_URL_H_ */
 

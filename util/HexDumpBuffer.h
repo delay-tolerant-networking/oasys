@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HEX_DUMP_BUFFER_H_
-#define _HEX_DUMP_BUFFER_H_
+#ifndef _OASYS_HEX_DUMP_BUFFER_H_
+#define _OASYS_HEX_DUMP_BUFFER_H_
 
 #include "StringBuffer.h"
 
@@ -77,4 +77,4 @@ public:
 
 } // namespace oasys
 
-#endif /* _HEX_DUMP_BUFFER_H_ */
+#endif /* _OASYS_HEX_DUMP_BUFFER_H_ */

@@ -35,8 +35,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __STREAM_BUFFER_H__
-#define __STREAM_BUFFER_H__
+#ifndef _OASYS_STREAM_BUFFER_H_
+#define _OASYS_STREAM_BUFFER_H_
 
 #include <stdlib.h>
 
@@ -107,4 +107,4 @@ private:
 
 } // namespace oasys
  
-#endif //__STREAM_BUFFER_H__
+#endif //_OASYS_STREAM_BUFFER_H_

@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MD5_H_
-#define _MD5_H_
+#ifndef _OASYS_MD5_H_
+#define _OASYS_MD5_H_
 
 #include <sys/types.h>
 #include <string>
@@ -132,4 +132,4 @@ private:
 
 } // namespace oasys
 
-#endif /* _MD5_H_ */
+#endif /* _OASYS_MD5_H_ */

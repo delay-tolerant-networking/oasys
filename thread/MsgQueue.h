@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MSG_QUEUE_H_
-#define _MSG_QUEUE_H_
+#ifndef _OASYS_MSG_QUEUE_H_
+#define _OASYS_MSG_QUEUE_H_
 
 #include <queue>
 #include <unistd.h>
@@ -113,4 +113,4 @@ protected:
 
 } // namespace oasys
 
-#endif //_MSG_QUEUE_H_
+#endif //_OASYS_MSG_QUEUE_H_

@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _IP_CLIENT_H_
-#define _IP_CLIENT_H_
+#ifndef _OASYS_IP_CLIENT_H_
+#define _OASYS_IP_CLIENT_H_
 
 #include "IPSocket.h"
 #include "IOClient.h"
@@ -80,4 +80,4 @@ public:
 
 } // namespace oasys
 
-#endif /* _IP_CLIENT_H_ */
+#endif /* _OASYS_IP_CLIENT_H_ */

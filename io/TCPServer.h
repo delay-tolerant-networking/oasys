@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TCP_SERVER_H_
-#define _TCP_SERVER_H_
+#ifndef _OASYS_TCP_SERVER_H_
+#define _OASYS_TCP_SERVER_H_
 
 #include "IPSocket.h"
 #include "../thread/Thread.h"
@@ -115,4 +115,4 @@ public:
 
 } // namespace oasys
                         
-#endif /* _TCP_SERVER_H_ */
+#endif /* _OASYS_TCP_SERVER_H_ */

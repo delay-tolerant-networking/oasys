@@ -35,8 +35,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __MEMORY_H__
-#define __MEMORY_H__
+#ifndef _OASYS__MEMORY_H__
+#define _OASYS__MEMORY_H__
 
 #if (__GNUC__ >= 3)
 
@@ -289,4 +289,4 @@ private:
 
 #endif // (__GNUC__ >= 3)
 
-#endif //__MEMORY_H__
+#endif //_OASYS__MEMORY_H__

@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LOCK_H_
-#define _LOCK_H_
+#ifndef _OASYS_LOCK_H_
+#define _OASYS_LOCK_H_
 
 #include "../debug/Debug.h"
 #include "Thread.h"

@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ATOMIC_X86_H_
-#define _ATOMIC_X86_H_
+#ifndef _OASYS_ATOMIC_X86_H_
+#define _OASYS_ATOMIC_X86_H_
 
 #include "../debug/Debug.h"
 
@@ -228,4 +228,4 @@ atomic_add32_ret(volatile void* v, unsigned int i)
 
 } // namespace oasys
 
-#endif /* _ATOMIC_X86_H_ */
+#endif /* _OASYS_ATOMIC_X86_H_ */

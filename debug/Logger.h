@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LOGGER_H_
-#define _LOGGER_H_
+#ifndef _OASYS_LOGGER_H_
+#define _OASYS_LOGGER_H_
 
 #include "Debug.h"
 
@@ -226,4 +226,4 @@ Logger::logf(const char* logpath, log_level_t level,
 
 } // namespace oasys
 
-#endif /* _LOGGER_H_ */
+#endif /* _OASYS_LOGGER_H_ */

@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SPINLOCK_H_
-#define _SPINLOCK_H_
+#ifndef _OASYS_SPINLOCK_H_
+#define _OASYS_SPINLOCK_H_
 
 #include "Atomic.h"
 #include "Lock.h"
@@ -96,4 +96,4 @@ public:
 
 #endif /* __NO_ATOMIC__ */
 
-#endif /* _SPINLOCK_H_ */
+#endif /* _OASYS_SPINLOCK_H_ */

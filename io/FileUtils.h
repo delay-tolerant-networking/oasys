@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _FILE_UTILS_H_
-#define _FILE_UTILS_H_
+#ifndef _OASYS_FILE_UTILS_H_
+#define _OASYS_FILE_UTILS_H_
 
 namespace oasys {
 
@@ -59,4 +59,4 @@ public:
 
 }
 
-#endif /* _FILE_UTILS_H_ */
+#endif /* _OASYS_FILE_UTILS_H_ */

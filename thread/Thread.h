@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _THREAD_H_
-#define _THREAD_H_
+#ifndef _OASYS_THREAD_H_
+#define _OASYS_THREAD_H_
 
 #include "../config.h"
 
@@ -224,4 +224,4 @@ Thread::spin_yield()
 
 } // namespace oasys
 
-#endif /* _THREAD_H_ */
+#endif /* _OASYS_THREAD_H_ */

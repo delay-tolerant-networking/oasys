@@ -35,8 +35,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __BUFFERED_IO_H__
-#define __BUFFERED_IO_H__
+#ifndef _OASYS_BUFFERED_IO_H_
+#define _OASYS_BUFFERED_IO_H_
 
 #include "../debug/Logger.h"
 #include "../io/IOClient.h"
@@ -182,4 +182,4 @@ private:
 
 } // namespace oasys
 
-#endif /* __BUFFERED_IO_H__ */
+#endif /* _OASYS_BUFFERED_IO_H_ */

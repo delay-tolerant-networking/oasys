@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NET_UTILS_H_
-#define _NET_UTILS_H_
+#ifndef _OASYS_NET_UTILS_H_
+#define _OASYS_NET_UTILS_H_
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -88,4 +88,4 @@ extern int gethostbyname(const char* name, in_addr_t* addrp);
 
 } // namespace oasys
 
-#endif /* _NET_UTILS_H_ */
+#endif /* _OASYS_NET_UTILS_H_ */

@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __IOCLIENT_H__
-#define __IOCLIENT_H__
+#ifndef _OASYS_IOCLIENT_H_
+#define _OASYS_IOCLIENT_H_
 
 #include <sys/uio.h>
 
@@ -94,4 +94,4 @@ public:
 
 } // namespace oasys
 
-#endif // __IOCLIENT_H__
+#endif // _OASYS_IOCLIENT_H_
