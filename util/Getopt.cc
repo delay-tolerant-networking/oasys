@@ -37,7 +37,14 @@
  */
 #include <stdio.h>
 #include <unistd.h>
+
+#include "../config.h"
+
+#ifdef HAVE_GETOPT_LONG
 #include <getopt.h>
+#else
+#include "compat/getopt.h"
+#endif
 
 #include "Getopt.h"
 

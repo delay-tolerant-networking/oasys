@@ -8,7 +8,6 @@
 
 COMPAT_SRCS :=					\
 	compat/fpclassify.c			\
-	compat/getopt.c				\
 	compat/getopt_long.c			\
 
 DEBUG_SRCS :=					\
