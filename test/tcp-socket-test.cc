@@ -61,6 +61,7 @@ public:
     void run()
     {
         while (1) {
+	    memset(inpkt_, 0, sizeof(inpkt_));
             int cc = read(inpkt_, sizeof(inpkt_));
             if (cc == 0) {
                 close(); // eof
