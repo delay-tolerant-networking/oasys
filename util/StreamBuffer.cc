@@ -13,6 +13,7 @@ StreamBuffer::StreamBuffer(size_t size) :
         size_ = 4;
 
     buf_ = static_cast<char*>(malloc(size_));
+    ASSERT(buf_);
 }
 
 StreamBuffer::~StreamBuffer()
@@ -48,7 +49,7 @@ StreamBuffer::end()
 void
 StreamBuffer::reserve(size_t amount)
 {
-    if(amount <= size_ - end_) 
+    if (amount <= size_ - end_) 
     {
         // do nothing
     } 
@@ -95,9 +96,9 @@ StreamBuffer::fullbytes()
 }
 
 size_t
-StreamBuffer::emptybytes() 
+StreamBuffer::tailbytes() 
 {
-    return size_ - end_ + start_;
+    return size_ - end_;
 }
 
 void

@@ -19,7 +19,7 @@ public:
     void clear();
     
     size_t fullbytes();
-    size_t emptybytes();
+    size_t tailbytes();
 
 private:
     void realloc(size_t size);
