@@ -193,7 +193,6 @@ TimerSystem::post_signal(int sig)
 {
     TimerSystem* _this = TimerSystem::instance();
 
-    fprintf(stderr, "post_signal %d\n", sig);
     _this->sigfired_ = true;
     _this->signals_[sig] = true;
     _this->interrupt();
