@@ -47,27 +47,33 @@ foreach test_exe $tests {
     } else {
 	source "output/$test_exe/stderr"
 	lassign {test_suite unit_tests summary} $result
+	set output [open "output/$test_exe/stdout" "r"]
 
 	foreach unit_test $unit_tests {
 	    lassign {number name status} $unit_test
 
 	    if [ string equal $status "P" ] {
 		set g_passed [expr $g_passed + 1 ]
-		set g_total  [expr $g_total + 1 ]
 	    } elseif [ string equal $status "F" ] {
-		puts "- $test_exe: $name failed"
+		puts "* $test_exe: $name failed, output in output/$test_exe/stdout"
 		set g_failed [expr $g_failed + 1 ]
-		set g_total  [expr $g_total + 1  ]
 	    } elseif [ string equal $status "I" ] {
-		# XXX/bowei input case
-		set g_total  [expr $g_total + 1  ]
+		seek $output 0
+		set check_result [eval "check$name" $output]
+		
+		if [ expr $check_result < 0 ] {
+		    puts "* $test_exe: $name failed, output in output/$test_exe/stdout"
+		    set g_failed [expr $g_failed + 1 ]
+		} else {
+		    set g_passed [expr $g_passed + 1 ]
+		}
 	    }
+	    set g_total  [expr $g_total + 1 ]
 	}
+	close $output
     }
 }
 
 puts "Total  : $g_total"
 puts "Passed : $g_passed"
 puts "Failed : $g_failed"
-
-# set i "{ \"sample test\" { { 1 ATest P} { 2 AnotherTest F} { 3 InputTest I} } { 3 1 1 1 } }"

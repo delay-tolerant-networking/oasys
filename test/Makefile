@@ -11,6 +11,7 @@ TESTS += \
 	mutex-test 		\
 	options-test 		\
 	optparser-test 		\
+	sample-test             \
 	serialize-test          \
 	spin-lock-test          \
 	tcp-socket-test 	\
@@ -21,8 +22,11 @@ TESTS += \
 	timer-test 		\
 	url-test 		\
 
+
 #
 # default rule for tests
 #
-test/%-test: test/%-test.cc liboasys.a
+test/%test: test/%test.cc liboasys.a
+	$(CXX) $^ -o $@ $(CFLAGS) $(LIBS) liboasys.a
+test/%Test: test/%Test.cc liboasys.a
 	$(CXX) $^ -o $@ $(CFLAGS) $(LIBS) liboasys.a
