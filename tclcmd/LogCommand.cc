@@ -16,6 +16,13 @@ LogCommand::help_string()
 int
 LogCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
 {
+    // log prefix <string>
+    if (argc == 3 && !strcmp(argv[1], "prefix")) {
+        Log::instance()->set_prefix(argv[2]);
+        ::logf("/log", LOG_DEBUG, "set logging prefix to '%s'", argv[2]);
+        return TCL_OK;
+    }
+    
     // log path level string
     if (argc != 4) {
         wrong_num_args(argc, argv, 1, 4, 4);

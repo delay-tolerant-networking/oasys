@@ -167,6 +167,14 @@ public:
      */
     void add_debug_rule(const char* path, log_level_t threshold);
 
+    /**
+     * Set the logging prefix after initialization.
+     */
+    void set_prefix(const char* prefix)
+    {
+        prefix_.assign(prefix);
+    }
+
 protected:
     Log();
     virtual ~Log() {} // never called
