@@ -31,6 +31,11 @@ SERIALIZE_SRCS :=				\
 	serialize/MarshalSerialize.cc		\
 	serialize/SQLSerialize.cc		\
 
+TCLCMD_SRCS :=					\
+	tclcmd/TclCommand.cc			\
+	tclcmd/HelpCommand.cc			\
+	tclcmd/LogCommand.cc			\
+
 THREAD_SRCS :=					\
 	thread/Mutex.cc				\
 	thread/Notifier.cc			\
@@ -47,6 +52,7 @@ UTIL_SRCS :=					\
 SRCS := $(DEBUG_SRCS) 				\
 	$(IO_SRCS) 				\
 	$(SERIALIZE_SRCS)			\
+	$(TCLCMD_SRCS)				\
 	$(THREAD_SRCS)				\
 	$(UTIL_SRCS)				\
 
@@ -104,6 +110,16 @@ debug/gdtoa-%.o: debug/gdtoa-%.c debug/arith.h
 	$(CC) -g -DINFNAN_CHECK -c $< -o $@
 
 GENFILES += debug/arith.h debug/arith-native.h debug/arithchk
+
+#
+# And a special rule to build the command-init-tcl.c file from command.tcl
+#
+cmd/Command.cc: cmd/command-init-tcl.c
+cmd/command-init-tcl.c: cmd/command-init.tcl
+	rm -f $@
+	echo "static const char* INIT_COMMAND = " > $@;
+	cat $^ | sed 's|"|\\"|g' | sed 's|^|"|g' | sed "s|$$|\\\\n\"|g" >> $@;
+	echo ";">> $@
 
 #
 # Include the common rules
