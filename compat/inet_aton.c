@@ -35,36 +35,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _OASYS_INET_ATON_H_
-#define _OASYS_INET_ATON_H_
 
-#include "../config.h"
+#include "inet_aton.h"
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#ifdef __cplusplus
-#define EXTERN_C extern "C"
-#else
-#define EXTERN_C extern
-#endif
-
-#if !defined(HAVE_INET_ATON)
-#if  defined(HAVE_INET_PTON)
-
-/*
- * Redefine inet_aton to use the compat function.
- */
-EXTERN_C int inet_aton_with_pton(const char *, struct in_addr *);
-#define inet_aton inet_aton_with_pton
-
-#else
-
-#error need either inet_aton or inet_pton
-
-#endif
-#endif
-
-#endif /* _OASYS_INET_ATON_H_ */
+int
+inet_aton_with_pton(const char * name, struct in_addr *addr)
+{
+    return inet_pton(AF_INET, name, addr);
+}

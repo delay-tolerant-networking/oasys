@@ -9,6 +9,7 @@
 COMPAT_SRCS :=					\
 	compat/fpclassify.c			\
 	compat/getopt_long.c			\
+	compat/inet_aton.c			\
 
 DEBUG_SRCS :=					\
 	debug/gdtoa-dmisc.c			\
