@@ -39,6 +39,7 @@
 #define _JENKINS_HASH_H_
 
 #include <sys/types.h>
+#include "../compat/inttypes.h"
 
 namespace oasys {
 

@@ -43,6 +43,8 @@
 #include <list>
 #include <string>
 
+#include "../compat/inttypes.h"
+
 namespace oasys {
 
 typedef enum urlerr_t {
