@@ -76,7 +76,6 @@ static const char* INIT_COMMAND =
 "    vwait forever\n"
 "}\n"
 "\n"
-"\n"
 "#\n"
 "# Run the command loop with the given prompt\n"
 "#\n"
