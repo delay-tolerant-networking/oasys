@@ -34,7 +34,7 @@ public:
      *
      * @param fmt the initial buffer contents
      */
-    StringBuffer(const char* fmt, ...);
+    StringBuffer(const char* fmt, ...) PRINTFLIKE(2, 3);
 
     /**
      * Destructor. Frees the buffer.
