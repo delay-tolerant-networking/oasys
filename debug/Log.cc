@@ -10,6 +10,7 @@
 #include "Debug.h"
 #include "Log.h"
 #include "thread/SpinLock.h"
+#include "thread/Timer.h"
 #include "io/IO.h"
 
 // we can't use the ASSERT from Debug.h since that one calls logf :-)
@@ -308,6 +309,19 @@ Log::rotate()
     
     logfd_ = newfd;
     logf("/log", LOG_ERR, "reopened log file after log rotate");
+}
+
+static void
+rotate_handler(int sig)
+{
+    Log::instance()->rotate();
+}
+
+void
+Log::add_rotate_handler(int sig)
+{
+    logf("/log", LOG_DEBUG, "adding log rotate signal handler");
+    TimerSystem::instance()->add_sighandler(sig, rotate_handler);
 }
 
 /**
