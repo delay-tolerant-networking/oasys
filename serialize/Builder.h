@@ -50,11 +50,14 @@ class BuilderHelper;
 
 namespace BuilderErr {
 enum {
-    TYPE_CODE = 1,
+    TYPECODE = 1,
     CORRUPT,
     MEMORY,
 };
 };
+
+template<typename _TypeCollection, typename _Type>
+class BuilderType2Code;
 
 template<typename _TypeCollection>
 class Builder : public Logger {
@@ -85,28 +88,25 @@ public:
      * check the return value from the function.
      *
      * @return 0 on no error, MEMORY if cannot allocate new object,
-     * CORRUPT if unserialization fails and TYPE_CODE if the TYPE_CODE
+     * CORRUPT if unserialization fails and TYPECODE if the TYPECODE
      * does not match the type.
      */
     template<typename _Type>
     int new_object(TypeCode_t typecode, _Type** obj_ptr, const u_char* data, 
                    int length, Serialize::context_t context)
     {
-        _Type* obj;
-
         // Check that the typecodes are within bounds
-        // XXX/bowei this can be fixed.
-   //      if(BuilderDispatch<_Type, _TypeCollection>::TYPECODE_LOW  > typecode ||
-//            BuilderDispatch<_Type, _TypeCollection>::TYPECODE_HIGH < typecode)
-//         {
-//             return BuilderErr::TYPE_CODE;
-//         }
+        if(BuilderType2Code<_TypeCollection, _Type>::TYPECODE_LOW  > typecode ||
+            BuilderType2Code<_TypeCollection, _Type>::TYPECODE_HIGH < typecode)
+        {
+            return BuilderErr::TYPECODE;
+        }
         
         ASSERT(dispatch_.find(typecode) != dispatch_.end());
 
-        obj = static_cast<_Type*>(dispatch_[typecode]->new_object());
+        _Type* obj = static_cast<_Type*>(dispatch_[typecode]->new_object());
         if(obj == 0) {
-            log_crit("/builder", "out of memory");
+            log_crit("out of memory");
             return BuilderErr::MEMORY;
         }
 
@@ -137,7 +137,7 @@ public:
 /**
  * Instantiate a template with the specific  class and create a
  * static instance of this to register the class. Use the
- * DECL_BUILDER macros below.
+ * DECLARE_BUILDER macros below.
  */
 template<typename _Class, typename _TypeCollection>
 class BuilderDispatch : public BuilderHelper {
@@ -155,7 +155,8 @@ public:
      * serializable object via a builder.
      *
      * @return The reason for the void* is to be able to virtualize
-     * this class.
+     * this class, yet not have the problem of potentially slicing the
+     * object.
      */
     void* new_object() {
         return static_cast<void*>
@@ -163,12 +164,38 @@ public:
     }
 };
 
-
 /**
  * Utility macro for encapsulation.
  */
-#define DECL_BUILDER(_class, _collection, _typecode)            \
-    BuilderDispatch<_class, _collection> _class ## Builder(_typecode)
+#define BUILDER_CLASS(_class, _collection, _typecode)                           \
+    BuilderDispatch<_class, _collection> _class ## Builder(_typecode);   \
+    BUILDER_TYPECODE(_collection, _class, _typecode)
+
+#define BUILDER_TYPECODE(_Collection, _Class, _code)    \
+namespace oasys {                                       \
+    template<>                                          \
+    struct BuilderType2Code<_Collection, _Class> {      \
+        enum {                                          \
+            TYPECODE_LOW  = _code,                      \
+            TYPECODE_HIGH = _code,                      \
+        };                                              \
+        enum {                                          \
+            TYPECODE = _code,                           \
+        };                                              \
+    };                                                  \
+}
+
+#define BUILDER_TYPECODE_AGGREGATE(_Collection, _Class, _low, _high)    \
+namespace oasys {                                                       \
+    template<>                                                          \
+    struct BuilderType2Code<_Collection, _Class> {                      \
+        enum {                                                          \
+            TYPECODE_LOW  = _low,                                       \
+            TYPECODE_HIGH = _high,                                      \
+        };                                                              \
+    };                                                                  \
+}
+
 }; // namespace oasys
 
 #endif //__OBJECT_BUILDER_H__
