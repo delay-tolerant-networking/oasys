@@ -52,38 +52,8 @@
 namespace oasys {
 
 Mutex::Mutex(const char* name, lock_type_t type, bool keep_quiet)
-    : Lock(), type_(type), keep_quiet_(keep_quiet)
+    : Lock(), type_(type), keep_quiet_(keep_quiet), lock_count_(0)
 {
-    // This hackish assignment is here because C99 syntax has diverged
-    // from the C++ standard! Woohoo!
-    switch(type_)
-    {
-    case TYPE_FAST: {
-        pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
-        mutex_ = m;
-        break;
-    }
-
-    case TYPE_RECURSIVE: {
-
-// XXX/demmer deal with this better...
-#ifndef PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
-#ifdef __sparc__
-#define PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP  \
-        {{0, 0, 0, USYNC_THREAD|LOCK_RECURSIVE, MUTEX_MAGIC}, \
-        {{{0}}}, 0}
-#else
-#define PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP \
-  {0, 0, 0, PTHREAD_MUTEX_RECURSIVE_NP, __LOCK_INITIALIZER}
-#endif /* __sparc__ */
-#endif 
-        
-        pthread_mutex_t m = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
-
-        mutex_ = m;
-        break;
-    }}
-
     if (name[0] == '/')
         ++name;
     
@@ -94,6 +64,34 @@ Mutex::Mutex(const char* name, lock_type_t type, bool keep_quiet)
     else
     {
         logpathf("/mutex/%s", name);
+    }
+
+    // Set up the type attribute
+    pthread_mutexattr_t attrs;
+    if (pthread_mutexattr_init(&attrs) != 0) {
+        PANIC("fatal error in pthread_mutexattr_init: %s", strerror(errno));
+    }
+
+    int mutex_type;
+    switch(type_) {
+    case TYPE_FAST:
+        mutex_type = PTHREAD_MUTEX_NORMAL;
+        break;
+    case TYPE_RECURSIVE:
+        mutex_type = PTHREAD_MUTEX_RECURSIVE;
+        break;
+    }
+
+    if (pthread_mutexattr_settype(&attrs, mutex_type) != 0) {
+        PANIC("fatal error in pthread_mutexattr_settype: %s", strerror(errno));
+    }
+
+    if (pthread_mutex_init(&mutex_, &attrs) != 0) {
+        PANIC("fatal error in pthread_mutex_init: %s", strerror(errno));
+    }
+
+    if (pthread_mutexattr_destroy(&attrs) != 0) {
+        PANIC("fatal error in pthread_mutexattr_destroy: %s", strerror(errno));
     }
 }
 
@@ -107,14 +105,14 @@ int
 Mutex::lock()
 {
     int err = pthread_mutex_lock(&mutex_);
-    
-    logf(LOG_DEBUG,
-         "%s %d",
-         (err == 0) ? "locked" : "error on locking",
-         err);
-    
-    if (err == 0)
-        lock_holder_ = Thread::current();
+
+    if (err != 0) {
+        PANIC("error in pthread_mutex_lock: %s", strerror(errno));
+    }
+
+    ++lock_count_;
+    logf(LOG_DEBUG, "locked (count %d)", lock_count_);
+    lock_holder_ = Thread::current();
 
     return err;
 }
@@ -122,15 +120,19 @@ Mutex::lock()
 int
 Mutex::unlock()
 {
+    ASSERT(is_locked_by_me());
+
+    if (--lock_count_ == 0) {
+        lock_holder_ = 0;
+    }
+    
     int err = pthread_mutex_unlock(&mutex_);
     
-    logf(LOG_DEBUG, 
-         "%s %d",
-         (err == 0) ? "unlocked" : "error on unlocking",
-         err);
+    if (err != 0) {
+        PANIC("error in pthread_mutex_unlock: %s", strerror(errno));
+    }
 
-    if (err == 0)
-        lock_holder_ = 0;
+    logf(LOG_DEBUG, "unlocked (count %d)", lock_count_);
     
     return err;
 }
@@ -140,18 +142,16 @@ Mutex::try_lock()
 {
     int err = pthread_mutex_trylock(&mutex_);
 
-    if (err == EBUSY) 
-    {
+    if (err == EBUSY) {
         logf(LOG_DEBUG, "try_lock busy");
+        return EBUSY;
+    } else if (err != 0) {
+        PANIC("error in pthread_mutex_trylock: %s", strerror(errno));
     }
 
-    logf(LOG_DEBUG, 
-         "%s %d",
-         (err == 0) ? "locked" : "error on try_lock",
-         err);
-
-    if (err == 0)
-        lock_holder_ = Thread::current();
+    ++lock_count_;
+    logf(LOG_DEBUG, "try_lock locked (count %d)", lock_count_);
+    lock_holder_ = Thread::current();
     
     return err;
 }

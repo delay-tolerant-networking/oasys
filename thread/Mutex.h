@@ -52,8 +52,7 @@ class Mutex : public Lock, public Logger {
 public:
     /// Different kinds of mutexes offered by Linux, distinguished by
     /// their response to a single thread attempting to acquire the
-    /// same lock more than once. For Capriccio, fast and recursive
-    /// are all the same.
+    /// same lock more than once.
     ///
     /// - FAST: No error checking. The thread will block forever.
     /// - RECURSIVE: Double locking is safe.
@@ -83,9 +82,11 @@ public:
     int logf(log_level_t level, const char *fmt, ...) PRINTFLIKE(3, 4);
 
 protected:
-    pthread_mutex_t mutex_;
-    lock_type_t     type_;
-    bool	    keep_quiet_;
+    pthread_mutex_t mutex_;        ///< the underlying mutex
+    lock_type_t     type_;         ///< the mutex type
+    bool	    keep_quiet_;   ///< no logging
+    unsigned int    lock_count_;   ///< count for recursive locking, needed
+                                   ///< for proper management of lock_holder_
 };
 
 } // namespace oasys

@@ -20,9 +20,11 @@ protected:
 
         while(true)
         {
-            ScopeLock lock(mutex_);
+            ASSERT(! mutex_->is_locked_by_me());
+            mutex_->lock();
+            ASSERT(mutex_->is_locked_by_me());
 
-            fprintf(stderr, "Thread1: grabbed lock, sleeping");
+            fprintf(stderr, "Thread1: grabbed lock, sleeping\n");
 
             gettimeofday(&start, NULL);
             
@@ -37,6 +39,14 @@ protected:
                 // reminds us of the Win3.1 days
                 Thread::yield();
             } while(now.tv_sec - 1 < start.tv_sec);
+
+            mutex_->unlock();
+
+            // give thread 3 a chance
+            if (invariant[0] % 4 == 0) {
+                fprintf(stderr, "Thread1: sleeping to give Thread 3 a chance\n");
+                sleep(4);
+            }
         }
     }
 
@@ -54,7 +64,9 @@ protected:
 
         while(true)
         {
-            ScopeLock lock(mutex_);
+            ASSERT(!mutex_->is_locked_by_me());
+            mutex_->lock();
+            ASSERT(mutex_->is_locked_by_me());
 
             fprintf(stderr, "Thread2: grabbed lock, sleeping\n");
             
@@ -63,6 +75,8 @@ protected:
                 ScopeLock lock2(mutex_);
                 gettimeofday(&start, NULL);
             }
+
+            ASSERT(mutex_->is_locked_by_me());
 
             do {
                 // assert invariant
@@ -77,8 +91,44 @@ protected:
 
                 gettimeofday(&now, NULL);
             } while(now.tv_sec - 0.3333 < start.tv_sec);
+
+            mutex_->unlock();
+
+            // give thread 3 a chance, but sleep for one more second
+            // so thread 1 gets in there
+            if (invariant[0] % 4 == 0) {
+                fprintf(stderr, "Thread2: sleeping to give Thread 3 a chance\n");
+                sleep(5);
+            }
         }
     }
+
+    Mutex* mutex_;
+};
+
+class Thread3 : public Thread {
+public:
+    Thread3(Mutex* m) : mutex_(m) {}
+    
+protected:
+    virtual void run() {
+        while(true) {
+            int ret = mutex_->try_lock();
+            if (ret != EBUSY) {
+                // very unlikely
+                fprintf(stderr, "Thread3: grabbed lock, releasing and sleeping\n");
+                ASSERT(mutex_->is_locked_by_me());
+                mutex_->unlock();
+                ASSERT(! mutex_->is_locked_by_me());
+                sleep(2);
+            } else {
+                fprintf(stderr, "Thread3: missed lock, sleeping and trying again\n");
+                ASSERT(! mutex_->is_locked_by_me());
+                sleep(1);
+            }
+
+        }
+    };
 
     Mutex* mutex_;
 };
@@ -98,10 +148,13 @@ main()
     
     Thread* t1 = new Thread1(&mutex);
     Thread* t2 = new Thread2(&mutex);
+    Thread* t3 = new Thread3(&mutex);
     t1->start();
     t2->start();
+    t3->start();
     
     while(true) {
         Thread::yield();
     }
+
 }
