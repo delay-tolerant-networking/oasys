@@ -18,10 +18,13 @@ public:
     /*! 
      * Read in a line of input, newline characters included. 
      * 
-     * \param buf buf is valid until next function call to
-     * BufferedInput.
-     * \return Length of line, including nl characters. <0 on error, 0
-     * on eof.
+     * @param nl  	character string that defines a newline
+     * @param buf 	output parameter containing a pointer to the buffer
+     * 			with the line, valid until next call to read_line
+     * @param timeout 	timeout value for read
+     
+     * @return		length of line, including nl characters. <0 on error,
+     *                  0 on eof.
      */
     int read_line(const char* nl, char** buf, int timeout = -1);
 
@@ -29,10 +32,14 @@ public:
      * Read len bytes. Blocking until specified amount of bytes is
      * read.
      *
-     * \param buf buf is valid until next fcn call to BufferedInput
-     * \return Length of segment read. <0 upon error, 0 on eof. Return 
-     * will only be < len if eof is reached before fully read len
-     * bytes.
+     * @param len  	length to read
+     * @param buf 	output parameter containing a pointer to the buffer
+     * 			with the line, valid until next call to read_line
+     * @param timeout 	timeout value for read
+     *
+     * @return 		length of segment read. <0 upon error, 0 on eof.
+     *                  Return  will only be < len if eof is reached before 
+     * 			fully read len bytes.
      */
     int read_bytes(size_t len, char** buf, int timeout = -1);
 
@@ -40,6 +47,10 @@ public:
     /*!
      * Read some bytes. 
      *
+     * @param buf 	output parameter containing a pointer to the buffer
+     * 			with the line, valid until next call to read_line
+     * @param timeout 	timeout value for read
+     * @return 		length of segment read. <0 upon error, 0 on eof.
      */
     int read_some_bytes(char** buf, int timeout = -1);
 
