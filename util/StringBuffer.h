@@ -4,6 +4,13 @@
 
 #include "../debug/Log.h" 	// for PRINTFLIKE macro
 
+class StringBuffer;
+
+// XXX/demmer namespace
+namespace oasys {
+typedef ::StringBuffer StringBuffer;
+};
+
 /**
  * Utility class that wraps a growable string buffer, similar to
  * std::ostringstream, but with printf() style arguments instead of
