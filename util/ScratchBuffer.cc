@@ -1,4 +1,4 @@
-#include <oasys/debug/Debug.h>
+#include "../debug/Debug.h"
 #include "ScratchBuffer.h"
 
 
@@ -12,20 +12,14 @@ oasys::ScratchBuffer::ScratchBuffer(size_t size)
 }
 
 
-void*
+char*
 oasys::ScratchBuffer::buf(size_t size)
 {
     if(size > size_)
     {
-        buf_ = realloc(buf_, size);
+        buf_ = static_cast<char*>(realloc(buf_, size));
         
     }
 
-    return buf_;
-}
-
-void*
-oasys::ScratchBuffer::buf()
-{
     return buf_;
 }
