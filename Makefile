@@ -100,7 +100,7 @@ doxygen:
 # And a rule to make sure that configure has been run recently enough.
 #
 .PHONY: checkconfigure
-checkconfigure: config.h Rules.make
+checkconfigure: Rules.make
 
 Rules.make: Rules.make.in configure
 	@[ ! -z `echo "$(MAKECMDGOALS)" | grep clean` ] || \
