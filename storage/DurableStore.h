@@ -55,6 +55,8 @@ class DurableTableItr;
 
 /**
  * Enumeration for error return codes from the datastore functions
+ *
+ * XXX/bowei - change these names
  */
 enum DurableTableResult_t {
     DS_OK        = 0,           ///< Success

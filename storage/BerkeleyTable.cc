@@ -4,6 +4,7 @@
 
 #include "debug/Debug.h"
 #include "util/StringBuffer.h"
+#include "serialize/MarshalSerialize.h"
 
 #include "DurableTable.h"
 #include "BerkeleyTable.h"
@@ -385,107 +386,135 @@ BerkeleyTable::~BerkeleyTable()
 }
 
 int 
-BerkeleyTable::get(const SerializableObject& key, SerializableObject* data)
+BerkeleyTable::get(const SerializableObject& key, 
+                   SerializableObject*       data)
 {
-    return 0;
-}
+    u_char key_buf[256];
+    size_t key_buf_len;
 
-int 
-BerkeleyTable::put(const SerializableObject& key, const SerializableObject* data)
-{
-    return 0;
-}
+    key_buf_len = flatten_key(key, key_buf, 256);
+    if(key_buf_len == 0) 
+    {
+        log_err("zero or too long key length");
+        return -1;
+    }
 
-int 
-BerkeleyTable::del(const SerializableObject& key)
-{
-    return 0;
-}
+    Dbt k(static_cast<void*>(key_buf), key_buf_len);
+    Dbt d;
 
-#if 0
-int 
-BerkeleyTable::get(const void* key, int key_len, void* data, int *data_len)
-{
-    Dbt k(const_cast<void*>(key), key_len), d;
     int err = 0;
 
     try 
     {
         err = db_->get(NO_TX, &k, &d, 0);
     } 
-    catch(DbException e) 
+    catch(DbException e)
     {
         log_err("DB: %s", e.what());
-        ASSERT(0); // XXX/bowei for now
+        return DS_ERR;
     }
      
     if(err == DB_NOTFOUND) 
     {
         return DS_NOTFOUND;
     }
-
-    if(*data_len < static_cast<int>(d.get_size())) {
-        return DS_BUFSIZE;
-    }
-
-    *data_len = d.get_size();
-    memcpy(data, d.get_data(), d.get_size());
-
-    return DS_OK;
-}
-
-
-int 
-BerkeleyTable::put(const void* key, int key_len, const void* data, int data_len)
-{
-    Dbt k(const_cast<void*>(key), key_len);
-    Dbt d(const_cast<void*>(data), data_len);
-
-    log_debug("put(%.*s): length %d", key_len, (char*)key, data_len);
-
-    // safety check
-    if (data_len > 10000000) {
-        log_warn("large db put length %d (table %d key %.*s)",
-                 data_len, id_, key_len, (char*)key);
-    }
-
-    int err = 0;
     
-    try 
-    {
-        err = db_->put(NO_TX, &k, &d, 0);
-    }
-    catch(DbException e)
-    {
-        log_err("DB: %s", e.what());
-        ASSERT(0); // XXX/bowei for now
-    }
+    Unmarshal unmarshaller(Serialize::CONTEXT_LOCAL, 
+                           static_cast<const u_char*>(d.get_data()), 
+                           d.get_size());
+    data->serialize(&unmarshaller);
 
-    return DS_OK;
+    return 0;
 }
 
 int 
-BerkeleyTable::del(const void* key, int key_len)
+BerkeleyTable::put(const SerializableObject& key, 
+                   const SerializableObject* data)
 {
-    Dbt k(const_cast<void*>(key), key_len);
-    int err = DS_OK;
+    u_char key_buf[256];
+    size_t key_buf_len;
+
+    key_buf_len = flatten_key(key, key_buf, 256);
+    if(key_buf_len == 0) 
+    {
+        log_err("zero or too long key length");
+        return -1;
+    }
+
+    MarshalSize sizer(Serialize::CONTEXT_LOCAL);
+    const_cast<SerializableObject*>(data)->serialize(&sizer);
+    
+    { // lock
+        ScopeLock lock(&scratch_mutex_);
+    
+        u_char* buf = scratch_.buf(sizer.size());
+        
+        Marshal m(Serialize::CONTEXT_LOCAL, buf, scratch_.size());
+        const_cast<SerializableObject*>(data)->serialize(&m);
+        
+        try 
+        {
+            Dbt k(static_cast<void*>(key_buf), key_buf_len);
+            Dbt d(static_cast<void*>(buf), sizer.size());
+            db_->put(NO_TX, &k, &d, 0);
+        } 
+        catch(DbException e)
+        {
+            log_err("DB: %s", e.what());
+            return DS_ERR;
+        }
+    } // unlock
+
+    return 0;
+}
+
+int 
+BerkeleyTable::del(const SerializableObject& key)
+{
+    u_char key_buf[256];
+    size_t key_buf_len;
+
+    key_buf_len = flatten_key(key, key_buf, 256);
+    if(key_buf_len == 0) 
+    {
+        log_err("zero or too long key length");
+        return DS_ERR;
+    }
 
     try 
     {
-        if(db_->del(NO_TX, &k, 0) == DB_NOTFOUND) 
+        Dbt k(static_cast<void*>(key_buf), key_buf_len);
+        int err = db_->del(NO_TX, &k, 0);
+        if(err == DB_NOTFOUND) 
         {
-            err = DS_NOTFOUND;
+            return DS_NOTFOUND;
         }
-    } 
+    }
     catch(DbException e)
     {
         log_err("DB: %s", e.what());
-        ASSERT(0); // XXX/bowei for now        
+        return DS_ERR;
     }
 
-    return err;
+    return 0;
 }
-#endif // 0
+
+size_t
+BerkeleyTable::flatten_key(const SerializableObject& key, 
+                           u_char* key_buf, size_t size)
+{
+    MarshalSize sizer(Serialize::CONTEXT_LOCAL);
+    const_cast<SerializableObject&>(key).serialize(&sizer);
+    if(sizer.size() < size)
+    {
+        return 0;
+    }
+
+    Marshal marshaller(Serialize::CONTEXT_LOCAL, key_buf, 256);
+    const_cast<SerializableObject&>(key).serialize(&marshaller);
+    
+    return sizer.size();
+}
 
 /******************************************************************************
  *

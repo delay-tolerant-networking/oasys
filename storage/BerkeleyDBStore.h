@@ -7,6 +7,8 @@
 #include "tclcmd/TclCommand.h"
 #include "debug/Logger.h"
 #include "thread/Mutex.h"
+#include "util/ScratchBuffer.h"
+
 #include "DurableTable.h"
 
 namespace oasys {
@@ -95,7 +97,16 @@ private:
      */
     BerkeleyTable(DurableTableId id, Db* db);
 
+    /**
+     * Helper method for flattening keys from the key objects.
+     */
+    size_t flatten_key(const SerializableObject& key, 
+                    u_char* key_buf, size_t size);
+
     Db* db_;
+
+    Mutex scratch_mutex_;   ///< This may cause performance problems.
+    ScratchBuffer scratch_;
 };
 
 class BerkeleyTableItr : public DurableTableItr, public Logger {
