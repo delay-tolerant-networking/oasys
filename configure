@@ -39,8 +39,10 @@ platform=''
 cc='gcc'
 ccver='auto'
 depflags=''
-make_static='n'
+make_static='y'
 debug='-g'
+# optimize='-O'
+# optimizewarn='-Wuninitialized' # depends on -O
 optimize=''
 optimizewarn=''
 
@@ -54,7 +56,7 @@ pthreadstaticlib=''
 pthreadflag=''			# for FreeBSD, gcc needs -pthread
 
 tclver='8.3'
-tcldir=''
+tcldir='system'
 tclincdir=''
 tcllibdir=''
 tcllib=''
@@ -79,6 +81,10 @@ do
   case "$ac_option" in
   -verbose | --verbose | -v)
      ;;
+  -target | --target | -t)
+    ac_prev=target ;;
+  -target=* | --target=* | -t=*)
+    target="$ac_optarg" ;;
 
   -static | --static)
     make_static=y ;;
@@ -109,33 +115,38 @@ do
   -with-gccver=* | --with-gccver=* | -with-ccver=* | --with-ccver=*)
     ccver="$ac_optarg" ;;
 
-  -with-capriccio-pthread | --with-capriccio-pthread)
-    ac_prev=with-capriccio-pthread ;;
-  -with-capriccio-pthread=* | --with-capriccio-pthread=*)
-    capriccio=y
-    capricciodir="$ac_optarg" ;;
-
-   -with-tcl=* | --with-tcl=*)
+  -with-tcl | --with-tcl)
+    ac_prev=with-tcl ;;
+  -with-tcl=* | --with-tcl=*)
     tcldir="$ac_optarg" ;;
+
+  -with-tclver | --with-tclver)
+    ac_prev=with-tclver ;;
+  -with-tclver=* | --with-tclver=*)
+    tclver="$ac_optarg" ;;
 
   -help | --help | -h)
     cat <<EOF
 Usage: configure [options]
 Options [defaults in brackets after descriptions]
 Directory and file names:
-  --exec-prefix=EPREFIX           install architecture-independent files in PREFIX
-                                  [$exec_prefix]
-  --static                        Build static objects; do not use dynamic link libraries
+  --target=TARGET                 Configure for TARGET.  Valid targets are 'native'
+                                  and 'arm' [$target]
+  --static                        Build static objects and libraries (default)
+  --dynamic                       Build using dynamic link libraries
 Features
-     debug			  Include '-g' in the CFLAGS.
-     optimize			  Include '-O' in the CFLAGS.
-
-  --disable-FEATURE
-  --enable-FEATURE[=ARG]
+  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --disable-debug         compile with debugging turned off
+  --disable-optimize      compile with optimization turned off
 Packages
-  --with-cc=GCC			  Version of the C/C++ compiler to use
-  --with-capriccio-pthread=DIR	  Location of capriccio pthreads installation
-  --with-tcl=DIR                  Location of the Tcl8.3 installation
+  --with-cc=GCC           Location of the C/C++ compiler to use
+  --with-ccver=VER        Version of the C/C++ compiler to use
+  --with-tcl=DIR          Location of the tcl installation [$tcldir]
+  --with-tclver=VERSION   Version of tcl to use [$tclver]
+
+  (set DIR=none   to disable the option)
+  (set DIR=system to search default locations)
 EOF
   exit 0
   ;;
@@ -227,20 +238,24 @@ cpp=`echo $cc | sed 's/cc/++/'`
 #
 case "$make_static" in
     yes | y | true | t)
-    static="-static"
-    allstatic="-all-static"
-    libext=a
     ;;
 
     *)
-    libext=so
+    echo "dynamic library build not supported in this release"
+    exit 1
     ;;
 esac
 
 #
+# Set platform-specific options for library extensions
+#
+libext=a
+shlibext=so
+
+#
 # Find the tcl library
 #
-if [ ! "$tcldir" = "" ]; then
+if [ ! "$tcldir" = "system" ]; then
   #
   # Make sure the directory the user specified is ok
   #
@@ -251,12 +266,16 @@ if [ ! "$tcldir" = "" ]; then
 	exit 1
   fi
 
-  if   [ -r $tcldir/lib/libtcl.$libext ]; then
+  if   [ -r $tcldir/lib/libtcl.$libext -o \
+	 -r $tcldir/lib/libtcl.$shlibext ] ; then
 	tcllibdir=-L$tcldir/lib
 	tcllib=-ltcl
-  elif [ -r $tcldir/lib/libtcl$tclver.$libext ]; then
+
+  elif [ -r $tcldir/lib/libtcl$tclver.$libext -o \
+	 -r $tcldir/lib/libtcl$tclver.$shlibext ]; then
 	tcllibdir=-L$tcldir/lib
 	tcllib=-ltcl$tclver
+
   else
 	echo "can't find libtcl.$libext or libtcl$tclver.$libext in $tcldir"
 	exit 1
@@ -268,48 +287,27 @@ else
   #
   if [ -r /usr/include/tcl.h ]; then
 	tclincdir=
+
   elif [ -r /usr/include/tcl$tclver/tcl.h ]; then
 	tclincdir=-I/usr/include/tcl$tclver
+
   else
 	echo "can't find usable tcl.h"
 	exit 1
   fi
 
-  if   [ -r /usr/lib/libtcl.$libext ]; then
+  if   [ -r /usr/lib/libtcl.$libext -o \
+	 -r /usr/lib/libtcl.$shlibext ]; then
 	tcllib=-ltcl
-  elif [ -r /usr/lib/libtcl$tclver.$libext ]; then
+
+  elif [ -r /usr/lib/libtcl$tclver.$libext -o \
+	 -r /usr/lib/libtcl$tclver.$shlibext ]; then
 	tcllib=-ltcl$tclver
+
   else
 	echo "can't find usable libtcl.$libext"
 	exit 1
   fi
-fi
-
-#
-# Deal with Capriccio pthreads
-# XXX/demmer todo
-#
-if [ "$capriccio" = "y" ]; then
-	if [ ! $make_static = 'y' ]; then
-		echo "capriccio can only be linked statically"
-		exit 1
-	fi
-
-	if [ ! -r $capricciodir/src/include/pthread.h ]; then
-		echo "can't find pthread.h in $capricciodir/src/include"
-		exit 1
-	fi
-	pthreadincdir=-I$capricciodir/src/include
-	
-	if [ ! -r $capricciodir/src/lib/libpthread.a ]; then
-		echo "can't find libpthread.a in $capricciodir/lib"
-		exit 1
-	fi
-	pthreadlib=''
-	pthreadstaticlib=$capricciodir/src/lib/libpthread.a
-elif [ "$platform" = FreeBSD ] ; then
-    pthreadlib=''
-    pthreadflag='-pthread'
 fi
 
 #
@@ -331,6 +329,7 @@ done
 #
 # Spit out some output and then do the correct substitution on Rules.make
 #
+echo "oasys configure state:"
 echo "Platform:"
 echo "  OS: $platform"
 echo "Target/Tools:"
@@ -344,19 +343,24 @@ echo "  Debug: $debug"
 echo "  Optimize: $optimize"
 echo "  Static: $make_static"
 echo " "
-if [ "$capriccio" = 'y' ]; then
-echo "  capriccio: $pthreadincdir $pthreadlibdir $pthreadlib $pthreadstaticlib"
-fi
+echo " "
 
-echo "#" > Rules.make
-echo "# This file was automatically generated by configure; do not edit directly" > Rules.make
+rm -f Rules.make
+echo > Rules.make <<EOF
+#
+# This file was automatically generated by configure.
+#
+#                     !!! DO NOT EDIT !!!
+#
+#
+EOF
+
 sed -e "
 s%@SRCDIR@%$srcdir%g
 s%@CFLAGS@%$cflags%g
 s%@STATIC@%$static%g
 s%@CC@%$cc%g
 s%@CPP@%$cpp%g
-s%@DEFS@%$defs%g
 s%@DEPFLAGS@%$depflags%g
 s%@DEBUG@%$debug%g
 s%@OPTIMIZE@%$optimize%g
@@ -368,6 +372,7 @@ s%@STATIC_LIBS@%$staticlibs%g
 s%@PTHREAD_FLAG@%$pthreadflag%g
 
 " $srcdir/Rules.make.in >> Rules.make
+chmod oag-w Rules.make
 
 echo ""
 echo "wrote Rules.make; now run make"
