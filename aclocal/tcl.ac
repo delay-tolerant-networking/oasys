@@ -67,11 +67,12 @@ AC_DEFUN(AC_OASYS_FIND_TCL, [
         ac_tclincdirs="/usr/include /usr/local/include"
 	for ac_tclver in $ac_tclvers ; do
            ac_tclincdirs="$ac_tclincdirs /usr/include/tcl$ac_tclver"
+           ac_tclincdirs="$ac_tclincdirs /usr/local/include/tcl$ac_tclver"
         done
     fi
 
     if test x"$ac_tcldir" = x"system" ; then
-        ac_tcllibdirs="/usr/lib"
+        ac_tcllibdirs="/usr/lib /usr/local/lib"
     else
         ac_tcllibdirs="$ac_tcldir/lib"
     fi
@@ -115,7 +116,7 @@ AC_DEFUN(AC_OASYS_FIND_TCL, [
           ])
 
       for ac_tcllibdir in $ac_tcllibdirs; do
-      for ac_tcllib in tcl tcl$ac_tclver; do
+      for ac_tcllib in tcl tcl$ac_tclver tcl$ac_tclvermajor$ac_tclverminor; do
 
         AC_MSG_CHECKING([for tcl library in $ac_tcllibdir, -l$ac_tcllib])
 	LDFLAGS="$ac_save_LDFLAGS -L$ac_tcllibdir"
