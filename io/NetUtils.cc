@@ -81,9 +81,17 @@ gethostbyname(const char* name, in_addr_t* addr)
     
     struct hostent h;
     char buf[2048];
-    struct hostent* ret;
+    struct hostent* ret = 0;
     int h_err;
 
+    
+#if defined(__sun__) // solaris has different args
+    if (::gethostbyname_r(name, &h, buf, sizeof(buf), &h_err) < 0) {
+        logf("/net", LOG_ERR, "error return from gethostbyname_r: %s",
+             strerror(h_err));
+        return -1;
+    }
+#else
     if (::gethostbyname_r(name, &h, buf, sizeof(buf), &ret, &h_err) < 0) {
         logf("/net", LOG_ERR, "error return from gethostbyname_r: %s",
              strerror(h_err));
@@ -92,6 +100,7 @@ gethostbyname(const char* name, in_addr_t* addr)
     if (ret == NULL) {
         return -1;
     }
+#endif
 
     *addr = ((struct in_addr**)h.h_addr_list)[0]->s_addr;
     return 0;
