@@ -19,11 +19,15 @@ public:
         object->serialize(this);
     }
     
+    /** Rewind to the beginning of the buffer */
+    void rewind() { offset_ = 0; }
+
 protected:
     /**
      * Constructor
      */
-    BufferedSerializeAction(action_t action, u_char* buf, size_t length);
+    BufferedSerializeAction(action_t action, context_t context,
+                            u_char* buf, size_t length);
 
     /**  
      * Get the next R/W length of the buffer.
@@ -38,9 +42,6 @@ protected:
     /** @return buffer length */
     size_t length() { return length_; }
     
-    /** Rewind to the beginning of the buffer */
-    void rewind() { offset_ = 0; }
-
  private:
     u_char* buf_;		///< Buffer that is un/marshalled
     size_t  length_;		///< Length of the buffer.
@@ -53,8 +54,10 @@ protected:
  */
 class Marshal : public BufferedSerializeAction {
 public:
-    // Constructor
-    Marshal(u_char* buf, size_t length);
+    /**
+     * Constructor
+     */
+    Marshal(context_t context, u_char* buf, size_t length);
 
     /**
      * Since the Marshal operation doesn't actually modify the
@@ -83,8 +86,10 @@ public:
  */
 class Unmarshal : public BufferedSerializeAction {
 public:
-    // Constructor
-    Unmarshal(const u_char* buf, size_t length);
+    /**
+     * Constructor
+     */
+    Unmarshal(context_t context, const u_char* buf, size_t length);
 
     // Virtual functions inherited from SerializeAction
     void process(const char* name, u_int32_t* i);
@@ -102,10 +107,11 @@ public:
  */
 class MarshalSize : public SerializeAction {
 public:
-    // Constructor
-    MarshalSize() : SerializeAction(INFO), size_(0)
-    {
-    }
+    /**
+     * Constructor
+     */
+    MarshalSize(context_t context)
+        : SerializeAction(INFO, context), size_(0) {}
 
     /**
      * The virtual action function. Always succeeds.
