@@ -861,7 +861,7 @@ Optional Packages:
   --with-cc=CC            name (or path) of the C compiler to use
   --with-tcl=DIR          location of a tcl installation (default system)
   --with-tcldir=DIR       same as --with-tcl
-  --with-tclver=VERSION   tcl version to use (default $ac_tclvers)
+  --with-tclver=VERSION   tcl version to use (default 8.4 or 8.3)
 
 Some influential environment variables:
   CC          C compiler command
@@ -2656,8 +2656,10 @@ echo "${ECHO_T}$oasys_cv_prog_gccver" >&6
         3.1*|2.9*)
             DEFS="$DEFS -D_GNU_SOURCE"
 	    DEPFLAGS=""
-            echo "*** warning: using old compiler $cc version $oasys_cv_prog_gccver,"
-	    echo "             automatic dependency generation will not work"
+            echo "*** "
+	    echo "*** warning: using old compiler $cc version $oasys_cv_prog_gccver,"
+	    echo "***          automatic dependency generation will not work"
+            echo "*** "
 	    ;;
 	#
 	# For 3.2 and beyond, use auto-dependency flags.
@@ -3135,14 +3137,14 @@ echo "$as_me: error: can't find usable tcl.h" >&2;}
     fi
 
     if test ! $oasys_cv_path_tcl_h = /usr/include ; then
-        CPPFLAGS="$CPPFLAGS -I$oasys_cv_path_tcl_h"
+        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_tcl_h"
     fi
 
     if test ! $oasys_cv_path_tcl_lib = /usr/lib ; then
-        LDFLAGS="$LDFLAGS -L$oasys_cv_path_tcl_lib"
+        OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_tcl_lib"
     fi
 
-    LIBS="$LIBS -l$oasys_cv_lib_tcl"
+    OASYS_LIBS="$OASYS_LIBS -l$oasys_cv_lib_tcl"
 
 
 
@@ -6060,6 +6062,10 @@ _ACEOF
 fi
 done
 
+
+CPPFLAGS="$CPPFLAGS $OASYS_CPPFLAGS"
+LDFLAGS="$LDFLAGS $OASYS_LDFLAGS"
+LIBS="$LIBS $OASYS_LIBS"
 
           ac_config_files="$ac_config_files Rules.make"
 
