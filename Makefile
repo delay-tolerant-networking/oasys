@@ -41,7 +41,8 @@ SERIALIZE_SRCS :=				\
 	serialize/MarshalSerialize.cc		\
 	serialize/SQLSerialize.cc		\
 
-STORAGE_SRCS :=                                 \
+STORAGE_SRCS :=					\
+	storage/BerkeleyTable.cc			\
 	storage/DurableTable.cc
 
 TCLCMD_SRCS :=					\
@@ -79,6 +80,7 @@ SRCS := \
 	$(IO_SRCS) 				\
 	$(MEMORY_SRCS)                          \
 	$(SERIALIZE_SRCS)			\
+	$(STORAGE_SRCS) 			\
 	$(TCLCMD_SRCS)				\
 	$(THREAD_SRCS)				\
 	$(UTIL_SRCS)				\
