@@ -81,11 +81,42 @@ AC_DEFUN(AC_OASYS_FIND_TCL, [
     for ac_tcllibdir in $ac_tcllibdirs; do
     for ac_tcllib in tcl tcl$ac_tclver; do
 
-        AC_MSG_CHECKING([for tcl (version $ac_tclver) in $ac_tclincdir, $ac_tcllibdir, -l$ac_tcllib])
-
         ac_tclver_major=`echo $ac_tclver | cut -d . -f1`
 	ac_tclver_minor=`echo $ac_tclver | cut -d . -f2`
 	CPPFLAGS="$ac_save_CPPFLAGS -I$ac_tclincdir"
+	LDFLAGS="$ac_save_LDFLAGS"
+	LIBS="$ac_save_LIBS"
+	
+	dnl
+	dnl First check the version in the header file. If there's a match, 
+	dnl fall through to the other check to make sure it links.
+	dnl If not, then we can break out of the two inner loops.
+	dnl
+        AC_MSG_CHECKING([for tcl.h (version $ac_tclver) in $ac_tclincdir])
+
+	AC_LINK_IFELSE(
+	  AC_LANG_PROGRAM(
+	    [
+                #include <tcl.h>
+           
+                #if (TCL_MAJOR_VERSION != ${ac_tclver_major}) || \
+                    (TCL_MINOR_VERSION != ${ac_tclver_minor})
+                #error "incorrect version"
+                #endif
+            ],
+            
+            [
+            ]),
+
+          [
+              AC_MSG_RESULT([yes])
+          ],
+          [
+              AC_MSG_RESULT([no])
+              break 2
+          ])
+
+        AC_MSG_CHECKING([for tcl library in $ac_tcllibdir, -l$ac_tcllib])
 	LDFLAGS="$ac_save_LDFLAGS -L$ac_tcllibdir"
 	LIBS="$ac_save_LIBS -l$ac_tcllib"
 

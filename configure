@@ -2823,12 +2823,69 @@ echo "$as_me: error: cannot configure without tcl" >&2;}
     for ac_tcllibdir in $ac_tcllibdirs; do
     for ac_tcllib in tcl tcl$ac_tclver; do
 
-        echo "$as_me:$LINENO: checking for tcl (version $ac_tclver) in $ac_tclincdir, $ac_tcllibdir, -l$ac_tcllib" >&5
-echo $ECHO_N "checking for tcl (version $ac_tclver) in $ac_tclincdir, $ac_tcllibdir, -l$ac_tcllib... $ECHO_C" >&6
-
         ac_tclver_major=`echo $ac_tclver | cut -d . -f1`
 	ac_tclver_minor=`echo $ac_tclver | cut -d . -f2`
 	CPPFLAGS="$ac_save_CPPFLAGS -I$ac_tclincdir"
+	LDFLAGS="$ac_save_LDFLAGS"
+	LIBS="$ac_save_LIBS"
+
+					        echo "$as_me:$LINENO: checking for tcl.h (version $ac_tclver) in $ac_tclincdir" >&5
+echo $ECHO_N "checking for tcl.h (version $ac_tclver) in $ac_tclincdir... $ECHO_C" >&6
+
+	cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+                #include <tcl.h>
+
+                #if (TCL_MAJOR_VERSION != ${ac_tclver_major}) || \
+                    (TCL_MINOR_VERSION != ${ac_tclver_minor})
+                #error "incorrect version"
+                #endif
+
+int
+main ()
+{
+
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+
+              echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+              echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+              break 2
+
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+
+        echo "$as_me:$LINENO: checking for tcl library in $ac_tcllibdir, -l$ac_tcllib" >&5
+echo $ECHO_N "checking for tcl library in $ac_tcllibdir, -l$ac_tcllib... $ECHO_C" >&6
 	LDFLAGS="$ac_save_LDFLAGS -L$ac_tcllibdir"
 	LIBS="$ac_save_LIBS -l$ac_tcllib"
 
