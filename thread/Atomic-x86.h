@@ -16,7 +16,11 @@
 /*
  * We have to force gcc to not optimize with an alias.
  */
-#define __noalias__(x) (*(volatile struct { int value; } *)x)
+struct __noalias {
+    int value;
+};
+
+#define __noalias__(x) (*(volatile __noalias *)x)
 
 /**
  * Atomic addition function.
