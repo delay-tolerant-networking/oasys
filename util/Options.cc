@@ -49,14 +49,16 @@ Options::List Options::allopts_;
 void
 Options::addopt(Opt* opt)
 {
-    int c = opt->shortopt_;
-    if (opts_[c]) {
-        fprintf(stderr,
-                "FATAL ERROR: multiple addopt calls for char '%c'\n", c);
-        abort();
-    }
+    if (opt->shortopt_ != 0) {
+        int c = opt->shortopt_;
+        if (opts_[c]) {
+            fprintf(stderr,
+                    "FATAL ERROR: multiple addopt calls for char '%c'\n", c);
+            abort();
+        }
         
-    opts_[c] = opt;
+        opts_[c] = opt;
+    }
     allopts_.push_back(opt);
 }
 
