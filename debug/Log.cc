@@ -178,11 +178,6 @@ Log::parse_debug_file(const char* debug_path)
     // check if we can open the file
     FILE *fp = fopen(debug_path, "r");
     if (fp == NULL) {
-        if (strcmp(debug_path, LOG_DEFAULT_DBGFILE) != 0) {
-            // error only if the user overrode the file
-            fprintf(stderr, "couldn't open debug file %s: %s\n",
-                    debug_path, strerror(errno));
-        }
         return;
     }
 
@@ -480,7 +475,7 @@ Log::vlogf(const char *path, log_level_t level, const char *fmt, va_list ap)
     struct timeval tv;
     getlogtime(&tv);
     len = snprintf(ptr, buflen, "[%s%ld.%06ld %s %s] ",
-                   prefix_.c_str(), tv.tv_sec, tv.tv_usec,
+                   prefix_.c_str(), (long)tv.tv_sec, (long)tv.tv_usec,
                    path, level2str(level));
 
     buflen -= len;
