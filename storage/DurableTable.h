@@ -44,7 +44,7 @@
 
 #include "debug/Debug.h"
 #include "debug/Log.h"
-#include "serialize/SerializableObject.h"
+#include "serialize/Serialize.h"
 
 namespace oasys {
 
@@ -53,7 +53,9 @@ class DurableTableStore;
 class DurableTable;
 class DurableTableItr;
 
-/// Enumeration for error return codes from the datastore functions
+/**
+ * Enumeration for error return codes from the datastore functions
+ */
 enum DurableTableResult_t {
     DS_OK        = 0,           ///< Success
     DS_NOTFOUND  = 1,           ///< Database element not found.
@@ -62,117 +64,145 @@ enum DurableTableResult_t {
     DS_ERR       = 1000,        ///< xxx/bowei placeholder for now
 };
 
-/// Identifier for DurableTables
+/**
+ * Identifier for DurableTables
+ */
 typedef int DurableTableId;
 
-/// Interface for the generic datastore
+/**
+ * Interface for the generic datastore
+ */
 class DurableTableStore {
 public:
-    /// Get singleton manager instance. Call init to create the
-    /// singleton instance.
-    static DurableTableStore* instance() 
+    /** Get singleton manager instance. Call init to create the
+     * singleton instance.
+     */
+    static inline DurableTableStore* instance() 
     {
         ASSERT(instance_);      // use init() please
         return instance_;      
     }
 
-    /// Do initialization. Must do this once before you try to obtain
-    /// an instance of this object. This is separated out from the
-    /// instance() call because we want to have control when the
-    /// database is initialized.
-    static void init();
+    /**
+     * Do initialization. Must do this once before you try to obtain
+     * an instance of this object. This is separated out from the
+     * instance() call because we want to have control when the
+     * database is initialized.
+     * 
+     * Subclasses should call this to set the instance_ variable in
+     * their own init methods.
+     */
+    static void init(DurableTableStore* instance) {
+        ASSERT(instance_ != 0);
+        instance_ = instance;
+    }
 
-    /// Destructor
+    /**
+     * Destructor
+     */
     virtual ~DurableTableStore() {}
 
-    /// Create a new table. Caller deletes the pointer.
+    /**
+     * Create a new table. Caller deletes the pointer.
+     */
     virtual int new_table(DurableTable** table) = 0;
 
-    /// Delete (by id) from the datastore
+    /**
+     * Delete (by id) from the datastore
+     */
     virtual int del_table(DurableTableId id) = 0;
 
-    /// Get a new table ptr to an id
+    /**
+     * Get a new table ptr to an id
+     */
     virtual int get_table(DurableTableId id, DurableTable** table) = 0;
     
-    /// Get meta-table, id = -1.
+    /**
+     * Get meta-table
+     */
     virtual int get_meta_table(DurableTable** table) = 0;
 
-protected:
-    /// Constructor - protected for singleton
-    DurableTableStore();
-
+private:
     static DurableTableStore* instance_; //< singleton instance
 };
 
-/// Object that encapsulates a single table.
+/**
+ * Object that encapsulates a single table.
+ */
 class DurableTable {
 public:
+    DurableTable(DurableTableId id) : id_(id) {}
     virtual ~DurableTable() {}
 
-    /// Get the data for key.
-    ///
-    /// \param key Key to retrieve
-    /// \param key_len Key length
-    /// \param data Data buffer
-    /// \param data_len Length of data buffer. Returned value will be
-    /// size of returned data.
-    ///
-    /// \return DS_OK, DS_NOTFOUND if key is not found, DS_BUFSIZE if
-    /// the given buffer is too small to store the data.
-    ///
-    virtual int get(const SerializableObject* key, 
+    /**
+     * Get the data for key.
+     *
+     * @param key Key to retrieve
+     * @param key_len Key length
+     * @param data Data buffer
+     * @param data_len Length of data buffer. Returned value will be
+     * size of returned data.
+     *
+     * @return DS_OK, DS_NOTFOUND if key is not found, DS_BUFSIZE if
+     * the given buffer is too small to store the data.
+     */
+    virtual int get(const SerializableObject& key, 
                     SerializableObject* data) = 0;
 
-    /// Put data for key in the database
-    ///
-    /// \param key Key to retrieve
-    /// \param key_len Key length
-    /// \param data Data buffer
-    /// \param data_len Length of data buffer
-    /// \return DS_OK, DS_ERR // XXX/bowei
-    ///
-    virtual int put(const SerializableObject* key, 
-                    const SerializableObject* data);
+    /** 
+     * Put data for key in the database
+     *
+     * @param key Key to retrieve
+     * @param key_len Key length
+     * @param data Data buffer
+     * @param data_len Length of data buffer
+     * @return DS_OK, DS_ERR // XXX/bowei
+     */
+    virtual int put(const SerializableObject& key, 
+                    const SerializableObject* data) = 0;
 
-    /// Delete a (key,data) pair from the database
-    ///
-    /// \return DS_OK, DS_NOTFOUND if key is not found
-    ///
-    virtual int del(const SerializableObject* key) = 0;
+    /**
+     * Delete a (key,data) pair from the database
+     * @return DS_OK, DS_NOTFOUND if key is not found
+     */
+    virtual int del(const SerializableObject& key) = 0;
 
-    /// Return table id.
+    /** Return table id. */
     DurableTableId id() { return id_; }
 
-protected:
+private:
     DurableTableId id_;
 };
 
-/// Table iterator object. Just like Java. Note: It is important that
-/// iterators do NOT outlive the tables they point into.
+/**
+ * Table iterator object. Just like Java. Note: It is important that
+ * iterators do NOT outlive the tables they point into.
+ */
 class DurableTableItr {
 public:
-    /// Destructor.
     virtual ~DurableTableItr() {};
 
-    /// Advance the pointer. An initialized iterator will be pointing
-    /// right before the first element in the list, so iteration code
-    /// will always be:
-    ///
-    /// \code
-    /// DurableTableItr i(table);
-    /// while(i.next() == 0) {
-    ///    // ... do stuff
-    /// }
-    /// \endcode
-    ///
-    /// \return DS_OK, DS_NOTFOUND if no more elements, DS_ERR if an
-    /// error occurred while iterating.
+    /**
+     * Advance the pointer. An initialized iterator will be pointing
+     * right before the first element in the list, so iteration code
+     * will always be:
+     *
+     * @code
+     * DurableTableItr i(table);
+     * while(i.next() == 0) {
+     *    // ... do stuff
+     * }
+     * @endcode
+     *
+     * @return DS_OK, DS_NOTFOUND if no more elements, DS_ERR if an
+     * error occurred while iterating.
+     */
     virtual int next() = 0;
 
-    /// Unserialize the object in obj
-    virtual int get(SerialiableObject* obj) = 0;
+    /** Unserialize the object in obj. */
+    virtual int get(SerializableObject* obj) = 0;
 };
 
-}; // oasys
+}; // namespace oasys
 
 #endif // __DURABLE_TABLE_H__
