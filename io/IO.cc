@@ -436,6 +436,11 @@ IO::timeout_readall(int fd, char* bp, size_t len, int timeout_ms,
     ASSERT(timeout_ms >= 0);
     int cc;
     int total = 0;
+
+    if (len == 0) {
+        return 0;
+    }
+    
     while (len > 0) {
         cc = timeout_read(fd, bp, len, timeout_ms, log);
         if (cc <= 0)
