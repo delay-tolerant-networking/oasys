@@ -1,4 +1,3 @@
-
 TESTS += \
 	buffered-io-test	\
 	command-test		\
@@ -10,6 +9,7 @@ TESTS += \
 	msg-queue-test 		\
 	mutex-test 		\
 	options-test 		\
+	serialize-test          \
 	tcp-socket-test 	\
 	tcp-timeout-read-test 	\
 	tcp-writeall-test 	\
@@ -22,4 +22,3 @@ TESTS += \
 #
 test/%-test: test/%-test.cc
 	$(CPP) $^ -o $@ $(CFLAGS) $(LIBS) liboasys.a
-
