@@ -38,8 +38,14 @@
 
 #include "inet_aton.h"
 
+#if !defined(HAVE_INET_ATON)
+#if  defined(HAVE_INET_PTON)
+
 int
 inet_aton_with_pton(const char * name, struct in_addr *addr)
 {
     return inet_pton(AF_INET, name, addr);
 }
+
+#endif
+#endif
