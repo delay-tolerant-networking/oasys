@@ -16,10 +16,10 @@ ByteGenerator::fill_bytes(void* buf, size_t size)
 {
     char* p = static_cast<char*>(buf);
     
-        for(size_t i=0; i<size; ++i) {
-            *p = cur_ % 256;
-            ++p;
-        }
+    for(size_t i=0; i<size; ++i) {
+        *p = cur_ % 256;
+        ++p;
+    }
 }
 
 void ByteGenerator::next() 
