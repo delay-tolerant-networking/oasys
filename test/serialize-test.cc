@@ -50,7 +50,7 @@ public:
     }
 
 private:
-    int    a, b, c, d;
+    int32_t    a, b, c, d;
     short  e;
     u_int32_t u;
     string s1;

@@ -107,8 +107,8 @@ main(int argc, const char** argv)
         log_err("/test", "error: can't gethostbyname 10.0.0.1");
     }
     if (addr != inet_addr("10.0.0.1")) {
-        log_err("/test", "error: gethostbyname 10.0.0.1 got %x, not %x",
-                addr, inet_addr("10.0.0.1"));
+        log_err("/test", "error: gethostbyname 10.0.0.1 got 0x%08lx, "
+			"not 0x%08lx", addr, inet_addr("10.0.0.1"));
     }
     
     if (gethostbyname("localhost", &addr) != 0) {
@@ -116,8 +116,8 @@ main(int argc, const char** argv)
     }
     
     if (ntohl(addr) != INADDR_LOOPBACK) {
-        log_err("/test", "error: gethostbyname(localhost) got %x, not %x",
-                addr, INADDR_LOOPBACK);
+        log_err("/test", "error: gethostbyname(localhost) got 0x%08lx, "
+			"not 0x%08lx", addr, (long int)INADDR_LOOPBACK);
     }
 
     TestTcpServer* s = new TestTcpServer();
