@@ -33,6 +33,9 @@ namespace oasys {
  * Tcl/C++ together in the same file is to make it easy to maintain
  * the tests.
  *
+ * Note that all Tcl code should be bracketed by conditional
+ * compilation, using #ifdef DECLARE_TEST_TCL ... #endif.
+ *
  * Each *-test in the directory is run and output is placed in
  * output/ *-test/std[out|err].
  *
@@ -86,41 +89,64 @@ public:
     virtual ~UnitTester() {}
 
     int run_tests(int argc, char* argv[]) {
-        if(argc < 2 || (strcmp(argv[1], "-test") != 0)) {
-            fprintf(stderr, "Please run this test from UnitTest.tcl\n");
-            exit(-1);
+        bool in_tcl = false;
+        
+        if (argc >= 2 && (strcmp(argv[1], "-test") == 0)) {
+            argc++;
+            argv++;
+            in_tcl = true;
         }
         // XXX/bowei parse arguments for test
         // for running just a single test
 
         add_tests();
-        
-        print_header();
+
+        if (in_tcl) {
+            print_header();
+        }
 
         int test_num = 1;
         for(UnitTestList::iterator i=tests_.begin(); 
             i != tests_.end(); ++i, ++test_num) 
         {
+            printf("%s...\n",  (*i)->name_.c_str());
+            fflush(stdout);
+            
             int err = (*i)->run();
             switch(err) {
             case UNIT_TEST_PASSED:
-                fprintf(stderr, "{ %d %s P } ", 
-                        test_num, (*i)->name_.c_str());
+                if (in_tcl) {
+                    fprintf(stderr, "{ %d %s P } ", 
+                            test_num, (*i)->name_.c_str());
+                } else {
+                    printf("%s... Passed\n",  (*i)->name_.c_str());
+                }
                 passed_++;
                 break;
             case UNIT_TEST_FAILED:
-                fprintf(stderr, "{ %d %s F } ", 
-                        test_num, (*i)->name_.c_str());
+                if (in_tcl) {
+                    fprintf(stderr, "{ %d %s F } ", 
+                            test_num, (*i)->name_.c_str());
+                } else {
+                    printf("%s... Failed\n",  (*i)->name_.c_str());
+                }
                 failed_++;
                 break;
             case UNIT_TEST_INPUT:
-                fprintf(stderr, "{ %d %s I } ", 
-                        test_num, (*i)->name_.c_str());
+                if (in_tcl) {
+                    fprintf(stderr, "{ %d %s I } ", 
+                            test_num, (*i)->name_.c_str());
+                } else {
+                    printf("%s... Unknown (UNIT_TEST_INPUT)\n",  (*i)->name_.c_str());
+                }
                 input_++;
                 break;                
             }
         }
-        print_tail();
+
+        if (in_tcl) {
+            print_tail();
+        }
 
         return 0;
     }
@@ -157,14 +183,14 @@ private:
 
 /// @{ Helper macros for implementing unit tests
 #define ADD_TEST(_name)                         \
-        add(new UnitTest ## _name())
+        add(new _name ## UnitTest())
 
 #define DECLARE_TEST(_name)                             \
-    struct UnitTest ## _name : public UnitTest {        \
-        UnitTest ## _name() : UnitTest(#_name) {}       \
+    struct _name ## UnitTest : public UnitTest {        \
+        _name ## UnitTest() : UnitTest(#_name) {}       \
         int run();                                      \
     };                                                  \
-    int UnitTest ## _name::run()
+    int _name ## UnitTest::run()
 
 #define DECLARE_TEST_FILE(_UnitTesterClass, testname)   \
 int main(int argc, char* argv[]) {                      \

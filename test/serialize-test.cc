@@ -1,42 +1,40 @@
-#if 0
-#  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING. By
-#  downloading, copying, installing or using the software you agree to
-#  this license. If you do not agree to this license, do not download,
-#  install, copy or use the software.
-#  
-#  Intel Open Source License 
-#  
-#  Copyright (c) 2004 Intel Corporation. All rights reserved. 
-#  
-#  Redistribution and use in source and binary forms, with or without
-#  modification, are permitted provided that the following conditions are
-#  met:
-#  
-#    Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  
-#    Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#  
-#    Neither the name of the Intel Corporation nor the names of its
-#    contributors may be used to endorse or promote products derived from
-#    this software without specific prior written permission.
-#   
-#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-#  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-#  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-#  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE INTEL OR
-#  ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-#  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-#  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-set __CC {
-#endif
+/*
+ * IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING. By
+ * downloading, copying, installing or using the software you agree to
+ * this license. If you do not agree to this license, do not download,
+ * install, copy or use the software.
+ * 
+ * Intel Open Source License 
+ * 
+ * Copyright (c) 2004 Intel Corporation. All rights reserved. 
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ * 
+ *   Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ * 
+ *   Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+ * 
+ *   Neither the name of the Intel Corporation nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ *  
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE INTEL OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <iostream>
 #include <debug/Debug.h>
@@ -99,7 +97,7 @@ private:
     char   s2[32];
 };
 
-int test1(int crc) {
+int CompareTest(bool crc) {
     OneOfEach o1, o2(false);
 
 #define LEN 256
@@ -113,15 +111,22 @@ int test1(int crc) {
     oasys::Marshal v(Serialize::CONTEXT_NETWORK, buf, LEN, crc);
     v.logpath("/marshal-test");
     v.action(&o1);
+    
     oasys::Unmarshal uv(Serialize::CONTEXT_NETWORK, buf, sizer.size(), crc);
     uv.logpath("/marshal-test");
     uv.action(&o2);
 
-    if (!o1.equals(o2)) {
-	return UNIT_TEST_FAILED;
-    }
+    ASSERT(o1.equals(o2));
 
     return 0;
+}
+
+DECLARE_TEST(CompareTest_NOCRC) {
+    return CompareTest(false);
+}
+
+DECLARE_TEST(CompareTest_CRC) {
+    return CompareTest(true);
 }
 
 DECLARE_TEST(SizeTest) {
@@ -134,34 +139,24 @@ DECLARE_TEST(SizeTest) {
 
     oasys::MarshalSize sizer1(Serialize::CONTEXT_NETWORK, 0);
     o.serialize(&sizer1);    
-    if(sizer1.size() != sz) {
+    if (sizer1.size() != sz) {
 	return UNIT_TEST_FAILED;
     }
     
     oasys::MarshalSize sizer2(Serialize::CONTEXT_NETWORK, Serialize::USE_CRC);
-    if(sizer1.size() != sz + 4) {
+    if (sizer1.size() != sz + 4) {
 	return UNIT_TEST_FAILED;
     }
 
-    return 0;
-}
-
-DECLARE_TEST(Test1) {
-    return test1(0);
-}
-
-DECLARE_TEST(Test2) {
-    // XXX/bowei
     return 0;
 }
 
 class MarshalTester : public UnitTester {
     DECLARE_TESTER(MarshalTester) {
 	ADD_TEST(SizeTest);
-	ADD_TEST(Test1);
-	ADD_TEST(Test2);
+	ADD_TEST(CompareTest_NOCRC);
+	ADD_TEST(CompareTest_CRC);
     }
 };
 
 DECLARE_TEST_FILE(MarshalTester, "marshalling test");
-// }

@@ -26,10 +26,10 @@ proc lassign {varlist list} {
 }
 
 # log messages which can be suppressed with --silent
-proc puts_reg {str} {
+proc puts_reg {args} {
     global g_silent
-    if [expr ! $g_silent] {
-	puts "$str"
+    if {! $g_silent} {
+	eval puts $args
     }
 }
 
@@ -60,11 +60,36 @@ parse_args
 set tests {sample-test timer-test serialize-test}
 
 foreach test_exe $tests {
-    exec   "mkdir" "output/$test_exe"
-    source "$test_exe.cc"
+    if {[file exists "$test_exe.cc"]} {
+    } elseif {[file exists "test/$test_exe.cc"]} {
+	cd "test"
+    } else {
+	error "couldn't find $test_exe.cc or test/$test_exe.cc"
+    }
+
+    file mkdir "output/$test_exe"
+    set fd [open "$test_exe.cc"]
+
+    set code [read $fd]
+
+    while {1} {
+	set matched [regexp {.*?DECLARE_TEST_TCL(.*?)endif(.*)$} $code match tcl_code rest]
+	
+	if {!$matched} {
+	    break
+	}
+	
+	eval $tcl_code
+	set code $rest
+    } 
+
+    close $fd
+
+    puts_reg -nonewline "* $test_exe: "
+    flush stdout
     
     if [catch {exec "./$test_exe" "-test" ">output/$test_exe/stdout" "2>output/$test_exe/stderr"} err ] {
- 	puts "$test_exe: $err"
+ 	puts "$err"
 	set g_failed [expr $g_failed + 1 ]
 	set g_total  [expr $g_total + 1  ]
     } else {
@@ -79,7 +104,7 @@ foreach test_exe $tests {
 	    if [ string equal $status "P" ] {
 		set g_passed [expr $g_passed + 1 ]
 	    } elseif [ string equal $status "F" ] {
-		puts "* $test_exe: $name failed, output in output/$test_exe/stdout"
+		puts "$name failed, output in output/$test_exe/stdout"
 		set g_failed [expr $g_failed + 1 ]
 		set all_clear 0
 	    } elseif [ string equal $status "I" ] {
@@ -87,7 +112,7 @@ foreach test_exe $tests {
 		set check_result [eval "check$name" $output]
 		
 		if [ expr $check_result < 0 ] {
-		    puts "* $test_exe: $name failed, output in output/$test_exe/stdout"
+		    puts "$name failed, output in output/$test_exe/stdout"
 		    set g_failed [expr $g_failed + 1 ]
 		    set all_clear 0
 		} else {
@@ -99,7 +124,7 @@ foreach test_exe $tests {
 	close $output
 
 	if {$all_clear} {
-	    puts_reg "* $test_exe: passed"
+	    puts_reg "passed"
 	}
     }
 }
