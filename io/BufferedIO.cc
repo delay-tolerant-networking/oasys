@@ -28,10 +28,10 @@ BufferedInput::read_line(const char* nl, char** buf, int timeout)
         int cc = internal_read(buf_.fullbytes() + BufferedInput::READ_AHEAD,
                                timeout);
         
-	logf(LOG_DEBUG, "readline: cc = %d", cc);
+	log_debug("readline: cc = %d", cc);
         if(cc <= 0)
         {
-            logf(LOG_DEBUG, "%s: read %s", 
+            log_debug("%s: read %s", 
                  __func__, (cc == 0) ? "eof" : strerror(errno));
             return cc;
         }
@@ -39,7 +39,7 @@ BufferedInput::read_line(const char* nl, char** buf, int timeout)
 
     *buf = buf_.start();
 
-    logf(LOG_DEBUG, "endl = %d", endl);
+    log_debug("endl = %d", endl);
     buf_.consume(endl + strlen(nl));
 
     return endl + strlen(nl);
@@ -50,19 +50,19 @@ BufferedInput::read_bytes(size_t len, char** buf, int timeout)
 {
     ASSERT(len > 0);
     
-    logf(LOG_DEBUG, "read_bytes %d (timeout %d)", len, timeout);
+    log_debug("read_bytes %d (timeout %d)", len, timeout);
     
     size_t total = buf_.fullbytes();
     
     while (total < len)
     {
         // fill up the buffer (if possible)
-        logf(LOG_DEBUG, "read_bytes calling internal_read for %d needed bytes",
+        log_debug("read_bytes calling internal_read for %d needed bytes",
              len - total);
 	int cc = internal_read(len, timeout);
         if (cc <= 0)
         {
-            logf(LOG_DEBUG, "%s: read %s", 
+            log_debug("%s: read %s", 
                  __func__, (cc == 0) ? "eof" : strerror(errno));
             return cc;
         }
@@ -94,7 +94,7 @@ BufferedInput::read_some_bytes(char** buf, int timeout)
         cc = internal_read(buf_.tailbytes(), timeout);
 
         if (cc == 0) {
-            logf(LOG_DEBUG, "%s: read eof", __func__);
+            log_debug("%s: read eof", __func__);
             return cc; // eof ok
         }
 
@@ -111,7 +111,7 @@ BufferedInput::read_some_bytes(char** buf, int timeout)
     cc = buf_.fullbytes();
     buf_.consume(cc);
     
-    logf(LOG_DEBUG, "read_some_bytes ret %d (timeout %d)", cc, timeout);
+    log_debug("read_some_bytes ret %d (timeout %d)", cc, timeout);
 
     return cc;
 }
@@ -164,7 +164,7 @@ BufferedInput::internal_read(size_t len, int timeout_ms)
     
     if (cc == IOTIMEOUT)
     {
-        logf(LOG_DEBUG, "internal_read %d (timeout %d) timed out",
+        log_debug("internal_read %d (timeout %d) timed out",
              len, timeout_ms);
         return cc;
     }
@@ -177,7 +177,7 @@ BufferedInput::internal_read(size_t len, int timeout_ms)
     }
     else if (cc == 0) 
     {
-        logf(LOG_DEBUG, "internal_read %d (timeout %d) eof",
+        log_debug("internal_read %d (timeout %d) eof",
              len, timeout_ms);
         seen_eof_ = true;
         return cc;
@@ -188,7 +188,7 @@ BufferedInput::internal_read(size_t len, int timeout_ms)
 
     int ret = MIN(buf_.fullbytes(), len);
     
-    logf(LOG_DEBUG, "internal_read %d (timeout %d): cc=%d ret %d",
+    log_debug("internal_read %d (timeout %d): cc=%d ret %d",
          len, timeout_ms, cc, ret);
 
     return ret;
@@ -229,7 +229,7 @@ BufferedInput::find_nl(const char* nl)
  **************************************************************************/
 BufferedOutput::BufferedOutput(IOClient* client, 
                                const char* logbase)
-    : log_(logbase), client_(client), buf_(DEFAULT_BUFSIZE), 
+    : Logger(logbase), client_(client), buf_(DEFAULT_BUFSIZE), 
       flush_limit_(DEFAULT_FLUSH_LIMIT)
 {}
 
@@ -315,11 +315,12 @@ BufferedOutput::flush()
 
         if (cc < 0) 
 	{
-            logf(LOG_ERR, "write error %s", strerror(errno));
+            log_err("write error %s", strerror(errno));
 
             return cc;
         }
-        logf(LOG_DEBUG, "flush wrote %d bytes", cc);
+        log_debug("flush wrote \"%s\", %d bytes", 
+                  buf_.start(), cc);
 
 	buf_.consume(cc);
 	total += cc;
