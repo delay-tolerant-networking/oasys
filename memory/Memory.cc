@@ -91,21 +91,26 @@ DbgMemInfo::init(
 
 
 void
-DbgMemInfo::debug_dump()
+DbgMemInfo::debug_dump(bool only_diffs)
 {
     for(int i=0; i<_DBG_MEM_TABLE_SIZE; ++i) 
     {
 	dbg_mem_entry_t* entry = &table_[i];
-        if(entry->frames_[0] == 0)
+        if (entry->frames_[0] == 0)
             continue;
 
-        log_info("/memory", "%5d: [%p %p %p] live=%d size=%.2fkb\n",
-		 i,
-		 entry->frames_[0],
-		 entry->frames_[1],
-		 entry->frames_[2],
-		 entry->live_,
-		 (float)entry->size_/1000);
+        if (! only_diffs || (entry->live_ != entry->last_live_)) {
+            log_info("/memory", "%5d: [%p %p %p] live=%d last_live=%d size=%.2fkb\n",
+                     i,
+                     entry->frames_[0],
+                     entry->frames_[1],
+                     entry->frames_[2],
+                     entry->live_,
+                     entry->last_live_,
+                     (float)entry->size_/1000);
+        }
+
+        entry->last_live_ = entry->live_;
     }
 }
 
@@ -203,8 +208,10 @@ operator new(size_t size) throw (std::bad_alloc)
         set_frame_info(frames);
 	b->entry_ = oasys::DbgMemInfo::inc(frames, size);
 
-	log_debug("/memory", "new a=%p, f=[%p %p %p]\n",              
-		  &b->block_, frames[0], frames[1], frames[2]);     
+// logging may not be initialized yet...
+        
+// 	log_debug("/memory", "new a=%p, f=[%p %p %p]\n",              
+// 		  &b->block_, frames[0], frames[1], frames[2]);     
     }
 								
     return (void*)&b->block_;                               
@@ -218,10 +225,12 @@ operator delete(void *ptr) throw ()
     ASSERT(b->magic_ == _DBG_MEM_MAGIC);
 
     if (b->entry_ != 0) {
-	log_debug("/memory", "delete a=%p, f=[%p %p %p]\n", 
-		  &b->block_, 
-		  b->entry_->frames_[0], b->entry_->frames_[1], 
-		  b->entry_->frames_[2]);
+// logging may not be initialized yet...
+        
+// 	log_debug("/memory", "delete a=%p, f=[%p %p %p]\n", 
+// 		  &b->block_, 
+// 		  b->entry_->frames_[0], b->entry_->frames_[1], 
+// 		  b->entry_->frames_[2]);
 
 	oasys::DbgMemInfo::dec(b);
     }

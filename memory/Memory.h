@@ -125,6 +125,7 @@ namespace oasys {
 struct dbg_mem_entry_t {
     void* frames_[_DBG_MEM_FRAMES]; ///< # of stack frames to snarf in LIFO order
     int       live_;       ///< Objects of this type that are alive.
+    int       last_live_;  ///< Objects of this type that were alive at the last dump.
     u_int32_t size_;       ///< Size of objects
 };
 
@@ -157,7 +158,7 @@ public:
      *
      * @param dump_file Dump of the memory usage characteristics.
      */
-    static void init(int flags, char* dump_file = 0);
+    static void init(int flags = NO_FLAGS, char* dump_file = 0);
 
 // Find a matching set of frames
 #define MATCH(_f1, _f2)                                                 \
@@ -200,7 +201,8 @@ public:
 
         if(entry->frames_[0] == 0) {
             memcpy(entry->frames_, frames, sizeof(void*) * _DBG_MEM_FRAMES);
-            entry->live_  = 1;
+            entry->live_      = 1;
+            entry->last_live_ = 0;
 	} else {
             ++(entry->live_);
         }
@@ -240,9 +242,11 @@ public:
     static dbg_mem_entry_t** get_table() { return &table_; }
 
     /**
-     * Dump out debugging information
+     * Dump out debugging information. If alloc_diffs is false, only
+     * print the differences since the last time debug_dump was
+     * called.
      */
-    static void debug_dump();
+    static void debug_dump(bool only_diffs = false);
 
     /**
      * Dump out memory usage summary to file.
