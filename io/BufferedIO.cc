@@ -90,9 +90,13 @@ BufferedInput::read_some_bytes(char** buf, int timeout)
         
         cc = internal_read(buf_.tailbytes(), timeout);
 
-        if (cc <= 0) {
-            logf(LOG_ERR, "%s: read %s", 
-                 __func__, (cc == 0) ? "eof" : strerror(errno));
+        if (cc == 0) {
+            logf(LOG_DEBUG, "%s: read eof", __func__);
+            return cc; // eof ok
+        }
+
+        if (cc < 0) {
+            logf(LOG_ERR, "%s: read error %s", __func__, strerror(errno));
             return cc;
         }
 
