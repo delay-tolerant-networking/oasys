@@ -18,7 +18,6 @@ autoscan
 
 echo "preconfig: running autoheader to build config.h.in..."
 rm -f config.h config.h.in
-chmod 644 config.h.in
 autoheader
 chmod 444 config.h.in
 
