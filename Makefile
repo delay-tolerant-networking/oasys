@@ -135,6 +135,8 @@ tclcmd/command-init-tcl.c: tclcmd/command-init.tcl
 # Include test files
 #
 include test/Makefile
+.PHONY: tests
+tests: $(TESTS)
 
 #
 # Include the common rules
