@@ -40,6 +40,8 @@
 #include <debug/Log.h>
 #include <memory/Memory.h>
 
+using namespace oasys;
+
 class Foo_1 {};
 std::list<Foo_1*> lFoos;
 
@@ -80,7 +82,7 @@ delete_all_foo()
 int
 main(int argc, char* argv[])
 {
-    Log::init(1, LOG_DEBUG, "memory-test.debug");
+    Log::init("-", LOG_DEBUG, "memory-test.debug");
     DbgMemInfo::init(DbgMemInfo::USE_SIGNAL, "/tmp/dump");
 
     log_info("/memory", "offset of data=%u\n", 

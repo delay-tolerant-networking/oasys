@@ -41,6 +41,8 @@
 #include <thread/Timer.h>
 #include "debug/Log.h"
 
+using namespace oasys;
+
 class PeriodicTimer : public Timer {
   public:
     PeriodicTimer(const char* name) {
