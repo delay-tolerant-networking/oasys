@@ -35,7 +35,8 @@ public:
                     const char* log = NULL);
 
     static int close(int fd,
-                     const char* log = NULL);
+                     const char* log = NULL,
+                     const char* filename = "");
     
     static int read(int fd, char* bp, size_t len,
                     const char* log = NULL);

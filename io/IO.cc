@@ -30,11 +30,11 @@ IO::open(const char* path, int flags, mode_t mode, const char* log)
 }
     
 int
-IO::close(int fd, const char* log)
+IO::close(int fd, const char* log, const char* filename)
 {
     int ret = ::close(fd);
     if (log) {
-        logf(log, LOG_DEBUG, "close %d: %d", fd, ret);
+        logf(log, LOG_DEBUG, "close %s fd %d: %d", filename, fd, ret);
     }
     return ret;
 }
