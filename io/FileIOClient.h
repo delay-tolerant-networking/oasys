@@ -6,6 +6,12 @@
 #include <fcntl.h>
 #include <string.h>
 
+//XXX/namespace
+class FileIOClient;
+namespace oasys {
+typedef ::FileIOClient FileIOClient;
+};
+
 /**
  * IOClient derivative for real files -- not sockets. Unlike the base
  * class FdIOClient, FileIOClient contains the path as a member
