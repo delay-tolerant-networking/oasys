@@ -79,6 +79,7 @@ TCPClient::timeout_connect(in_addr_t remote_addr, u_int16_t remote_port,
     {
         log_debug("timeout_connect: succeeded immediately");
         if (errp) *errp = 0;
+        ASSERT(state_ == ESTABLISHED); // set by IPSocket
     }
     else if (ret < 0 && errno != EINPROGRESS)
     {
@@ -112,6 +113,7 @@ TCPClient::timeout_connect(in_addr_t remote_addr, u_int16_t remote_port,
             if (err == 0) {
                 log_debug("return from poll, connect succeeded");
                 ret = 0;
+                set_state(ESTABLISHED);
             } else {
                 log_debug("return from poll, connect failed");
                 ret = IOERROR;
