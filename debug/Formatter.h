@@ -5,6 +5,13 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+// XXX/bowei namespace
+class Formatter;
+namespace oasys {
+    typedef ::Formatter Formatter;
+};
+
+
 /**
  * This class is intended to be used with a modified implementation of
  * snprintf/vsnprintf, defined in Formatter.cc.

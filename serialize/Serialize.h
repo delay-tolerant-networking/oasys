@@ -12,6 +12,14 @@ class Serialize;
 class SerializeAction;
 class SerializableObject;
 
+
+//XXX/bowei namespace
+namespace oasys {
+    typedef ::Serialize          Serialize;
+    typedef ::SerializeAction    SerializeAction;
+    typedef ::SerializableObject SerializableObject;
+};
+
 /**
  * Empty base class that's just used for name scoping of the action
  * and context enumerated types.
