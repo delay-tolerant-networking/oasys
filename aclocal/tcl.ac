@@ -5,9 +5,8 @@ dnl
 dnl
 dnl Main macro for finding a usable tcl installation 
 dnl
-AC_DEFUN(AC_OASYS_TCLCONFIG, [
-
-    ac_tclver='8.4 8.3'
+AC_DEFUN(AC_OASYS_CONFIG_TCL, [
+    ac_tclvers='8.4 8.3'
     ac_tcldir='system'
 
     AC_ARG_WITH(tcl,
@@ -15,84 +14,117 @@ AC_DEFUN(AC_OASYS_TCLCONFIG, [
     		   [location of a tcl installation (default system)]),
         ac_tcldir=$withval) 
 
+    AC_ARG_WITH(tcldir,
+        AC_HELP_STRING([--with-tcldir=DIR],
+    		   [same as --with-tcl]),
+        ac_tcldir=$withval) 
+
     AC_ARG_WITH(tclver,
         AC_HELP_STRING([--with-tclver=VERSION],
-    		   [tcl version to use (default $ac_tclver)]),
-        ac_tclver=$withval)
+    		   [tcl version to use (default $ac_tclvers)]),
+        ac_tclvers=$withval)
 
     dnl
-    dnl Tcl include file
+    dnl We don't accept --without-tcl
     dnl
+    if test $ac_tcldir = no ; then
+       AC_MSG_ERROR([cannot configure without tcl])
+    fi
     
-    if test x$oasys_cv_path_tcl_h = x ; then
-        echo "checking for tcl header file..."
-        AC_OASYS_FIND_TCLINCLUDE
+    dnl
+    dnl First check if we have a cached value. If so, we just use that.
+    dnl
+    if test ! x$oasys_cv_path_tcl_h = x ; then
+        echo "checking for tcl installation... (cached) \
+	      ($oasys_cv_path_tcl_h/tcl.h, $oasys_cv_path_tcl_lib -l$oasys_cv_lib_tcl)"
     else
-        echo "checking for tcl header... (cached) $oasys_cv_path_tcl_h"
+        AC_OASYS_FIND_TCL
     fi
         
     if test ! $oasys_cv_path_tcl_h = /usr/include ; then
         CPPFLAGS="$CPPFLAGS -I$oasys_cv_path_tcl_h"
     fi
 
-    dnl
-    dnl Tcl library file
-    dnl
-    
-    if test ! x"$ac_tcldir" = x"system" ; then
-        LDFLAGS="$LDFLAGS -L$ac_tcldir/lib"
+    if test ! $oasys_cv_path_tcl_lib = /usr/lib ; then
+        LDFLAGS="$LDFLAGS -L$oasys_cv_path_tcl_lib"
     fi
 
-    if test x$oasys_cv_lib_tcl = x ; then
-        echo "checking for tcl library..."
-        AC_OASYS_FIND_TCLLIB
-    else
-        echo "checking for tcl library... (cached) $oasys_cv_lib_tcl"
-    fi
-        
     LIBS="$LIBS -l$oasys_cv_lib_tcl"
 ])
 
 dnl
-dnl Find tcl.h
+dnl Find tcl
 dnl
-AC_DEFUN(AC_OASYS_FIND_TCLINCLUDE, [
-  AC_CACHE_VAL([oasys_cv_path_tcl_h], [
+AC_DEFUN(AC_OASYS_FIND_TCL, [
     oasys_cv_path_tcl_h=
+
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    ac_save_LDFLAGS="$LDFLAGS"
+    ac_save_LIBS="$LIBS"
 
     if test ! x"$ac_tcldir" = x"system" ; then
         ac_tclincdirs=$ac_tcldir/include/
     else
         ac_tclincdirs="/usr/include /usr/local/include"
-	for tclver in $ac_tclver ; do
-           ac_tclincdirs="$ac_tclincdirs /usr/include/tcl$tclver"
+	for ac_tclver in $ac_tclvers ; do
+           ac_tclincdirs="$ac_tclincdirs /usr/include/tcl$ac_tclver"
         done
     fi
 
+    if test x"$ac_tcldir" = x"system" ; then
+        ac_tcllibdirs="/usr/lib"
+    else
+        ac_tcllibdirs="$ac_tcldir/lib"
+    fi
+
+    for ac_tclver in $ac_tclvers ; do
     for ac_tclincdir in $ac_tclincdirs; do
-        AC_CHECK_FILE($ac_tclincdir/tcl.h,
-	              [oasys_cv_path_tcl_h=$ac_tclincdir; break])
+    for ac_tcllibdir in $ac_tcllibdirs; do
+    for ac_tcllib in tcl tcl$ac_tclver; do
+
+        AC_MSG_CHECKING([for tcl (version $ac_tclver) in $ac_tclincdir, $ac_tcllibdir, -l$ac_tcllib])
+
+        ac_tclver_major=`echo $ac_tclver | cut -d . -f1`
+	ac_tclver_minor=`echo $ac_tclver | cut -d . -f2`
+	CPPFLAGS="$ac_save_CPPFLAGS -I$ac_tclincdir"
+	LDFLAGS="$ac_save_LDFLAGS -I$ac_tcllibdir"
+	LIBS="$ac_save_LIBS -l$ac_tcllib"
+
+	AC_LINK_IFELSE(
+	  AC_LANG_PROGRAM(
+	    [
+                #include <tcl.h>
+           
+                #if (TCL_MAJOR_VERSION != ${ac_tclver_major}) || \
+                    (TCL_MINOR_VERSION != ${ac_tclver_minor})
+                #error "incorrect version"
+                #endif
+            ],
+            
+            [
+                Tcl_Interp* interp = Tcl_CreateInterp();
+            ]),
+
+          [
+              AC_MSG_RESULT([yes])
+              oasys_cv_path_tcl_h=$ac_tclincdir
+              oasys_cv_path_tcl_lib=$ac_tcllibdir
+              oasys_cv_lib_tcl=$ac_tcllib
+              break 4
+          ],
+          [
+              AC_MSG_RESULT([no])
+          ])
     done
-  ])
+    done
+    done
+    done
 
-  if test x$oasys_cv_path_tcl_h = x ; then
+    CPPFLAGS="$ac_save_CPPFLAGS"
+    LDFLAGS="$ac_save_LDFLAGS"
+    LIBS="$ac_save_LIBS"
+
+    if test x$oasys_cv_path_tcl_h = x ; then
         AC_MSG_ERROR([can't find usable tcl.h])
-  fi
-])
-
-
-dnl
-dnl Find libtcl
-dnl
-AC_DEFUN(AC_OASYS_FIND_TCLLIB, [
-    AC_CACHE_VAL(oasys_cv_lib_tcl,[
-        for tclver in "" $ac_tclver; do
-            oasys_cv_lib_tcl=tcl$tclver
-            AC_CHECK_LIB($oasys_cv_lib_tcl, Tcl_Init, [break], [oasys_cv_lib_tcl=])
-        done
-    ])
-
-    if test x$oasys_cv_lib_tcl = x ; then
-        AC_MSG_ERROR([can't find usable tcl library])
     fi
 ])
