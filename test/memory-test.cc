@@ -83,6 +83,11 @@ int
 main(int argc, char* argv[])
 {
     Log::init(LOG_DEBUG);
+
+#if ! OASYS_DEBUG_MEMORY_ENABLED
+    log_crit("/memory", "test must be run with memory debugging enabled");
+#else
+    
     DbgMemInfo::init(DbgMemInfo::USE_SIGNAL, "/tmp/dump");
 
     log_info("/memory", "offset of data=%u\n", 
@@ -118,4 +123,6 @@ main(int argc, char* argv[])
     new Big();    
 
     while(1);
+
+#endif
 }
