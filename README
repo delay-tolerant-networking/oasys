@@ -4,7 +4,11 @@ OASYS - Object-oriented Adaptors to SYStem interfaces
 OASYS is a C++ library that provides a set of wrapper classes and
 utilities for systems programming projects.
 
+Build / Installation:
+---------------------
 
+./configure
+make
 
-
-
+Note: there is (at present) no install script or make target, as 
+oasys is designed to be statically linked into an application.
