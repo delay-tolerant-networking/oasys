@@ -77,8 +77,9 @@ public:
  */
 class TCPServerThread : public TCPServer, public Thread {
 public:
-    TCPServerThread(char* logbase = "/tcpserver")
-        : TCPServer(logbase)
+    TCPServerThread(char* logbase = "/tcpserver",
+                    int flags = 0)
+        : TCPServer(logbase), Thread(flags)
     {
     }
     
