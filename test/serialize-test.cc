@@ -41,6 +41,7 @@
 
 #include "util/UnitTest.h"
 #include "serialize/MarshalSerialize.h"
+#include "serialize/TypeShims.h"
 
 using namespace std;
 using namespace oasys;
@@ -148,10 +149,24 @@ DECLARE_TEST(SizeTest) {
     return 0;
 }
 
+DECLARE_TEST(NullStringTest1) {
+    char* test = "test string END";
+
+    NullStringShim id;
+    oasys::Unmarshal uv(Serialize::CONTEXT_LOCAL, 
+	                reinterpret_cast<u_char*>(test), 
+	                strlen(test) + 1, 0);
+    uv.action(&id);
+    CHECK(strcmp(test, id.value()) == 0);
+
+    return 0;
+}
+
 DECLARE_TESTER(MarshalTester) {
     ADD_TEST(SizeTest);
     ADD_TEST(CompareTest_NOCRC);
     ADD_TEST(CompareTest_CRC);
+    ADD_TEST(NullStringTest1);
 };
 
 DECLARE_TEST_FILE(MarshalTester, "marshalling test");
