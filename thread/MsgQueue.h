@@ -41,8 +41,8 @@
 
 #include <queue>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/poll.h>
-#include <sys/errno.h>
 
 #include "Notifier.h"
 #include "SpinLock.h"

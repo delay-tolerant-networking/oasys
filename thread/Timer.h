@@ -39,6 +39,7 @@
 #ifndef tier_timer_h
 #define tier_timer_h
 
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <queue>
@@ -50,11 +51,7 @@
 #include "Notifier.h"
 #include "Thread.h"
 
-#ifdef __CYGWIN__
-typedef void (*__sighandler_t) __P ((int));
-// this is just a guess, but it seems to be safe to guess high
-#define _NSIG 64
-#endif
+typedef void (*__sighandler_t) (int);
 
 namespace oasys {
 
@@ -140,8 +137,8 @@ private:
     Notifier signal_;
     std::priority_queue<Timer*, std::vector<Timer*>, TimerCompare> timers_;
 
-    __sighandler_t handlers_[_NSIG];	///< handlers for signals
-    bool 	   signals_[_NSIG];	///< which signals have fired
+    __sighandler_t handlers_[NSIG];	///< handlers for signals
+    bool 	   signals_[NSIG];	///< which signals have fired
     bool	   sigfired_;		///< boolean to check if any fired
 };
 

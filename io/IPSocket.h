@@ -59,6 +59,10 @@ namespace oasys {
 // XXX/demmer this should be in some system header somewhere
 #define MAX_UDP_PACKET 65536
 
+#ifndef INADDR_NONE
+#define INADDR_NONE 0
+#endif /* INADDR_NONE */
+
 /**
  * \class IPSocket
  *

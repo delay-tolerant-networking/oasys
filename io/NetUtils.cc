@@ -20,14 +20,12 @@
  *
  */
 
+#include "config.h"
 #include "NetUtils.h"
 #include "debug/Debug.h"
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <netdb.h>
 
 namespace oasys {
@@ -79,33 +77,8 @@ gethostbyname(const char* name, in_addr_t* addr)
         return 0;
     }
 
-#ifdef __FreeBSD__
-    struct addrinfo *res;
-    int              err;
-
-    err = getaddrinfo(name, 0, 0, &res);
-    if(err != 0) 
-        return -1;
+#if defined(HAVE_GETHOSTBYNAME_R)
     
-    ASSERT(res != 0);
-    *addr = ((struct in_addr*) &res->ai_addr)->s_addr;
-    
-    freeaddrinfo(res);
-    return 0;
-#elif __CYGWIN__
-    // XXX/jra can we really get away with using a non-reentrant one here?
-
-    struct hostent *hent;
-    hent = ::gethostbyname(name);
-    if (hent == NULL) {
-        logf("/net", LOG_ERR, "error return from gethostbyname: %s",
-             strerror(h_errno));
-        return -1;
-    } else {
-        *addr = ((struct in_addr**)hent->h_addr_list)[0]->s_addr;
-        return 0;
-    }
-#else
     struct hostent h;
     char buf[2048];
     struct hostent* ret;
@@ -122,6 +95,42 @@ gethostbyname(const char* name, in_addr_t* addr)
 
     *addr = ((struct in_addr**)h.h_addr_list)[0]->s_addr;
     return 0;
+
+#elif defined(HAVE_GETADDRINFO)
+    
+    struct addrinfo *res;
+    int              err;
+
+    err = getaddrinfo(name, 0, 0, &res);
+    if(err != 0) 
+        return -1;
+    
+    ASSERT(res != 0);
+    *addr = ((struct in_addr*) &res->ai_addr)->s_addr;
+    
+    freeaddrinfo(res);
+    return 0;
+
+
+    // XXX/demmer see if this is needed...
+    
+// #elif defined(HAVE_GETHOSTBYNAME)
+    
+//     // XXX/jra can we really get away with using a non-reentrant one here?
+
+//     struct hostent *hent;
+//     hent = ::gethostbyname(name);
+//     if (hent == NULL) {
+//         logf("/net", LOG_ERR, "error return from gethostbyname: %s",
+//              strerror(h_errno));
+//         return -1;
+//     } else {
+//         *addr = ((struct in_addr**)hent->h_addr_list)[0]->s_addr;
+//         return 0;
+//     }
+    
+#else
+#error No gethostbyname equivalent available for this platform
 #endif    
 }
 

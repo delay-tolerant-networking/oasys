@@ -39,6 +39,12 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "config.h"
+
+#ifdef HAVE_SYNCH_H
+#include <synch.h>
+#endif
+
 #include "debug/Debug.h"
 #include "debug/Log.h"
 #include "Mutex.h"
@@ -60,12 +66,17 @@ Mutex::Mutex(const char* name, lock_type_t type, bool keep_quiet)
 
     case TYPE_RECURSIVE: {
 
-// XXX/demmer this is a big hack but it seems necessary to work with
-// gcc 2.9x and i don't have patience to deal with it any more
+// XXX/demmer deal with this better...
 #ifndef PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
-# define PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP \
+#ifdef __sparc__
+#define PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP  \
+        {{0, 0, 0, USYNC_THREAD|LOCK_RECURSIVE, MUTEX_MAGIC}, \
+        {{{0}}}, 0}
+#else
+#define PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP \
   {0, 0, 0, PTHREAD_MUTEX_RECURSIVE_NP, __LOCK_INITIALIZER}
-#endif
+#endif /* __sparc__ */
+#endif 
         
         pthread_mutex_t m = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 

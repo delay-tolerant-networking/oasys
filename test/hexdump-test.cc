@@ -1,5 +1,5 @@
 
-#include <sys/errno.h>
+#include <errno.h>
 #include "io/FileIOClient.h"
 #include "io/FileUtils.h"
 #include "util/HexDumpBuffer.h"

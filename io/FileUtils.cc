@@ -36,7 +36,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/errno.h>
+#include <errno.h>
 #include <sys/stat.h>
 
 #include "debug/Log.h"

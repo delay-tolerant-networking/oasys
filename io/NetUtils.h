@@ -41,6 +41,7 @@
 
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 /**
  * Wrapper macro to give the illusion that intoa() is a function call.

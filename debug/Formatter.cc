@@ -40,6 +40,7 @@
 using oasys::Formatter;
 
 #include <stdarg.h>
+#include "config.h"
 
 /**
  * @file
@@ -97,7 +98,11 @@ using oasys::Formatter;
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
+
 //__FBSDID("$FreeBSD: src/lib/libc/stdio/vfprintf.c,v 1.59 2003/04/19 23:53:19 das Exp $");
 
 /*
@@ -113,10 +118,13 @@ static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 #include <limits.h>
 #include <locale.h>
 #include <stddef.h>
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <wchar.h>
 
 #include <stdarg.h>
