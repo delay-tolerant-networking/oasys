@@ -20,6 +20,7 @@ IO_SRCS :=					\
 	io/IO.cc				\
 	io/FdIOClient.cc			\
 	io/FileIOClient.cc			\
+	io/FileUtils.cc				\
 	io/IPSocket.cc				\
 	io/IPClient.cc				\
 	io/NetUtils.cc				\
