@@ -2,7 +2,7 @@
 #define __BUFFERED_IO_H__
 
 #include <debug/Logger.h>
-#include "lib/IOClient.h"
+#include <io/IOClient.h>
 #include "lib/StreamBuffer.h"
 
 /**

@@ -1,4 +1,5 @@
-#include "lib/StringBuffer.h"
+#include <util/StringBuffer.h>
+
 #include "PrettyPrintBuffer.h"
 
 const int PrettyPrintBuf::MAX_COL = 40;
