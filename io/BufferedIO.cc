@@ -60,14 +60,17 @@ BufferedInput::read_bytes(size_t len, char** buf, int timeout)
         logf(LOG_DEBUG, "read_bytes calling internal_read for %d needed bytes",
              len - total);
 	int cc = internal_read(len, timeout);
-        if(cc <= 0)
+        if (cc <= 0)
         {
             logf(LOG_DEBUG, "%s: read %s", 
                  __func__, (cc == 0) ? "eof" : strerror(errno));
             return cc;
         }
-        
-	total += cc;
+
+        // the return from internal_read is the smaller of what we
+        // asked for (i.e. len), and the buffer's fullbytes after the
+        // read. therefore, it's suitable as the value for total
+	total = cc;
     }
 
     *buf = buf_.start();
@@ -182,8 +185,8 @@ BufferedInput::internal_read(size_t len, int timeout_ms)
     
     buf_.fill(cc);
 
-    int ret;
-    ret = MIN(buf_.fullbytes(), len);
+
+    int ret = MIN(buf_.fullbytes(), len);
     
     logf(LOG_DEBUG, "internal_read %d (timeout %d): cc=%d ret %d",
          len, timeout_ms, cc, ret);
