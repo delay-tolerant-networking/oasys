@@ -322,9 +322,13 @@ BufferedOutput::flush()
 
 #ifndef NDEBUG
         PrettyPrintBuf pretty(buf_.start(), cc);
-
-        log_debug("flush wrote \"%s\", %d bytes", 
-                  pretty.c_str(), cc);
+        
+        log_debug("flush %d bytes, data =", cc);
+        std::pair< std::string, bool > p;
+        do {
+            p = pretty.next_str();
+            log_debug("%s", p.first.c_str());
+        } while(p.second);
 #else
         log_debug("flush wrote \"%s\", %d bytes", 
                   buf_.start(), cc);
