@@ -52,7 +52,22 @@ ALLSRCS := $(SRCS)
 #
 # Default target is to build the library
 #
-all: liboasys
+all: checkconfigure liboasys
+
+#
+# And a rule to make sure that configure has been run recently enough.
+#
+.PHONY: checkconfigure
+checkconfigure: Rules.make
+
+Rules.make.in:
+	@echo SRCDIR: $(SRCDIR)
+	@echo error -- Makefile did not set SRCDIR properly
+	@exit 1
+
+Rules.make: Rules.make.in configure
+	@echo $@ is out of date, need to rerun configure
+	@exit 1
 
 # XXX/demmer handle .so as well
 liboasys: liboasys.a

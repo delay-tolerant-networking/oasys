@@ -29,22 +29,6 @@ catchdefault:
 	@exit 1
 
 #
-# And a rule to make sure that configure has been run recently enough.
-# This should be run from every default rule
-#
-.PHONY: checkconfigure
-checkconfigure: $(SRCDIR)/Rules.make
-
-$(SRCDIR)/Rules.make.in:
-	@echo SRCDIR: $(SRCDIR)
-	@echo error -- Makefile did not set SRCDIR properly
-	@exit 1
-
-$(SRCDIR)/Rules.make: $(SRCDIR)/Rules.make.in $(SRCDIR)/configure
-	@echo $@ is out of date, need to rerun configure
-	@exit 1
-
-#
 # Rule for generating a .o file from the corresponding .cc file;
 # automatically creates dependencies via the dependency flags.
 #
