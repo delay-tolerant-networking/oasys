@@ -43,6 +43,8 @@
 
 namespace oasys {
 
+class IOClient;
+
 /**
  * Utility class that wraps a growable string buffer, similar to
  * std::ostringstream, but with printf() style arguments instead of
@@ -135,6 +137,11 @@ public:
     size_t append(char c);
 
     /**
+     * Fill the buffer by reading len bytes from the given IOClient.
+     */
+    void append(IOClient* io, size_t len);
+    
+    /**
      * Formatting append function.
      *
      * @param fmt the format string
@@ -158,6 +165,15 @@ public:
     {
         ASSERT(len_ >= cnt);
         len_ -= cnt;
+    }
+
+    /**
+     * Forcibly set the buffer length to len.
+     */
+    void set_length(size_t len)
+    {
+        ASSERT(buflen_ >= len);
+        len_ = len;
     }
 
 protected:

@@ -39,6 +39,10 @@
 #include <stdlib.h>
 
 #include "StringBuffer.h"
+#include "io/IOClient.h"
+
+// XXX/demmer don't malloc by default in the default constructor but
+// rather wait to allow a reserve call to come in.
 
 namespace oasys {
 
@@ -118,6 +122,17 @@ StringBuffer::append(char c)
     reserve(len_ + 1);
     buf_[len_++] = c;
     return 1;
+}
+
+/**
+ * Append len bytes from the given IOClient.
+ */
+void
+StringBuffer::append(IOClient* io, size_t len)
+{
+    reserve(len_ + len);
+    io->readall(buf_, len);
+    len_ += len;
 }
 
 size_t
