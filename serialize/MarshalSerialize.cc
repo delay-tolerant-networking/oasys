@@ -375,6 +375,15 @@ Unmarshal::process(const char* name, std::string* s)
  * MarshalSize 
  *
  *****************************************************************************/
+
+void
+MarshalSize::begin_action()
+{
+    if (options_ & USE_CRC) {
+        size_ += sizeof(CRC32::CRC_t);
+    }
+}
+
 void
 MarshalSize::process(const char* name, u_int32_t* i)
 {
@@ -419,12 +428,6 @@ MarshalSize::process(const char* name, std::string* s)
 }
 
 
-int
-MarshalSize::action(SerializableObject* object)
-{
-    object->serialize(this);
-    return 0;
-}
 
 /******************************************************************************
  *
@@ -460,14 +463,6 @@ void
 MarshalCRC::process(const char* name, std::string* s)
 {
     crc_.update((u_char*)s->c_str(), s->size());
-}
-
-
-int
-MarshalCRC::action(SerializableObject* object)
-{
-    object->serialize(this);
-    return 0;
 }
 
 } // namespace oasys

@@ -190,23 +190,17 @@ public:
      * Constructor
      */
     MarshalSize(context_t context = CONTEXT_UNKNOWN, int options = 0)
-        : SerializeAction(Serialize::INFO, context, options)
+        : SerializeAction(Serialize::INFO, context, options), size_(0)
     {
-        size_ = (options & Serialize::USE_CRC) ? sizeof(u_int32_t) : 0;
     }
 
-    /**
-     * The virtual action function. Always succeeds.
-     */
-    int action(SerializableObject* object);
-    
     /**
      * Again, we can tolerate a const object as well.
      */
     int action(const SerializableObject* const_object)
     {
         SerializableObject* object = (SerializableObject*)const_object;
-        return action(object);
+        return SerializeAction::action(object);
     }
     
     void process(const char* name, SerializableObject* const_object)
@@ -219,6 +213,7 @@ public:
     size_t size() { return size_; }
     
     // Virtual functions inherited from SerializeAction
+    void begin_action();
     void process(const char* name, u_int32_t* i);
     void process(const char* name, u_int16_t* i);
     void process(const char* name, u_int8_t* i);
@@ -242,14 +237,11 @@ public:
     
     u_int32_t crc() { return crc_.value(); }
     
-    // virtual from SerializeAction
-    virtual int action(SerializableObject* object);
-
     /** @{ Make it so this can take const objects */
     int action(const SerializableObject* const_object)
     {
         SerializableObject* object = (SerializableObject*)const_object;
-        return action(object);
+        return SerializeAction::action(object);
     }
     void process(const char* name, SerializableObject* const_object)
     {
