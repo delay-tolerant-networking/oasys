@@ -39,9 +39,11 @@
 #define _MARSHAL_SERIALIZE_H_
 
 #include "Serialize.h"
-
+#include "../util/CRC32.h"
+
 namespace oasys {
 
+//////////////////////////////////////////////////////////////////////////////
 /**
  * Common base class for Marshal and Unmarshal that manages the flat
  * buffer.
@@ -66,7 +68,8 @@ protected:
      * Constructor
      */
     BufferedSerializeAction(action_t action, context_t context,
-                            u_char* buf, size_t length);
+                            u_char* buf, size_t length, 
+                            int options);
 
     /**  
      * Get the next R/W length of the buffer.
@@ -81,12 +84,16 @@ protected:
     /** @return buffer length */
     size_t length() { return length_; }
     
+    /** @return Current offset into buf */
+    size_t offset() { return offset_; }
+
  private:
     u_char* buf_;		///< Buffer that is un/marshalled
     size_t  length_;		///< Length of the buffer.
     size_t  offset_;
 };
-
+
+//////////////////////////////////////////////////////////////////////////////
 /**
  * Marshal is a SerializeAction that flattens an object into a byte
  * stream.
@@ -96,9 +103,13 @@ public:
     /**
      * Constructor
      */
-    Marshal(u_char* buf, size_t length);
-    Marshal(context_t context, u_char* buf, size_t length);
-        
+    Marshal(
+	context_t context, 
+	u_char*   buf, 
+	size_t    length, 
+        int       options = 0
+    );
+
     /**
      * Since the Marshal operation doesn't actually modify the
      * SerializableObject, define a variant of action() and process()
@@ -118,6 +129,8 @@ public:
     }
 
     // Virtual functions inherited from SerializeAction
+    void end_action();
+
     void process(const char* name, u_int32_t* i);
     void process(const char* name, u_int16_t* i);
     void process(const char* name, u_int8_t* i);
@@ -125,8 +138,12 @@ public:
     void process(const char* name, u_char* bp, size_t len);
     void process(const char* name, u_char** bp, size_t* lenp, bool alloc_copy);
     void process(const char* name, std::string* s);
-};
 
+private:
+    bool add_crc_;
+};
+
+//////////////////////////////////////////////////////////////////////////////
 /**
  * Unmarshal is a SerializeAction that constructs an object's
  * internals from a flat byte stream.
@@ -136,10 +153,18 @@ public:
     /**
      * Constructor
      */
+    Unmarshal(
+	context_t     context, 
+	const u_char* buf, 
+	size_t        length,
+        int           options = 0
+    );
+
     Unmarshal(const u_char* buf, size_t length);
-    Unmarshal(context_t context, const u_char* buf, size_t length);
 
     // Virtual functions inherited from SerializeAction
+    void begin_action();
+
     void process(const char* name, u_int32_t* i);
     void process(const char* name, u_int16_t* i);
     void process(const char* name, u_int8_t* i);
@@ -147,8 +172,12 @@ public:
     void process(const char* name, u_char* bp, size_t len);
     void process(const char* name, u_char** bp, size_t* lenp, bool alloc_copy);
     void process(const char* name, std::string* s); 
-};
 
+private:
+    bool has_crc_;
+};
+
+//////////////////////////////////////////////////////////////////////////////
 /**
  * MarshalSize is a SerializeAction that determines the buffer size
  * needed to run a Marshal action over the object.
@@ -158,8 +187,11 @@ public:
     /**
      * Constructor
      */
-    MarshalSize(context_t context = CONTEXT_UNKNOWN)
-        : SerializeAction(INFO, context), size_(0) {}
+    MarshalSize(
+	context_t context, 
+        int       options = 0
+    ) : SerializeAction(Serialize::INFO, context, options),
+	size_((options & Serialize::USE_CRC)?sizeof(u_int32_t):0) {}
 
     /**
      * The virtual action function. Always succeeds.
@@ -195,6 +227,46 @@ public:
 
 private:
     size_t size_;
+};
+
+//////////////////////////////////////////////////////////////////////////////
+/**
+ * MarshalCRC: compute the CRC32 checksum of the bits.
+ */
+class MarshalCRC : public SerializeAction {
+public:
+    MarshalCRC(context_t context)
+        : SerializeAction(Serialize::INFO, context) {}
+    
+    u_int32_t crc() { return crc_.value(); }
+    
+    // virtual from SerializeAction
+    virtual int action(SerializableObject* object);
+
+    /** @{ Make it so this can take const objects */
+    int action(const SerializableObject* const_object)
+    {
+        SerializableObject* object = (SerializableObject*)const_object;
+        return action(object);
+    }
+    void process(const char* name, SerializableObject* const_object)
+    {
+        SerializableObject* object = (SerializableObject*)const_object;
+        return SerializeAction::process(name, object);
+    }
+    /** @} */
+
+    // virtual from SerializeAction
+    void process(const char* name, u_int32_t* i);
+    void process(const char* name, u_int16_t* i);
+    void process(const char* name, u_int8_t* i);
+    void process(const char* name, bool* b);
+    void process(const char* name, u_char* bp, size_t len);
+    void process(const char* name, u_char** bp, size_t* lenp, bool alloc_copy);
+    void process(const char* name, std::string* s);
+
+private:
+    CRC32 crc_;
 };
 
 } // namespace oasys

@@ -38,20 +38,24 @@
 #include "debug/Debug.h"
 #include "debug/Log.h"
 #include "util/StringUtils.h"
+#include "util/CRC32.h"
 
 #include "MarshalSerialize.h"
 
 namespace oasys {
-
+
 /******************************************************************************
  *
  * BufferedSerializeAction
  *
  *****************************************************************************/
-BufferedSerializeAction::BufferedSerializeAction(action_t action,
-                                                 context_t context,
-                                                 u_char* buf, size_t length)
-    : SerializeAction(action, context),
+BufferedSerializeAction::BufferedSerializeAction(
+    action_t  action,
+    context_t context,
+    u_char*   buf, 
+    size_t    length,
+    int       options
+    ) : SerializeAction(action, context, options),
       buf_(buf), length_(length), offset_(0)
 {
 }
@@ -77,20 +81,45 @@ BufferedSerializeAction::next_slice(size_t length)
     offset_ += length;
     return ret;
 }
-
+
 /******************************************************************************
  *
  * Marshal
  *
  *****************************************************************************/
+<<<<<<< MarshalSerialize.cc
+Marshal::Marshal(
+    context_t context, 
+    u_char*   buf, 
+    size_t    length, 
+    int       options
+    ) : BufferedSerializeAction(Serialize::MARSHAL, 
+                                context, buf, length, options)
+{}
+
 Marshal::Marshal(u_char* buf, size_t length)
     : BufferedSerializeAction(MARSHAL, CONTEXT_UNKNOWN, buf, length)
 {
 }
 
-Marshal::Marshal(context_t context, u_char* buf, size_t length)
-    : BufferedSerializeAction(MARSHAL, context, buf, length)
+void
+Marshal::end_action()
 {
+    if(options_ & Serialize::USE_CRC)
+    {
+        CRC32 crc;
+
+        if(buf() != 0) 
+        {
+            crc.update(buf(), offset());
+            CRC32::CRC_t crc_val = crc.value();
+            process("crc", &crc_val);
+
+            if (log_) {
+                logf(log_, LOG_DEBUG, "crc32 is 0x%x", crc_val);
+            }
+        }
+    }
 }
 
 void
@@ -198,19 +227,52 @@ Marshal::process(const char* name, std::string* s)
                  name, len, 32, s->data());
     }
 }
+
 /******************************************************************************
  *
  * Unmarshal
  *
  *****************************************************************************/
+Unmarshal::Unmarshal(
+    context_t     context, 
+    const u_char* buf, 
+    size_t        length,
+    int           options
+    ) : BufferedSerializeAction(Serialize::UNMARSHAL, context, 
+                                (u_char*)(buf), length, options)
+{}
+
 Unmarshal::Unmarshal(const u_char* buf, size_t length)
     : BufferedSerializeAction(UNMARSHAL, CONTEXT_UNKNOWN, (u_char*)(buf), length)
 {
 }
 
-Unmarshal::Unmarshal(context_t context, const u_char* buf, size_t length)
-    : BufferedSerializeAction(UNMARSHAL, context, (u_char*)(buf), length)
+void
+Unmarshal::begin_action()
 {
+    if(options_ & Serialize::USE_CRC)
+    {
+        CRC32 crc;
+        CRC32::CRC_t crc_val;
+        
+        crc_val = CRC32::from_bytes(buf() + length() -
+                                    sizeof(CRC32::CRC_t)); 
+        crc.update(buf(), length() - sizeof(CRC32::CRC_t));
+        
+        if(crc.value() != crc_val)
+        {
+            if(log_)
+            {
+                logf(log_, LOG_WARN, "crc32 mismatch, 0x%x != 0x%x",
+                     crc.value(), crc_val);
+                error_ = true;
+            }
+        }
+        else
+        {
+            logf(log_, LOG_INFO, "crc32 is good");
+        }
+    }
 }
 
 void
@@ -313,7 +375,7 @@ Unmarshal::process(const char* name, std::string* s)
                  name, len, 32, s->data());
     }
 }
-
+
 /******************************************************************************
  *
  * MarshalSize 
@@ -365,6 +427,50 @@ MarshalSize::process(const char* name, std::string* s)
 
 int
 MarshalSize::action(SerializableObject* object)
+{
+    object->serialize(this);
+    return 0;
+}
+
+/******************************************************************************
+ *
+ * MarshalCRC
+ *
+ *****************************************************************************/
+#define DECL_CRC(_type)                         \
+void                                            \
+MarshalCRC::process(const char* name, _type* i) \
+{                                               \
+    crc_.update((u_char*)i, sizeof(_type));     \
+}
+
+DECL_CRC(u_int32_t)
+DECL_CRC(u_int16_t)
+DECL_CRC(u_int8_t)
+DECL_CRC(bool)
+
+void
+MarshalCRC::process(const char* name, u_char* bp, size_t len)
+{
+    crc_.update(bp, len);
+}
+
+void
+MarshalCRC::process(const char* name, u_char** bp,
+                     size_t* lenp, bool alloc_copy)
+{
+    crc_.update(*bp, *lenp);
+}
+
+void
+MarshalCRC::process(const char* name, std::string* s)
+{
+    crc_.update((u_char*)s->c_str(), s->size());
+}
+
+
+int
+MarshalCRC::action(SerializableObject* object)
 {
     object->serialize(this);
     return 0;

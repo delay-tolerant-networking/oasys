@@ -56,7 +56,7 @@ namespace oasys {
 SQLQuery::SQLQuery(action_t type, const char* table_name,
                    SQLImplementation* impl, const char* initial_query)
     
-    : SerializeAction(type, CONTEXT_LOCAL),
+    : SerializeAction(type, Serialize::CONTEXT_LOCAL),
       table_name_(table_name),
       sql_impl_(impl),
       query_(256, initial_query)
@@ -73,7 +73,7 @@ SQLQuery::SQLQuery(action_t type, const char* table_name,
  * Constructor.
  */
 SQLInsert::SQLInsert(const char* table_name, SQLImplementation* impl)
-    : SQLQuery(MARSHAL, table_name, impl)
+    : SQLQuery(Serialize::MARSHAL, table_name, impl)
 {
 }
 
@@ -178,7 +178,7 @@ SQLInsert::process(const char* name, u_char** bp, size_t* lenp, bool alloc_copy)
  * Constructor.
  */
 SQLUpdate::SQLUpdate(const char* table_name, SQLImplementation* impl)
-    : SQLQuery(MARSHAL, table_name, impl)
+    : SQLQuery(Serialize::MARSHAL, table_name, impl)
 {
 }
 
@@ -275,7 +275,7 @@ SQLUpdate::process(const char* name, u_char** bp, size_t* lenp, bool alloc_copy)
 
 SQLTableFormat::SQLTableFormat(const char* table_name,
                                SQLImplementation* impl)
-    : SQLQuery(INFO, table_name, impl)
+    : SQLQuery(Serialize::INFO, table_name, impl)
 {
 }
 
@@ -373,7 +373,8 @@ SQLTableFormat::process(const char* name, u_char** bp, size_t* lenp, bool alloc_
  */
 
 SQLExtract::SQLExtract(SQLImplementation* impl)
-    : SerializeAction(UNMARSHAL, CONTEXT_LOCAL)
+    : SerializeAction(Serialize::UNMARSHAL, 
+                      Serialize::CONTEXT_LOCAL)
 {
     field_ = 0;
     sql_impl_ = impl;

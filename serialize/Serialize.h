@@ -77,6 +77,12 @@ public:
         CONTEXT_NETWORK,	/// serialization to/from the network
         CONTEXT_LOCAL		/// serialization to/from local disk
     } context_t;
+
+    enum {
+        /** Options for un/marshaling. */
+        NO_OPTS = 0,
+        USE_CRC = 1 << 0,
+    };
 };    
 
 /**
@@ -107,15 +113,18 @@ typedef std::vector<SerializableObject*> SerializableObjectVector;
  * ability is used to be able to string several Marshallable objects
  * together, either for writing or reading).
  */
-class SerializeAction : public Serialize {
+class SerializeAction {
 public:
+    typedef Serialize::action_t action_t;
+    typedef Serialize::context_t context_t;
+
     /**
      * Create a SerializeAction with the specified type code and context
      *
      * @param type serialization action type code
      * @param context serialization context
      */
-    SerializeAction(action_t action, context_t context);
+    SerializeAction(action_t action, context_t context, int options = 0);
 
     /**
      * Perform the serialization or deserialization action on the object.
@@ -236,9 +245,11 @@ public:
     virtual ~SerializeAction();
 
 protected:
-    action_t action_;	///< Serialization action code
+    action_t  action_;	///< Serialization action code
     context_t context_;	///< Serialization context
-    bool  error_;	///< Indication of whether an error occurred
+    bool      error_;	///< Indication of whether an error occurred
+
+    int       options_; ///< Serialization options
     const char* log_;	///< Optional log for verbose marshalling
 
 private:
