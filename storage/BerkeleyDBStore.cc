@@ -258,7 +258,7 @@ BerkeleyStore::new_table(DurableTable** table)
 
 
 int
-BerkeleyStore::del_table(int id)
+BerkeleyStore::del_table(DurableTableId id)
 {
     int err;
     
@@ -293,7 +293,7 @@ BerkeleyStore::del_table(int id)
 
 
 int 
-BerkeleyStore::get_table(int id, DurableTable** table)
+BerkeleyStore::get_table(DurableTableId id, DurableTable** table)
 {
     DB* db;
     int err;
@@ -382,7 +382,7 @@ BerkeleyStore::get_name(int id)
  * Dstable
  *
  *****************************************************************************/
-BerkeleyTable::BerkeleyTable(int id, DB* db)
+BerkeleyTable::BerkeleyTable(DurableTableId id, DB* db)
     : DurableTable(id), db_(db)
 {
     logpathf("/berkeleydb/table(%d)", id);

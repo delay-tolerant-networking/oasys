@@ -139,12 +139,8 @@ public:
     /**
      * Get the data for key.
      *
-     * @param key Key to retrieve
-     * @param key_len Key length
-     * @param data Data buffer
-     * @param data_len Length of data buffer. Returned value will be
-     * size of returned data.
-     *
+     * @param key  Key object
+     * @param data Data object
      * @return DS_OK, DS_NOTFOUND if key is not found, DS_BUFSIZE if
      * the given buffer is too small to store the data.
      */
@@ -154,10 +150,8 @@ public:
     /** 
      * Put data for key in the database
      *
-     * @param key Key to retrieve
-     * @param key_len Key length
-     * @param data Data buffer
-     * @param data_len Length of data buffer
+     * @param key Key object
+     * @param data Data object
      * @return DS_OK, DS_ERR // XXX/bowei
      */
     virtual int put(const SerializableObject& key, 

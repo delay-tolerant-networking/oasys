@@ -33,12 +33,25 @@ public:
 
     ~BerkeleyStore();
 
-    /// @{ virtual from DataStore
+    /**
+     * Create a new table. Caller deletes the pointer.
+     */
     virtual int new_table(DurableTable** table);
+    
+    /**
+     * Delete (by id) from the datastore
+     */
     virtual int del_table(DurableTableId id);
+
+    /**
+     * Get a new table ptr to an id
+     */
     virtual int get_table(DurableTableId id, DurableTable** table);
+    
+    /**
+     * Get meta-table
+     */
     virtual int get_meta_table(DurableTable** table);
-    /// @}
 
 private:
     FILE*       err_log_;     ///< db err log file
