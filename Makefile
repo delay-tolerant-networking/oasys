@@ -79,7 +79,6 @@ SRCS := \
 	$(IO_SRCS) 				\
 	$(MEMORY_SRCS)                          \
 	$(SERIALIZE_SRCS)			\
-	$(STORAGE_SRCS)			        \
 	$(TCLCMD_SRCS)				\
 	$(THREAD_SRCS)				\
 	$(UTIL_SRCS)				\
