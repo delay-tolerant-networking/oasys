@@ -6,6 +6,7 @@
 #include <cstring>
 #include <sys/mman.h>
 
+#include "debug/Debug.h"
 #include "debug/Log.h"
 #include "util/jenkins_hash.h"
 
@@ -37,7 +38,7 @@
 
 #define _BYTE             char
 
-#define _DBG_MEM_FRAMES     4
+#define _DBG_MEM_FRAMES     3
 #define _DBG_MEM_TABLE_EXP  10
 #define _DBG_MEM_TABLE_SIZE 1<<_DBG_MEM_TABLE_EXP
 #define _DBG_MEM_MMAP_HIGH  
@@ -142,12 +143,15 @@ public:
         
         if(entry->frames_[0] == 0)
         {
-            // XXX/bowei ASSERT!
+	    PANIC("Decrementing memory entry with no frame info");
         }
         else
         {
             --(entry->live_);
-            // XXX/bowei ASSERT!
+	    if(entry->live_ < 0)
+	    {
+		PANIC("Memory object live count < 0");
+	    }
         }
 
         return entry;
@@ -161,8 +165,14 @@ public:
     /**
      * Dump out debugging information
      */
-    static void dump();
+    static void debug_dump();
 
+    /**
+     * Dump out memory usage summary to file.
+     *
+     * @param fd File to output to.
+     */
+    static void dump_to_file(FILE* f);
 
     /**
      * Getter for init state
@@ -229,25 +239,26 @@ operator new(size_t size)
 	set_frame_info(frames);
 	b->entry_ = DbgMemInfo::inc(frames);
 
-	log_debug("/memory", "new a=%p, f=[%p %p %p %p]\n",              
-		  &b->block_, frames[0], frames[1], frames[2], frames[3]);     
+	log_debug("/memory", "new a=%p, f=[%p %p %p]\n",              
+		  &b->block_, frames[0], frames[1], frames[2]);     
     }
 								
     return (void*)&b->block_;                               
 }
 
 /**
- * Typed delete.
+ * Delete operator. If the memory frame info is 0, then this memory
+ * allocation is ignored.
  */ 
 inline void
 operator delete(void *ptr)
 {
     dbg_mem_t* b = PARENT_PTR(ptr, dbg_mem_t, block_);
     
-    log_debug("/memory", "delete a=%p, f=[%p %p %p %p]\n", 
+    log_debug("/memory", "delete a=%p, f=[%p %p %p]\n", 
 	      &b->block_, 
 	      b->entry_->frames_[0], b->entry_->frames_[1], 
-	      b->entry_->frames_[2], b->entry_->frames_[3]);
+	      b->entry_->frames_[2]);
     
     if(b->entry_->frames_[0] != 0) {
 	DbgMemInfo::dec(b->entry_->frames_);
