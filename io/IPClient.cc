@@ -152,4 +152,12 @@ IPClient::set_nonblocking(bool nonblocking)
     return IO::set_nonblocking(fd_, nonblocking);
 }
 
+#if 0
+int
+IPClient::get_nonblocking(bool *pRes)
+{
+    return IO::get_nonblocking(fd_, pRes);
+}
+#endif
+
 } // namespace oasys

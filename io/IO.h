@@ -162,7 +162,10 @@ public:
 
     //@}
     
-    /// Set the file descriptor's nonblocking status
+    /// Get and Set the file descriptor's nonblocking status
+#if 0
+    static int get_nonblocking(int fd, bool *pRes);
+#endif
     static int set_nonblocking(int fd, bool nonblocking);
     
 private:
