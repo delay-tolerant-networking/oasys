@@ -41,6 +41,13 @@
 #include "../config.h"
 
 /*
+ * Try to pull in stdint.h in case it exists
+ */
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+
+/*
  * See if we can define u_intxx_t in terms of uintxx_t.
  */
 #ifndef HAVE_U_INT32_T
