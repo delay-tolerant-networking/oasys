@@ -123,7 +123,11 @@ SQLInsert::process(const char* name, u_int8_t* i)
 void 
 SQLInsert::process(const char* name, int32_t* i)
 {
+#ifdef __CYGWIN__
+    query_.appendf("%ld,", *i);
+#else
     query_.appendf("%d,", *i);
+#endif
 }
 
 void 
@@ -219,7 +223,11 @@ SQLUpdate::process(const char* name, u_int8_t* i)
 void 
 SQLUpdate::process(const char* name, int32_t* i)
 {
+#ifdef __CYGWIN__
+    query_.appendf("%s = %ld, ", name, *i);
+#else
     query_.appendf("%s = %d, ", name, *i);
+#endif
 }
 
 void 
