@@ -5,6 +5,8 @@
 #include <thread/SpinLock.h>
 #include <thread/Thread.h>
 
+#ifndef __NO_ATOMIC__
+
 using namespace oasys;
 
 volatile int nspins = 10000000;
@@ -100,3 +102,14 @@ main()
     test("separate", &lock, &lock2);
     test("no", 0, 0);
 }
+
+#else // __NO_ATOMIC__
+
+int
+main()
+{
+    fprintf(stderr, "spin lock test is meaningless without an atomic.h");
+}
+
+#endif // __NO_ATOMIC__
+
