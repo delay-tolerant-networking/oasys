@@ -37,8 +37,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _OASYS_GETOPT_H_
-#define _OASYS_GETOPT_H_
+#ifndef _OASYS_COMPAT_GETOPT_H_
+#define _OASYS_COMPAT_GETOPT_H_
 
 #ifdef HAVE_CDEFS_H
 #include <sys/cdefs.h>
@@ -91,4 +91,4 @@ extern int optreset;			/* getopt(3) external variable */
 }
 #endif
  
-#endif /* !_OASYS_GETOPT_H_ */
+#endif /* !_OASYS_COMPAT_GETOPT_H_ */
