@@ -49,8 +49,20 @@ namespace oasys {
 class Opt;
 class Options {
 public:
+    /**
+     * Register a new option binding.
+     */
     static void addopt(Opt* opt);
-    static void getopt(const char* progname, int argc, char* const argv[]);
+
+    /**
+     * Parse argv, processing all registered options. Returns the
+     * index of the first non-option argument in argv
+     */
+    static int getopt(const char* progname, int argc, char* const argv[]);
+
+    /**
+     * Prints a nicely formatted usage string to stderr.
+     */
     static void usage(const char* progname);
     
 protected:

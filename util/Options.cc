@@ -62,7 +62,7 @@ Options::addopt(Opt* opt)
     allopts_.push_back(opt);
 }
 
-void
+int
 Options::getopt(const char* progname, int argc, char* const argv[])
 {
     Opt* opt;
@@ -139,7 +139,7 @@ Options::getopt(const char* progname, int argc, char* const argv[])
             
         case -1:
             // end of list
-            return;
+            return optind;
             
         default:
             if (c < 0 || c > 256) {
