@@ -100,7 +100,7 @@ libclean:
 	@test -z "$(LIBFILES)" || rm -f $(LIBFILES)
 
 .PHONY: distclean
-CFGFILES := Rules.make
+CFGFILES := Rules.make config.h config.cache
 distclean: clean
 	@echo "removing configure generated files: $(CFGFILES)..."
 	@test -z "$(CFGFILES)" || rm -f $(CFGFILES)
