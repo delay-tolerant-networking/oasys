@@ -82,6 +82,7 @@ delete_all_foo()
 int
 main(int argc, char* argv[])
 {
+#if 0
     Log::init(LOG_DEBUG);
 
 #if ! OASYS_DEBUG_MEMORY_ENABLED
@@ -123,6 +124,6 @@ main(int argc, char* argv[])
     new Big();    
 
     while(1);
-
+#endif
 #endif
 }

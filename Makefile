@@ -62,6 +62,7 @@ THREAD_SRCS :=					\
 UTIL_SRCS :=					\
 	util/CRC32.cc				\
 	util/jenkins_hash.c			\
+	util/MD5.cc				\
 	util/md5-rsa.c				\
 	util/jenkins_hash.cc			\
 	util/Getopt.cc				\
@@ -166,12 +167,17 @@ tclcmd/command-init-tcl.c: tclcmd/command-init.tcl
 	echo ";">> $@
 
 #
-# Include test files
+# test files
 #
 include test/Makefile
 TESTS := $(patsubst %,test/%,$(TESTS))
 .PHONY: test tests
 test tests: $(TESTS)
+
+# run tests
+.PHONY: check
+check:
+	cd test; tclsh UnitTest.tcl
 
 #
 # Include the common rules

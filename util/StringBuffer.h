@@ -243,14 +243,14 @@ public:
     }
 
     /** @return c-string. */
-    char* c_str() { return buf_; }
+    const char* c_str() const { buf_[len_] = '\0'; return buf_; }
 
     /** @return length */
-    size_t size() { return len_; }
+    size_t size() const { return len_; }
     
     
 private:
-    char   buf_[_sz + 1];
+    mutable char buf_[_sz + 1];
     size_t len_;
 };
 

@@ -14,6 +14,7 @@ TESTS += \
 	sample-test             \
 	serialize-test          \
 	spin-lock-test          \
+	static-buffer-test      \
 	tcp-socket-test 	\
 	tcp-timeout-read-test 	\
 	tcp-writeall-test 	\

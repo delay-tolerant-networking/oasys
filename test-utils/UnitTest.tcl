@@ -7,7 +7,7 @@ proc usage {} {
     puts {Usage: UnitTest.tcl [OPTION]... [TESTUNIT]...
 Run the unit test suite.
 
--e Don't clobber the test output and only rerun tests which have failed.
+-c Clobber and run all tests again.
 -s Run in silent mode.
     }
 }
@@ -20,10 +20,9 @@ proc parse_args {} {
 	if [string equal $arg "-s"] {
 	    set g_silent 1
 	}
-	if [string equal $arg "-e"] {
-	    puts_reg "- Only running error cases"
-	    set g_clobber    0
-	    set g_error_only 1
+	if [string equal $arg "-c"] {
+	    set g_clobber    1
+	    set g_error_only 0
 	}
 	if [expr [string equal $arg "-h"] || [string equal $arg "--help"]] {
 	    usage
@@ -89,15 +88,15 @@ set g_total   0
 set g_passed  0
 set g_failed  0
 
-set g_clobber    1;			# clobber directories
-set g_error_only 0;			# rerun only error cases
+set g_clobber    0;			# clobber directories
+set g_error_only 1;			# rerun only error cases
 set g_silent     0;			# run silently
 parse_args
 
 chkdirs $g_clobber
 
 # set tests [glob "*-test"] XXX
-set tests {sample-test timer-test serialize-test}
+set tests {sample-test timer-test serialize-test static-buffer-test}
 
 foreach test_exe $tests {
     parse_cc_file $test_exe
@@ -106,11 +105,15 @@ foreach test_exe $tests {
     flush stdout
     
     if [expr $g_error_only && [file exists output/$test_exe/PASSED]] {
-	puts_reg "- skipping $test_exe (cached)"
+	puts_reg "skipping (cached)"
 	continue
     }
     
+    if [file exists "output/$test_exe"] {
+	exec "rm" "-r" "output/$test_exe"
+    }
     file mkdir "output/$test_exe"
+
     if [catch {exec "./$test_exe" "-test" ">output/$test_exe/stdout" "2>output/$test_exe/stderr"} err ] {
  	puts "$err"
 	incr g_failed

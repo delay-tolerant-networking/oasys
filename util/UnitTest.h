@@ -185,11 +185,11 @@ private:
 #define ADD_TEST(_name)                         \
         add(new _name ## UnitTest())
 
-#define DECLARE_TEST(_name)                             \
-    struct _name ## UnitTest : public oasys::UnitTest { \
-        _name ## UnitTest() : UnitTest(#_name) {}       \
-        int run();                                      \
-    };                                                  \
+#define DECLARE_TEST(_name)                                                     \
+    struct _name ## UnitTest : public oasys::UnitTest, public oasys::Logger {   \
+        _name ## UnitTest() : UnitTest(#_name), Logger("/unit") {}              \
+        int run();                                                              \
+    };                                                                          \
     int _name ## UnitTest::run()
 
 #define DECLARE_TEST_FILE(_UnitTesterClass, testname)   \
