@@ -96,7 +96,7 @@ parse_args
 chkdirs $g_clobber
 
 # set tests [glob "*-test"] XXX
-set tests {sample-test timer-test serialize-test static-buffer-test}
+set tests {sample-test timer-test serialize-test static-buffer-test builder-test}
 
 foreach test_exe $tests {
     parse_cc_file $test_exe
