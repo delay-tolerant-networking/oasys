@@ -186,7 +186,7 @@ private:
         add(new _name ## UnitTest())
 
 #define DECLARE_TEST(_name)                             \
-    struct _name ## UnitTest : public UnitTest {        \
+    struct _name ## UnitTest : public oasys::UnitTest { \
         _name ## UnitTest() : UnitTest(#_name) {}       \
         int run();                                      \
     };                                                  \
@@ -200,7 +200,7 @@ int main(int argc, const char* argv[]) {                \
 }                                               
 
 #define DECLARE_TESTER(_name)                                   \
-class _name : public UnitTester {                               \
+class _name : public oasys::UnitTester {                        \
 public:                                                         \
     _name::_name(std::string name) : UnitTester(name) {}        \
 protected:                                                      \
@@ -213,7 +213,7 @@ void _name::add_tests()                                         \
         oasys::logf("/test", oasys::LOG_CRIT,           \
                     "CHECK FAILED (" #x ") at %s:%d",   \
                     __FILE__, __LINE__);                \
-        return UNIT_TEST_FAILED;                        \
+        return oasys::UNIT_TEST_FAILED;                 \
     } else {                                            \
         oasys::logf("/test", oasys::LOG_DEBUG,          \
                     "CHECK (" #x ") ok");               \
@@ -224,7 +224,7 @@ void _name::add_tests()                                         \
         oasys::logf("/test", oasys::LOG_CRIT,                                           \
                     "CHECK FAILED: '" #a "' (%d) != '" #b "' (%d) at %s:%d",            \
                     (int)(a), (int)(b), __FILE__, __LINE__);                            \
-        return UNIT_TEST_FAILED;                                                        \
+        return oasys::UNIT_TEST_FAILED;                                                 \
     } else {                                                                            \
         oasys::logf("/test", oasys::LOG_DEBUG,                                          \
                     "CHECK '" #a "' (%d) == '" #b "' (%d)", (int)(a), (int)(b));        \
@@ -235,7 +235,7 @@ void _name::add_tests()                                         \
         oasys::logf("/test", oasys::LOG_CRIT,                                   \
                     "CHECK FAILED: '" #a "' (%s) != '" #b "' (%s) at %s:%d",    \
                     (a), (b), __FILE__, __LINE__);                              \
-        return UNIT_TEST_FAILED;                                                \
+        return oasys::UNIT_TEST_FAILED;                                         \
     } else {                                                                    \
         oasys::logf("/test", oasys::LOG_DEBUG,                                  \
                     "CHECK '" #a "' (%s) == '" #b "' (%s)", (a), (b));          \
@@ -246,7 +246,7 @@ void _name::add_tests()                                         \
         oasys::logf("/test", oasys::LOG_CRIT,                                   \
                     "CHECK FAILED: '" #a "' (%s) != '" #b "' (%s) at %s:%d",    \
                     (a), (b), __FILE__, __LINE__);                              \
-        return UNIT_TEST_FAILED;                                                \
+        return oasys::UNIT_TEST_FAILED;                                         \
     } else {                                                                    \
         oasys::logf("/test", oasys::LOG_DEBUG,                                  \
                     "CHECK '" #a "' (%s) == '" #b "' (%s)", (a), (b));          \
