@@ -248,6 +248,7 @@ BerkeleyStore::do_init()
         return DS_ERR;
     }
 
+    /*
     DurableTableItr* itr = new BerkeleyTableItr(metatable);
     int max_id = 0;
 
@@ -259,6 +260,8 @@ BerkeleyStore::do_init()
     next_id_ = max_id + 1;
 
     delete itr;
+    */
+
     delete metatable;
 
     return 0;
