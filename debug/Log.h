@@ -2,17 +2,17 @@
 #ifndef _LOG_H_
 #define _LOG_H_
 
-/*!
- * \class Log
+/**
+ * @class Log
  *  
  * Dynamic Log system implementation.
  *
  * Basic idea is that a logf command contains an arbitrary log path, a
  * level, and a printf-style body. For example:
  *
- * \code
+ * @code
  * logf("/some/path", LOG_INFO, "something happened %d times", count);
- * \endcode
+ * @endcode
  *
  * Each application should at intialization call Log::init(level) to
  * prime the default level. All log messages with a level equal or
@@ -22,12 +22,12 @@
  * The code also checks for a ~/.debug file which can optionally
  * contain log paths and other levels. For example:
  *
- * \code
+ * @code
  * # my ~/.debug file
  * /some/path debug
  * /other info
  * /other/more/specific debug
- * \endcode
+ * @endcode
  *
  * The paths are interpreted to include everything below them, thus in
  * the example above, all messages to /some/path/... would be output at
@@ -83,12 +83,15 @@ typedef enum {
     LOG_CRIT    = 5
 } log_level_t;
 
+#ifndef DOXYGEN
 struct level2str_t {
     const char* str;
     log_level_t level;
 };
 
 extern level2str_t log_levelnames[];
+
+#endif
 
 inline const char *level2str(log_level_t level) {
     for (int i = 0; log_levelnames[i].str != 0; i++) {

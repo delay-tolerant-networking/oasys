@@ -264,6 +264,10 @@ Log::add_debug_rule(const char* path, log_level_t threshold)
     sort_rules();
 }
 
+/**
+ * Simple class to incremement a counter in the constructor and then
+ * decrement when the class goes out of scope.
+ */
 class ScopedIncr {
 public:
     ScopedIncr(int* v) : val_(v)

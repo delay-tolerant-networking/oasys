@@ -7,8 +7,8 @@
 #include <string.h>
 
 /**
- * IOClient derivative for real files (i.e. not sockets). Unlike the
- * base class FdIOClient, FileIOClient contains the path as a member
+ * IOClient derivative for real files -- not sockets. Unlike the base
+ * class FdIOClient, FileIOClient contains the path as a member
  * variable and exposes file specific system calls, i.e. open(),
  * lseek(), etc.
  */

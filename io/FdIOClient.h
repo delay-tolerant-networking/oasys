@@ -5,7 +5,7 @@
 #include "IOClient.h"
 #include "debug/Logger.h"
 
-/*!
+/**
  * IOClient which uses pure file descriptors.
  */
 class FdIOClient : public IOClient, public Logger {

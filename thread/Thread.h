@@ -6,8 +6,9 @@
 #include <signal.h>
 #include "debug/Debug.h"
 
-/*
- * Base class for classes that "are" threads. Similar to the Java API.
+/**
+ * Class to wrap a thread of execution using pthreads. Similar to the
+ * Java API.
  */
 class Thread {
 public:

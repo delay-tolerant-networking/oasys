@@ -5,9 +5,9 @@
 #include "debug/Log.h"
 
 /**
- * Utility class that wraps a growable string buffer, much like that
- * which is done by the C++ ostringstream, but with printf() style
- * arguments instead of the << operator.
+ * Utility class that wraps a growable string buffer, similar to
+ * std::ostringstream, but with printf() style arguments instead of
+ * the << operator.
  *
  * The initial size of the buffer is 256 bytes, but can be overridden
  * at the constructor and/or through the reserve() function call.
