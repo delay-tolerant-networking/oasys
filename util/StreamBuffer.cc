@@ -67,7 +67,8 @@ StreamBuffer::reserve(size_t amount)
 void
 StreamBuffer::fill(size_t amount)
 {
-    reserve(amount);
+    ASSERT(amount <= tailbytes());
+    
     end_ += amount;
 }
 
