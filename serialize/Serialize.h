@@ -46,6 +46,8 @@
 
 #include <string>
 #include <vector>
+#include <sys/types.h>
+#include "../compat/inttypes.h"
 
 namespace oasys {
 
