@@ -21,7 +21,7 @@ AC_DEFUN(AC_OASYS_CONFIG_TCL, [
 
     AC_ARG_WITH(tclver,
         AC_HELP_STRING([--with-tclver=VERSION],
-    		   [tcl version to use (default $ac_tclvers)]),
+    		   [tcl version to use (default 8.4 or 8.3)]),
         ac_tclvers=$withval)
 
     dnl
@@ -41,14 +41,14 @@ AC_DEFUN(AC_OASYS_CONFIG_TCL, [
     fi
         
     if test ! $oasys_cv_path_tcl_h = /usr/include ; then
-        CPPFLAGS="$CPPFLAGS -I$oasys_cv_path_tcl_h"
+        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_tcl_h"
     fi
 
     if test ! $oasys_cv_path_tcl_lib = /usr/lib ; then
-        LDFLAGS="$LDFLAGS -L$oasys_cv_path_tcl_lib"
+        OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_tcl_lib"
     fi
 
-    LIBS="$LIBS -l$oasys_cv_lib_tcl"
+    OASYS_LIBS="$OASYS_LIBS -l$oasys_cv_lib_tcl"
 ])
 
 dnl
