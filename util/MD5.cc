@@ -80,10 +80,19 @@ MD5::digest_fromascii(const char* str, u_char* digest)
     str2hex(str, digest, MD5LEN);
 }
 
+
 void 
 MD5Hash_t::serialize(SerializeAction* a)
 {
     a->process("hash", reinterpret_cast<char*>(hash_), MD5::MD5LEN);
+}
+
+MD5Hash_t& 
+MD5Hash_t::operator=(const MD5Hash_t& hash)
+{
+    memcpy(hash_, hash.hash_, MD5::MD5LEN);
+
+    return *this;
 }
 
 }; // namespace oasys

@@ -102,6 +102,8 @@ private:
 struct MD5Hash_t : public SerializableObject {
     u_char hash_[MD5::MD5LEN];
     
+    MD5Hash_t& operator=(const MD5Hash_t& hash);
+
     // virtual from SerializableObject
     void serialize(SerializeAction* a);
 };
