@@ -51,7 +51,13 @@ namespace oasys {
 class OptParser {
 public:
     /**
-     * Register a new option binding.
+     * Destructor, which also deletes any bound Opt classes.
+     */
+    virtual ~OptParser();
+    
+    /**
+     * Register a new option binding. This assumes ownership of the
+     * object and will call delete on it when the parser is destroyed.
      */
     void addopt(Opt* opt);
 

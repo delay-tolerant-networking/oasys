@@ -39,6 +39,14 @@
 
 namespace oasys {
 
+OptParser::~OptParser()
+{
+    for (u_int i = 0; i < allopts_.size(); ++i)
+    {
+        delete allopts_[i];
+    }
+}
+
 void
 OptParser::addopt(Opt* opt)
 {
@@ -72,7 +80,7 @@ OptParser::parse_opt(const char* opt_str, size_t len)
     for (int i = 0; i < nopts; ++i)
     {
         opt = allopts_[i];
-
+        
         if (strncmp(opt_str, opt->longopt_, opt_len) == 0)
         {
             if (opt->needval_ && (val_str == NULL)) {

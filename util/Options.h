@@ -51,6 +51,9 @@ namespace oasys {
 class Opt {
     friend class Getopt;
     friend class OptParser;
+
+public:
+    virtual ~Opt();
     
 protected:
     /**
@@ -59,7 +62,6 @@ protected:
     Opt(char shortopt, const char* longopt,
         void* valp, bool* setp, bool needval,
         const char* valdesc, const char* desc);
-    virtual ~Opt();
 
     /**
      * Virtual callback to set the option to the given string value.
