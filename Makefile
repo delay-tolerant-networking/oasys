@@ -53,6 +53,7 @@ UTIL_SRCS :=					\
 	util/jenkins_hash.c			\
 	util/md5-rsa.c				\
 	util/jenkins_hash.cc			\
+	util/HexDumpBuffer.cc			\
 	util/Options.cc				\
 	util/RateEstimator.cc			\
 	util/ScratchBuffer.cc			\
@@ -142,8 +143,8 @@ tclcmd/command-init-tcl.c: tclcmd/command-init.tcl
 # Include test files
 #
 include test/Makefile
-.PHONY: tests
-tests: $(TESTS)
+.PHONY: test tests
+test tests: $(TESTS)
 
 #
 # Include the common rules
