@@ -40,7 +40,7 @@
 #define _OASYS_LOG_H_
 
 /**
- * @class Log
+ * @class oasys::Log
  *  
  * Dynamic Log system implementation.
  *

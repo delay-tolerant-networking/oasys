@@ -32,7 +32,7 @@
 
 namespace oasys {
 
-/**
+/*
  * A faster replacement for inet_ntoa().
  * (Copied from the tcpdump source ).
  *

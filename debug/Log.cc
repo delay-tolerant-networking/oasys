@@ -53,6 +53,9 @@
 #include "thread/Timer.h"
 #include "io/IO.h"
 
+/**
+ * Namespace for the oasys library of system support classes.
+ */
 namespace oasys {
 
 // we can't use the ASSERT from Debug.h since that one calls logf :-)

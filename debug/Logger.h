@@ -44,8 +44,6 @@
 namespace oasys {
 
 /**
- * @class Logger
- *
  * Many objects will, at constructor time, format a log target and
  * then use it throughout the code implementation -- the Logger class
  * encapsulates this common behavior.
