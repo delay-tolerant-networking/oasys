@@ -71,6 +71,10 @@ public:
         return 0;
     }
             
+    int get_nonblocking(bool* b) {
+        return 0;
+    }
+            
 private:
     int read_num_;
 };
