@@ -195,6 +195,8 @@ public:
      * _sz, then the string is truncated.
      */
     StaticStringBuffer(char* init_str = 0) : len_(0) {
+        buf_[_sz] = '\0';
+
         if(init_str != 0) {
             buf_[_sz - 1] = '\0';
             strncpy(buf_, init_str, _sz);
@@ -210,7 +212,7 @@ public:
      */
     size_t append(char c) {
         if(len_ < _sz) {
-            buf_[len_] = c;
+            buf_[len_++] = c;
             return 1;
         }
         return 0;
@@ -223,13 +225,6 @@ public:
      * @return the number of bytes written
      */
     size_t appendf(const char* fmt, ...) PRINTFLIKE(2, 3);
-    size_t appendf(const char* fmt, ...) {
-        va_list ap;
-        va_start(ap, fmt);
-        size_t ret = vappendf(fmt, ap);
-        va_end(ap);
-        return ret;
-    }
 
     /**
      * Formatting append function, truncating if necessary.
@@ -241,14 +236,34 @@ public:
     size_t vappendf(const char* fmt, va_list ap) {
         size_t nfree = _sz - len_;
         int ret = vsnprintf(&buf_[len_], nfree, fmt, ap);
-
+        
+        len_ += ret;
+        
         return ret;
     }
 
+    /** @return c-string. */
+    char* c_str() { return buf_; }
+
+    /** @return length */
+    size_t size() { return len_; }
+    
+    
 private:
-    char   buf_[_sz];
+    char   buf_[_sz + 1];
     size_t len_;
 };
+
+template<unsigned int _sz>
+size_t StaticStringBuffer<_sz>::appendf(const char* fmt, ...) 
+{
+    va_list ap;
+    va_start(ap, fmt);
+    size_t ret = vappendf(fmt, ap);
+    va_end(ap);
+    return ret;
+}
+
 
 } // namespace oasys
 

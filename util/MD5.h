@@ -41,93 +41,69 @@
 
 #include <sys/types.h>
 #include <string>
+
 #include "StringUtils.h"
+#include "../serialize/Serialize.h"
 
 extern "C" {
 #define PROTOTYPES 1
 #include "md5-rsa.h"
 }
 
-#define MD5LEN 16
-
 namespace oasys {
-
 /**
  * Simple wrapper class to calculate an MD5 digest.
  */
 class MD5 {
 public:
-    MD5() {
-        init();
-    }
-    ~MD5() {}
-
-    /*! MD5 initialization. Begins an MD5 operation, writing a new context. */
-    void init()
-    {
-        MD5Init(&ctx_);
-    }
+    static const unsigned int MD5LEN = 16;
     
-    /*! Update the md5 hash with data bytes */ 
-    void update(const u_char* data, size_t len)
-    {
-        MD5Update(&ctx_, (u_char*)data, len);
-    }
+    MD5();
+    ~MD5() {}
+    
+    /*! MD5 initialization. Begins an MD5 operation, writing a new context. */
+    void init();
 
     /*! Update the md5 hash with data bytes */ 
-    void update(const char* data, size_t len)
-    {
-        MD5Update(&ctx_, (u_char*)data, len);
-    }
+    void update(const u_char* data, size_t len);
+
+    /*! Update the md5 hash with data bytes */ 
+    void update(const char* data, size_t len);
 
     /*! Finish up the md5 hashing process */
-    void finalize()
-    {
-        MD5Final(digest_, &ctx_);
-    }
+    void finalize();
     
     /*! \return MD5 hash value. */
-    const u_char* digest()
-    {
-        return digest_;
-    }
+    const u_char* digest();
 
     /*! \return MD5 hash value in ascii, std::string varient */
-    static void digest_ascii(std::string* str,
-                             const u_char* digest)
-    {
-        hex2str(str, digest, MD5LEN);
-    }
+    static void digest_ascii(std::string* str, const u_char* digest);
 
     /*! \return MD5 hash value in ascii */
-    static std::string digest_ascii(const u_char* digest)
-    {
-        std::string str;
-        digest_ascii(&str, digest);
-        return str;
-    }
+    static std::string digest_ascii(const u_char* digest);
 
     /*! \return MD5 hash value in ascii */
-    void digest_ascii(std::string* str)
-    {
-        digest_ascii(str, digest_);
-    }
+    void digest_ascii(std::string* str);
 
     /*! \return MD5 hash value in ascii, std::string varient */
-    std::string digest_ascii()
-    {
-        return digest_ascii(digest_);
-    }
+    std::string digest_ascii();
 
     /*! Obtain the digest from ascii */
-    static void digest_fromascii(const char* str, u_char* digest)
-    {
-        str2hex(str, digest, MD5LEN);
-    }
+    static void digest_fromascii(const char* str, u_char* digest);
 
 private:
     MD5_CTX ctx_;
     u_char digest_[MD5LEN];
+};
+
+/**
+ * Helper for storing the hash
+ */
+struct MD5Hash_t : public SerializableObject {
+    u_char hash_[MD5::MD5LEN];
+    
+    // virtual from SerializableObject
+    void serialize(SerializeAction* a);
 };
 
 } // namespace oasys
