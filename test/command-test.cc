@@ -14,7 +14,7 @@ public:
         bind_s("buf", &buf_);
     }
 
-    virtual int exec(int argc, const char** args, Tcl_Interp* interp)
+    virtual int exec(int argc, const char** argv, Tcl_Interp* interp)
     {
         resultf("test of var args %s %d", "\"string\"", 66);
         return TCL_ERROR;

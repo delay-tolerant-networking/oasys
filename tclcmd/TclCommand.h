@@ -283,13 +283,13 @@ public:
     /** 
      * Override this to parse the list of arguments as strings.
      *
-     * @param objc Argument count 
-     * @param objv Argument values
+     * @param argc Argument count 
+     * @param argv Argument values
      * @param interp Tcl interpreter
      *
      * @return 0 on success, -1 on error
      */
-    virtual int exec(int objc, const char** objv, Tcl_Interp* interp);
+    virtual int exec(int argc, const char** argv, Tcl_Interp* interp);
 
     /**
      * Internal handling of the "set" command.

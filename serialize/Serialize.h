@@ -121,8 +121,9 @@ public:
     /**
      * Create a SerializeAction with the specified type code and context
      *
-     * @param type serialization action type code
+     * @param action serialization action type code
      * @param context serialization context
+     * @param options serialization options
      */
     SerializeAction(action_t action, context_t context, int options = 0);
 

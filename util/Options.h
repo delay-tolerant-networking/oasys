@@ -137,6 +137,7 @@ public:
      * @param shortopt  short option character
      * @param longopt   long option string
      * @param valp      pointer to the value
+     * @param valdesc short description for the value 
      * @param desc      descriptive string
      * @param setp      optional pointer to indicate whether or not
                         the option was set
@@ -175,6 +176,7 @@ public:
      * @param shortopt  short option character
      * @param longopt   long option string
      * @param valp      pointer to the value
+     * @param valdesc short description for the value 
      * @param desc      descriptive string
      * @param setp      optional pointer to indicate whether or not
                         the option was set
@@ -213,6 +215,7 @@ public:
      * @param shortopt  short option character
      * @param longopt   long option string
      * @param valp      pointer to the value
+     * @param valdesc short description for the value 
      * @param desc      descriptive string
      * @param setp      optional pointer to indicate whether or not
                         the option was set

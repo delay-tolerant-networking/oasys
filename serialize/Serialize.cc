@@ -45,6 +45,7 @@ namespace oasys {
  *
  * @param type serialization action type code
  * @param context serialization context
+ * @param options serialization options
  */
 SerializeAction::SerializeAction(
     action_t  action, 
