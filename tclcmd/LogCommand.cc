@@ -71,6 +71,12 @@ LogCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
         return TCL_OK;
     }
     
+    // log reparse_debug_file
+    if (argc == 2 && !strcmp(argv[1], "reparse_debug_file")) {
+        Log::instance()->parse_debug_file();
+        return TCL_OK;
+    }
+    
     // log path level string
     if (argc != 4) {
         wrong_num_args(argc, argv, 1, 4, 4);

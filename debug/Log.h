@@ -205,10 +205,11 @@ public:
     log_level_t log_level(const char *path);
 
     /**
-     * Parse (or reparse) the debug file and repopulate the rule list
-     * (called from init).
+     * Parse the debug file and repopulate the rule list. Called from
+     * init or from an external handler to reparse the file. If
+     * debug_path is unspecified, it defaults to the existing file.
      */
-    void parse_debug_file(const char* debug_path);
+    void parse_debug_file(const char* debug_path = NULL);
 
     /**
      * Add a new rule to the list.
@@ -297,9 +298,9 @@ private:
     Rule *find_rule(const char *path);
 
     /**
-     * Sort the rules list.
+     * Sort a rules list.
      */
-    void sort_rules();
+    static void sort_rules(RuleList* rule_list);
 
     /**
      * Debugging function to print the rules list.

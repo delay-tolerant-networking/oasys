@@ -83,10 +83,9 @@ level2str_t log_levelnames[] =
 Log* Log::instance_ = NULL;
 
 Log::Log()
-    : inited_(false), logfd_(-1),
+    : inited_(false), logfd_(-1), rule_list_(NULL),
       default_threshold_(LOG_DEFAULT_THRESHOLD)
 {
-    rule_list_ = new RuleList();
     lock_ = new SpinLock();
 }
 
@@ -129,19 +128,28 @@ Log::do_init(const char* logfile, log_level_t defaultlvl,
     ScopeLock lock(lock_);
 
     default_threshold_ = defaultlvl;
-
-    // short-circuit the case where there's no path at all
-    if (debug_path == 0 || debug_path[0] == '\0') {
-        inited_ = true;
-        return;
-    }
-
     parse_debug_file(debug_path);
+    inited_ = true;
 }
 
 void
 Log::parse_debug_file(const char* debug_path)
 {
+    // if the debug path isn't specified, we're either reparsing or
+    // the user doesn't want a debug file
+    if (debug_path == 0)
+        debug_path = debug_path_.c_str();
+
+    // ok, now we can see if there's just nothing to do...
+    if (debug_path[0] == '\0')
+        return;
+    
+    // note that we do as much as we can without taking the lock to
+    // avoid holding up other parts of the system. the lock is only
+    // taken to swap the old and new lists
+    RuleList* old_rule_list;
+    RuleList* new_rule_list = new RuleList();
+
     // handle ~/ in the debug_path
     if ((debug_path[0] == '~') && (debug_path[1] == '/')) {
         char path[256];
@@ -156,7 +164,6 @@ Log::parse_debug_file(const char* debug_path)
         } else {
             fprintf(stderr, "Can't expand ~ to HOME in debug_path %s\n",
                     debug_path);
-            inited_ = true;
             return;
         }
         debug_path_.assign(path);
@@ -168,11 +175,11 @@ Log::parse_debug_file(const char* debug_path)
     // check if we can open the file
     FILE *fp = fopen(debug_path, "r");
     if (fp == NULL) {
-        if (! strcmp(debug_path, LOG_DEFAULT_DBGFILE)) {
+        if (strcmp(debug_path, LOG_DEFAULT_DBGFILE) != 0) {
             // error only if the user overrode the file
-            fprintf(stderr, "Couldn't open debug file: %s\n", debug_path);
+            fprintf(stderr, "couldn't open debug file %s: %s\n",
+                    debug_path, strerror(errno));
         }
-        inited_ = true;
         return;
     }
 
@@ -227,27 +234,39 @@ Log::parse_debug_file(const char* debug_path)
                 goto parseerr;
             }
 
-            rule_list_->push_back(Rule(logpath, threshold));
+            new_rule_list->push_back(Rule(logpath, threshold));
         }
     }
     
     fclose(fp);
 
-    sort_rules();
+    sort_rules(new_rule_list);
+
+    lock_->lock();
+    old_rule_list = rule_list_;
+    rule_list_ = new_rule_list;
+    if (inited_) {
+        log_crit("/log", "reparsed debug file... found %d rules",
+                 new_rule_list->size());
+    }
+    lock_->unlock();
+
+    if (old_rule_list)
+        delete old_rule_list;
 }
 
 void
-Log::sort_rules()
+Log::sort_rules(RuleList* rule_list)
 {
     // Now that it's been parsed, sort the list based on the length
-    std::sort(rule_list_->begin(), rule_list_->end(), RuleCompare());
+    std::sort(rule_list->begin(), rule_list->end(), RuleCompare());
 
 #ifndef NDEBUG
     // Sanity assertion
-    if (rule_list_->size() > 0) {
+    if (rule_list->size() > 0) {
         RuleList::iterator itr;
         Rule* prev = 0;
-        for (itr = rule_list_->begin(); itr != rule_list_->end(); ++itr) {
+        for (itr = rule_list->begin(); itr != rule_list->end(); ++itr) {
             if (prev != 0) {
                 ASSERT(prev->path_.length() >= itr->path_.length());
                 prev = &(*itr);
@@ -255,14 +274,14 @@ Log::sort_rules()
         }
     }
 #endif // NDEBUG
-
-    inited_ = true;
-    return;
 }
 
 void
 Log::print_rules()
 {
+    ASSERT(inited_);
+    ScopeLock l(lock_);
+    
     RuleList::iterator iter = rule_list_->begin();
     printf("Logging rules:\n");
     for (iter = rule_list_->begin(); iter != rule_list_->end(); iter++) {
@@ -273,6 +292,9 @@ Log::print_rules()
 Log::Rule *
 Log::find_rule(const char *path)
 {
+    ASSERT(inited_);
+    ScopeLock l(lock_);
+    
     /*
      * The rules are stored in decreasing path lengths, so the first
      * match is the best (i.e. most specific).
@@ -308,7 +330,7 @@ Log::add_debug_rule(const char* path, log_level_t threshold)
     ScopeLock l(lock_);
     ASSERT(path);
     rule_list_->push_back(Rule(path, threshold));
-    sort_rules();
+    sort_rules(rule_list_);
 }
 
 void
@@ -349,6 +371,19 @@ Log::add_rotate_handler(int sig)
 {
     logf("/log", LOG_DEBUG, "adding log rotate signal handler");
     TimerSystem::instance()->add_sighandler(sig, rotate_handler);
+}
+
+static void
+reparse_handler(int sig)
+{
+    Log::instance()->parse_debug_file();
+}
+
+void
+Log::add_reparse_handler(int sig)
+{
+    logf("/log", LOG_DEBUG, "adding log reparse signal handler");
+    TimerSystem::instance()->add_sighandler(sig, reparse_handler);
 }
 
 /**
