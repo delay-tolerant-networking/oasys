@@ -160,6 +160,13 @@ public:
         return pthread_;
     }
     
+    /**
+     * Probe the CPU for the number of CPU's to make the
+     * implementation behavior more efficient depending on whether the
+     * system is running a SMP or single CPU
+     */
+    static void check_for_SMP();
+    
 protected:
     /**
      * Derived classes should implement this function which will get
@@ -192,16 +199,10 @@ Thread::yield()
 void
 Thread::spin_yield()
 {
-// XXX/demmer -- fix me with a real fix. for now, force it to yield
-// since we keep hitting spin limits
-
-//#ifdef NO_SMP
-#ifdef _POSIX_THREAD_IS_CAPRICCIO
-    PANIC("SpinLock should never be contended under capriccio");
-#else
+    // XXX/bowei: 
+    // 1-p call yield()
+    // o.w. spin
     Thread::yield();
-#endif // _POSIX_THREAD_IS_CAPRICCIO
-//#endif // NO_SMP
 }
 
 } // namespace oasys

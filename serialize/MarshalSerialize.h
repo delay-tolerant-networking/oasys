@@ -147,6 +147,9 @@ private:
 /**
  * Unmarshal is a SerializeAction that constructs an object's
  * internals from a flat byte stream.
+ * 
+ * INVARIANT: The length of the buffer must be the lenght of the serialized
+ * buffer.
  */
 class Unmarshal : public BufferedSerializeAction {
 public:

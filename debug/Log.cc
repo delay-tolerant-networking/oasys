@@ -129,20 +129,6 @@ Log::do_init(const char* logfile, log_level_t defaultlvl,
 
     default_threshold_ = defaultlvl;
 
-#ifdef _POSIX_THREAD_IS_CAPRICCIO
-    /*
-     * Make sure stdout is nonblocking so we don't ever block in
-     * ::write while holding the spin lock.
-     *
-     * XXX/demmer for some reason this seems to set stdin to be
-     * nonblocking as well when not running under capriccio
-     */
-    if (IO::set_nonblocking(logfd_, true) != 0) {
-        fprintf(stderr, "error setting stdout to nonblocking: %s\n",
-                strerror(errno));
-    }
-#endif
-
     // short-circuit the case where there's no path at all
     if (debug_path == 0 || debug_path[0] == '\0') {
         inited_ = true;

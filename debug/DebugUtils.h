@@ -72,12 +72,20 @@
         abort();                                        \
     } while(0);
 
-// Compile time static checking
-#define STATIC_ASSERT(_x, _what)                \
-do {                                            \
-    char _what[ (_x) ? 0 : -1 ];                \
-    (void)_what;				\
-} while(0)
+/** @{ 
+ * Compile time static checking (better version, from Boost)
+ * Take the sizeof() of an undefined template, which will die.
+ */
+template <int x> struct static_assert_test{};
+template <bool>  struct STATIC_ASSERTION_FAILURE;
+template <>      struct STATIC_ASSERTION_FAILURE<true>{};
+
+#define STATIC_ASSERT(_x, _what, _line)            \
+    typedef static_assert_test                     \
+    <                                              \
+	sizeof(STATIC_ASSERTION_FAILURE<(bool)_x>) \
+    > static_assert_typedef_ ## _what ## _line; 
+/** @} */
 
 #include "../memory/Memory.h"
 

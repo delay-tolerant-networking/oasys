@@ -59,15 +59,13 @@ Mutex::Mutex(const char* name, lock_type_t type, bool keep_quiet)
     }
 
     case TYPE_RECURSIVE: {
-#ifdef _POSIX_THREAD_IS_CAPRICCIO
-        // Capriccio is by default recursively enabled
-        pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
-#elif __FreeBSD__
+#ifdef __FreeBSD__
         pthread_mutex_t m;
         pthread_mutex_init(&m, 0);
 #else
         pthread_mutex_t m = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 #endif
+
         mutex_ = m;
         break;
     }}

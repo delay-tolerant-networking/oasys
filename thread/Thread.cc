@@ -144,4 +144,10 @@ Thread::set_interruptable(bool interruptable)
     }
 }
 
+void
+Thread::check_for_SMP()
+{
+    // XXX/bowei - check /proc/cpuinfo for SMP
+}
+
 } // namespace oasys
