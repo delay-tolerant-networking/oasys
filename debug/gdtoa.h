@@ -1,4 +1,3 @@
-// XXX/demmer add copyright
 /****************************************************************
 
 The author of this software is David M. Gay.

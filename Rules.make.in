@@ -1,7 +1,7 @@
 #
-# XXX/demmer copyright here 
+# Rules.make: common makefile rules for oasys
 #
-#
+
 #
 # Common settings extracted from the configure script
 #
