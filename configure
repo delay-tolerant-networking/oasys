@@ -163,7 +163,6 @@ if [ -z "$legal" ] ; then
     echo "error: building oasys on unsupported platform $platform"
     exit 1
 fi
-platform="-D__${platform}__"
 
 #
 # Make sure the compiler a) works b) is some gcc variant and c) is an
@@ -328,7 +327,8 @@ done
 #
 # Spit out some output and then do the correct substitution on Rules.make
 #
-echo "Platform:  $platform"
+echo "Platform:"
+echo "  OS: $platform"
 echo "Target/Tools:"
 echo "  SRCDIR: $srcdir"
 echo "  CC: $cc"
@@ -361,7 +361,6 @@ s%@INCDIRS@%$incdirs%g
 s%@LIBDIRS@%$libdirs%g
 s%@LIBS@%$libs%g
 s%@STATIC_LIBS@%$staticlibs%g
-s%@PLATFORM@%$platform%g
 
 " $srcdir/Rules.make.in >> Rules.make
 
