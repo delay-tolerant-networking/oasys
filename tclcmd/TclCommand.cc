@@ -130,12 +130,23 @@ TclCommandInterp::exec_command(const char* command)
 }
 
 void
+TclCommandInterp::command_server(const char* prompt,
+                                 in_addr_t addr, u_int16_t port)
+{
+    StringBuffer cmd("command_server %s %s %d", prompt, intoa(addr), port);
+    
+    if (Tcl_Eval(interp_, cmd.c_str()) != TCL_OK) {
+        log_err("tcl error in readline loop: \"%s\"",
+                interp_->result);
+    }
+}
+
+void
 TclCommandInterp::command_loop(const char* prompt)
 {
-    char cmd[256];
-    snprintf(cmd, sizeof(cmd), "command_loop %s", prompt);
+    StringBuffer cmd("command_loop %s", prompt);
     
-    if (Tcl_Eval(interp_, cmd) != TCL_OK) {
+    if (Tcl_Eval(interp_, cmd.c_str()) != TCL_OK) {
         log_err("tcl error in readline loop: \"%s\"",
                 interp_->result);
     }

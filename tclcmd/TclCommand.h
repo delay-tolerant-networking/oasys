@@ -76,6 +76,11 @@ public:
     int exec_command(const char* command);
 
     /**
+     * Run a command interpreter over tcp sockets on the given port.
+     */
+    void command_server(const char* prompt, in_addr_t addr, u_int16_t port);
+
+    /**
      * Run a command interpreter loop. Doesn't return.
      */
     void command_loop(const char* prompt);
