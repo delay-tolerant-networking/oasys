@@ -185,7 +185,7 @@ Marshal::process(const char* name, u_char** bp,
                  size_t* lenp, bool alloc_copy)
 {
     ASSERT(*lenp > 0);
-    process(name, lenp);
+    process(name, (u_int32_t*)lenp);
 
     if (*lenp > 0) {
         u_char* buf = next_slice(*lenp);
@@ -206,7 +206,7 @@ void
 Marshal::process(const char* name, std::string* s)
 {
     size_t len = s->length();
-    process(name, &len);
+    process(name, (u_int32_t*)&len);
 
     u_char* buf = next_slice(len);
     if (buf == NULL) return;
@@ -328,7 +328,7 @@ Unmarshal::process(const char* name, u_char* bp, size_t len)
 void 
 Unmarshal::process(const char* name, u_char** bp, size_t* lenp, bool alloc_copy)
 {
-    process(name, lenp);
+    process(name, (u_int32_t*)lenp);
     ASSERT(*lenp >= 0);
     ASSERT(*bp == 0);
     
@@ -354,7 +354,7 @@ void
 Unmarshal::process(const char* name, std::string* s)
 {
     size_t len;
-    process(name, &len);
+    process(name, (u_int32_t*)&len);
 
     u_char* buf = next_slice(len);
     if (buf == NULL) return;
