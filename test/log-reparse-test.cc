@@ -1,5 +1,6 @@
 
 #include <unistd.h>
+#include <sys/stat.h>
 #include "debug/Log.h"
 #include "io/FileIOClient.h"
 #include "thread/Thread.h"
