@@ -41,6 +41,9 @@ SERIALIZE_SRCS :=				\
 	serialize/MarshalSerialize.cc		\
 	serialize/SQLSerialize.cc		\
 
+STORAGE_SRCS :=                                 \
+	storage/DurableTable.cc
+
 TCLCMD_SRCS :=					\
 	tclcmd/TclCommand.cc			\
 	tclcmd/DebugCommand.cc			\
@@ -76,6 +79,7 @@ SRCS := \
 	$(IO_SRCS) 				\
 	$(MEMORY_SRCS)                          \
 	$(SERIALIZE_SRCS)			\
+	$(STORAGE_SRCS)			        \
 	$(TCLCMD_SRCS)				\
 	$(THREAD_SRCS)				\
 	$(UTIL_SRCS)				\
@@ -114,7 +118,7 @@ Rules.make.in:
 
 # XXX/demmer handle .so as well
 LIBFILES += liboasys.a
-liboasys: liboasys.a
+liboasys: liboasys.a 
 liboasys.a: $(OBJS)
 	rm -f $@
 	ar ruc $@ $^
@@ -136,7 +140,7 @@ debug/arith.h:
 debug/Formatter.cc: debug/arith.h
 
 debug/gdtoa-%.o: debug/gdtoa-%.c debug/arith.h
-	$(CC) -g -DINFNAN_CHECK -c $< -o $@
+	$(CC)  -g -DINFNAN_CHECK -c $< -o $@
 
 GENFILES += debug/arith.h debug/arith-native.h debug/arithchk
 
