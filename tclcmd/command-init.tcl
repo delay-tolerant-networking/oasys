@@ -124,7 +124,7 @@ proc command_connection {chan host port} {
 #
 proc command_server {prompt addr port} {
     global command_prompt
-    set command_prompt $prompt
+    set command_prompt "${prompt}% "
     socket -server command_connection -myaddr $addr $port 
 }
 
