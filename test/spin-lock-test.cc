@@ -14,7 +14,7 @@ volatile int count2 = 0;
 
 class Thread1 : public Thread {
 public:
-    Thread1(SpinLock* l) : lock_(l) {}
+    Thread1(SpinLock* l) : Thread(CREATE_JOINABLE), lock_(l) {}
     
 protected:
     virtual void run() {
@@ -33,7 +33,7 @@ protected:
 
 class Thread2 : public Thread {
 public:
-    Thread2(SpinLock* l) : lock_(l) {}
+    Thread2(SpinLock* l) : Thread(CREATE_JOINABLE), lock_(l) {}
     
 protected:
     virtual void run() {

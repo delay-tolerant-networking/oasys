@@ -119,7 +119,9 @@ Thread::start()
                 strerror(errno));
     }
 
-    if (flags_ & CREATE_DETACHED) {
+    // since in most cases we want detached threads, users must
+    // explicitly request for them to be joinable
+    if (! (flags_ & CREATE_JOINABLE)) {
 	pthread_detach(pthread_);
     }
 }
@@ -127,6 +129,11 @@ Thread::start()
 void
 Thread::join()
 {
+    if (! (flags_ & CREATE_JOINABLE)) {
+        PANIC("tried to join a thread that isn't joinable -- "
+              "need CREATE_JOINABLE flag");
+    }
+    
     void* ignored;
     if (pthread_join(pthread_, &ignored) != 0) {
         PANIC("error in pthread_join");

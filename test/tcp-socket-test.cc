@@ -26,7 +26,7 @@ protected:
     {
         sleep(1);
         
-        while (1) {
+        for (int j = 0; j < 3; ++j) {
             connect(htonl(INADDR_LOOPBACK), PORT);
             for (int i = 0; i < 5; ++i) {
                 snprintf(outpkt_, sizeof(outpkt_), "ping %d", i);
@@ -48,7 +48,7 @@ class TestTcpPong : public TCPClient, public Thread {
 public:
     // The server side accept()ed socket that responds
     TestTcpPong(int fd, in_addr_t host, u_int16_t port) :
-        TCPClient(fd, host, port),Thread(DELETE_ON_EXIT)
+        TCPClient(fd, host, port), Thread(DELETE_ON_EXIT)
     {
         snprintf(outpkt_, sizeof(outpkt_), "pong");
     }
@@ -80,7 +80,7 @@ public:
 class TestTcpServer : public TCPServerThread {
 public:
     TestTcpServer()
-        : TCPServerThread("/test-server")
+        : TCPServerThread("/test-server", CREATE_JOINABLE)
     {
         log_info("starting up");
         bind(htonl(INADDR_LOOPBACK), PORT);

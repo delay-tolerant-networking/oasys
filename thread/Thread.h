@@ -61,7 +61,7 @@ public:
      * Bit values for thread flags.
      */
     enum thread_flags_t {
-        CREATE_DETACHED	= 1 << 0,	///< same as PTHREAD_CREATE_DETACHED
+        CREATE_JOINABLE	= 1 << 0,	///< inverse of PTHREAD_CREATE_DETACHED
         DELETE_ON_EXIT  = 1 << 1,	///< delete thread when run() completes
         INTERRUPTABLE   = 1 << 2,	///< thread can be interrupted
         SHOULD_STOP   	= 1 << 3,	///< bit to signal the thread to stop
