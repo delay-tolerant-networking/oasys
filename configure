@@ -51,6 +51,12 @@ pthreadlibdir=''
 pthreadlib='-lpthread'
 pthreadstaticlib=''
 
+tclver='8.3'
+tcldir=''
+tclincdir=''
+tcllibdir=''
+tcllib=''
+
 #
 # Parse user options
 #
@@ -107,6 +113,9 @@ do
     capriccio=y
     capricciodir="$ac_optarg" ;;
 
+   -with-tcl=* | --with-tcl=*)
+    tcldir="$ac_optarg" ;;
+
   -help | --help | -h)
     cat <<EOF
 Usage: configure [options]
@@ -124,6 +133,7 @@ Features
 Packages
   --with-cc=GCC			  Version of the C/C++ compiler to use
   --with-capriccio-pthread=DIR	  Location of capriccio pthreads installation
+  --with-tcl=DIR                  Location of the Tcl8.3 installation
 EOF
   exit 0
   ;;
@@ -211,6 +221,54 @@ case "$make_static" in
 esac
 
 #
+# Find the tcl library
+#
+if [ ! "$tcldir" = "" ]; then
+  #
+  # Make sure the directory the user specified is ok
+  #
+  if [ -r $tcldir/include/tcl.h ]; then
+	tclincdir=-I$tcldir/include
+  else
+	echo "can't find tcl.h in $tcldir"
+	exit 1
+  fi
+
+  if   [ -r $tcldir/lib/libtcl.$libext ]; then
+	tcllibdir=-L$tcldir/lib
+	tcllib=-ltcl
+  elif [ -r $tcldir/lib/libtcl$tclver.$libext ]; then
+	tcllibdir=-L$tcldir/lib
+	tcllib=-ltcl$tclver
+  else
+	echo "can't find libtcl.$libext or libtcl$tclver.$libext in $tcldir"
+	exit 1
+  fi
+
+else
+  #
+  # Try to find a system installation
+  #
+  if [ -r /usr/include/tcl.h ]; then
+	tclincdir=
+  elif [ -r /usr/include/tcl$tclver/tcl.h ]; then
+	tclincdir=-I/usr/include/tcl$tclver
+  else
+	echo "can't find usable tcl.h"
+	exit 1
+  fi
+
+  if   [ -r /usr/lib/libtcl.$libext ]; then
+	tcllib=-ltcl
+  elif [ -r /usr/lib/libtcl$tclver.$libext ]; then
+	tcllib=-ltcl$tclver
+  else
+	echo "can't find usable libtcl.$libext"
+	exit 1
+  fi
+fi
+
+#
 # Deal with Capriccio pthreads
 # XXX/demmer todo
 #
@@ -243,7 +301,7 @@ fi
 #
 for what in incdir libdir lib staticlib ;  do
   cmd="$what"s=\"
-  for lib in pthread ; do
+  for lib in pthread tcl ; do
 	cmd=$cmd\$"$lib$what "
   done
   cmd=$cmd\"
