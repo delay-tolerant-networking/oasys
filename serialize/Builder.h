@@ -94,7 +94,7 @@ template<typename _TypeCollection, typename _Type> class BuilderCode;
  * 
  * // in the .h file
  * BUILDER_TYPECODE(DtnC, Foo, 1);
- * BUILDER_TYPECODE(DtnC, Foo, 1);
+ * BUILDER_TYPECODE(DtnC, Bar, 2);
  * BUILDER_TYPECODE_AGGREGATE(DtnC, Obj, 1, 2);
  * 
  * // in the .cc file
@@ -137,7 +137,7 @@ public:
      * check the return value from the function.
      *
      * @return 0 on no error, MEMORY if cannot allocate new object,
-     * CORRUPT if unserialization fails and TYPECODE if the TYPECODE
+     * CORRUPT if unserialization fails and TYPECODE if the typecode
      * does not match the type.
      */
     template<typename _Type>
