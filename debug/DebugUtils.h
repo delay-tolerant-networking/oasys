@@ -3,6 +3,7 @@
 #define _DEBUG_H_
 
 #include "Log.h"
+#include <stdlib.h>
 
 #define ASSERT(x)  			                                      \
     do { if (! (x)) {                                                         \
