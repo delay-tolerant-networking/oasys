@@ -128,7 +128,7 @@ public:
     
     urlerr_t err_;	/* parse status */
 
-private:
+protected:
     urlerr_t parse_internal();
 };
 
