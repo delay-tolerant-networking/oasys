@@ -26,6 +26,11 @@ IO_SRCS :=					\
 	io/TCPServer.cc				\
 	io/UDPClient.cc				\
 
+SERIALIZE_SRCS :=				\
+	serialize/Serialize.cc			\
+	serialize/MarshalSerialize.cc		\
+	serialize/SQLSerialize.cc		\
+
 THREAD_SRCS :=					\
 	thread/Mutex.cc				\
 	thread/Notifier.cc			\
@@ -40,6 +45,7 @@ UTIL_SRCS :=					\
 
 SRCS := $(DEBUG_SRCS) 				\
 	$(IO_SRCS) 				\
+	$(SERIALIZE_SRCS)			\
 	$(THREAD_SRCS)				\
 	$(UTIL_SRCS)				\
 
@@ -75,6 +81,7 @@ Rules.make: Rules.make.in configure
 	@exit 1
 
 # XXX/demmer handle .so as well
+LIBFILES += liboasys.a
 liboasys: liboasys.a
 liboasys.a: $(OBJS)
 	rm -f $@
