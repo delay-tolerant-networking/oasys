@@ -83,6 +83,11 @@ BufferedSerializeAction::next_slice(size_t length)
  * Marshal
  *
  *****************************************************************************/
+Marshal::Marshal(u_char* buf, size_t length)
+    : BufferedSerializeAction(MARSHAL, CONTEXT_UNKNOWN, buf, length)
+{
+}
+
 Marshal::Marshal(context_t context, u_char* buf, size_t length)
     : BufferedSerializeAction(MARSHAL, context, buf, length)
 {
@@ -198,6 +203,11 @@ Marshal::process(const char* name, std::string* s)
  * Unmarshal
  *
  *****************************************************************************/
+Unmarshal::Unmarshal(const u_char* buf, size_t length)
+    : BufferedSerializeAction(UNMARSHAL, CONTEXT_UNKNOWN, (u_char*)(buf), length)
+{
+}
+
 Unmarshal::Unmarshal(context_t context, const u_char* buf, size_t length)
     : BufferedSerializeAction(UNMARSHAL, context, (u_char*)(buf), length)
 {

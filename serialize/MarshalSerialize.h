@@ -96,8 +96,9 @@ public:
     /**
      * Constructor
      */
+    Marshal(u_char* buf, size_t length);
     Marshal(context_t context, u_char* buf, size_t length);
-
+        
     /**
      * Since the Marshal operation doesn't actually modify the
      * SerializableObject, define a variant of action() and process()
@@ -135,6 +136,7 @@ public:
     /**
      * Constructor
      */
+    Unmarshal(const u_char* buf, size_t length);
     Unmarshal(context_t context, const u_char* buf, size_t length);
 
     // Virtual functions inherited from SerializeAction
@@ -156,7 +158,7 @@ public:
     /**
      * Constructor
      */
-    MarshalSize(context_t context)
+    MarshalSize(context_t context = CONTEXT_UNKNOWN)
         : SerializeAction(INFO, context), size_(0) {}
 
     /**
