@@ -52,6 +52,9 @@ class FileUtils {
 public:
     static bool readable(const char* path,
                          const char* log = 0);
+
+    static size_t size(const char* path,
+                       const char* log = 0);
 };
 
 }

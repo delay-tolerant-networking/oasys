@@ -72,4 +72,27 @@ FileUtils::readable(const char* path, const char* log)
     return true;
 }
 
+size_t
+FileUtils::size(const char* path, const char* log)
+{
+    struct stat st;
+    int ret = stat(path, &st);
+
+    if (ret == -1) {
+        log && logf(log, LOG_DEBUG,
+                    "FileUtils::size(%s): error running stat %s",
+                    path, strerror(errno));
+        return 0;
+    }
+
+    if (!S_ISREG(st.st_mode)) {
+        log && logf(log, LOG_DEBUG,
+                    "FileUtils::size(%s): not a regular file", path);
+        return 0;
+    }
+
+    return st.st_size;
+}
+
+
 } // end namespace
