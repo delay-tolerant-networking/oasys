@@ -89,12 +89,15 @@ SRCS := \
 OBJS := $(SRCS:.cc=.o)
 OBJS := $(OBJS:.c=.o)
 
+COMPAT_OBJS := $(COMPAT_SRCS:.c=.o)
+
 ALLSRCS := $(SRCS)
 
 #
-# Default target is to build the library
+# Default target is to build the library and the compat library
 #
-all: checkconfigure liboasys
+LIBFILES := liboasys.a liboasyscompat.a
+all: checkconfigure $(LIBFILES)
 
 #
 # Rule to generate the doxygen documentation
@@ -119,9 +122,12 @@ Rules.make.in:
 	@exit 1
 
 # XXX/demmer handle .so as well
-LIBFILES += liboasys.a
-liboasys: liboasys.a 
 liboasys.a: $(OBJS)
+	rm -f $@
+	ar ruc $@ $^
+	ranlib $@ || true
+
+liboasyscompat.a: $(COMPAT_OBJS)
 	rm -f $@
 	ar ruc $@ $^
 	ranlib $@ || true
