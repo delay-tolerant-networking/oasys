@@ -4,7 +4,6 @@
 #include "UDPClient.h"
 #include "debug/Debug.h"
 #include "debug/Log.h"
-#include "conv_layers/IPConvergenceLayer.h"
 
 #include <sys/errno.h>
 #include <sys/poll.h>
