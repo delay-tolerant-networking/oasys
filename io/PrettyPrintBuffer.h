@@ -41,6 +41,8 @@
 #include <string>
 #include <utility>              // for std::pair
 
+namespace oasys {
+
 /**
  * Class for generating pretty printed text. Somewhat inefficient.
  */
@@ -57,5 +59,7 @@ private:
     int cur_;
     int len_;
 };
+
+} // namespace oasys
 
 #endif /* __PRETTY_PRINT_BUFFER_H__ */

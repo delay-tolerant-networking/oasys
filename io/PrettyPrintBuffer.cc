@@ -39,6 +39,8 @@
 #include "PrettyPrintBuffer.h"
 #include "util/StringBuffer.h"
 
+namespace oasys {
+
 const int PrettyPrintBuf::MAX_COL = 40;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -55,7 +57,7 @@ PrettyPrintBuf::PrettyPrintBuf(const char* buf, int len)
 std::pair<std::string, bool>
 PrettyPrintBuf::next_str()
 {
-    StringBuffer buf;
+    oasys::StringBuffer buf;
 
     int bound = std::min(cur_ + MAX_COL, len_);
     for(int i = cur_; i<bound; ++i, ++cur_)
@@ -81,3 +83,5 @@ PrettyPrintBuf::next_str()
         return std::pair<std::string, bool>(buf.c_str(), true);
     }
 }
+
+} // namespace oasys

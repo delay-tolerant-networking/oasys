@@ -44,6 +44,9 @@
 #include "thread/SpinLock.h"
 #include "util/StringBuffer.h"
 
+// XXX/namespace
+using oasys::StringBuffer;
+
 /******************************************************************************
  *
  * TclCommandInterp

@@ -40,6 +40,8 @@
 
 #include "StringBuffer.h"
 
+namespace oasys {
+
 StringBuffer::StringBuffer(size_t initsz, const char* initstr)
 {
     buflen_ = initsz;
@@ -167,6 +169,8 @@ StringBuffer::appendf(const char* fmt, ...)
     va_end(ap);
     return ret;
 }
+
+} // namespace oasys
 
 #ifdef STRINGBUFFER_TEST
 int

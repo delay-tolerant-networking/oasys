@@ -42,6 +42,9 @@
 #include "IO.h"
 #include "PrettyPrintBuffer.h"
 
+// XXX/namespace
+using oasys::PrettyPrintBuf;
+
 /******************************************************************
  *
  * BufferedInput

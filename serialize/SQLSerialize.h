@@ -48,6 +48,9 @@
 #include "Serialize.h"
 #include "../util/StringBuffer.h"
 
+// XXX/namespace
+using oasys::StringBuffer;
+
 class SQLImplementation;
 
 /**

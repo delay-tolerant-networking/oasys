@@ -41,12 +41,7 @@
 
 #include "../debug/Log.h" 	// for PRINTFLIKE macro
 
-class StringBuffer;
-
-// XXX/demmer namespace
 namespace oasys {
-typedef ::StringBuffer StringBuffer;
-};
 
 /**
  * Utility class that wraps a growable string buffer, similar to
@@ -170,5 +165,7 @@ protected:
     size_t len_;
     size_t buflen_;
 };
+
+} // namespace oasys
 
 #endif /* _STRING_BUFFER_H_ */

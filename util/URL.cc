@@ -40,6 +40,9 @@
 #include "StringBuffer.h"
 #include "debug/Debug.h"
 
+// XXX/namespace
+using oasys::StringBuffer;
+
 urlerr_t
 URL::parse_internal()
 {

@@ -41,6 +41,9 @@
 #include "memory/Memory.h"
 #include "util/StringBuffer.h"
 
+// XXX/namespace
+using oasys::StringBuffer;
+
 HelpCommand::HelpCommand()
     : TclCommand("help")
 {
