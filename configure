@@ -1,0 +1,291 @@
+#!/bin/sh
+#
+
+#
+# Before anything else, check for configure --verbose
+#
+for ac_option do
+   case "$ac_option" in
+   -verbose | --verbose | -v)
+      set -x
+      break
+      ;;
+   esac
+done
+
+#
+# Figure out srcdir based on the path to the configure script
+#
+confscript=$0
+srcdir=`echo "$confscript" | sed 's%[\\/][^\\/][^\\/]*$%%'`
+if test "$srcdir" = "$confscript" ; then
+   srcdir=.
+fi
+
+if ! test -r "$srcdir/Rules.make.in" ; then
+   echo "Can't find Rules.make.in in srcdir $srcdir"
+   exit 1
+fi
+
+if ! test "$srcdir" = "." ; then
+   echo "XXX/demmer support non-local srcdir"
+   exit 1
+fi
+
+#
+# Defaults
+#
+cc='gcc'
+ccver='auto'
+depflags=''
+make_static='n'
+debug='-g'
+optimize=''
+optimizewarn=''
+
+#
+# External libraries
+#
+pthreadincdir=''
+pthreadlibdir=''
+pthreadlib='-lpthread'
+pthreadstaticlib=''
+
+#
+# Parse user options
+#
+ac_prev=
+for ac_option
+do
+  if  test -n "$ac_prev"; then
+      eval "$ac_prev=\$ac_option"
+      ac_prev=
+      continue
+  fi
+
+  case "$ac_option" in
+  -*=*) ac_optarg=`echo "$ac_option" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
+  *) ac_optarg= ;;
+  esac
+
+  case "$ac_option" in
+  -verbose | --verbose | -v)
+     ;;
+
+  -static | --static)
+    make_static=y ;;
+  -dynamic | --dynamic)
+    make_static=n ;;
+
+  -enable-debug | --enable-debug)
+    debug='-g' ;;
+  -disable-debug | --disable-debug)
+    debug='' ;;
+
+  -enable-optimize | --enable-optimize)
+    optimize='-O'
+    optimizewarn='-Wuninitialized'
+    ;;
+  -disable-optimize | --disable-optimize)
+    optimize='' 
+    optimizewarn=''
+    ;;
+
+  -with-gcc | --with-gcc | -with-cc | --with-cc)
+    ac_prev=with-cc ;;
+  -with-gcc=* | --with-gcc=* | -with-cc=* | --with-cc=*)
+    cc="$ac_optarg" ;;
+
+  -with-gccver | --with-gccver | -with-ccver | --with-ccver)
+    ac_prev=with-cc ;;
+  -with-gccver=* | --with-gccver=* | -with-ccver=* | --with-ccver=*)
+    ccver="$ac_optarg" ;;
+
+  -with-capriccio-pthread | --with-capriccio-pthread)
+    ac_prev=with-capriccio-pthread ;;
+  -with-capriccio-pthread=* | --with-capriccio-pthread=*)
+    capriccio=y
+    capricciodir="$ac_optarg" ;;
+
+  -help | --help | -h)
+    cat <<EOF
+Usage: configure [options]
+Options [defaults in brackets after descriptions]
+Directory and file names:
+  --exec-prefix=EPREFIX           install architecture-independent files in PREFIX
+                                  [$exec_prefix]
+  --static                        Build static objects; do not use dynamic link libraries
+Features
+     debug			  Include '-g' in the CFLAGS.
+     optimize			  Include '-O' in the CFLAGS.
+
+  --disable-FEATURE
+  --enable-FEATURE[=ARG]
+Packages
+  --with-cc=GCC			  Version of the C/C++ compiler to use
+  --with-capriccio-pthread=DIR	  Location of capriccio pthreads installation
+EOF
+  exit 0
+  ;;
+  *)
+    cat <<EOF
+configure: unrecognized option \`$ac_option'.
+Try \`configure --help' for more information.
+EOF
+  exit 1
+  ;;
+  esac
+done
+
+#
+# Make sure the compiler a) works b) is some gcc variant and c) is an
+# acceptable version.
+#
+if [ $ccver = "auto" ]; then
+
+cat > config.$$.c <<EOF
+#include <stdio.h>
+int 
+main(int argc, const char** argv) {
+    printf("%d.%d", __GNUC__, __GNUC_MINOR__);
+}
+EOF
+$cc config.$$.c > /dev/null 2> /dev/null
+if [ $? != 0 -o ! -f ./a.out ]; then
+    echo "error: non-functional or non-gnu compiler $cc"
+    exit 1
+fi
+
+rm -f config.$$.c
+
+ccver=`./a.out`
+rm -f ./a.out
+
+fi
+
+#
+# Now set some options based on the compiler version
+#
+case "$ccver" in
+    #
+    # for gcc 2.9.X and 3.1, the auto-dependency features don't work, and 
+    # _GNU_SOURCE isn't defined, so do both those things here
+    #
+    3.1|2.9*)
+        defs="$defs -D_GNU_SOURCE"
+	depflags=''
+	echo "*** warning: using old compiler $cc version $ccver,"
+	echo "             automatic dependency generation will not work"
+	;;
+    #
+    # For later 3.X, use auto-dependency flags
+    #
+    3.*)
+	depflags='-MMD -MP -MT "$*.o $*.E $*.po"'
+	;;
+    *)
+	echo "error: unsupported compiler version $ccver"
+	exit 1
+	;;
+esac
+
+#
+# Assume that if we're using gcc-xxx, we also want g++-xxx
+#
+cpp=`echo $cc | sed 's/cc/++/'`
+
+#
+# Set options to build statically
+#
+case "$make_static" in
+    yes | y | true | t)
+    static="-static"
+    allstatic="-all-static"
+    libext=a
+    ;;
+
+    *)
+    libext=so
+    ;;
+esac
+
+#
+# Deal with Capriccio pthreads
+# XXX/demmer todo
+#
+if [ "$capriccio" = "y" ]; then
+	if [ ! $make_static = 'y' ]; then
+		echo "capriccio can only be linked statically"
+		exit 1
+	fi
+
+	if [ ! -r $capricciodir/src/include/pthread.h ]; then
+		echo "can't find pthread.h in $capricciodir/src/include"
+		exit 1
+	fi
+	pthreadincdir=-I$capricciodir/src/include
+	
+	if [ ! -r $capricciodir/src/lib/libpthread.a ]; then
+		echo "can't find libpthread.a in $capricciodir/lib"
+		exit 1
+	fi
+	pthreadlib=''
+	pthreadstaticlib=$capricciodir/src/lib/libpthread.a
+fi
+
+#
+# Cons together the various directories.
+#
+# i.e: incdir="$tclincdir $pthreadincdir..."
+#      libdir="$tcllibdir $pthreadlibdir..."
+#
+#
+for what in incdir libdir lib staticlib ;  do
+  cmd="$what"s=\"
+  for lib in pthread ; do
+	cmd=$cmd\$"$lib$what "
+  done
+  cmd=$cmd\"
+  eval $cmd
+done
+
+#
+# Spit out some output and then do the correct substitution on Rules.make
+#
+echo "Target/Tools:"
+echo "  SRCDIR: $srcdir"
+echo "  CC: $cc"
+echo "  CPP: $cpp"
+echo "  CCVER: $ccver"
+echo " "
+echo "Options:"
+echo "  Debug: $debug"
+echo "  Optimize: $optimize"
+echo "  Static: $make_static"
+echo " "
+if [ "$capriccio" = 'y' ]; then
+echo "  capriccio: $pthreadincdir $pthreadlibdir $pthreadlib $pthreadstaticlib"
+fi
+
+echo "#" > Rules.make
+echo "# This file was automatically generated by configure; do not edit directly" > Rules.make
+sed -e "
+s%@SRCDIR@%$srcdir%g
+s%@CFLAGS@%$cflags%g
+s%@STATIC@%$static%g
+s%@CC@%$cc%g
+s%@CPP@%$cpp%g
+s%@DEFS@%$defs%g
+s%@DEPFLAGS@%$depflags%g
+s%@DEBUG@%$debug%g
+s%@OPTIMIZE@%$optimize%g
+s%@OPTIMIZE_WARN@%$optimizewarn%g
+s%@INCDIRS@%$incdirs%g
+s%@LIBDIRS@%$libdirs%g
+s%@LIBS@%$libs%g
+s%@STATIC_LIBS@%$staticlibs%g
+
+" $srcdir/Rules.make.in >> Rules.make
+
+echo ""
+echo "wrote Rules.make; now run make"

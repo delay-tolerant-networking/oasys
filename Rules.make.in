@@ -1,0 +1,110 @@
+#
+# XXX/demmer copyright here 
+#
+#
+#
+# Common settings extracted from the configure script
+#
+SRCDIR		= @SRCDIR@
+INCDIRS		= -I$(SRCDIR) @INCDIRS@
+LIBDIRS		= @LIBDIRS@
+LIBS		= @LIBS@
+STATIC_LIBS	= @STATIC_LIBS@
+CC		= @CC@
+CPP		= @CPP@
+DEPFLAGS	= @DEPFLAGS@
+DEFS		= @DEFS@
+DEBUG		= @DEBUG@
+OPTIMIZE	= @OPTIMIZE@
+WARN		= -Wall -Werror @OPTIMIZE_WARN@
+CFLAGS		= $(INCDIRS) $(DEBUG) $(OPTIMIZE) $(DEPFLAGS) $(WARN) $(DEFS)
+LFLAGS		= $(LIBDIRS) @STATIC@
+
+#
+# Add a phony rule to make sure this isn't included before the default
+#
+.PHONY: catchdefault
+catchdefault:
+	@echo "Rules.make should be included after the default rule is set"
+	@exit 1
+
+#
+# And a rule to make sure that configure has been run recently enough.
+# This should be run from every default rule
+#
+.PHONY: checkconfigure
+checkconfigure: $(SRCDIR)/Rules.make
+
+$(SRCDIR)/Rules.make.in:
+	@echo SRCDIR: $(SRCDIR)
+	@echo error -- Makefile did not set SRCDIR properly
+	@exit 1
+
+$(SRCDIR)/Rules.make: $(SRCDIR)/Rules.make.in $(SRCDIR)/configure
+	@echo $@ is out of date, need to rerun configure
+	@exit 1
+
+#
+# Rule for generating a .o file from the corresponding .cc file;
+# automatically creates dependencies via the dependency flags.
+#
+%.o: %.cc
+	@rm -f $@; mkdir -p $(@D)
+	$(CPP) $(CFLAGS) -c $< -o $@
+
+%.o: %.c
+	@rm -f $@; mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+#
+# Generate cpp output in .E files.
+#
+%.E: %.cc
+	@rm -f $@; mkdir -p $(@D)
+	$(CPP) $(CFLAGS) -c $< -E -o $@
+
+%.E: %.c
+	@rm -f $@; mkdir -p $(@D)
+	$(CPP) $(CFLAGS) -c $< -E -o $@
+
+#
+# Always include all the .d files that we can find, based on all the
+# source files we can find (unless they're specified).
+#
+ifeq ($(ALLSRCS),)
+ALLSRCS := $(shell find . -name \*.cc -o -name \*.c)
+endif
+DEPFILES := $(ALLSRCS:%.cc=%.d)
+DEPFILES := $(DEPFILES:%.c=%.d)
+ifneq ($(DEPFILES),)
+-include $(DEPFILES)
+endif
+
+echodep:
+	@echo "allsrcs: $(ALLSRCS)"
+	@echo "depfiles: $(DEPFILES)"
+
+#
+# Some rules for cleaning object files
+#
+clean: objclean depclean genclean binclean
+
+.PHONY: objclean
+objclean:
+	@echo "removing object files..."
+	find . \( -name '*.[Eo]' \) -print0 | xargs -0 rm -f
+
+.PHONY: depclean
+depclean:
+	@echo "removing dependency files..."
+	find . \( -name '*.d' \) -print0 | xargs -0 rm -f
+
+.PHONY: genclean
+genclean:
+	@echo "removing generated files: $(GENFILES)..."
+	@test -z "$(GENFILES)" || rm -f $(GENFILES)
+
+.PHONY: binclean
+binclean:
+	@echo "removing binary files: $(BINFILES)..."
+	@test -z "$(BINFILES)" || rm -f $(BINFILES)
