@@ -261,17 +261,17 @@ int
 BufferedOutput::vformat_buf(const char* fmt, va_list ap)
 {
     int nfree = buf_.tailbytes();
-    int len = vsnprintf(buf_.end(), nfree, fmt, ap);
+    int len   = vsnprintf(buf_.end(), nfree, fmt, ap);
 
+    ASSERT(len != -1);
     if (len >= nfree) {
         buf_.reserve(len);
         nfree = len;
         len = vsnprintf(buf_.end(), nfree, fmt, ap);
         ASSERT(len <= nfree);
     }
-
-    buf_.fill(len);
     
+    buf_.fill(len);
     if ((flush_limit_) > 0 && (buf_.fullbytes() > flush_limit_))
     {
 	flush();
