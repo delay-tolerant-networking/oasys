@@ -1,13 +1,13 @@
 #ifndef __MEMORY_H__
 #define __MEMORY_H__
 
-#include <cstdio>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
-
 #include <sys/mman.h>
 
-#include "../util/jenkins_hash.h"
+#include "debug/Log.h"
+#include "util/jenkins_hash.h"
 
 /**
  * @file Debug memory allocator that keep track of different object
@@ -36,7 +36,6 @@
 #endif 
 
 #define _BYTE             char
-#define _CHECKSUM_MAGIC   0xDEADBEEF
 
 #define _DBG_MEM_FRAMES     4
 #define _DBG_MEM_TABLE_EXP  10
@@ -45,11 +44,9 @@
 
 /** 
  * Get the containing structure given the address of _ptr->_field.
- * This might not be portable, depending on the way pointer arithmetic
- * works.
  */ 
 #define PARENT_PTR(_ptr, _type, _field)                 \
-    (_type*) ((_BYTE*)_ptr - (int)&((_type*)0)->_field)
+    ( (_type*) ((_BYTE*)_ptr - offsetof(_type, _field)) )
 
 /**
  * An entry in the memory block information table.
@@ -78,16 +75,21 @@ public:
      * Set up the memory usage statistics table.
      */
     static void init() {
+	// XXX/bowei Needs to be changed to MMAP
         entries_ = 0;
         table_   = (dbg_mem_entry_t*)
             calloc(_DBG_MEM_TABLE_SIZE, sizeof(dbg_mem_entry_t));
         
         memset(table_, 0, sizeof(dbg_mem_entry_t) * _DBG_MEM_TABLE_SIZE);
+
+	init_ = true;
     }
 
+// Find a matching set of frames
 #define MATCH(_f1, _f2)                                                 \
     (memcmp((_f1), (_f2), sizeof(void*) * _DBG_MEM_FRAMES) == 0)
 
+// Mod by a power of 2
 #define MOD(_x, _m)                                             \
     ((_x) & ((unsigned int)(~0))>>((sizeof(int)*8) - (_m)))
 
@@ -161,12 +163,19 @@ public:
      */
     static void dump();
 
+
+    /**
+     * Getter for init state
+     */
+    static bool initialized() { return init_; }
+
 private:
     /** 
      * Pointer to the allocated memory hash table.
      */
     static int              entries_;
     static dbg_mem_entry_t* table_;
+    static bool             init_;
 };
 
 #ifndef NDEBUG_MEMORY
@@ -202,18 +211,28 @@ set_frame_info(void** frames)
 inline void*
 operator new(size_t size)
 {
+    // The reason for these two code paths is the prescence of static
+    // initializers which allocate memory on the heap. Memory
+    // allocated before init is called is not tracked.
     dbg_mem_t* b = static_cast<dbg_mem_t*>                  
-        (malloc(sizeof(dbg_mem_t) + size));                 
-    void* frames[_DBG_MEM_FRAMES];
-                                                                
-    memset(b, 0, sizeof(dbg_mem_t));
+	(malloc(sizeof(dbg_mem_t) + size));                 
+
+    if(b == 0) {
+	throw std::bad_alloc();
+    }
     
-    set_frame_info(frames);
-    b->entry_ = DbgMemInfo::inc(frames);
-                   
-    printf("new a=%08x, f=[0x%x 0x%x 0x%x 0x%x]\n",              
-           &b->block_, frames[0], frames[1], frames[2], frames[3]);     
-                                                                
+    void* frames[_DBG_MEM_FRAMES];
+    memset(b, 0, sizeof(dbg_mem_t));
+
+    // non-init allocations have frame == 0
+    if(DbgMemInfo::initialized()) {
+	set_frame_info(frames);
+	b->entry_ = DbgMemInfo::inc(frames);
+
+	log_debug("/memory", "new a=%p, f=[%p %p %p %p]\n",              
+		  &b->block_, frames[0], frames[1], frames[2], frames[3]);     
+    }
+								
     return (void*)&b->block_;                               
 }
 
@@ -225,12 +244,15 @@ operator delete(void *ptr)
 {
     dbg_mem_t* b = PARENT_PTR(ptr, dbg_mem_t, block_);
     
-    printf("delete a=%08x, f=[0x%x 0x%x 0x%x 0x%x]\n", 
-           &b->block_, 
-           b->entry_->frames_[0], b->entry_->frames_[1], 
-           b->entry_->frames_[2], b->entry_->frames_[3]);
+    log_debug("/memory", "delete a=%p, f=[%p %p %p %p]\n", 
+	      &b->block_, 
+	      b->entry_->frames_[0], b->entry_->frames_[1], 
+	      b->entry_->frames_[2], b->entry_->frames_[3]);
     
-    // ASSERT(b->chksum() == b->chksum_);
+    if(b->entry_->frames_[0] != 0) {
+	DbgMemInfo::dec(b->entry_->frames_);
+    }
+    
     free(b);
 }
 
@@ -243,7 +265,6 @@ operator delete(void *ptr)
 // clean up namespace ////////////////////////////////////////////////////////
 #undef _ALIGNED
 #undef _BYTE
-#undef _CHECKSUM_MAGIC
 #undef _UNKNOWN_TYPE
 #undef _EMPTY_SLOT
 #undef PARENT_PTR

@@ -26,6 +26,9 @@ IO_SRCS :=					\
 	io/TCPServer.cc				\
 	io/UDPClient.cc				\
 
+MEMORY_SRCS :=                                  \
+	memory/Memory.cc          
+
 SERIALIZE_SRCS :=				\
 	serialize/Serialize.cc			\
 	serialize/MarshalSerialize.cc		\
@@ -45,6 +48,7 @@ THREAD_SRCS :=					\
 UTIL_SRCS :=					\
 	util/jenkins_hash.c			\
 	util/md5-rsa.c				\
+	util/jenkins_hash.cc			\
 	util/Options.cc				\
 	util/RateEstimator.cc			\
 	util/StreamBuffer.cc			\
@@ -53,6 +57,7 @@ UTIL_SRCS :=					\
 
 SRCS := $(DEBUG_SRCS) 				\
 	$(IO_SRCS) 				\
+	$(MEMORY_SRCS)                          \
 	$(SERIALIZE_SRCS)			\
 	$(TCLCMD_SRCS)				\
 	$(THREAD_SRCS)				\
@@ -125,6 +130,11 @@ tclcmd/command-init-tcl.c: tclcmd/command-init.tcl
 		 sed 's|^|"|g' | \
 		 sed "s|$$|\\\\n\"|g" >> $@;
 	echo ";">> $@
+
+#
+# Include test files
+#
+include test/Makefile
 
 #
 # Include the common rules
