@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <sys/time.h>
+#include <sys/errno.h>
 
 #include "debug/Log.h"
 #include <thread/Mutex.h>
