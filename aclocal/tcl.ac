@@ -78,8 +78,6 @@ AC_DEFUN(AC_OASYS_FIND_TCL, [
 
     for ac_tclver in $ac_tclvers ; do
     for ac_tclincdir in $ac_tclincdirs; do
-    for ac_tcllibdir in $ac_tcllibdirs; do
-    for ac_tcllib in tcl tcl$ac_tclver; do
 
         ac_tclver_major=`echo $ac_tclver | cut -d . -f1`
 	ac_tclver_minor=`echo $ac_tclver | cut -d . -f2`
@@ -113,8 +111,11 @@ AC_DEFUN(AC_OASYS_FIND_TCL, [
           ],
           [
               AC_MSG_RESULT([no])
-              break 2
+              continue
           ])
+
+      for ac_tcllibdir in $ac_tcllibdirs; do
+      for ac_tcllib in tcl tcl$ac_tclver; do
 
         AC_MSG_CHECKING([for tcl library in $ac_tcllibdir, -l$ac_tcllib])
 	LDFLAGS="$ac_save_LDFLAGS -L$ac_tcllibdir"
