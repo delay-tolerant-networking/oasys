@@ -1,7 +1,7 @@
+#include <algorithm>
 #include <io/IO.h>
+#include <errno.h>
 
-#include "errno.h"
-#include "lib/Utils.h"
 #include "lib/PrettyPrintBuffer.h"
 #include "BufferedIO.h"
 
@@ -188,7 +188,7 @@ BufferedInput::internal_read(size_t len, int timeout_ms)
     buf_.fill(cc);
 
 
-    int ret = MIN(buf_.fullbytes(), len);
+    int ret = std::min(buf_.fullbytes(), len);
     
     log_debug("internal_read %d (timeout %d): cc=%d ret %d",
          len, timeout_ms, cc, ret);

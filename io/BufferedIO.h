@@ -7,8 +7,7 @@
 
 /**
  * Wrapper class for a tcp client socket that includes an in-memory
- * buffer for reading and/or writing. Note that the same buffer is
- * used for both.
+ * buffer for reading and/or writing.
  */
 class BufferedInput : public Logger {
 public:
