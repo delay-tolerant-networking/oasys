@@ -1,7 +1,8 @@
 
 /*
  * We include the NetBSD version of getopt in case we don't have a
- * system one.
+ * system one.  Some minor modifications were made to fix compilation
+ * errors on non-BSD platforms.
  */
 
 #include "../config.h"
@@ -71,12 +72,22 @@
 static char *rcsid = "$OpenBSD: getopt_long.c,v 1.16 2004/02/04 18:17:25 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 #endif
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/lib/libc/stdlib/getopt_long.c,v 1.12 2004/07/06 13:58:45 ache Exp $");
 
+#ifdef HAVE_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+
+// __FBSDID("$FreeBSD: src/lib/libc/stdlib/getopt_long.c,v 1.12 2004/07/06 13:58:45 ache Exp $");
+
+#ifdef HAVE_ERR_H
 #include <err.h>
+#else
+#include <stdio.h>
+#define warnx printf
+#endif
+
 #include <errno.h>
-#include <getopt.h>
+#include "getopt.h"
 #include <stdlib.h>
 #include <string.h>
 
