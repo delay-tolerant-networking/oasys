@@ -18,6 +18,7 @@ proc chkdirs {clobber} {
     exec "mkdir" "output/"
 }
 
+# assign a list of variables to the elements in the list
 proc lassign {varlist list} {
     foreach var $varlist list_val $list {
 	uplevel "set $var \"$list_val\""

@@ -1,11 +1,17 @@
-#if 0  // tcl
+#if 0  // begin tcl
 
 proc checkInputTest {output} {
+    while {[set line [gets $output]] != ""} {
+	if [regexp ".*InputTest: .*foo" $line] {
+	    return 0
+	}
+    }
+
     return -1
 }
 
-set CC {
-#endif // tcl
+set __CC {
+#endif // end tcl
 
 #include <util/UnitTest.h>
 using namespace oasys;
