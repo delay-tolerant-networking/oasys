@@ -63,18 +63,20 @@ public:
     
     /// Socket State values
     enum state_t {
-        INIT, 		/* initial state */
-        LISTENING,	/* server socket, called listen() */
-        CONNECTING,	/* client socket, called connect() */
-        ESTABLISHED, 	/* connected socket, data can flow */
-        RDCLOSED,	/* shutdown(SHUT_RD) called, writing still enabled */
-        WRCLOSED,	/* shutdown(SHUT_WR) called, reading still enabled */
-        CLOSED,		/* shutdown called for both read and write */
-        FINI		/* close() called on the socket */
+        INIT, 		///< initial state
+        LISTENING,	///< server socket, called listen()
+        CONNECTING,	///< client socket, called connect()
+        ESTABLISHED, 	///< connected socket, data can flow
+        RDCLOSED,	///< shutdown(SHUT_RD) called, writing still enabled
+        WRCLOSED,	///< shutdown(SHUT_WR) called, reading still enabled
+        CLOSED,		///< shutdown called for both read and write
+        FINI		///< close() called on the socket
     };
         
-    /// Return the current state
-        state_t state() { return state_; }
+    /**
+     * Return the current state.
+     */
+    state_t state() { return state_; }
         
     /**
      * Socket parameters are public fields that should be set after
