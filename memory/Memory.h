@@ -49,6 +49,7 @@
 #include <signal.h>
 #include <sys/mman.h>
 
+#include "../compat/inttypes.h"
 #include "../debug/Debug.h"
 #include "../debug/Log.h"
 #include "../util/jenkins_hash.h"

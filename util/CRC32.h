@@ -41,6 +41,7 @@
 #define __CRC_32_H__
 
 #include <sys/types.h>
+#include "../compat/inttypes.h"
 
 namespace oasys {
 class CRC32 {
