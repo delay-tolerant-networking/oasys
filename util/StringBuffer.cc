@@ -186,22 +186,3 @@ StringBuffer::appendf(const char* fmt, ...)
 }
 
 } // namespace oasys
-
-#ifdef STRINGBUFFER_TEST
-int
-main(int argc, char** argv)
-{
-    int n;
-    StringBuffer b(10);
-
-    b.append("abcdefg");
-    printf("%.*s (len %d)\n", b.length(), b.data(), b.length());
-
-    b.append("hiXXXX", 2);
-    printf("%.*s (len %d)\n", b.length(), b.data(), b.length());
-
-    n = b.appendf("%s%d%.*s", "jklm", 1234, 4, "nopqXXXX");
-    printf("%.*s (len %d) (n %d)\n", b.length(), b.data(), b.length(), n);
-}
-
-#endif
