@@ -100,8 +100,9 @@ Rules.make.in:
 	@exit 1
 
 Rules.make: Rules.make.in configure
-	@echo $@ is out of date, need to rerun configure
-	@exit 1
+	@[ ! -z `echo "$(MAKECMDGOALS)" | grep clean` ] || \
+	(echo "$@ is out of date, need to rerun configure" && \
+	exit 1)
 
 # XXX/demmer handle .so as well
 LIBFILES += liboasys.a

@@ -70,7 +70,7 @@ echodep:
 #
 # Some rules for cleaning object files
 #
-clean: objclean depclean genclean binclean
+clean: objclean depclean genclean libclean binclean
 
 .PHONY: objclean
 objclean:
@@ -91,3 +91,14 @@ genclean:
 binclean:
 	@echo "removing binary files: $(BINFILES)..."
 	@test -z "$(BINFILES)" || rm -f $(BINFILES)
+
+.PHONY: libclean
+libclean:
+	@echo "removing library files: $(LIBFILES)..."
+	@test -z "$(LIBFILES)" || rm -f $(LIBFILES)
+
+.PHONY: distclean
+CFGFILES := Rules.make
+distclean: clean
+	@echo "removing configure generated files: $(CFGFILES)..."
+	@test -z "$(CFGFILES)" || rm -f $(CFGFILES)
