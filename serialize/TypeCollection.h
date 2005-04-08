@@ -106,7 +106,6 @@ template<typename _TypeCollection, typename _Type> class BuilderCode;
  * Builder<DtnC>* b = Builder<DtnC>::instance();
  * int err = b->new_object(BuilderCode<TestC, Foo>::TYPECODE, 
  *                         &foo, buf, len, Serialize::CONTEXT_LOCAL)
- *                         test
  * @endcode
  */
 template<typename _TypeCollection>
