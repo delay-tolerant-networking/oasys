@@ -25,23 +25,17 @@ class BerkeleyStore : public DurableTableStore, public Logger {
 public:
     ~BerkeleyStore();
 
-    /** 
+    /**
      * Do initialization. Must do this once before you try to obtain
      * an instance of this object. This is separated out from the
      * instance() call because we want to have control when the
      * database is initialized.
      */
-    static void init();
-
-    /**
-     * Initialization routine for debugging purposes. Allows bringing
-     * up/down of BerkeleyDB to test for persistence of the data.
-     */
-    static void init_for_debug(const std::string& db_name,
-                               const char*        config_dir,
-                               const char*        err_log_name,
-                               bool               tidy_db,
-                               int                tidy_wait);
+    static void init(const std::string& db_name,
+                     const char*        config_dir,
+                     const char*        err_log_name,
+                     bool               tidy_db,
+                     int                tidy_wait);
     /**
      * Shutdown BerkeleyDB and free associated resources.
      */
@@ -172,43 +166,6 @@ protected:
 
     DBT key_;
     DBT data_;
-};
-
-
-/**
- * Data store configuration module.
- */
-class BerkeleyStoreCommand : public oasys::AutoTclCommand { 
-    friend class BerkeleyStore;
-
-public:
-    BerkeleyStoreCommand();
-
-    static BerkeleyStoreCommand* instance() 
-    {
-	if(instance_ == 0)
-	{
-	    instance_ = new BerkeleyStoreCommand();
-	}
-
-        return instance_;
-    }
-    
-    void bind_vars();
-
-    virtual int exec(int argc, const char** argv, Tcl_Interp* interp);
-
-public:
-    bool        tidy_db_;	//!< tidy up the db on init
-    int         tidy_wait_;	//!< num seconds to wait before tidying
-    std::string dir_;		//!< Database directory
-    std::string db_name_;       //!< Database name
-    std::string err_log_;	//!< Error log
-
-private:
-    static BerkeleyStoreCommand* instance_;
-
-    BerkeleyStore* ds_;      //!< datastore configuration is attached to
 };
 
 }; // namespace oasys
