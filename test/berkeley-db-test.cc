@@ -11,13 +11,11 @@ using namespace std;
 
 std::string    g_db_name      = "test";
 const char*    g_config_dir   = "output/berkeley-db-test/berkeley-db-test";
-const char*    g_err_log_name = "output/berkeley-db-test/err.log";
 DurableTableId g_id;
 
 DECLARE_TEST(DBInit) {
     BerkeleyStore::init(g_db_name,
                         g_config_dir,
-                        g_err_log_name,
                         true, 0);
 
     BerkeleyStore::shutdown();
@@ -27,7 +25,6 @@ DECLARE_TEST(DBInit) {
 DECLARE_TEST(TableCreate) {
     BerkeleyStore::init(g_db_name,
                         g_config_dir,
-                        g_err_log_name,
                         false, 0);
 
     DurableTable* table1;
@@ -58,7 +55,6 @@ DECLARE_TEST(TableCreate) {
 DECLARE_TEST(Insert) {
     BerkeleyStore::init(g_db_name,
                         g_config_dir,
-                        g_err_log_name,
                         false, 0);
     DurableTableStore* store = DurableTableStore::instance();
     DurableTable* table;
@@ -82,7 +78,6 @@ DECLARE_TEST(Insert) {
 
     BerkeleyStore::init(g_db_name,
                         g_config_dir,
-                        g_err_log_name,
                         false, 0);
     store = DurableTableStore::instance();
     CHECK(store->get_table(g_id, &table) == 0);
@@ -110,7 +105,6 @@ DECLARE_TEST(Insert) {
 DECLARE_TEST(Delete) {
     BerkeleyStore::init(g_db_name,
                         g_config_dir,
-                        g_err_log_name,
                         false, 0);
     DurableTableStore* store = DurableTableStore::instance();
     DurableTable* table;
@@ -144,7 +138,6 @@ DECLARE_TEST(Delete) {
 DECLARE_TEST(Iterator) {
     BerkeleyStore::init(g_db_name,
                         g_config_dir,
-                        g_err_log_name,
                         false, 0);
     DurableTableStore* store = DurableTableStore::instance();
     DurableTable* table;

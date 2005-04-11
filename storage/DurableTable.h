@@ -42,9 +42,9 @@
 #include <new>
 #include <string>
 
-#include "debug/Debug.h"
-#include "debug/Log.h"
-#include "serialize/Serialize.h"
+#include "../debug/Debug.h"
+#include "../debug/Log.h"
+#include "../serialize/Serialize.h"
 
 namespace oasys {
 

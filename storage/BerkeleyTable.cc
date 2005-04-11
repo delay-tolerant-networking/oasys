@@ -104,8 +104,7 @@ BerkeleyStore::~BerkeleyStore()
 
 void 
 BerkeleyStore::init(const std::string& db_name,
-                    const char*        config_dir,
-                    const char*        err_log_name,
+                    const char*        db_dir,
                     bool               tidy_db,
                     int                tidy_wait)
 {
@@ -114,8 +113,7 @@ BerkeleyStore::init(const std::string& db_name,
 
     int err;
     err = s->do_init(db_name, 
-                     config_dir, 
-                     err_log_name, 
+                     db_dir, 
                      tidy_db, 
                      tidy_wait);
     if(err != 0) {
@@ -130,8 +128,7 @@ void BerkeleyStore::shutdown_for_debug()
 
 int 
 BerkeleyStore::do_init(const std::string& db_name,
-                       const char*        config_dir,
-                       const char*        err_log_name,
+                       const char*        db_dir,
                        bool               tidy_db,
                        int                tidy_wait)
 {
@@ -142,16 +139,16 @@ BerkeleyStore::do_init(const std::string& db_name,
     // create database directory
     struct stat f_stat;
 
-    if(stat(config_dir, &f_stat) == -1)
+    if(stat(db_dir, &f_stat) == -1)
     {
         if(errno == ENOENT)
         {
-            log_info("creating new database directory %s", config_dir);
+            log_info("creating new database directory %s", db_dir);
 
-            if(mkdir(config_dir, 0700) != 0) 
+            if(mkdir(db_dir, 0700) != 0) 
             {
                 log_crit("can't create datastore directory %s: %s",
-                         config_dir, strerror(errno));
+                         db_dir, strerror(errno));
                 return DS_ERR;
             }
         }
@@ -164,7 +161,9 @@ BerkeleyStore::do_init(const std::string& db_name,
         return DS_ERR;
     }
 
-    err_log_ = ::fopen(err_log_name, "w");
+    std::string err_filename = db_dir;
+    err_filename += "/err.log";
+    err_log_ = ::fopen(err_filename.c_str(), "w");
 
     if(err_log_ == NULL) 
     {
@@ -175,25 +174,25 @@ BerkeleyStore::do_init(const std::string& db_name,
         dbenv_->set_errfile(dbenv_, err_log_);
     }
 
-    log_info("Using dbdir = %s, errlog = %s", config_dir, err_log_name);
+    log_info("Using dbdir = %s, errlog = %s", db_dir, err_filename.c_str());
     if(tidy_db)
     {
         char cmd[256];
         for(int i = tidy_wait; i > 0; --i) {
             log_warn("PRUNING CONTENTS OF %s IN %d SECONDS",
-                     config_dir, i);
+                     db_dir, i);
             sleep(1);
         }
-        sprintf(cmd, "/bin/rm -rf %s", config_dir);
+        sprintf(cmd, "/bin/rm -rf %s", db_dir);
         system(cmd);
     }
-    if(stat(config_dir, &f_stat) == -1)
+    if(stat(db_dir, &f_stat) == -1)
     {
         if(errno == ENOENT)
         {
-            log_info("creating new database directory %s", config_dir);
+            log_info("creating new database directory %s", db_dir);
 
-            if(mkdir(config_dir, 0700) != 0) {
+            if(mkdir(db_dir, 0700) != 0) {
                 log_crit("can't create datastore directory: %s", strerror(errno));
                 return DS_ERR;
             }
@@ -201,7 +200,7 @@ BerkeleyStore::do_init(const std::string& db_name,
     }
 
     err = dbenv_->open(dbenv_, 
-                       config_dir,
+                       db_dir,
                        DB_CREATE     | // create new files
                        DB_INIT_MPOOL | // initialize memory pool
                        DB_INIT_LOG   | // use logging
@@ -224,7 +223,7 @@ BerkeleyStore::do_init(const std::string& db_name,
     
     // Create database file if none exists. Table 0 is used for
     // storing general global metadata.
-    std::string dbpath = config_dir;
+    std::string dbpath = db_dir;
     dbpath += "/";
     dbpath += db_name_;
 

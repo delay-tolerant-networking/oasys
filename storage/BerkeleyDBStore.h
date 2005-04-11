@@ -4,10 +4,10 @@
 #include <map>
 #include <db.h>
 
-#include "tclcmd/TclCommand.h"
-#include "debug/Logger.h"
-#include "thread/Mutex.h"
-#include "util/ScratchBuffer.h"
+#include "../tclcmd/TclCommand.h"
+#include "../debug/Logger.h"
+#include "../thread/Mutex.h"
+#include "../util/ScratchBuffer.h"
 
 #include "DurableTable.h"
 
@@ -32,8 +32,7 @@ public:
      * database is initialized.
      */
     static void init(const std::string& db_name,
-                     const char*        config_dir,
-                     const char*        err_log_name,
+                     const char*        db_dir,
                      bool               tidy_db,
                      int                tidy_wait);
     /**
@@ -90,12 +89,10 @@ private:
      * @return 0 if no error
      */
     int do_init(const std::string& db_name,
-                const char*        config_dir,
-                const char*        err_log_name,
+                const char*        db_dir,
                 bool               tidy_db,
                 int                tidy_wait);
 };
-
 
 /**
  * Object that encapsulates a single table. Multiple instances of
