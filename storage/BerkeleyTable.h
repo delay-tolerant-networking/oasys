@@ -40,20 +40,11 @@ public:
      */
     static void shutdown_for_debug();
 
-    /**
-     * Create a new table. Caller deletes the pointer.
-     */
+    /// @{ Virtual from DurableTable
     virtual int new_table(DurableTable** table, DurableTableId new_id = -1);
-    
-    /**
-     * Delete (by id) from the datastore
-     */
     virtual int del_table(DurableTableId id);
-
-    /**
-     * Get a new table ptr to an id
-     */
     virtual int get_table(DurableTableId id, DurableTable** table);
+    /// @}
 
 private:
     FILE*       err_log_;     ///< db err log file

@@ -35,7 +35,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+
 #ifndef __DURABLE_TABLE_H__
 #define __DURABLE_TABLE_H__
 
@@ -126,6 +126,8 @@ public:
 
     /**
      * Get a new table ptr to an id
+     *
+     * @return 0 - ok, DS_NOTFOUND - table with id doesn't exist, DS_ERR - other error
      */
     virtual int get_table(DurableTableId id, DurableTable** table) = 0;
     
