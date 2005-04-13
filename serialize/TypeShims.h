@@ -53,6 +53,7 @@ struct IntShim : public SerializableObject {
     }
 
     int value() const { return i_; }
+    void assign(int i) { i_ = i; }
     
     int i_;
 };
