@@ -71,11 +71,11 @@ namespace oasys {
      (double)((((t1).tv_usec - (t2).tv_usec)) * 1000000.0))
 
 #define TIMEVAL_DIFF_MSEC(t1, t2) \
-    ((((t1).tv_sec  - (t2).tv_sec)  * 1000) + \
+    ((unsigned long int)(((t1).tv_sec  - (t2).tv_sec)  * 1000) + \
      (((t1).tv_usec - (t2).tv_usec) / 1000))
 
 #define TIMEVAL_DIFF_USEC(t1, t2) \
-    ((((t1).tv_sec  - (t2).tv_sec)  * 1000000) + \
+    ((unsigned long int)(((t1).tv_sec  - (t2).tv_sec)  * 1000000) + \
      (((t1).tv_usec - (t2).tv_usec)))
 
 #define TIMEVAL_GT(t1, t2) \
