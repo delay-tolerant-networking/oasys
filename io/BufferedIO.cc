@@ -91,15 +91,15 @@ BufferedInput::read_bytes(size_t len, char** buf, int timeout)
 {
     ASSERT(len > 0);
     
-    log_debug("read_bytes %d (timeout %d)", len, timeout);
+    log_debug("read_bytes %u (timeout %d)", (u_int)len, timeout);
     
     size_t total = buf_.fullbytes();
     
     while (total < len)
     {
         // fill up the buffer (if possible)
-        log_debug("read_bytes calling internal_read for %d needed bytes",
-             len - total);
+        log_debug("read_bytes calling internal_read for %u needed bytes",
+                  (u_int)(len - total));
 	int cc = internal_read(len, timeout);
         if (cc <= 0)
         {
@@ -205,21 +205,21 @@ BufferedInput::internal_read(size_t len, int timeout_ms)
     
     if (cc == IOTIMEOUT)
     {
-        log_debug("internal_read %d (timeout %d) timed out",
-             len, timeout_ms);
+        log_debug("internal_read %u (timeout %d) timed out",
+             (u_int)len, timeout_ms);
         return cc;
     }
     else if (cc == IOERROR)
     {
-        logf(LOG_ERR, "internal_read %d (timeout %d) error in read: %s",
-             len, timeout_ms, strerror(errno));
+        logf(LOG_ERR, "internal_read %u (timeout %d) error in read: %s",
+             (u_int)len, timeout_ms, strerror(errno));
         
         return cc;
     }
     else if (cc == 0) 
     {
-        log_debug("internal_read %d (timeout %d) eof",
-             len, timeout_ms);
+        log_debug("internal_read %u (timeout %d) eof",
+                  (u_int)len, timeout_ms);
         seen_eof_ = true;
         return cc;
     }
@@ -229,8 +229,8 @@ BufferedInput::internal_read(size_t len, int timeout_ms)
 
     int ret = std::min(buf_.fullbytes(), len);
     
-    log_debug("internal_read %d (timeout %d): cc=%d ret %d",
-         len, timeout_ms, cc, ret);
+    log_debug("internal_read %u (timeout %d): cc=%d ret %d",
+              (u_int)len, timeout_ms, cc, ret);
 
     return ret;
 }

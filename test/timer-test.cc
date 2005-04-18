@@ -55,7 +55,8 @@ class PeriodicTimer : public Timer {
     void timeout(struct timeval* now) {
         int late = TIMEVAL_DIFF_USEC(*now, when());
         logf(log_, LOG_INFO, "timer at %ld.%ld (%d usec late)",
-             now->tv_sec, now->tv_usec, late);
+             (long unsigned int)now->tv_sec, (long unsigned int)now->tv_usec,
+             late);
         
         reschedule();
     }

@@ -58,7 +58,7 @@ HexDumpBuffer::hexify()
     {
         // print the offset on each new line
         if (i % 16 == 0) {
-            appendf("%07x ", i);
+            appendf("%07x ", (u_int)i);
         }
         
         // otherwise print a space every two bytes (except the first)

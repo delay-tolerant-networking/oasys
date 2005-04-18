@@ -82,7 +82,7 @@ int
 IO::read(int fd, char* bp, size_t len, const char* log)
 {
     int cc = ::read(fd, (void*)bp, len);
-    if (log) logf(log, LOG_DEBUG, "read %d/%d", cc, len);
+    if (log) logf(log, LOG_DEBUG, "read %d/%u", cc, (u_int)len);
     return cc;
 }
 
@@ -95,7 +95,7 @@ IO::readv(int fd, const struct iovec* iov, int iovcnt, const char* log)
     }
 
     int cc = ::readv(fd, iov, iovcnt);
-    if (log) logf(log, LOG_DEBUG, "readv %d/%d", cc, total);
+    if (log) logf(log, LOG_DEBUG, "readv %d/%u", cc, (u_int)total);
     
     return cc;
 }
@@ -104,7 +104,7 @@ int
 IO::write(int fd, const char* bp, size_t len, const char* log)
 {
     int cc = ::write(fd, (void*)bp, len);
-    if (log) logf(log, LOG_DEBUG, "write %d/%d", cc, len);
+    if (log) logf(log, LOG_DEBUG, "write %d/%u", cc, (u_int)len);
     return cc;
 }
 
@@ -117,7 +117,7 @@ IO::writev(int fd, const struct iovec* iov, int iovcnt, const char* log)
     }
 
     int cc = ::writev(fd, iov, iovcnt);
-    if (log) logf(log, LOG_DEBUG, "writev %d/%d", cc, total);
+    if (log) logf(log, LOG_DEBUG, "writev %d/%u", cc, (u_int)total);
     
     return cc;
 }
@@ -138,7 +138,7 @@ IO::lseek(int fd, off_t offset, int whence, const char* log)
     int cc = ::lseek(fd, offset, whence);
     if (log) {
         logf(log, LOG_DEBUG, "lseek %u %s -> %d",
-             (size_t)offset,
+             (u_int)offset,
              (whence == SEEK_SET) ? "SEEK_SET" :
              (whence == SEEK_CUR) ? "SEEK_CUR" :
              (whence == SEEK_END) ? "SEEK_END" :
@@ -154,7 +154,7 @@ IO::truncate(int fd, off_t length, const char* log)
 {
     int ret = ftruncate(fd, length);
     if (log) {
-        logf(log, LOG_DEBUG, "truncate %u: %d", (size_t)length, ret);
+        logf(log, LOG_DEBUG, "truncate %u: %d", (u_int)length, ret);
     }
     return ret;
 }
@@ -165,7 +165,7 @@ IO::send(int fd, const char* bp, size_t len, int flags,
          const char* log)
 {
     int cc = ::send(fd, (void*)bp, len, flags);
-    if (log) logf(log, LOG_DEBUG, "send %d/%d", cc, len);
+    if (log) logf(log, LOG_DEBUG, "send %d/%u", cc, (u_int)len);
     return cc;
 }
 
@@ -175,7 +175,7 @@ IO::sendto(int fd, char* bp, size_t len, int flags,
            const char* log)
 {
     int cc = ::sendto(fd, (void*)bp, len, flags, to, tolen);
-    if (log) logf(log, LOG_DEBUG, "sendto %d/%d", cc, len);
+    if (log) logf(log, LOG_DEBUG, "sendto %d/%u", cc, (u_int)len);
     return cc;
 }
 
@@ -193,7 +193,7 @@ IO::recv(int fd, char* bp, size_t len, int flags,
             const char* log)
 {
     int cc = ::recv(fd, (void*)(bp), len, flags);
-    if (log) logf(log, LOG_DEBUG, "recv %d/%d", cc, len);
+    if (log) logf(log, LOG_DEBUG, "recv %d/%u", cc, (u_int)len);
     return cc;
 }
 
@@ -203,7 +203,7 @@ IO::recvfrom(int fd, char* bp, size_t len, int flags,
              const char* log)
 {
     int cc = ::recvfrom(fd, (void*)bp, len, flags, from, fromlen);
-    if (log) logf(log, LOG_DEBUG, "recvfrom %d/%d", cc, len);
+    if (log) logf(log, LOG_DEBUG, "recvfrom %d/%u", cc, (u_int)len);
     return cc;
 }
 
@@ -282,7 +282,7 @@ int
 IO::readall(int fd, char* bp, size_t len, const char* log)
 {
     int cc = rwall(::read, fd, bp, len, log);
-    if (log) logf(log, LOG_DEBUG, "readall %d/%d", cc, len);
+    if (log) logf(log, LOG_DEBUG, "readall %d/%u", cc, (u_int)len);
     return cc;
 }
 
@@ -290,7 +290,7 @@ int
 IO::writeall(int fd, const char* bp, size_t len, const char* log)
 {
     int cc = rwall((rw_func_t)::write, fd, (char*)bp, len, log);
-    if (log) logf(log, LOG_DEBUG, "writeall %d/%d", cc, len);
+    if (log) logf(log, LOG_DEBUG, "writeall %d/%u", cc, (u_int)len);
     return cc;
 }
 
@@ -347,8 +347,8 @@ IO::rwvall(rw_vfunc_t rw, int fd, const struct iovec* const_iov, int iovcnt,
          */
         while (cc >= (int)iov[0].iov_len)
         {
-            if (log) logf(log, LOG_DEBUG, "%s skipping all %d of %p", log_func,
-                          iov[0].iov_len, iov[0].iov_base);
+            if (log) logf(log, LOG_DEBUG, "%s skipping all %u of %p", log_func,
+                          (u_int)iov[0].iov_len, iov[0].iov_base);
             cc -= iov[0].iov_len;
             iov++;
             iovcnt--;

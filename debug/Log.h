@@ -99,7 +99,7 @@
 #include <string>
 #include <vector>
 
-#if defined(__GNUC__) && !defined(__APPLE__)
+#if defined(__GNUC__)
 # define PRINTFLIKE(fmt, arg) __attribute__((format (printf, fmt, arg)))
 #else
 # define PRINTFLIKE(a, b)
