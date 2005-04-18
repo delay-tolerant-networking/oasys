@@ -46,6 +46,8 @@
 #include <ctype.h>
 #include <string>
 #include <vector>
+#include <set>
+#include <map>
 
 // Though hash_set was part of std:: in the 2.9x gcc series, it's been
 // moved to ext/__gnu_cxx:: in 3.x
@@ -72,13 +74,43 @@ struct StringHash {
 };
 
 /**
- * Comparison function class for std::strings.
+ * Equality function class for std::strings.
+ */
+struct StringLessThan {
+    bool operator()(const std::string& str1, const std::string& str2) const
+    {
+        return (str1.compare(str2) < 0);
+    }
+};
+
+/**
+ * Equality function class for std::strings.
  */
 struct StringEquals {
     bool operator()(const std::string& str1, const std::string& str2) const
     {
-        return str1 == str2;
+        return (str1 == str2);
     }
+};
+
+/**
+ * A StringSet is a set with std::string members
+ */
+class StringSet : public std::set<std::string, StringEquals> {
+};
+
+/**
+ * A StringMap is a map with std::string keys.
+ */
+template <class _Type> class StringMap :
+    public std::map<std::string, _Type, StringLessThan> {
+};
+
+/**
+ * A StringMultiMap is a multimap with std::string keys.
+ */
+template <class _Type> class StringMultiMap :
+    public std::multimap<std::string, _Type, StringLessThan> {
 };
 
 /**
