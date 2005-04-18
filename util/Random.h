@@ -39,10 +39,10 @@ class PermutationArray {
 public:
     PermutationArray(size_t size);
     
-    size_t map(size_t i);
+    unsigned int map(unsigned int i);
 
 private:
-    std::vector<size_t> array_;
+    std::vector<unsigned int> array_;
     size_t size_;
 };
 

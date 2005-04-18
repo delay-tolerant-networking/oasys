@@ -45,8 +45,8 @@ PermutationArray::PermutationArray(size_t size)
     }
 }
 
-size_t
-PermutationArray::map(size_t i) {
+unsigned int
+PermutationArray::map(unsigned int i) {
     ASSERT(i<size_); 
     return array_[i];
 }
