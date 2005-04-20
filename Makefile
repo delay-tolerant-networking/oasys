@@ -12,6 +12,7 @@ COMPAT_SRCS :=					\
 	compat/inet_aton.c			\
 
 DEBUG_SRCS :=					\
+	debug/Debug.cc				\
 	debug/gdtoa-dmisc.c			\
 	debug/gdtoa-dtoa.c			\
 	debug/gdtoa-gdtoa.c			\

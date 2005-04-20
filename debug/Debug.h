@@ -48,6 +48,7 @@
         oasys::logf("/assert", oasys::LOG_CRIT,                 \
                     "ASSERTION FAILED (" #x ") at %s:%d",       \
                     __FILE__, __LINE__);                        \
+        ::oasys::Breaker::break_here();                         \
         abort();                                                \
     } } while(0)
 
@@ -56,6 +57,7 @@
         oasys::logf("/assert", oasys::LOG_CRIT,                 \
                     "ASSERTION FAILED (" #x ") at %s:%d: " fmt, \
                     __FILE__, __LINE__, ## args);               \
+        ::oasys::Breaker::break_here();                         \
         abort();                                                \
     } } while(0)
 
@@ -63,6 +65,7 @@
     do {                                                                \
        oasys::logf("/panic", oasys::LOG_CRIT, "PANIC at %s:%d: " fmt,   \
                    __FILE__, __LINE__ , ## args);                       \
+        ::oasys::Breaker::break_here();                                 \
         abort();                                                        \
     } while(0)
 
@@ -70,6 +73,7 @@
     do { oasys::logf("/assert", oasys::LOG_CRIT,        \
                      "NOTREACHED REACHED at %s:%d\n",   \
                      __FILE__, __LINE__);               \
+        ::oasys::Breaker::break_here();                 \
         abort();                                        \
     } while(0);
 
@@ -77,6 +81,7 @@
     do { oasys::logf("/assert", oasys::LOG_CRIT,        \
                      "%s NOT IMPLEMENTED at %s:%d\n",   \
                      __FUNCTION__, __FILE__, __LINE__); \
+        ::oasys::Breaker::break_here();                 \
         abort();                                        \
     } while(0);
 
@@ -94,6 +99,18 @@ template <>      struct STATIC_ASSERTION_FAILURE<true>{};
 	sizeof(STATIC_ASSERTION_FAILURE<(bool)(_x)>) \
     > static_assert_typedef_ ## _what;
 /** @} */
+
+namespace oasys {
+class Breaker {
+public:
+    /** 
+     * This is a convenience method for setting a breakpoint here, in
+     * case the stack is completely corrupted by the time the program
+     * hits abort(). (Seems completely bogus, but it happens.)
+     */
+    static void break_here();
+};
+} // namespace oasys
 
 #include "../memory/Memory.h"
 
