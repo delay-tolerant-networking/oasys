@@ -50,7 +50,7 @@
 namespace oasys {
 
 TCPServer::TCPServer(char* logbase)
-    : IPSocket(logbase, SOCK_STREAM)
+    : IPSocket(SOCK_STREAM, logbase)
 {
     params_.reuseaddr_ = 1;
 }

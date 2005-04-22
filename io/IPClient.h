@@ -49,9 +49,14 @@ namespace oasys {
  * TCPClient and UDPClient derive from IPClient.
  */
 class IPClient : public IPSocket, public IOClient {
+private:
+    IPClient(); 		///< Prohibited constructor
+    IPClient(const IPClient&);	///< Prohibited constructor
+    
 public:
-    IPClient(const char* logbase, int socktype);
-    IPClient(int fd, in_addr_t remote_addr, u_int16_t remote_port,
+    IPClient(int socktype, const char* logbase);
+    IPClient(int socktype, int sock,
+             in_addr_t remote_addr, u_int16_t remote_port,
              const char* logbase);
     virtual ~IPClient();
     

@@ -46,7 +46,7 @@
 namespace oasys {
 
 UDPClient::UDPClient(const char* logbase)
-    : IPClient(logbase, SOCK_DGRAM)
+    : IPClient(SOCK_DGRAM, logbase)
 {
 }
 

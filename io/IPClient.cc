@@ -44,14 +44,15 @@
 
 namespace oasys {
 
-IPClient::IPClient(const char* logbase, int socktype)
-    : IPSocket(logbase, socktype)
+IPClient::IPClient(int socktype, const char* logbase)
+    : IPSocket(socktype, logbase)
 {
 }
 
-IPClient::IPClient(int fd, in_addr_t remote_addr, u_int16_t remote_port,
+IPClient::IPClient(int socktype, int sock,
+                   in_addr_t remote_addr, u_int16_t remote_port,
                    const char* logbase)
-    : IPSocket(fd, remote_addr, remote_port, logbase)
+    : IPSocket(socktype, sock, remote_addr, remote_port, logbase)
 {
 }
 

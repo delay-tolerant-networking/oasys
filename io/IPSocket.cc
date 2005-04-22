@@ -58,7 +58,7 @@ namespace oasys {
 
 int IPSocket::abort_on_error_ = 0;
 
-IPSocket::IPSocket(const char* logbase, int socktype)
+IPSocket::IPSocket(int socktype, const char* logbase)
     : Logger(logbase)
 {
     state_ = INIT;
@@ -93,10 +93,12 @@ IPSocket::init_socket()
     configure();
 }
 
-IPSocket::IPSocket(int sock, in_addr_t remote_addr, u_int16_t remote_port,
+IPSocket::IPSocket(int socktype, int sock,
+                   in_addr_t remote_addr, u_int16_t remote_port,
                    const char* logbase)
 {
     fd_ = sock;
+    socktype_ = socktype;
     logpathf("%s/%d", logbase, sock);
     
     state_ = ESTABLISHED;

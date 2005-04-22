@@ -46,6 +46,9 @@ namespace oasys {
  * Wrapper class for a udp client socket.
  */
 class UDPClient : public IPClient {
+private:
+    UDPClient(const UDPClient&);	///< Prohibited constructor
+    
 public:
     UDPClient(const char* logbase = "/udpclient");
 };

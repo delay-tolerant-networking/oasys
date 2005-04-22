@@ -66,10 +66,15 @@ namespace oasys {
  * for TCPClient, TCPServer, and UDPSocket.
  */
 class IPSocket : public Logger {
+private:
+    IPSocket(); 		///< Prohibited constructor
+    IPSocket(const IPSocket&);	///< Prohibited constructor
+    
 public:
     // Constructor / destructor
-    IPSocket(const char* logbase, int socktype);
-    IPSocket(int fd, in_addr_t remote_addr, u_int16_t remote_port,
+    IPSocket(int socktype, const char* logbase);
+    IPSocket(int socktype, int sock,
+             in_addr_t remote_addr, u_int16_t remote_port,
              const char* logbase);
     virtual ~IPSocket();
 

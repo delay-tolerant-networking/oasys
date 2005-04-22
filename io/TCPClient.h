@@ -47,6 +47,9 @@ namespace oasys {
  * Wrapper class for a tcp client socket.
  */
 class TCPClient : public IPClient {
+private:
+    TCPClient(const TCPClient&);	///< Prohibited constructor
+    
 public:
     TCPClient(const char* logbase = "/tcpclient");
     TCPClient(int fd, in_addr_t remote_addr, u_int16_t remote_port,
