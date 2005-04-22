@@ -32,7 +32,7 @@ protected:
                 snprintf(outpkt_, sizeof(outpkt_), "ping %d", i);
                 write(outpkt_, strlen(outpkt_));
                 int cc = read(inpkt_, sizeof(inpkt_));
-                log_info("got packet '%s' of size %d", inpkt_, cc);
+                log_info("got packet '%.*s' of size %d", cc, inpkt_, cc);
                 sleep(1);
             }
             close();
