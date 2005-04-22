@@ -82,7 +82,7 @@ struct NullStringShim : public SerializableObject {
 
     // virtual from SerializableObject
     void serialize(SerializeAction* a) {
-        size_t len;
+        size_t len = 0;
         a->process("string", 
 		   reinterpret_cast<u_char**>(&str_), 
 		   &len, 
