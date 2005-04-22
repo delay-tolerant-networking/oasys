@@ -139,9 +139,12 @@ DECLARE_TEST(NullTerminationTestBug) {
     size_t end = str.find('e');
     std::string key(str, 0, end);
     
-    // this elucidates the bug
+    // this elucidates the bug by scribbling on the null character and
+    // some others that follow the actual string data
     bm["abcd"] = 1;
-    key[4] = 'x';
+    for (int i = 4; i < 10; ++i) {
+        ((char*)key.data())[i] = 'x';
+    }
     CHECK(bm.find("abcd") != bm.end());
     CHECK(bm.find(key) == bm.end());
     CHECK(bm.find(key.c_str()) != bm.end());
