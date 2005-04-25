@@ -153,6 +153,15 @@ public:
     
     virtual ~Timer() {}
     
+    /**
+     *  Need this to support the new rescheduling mechanism. The way the reschedule_in 
+     *  function works is it makes a copy, cancels the old one, and schedules the copy.
+     *
+     *  Unfortunately, copy constructors can't be virtual, so we have to brute-force it 
+     *  with a virtual copy() method instead. Oh well.
+     */
+    virtual Timer* copy() = 0;   
+
     void schedule_at(struct timeval *when)
     {
         TimerSystem::instance()->schedule_at(when, this);
@@ -161,6 +170,23 @@ public:
     void schedule_in(int milliseconds)
     {
         TimerSystem::instance()->schedule_in(milliseconds, this);
+    }
+
+    /**
+     *  Reschedule this event to happen milliseconds later. 
+     *
+     *  What it really does is make a copy of the current timer, and schedule that one.
+     *  The current timer, in return, gets cancelled, and will be deleted upon timeout.
+     *
+     */
+    Timer* reschedule_in(int milliseconds)
+    {
+        Timer *c=copy();
+        c->pending_ = 0;
+
+        TimerSystem::instance()->schedule_in(milliseconds, c);
+        cancel(true);
+        return c;
     }
 
     void schedule_immediate()
@@ -192,6 +218,7 @@ private:
     
     struct timeval when_;
     bool pending_;
+protected:
     bool cancelled_;
     bool delete_on_cancel_;
 };

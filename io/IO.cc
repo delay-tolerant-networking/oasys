@@ -314,6 +314,7 @@ IO::rwvall(rw_vfunc_t rw, int fd, const struct iovec* const_iov, int iovcnt,
         iov = dynamic_iov;
     }
     
+    memset(static_iov, 0, sizeof(struct iovec) * (iovcnt<16?16:iovcnt));
     memcpy(iov, const_iov, sizeof(struct iovec) * iovcnt);
     
     int cc, total = 0, done = 0;

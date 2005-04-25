@@ -96,6 +96,7 @@ Thread::thread_run(void* t)
 Thread::Thread(int flags)
     : flags_(flags)
 {
+  pthread_=0;
 }
 
 Thread::~Thread()
