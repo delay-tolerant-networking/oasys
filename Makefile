@@ -75,6 +75,7 @@ UTIL_SRCS :=					\
 	util/ScratchBuffer.cc			\
 	util/StreamBuffer.cc			\
 	util/StringBuffer.cc			\
+	util/StringUtils.cc			\
 	util/URL.cc				\
 
 SRCS := \

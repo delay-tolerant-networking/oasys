@@ -96,7 +96,9 @@ struct StringEquals {
 /**
  * A StringSet is a set with std::string members
  */
-class StringSet : public std::set<std::string, StringEquals> {
+class StringSet : public std::set<std::string, StringLessThan> {
+public:
+    void dump(const char* log) const;
 };
 
 /**
@@ -116,7 +118,8 @@ template <class _Type> class StringMultiMap :
 /**
  * A StringHashSet is a hash set with std::string members.
  */
-class StringHashSet : public _std::hash_set<std::string, StringHash, StringEquals> {
+class StringHashSet :
+        public _std::hash_set<std::string, StringHash, StringEquals> {
 public:
     void dump(const char* log) const;
 };
