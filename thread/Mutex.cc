@@ -80,6 +80,9 @@ Mutex::Mutex(const char* name, lock_type_t type, bool keep_quiet)
     case TYPE_RECURSIVE:
         mutex_type = PTHREAD_MUTEX_RECURSIVE;
         break;
+    default:
+        NOTREACHED;
+        break;
     }
 
     if (pthread_mutexattr_settype(&attrs, mutex_type) != 0) {
