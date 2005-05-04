@@ -81,7 +81,7 @@ Mutex::Mutex(const char* name, lock_type_t type, bool keep_quiet)
         mutex_type = PTHREAD_MUTEX_RECURSIVE;
         break;
     default:
-        NOTREACHED;
+        NOTREACHED; // needed to avoid uninitialized variable warning
         break;
     }
 
