@@ -36,6 +36,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/errno.h>
 #include "FileIOClient.h"
 #include "IO.h"
 
@@ -106,6 +107,47 @@ int
 FileIOClient::truncate(off_t length)
 {
     return IO::truncate(fd_, length, logpath_);
+}
+
+int
+FileIOClient::mkstemp(char* temp)
+{
+    path_.assign(temp);
+    if (fd_ != -1) {
+        log_err("can't call mkstemp on open file");
+        return -1;
+    }
+
+    fd_ = IO::mkstemp(temp, logpath_);
+    return fd_;
+}
+
+int
+FileIOClient::copy_contents(size_t len, FileIOClient* dest)
+{
+    char buf[1024];
+    int cnt;
+    int origlen = len;
+
+    while (len > 0) {
+        cnt = (len < sizeof(buf)) ? len : sizeof(buf);
+
+        if (readall(buf, cnt) != cnt) {
+            log_err("copy_contents: error reading %d bytes: %s",
+                    cnt, strerror(errno));
+            return -1;
+        }
+
+        if (dest->writeall(buf, cnt) != cnt) {
+            log_err("copy_contents: error writing %d bytes: %s",
+                    cnt, strerror(errno));
+            return -1;
+        }
+
+        len -= cnt;
+    }
+    
+    return origlen;
 }
 
 } // namespace oasys

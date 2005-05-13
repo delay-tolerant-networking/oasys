@@ -148,7 +148,6 @@ IO::lseek(int fd, off_t offset, int whence, const char* log)
     return cc;
 }
 
-    
 int
 IO::truncate(int fd, off_t length, const char* log)
 {
@@ -159,6 +158,15 @@ IO::truncate(int fd, off_t length, const char* log)
     return ret;
 }
 
+int
+IO::mkstemp(char* templ, const char* log)
+{
+    int ret = mkstemp(templ);
+    if (log) {
+        logf(log, LOG_DEBUG, "mkstemp %s: %d", templ, ret);
+    }
+    return ret;
+}
 
 int
 IO::send(int fd, const char* bp, size_t len, int flags,

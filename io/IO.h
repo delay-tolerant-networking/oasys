@@ -97,6 +97,8 @@ public:
     
     static int truncate(int fd, off_t length,
                         const char* log = NULL);
+
+    static int mkstemp(char* templ, const char* log = NULL);
     
     static int send(int fd, const char* bp, size_t len, int flags,
                     const char* log = NULL);

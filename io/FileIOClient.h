@@ -65,7 +65,12 @@ public:
     int unlink();
     int lseek(off_t offset, int whence);
     int truncate(off_t length);
+    int mkstemp(char* temp);
     ///@}
+
+    /// Copy len bytes of file contents from the current offset to
+    /// another open file. Return the amount copied or -1 if error
+    int copy_contents(size_t len, FileIOClient* dest);
 
     /// Set the path associated with this file handle
     void set_path(const char* path) {
@@ -80,6 +85,9 @@ public:
 
     /// Path accessor
     const char* path() { return path_.c_str(); }
+
+    /// Path accessor
+    size_t path_len() { return path_.length(); }
 
 protected:
     /// Path to the file
