@@ -145,13 +145,15 @@ int
 TCPServerThread::bind_listen_start(in_addr_t local_addr,
                                    u_int16_t local_port)
 {
-    int ret = bind(local_addr, local_port) || listen();
-    if(!ret)
-    {
-        start();
-    }
-
-    return ret;
+    if (bind(local_addr, local_port) != 0)
+        return -1;
+    
+    if (listen() != 0)
+        return -1;
+    
+    start();
+    
+    return 0;
 }
 
 } // namespace oasys
