@@ -70,6 +70,7 @@ UTIL_SRCS :=					\
 	util/HexDumpBuffer.cc			\
 	util/Options.cc				\
 	util/OptParser.cc			\
+	util/ProgressPrinter.cc			\
 	util/Random.cc				\
 	util/RateEstimator.cc			\
 	util/ScratchBuffer.cc			\
@@ -96,6 +97,9 @@ OBJS := $(OBJS:.c=.o)
 COMPAT_OBJS := $(COMPAT_SRCS:.c=.o) version.o
 
 ALLSRCS := $(SRCS)
+
+CPPS := $(SRCS:.cc=.E)
+CPPS := $(CPPS:.c=.E)
 
 #
 # Default target is to build the library and the compat library
@@ -135,6 +139,9 @@ liboasyscompat.a: $(COMPAT_OBJS)
 	rm -f $@
 	ar ruc $@ $^
 	ranlib $@ || true
+
+.PHONY: cpps
+cpps: $(CPPS)
 
 #
 # Need special rules for the gdtoa sources adapted from the source
