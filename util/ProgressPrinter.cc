@@ -89,7 +89,7 @@ ProgressPrinter::done(const char* fmt, ...)
     ::gettimeofday(&end, 0);
     unsigned long elapsed = TIMEVAL_DIFF_MSEC(end, start_);
     
-    printf(" (%lu.%lu secs)\n", elapsed / 1000, elapsed % 1000);
+    printf(" (%lu.%.3lu secs)\n", elapsed / 1000, (elapsed % 1000));
 }
 
 } // namespace oasys
