@@ -171,7 +171,8 @@ TimerSystem::pop_timer(struct timeval* now)
         log_debug("popping cancelled timer at %u.%u",
                   (u_int)now->tv_sec, (u_int)now->tv_usec);
         next_timer->cancelled_ = 0;
-        if (next_timer->delete_on_cancel_) {
+        
+        if (next_timer->cancel_flags_ == Timer::DELETE_ON_CANCEL) {
             log_debug("deleting cancelled timer at %u.%u",
                       (u_int)now->tv_sec, (u_int)now->tv_usec);
             delete next_timer;

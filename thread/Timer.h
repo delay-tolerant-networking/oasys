@@ -149,19 +149,10 @@ private:
  */
 class Timer {
 public:
-    Timer() : pending_(false), cancelled_(false), delete_on_cancel_(false) {}
+    Timer() : pending_(false), cancelled_(false), cancel_flags_(NO_DELETE) {}
     
     virtual ~Timer() {}
     
-    /**
-     *  Need this to support the new rescheduling mechanism. The way the reschedule_in 
-     *  function works is it makes a copy, cancels the old one, and schedules the copy.
-     *
-     *  Unfortunately, copy constructors can't be virtual, so we have to brute-force it 
-     *  with a virtual copy() method instead. Oh well.
-     */
-    virtual Timer* copy() = 0;   
-
     void schedule_at(struct timeval *when)
     {
         TimerSystem::instance()->schedule_at(when, this);
@@ -172,31 +163,19 @@ public:
         TimerSystem::instance()->schedule_in(milliseconds, this);
     }
 
-    /**
-     *  Reschedule this event to happen milliseconds later. 
-     *
-     *  What it really does is make a copy of the current timer, and schedule that one.
-     *  The current timer, in return, gets cancelled, and will be deleted upon timeout.
-     *
-     */
-    Timer* reschedule_in(int milliseconds)
-    {
-        Timer *c=copy();
-        c->pending_ = 0;
-
-        TimerSystem::instance()->schedule_in(milliseconds, c);
-        cancel(true);
-        return c;
-    }
-
     void schedule_immediate()
     {
         TimerSystem::instance()->schedule_immediate(this);
     }
+
+    typedef enum {
+        NO_DELETE = 0,
+        DELETE_ON_CANCEL = 1
+    } cancel_flags_t;
     
-    bool cancel(bool delete_on_cancel = false)
+    bool cancel(cancel_flags_t cancel_flags)
     {
-        delete_on_cancel_ = delete_on_cancel;
+        cancel_flags_ = cancel_flags;
         return TimerSystem::instance()->cancel(this);
     }
 
@@ -220,7 +199,7 @@ private:
     bool pending_;
 protected:
     bool cancelled_;
-    bool delete_on_cancel_;
+    cancel_flags_t cancel_flags_;
 };
 
 /**
