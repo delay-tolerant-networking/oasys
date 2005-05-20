@@ -89,10 +89,12 @@ level2str_t log_levelnames[] =
 Log* Log::instance_ = NULL;
 
 Log::Log()
-    : inited_(false), logfd_(-1),
+    : output_flags_(OUTPUT_TIME),
+      inited_(false), 
+      logfd_(-1),
       default_threshold_(LOG_DEFAULT_THRESHOLD)
 {
-    lock_ = new SpinLock();
+    lock_      = new SpinLock();
     rule_list_ = new RuleList();
 }
 
@@ -197,7 +199,6 @@ Log::parse_debug_file(const char* debug_path)
 
 	    ++linenum;
 
-            // parse the line
             logpath = line;
 
             // skip leading whitespace
@@ -211,6 +212,20 @@ Log::parse_debug_file(const char* debug_path)
             if (logpath[0] == '#')
                 continue;
 
+            // printing options
+            if (logpath[0] == '%') {
+                if (strstr(logpath, "no_time") != 0) {
+                    output_flags_ &= ~OUTPUT_TIME;
+                }
+                if (strstr(logpath, "brief") != 0) {
+                    output_flags_ |= OUTPUT_SHORT;
+                }
+                if (strstr(logpath, "pretty") != 0) {
+                    output_flags_ |= OUTPUT_PRETTY;
+                }
+                continue;
+            }
+
             // find the end of path and null terminate
             level = logpath;
             while (*level && !isspace(*level)) ++level;
@@ -220,7 +235,7 @@ Log::parse_debug_file(const char* debug_path)
             // skip any other whitespace
             while (level && isspace(*level)) ++level;
             if (!level) {
- parseerr:
+ parse_err:
                 fprintf(stderr, "Error in log configuration %s line %d\n",
                         debug_path, linenum);
                 continue;
@@ -233,7 +248,7 @@ Log::parse_debug_file(const char* debug_path)
 
             log_level_t threshold = str2level(level);
             if (threshold == LOG_INVALID) {
-                goto parseerr;
+                goto parse_err;
             }
 
             new_rule_list->push_back(Rule(logpath, threshold));
@@ -475,15 +490,66 @@ Log::vlogf(const char *path, log_level_t level, const char *fmt, va_list ap)
     int buflen = LOG_MAX_LINELEN - 1; /* Save a character for newline. */
     int len;
 
-    // tack on a timestamp
-    struct timeval tv;
-    getlogtime(&tv);
-    len = snprintf(ptr, buflen, "[%s%ld.%06ld %s %s] ",
-                   prefix_.c_str(), (long)tv.tv_sec, (long)tv.tv_usec,
-                   path, level2str(level));
+    // print header
+    char* pretty_begin = "";
+    char* pretty_end   = "";
+    char* pretty_type  = "";
 
-    buflen -= len;
-    ptr += len;
+    if(output_flags_ & OUTPUT_PRETTY) {
+        pretty_begin = "\033[33m";
+        pretty_end   = "\033[0m";
+        pretty_type  = "\033[36m";
+    }
+
+    if (prefix_.size() > 0) {
+        len = snprintf(ptr, buflen, "%s[%s", 
+                       pretty_begin, prefix_.c_str());
+        buflen -= len;
+        ptr += len;
+    } else {
+        len = snprintf(ptr, buflen, "%s[", pretty_begin);
+        buflen -= len;
+        ptr += len;        
+    }
+    
+    if (output_flags_ & OUTPUT_TIME) {
+        struct timeval tv;
+        getlogtime(&tv);
+        len = snprintf(ptr, buflen, 
+                       "%ld.%06ld ",
+                       (long)tv.tv_sec, (long)tv.tv_usec);
+        buflen -= len;
+        ptr += len;
+    }
+
+    if (output_flags_ & OUTPUT_SHORT) {
+        len = snprintf(ptr, buflen, "%.19s ", path);
+        buflen -= len;
+        ptr    += len;
+
+        for (int j = len; j<20; ++j) {
+            --buflen;
+            *ptr++ = ' ';
+        }
+        
+        len = snprintf(ptr, buflen, "%s%c%s]%s ",
+                       pretty_type,
+                       level2str(level)[0],
+                       pretty_begin,
+                       pretty_end);
+        buflen -= len;
+        ptr    += len;
+    } else {
+        len = snprintf(ptr, buflen, 
+                       "%s %s%s%s]%s ", 
+                       path, 
+                       pretty_type,
+                       level2str(level),
+                       pretty_begin,
+                       pretty_end);
+        buflen -= len;
+        ptr += len;        
+    }
 
     // Generate string.
     len = vsnprintf(ptr, buflen, fmt, ap);

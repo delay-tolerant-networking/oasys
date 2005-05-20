@@ -282,7 +282,7 @@ private:
      * always return the most specific match.
      */
     struct RuleCompare {
-        bool operator()(const Rule& rule1, const Rule& rule2)
+            bool operator()(const Rule& rule1, const Rule& rule2)
         {
             return (rule1.path_.length() > rule2.path_.length());
         }
@@ -293,6 +293,16 @@ private:
      */
     typedef std::vector<Rule> RuleList;
     
+    /**
+     * Output format types
+     */
+    enum {
+        OUTPUT_TIME   = 1<<0,   // output time in logs
+        OUTPUT_SHORT  = 1<<1,   // shorten names
+        OUTPUT_PRETTY = 1<<2,   // beauty
+    };
+    int output_flags_;
+
     /**
      * Find a rule given a path.
      */
