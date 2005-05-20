@@ -44,8 +44,8 @@ SERIALIZE_SRCS :=				\
 	serialize/SQLSerialize.cc		\
 
 STORAGE_SRCS :=					\
-	storage/BerkeleyTable.cc		\
-	storage/DurableTable.cc			\
+	storage/BerkeleyDBStore.cc		\
+	storage/DurableStore.cc			\
 
 TCLCMD_SRCS :=					\
 	tclcmd/TclCommand.cc			\

@@ -9,21 +9,23 @@
 #include "../thread/Mutex.h"
 #include "../util/ScratchBuffer.h"
 
-#include "DurableTable.h"
+#include "DurableStore.h"
 
 namespace oasys {
 
 // forward decls
-class BerkeleyTable;
+class BerkeleyDBStore;
+class BerkeleyDBTable;
+class BerkeleyDBIterator;
 
 /**
  * Interface for the generic datastore
  */
-class BerkeleyStore : public DurableTableStore, public Logger {
-    friend class BerkeleyTable;
+class BerkeleyDBStore : public DurableStore, public Logger {
+    friend class BerkeleyDBTable;
 
 public:
-    ~BerkeleyStore();
+    ~BerkeleyDBStore();
 
     /**
      * Do initialization. Must do this once before you try to obtain
@@ -40,10 +42,10 @@ public:
      */
     static void shutdown_for_debug();
 
-    /// @{ Virtual from DurableTable
-    virtual int new_table(DurableTable** table, DurableTableId new_id = -1);
-    virtual int del_table(DurableTableId id);
-    virtual int get_table(DurableTableId id, DurableTable** table);
+    /// @{ Virtual from DurableStore
+    virtual int new_table(DurableTable** table, DurableTableID new_id = -1);
+    virtual int del_table(DurableTableID id);
+    virtual int get_table(DurableTableID id, DurableTable** table);
     /// @}
 
 private:
@@ -52,24 +54,24 @@ private:
     DB_ENV*     dbenv_;       ///< database environment for all tables
 
     Mutex next_id_mutex_;
-    DurableTableId next_id_;  ///< next table id to hand out
+    DurableTableID next_id_;  ///< next table id to hand out
 
     Mutex ref_count_mutex_;
     typedef std::map<int, int> RefCountMap;
     RefCountMap ref_count_;   ///< Ref. count for open tables.
 
     /// Id the represents the metatable of tables
-    static const DurableTableId META_TABLE_ID = -1;
+    static const DurableTableID META_TABLE_ID = -1;
 
     /// Constructor - protected for singleton
-    BerkeleyStore();
+    BerkeleyDBStore();
 
     /// Get meta-table
-    virtual int get_meta_table(BerkeleyTable** table);
+    virtual int get_meta_table(BerkeleyDBTable** table);
     
-    /// @{ Changes the ref count on the tables, used by BerkeleyTable 
-    int acquire_table(DurableTableId id);
-    int release_table(DurableTableId id);
+    /// @{ Changes the ref count on the tables, used by BerkeleyDBTable 
+    int acquire_table(DurableTableID id);
+    int release_table(DurableTableID id);
     /// @}
 
     /// Get the string name of a table
@@ -89,25 +91,25 @@ private:
  * Object that encapsulates a single table. Multiple instances of
  * this object represent multiple uses of the same table.
  */
-class BerkeleyTable : public DurableTable, public Logger {
-    friend class BerkeleyStore;
-    friend class BerkeleyTableItr;
+class BerkeleyDBTable : public DurableTable, public Logger {
+    friend class BerkeleyDBStore;
+    friend class BerkeleyDBIterator;
 
 public:
-    ~BerkeleyTable();
+    ~BerkeleyDBTable();
 
     /// @{ virtual from DurableTable 
     int get(const SerializableObject& key, SerializableObject* data);
     int put(const SerializableObject& key, const SerializableObject& data);
     int del(const SerializableObject& key);
-    int itr(DurableTableItr** itr);
+    int itr(DurableIterator** itr);
     /// @}
 
 private:
     /**
      * Only DataStore can create DsTables
      */
-    BerkeleyTable(DurableTableId id, DB* db);
+    BerkeleyDBTable(DurableTableID id, DB* db);
 
     /// Whether a specific key exists in the table.
     int key_exists(const void* key, size_t key_len);
@@ -116,7 +118,7 @@ private:
      * Helper method for flattening keys from the key objects.
      */
     size_t flatten_key(const SerializableObject& key, 
-                    u_char* key_buf, size_t size);
+                       u_char* key_buf, size_t size);
 
     DB* db_;
 
@@ -124,16 +126,16 @@ private:
     ScratchBuffer scratch_;
 };
 
-class BerkeleyTableItr : public DurableTableItr, public Logger {
-    friend class BerkeleyTable;
+class BerkeleyDBIterator : public DurableIterator, public Logger {
+    friend class BerkeleyDBTable;
 private:
     /** Create an iterator for table t. These should not be called
-     * except by BerkeleyTable. */
-    BerkeleyTableItr(DurableTable* t);
-    BerkeleyTableItr(DurableTable* t, void* k, int len); // UNIMPLEMENTED for now
+     * except by BerkeleyDBTable. */
+    BerkeleyDBIterator(DurableTable* t);
+    BerkeleyDBIterator(DurableTable* t, void* k, int len); // UNIMPLEMENTED for now
 
 public:
-    ~BerkeleyTableItr();
+    ~BerkeleyDBIterator();
     
     /// @{ Obtain the raw byte representations of the key and data.
     // Buffers are only valid until the next invocation of the
@@ -142,7 +144,7 @@ public:
     int raw_data(void** data, size_t* len);
     /// @}
     
-    /// @{ virtual from DurableTableItr
+    /// @{ virtual from DurableIterator
     int next();
     int get(SerializableObject* key, SerializableObject* data);
     /// @}

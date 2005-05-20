@@ -3,7 +3,7 @@
 #include "util/UnitTest.h"
 #include "util/StringBuffer.h"
 #include "util/Random.h"
-#include "storage/BerkeleyTable.h"
+#include "storage/BerkeleyDBStore.h"
 #include "serialize/TypeShims.h"
 
 using namespace oasys;
@@ -11,25 +11,25 @@ using namespace std;
 
 std::string    g_db_name      = "test";
 const char*    g_config_dir   = "output/berkeley-db-test/berkeley-db-test";
-DurableTableId g_id;
+DurableTableID g_id;
 
 DECLARE_TEST(DBInit) {
-    BerkeleyStore::init(g_db_name,
+    BerkeleyDBStore::init(g_db_name,
                         g_config_dir,
                         true, 0);
 
-    BerkeleyStore::shutdown();
+    BerkeleyDBStore::shutdown();
     return 0;
 }
 
 DECLARE_TEST(TableCreate) {
-    BerkeleyStore::init(g_db_name,
+    BerkeleyDBStore::init(g_db_name,
                         g_config_dir,
                         false, 0);
 
     DurableTable* table1;
     DurableTable* table2;
-    DurableTableStore* store = DurableTableStore::instance();
+    DurableStore* store = DurableStore::instance();
 
     CHECK(store->new_table(&table1, 10) == 0);
     CHECK(store->new_table(&table2, 10) == DS_EXISTS);
@@ -48,15 +48,15 @@ DECLARE_TEST(TableCreate) {
 	delete table1;
     }
 
-    BerkeleyStore::shutdown();
+    BerkeleyDBStore::shutdown();
     return 0;
 }
 
 DECLARE_TEST(Insert) {
-    BerkeleyStore::init(g_db_name,
+    BerkeleyDBStore::init(g_db_name,
                         g_config_dir,
                         false, 0);
-    DurableTableStore* store = DurableTableStore::instance();
+    DurableStore* store = DurableStore::instance();
     DurableTable* table;
     CHECK(store->new_table(&table) == 0);
     
@@ -74,12 +74,12 @@ DECLARE_TEST(Insert) {
     }
 
     delete table; table = 0;
-    BerkeleyStore::shutdown();
+    BerkeleyDBStore::shutdown();
 
-    BerkeleyStore::init(g_db_name,
+    BerkeleyDBStore::init(g_db_name,
                         g_config_dir,
                         false, 0);
-    store = DurableTableStore::instance();
+    store = DurableStore::instance();
     CHECK(store->get_table(g_id, &table) == 0);
 
     PermutationArray pa(500);
@@ -97,16 +97,16 @@ DECLARE_TEST(Insert) {
     }
 
     delete table; table = 0;
-    BerkeleyStore::shutdown();
+    BerkeleyDBStore::shutdown();
 
     return 0;
 }
 
 DECLARE_TEST(Delete) {
-    BerkeleyStore::init(g_db_name,
+    BerkeleyDBStore::init(g_db_name,
                         g_config_dir,
                         false, 0);
-    DurableTableStore* store = DurableTableStore::instance();
+    DurableStore* store = DurableStore::instance();
     DurableTable* table;
     
     CHECK(store->get_table(g_id, &table) == 0);
@@ -131,15 +131,15 @@ DECLARE_TEST(Delete) {
 
     delete table; table = 0;
 
-    BerkeleyStore::shutdown();
+    BerkeleyDBStore::shutdown();
     return 0;
 }
 
 DECLARE_TEST(Iterator) {
-    BerkeleyStore::init(g_db_name,
+    BerkeleyDBStore::init(g_db_name,
                         g_config_dir,
                         false, 0);
-    DurableTableStore* store = DurableTableStore::instance();
+    DurableStore* store = DurableStore::instance();
     DurableTable* table;
      
     CHECK(store->new_table(&table) == 0);
@@ -156,7 +156,7 @@ DECLARE_TEST(Iterator) {
 		         NullStringShim(data.c_str())) == 0);
     }
 
-    DurableTableItr* itr;
+    DurableIterator* itr;
     table->itr(&itr);
 
     bitset<500> found;
@@ -177,7 +177,7 @@ DECLARE_TEST(Iterator) {
     delete itr; itr = 0;
     delete table; table = 0;
 
-    BerkeleyStore::shutdown();
+    BerkeleyDBStore::shutdown();
     return 0;    
 }
 

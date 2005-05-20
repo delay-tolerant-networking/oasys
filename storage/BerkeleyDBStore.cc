@@ -47,8 +47,8 @@
 #include <serialize/MarshalSerialize.h>
 #include <serialize/TypeShims.h>
 
-#include "DurableTable.h"
-#include "BerkeleyTable.h"
+#include "DurableStore.h"
+#include "BerkeleyDBStore.h"
 
 #define NO_TX  0 // for easily going back and changing TX id's later
 
@@ -68,13 +68,13 @@ namespace oasys {
  * BerkeleyDs
  *
  *****************************************************************************/
-BerkeleyStore::BerkeleyStore() 
+BerkeleyDBStore::BerkeleyDBStore() 
     : Logger("/berkeleydb/store")
 {
     // Real init code in do_init. 
 }
 
-BerkeleyStore::~BerkeleyStore()
+BerkeleyDBStore::~BerkeleyDBStore()
 {
     StringBuffer err_str;
 
@@ -103,13 +103,13 @@ BerkeleyStore::~BerkeleyStore()
 }
 
 void 
-BerkeleyStore::init(const std::string& db_name,
-                    const char*        db_dir,
-                    bool               tidy_db,
-                    int                tidy_wait)
+BerkeleyDBStore::init(const std::string& db_name,
+                      const char*        db_dir,
+                      bool               tidy_db,
+                      int                tidy_wait)
 {
-    BerkeleyStore* s = new BerkeleyStore();
-    DurableTableStore::init(s);
+    BerkeleyDBStore* s = new BerkeleyDBStore();
+    DurableStore::init(s);
 
     int err;
     err = s->do_init(db_name, 
@@ -121,16 +121,17 @@ BerkeleyStore::init(const std::string& db_name,
     }
 }
 
-void BerkeleyStore::shutdown_for_debug()
+void
+BerkeleyDBStore::shutdown_for_debug()
 {
-    DurableTableStore::shutdown();
+    DurableStore::shutdown();
 }
 
 int 
-BerkeleyStore::do_init(const std::string& db_name,
-                       const char*        db_dir,
-                       bool               tidy_db,
-                       int                tidy_wait)
+BerkeleyDBStore::do_init(const std::string& db_name,
+                         const char*        db_dir,
+                         bool               tidy_db,
+                         int                tidy_wait)
 {
     int err;
 
@@ -257,16 +258,16 @@ BerkeleyStore::do_init(const std::string& db_name,
     }
 
     // Initialize max id from meta-database.
-    BerkeleyTable* metatable;
+    BerkeleyDBTable* metatable;
     if(get_meta_table(&metatable) != 0) 
     {
         log_crit("Unable to open metatable!");
         return DS_ERR;
     }
 
-    DurableTableItr* dItr;
+    DurableIterator* dItr;
     err = metatable->itr(&dItr);
-    BerkeleyTableItr* pItr = static_cast<BerkeleyTableItr*>(dItr);
+    BerkeleyDBIterator* pItr = static_cast<BerkeleyDBIterator*>(dItr);
     
     if(err != 0) {
         PANIC("Unable to create metatable iterator");
@@ -301,15 +302,15 @@ BerkeleyStore::do_init(const std::string& db_name,
 }
 
 int
-BerkeleyStore::new_table(DurableTable** table, DurableTableId new_id)
+BerkeleyDBStore::new_table(DurableTable** table, DurableTableID new_id)
 {
     DB* db;
     int err;
-    DurableTableId id;
+    DurableTableID id;
 
     if(new_id != -1) 
     {
-        oasys::ScopePtr<BerkeleyTable> metatable;
+        oasys::ScopePtr<BerkeleyDBTable> metatable;
         if(get_meta_table(&(metatable.get())) != 0)
         {
             log_err("Can't open metatable");
@@ -351,14 +352,14 @@ BerkeleyStore::new_table(DurableTable** table, DurableTableId new_id)
     
     log_debug("Creating new table %d", id);
 
-    *table = new BerkeleyTable(id, db);
+    *table = new BerkeleyDBTable(id, db);
 
     return 0;
 }
 
 
 int
-BerkeleyStore::del_table(DurableTableId id)
+BerkeleyDBStore::del_table(DurableTableID id)
 {
     int err;
     
@@ -393,7 +394,7 @@ BerkeleyStore::del_table(DurableTableId id)
 
 
 int 
-BerkeleyStore::get_table(DurableTableId id, DurableTable** table)
+BerkeleyDBStore::get_table(DurableTableID id, DurableTable** table)
 {
     DB* db;
     int err;
@@ -417,13 +418,13 @@ BerkeleyStore::get_table(DurableTableId id, DurableTable** table)
         }
     }
     
-    *table = new BerkeleyTable(id, db);
+    *table = new BerkeleyDBTable(id, db);
     
     return 0;
 }
 
 int  
-BerkeleyStore::get_meta_table(BerkeleyTable** table)
+BerkeleyDBStore::get_meta_table(BerkeleyDBTable** table)
 {
     DB* db;
     int err;
@@ -441,14 +442,14 @@ BerkeleyStore::get_meta_table(BerkeleyTable** table)
         return DS_ERR;
     }
     
-    *table = static_cast<BerkeleyTable*>
-             (new BerkeleyTable(META_TABLE_ID, db));
+    *table = static_cast<BerkeleyDBTable*>
+             (new BerkeleyDBTable(META_TABLE_ID, db));
     
     return 0;
 }
 
 int
-BerkeleyStore::acquire_table(DurableTableId id)
+BerkeleyDBStore::acquire_table(DurableTableID id)
 {
     ++ref_count_[id];
     ASSERT(ref_count_[id] >= 0);
@@ -459,7 +460,7 @@ BerkeleyStore::acquire_table(DurableTableId id)
 }
 
 int
-BerkeleyStore::release_table(DurableTableId id)
+BerkeleyDBStore::release_table(DurableTableID id)
 {
     --ref_count_[id];
     ASSERT(ref_count_[id] >= 0);
@@ -470,7 +471,7 @@ BerkeleyStore::release_table(DurableTableId id)
 }
 
 std::string 
-BerkeleyStore::get_name(int id)
+BerkeleyDBStore::get_name(int id)
 {
     char buf[256];
     sprintf(buf, "%d", id);
@@ -483,24 +484,24 @@ BerkeleyStore::get_name(int id)
  * Dstable
  *
  *****************************************************************************/
-BerkeleyTable::BerkeleyTable(DurableTableId id, DB* db)
+BerkeleyDBTable::BerkeleyDBTable(DurableTableID id, DB* db)
     : DurableTable(id), db_(db)
 {
     logpathf("/berkeleydb/table(%d)", id);
 
-    BerkeleyStore* store = 
-        static_cast<BerkeleyStore*>(BerkeleyStore::instance()); 
+    BerkeleyDBStore* store = 
+        static_cast<BerkeleyDBStore*>(BerkeleyDBStore::instance()); 
     store->acquire_table(this->id());
 }
 
 
-BerkeleyTable::~BerkeleyTable() 
+BerkeleyDBTable::~BerkeleyDBTable() 
 {
     // Note: If we are to multithread access to the same table, this
     // will have potential concurrency problems, because close can
     // only happen if no other instance of Db is around.
-    BerkeleyStore* store = 
-        static_cast<BerkeleyStore*>(BerkeleyStore::instance()); 
+    BerkeleyDBStore* store = 
+        static_cast<BerkeleyDBStore*>(BerkeleyDBStore::instance()); 
     
     if(store->release_table(id()) == 0)
     {
@@ -510,8 +511,8 @@ BerkeleyTable::~BerkeleyTable()
 }
 
 int 
-BerkeleyTable::get(const SerializableObject& key, 
-                   SerializableObject*       data)
+BerkeleyDBTable::get(const SerializableObject& key, 
+                     SerializableObject*       data)
 {
     u_char key_buf[256];
     size_t key_buf_len;
@@ -548,8 +549,8 @@ BerkeleyTable::get(const SerializableObject& key,
 }
 
 int 
-BerkeleyTable::put(const SerializableObject& key, 
-                   const SerializableObject& data)
+BerkeleyDBTable::put(const SerializableObject& key, 
+                     const SerializableObject& data)
 {
     u_char key_buf[256];
     size_t key_buf_len;
@@ -589,7 +590,7 @@ BerkeleyTable::put(const SerializableObject& key,
 }
 
 int 
-BerkeleyTable::del(const SerializableObject& key)
+BerkeleyDBTable::del(const SerializableObject& key)
 {
     u_char key_buf[256];
     size_t key_buf_len;
@@ -620,16 +621,16 @@ BerkeleyTable::del(const SerializableObject& key)
 }
 
 int 
-BerkeleyTable::itr(DurableTableItr** itr)
+BerkeleyDBTable::itr(DurableIterator** itr)
 {
-    *itr = new BerkeleyTableItr(this);
+    *itr = new BerkeleyDBIterator(this);
     ASSERT(*itr);
     
     return 0;
 }
 
 int 
-BerkeleyTable::key_exists(const void* key, size_t key_len)
+BerkeleyDBTable::key_exists(const void* key, size_t key_len)
 {
     DBT k, d;
     bzero(&d, sizeof(d));
@@ -651,8 +652,8 @@ BerkeleyTable::key_exists(const void* key, size_t key_len)
 }
 
 size_t
-BerkeleyTable::flatten_key(const SerializableObject& key, 
-                           u_char* key_buf, size_t size)
+BerkeleyDBTable::flatten_key(const SerializableObject& key, 
+                             u_char* key_buf, size_t size)
 {
     MarshalSize sizer(Serialize::CONTEXT_LOCAL);
     sizer.action(const_cast<SerializableObject*>(&key));
@@ -670,15 +671,15 @@ BerkeleyTable::flatten_key(const SerializableObject& key,
 
 /******************************************************************************
  *
- * BerkeleyTableItr
+ * BerkeleyDBIterator
  *
  *****************************************************************************/
-BerkeleyTableItr::BerkeleyTableItr(DurableTable* d)
+BerkeleyDBIterator::BerkeleyDBIterator(DurableTable* d)
     : cur_(0), valid_(false)
 {
     logpathf("/berkeleydb/itr(%d)", d->id());
 
-    BerkeleyTable* t = dynamic_cast<BerkeleyTable*>(d);
+    BerkeleyDBTable* t = dynamic_cast<BerkeleyDBTable*>(d);
     ASSERT(t != 0);
 
     int err = t->db_->cursor(t->db_, NO_TX, &cur_, 0);
@@ -693,7 +694,7 @@ BerkeleyTableItr::BerkeleyTableItr(DurableTable* d)
     }
 }
 
-BerkeleyTableItr::~BerkeleyTableItr()
+BerkeleyDBIterator::~BerkeleyDBIterator()
 {
     valid_ = false;
     if(cur_) 
@@ -707,7 +708,7 @@ BerkeleyTableItr::~BerkeleyTableItr()
 }
 
 int
-BerkeleyTableItr::next()
+BerkeleyDBIterator::next()
 {
     ASSERT(valid_);
 
@@ -733,8 +734,8 @@ BerkeleyTableItr::next()
 }
 
 int 
-BerkeleyTableItr::get(SerializableObject* keyObj, 
-                      SerializableObject* dataObj)
+BerkeleyDBIterator::get(SerializableObject* keyObj, 
+                        SerializableObject* dataObj)
 {
     if(!valid_)
         return DS_ERR;
@@ -763,7 +764,7 @@ BerkeleyTableItr::get(SerializableObject* keyObj,
 }
 
 int 
-BerkeleyTableItr::raw_key(void** key, size_t* len)
+BerkeleyDBIterator::raw_key(void** key, size_t* len)
 {
     if(!valid_) return DS_ERR;
 
@@ -774,7 +775,7 @@ BerkeleyTableItr::raw_key(void** key, size_t* len)
 }
 
 int 
-BerkeleyTableItr::raw_data(void** data, size_t* len)
+BerkeleyDBIterator::raw_data(void** data, size_t* len)
 {
     if(!valid_) return DS_ERR;
 

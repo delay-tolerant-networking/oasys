@@ -1,6 +1,6 @@
-#include "DurableTable.h"
+#include "DurableStore.h"
 
 namespace oasys {
-DurableTableStore* DurableTableStore::instance_ = 0;
+DurableStore* DurableStore::instance_ = 0;
 
 }; // namespace oasys

@@ -49,16 +49,16 @@
 namespace oasys {
 
 // forward decls
-class DurableTableStore;
+class DurableStore;
 class DurableTable;
-class DurableTableItr;
+class DurableIterator;
 
 /**
  * Enumeration for error return codes from the datastore functions
  *
  * XXX/bowei - change these names
  */
-enum DurableTableResult_t {
+enum DurableStoreResult_t {
     DS_OK        = 0,           ///< Success
     DS_NOTFOUND  = 1,           ///< Database element not found.
     DS_BUFSIZE   = 2,           ///< Buffer too small.
@@ -70,17 +70,17 @@ enum DurableTableResult_t {
 /**
  * Identifier for DurableTables
  */
-typedef int DurableTableId;
+typedef int DurableTableID;
 
 /**
  * Interface for the generic datastore
  */
-class DurableTableStore {
+class DurableStore {
 public:
     /** Get singleton manager instance. Call init to create the
      * singleton instance.
      */
-    static inline DurableTableStore* instance() 
+    static inline DurableStore* instance() 
     {
         ASSERT(instance_);      // use init() please
         return instance_;      
@@ -95,7 +95,7 @@ public:
      * Subclasses should call this to set the instance_ variable in
      * their own init methods.
      */
-    static void init(DurableTableStore* instance) {
+    static void init(DurableStore* instance) {
         ASSERT(instance_ == 0);
         instance_ = instance;
     }
@@ -111,28 +111,31 @@ public:
     /**
      * Destructor
      */
-    virtual ~DurableTableStore() {}
+    virtual ~DurableStore() {}
 
     /**
      * Create a new table. Caller deletes the pointer.
-     * @param id Specifies what the id of the table should be.
+     *
+     * @param id Specifies what the id of the table should be if
+     * specified
      */
-    virtual int new_table(DurableTable** table, DurableTableId id = -1) = 0;
+    virtual int new_table(DurableTable** table, DurableTableID id = -1) = 0;
 
     /**
-     * Delete (by id) from the datastore
+     * Delete (by id) from the datastore.
      */
-    virtual int del_table(DurableTableId id) = 0;
+    virtual int del_table(DurableTableID id) = 0;
 
     /**
      * Get a new table ptr to an id
      *
-     * @return 0 - ok, DS_NOTFOUND - table with id doesn't exist, DS_ERR - other error
+     * @return 0 - ok, DS_NOTFOUND - table with id doesn't exist,
+     * DS_ERR - other error
      */
-    virtual int get_table(DurableTableId id, DurableTable** table) = 0;
+    virtual int get_table(DurableTableID id, DurableTable** table) = 0;
     
 private:
-    static DurableTableStore* instance_; //< singleton instance
+    static DurableStore* instance_; //< singleton instance
 };
 
 /**
@@ -140,7 +143,7 @@ private:
  */
 class DurableTable {
 public:
-    DurableTable(DurableTableId id) : id_(id) {}
+    DurableTable(DurableTableID id) : id_(id) {}
     virtual ~DurableTable() {}
 
     /**
@@ -153,7 +156,7 @@ public:
      */
     virtual int get(const SerializableObject& key, 
                     SerializableObject* data) = 0;
-
+    
     /** 
      * Put data for key in the database
      *
@@ -176,22 +179,22 @@ public:
      * @param itr Iterator pointer to be set. Caller deletes this
      * pointer.
      */
-    virtual int itr(DurableTableItr** itr) = 0;
+    virtual int itr(DurableIterator** itr) = 0;
 
     /** Return table id. */
-    DurableTableId id() { return id_; }
+    DurableTableID id() { return id_; }
 
 private:
-    DurableTableId id_;
+    DurableTableID id_;
 };
 
 /**
  * Table iterator object. Just like Java. Note: It is important that
  * iterators do NOT outlive the tables they point into.
  */
-class DurableTableItr {
+class DurableIterator {
 public:
-    virtual ~DurableTableItr() {};
+    virtual ~DurableIterator() {};
 
     /**
      * Advance the pointer. An initialized iterator will be pointing
@@ -199,7 +202,7 @@ public:
      * will always be:
      *
      * @code
-     * DurableTableItr i(table);
+     * DurableIterator i(table);
      * while(i.next() == 0) {
      *    // ... do stuff
      * }
