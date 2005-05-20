@@ -102,7 +102,7 @@ public:
     int get(const SerializableObject& key, SerializableObject* data);
     int put(const SerializableObject& key, const SerializableObject& data);
     int del(const SerializableObject& key);
-    int itr(DurableIterator** itr);
+    int iter(DurableIterator** iter);
     /// @}
 
 private:

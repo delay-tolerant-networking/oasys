@@ -176,10 +176,10 @@ public:
     /**
      * Get an iterator to this table.
      *
-     * @param itr Iterator pointer to be set. Caller deletes this
+     * @param iter Iterator pointer to be set. Caller deletes this
      * pointer.
      */
-    virtual int itr(DurableIterator** itr) = 0;
+    virtual int iter(DurableIterator** iter) = 0;
 
     /** Return table id. */
     DurableTableID id() { return id_; }

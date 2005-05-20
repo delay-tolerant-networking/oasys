@@ -156,14 +156,14 @@ DECLARE_TEST(Iterator) {
 		         NullStringShim(data.c_str())) == 0);
     }
 
-    DurableIterator* itr;
-    table->itr(&itr);
+    DurableIterator* iter;
+    table->iter(&iter);
 
     bitset<500> found;
-    while(itr->next() == 0) {
+    while(iter->next() == 0) {
         NullStringShim key, data;
 
-        itr->get(&key, &data);
+        iter->get(&key, &data);
         CHECK(key.value()[0] == 'k' && // lazy
               key.value()[1] == 'e' &&
               key.value()[2] == 'y');
@@ -174,7 +174,7 @@ DECLARE_TEST(Iterator) {
     found.flip();
     CHECK(!found.any());
 
-    delete itr; itr = 0;
+    delete iter; iter = 0;
     delete table; table = 0;
 
     BerkeleyDBStore::shutdown();

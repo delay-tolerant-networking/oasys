@@ -81,13 +81,13 @@ BerkeleyDBStore::~BerkeleyDBStore()
     err_str.append("Tables still open at deletion time: ");
     bool busy = false;
 
-    for(RefCountMap::iterator itr = ref_count_.begin(); 
-        itr != ref_count_.end();
-        ++itr)
+    for(RefCountMap::iterator iter = ref_count_.begin(); 
+        iter != ref_count_.end();
+        ++iter)
     {
-        if(itr->second != 0)
+        if(iter->second != 0)
         {
-            err_str.appendf("%d ", itr->first);
+            err_str.appendf("%d ", iter->first);
             busy = true;
         }
     }
@@ -266,7 +266,7 @@ BerkeleyDBStore::do_init(const std::string& db_name,
     }
 
     DurableIterator* dItr;
-    err = metatable->itr(&dItr);
+    err = metatable->iter(&dItr);
     BerkeleyDBIterator* pItr = static_cast<BerkeleyDBIterator*>(dItr);
     
     if(err != 0) {
@@ -621,10 +621,10 @@ BerkeleyDBTable::del(const SerializableObject& key)
 }
 
 int 
-BerkeleyDBTable::itr(DurableIterator** itr)
+BerkeleyDBTable::iter(DurableIterator** iter)
 {
-    *itr = new BerkeleyDBIterator(this);
-    ASSERT(*itr);
+    *iter = new BerkeleyDBIterator(this);
+    ASSERT(*iter);
     
     return 0;
 }
@@ -677,7 +677,7 @@ BerkeleyDBTable::flatten_key(const SerializableObject& key,
 BerkeleyDBIterator::BerkeleyDBIterator(DurableTable* d)
     : cur_(0), valid_(false)
 {
-    logpathf("/berkeleydb/itr(%d)", d->id());
+    logpathf("/berkeleydb/iter(%d)", d->id());
 
     BerkeleyDBTable* t = dynamic_cast<BerkeleyDBTable*>(d);
     ASSERT(t != 0);
