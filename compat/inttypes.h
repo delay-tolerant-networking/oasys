@@ -41,8 +41,12 @@
 #include "../config.h"
 
 /*
- * Try to pull in stdint.h in case it exists
+ * Pull in relevant system headers.
  */
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
