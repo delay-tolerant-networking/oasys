@@ -8,8 +8,6 @@ using namespace std;
 
 using namespace oasys;
 
-template MsgQueue<int>;
-
 class Consumer : public Thread {
 public:
     Consumer(MsgQueue<int>* q) : q_(q) {}
