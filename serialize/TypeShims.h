@@ -45,17 +45,20 @@
 namespace oasys {
 
 struct IntShim : public SerializableObject {
-    IntShim(int i = 0) : i_(i) {}
+    IntShim(const char* name = 0, int value = 0)
+        : value_(value), name_(name) {}
     
     // virtual from SerializableObject
     void serialize(SerializeAction* a) {
-	a->process("int", &i_);
+	a->process(name_.c_str(), &value_);
     }
 
-    int value() const { return i_; }
-    void assign(int i) { i_ = i; }
-    
-    int i_;
+    int value() const { return value_; }
+    void assign(int value) { value_ = value; }
+
+private:
+    int         value_;
+    std::string name_;
 };
 
 struct StringShim : public SerializableObject {
@@ -66,7 +69,7 @@ struct StringShim : public SerializableObject {
 	a->process("string", str_);
     }
 
-    std::string* value() const { return str_; }
+    const std::string* value() const { return str_; }
 
     std::string* str_;
 };
