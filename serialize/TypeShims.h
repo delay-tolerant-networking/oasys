@@ -44,9 +44,11 @@
 
 namespace oasys {
 
-struct IntShim : public SerializableObject {
-    IntShim(const char* name = 0, int value = 0)
-        : value_(value), name_(name) {}
+class IntShim : public SerializableObject {
+public:
+    IntShim(int value = 0, const char* name = "int")
+        : name_(name), value_(value) {}
+    IntShim(const Builder& b) {}
     
     // virtual from SerializableObject
     void serialize(SerializeAction* a) {
@@ -57,43 +59,59 @@ struct IntShim : public SerializableObject {
     void assign(int value) { value_ = value; }
 
 private:
-    int         value_;
     std::string name_;
+    int         value_;
 };
 
-struct StringShim : public SerializableObject {
-    StringShim(std::string* str) : str_(str) {}
+class StringShim : public SerializableObject {
+public:
+    StringShim(const std::string& str, const char* name = "string")
+        : name_(name), str_(str) {}
+    StringShim(const Builder& b) {}
+    
+    virtual ~StringShim() {}
     
     // virtual from SerializableObject
     void serialize(SerializeAction* a) {
-	a->process("string", str_);
+	a->process(name_.c_str(), &str_);
     }
 
-    const std::string* value() const { return str_; }
+    const std::string& value() const { return str_; }
+    void assign(const std::string& str) { str_.assign(str); }
 
-    std::string* str_;
+private:
+    std::string name_;
+    std::string str_;
 };
 
-struct NullStringShim : public SerializableObject {
-    NullStringShim(const char* str = 0) 
-	: str_(const_cast<char*>(str)) 
+class NullStringShim : public SerializableObject {
+public:
+    NullStringShim(const char* str, const char* name = "string") 
+	: name_(name), str_(const_cast<char*>(str)) 
     {
 	free_mem_ = (str == 0);
     }
 
+    NullStringShim(Builder b)
+        : name_("string"), str_(NULL), free_mem_(false)
+    {}
+
     ~NullStringShim() { if(free_mem_) { free(str_); } }
 
     // virtual from SerializableObject
-    void serialize(SerializeAction* a) {
+    void serialize(SerializeAction* a)
+    {
         size_t len = 0;
-        a->process("string", 
-		   reinterpret_cast<u_char**>(&str_), 
-		   &len, 
+        a->process(name_.c_str(), 
+		   reinterpret_cast<u_char**>(&str_), &len,
 		   Serialize::NULL_TERMINATED | Serialize::ALLOC_MEM);
+        free_mem_ = true;
     }
 
     const char* value() const { return str_; }
 
+private:
+    std::string name_;
     char* str_;
     bool free_mem_;
 };
