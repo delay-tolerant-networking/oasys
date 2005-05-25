@@ -7,6 +7,7 @@
 #include "../tclcmd/TclCommand.h"
 #include "../debug/Logger.h"
 #include "../thread/Mutex.h"
+#include "../thread/SpinLock.h"
 #include "../util/ScratchBuffer.h"
 
 #include "DurableStore.h"
@@ -29,23 +30,35 @@ public:
 
     /**
      * Do initialization. Must do this once before you try to obtain
-     * an instance of this object. This is separated out from the
-     * instance() call because we want to have control when the
-     * database is initialized.
+     * an instance of this object.
      */
     static void init(const std::string& db_name,
                      const char*        db_dir,
+                     int                db_flags,
                      bool               tidy_db,
                      int                tidy_wait);
+
+    /**
+     * Shadow the instance method of DurableStore so callees do not
+     * need to do the downcast.
+     */
+    BerkeleyDBStore* instance()
+    {
+        return static_cast<BerkeleyDBStore*>(DurableStore::instance());
+    }
+
     /**
      * Shutdown BerkeleyDB and free associated resources.
      */
     static void shutdown_for_debug();
 
     /// @{ Virtual from DurableStore
-    virtual int new_table(DurableTable** table, DurableTableID new_id = -1);
-    virtual int del_table(DurableTableID id);
-    virtual int get_table(DurableTableID id, DurableTable** table);
+    virtual int get_table(DurableTable**      table,
+                          int                 flags,
+                          const std::string&  name,
+                          SerializableObject* prototype);
+    
+    virtual int del_table(std::string& name);
     /// @}
 
 private:
@@ -53,21 +66,25 @@ private:
     std::string db_name_;     ///< Name of the database file
     DB_ENV*     dbenv_;       ///< database environment for all tables
 
-    Mutex next_id_mutex_;
+    SpinLock next_id_lock_;
     DurableTableID next_id_;  ///< next table id to hand out
 
-    Mutex ref_count_mutex_;
+    SpinLock ref_count_lock_;
     typedef std::map<int, int> RefCountMap;
     RefCountMap ref_count_;   ///< Ref. count for open tables.
 
-    /// Id the represents the metatable of tables
-    static const DurableTableID META_TABLE_ID = -1;
+    /// Id that represents the metatable of tables
+    static const DurableTableID META_TABLE_ID = 1;
+
+    /// Handle on the metatable
+    BerkeleyDBTable* metatable_;
 
     /// Constructor - protected for singleton
     BerkeleyDBStore();
+    BerkeleyDBStore(const BerkeleyDBStore&);
 
     /// Get meta-table
-    virtual int get_meta_table(BerkeleyDBTable** table);
+    int get_meta_table(BerkeleyDBTable** table);
     
     /// @{ Changes the ref count on the tables, used by BerkeleyDBTable 
     int acquire_table(DurableTableID id);
@@ -83,6 +100,7 @@ private:
      */
     int do_init(const std::string& db_name,
                 const char*        db_dir,
+                int                db_flags,
                 bool               tidy_db,
                 int                tidy_wait);
 };
@@ -91,34 +109,34 @@ private:
  * Object that encapsulates a single table. Multiple instances of
  * this object represent multiple uses of the same table.
  */
-class BerkeleyDBTable : public DurableTable, public Logger {
+class BerkeleyDBTable : public DurableTableImpl, public Logger {
     friend class BerkeleyDBStore;
     friend class BerkeleyDBIterator;
 
 public:
     ~BerkeleyDBTable();
 
-    /// @{ virtual from DurableTable 
-    int get(const SerializableObject& key, SerializableObject* data);
-    int put(const SerializableObject& key, const SerializableObject& data);
+    /// @{ virtual from DurableTableInpl
+    int get(const SerializableObject& key,
+            SerializableObject* data);
+    
+    int put(const SerializableObject& key,
+            const SerializableObject* data,
+            int flags);
+    
     int del(const SerializableObject& key);
-    int iter(DurableIterator** iter);
+    
+    DurableIteratorImpl* iter();
     /// @}
 
 private:
     /**
-     * Only DataStore can create DsTables
+     * Only BerkeleyDBStore can create BerkeleyDBTables
      */
     BerkeleyDBTable(DurableTableID id, DB* db);
 
     /// Whether a specific key exists in the table.
     int key_exists(const void* key, size_t key_len);
-
-    /**
-     * Helper method for flattening keys from the key objects.
-     */
-    size_t flatten_key(const SerializableObject& key, 
-                       u_char* key_buf, size_t size);
 
     DB* db_;
 
@@ -126,13 +144,18 @@ private:
     ScratchBuffer scratch_;
 };
 
-class BerkeleyDBIterator : public DurableIterator, public Logger {
+/**
+ * Iterator class for Berkeley DB tables.
+ */
+class BerkeleyDBIterator : public DurableIteratorImpl, public Logger {
     friend class BerkeleyDBTable;
+
 private:
-    /** Create an iterator for table t. These should not be called
-     * except by BerkeleyDBTable. */
-    BerkeleyDBIterator(DurableTable* t);
-    BerkeleyDBIterator(DurableTable* t, void* k, int len); // UNIMPLEMENTED for now
+    /**
+     * Create an iterator for table t. These should not be called
+     * except by BerkeleyDBTable.
+     */
+    BerkeleyDBIterator(BerkeleyDBTable* t);
 
 public:
     ~BerkeleyDBIterator();
@@ -144,18 +167,16 @@ public:
     int raw_data(void** data, size_t* len);
     /// @}
     
-    /// @{ virtual from DurableIterator
-    int next();
-    int get(SerializableObject* key, SerializableObject* data);
+    /// @{ virtual from DurableIteratorImpl
+    int next(SerializableObject* key);
     /// @}
 
-
 protected:
-    DBC* cur_;                  ///< Current database cursor.
-    bool valid_;                ///< Status of the iterator.
+    DBC* cur_;          ///< Current database cursor
+    bool valid_;        ///< Status of the iterator
 
-    DBT key_;
-    DBT data_;
+    DBT key_;		///< Current element key
+    DBT data_;		///< Current element data
 };
 
 }; // namespace oasys

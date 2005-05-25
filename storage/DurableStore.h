@@ -36,22 +36,25 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __DURABLE_TABLE_H__
-#define __DURABLE_TABLE_H__
-
-#include <new>
-#include <string>
+#ifndef __OASYS_DURABLE_STORE_H__
+#define __OASYS_DURABLE_STORE_H__
 
 #include "../debug/Debug.h"
 #include "../debug/Log.h"
 #include "../serialize/Serialize.h"
+#include "../serialize/TypeCollection.h"
 
 namespace oasys {
 
 // forward decls
 class DurableStore;
+class DurableStoreImpl;
 class DurableTable;
+template <typename _Type> class SingleTypeDurableTable;
+template <typename _Type, typename _Collection> class MultiTypeDurableTable;
+class DurableTableImpl;
 class DurableIterator;
+class DurableObjectCache;
 
 /**
  * Enumeration for error return codes from the datastore functions
@@ -68,16 +71,28 @@ enum DurableStoreResult_t {
 };
 
 /**
- * Identifier for DurableTables
+ * Enumeration for flags to the datastore functions.
  */
-typedef int DurableTableID;
+enum DurableStoreFlags_t {
+    DS_CREATE    = 1 << 0,
+    DS_EXCL      = 1 << 1,
+    DS_HASH      = 1 << 2,
+    DS_BTREE     = 1 << 3
+};
+
+// Pull in the various related class definitions (and template class
+// implementations) after the above declarations
+#include "DurableIterator.h"
+#include "DurableTable.h"
+#include "DurableStoreImpl.h"
 
 /**
- * Interface for the generic datastore
+ * Interface for the generic datastore.
  */
 class DurableStore {
 public:
-    /** Get singleton manager instance. Call init to create the
+    /**
+     * Get singleton manager instance. Call init to create the
      * singleton instance.
      */
     static inline DurableStore* instance() 
@@ -95,9 +110,9 @@ public:
      * Subclasses should call this to set the instance_ variable in
      * their own init methods.
      */
-    static void init(DurableStore* instance) {
+    static void init(DurableStoreImpl* impl) {
         ASSERT(instance_ == 0);
-        instance_ = instance;
+        instance_ = new DurableStore(impl);
     }
 
     // XXX/bowei should be virtualized
@@ -114,109 +129,59 @@ public:
     virtual ~DurableStore() {}
 
     /**
-     * Create a new table. Caller deletes the pointer.
+     * Get a new handle on a single-type table.
      *
-     * @param id Specifies what the id of the table should be if
-     * specified
+     * @param flags options for creating the table
+     * @param id what the id of the table should be if specified
+     * @return DS_OK, DS_NOTFOUND, DS_EXISTS, DS_ERR
      */
-    virtual int new_table(DurableTable** table, DurableTableID id = -1) = 0;
+    template <typename _DataType>
+    int get_table(SingleTypeDurableTable<_DataType>** table,
+                  std::string         table_name,
+                  int                 flags,
+                  DurableObjectCache* cache);
 
     /**
-     * Delete (by id) from the datastore.
+     * Get a new handle on a multi-type table.
+     *
+     * @param flags options for creating the table
+     * @param id what the id of the table should be if specified
+     * @return DS_OK, DS_NOTFOUND, DS_EXISTS, DS_ERR
      */
-    virtual int del_table(DurableTableID id) = 0;
+    template <typename _BaseType, typename _Collection>
+    int get_table(MultiTypeDurableTable<_BaseType, _Collection>** table,
+                  std::string         table_name,
+                  int                 flags,
+                  DurableObjectCache* cache);
 
     /**
-     * Get a new table ptr to an id
-     *
-     * @return 0 - ok, DS_NOTFOUND - table with id doesn't exist,
-     * DS_ERR - other error
+     * Delete the table (by name) from the datastore.
      */
-    virtual int get_table(DurableTableID id, DurableTable** table) = 0;
+    int del_table(std::string table_name);
     
 private:
-    static DurableStore* instance_; //< singleton instance
-};
-
-/**
- * Object that encapsulates a single table.
- */
-class DurableTable {
-public:
-    DurableTable(DurableTableID id) : id_(id) {}
-    virtual ~DurableTable() {}
-
     /**
-     * Get the data for key.
-     *
-     * @param key  Key object
-     * @param data Data object
-     * @return DS_OK, DS_NOTFOUND if key is not found, DS_BUFSIZE if
-     * the given buffer is too small to store the data.
+     * Typedef for the list of objects passed to the implementation to
+     * initialize the table.
      */
-    virtual int get(const SerializableObject& key, 
-                    SerializableObject* data) = 0;
+    typedef std::vector<std::auto_ptr<const SerializableObject*> > PrototypeVector;
     
-    /** 
-     * Put data for key in the database
-     *
-     * @param key Key object
-     * @param data Data object
-     * @return DS_OK, DS_ERR // XXX/bowei
+    /**
+     * The constructor should only be called by DurableStore::init.
      */
-    virtual int put(const SerializableObject& key, 
-                    const SerializableObject& data) = 0;
+    DurableStore(DurableStoreImpl* impl) : impl_(impl) {}
 
     /**
-     * Delete a (key,data) pair from the database
-     * @return DS_OK, DS_NOTFOUND if key is not found
+     * The copy constructor should never be called.
      */
-    virtual int del(const SerializableObject& key) = 0;
+    DurableStore(const DurableStore& other);
 
-    /**
-     * Get an iterator to this table.
-     *
-     * @param iter Iterator pointer to be set. Caller deletes this
-     * pointer.
-     */
-    virtual int iter(DurableIterator** iter) = 0;
-
-    /** Return table id. */
-    DurableTableID id() { return id_; }
-
-private:
-    DurableTableID id_;
+    static DurableStore* instance_; 	///< singleton instance
+    DurableStoreImpl*    impl_;		///< the storage implementation
 };
 
-/**
- * Table iterator object. Just like Java. Note: It is important that
- * iterators do NOT outlive the tables they point into.
- */
-class DurableIterator {
-public:
-    virtual ~DurableIterator() {};
+#include "DurableStore.tcc"
 
-    /**
-     * Advance the pointer. An initialized iterator will be pointing
-     * right before the first element in the list, so iteration code
-     * will always be:
-     *
-     * @code
-     * DurableIterator i(table);
-     * while(i.next() == 0) {
-     *    // ... do stuff
-     * }
-     * @endcode
-     *
-     * @return DS_OK, DS_NOTFOUND if no more elements, DS_ERR if an
-     * error occurred while iterating.
-     */
-    virtual int next() = 0;
+} // namespace oasys
 
-    /** Unserialize the data. */
-    virtual int get(SerializableObject* key, SerializableObject* data) = 0;
-};
-
-}; // namespace oasys
-
-#endif // __DURABLE_TABLE_H__
+#endif // __OASYS_DURABLE_STORE_H__

@@ -1,7 +1,5 @@
 TESTS += \
-	berkeley-db-test			\
 	buffered-io-test			\
-	builder-test				\
 	command-test				\
 	hexdump-test				\
 	log-test				\
@@ -24,6 +22,7 @@ TESTS += \
 	thread-test				\
 	thread-interrupt-test			\
 	timer-test				\
+	type-collection-test			\
 	url-test				\
 
 
