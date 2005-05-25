@@ -1,4 +1,5 @@
 TESTS += \
+	berkeley-db-test			\
 	buffered-io-test			\
 	command-test				\
 	hexdump-test				\

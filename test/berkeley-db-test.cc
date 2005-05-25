@@ -10,165 +10,275 @@ using namespace oasys;
 using namespace std;
 
 std::string    g_db_name      = "test";
+std::string    g_db_table     = "test-table";
 const char*    g_config_dir   = "output/berkeley-db-test/berkeley-db-test";
-DurableTableID g_id;
+
+typedef SingleTypeDurableTable<StringShim> StringDurableTable;
 
 DECLARE_TEST(DBInit) {
-    BerkeleyDBStore::init(g_db_name,
-                        g_config_dir,
-                        true, 0);
+    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
+    DurableStore::shutdown();
+    return 0;
+}
 
-    BerkeleyDBStore::shutdown();
+DECLARE_TEST(DBTidy) {
+    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
+    DurableStore* store = DurableStore::instance();
+    StringDurableTable* table1 = NULL;
+    
+    CHECK(store->get_table(&table1, "test", DS_CREATE | DS_EXCL, NULL) == 0);
+    CHECK(table1 != NULL);
+    delete table1;
+    table1 = NULL;
+    
+    DurableStore::shutdown();
+    
+    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, false, 0);
+    store = DurableStore::instance();
+
+    CHECK(store->get_table(&table1, "test", 0, NULL) == 0);
+    CHECK(table1 != NULL);
+    delete table1;
+    table1 = NULL;
+
+    DurableStore::shutdown();
+
+    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
+    store = DurableStore::instance();
+
+    CHECK(store->get_table(&table1, "test", 0, NULL) == DS_NOTFOUND);
+    CHECK(table1 == NULL);
+
+    DurableStore::shutdown();
     return 0;
 }
 
 DECLARE_TEST(TableCreate) {
-    BerkeleyDBStore::init(g_db_name,
-                        g_config_dir,
-                        false, 0);
-
-    DurableTable* table1;
-    DurableTable* table2;
+    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
     DurableStore* store = DurableStore::instance();
+    
+    StringDurableTable* table1 = NULL;
+    StringDurableTable* table2 = NULL;
 
-    CHECK(store->new_table(&table1, 10) == 0);
-    CHECK(store->new_table(&table2, 10) == DS_EXISTS);
+    CHECK(store->get_table(&table1, "test", 0, NULL) == DS_NOTFOUND);
+    CHECK(table1 == NULL);
+    
+    CHECK(store->get_table(&table1, "test", DS_CREATE, NULL) == 0);
+    CHECK(table1 != NULL);
+
+    delete table1;
+    table1 = NULL;
+    
+    CHECK(store->get_table(&table2, "test", DS_CREATE | DS_EXCL, NULL) == DS_EXISTS);
+    CHECK(table2 == NULL);
+    
+    CHECK(store->get_table(&table2, "test", 0, NULL) == 0);
+    CHECK(table2 != NULL);
+
+    delete table2;
+    table2 = NULL;
+
+    CHECK(store->get_table(&table1, "test", DS_CREATE, NULL) == 0);
+    CHECK(table1 != NULL);
     delete table1;
 
-    const int LIMIT = 1;
-    for(int i=0; i<LIMIT; ++i) {
-	CHECK(store->new_table(&table1) == 0);
-	CHECK(store->new_table(&table2) == 0);
-	delete table1;
-	delete table2;
-
-	CHECK(store->new_table(&table1) == 0);
-	delete table1;
-	CHECK(store->new_table(&table1) == 0);
-	delete table1;
-    }
-
-    BerkeleyDBStore::shutdown();
+    DurableStore::shutdown();
     return 0;
 }
 
-DECLARE_TEST(Insert) {
-    BerkeleyDBStore::init(g_db_name,
-                        g_config_dir,
-                        false, 0);
+DECLARE_TEST(TableDelete) {
+    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
     DurableStore* store = DurableStore::instance();
-    DurableTable* table;
-    CHECK(store->new_table(&table) == 0);
     
-    g_id = table->id();
+    StringDurableTable* table = NULL;
+
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, NULL) == 0);
+    CHECK(table != NULL);
+    delete table;
+    table = NULL;
+
+    CHECK(store->del_table("test") == 0);
     
-    for(int i=0; i<500; ++i) {
-        StaticStringBuffer<256> key;
-        StaticStringBuffer<256> data;
+    CHECK(store->get_table(&table, "test", 0, NULL) == DS_NOTFOUND);
+    CHECK(table == NULL);
 
-	key.appendf("key%d", i);
-	data.appendf("data%d", i);
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, NULL) == 0);
+    CHECK(table != NULL);
+    delete table;
+    table = NULL;
 
-	CHECK(table->put(NullStringShim(key.c_str()),
-		         NullStringShim(data.c_str())) == 0);
+    DurableStore::shutdown();
+    return 0;
+}
+
+DECLARE_TEST(SingleTypePut) {
+    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
+    DurableStore* store = DurableStore::instance();
+
+    StringDurableTable* table;
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, NULL) == 0);
+
+    IntShim    key(99);
+    StringShim data("data");
+
+    CHECK(table->put(key, &data, 0) == DS_NOTFOUND);
+    CHECK(table->put(key, &data, DS_CREATE) == 0);
+    CHECK(table->put(key, &data, 0) == 0);
+    CHECK(table->put(key, &data, DS_CREATE) == 0);
+    CHECK(table->put(key, &data, DS_CREATE | DS_EXCL) == DS_EXISTS);
+
+    delete table;
+    
+    DurableStore::shutdown();
+    return 0;
+}
+
+DECLARE_TEST(SingleTypeGet) {
+    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
+    DurableStore* store = DurableStore::instance();
+
+    StringDurableTable* table;
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, NULL) == 0);
+
+    IntShim    key(99);
+    IntShim    key2(101);
+    StringShim data("data");
+    StringShim* data2 = NULL;
+
+    CHECK(table->put(key, &data, DS_CREATE | DS_EXCL) == 0);
+    
+    CHECK(table->get(key, &data2) == 0);
+    CHECK(data2 != NULL);
+    CHECK(data2->value() == data.value());
+
+    delete data2;
+    data2 = NULL;
+    
+    CHECK(table->get(key2, &data2) == DS_NOTFOUND);
+    CHECK(data2 == NULL);
+
+    data.assign("new data");
+    CHECK(table->put(key, &data, 0) == 0);
+
+    CHECK(table->get(key, &data2) == 0);
+    CHECK(data2 != NULL);
+    CHECK(data2->value() == data.value());
+
+    delete data2;
+    data2 = NULL;
+
+    delete table;
+    DurableStore::shutdown();
+
+    return 0;
+}
+
+DECLARE_TEST(SingleTypeDelete) {
+    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
+    DurableStore* store = DurableStore::instance();
+
+    StringDurableTable* table;
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, NULL) == 0);
+
+    IntShim    key(99);
+    IntShim    key2(101);
+    StringShim data("data");
+    StringShim* data2;
+
+    CHECK(table->put(key, &data, DS_CREATE | DS_EXCL) == 0);
+    
+    CHECK(table->get(key, &data2) == 0);
+    CHECK(data2 != NULL);
+    CHECK(data2->value() == data.value());
+    delete data2;
+    data2 = NULL;
+    
+    CHECK(table->del(key) == 0);
+
+    CHECK(table->get(key, &data2) == DS_NOTFOUND);
+    CHECK(data2 == NULL);
+
+    CHECK(table->del(key2) == DS_NOTFOUND);
+    
+    delete table;
+    DurableStore::shutdown();
+
+    return 0;
+}
+
+DECLARE_TEST(SingleTypeMultiObject) {
+    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
+    DurableStore* store = DurableStore::instance();
+
+    StringDurableTable* table;
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, NULL) == 0);
+
+    int num_objs = 100;
+    
+    for(int i=0; i<num_objs; ++i) {
+        StaticStringBuffer<256> buf;
+	buf.appendf("data%d", i);
+        StringShim data(buf.c_str());
+        
+	CHECK(table->put(IntShim(i), &data, DS_CREATE | DS_EXCL) == 0);
     }
+    
+    delete table;
+    table = 0;
+    DurableStore::shutdown();
 
-    delete table; table = 0;
-    BerkeleyDBStore::shutdown();
-
-    BerkeleyDBStore::init(g_db_name,
-                        g_config_dir,
-                        false, 0);
+    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, false, 0);
     store = DurableStore::instance();
-    CHECK(store->get_table(g_id, &table) == 0);
+    CHECK(store->get_table(&table, "test", 0, NULL) == 0);
 
-    PermutationArray pa(500);
+    PermutationArray pa(num_objs);
 
-    for(int i=0; i<500; ++i) {
-        StaticStringBuffer<256> key;
-        StaticStringBuffer<256> proper_data;
-	NullStringShim data;
+    for(int i=0; i<num_objs; ++i) {
+        StaticStringBuffer<256> buf;
+	StringShim* data = NULL;
 
-	key.appendf("key%d", pa.map(i));
-        proper_data.appendf("data%d", pa.map(i));
+        IntShim key(pa.map(i));
+        buf.appendf("data%d", pa.map(i));
 
-	CHECK(table->get(NullStringShim(key.c_str()), &data) == 0);
-        CHECK_EQUALSTR(proper_data.c_str(), data.value());
+	CHECK(table->get(key, &data) == 0);
+        CHECK_EQUALSTR(buf.c_str(), data->value().c_str());
     }
 
-    delete table; table = 0;
-    BerkeleyDBStore::shutdown();
+    delete table;
+    table = 0;
+    DurableStore::shutdown();
 
     return 0;
 }
 
-DECLARE_TEST(Delete) {
-    BerkeleyDBStore::init(g_db_name,
-                        g_config_dir,
-                        false, 0);
+DECLARE_TEST(SingleTypeIterator) {
+    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
     DurableStore* store = DurableStore::instance();
-    DurableTable* table;
-    
-    CHECK(store->get_table(g_id, &table) == 0);
-    PermutationArray pa(200);
+    StringDurableTable* table;
 
-    for(int i=0; i<200; ++i) {
-        StaticStringBuffer<256> key;
-        key.appendf("key%d", pa.map(i));
-
-        CHECK(table->del(NullStringShim(key.c_str())) == 0);
-
-        NullStringShim dummy;
-        CHECK(table->get(NullStringShim(key.c_str()), &dummy) == DS_NOTFOUND);
-    }
-
-    for(int i=200; i<500; ++i) {
-        StaticStringBuffer<256> key;
-        key.appendf("key%d", i);
-        NullStringShim dummy;
-        CHECK(table->get(NullStringShim(key.c_str()), &dummy) == 0);
-    }
-
-    delete table; table = 0;
-
-    BerkeleyDBStore::shutdown();
-    return 0;
-}
-
-DECLARE_TEST(Iterator) {
-    BerkeleyDBStore::init(g_db_name,
-                        g_config_dir,
-                        false, 0);
-    DurableStore* store = DurableStore::instance();
-    DurableTable* table;
+    static const int num_objs = 100;
      
-    CHECK(store->new_table(&table) == 0);
-    g_id = table->id();
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, NULL) == 0);
     
-    for(int i=0; i<500; ++i) {
-        StaticStringBuffer<256> key;
-        StaticStringBuffer<256> data;
-
-	key.appendf("key%d", i);
-	data.appendf("data%d", i);
-
-	CHECK(table->put(NullStringShim(key.c_str()),
-		         NullStringShim(data.c_str())) == 0);
+    for(int i=0; i<num_objs; ++i) {
+        StaticStringBuffer<256> buf;
+	buf.appendf("data%d", i);
+        StringShim data(buf.c_str());
+        
+	CHECK(table->put(IntShim(i), &data, DS_CREATE | DS_EXCL) == 0);
     }
 
-    DurableIterator* iter;
-    table->iter(&iter);
+    DurableIterator* iter = table->iter();
 
-    bitset<500> found;
+    bitset<num_objs> found;
     while(iter->next() == 0) {
-        NullStringShim key, data;
-
-        iter->get(&key, &data);
-        CHECK(key.value()[0] == 'k' && // lazy
-              key.value()[1] == 'e' &&
-              key.value()[2] == 'y');
-        int idx = atoi(&key.value()[3]);
-        found.set(idx);
+        // XXX/demmer I don't know why a temporary doesn't work here...
+        Builder b;
+        IntShim key(b);
+        
+        iter->get(&key);
+        CHECK(found[key.value()] == false);
+        found.set(key.value());
     }
 
     found.flip();
@@ -177,16 +287,20 @@ DECLARE_TEST(Iterator) {
     delete iter; iter = 0;
     delete table; table = 0;
 
-    BerkeleyDBStore::shutdown();
+    DurableStore::shutdown();
     return 0;    
 }
 
 DECLARE_TESTER(BerkleyDBTester) {
     ADD_TEST(DBInit);
+    ADD_TEST(DBTidy);
     ADD_TEST(TableCreate);
-    ADD_TEST(Insert);
-    ADD_TEST(Delete);
-    ADD_TEST(Iterator);
+    ADD_TEST(TableDelete);
+    ADD_TEST(SingleTypePut);
+    ADD_TEST(SingleTypeGet);
+    ADD_TEST(SingleTypeDelete);
+    ADD_TEST(SingleTypeMultiObject);
+    ADD_TEST(SingleTypeIterator);
 }
 
 DECLARE_TEST_FILE(BerkleyDBTester, "berkeley db test");
