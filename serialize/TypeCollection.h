@@ -35,8 +35,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __OBJECT_BUILDER_H__
-#define __OBJECT_BUILDER_H__
+#ifndef __OASYS_TYPE_COLLECTION_H__
+#define __OASYS_TYPE_COLLECTION_H__
 
 #include <map>
 
@@ -46,129 +46,125 @@
 
 namespace oasys {
 
-class BuilderHelper;
+class TypeCollectionHelper;
 
-namespace BuilderErr {
+namespace TypeCollectionErr {
 enum {
     TYPECODE = 1,
-    CORRUPT,
     MEMORY,
 };
 };
 
 /**
  * Conversion class from C++ types to their associated type codes. See
- * BUILDER_TYPECODE macro below for a instantiation (specialization)
+ * TYPE_COLLECTION_MAP macro below for a instantiation (specialization)
  * of this template to define the types.
  */
-template<typename _TypeCollection, typename _Type> class BuilderCode;
+template<typename _Collection, typename _Type> class TypeCollectionCode;
 
 /**
- * This templated builder accomplishes severals things:
+ * This templated type collection accomplishes severals things:
  *
  * - Enables different collections of type codes which can have the
  *   same numeric value, e.g. the same type codes can be reused in
  *   different projects that are then linked together.
  * - Type checked object creation from raw bits.
- * - Abstract aggregate types, e.g. Object* deserialized from concrete
+ * - Abstract type groups, e.g. Object* deserialized from concrete
  *   instantiations A, B, C who inherited from Object.
  * 
  * Example of use:
  * @code
- * // Type declaration for the Dtn collection of type codes
- * struct DtnC {};
+ * // Type declaration for the Foobar collection of type codes
+ * struct FoobarC {};
  * 
- * // Instantiate a builder for this collection (this goes in the .cc file)
- * Builder<DtnC>* Builder<DtnC>::instance_;
+ * // Instantiate a typecollection for this collection (this goes in
+ * // the .cc file)
+ * TypeCollection<FoobarC>* TypeCollection<FoobarC>::instance_;
  * 
  * // An aggregate class Obj and concrete classes Foo, Bar
  * struct Obj : public SerializableObject {};
  * struct Foo : public Obj {
- *     Foo(Builder<DtnC>* b) {}
+ *     Foo(TypeCollection<FoobarC>* b) {}
  *     void serialize(SerializeAction* a) {}
  * };
  * struct Bar : public Obj {
- *     Bar(Builder<DtnC>* b) {}
+ *     Bar(TypeCollection<FoobarC>* b) {}
  *     void serialize(SerializeAction* a) {}
  * };
  * 
  * // in the .h file
- * BUILDER_TYPECODE(DtnC, Foo, 1);
- * BUILDER_TYPECODE(DtnC, Bar, 2);
- * BUILDER_TYPECODE_AGGREGATE(DtnC, Obj, 1, 2);
+ * TYPE_COLLECTION_DECLARE(FoobarC, Foo, 1);
+ * TYPE_COLLECTION_DECLARE(FoobarC, Bar, 2);
+ * TYPE_COLLECTION_GROUP(FoobarC, Obj, 1, 2);
  * 
  * // in the .cc file
- * BUILDER_CLASS(DtnC, Foo, 1);
- * BUILDER_CLASS(DtnC, Bar, 2);
+ * TYPE_COLLECTION_DEFINE(FoobarC, Foo, 1);
+ * TYPE_COLLECTION_DEFINE(FoobarC, Bar, 2);
  * 
  * // example of use
  * Foo* foo;
- * Builder<DtnC>* b = Builder<DtnC>::instance();
- * int err = b->new_object(BuilderCode<TestC, Foo>::TYPECODE, 
+ * TypeCollection<FoobarC>* b = TypeCollection<FoobarC>::instance();
+ * int err = b->new_object(TypeCollectionCode<TestC, Foo>::TYPECODE,
  *                         &foo, buf, len, Serialize::CONTEXT_LOCAL)
  * @endcode
  */
-template<typename _TypeCollection>
-class Builder : public Logger {
+template<typename _Collection>
+class TypeCollection : public Logger {
 public:    
     typedef u_int32_t TypeCode_t;
 
-    Builder<_TypeCollection>() : Logger("/builder") {}
+    TypeCollection<_Collection>() : Logger("/type_collection") {}
 
     /** 
      * Note: this should be multithread safe because the instance is
      * created by the static initializers of the program, at which
      * time there should be only one thread.
      */ 
-    static Builder<_TypeCollection>* instance() {
+    static TypeCollection<_Collection>* instance() {
         if(!instance_) {
-            instance_ = new Builder<_TypeCollection>();
+            instance_ = new TypeCollection<_Collection>();
         }        
         return instance_;
     }
 
-    void reg(TypeCode_t typecode, BuilderHelper* helper) {
+    void reg(TypeCode_t typecode, TypeCollectionHelper* helper) {
         ASSERT(dispatch_.find(typecode) == dispatch_.end());
         dispatch_[typecode] = helper;
     }
 
     /**
-     * Get a new object from the bits. NOTE: This can fail! Be sure to
-     * check the return value from the function.
+     * Get a new object from the given typecode. NOTE: This can fail!
+     * Be sure to check the return value from the function.
      *
      * @return 0 on no error, MEMORY if cannot allocate new object,
-     * CORRUPT if unserialization fails and TYPECODE if the typecode
-     * does not match the type.
+     * and TYPECODE if the typecode is invalid for the given type.
      */
     template<typename _Type>
-    int new_object(TypeCode_t typecode, _Type** obj_ptr, const u_char* data, 
-                   int length, Serialize::context_t context)
+    int new_object(TypeCode_t typecode, _Type** obj)
     {
-        // Check that the typecodes are within bounds
-        if(BuilderCode<_TypeCollection, _Type>::TYPECODE_LOW  > typecode ||
-            BuilderCode<_TypeCollection, _Type>::TYPECODE_HIGH < typecode)
+        // Check that the given typecode is within the legal bounds
+        // for the _Type of the return
+        if(TypeCollectionCode<_Collection, _Type>::TYPECODE_LOW  > typecode ||
+           TypeCollectionCode<_Collection, _Type>::TYPECODE_HIGH < typecode)
         {
-            return BuilderErr::TYPECODE;
+            return TypeCollectionErr::TYPECODE;
         }
-        
+
+        // Based on the lookup in the dispatch, create a new object
+        // and cast it to the given type.
         ASSERT(dispatch_.find(typecode) != dispatch_.end());
-
-        _Type* obj = static_cast<_Type*>(dispatch_[typecode]->new_object());
-        if(obj == 0) {
+        *obj = static_cast<_Type*>(dispatch_[typecode]->new_object());
+        if (*obj == NULL) {
             log_crit("out of memory");
-            return BuilderErr::MEMORY;
-        }
-
-        oasys::Unmarshal unm(context, data, length);
-        if(unm.action(obj) != 0) {
-            delete obj;
-            return BuilderErr::CORRUPT;
+            return TypeCollectionErr::MEMORY;
         }
         
-        *obj_ptr = obj;
         return 0;
     }
 
+    /**
+     * Return the stringified type code.
+     */
     const char* type_name(TypeCode_t typecode) {
 	if(dispatch_.find(typecode) == dispatch_.end()) {
 	    return "";
@@ -178,15 +174,15 @@ public:
     }
 
 private:
-    std::map<TypeCode_t, BuilderHelper*> dispatch_;
-    static Builder<_TypeCollection>*     instance_;
+    std::map<TypeCode_t, TypeCollectionHelper*> dispatch_;
+    static TypeCollection<_Collection>*     instance_;
 };
 
 /**
  * The generic base class is just to stuff the templated class into a
  * map.
  */
-class BuilderHelper {
+class TypeCollectionHelper {
 public:
     virtual void* new_object() = 0;
     virtual const char* name() const = 0;
@@ -194,62 +190,61 @@ public:
 
 /**
  * Instantiate a template with the specific class and create a static
- * instance of this to register the class. Use the BUILDER_CLASS macro
+ * instance of this to register the class. Use the TYPE_COLLECTION_DEFINE macro
  * below.
  */
-template<typename _TypeCollection, typename _Class>
-class BuilderDispatch : public BuilderHelper {
+template<typename _Collection, typename _Class>
+class TypeCollectionDispatch : public TypeCollectionHelper {
 public:
     /** Register upon creation. */
-    BuilderDispatch<_TypeCollection, _Class>
-	(typename Builder<_TypeCollection>::TypeCode_t typecode,
+    TypeCollectionDispatch<_Collection, _Class>
+	(typename TypeCollection<_Collection>::TypeCode_t typecode,
 	 const char* name) : name_(name)
     {
-        Builder<_TypeCollection>::instance()->reg(typecode, this);
+        TypeCollection<_Collection>::instance()->reg(typecode, this);
     }
 
     /** 
-     * The _Class takes an instance of the Builder class in order to
+     * The _Class takes an instance of the TypeCollection class in order to
      * distinguish that the constructor is being called to build the
-     * serializable object via a builder.
+     * serializable object via a typecollection.
      *
      * @return The reason for the void* is to be able to virtualize
      * this class yet not have the problem of potentially slicing the
      * object via casting.
      */
     void* new_object() {
-        return static_cast<void*>
-            (new _Class(Builder<_TypeCollection>::instance()));
+        return static_cast<void*>(new _Class(Builder()));
     }
 
     const char* name() const { return name_; }
-    
+
 private:
     const char* name_;
 };
 
 /**
- * Macro to use to define a class to be used by the builder.
+ * Macro to use to define a class to be used by the typecollection.
  */
-#define BUILDER_CLASS(_collection, _class, _typecode)             \
-    BuilderDispatch<_collection, _class>                          \
-        _class ## Builder(_typecode, #_collection "::" #_class);  \
+#define TYPE_COLLECTION_DEFINE(_collection, _class, _typecode)          \
+    TypeCollectionDispatch<_collection, _class>                         \
+        _class ## TypeCollection(_typecode, #_collection "::" #_class);
 
 /**
- * Define the builder C++ type -> typecode converter
+ * Define the typecollection C++ type -> typecode converter
  */
-#define BUILDER_TYPECODE(_Collection, _Class, _code)    \
-namespace oasys {                                       \
-    template<>                                          \
-    struct BuilderCode<_Collection, _Class> {           \
-        enum {                                          \
-            TYPECODE_LOW  = _code,                      \
-            TYPECODE_HIGH = _code,                      \
-        };                                              \
-        enum {                                          \
-            TYPECODE = _code,                           \
-        };                                              \
-    };                                                  \
+#define TYPE_COLLECTION_DECLARE(_Collection, _Class, _code)     \
+namespace oasys {                                               \
+    template<>                                                  \
+    struct TypeCollectionCode<_Collection, _Class> {            \
+        enum {                                                  \
+            TYPECODE_LOW  = _code,                              \
+            TYPECODE_HIGH = _code,                              \
+        };                                                      \
+        enum {                                                  \
+            TYPECODE = _code,                                   \
+        };                                                      \
+    };                                                          \
 }
 
 /**
@@ -259,20 +254,20 @@ namespace oasys {                                       \
  * could potentially be of concrete types A, B, C), you need to use
  * this macro in the type codes header:
  * @code
- * BUILDER_TYPECODE_AGGREGATE(Collection, S, 1, 3);
+ * TYPE_COLLECTION_GROUP(Collection, S, 1, 3);
  * @endcode
  */
-#define BUILDER_TYPECODE_AGGREGATE(_Collection, _Class, _low, _high)    \
-namespace oasys {                                                       \
-    template<>                                                          \
-    struct BuilderCode<_Collection, _Class> {                           \
-        enum {                                                          \
-            TYPECODE_LOW  = _low,                                       \
-            TYPECODE_HIGH = _high,                                      \
-        };                                                              \
-    };                                                                  \
+#define TYPE_COLLECTION_GROUP(_Collection, _Class, _low, _high) \
+namespace oasys {                                               \
+    template<>                                                  \
+    struct TypeCollectionCode<_Collection, _Class> {            \
+        enum {                                                  \
+            TYPECODE_LOW  = _low,                               \
+            TYPECODE_HIGH = _high,                              \
+        };                                                      \
+    };                                                          \
 }
 
 }; // namespace oasys
 
-#endif //__OBJECT_BUILDER_H__
+#endif //__OASYS_TYPE_COLLECTION_H__
