@@ -56,6 +56,15 @@ enum {
 };
 
 /**
+ * Generic base class needed to stuff the templated class into a map.
+ */
+class TypeCollectionHelper {
+public:
+    virtual void* new_object() = 0;
+    virtual const char* name() const = 0;
+};
+
+/**
  * Conversion class from C++ types to their associated type codes. See
  * TYPE_COLLECTION_MAP macro below for a instantiation (specialization)
  * of this template to define the types.
@@ -176,16 +185,6 @@ public:
 private:
     std::map<TypeCode_t, TypeCollectionHelper*> dispatch_;
     static TypeCollection<_Collection>*     instance_;
-};
-
-/**
- * The generic base class is just to stuff the templated class into a
- * map.
- */
-class TypeCollectionHelper {
-public:
-    virtual void* new_object() = 0;
-    virtual const char* name() const = 0;
 };
 
 /**
