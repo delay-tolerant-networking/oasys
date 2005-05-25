@@ -90,7 +90,24 @@ public:
         ALLOC_MEM       = 1<<0, ///< Allocated memory to be freed by the user 
         NULL_TERMINATED = 1<<1, ///< Delim by '\0' instead of storing length
     };
-};    
+};
+
+/**
+ * Empty class used by various object factories (e.g. TypeCollection
+ * and ObjectBuilder) to pass to the new object's constructor to
+ * distinguish the call from a default construction.
+ *
+ * For example:
+ *
+ * @code
+ * new SerializableObject(Builder());
+ * @endcode
+ */
+class Builder {
+public:
+    Builder() {}
+    Builder(const Builder& b) {}
+};
 
 /**
  * Inherit from this class to add serialization capability to a class.
