@@ -63,13 +63,13 @@ DurableStore::get_table(MultiTypeDurableTable<_BaseType, _Collection>** table,
     // automatically when the vector is destroyed.
     PrototypeVector prototypes;
 
-    for (typecode = low; typecode <= high; ++typecode)
+    for (code = low; code <= high; ++code)
     {
-        err = collection->new_object(typecode, &obj);
+        err = collection->new_object(code, &obj);
 
         if (err == 0)
         {
-            protoypes.push_back(std::auto_ptr<SerializableObject>(obj));
+            prototypes.push_back(std::auto_ptr<SerializableObject>(obj));
         }
         else if (err == TypeCollectionErr::TYPECODE)
         {
@@ -77,13 +77,14 @@ DurableStore::get_table(MultiTypeDurableTable<_BaseType, _Collection>** table,
         }
         else
         {
-            log_crit("unknown error from TypeCollection::new_object");
+            log_crit("/typecollection",
+                     "unknown error from TypeCollection::new_object");
             return DS_ERR;
         }
     }
 
     DurableTableImpl* table_impl;
-    err = impl_->get_table(&table_impl, db_name, flags, prototypes);
+    err = impl_->get_table(&table_impl, table_name, flags, prototypes);
     if (err != 0) {
         return err;
     }
