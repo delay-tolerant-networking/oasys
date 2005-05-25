@@ -40,7 +40,7 @@
 #define _OASYS_STRING_BUFFER_H_
 
 #include "../debug/Log.h" 	// for PRINTFLIKE macro
-#include <algorithm>
+#include "../util/IntUtils.h"	// for min
 
 namespace oasys {
 
@@ -201,7 +201,7 @@ public:
         if(init_str != 0) {
             buf_[_sz - 1] = '\0';
             strncpy(buf_, init_str, _sz);
-            len_ = std::min<unsigned int>(_sz - 1, strlen(init_str));
+            len_ = min(_sz - 1, strlen(init_str));
         }
     }
     
