@@ -93,6 +93,10 @@ template <int x> struct static_assert_test{};
 template <bool>  struct STATIC_ASSERTION_FAILURE;
 template <>      struct STATIC_ASSERTION_FAILURE<true>{};
 
+#ifdef STATIC_ASSERT
+#undef STATIC_ASSERT
+#endif
+
 #define STATIC_ASSERT(_x, _what)                   \
     typedef static_assert_test                     \
     <                                              \
