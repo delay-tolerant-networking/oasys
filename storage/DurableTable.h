@@ -54,7 +54,10 @@ public:
                  DurableObjectCache* cache)
         : impl_(impl), name_(name), cache_(cache) {}
     
-    ~DurableTable() {}
+    ~DurableTable()
+    {
+        delete impl_;
+    }
 
     
     /** 
@@ -78,6 +81,12 @@ public:
     int del(const SerializableObject& key);
 
     /**
+     * Return a newly allocated iterator for the table. Caller has the
+     * responsibility to delete it once finished.
+     */
+    DurableIterator* iter() { return impl_->iter(); }
+
+    /**
      * Return the underlying table implementation.
      */
     DurableTableImpl* impl() { return impl_; }
@@ -87,10 +96,14 @@ public:
      */
     std::string name() { return name_; }
 
-private:
+protected:
     DurableTableImpl*   impl_;
     std::string         name_;
     DurableObjectCache* cache_;
+
+private:
+    DurableTable();
+    DurableTable(const DurableTable&);
 };
 
 /**
