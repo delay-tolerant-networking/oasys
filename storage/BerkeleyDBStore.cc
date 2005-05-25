@@ -290,18 +290,21 @@ BerkeleyDBStore::get_table(DurableTableImpl**  table,
     db_flags = 0;
     if (flags & DS_CREATE) {
         db_flags |= DB_CREATE;
+
+        if (((flags & DS_BTREE) != 0) && ((flags & DS_HASH) != 0)) {
+            PANIC("both DS_HASH and DS_BTREE were specified");
+        }
         
-        if (flags & DS_HASH) {
-            ASSERTF(!(flags & DS_BTREE),
-                    "both DS_HASH and DS_BTREE specified");
+        if (flags & DS_HASH)
+        {
             db_type = DB_HASH;
-            
-        } else if (flags & DS_BTREE) {
-            ASSERTF(!(flags & DS_HASH),
-                    "both DS_HASH and DS_BTREE specified");
+        }
+        else if (flags & DS_BTREE)
+        {
             db_type = DB_BTREE;
-        } else {
-            // XXX/demmer force type to be specified??
+        }
+        else // XXX/demmer force type to be specified??
+        {
             db_type = DB_BTREE;
         }
     }
@@ -482,8 +485,8 @@ BerkeleyDBTable::get(const SerializableObject& key,
     }
 
     
-    Unmarshal unmarshaller(Serialize::CONTEXT_LOCAL, 
-                           static_cast<const u_char*>(d.data), d.size);
+    Unmarshal unmarshaller(Serialize::CONTEXT_LOCAL,
+                           (u_char*)(d.data), d.size);
     
     if (unmarshaller.action(data) != 0) {
         log_err("DB: error unserializing data object");
