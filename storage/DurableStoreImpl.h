@@ -46,7 +46,7 @@ public:
     /**
      * Typedef for the list of objects passed to get_table.
      */
-    typedef std::vector<std::auto_ptr<const SerializableObject*> > PrototypeVector;
+    typedef std::vector<SerializableObject*> PrototypeVector;
 
     /**
      * Hook to get or create the implementation-specific components of
@@ -54,14 +54,14 @@ public:
      *
      */
     virtual int get_table(DurableTableImpl** table,
+                          const std::string& db_name,
                           int                flags,
-                          std::string        db_name,
                           PrototypeVector&   prototypes) = 0;
 
     /**
      * Hook to remove a table (by name) from the data store.
      */
-    virtual int del_table(std::string db_name) = 0;
+    virtual int del_table(const std::string& db_name) = 0;
 };
 
 
@@ -103,9 +103,14 @@ public:
     /**
      * Get an iterator to this table. 
      *
-     * @return The new iterator. set. Caller deletes this pointer.
+     * @return The new iterator. Caller deletes this pointer.
      */
     virtual DurableIterator* iter() = 0;
+
+    /**
+     * Return the name of this table.
+     */
+    const char* name() { return table_name_.c_str(); }
 
 protected:
     /**
