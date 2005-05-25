@@ -69,7 +69,7 @@ DurableStore::get_table(MultiTypeDurableTable<_BaseType, _Collection>** table,
 
         if (err == 0)
         {
-            prototypes.push_back(std::auto_ptr<SerializableObject>(obj));
+            prototypes.push_back(obj);
         }
         else if (err == TypeCollectionErr::TYPECODE)
         {
