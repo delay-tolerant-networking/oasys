@@ -152,7 +152,7 @@ DECLARE_TEST(SizeTest) {
 DECLARE_TEST(NullStringTest1) {
     char* test = "test string END";
 
-    NullStringShim id;
+    NullStringShim id(0);
     oasys::Unmarshal uv(Serialize::CONTEXT_LOCAL, 
 	                reinterpret_cast<u_char*>(test), 
 	                strlen(test) + 1, 0);
@@ -162,11 +162,28 @@ DECLARE_TEST(NullStringTest1) {
     return 0;
 }
 
+DECLARE_TEST(NullStringTest2) {
+    char* test = "test string END";
+
+    // XXX/demmer why doesn't the temporary work??
+    Builder b;
+    NullStringShim id(b);
+    oasys::Unmarshal uv(Serialize::CONTEXT_LOCAL, 
+	                reinterpret_cast<u_char*>(test), 
+	                strlen(test) + 1, 0);
+    uv.action(&id);
+    CHECK(strcmp(test, id.value()) == 0);
+
+    return 0;
+}
+
+
 DECLARE_TESTER(MarshalTester) {
     ADD_TEST(SizeTest);
     ADD_TEST(CompareTest_NOCRC);
     ADD_TEST(CompareTest_CRC);
     ADD_TEST(NullStringTest1);
+    ADD_TEST(NullStringTest2);
 };
 
 DECLARE_TEST_FILE(MarshalTester, "marshalling test");
