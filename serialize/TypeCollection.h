@@ -267,6 +267,13 @@ namespace oasys {                                               \
     };                                                          \
 }
 
+/**
+ * Macro to wrap the annoyingly finicky template static instantiation.
+ */
+#define TYPE_COLLECTION_INSTANTIATE(_Collection)        \
+template<> class oasys::TypeCollection<_Collection>*    \
+   oasys::TypeCollection<_Collection>::instance_ = 0;
+
 }; // namespace oasys
 
 #endif //__OASYS_TYPE_COLLECTION_H__

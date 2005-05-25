@@ -44,7 +44,7 @@ using namespace oasys;
 
 struct TestC {};
 
-TypeCollection<TestC>* TypeCollection<TestC>::instance_;
+TYPE_COLLECTION_INSTANTIATE(TestC);
 
 class Obj  {
 public:
