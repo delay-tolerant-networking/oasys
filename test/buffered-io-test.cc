@@ -63,6 +63,6 @@ struct TestClient : public IOClient {
 
 // DECLARE_TEST_FILE(Test, "BufferedIO");
 
-int main() { NOTIMPLEMENTED; }
+int main() { Log::init(); NOTIMPLEMENTED; }
 
 // """ # ----------------------------------------------------------------------
