@@ -69,5 +69,5 @@ public:
     /**
      * Unserialize the current element into the given key object.
      */
-    virtual void get(SerializableObject* key) = 0;
+    virtual int get(SerializableObject* key) = 0;
 };

@@ -15,7 +15,17 @@ template <typename _DataType>
 int
 SingleTypeDurableTable<_DataType>::get(const SerializableObject& key, _DataType** data)
 {
-    NOTIMPLEMENTED;    
+    int err;
+    _DataType* d = new _DataType(Builder());
+
+    err = impl_->get(key, d);
+    if (err != 0) {
+        delete d;
+        return err;
+    }
+
+    *data = d;
+    return 0;
 }
 
 /**
@@ -45,12 +55,12 @@ MultiTypeDurableTable<_DataType, _Collection>::get(const SerializableObject& key
  * @param flags Bit vector of DurableStoreFlags_t values.
  * @return DS_OK, DS_NOTFOUND, DS_ERR
  */
-int
+inline int
 DurableTable::put(const SerializableObject& key,
                   const SerializableObject* data,
                   int flags)
 {
-    NOTIMPLEMENTED;
+    return impl_->put(key, data, flags);
 }
     
 /**
@@ -58,8 +68,8 @@ DurableTable::put(const SerializableObject& key,
  *
  * @return DS_OK, DS_NOTFOUND if key is not found
  */
-int
+inline int
 DurableTable::del(const SerializableObject& key)
 {
-    NOTIMPLEMENTED;
+    return impl_->del(key);
 }

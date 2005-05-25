@@ -82,9 +82,9 @@ enum DurableStoreFlags_t {
 
 // Pull in the various related class definitions (and template class
 // implementations) after the above declarations
+#include "DurableStoreImpl.h"
 #include "DurableIterator.h"
 #include "DurableTable.h"
-#include "DurableStoreImpl.h"
 
 /**
  * Interface for the generic datastore.
@@ -99,6 +99,14 @@ public:
     {
         ASSERT(instance_);      // use init() please
         return instance_;      
+    }
+
+    /**
+     * Return the implementation pointer.
+     */
+    DurableStoreImpl* impl()
+    {
+        return impl_;
     }
 
     /**
@@ -117,10 +125,9 @@ public:
 
     // XXX/bowei should be virtualized
     static void shutdown() {
-        ASSERT(instance_ != 0);
+        delete instance_->impl_;
         delete instance_;
-
-        instance_ = 0;
+        instance_ = NULL;
     }
 
     /**
@@ -164,7 +171,7 @@ private:
      * Typedef for the list of objects passed to the implementation to
      * initialize the table.
      */
-    typedef std::vector<std::auto_ptr<const SerializableObject*> > PrototypeVector;
+    typedef DurableStoreImpl::PrototypeVector PrototypeVector;
     
     /**
      * The constructor should only be called by DurableStore::init.

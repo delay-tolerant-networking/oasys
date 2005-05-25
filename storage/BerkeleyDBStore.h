@@ -22,11 +22,11 @@ class BerkeleyDBIterator;
 /**
  * Interface for the generic datastore
  */
-class BerkeleyDBStore : public DurableStore, public Logger {
+class BerkeleyDBStore : public DurableStoreImpl, public Logger {
     friend class BerkeleyDBTable;
 
 public:
-    ~BerkeleyDBStore();
+    virtual ~BerkeleyDBStore();
 
     /**
      * Do initialization. Must do this once before you try to obtain
@@ -42,9 +42,9 @@ public:
      * Shadow the instance method of DurableStore so callees do not
      * need to do the downcast.
      */
-    BerkeleyDBStore* instance()
+    static BerkeleyDBStore* instance()
     {
-        return static_cast<BerkeleyDBStore*>(DurableStore::instance());
+        return static_cast<BerkeleyDBStore*>(DurableStore::instance()->impl());
     }
 
     /**
@@ -53,12 +53,12 @@ public:
     static void shutdown_for_debug();
 
     /// @{ Virtual from DurableStore
-    virtual int get_table(DurableTable**      table,
-                          int                 flags,
-                          const std::string&  name,
-                          SerializableObject* prototype);
+    int get_table(DurableTableImpl**  table,
+                  const std::string&  name,
+                  int                 flags,
+                  PrototypeVector&    prototypes);
     
-    virtual int del_table(std::string& name);
+    int del_table(const std::string& name);
     /// @}
 
 private:
@@ -66,18 +66,12 @@ private:
     std::string db_name_;     ///< Name of the database file
     DB_ENV*     dbenv_;       ///< database environment for all tables
 
-    SpinLock next_id_lock_;
-    DurableTableID next_id_;  ///< next table id to hand out
-
     SpinLock ref_count_lock_;
-    typedef std::map<int, int> RefCountMap;
+    typedef std::map<std::string, int> RefCountMap;
     RefCountMap ref_count_;   ///< Ref. count for open tables.
 
     /// Id that represents the metatable of tables
-    static const DurableTableID META_TABLE_ID = 1;
-
-    /// Handle on the metatable
-    BerkeleyDBTable* metatable_;
+    static const std::string META_TABLE_NAME;
 
     /// Constructor - protected for singleton
     BerkeleyDBStore();
@@ -87,12 +81,9 @@ private:
     int get_meta_table(BerkeleyDBTable** table);
     
     /// @{ Changes the ref count on the tables, used by BerkeleyDBTable 
-    int acquire_table(DurableTableID id);
-    int release_table(DurableTableID id);
+    int acquire_table(const std::string& table);
+    int release_table(const std::string& table);
     /// @}
-
-    /// Get the string name of a table
-    std::string get_name(int id);
 
     /**
      * real initialization code
@@ -126,14 +117,14 @@ public:
     
     int del(const SerializableObject& key);
     
-    DurableIteratorImpl* iter();
+    DurableIterator* iter();
     /// @}
 
 private:
     /**
      * Only BerkeleyDBStore can create BerkeleyDBTables
      */
-    BerkeleyDBTable(DurableTableID id, DB* db);
+    BerkeleyDBTable(std::string name, DB* db);
 
     /// Whether a specific key exists in the table.
     int key_exists(const void* key, size_t key_len);
@@ -147,7 +138,7 @@ private:
 /**
  * Iterator class for Berkeley DB tables.
  */
-class BerkeleyDBIterator : public DurableIteratorImpl, public Logger {
+class BerkeleyDBIterator : public DurableIterator, public Logger {
     friend class BerkeleyDBTable;
 
 private:
@@ -158,7 +149,7 @@ private:
     BerkeleyDBIterator(BerkeleyDBTable* t);
 
 public:
-    ~BerkeleyDBIterator();
+    virtual ~BerkeleyDBIterator();
     
     /// @{ Obtain the raw byte representations of the key and data.
     // Buffers are only valid until the next invocation of the
@@ -168,7 +159,8 @@ public:
     /// @}
     
     /// @{ virtual from DurableIteratorImpl
-    int next(SerializableObject* key);
+    int next();
+    int get(SerializableObject* key);
     /// @}
 
 protected:

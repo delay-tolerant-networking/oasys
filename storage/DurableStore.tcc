@@ -7,7 +7,7 @@
  * @return DS_OK, DS_NOTFOUND, DS_EXISTS, DS_ERR
  */
 template <typename _DataType>
-int
+inline int
 DurableStore::get_table(SingleTypeDurableTable<_DataType>** table,
                         std::string         table_name,
                         int                 flags,
@@ -19,24 +19,28 @@ DurableStore::get_table(SingleTypeDurableTable<_DataType>** table,
     // the vector stores auto_ptr instances so the objects are cleaned
     // up automatically when the vector goes away
     PrototypeVector prototypes;
-    prototypes.push_back(std::auto_ptr(new _DataType(Builder())));
+    prototypes.push_back(new _DataType(Builder()));
 
     DurableTableImpl* table_impl;
-    err = impl_->get_table(&table_impl, flags, db_name, prototypes);
+    err = impl_->get_table(&table_impl, table_name, flags, prototypes);
+
+    // clean up the prototype vector
+    delete prototypes.back();
+    prototypes.pop_back();
+    ASSERT(prototypes.size() == 0);
+
+    // check for errors from the implementation
     if (err != 0) {
         return err;
     }
-
+    
     *table = new SingleTypeDurableTable<_DataType>(table_impl, table_name, cache);
 
     return 0;
 }
 
-/**
- * Template specialization for the NoCollection case.
- */
 template <typename _BaseType, typename _Collection>
-int
+inline int
 DurableStore::get_table(MultiTypeDurableTable<_BaseType, _Collection>** table,
                         std::string         table_name,
                         int                 flags,
@@ -65,7 +69,7 @@ DurableStore::get_table(MultiTypeDurableTable<_BaseType, _Collection>** table,
 
         if (err == 0)
         {
-            protoypes.push_back(std::auto_ptr(obj));
+            protoypes.push_back(std::auto_ptr<SerializableObject>(obj));
         }
         else if (err == TypeCollectionErr::TYPECODE)
         {
@@ -79,7 +83,7 @@ DurableStore::get_table(MultiTypeDurableTable<_BaseType, _Collection>** table,
     }
 
     DurableTableImpl* table_impl;
-    err = impl_->get_table(&table_impl, flags, db_name, prototypes);
+    err = impl_->get_table(&table_impl, db_name, flags, prototypes);
     if (err != 0) {
         return err;
     }
@@ -93,7 +97,7 @@ DurableStore::get_table(MultiTypeDurableTable<_BaseType, _Collection>** table,
 /**
  * Delete the table (by id) from the datastore.
  */
-int
+inline int
 DurableStore::del_table(std::string db_name)
 {
     return impl_->del_table(db_name);

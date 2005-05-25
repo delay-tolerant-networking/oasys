@@ -67,8 +67,10 @@ namespace oasys {
  * BerkeleyDBStore
  *
  *****************************************************************************/
+const std::string BerkeleyDBStore::META_TABLE_NAME("___META_TABLE___");
+
 BerkeleyDBStore::BerkeleyDBStore() 
-    : Logger("/berkeleydb/store"), metatable_(NULL)
+    : Logger("/berkeleydb/store")
 {
     // Real init code in do_init.
 }
@@ -77,10 +79,6 @@ BerkeleyDBStore::~BerkeleyDBStore()
 {
     StringBuffer err_str;
 
-    if (metatable_) {
-        delete metatable_;
-    }
-    
     err_str.append("Tables still open at deletion time: ");
     bool busy = false;
 
@@ -90,7 +88,7 @@ BerkeleyDBStore::~BerkeleyDBStore()
     {
         if(iter->second != 0)
         {
-            err_str.appendf("%d ", iter->first);
+            err_str.appendf("%s ", iter->first.c_str());
             busy = true;
         }
     }
@@ -129,7 +127,6 @@ BerkeleyDBStore::init(const std::string& db_name,
 void
 BerkeleyDBStore::shutdown_for_debug()
 {
-    delete metatable_;
     DurableStore::shutdown();
 }
 
@@ -237,7 +234,7 @@ BerkeleyDBStore::do_init(const std::string& db_name,
         return DS_ERR;
     }
     
-    // Create database file and the metatable if none exists
+    // Create database file if none exists
     std::string dbpath = db_dir;
     dbpath += "/";
     dbpath += db_name_;
@@ -248,20 +245,15 @@ BerkeleyDBStore::do_init(const std::string& db_name,
         {
             DB* db;
 
-            db_create(&db, dbenv_, 0);
-            log_info("Creating new database file");
-            
-            err = db->open(db, NO_TX, db_name_.c_str(),
-                           get_id(META_TABLE_ID).c_str(),
-                           DB_HASH, DB_CREATE, 0);
-            if(err != 0) {
-                log_crit("Can't create database file");
+            err = db_create(&db, dbenv_, 0);
+            if (err != 0) {
+                log_err("error creating database handle: %s", db_strerror(err));
                 return DS_ERR;
             }
             
             err = db->close(db, 0);
-            if(err != 0) {
-                log_crit("Corrupt database file?!");
+            if (err != 0) {
+                log_err("error closing database handle: %s", db_strerror(err));
                 return DS_ERR;
             }
         }
@@ -272,55 +264,18 @@ BerkeleyDBStore::do_init(const std::string& db_name,
         }
     }
 
-    // Open the meta table and figure out the max id
-    if(get_meta_table(&metatable_) != 0) 
-    {
-        log_crit("Unable to open metatable!");
-        return DS_ERR;
-    }
-
-    BerkeleyDBIterator* pItr;
-    pItr = static_cast<BerkeleyDBIterator*>(metatable->iter());
-    ASSERTF(pItr, "unable to create metatable iterator");
-
-    int max_id = 0;
-    IntShim key;
-    while (pItr->next(&key) == 0)
-    {
-	char raw_key_value[256];
-	void* raw_key;
-	size_t raw_key_len;
-	
-	err = pItr->raw_key(&raw_key, &raw_key_len);
-	if(err != 0) {
-	    PANIC("Iterator to metatable is unusable!");
-	}
-
-	memcpy(raw_key_value, raw_key, raw_key_len);
-	raw_key_value[raw_key_len] = '\0';
-
-	int cur_id = atoi(raw_key_value);
-        max_id = (max_id < cur_id) ? cur_id : max_id;
-        
-        log_debug("metatable has %s", raw_key_value);
-    }
-    next_id_ = max_id + 1;
-
-    delete pItr;
-    delete metatable;
-
     return 0;
 }
 
 int
-BerkeleyDBStore::get_table(DurableTable** table,
-                           int            flags,
-                           std::string    db_name)
+BerkeleyDBStore::get_table(DurableTableImpl**  table,
+                           const std::string&  name,
+                           int                 flags,
+                           PrototypeVector&    prototypes)
 {
     DB* db;
     int err;
-    std::string    db_name;
-    DBTYPE db_type;
+    DBTYPE db_type = DB_BTREE;
     u_int32_t db_flags;
 
     // grab a new database handle
@@ -334,91 +289,70 @@ BerkeleyDBStore::get_table(DurableTable** table,
     // to the meta table, and calculate the db type and creation flags
     db_flags = 0;
     if (flags & DS_CREATE) {
-        oasys::ScopeLock l(next_id_lock_);
-        
-        if (id == META_TABLE_ID) {
-            log_err("can't recreate meta table");
-            return DS_ERR;
-        }
-        
-        if (id == 0) {
-            id = next_id_;
-        }
-
-        IntShim k("id", id);
-        IntShim d("id", id);
-        err = metatable_->put(k, &d, DS_CREATE | DS_EXCL);
-        
-        if ((flags & DS_EXCL) && (err == DS_EXISTS))
-        {
-            log_err("table already exists");
-            return DS_EXISTS;
-
-        } else if (err != 0) {
-            log_err("error creating metatable entry");
-            return DS_ERR;
-        }
-            
-        if (next_id_ < id) {
-            next_id_ = id + 1;
-        }
-        
-        db_flags = DB_CREATE;
+        db_flags |= DB_CREATE;
         
         if (flags & DS_HASH) {
             ASSERTF(!(flags & DS_BTREE),
                     "both DS_HASH and DS_BTREE specified");
-            type = DB_HASH;
-
+            db_type = DB_HASH;
+            
         } else if (flags & DS_BTREE) {
             ASSERTF(!(flags & DS_HASH),
                     "both DS_HASH and DS_BTREE specified");
-            type = DB_BTREE;
+            db_type = DB_BTREE;
+        } else {
+            // XXX/demmer force type to be specified??
+            db_type = DB_BTREE;
         }
+    }
 
-    } else {
-        // make sure the entry exists in the metatable
-        if (! metatable_->
-
-    } else {
-//         log_err("DB: one of DS_HASH or DS_BTREE must be specified");
-//         return DS_ERR;
-
-        // XXX/demmer figure this out?
-        db_flags = DB_BTREE;
+    if (flags & DS_EXCL) {
+        db_flags |= DB_EXCL;
     }
     
-    err = db->open(db, NO_TX, db_name_.c_str(), get_name(id).c_str(), 
-                   db_flags, DB_CREATE, 0);
-    if (err != 0) {
-        log_err("DB: %s", db_strerror(err));
+    err = db->open(db, NO_TX, db_name_.c_str(), name.c_str(),
+                   db_type, db_flags, 0);
+
+    if (err == ENOENT)
+    {
+        log_debug("get_table -- notfound database %s", name.c_str());
+        return DS_NOTFOUND;
+    }
+    else if (err == EEXIST)
+    {
+        log_debug("get_table -- already existing database %s", name.c_str());
+        return DS_EXISTS;
+    }
+    else if (err != 0)
+    {
+        log_err("DB internal error in get_table: %s", db_strerror(err));
         return DS_ERR;
     }
     
-    log_debug("Creating new table %d", id);
+    log_debug("get_table -- opened table %s", name.c_str());
 
-    *table = new BerkeleyDBTable(id, db);
+    *table = new BerkeleyDBTable(name, db);
 
     return 0;
 }
 
 
 int
-BerkeleyDBStore::del_table(std::string    db_name)
+BerkeleyDBStore::del_table(const std::string& name)
 {
     int err;
     
-    if(ref_count_[id] != 0)
+    if(ref_count_[name] != 0)
     {
-        log_info("Trying to delete table %d with %d refs still on it",
-                 id, ref_count_[id]);
-
+        log_info("Trying to delete table %s with %d refs still on it",
+                 name.c_str(), ref_count_[name]);
+        
         return DS_BUSY;
     }
 
-    log_info("Deleting table %d", id);
-    err = dbenv_->dbremove(dbenv_, NO_TX, db_name_.c_str(), 
-                           get_name(id).c_str(), 0);
+    log_info("deleting table %s", name.c_str());
+    err = dbenv_->dbremove(dbenv_, NO_TX, db_name_.c_str(), name.c_str(), 0);
+    
     if(err != 0) {
         log_err("DB: del_table %s", db_strerror(err));
 
@@ -432,11 +366,15 @@ BerkeleyDBStore::del_table(std::string    db_name)
         }
     }
     
-    ref_count_.erase(id);
+    ref_count_.erase(name);
 
     return 0;
 }
 
+/**
+ * Get a handle on the internal metatable by passing NULL for the
+ * table name to db->open.
+ */
 int  
 BerkeleyDBStore::get_meta_table(BerkeleyDBTable** table)
 {
@@ -456,55 +394,45 @@ BerkeleyDBStore::get_meta_table(BerkeleyDBTable** table)
         return DS_ERR;
     }
     
-    *table = new BerkeleyDBTable(META_TABLE_ID, db);
+    *table = new BerkeleyDBTable(META_TABLE_NAME, db);
     
     return 0;
 }
 
 int
-BerkeleyDBStore::acquire_table(std::string    db_name)
+BerkeleyDBStore::acquire_table(const std::string& table)
 {
-    ++ref_count_[id];
-    ASSERT(ref_count_[id] >= 0);
+    ++ref_count_[table];
+    ASSERT(ref_count_[table] >= 0);
 
-    log_debug("table %d, +refcount=%d", id, ref_count_[id]);
+    log_debug("table %s, +refcount=%d", table.c_str(), ref_count_[table]);
 
-    return ref_count_[id];
+    return ref_count_[table];
 }
 
 int
-BerkeleyDBStore::release_table(std::string    db_name)
+BerkeleyDBStore::release_table(const std::string& table)
 {
-    --ref_count_[id];
-    ASSERT(ref_count_[id] >= 0);
+    --ref_count_[table];
+    ASSERT(ref_count_[table] >= 0);
 
-    log_debug("table %d, -refcount=%d", id, ref_count_[id]);
+    log_debug("table %s, -refcount=%d", table.c_str(), ref_count_[table]);
 
-    return ref_count_[id];
-}
-
-std::string 
-BerkeleyDBStore::get_name(int id)
-{
-    char buf[256];
-    sprintf(buf, "%d", id);
-
-    return buf;
+    return ref_count_[table];
 }
 
 /******************************************************************************
  *
- * Dstable
+ * BerkeleyDBTable
  *
  *****************************************************************************/
-BerkeleyDBTable::BerkeleyDBTable(std::string    db_name, DB* db)
-    : DurableTable(id), db_(db)
+BerkeleyDBTable::BerkeleyDBTable(std::string name, DB* db)
+    : DurableTableImpl(name), db_(db)
 {
-    logpathf("/berkeleydb/table(%d)", id);
+    logpathf("/berkeleydb/table(%s)", name.c_str());
 
-    BerkeleyDBStore* store = 
-        static_cast<BerkeleyDBStore*>(BerkeleyDBStore::instance()); 
-    store->acquire_table(this->id());
+    BerkeleyDBStore* store = BerkeleyDBStore::instance();
+    store->acquire_table(name);
 }
 
 
@@ -516,11 +444,10 @@ BerkeleyDBTable::~BerkeleyDBTable()
     BerkeleyDBStore* store = 
         static_cast<BerkeleyDBStore*>(BerkeleyDBStore::instance()); 
     
-    if(store->release_table(id()) == 0)
-    {
-        log_debug("closing Db %d", id());
-        db_->close(db_, 0);
-    }
+    store->release_table(name());
+
+    log_debug("closing db %s", name());
+    db_->close(db_, 0);
 }
 
 int 
@@ -578,7 +505,7 @@ BerkeleyDBTable::put(const SerializableObject& key,
     int err;
 
     // flatten and fill in the key
-    key_buf_len = flatten_key(key, key_buf, 256);
+    key_buf_len = flatten(key, key_buf, 256);
     if(key_buf_len == 0) 
     {
         log_err("zero or too long key length");
@@ -593,18 +520,18 @@ BerkeleyDBTable::put(const SerializableObject& key,
         bzero(&d, sizeof(d));
 
         err = db_->get(db_, NO_TX, &k, &d, 0);
-        if (err == 0) {
-            return DS_EXISTS;
+        if (err == DB_NOTFOUND) {
+            return DS_NOTFOUND;
 
-        } else if (err != DB_NOTFOUND) {
-            log_err("DB internal error: %s", db_strerror(err));
+        } else if (err != 0) {
+            log_err("put -- DB internal error: %s", db_strerror(err));
             return DS_ERR;
         }
     }
 
     // figure out the size of the data
     MarshalSize sizer(Serialize::CONTEXT_LOCAL);
-    sizer.action(const_cast<SerializableObject*>(&data));
+    sizer.action(data);
 
     { // lock
         ScopeLock lock(&scratch_mutex_);
@@ -642,7 +569,7 @@ BerkeleyDBTable::del(const SerializableObject& key)
     u_char key_buf[256];
     size_t key_buf_len;
 
-    key_buf_len = flatten_key(key, key_buf, 256);
+    key_buf_len = flatten(key, key_buf, 256);
     if(key_buf_len == 0) 
     {
         log_err("zero or too long key length");
@@ -667,13 +594,10 @@ BerkeleyDBTable::del(const SerializableObject& key)
     return 0;
 }
 
-int 
-BerkeleyDBTable::iter(DurableIterator** iter)
+DurableIterator*
+BerkeleyDBTable::iter()
 {
-    *iter = new BerkeleyDBIterator(this);
-    ASSERT(*iter);
-    
-    return 0;
+    return new BerkeleyDBIterator(this);
 }
 
 int 
@@ -706,7 +630,7 @@ BerkeleyDBTable::key_exists(const void* key, size_t key_len)
 BerkeleyDBIterator::BerkeleyDBIterator(BerkeleyDBTable* t)
     : cur_(0), valid_(false)
 {
-    logpathf("/berkeleydb/iter(%d)", d->id());
+    logpathf("/berkeleydb/iter(%s)", t->name());
 
     int err = t->db_->cursor(t->db_, NO_TX, &cur_, 0);
     if(err != 0) {
@@ -734,7 +658,7 @@ BerkeleyDBIterator::~BerkeleyDBIterator()
 }
 
 int
-BerkeleyDBIterator::next(SerializableObject* key_obj)
+BerkeleyDBIterator::next()
 {
     ASSERT(valid_);
 
@@ -753,10 +677,17 @@ BerkeleyDBIterator::next(SerializableObject* key_obj)
         return DS_ERR;
     }
 
-    ASSERT(key_obj != NULL);
+    return 0;
+}
+
+int
+BerkeleyDBIterator::get(SerializableObject* key)
+{
+    ASSERT(key != NULL);
     oasys::Unmarshal un(oasys::Serialize::CONTEXT_LOCAL,
                         static_cast<u_char*>(key_.data), key_.size);
-    if (un.action(key_obj) != 0) {
+
+    if (un.action(key) != 0) {
         log_err("error unmarshalling");
         return DS_ERR;
     }
@@ -787,3 +718,4 @@ BerkeleyDBIterator::raw_data(void** data, size_t* len)
 }
 
 } // namespace oasys
+
