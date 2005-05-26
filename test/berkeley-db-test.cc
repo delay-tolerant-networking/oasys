@@ -4,6 +4,7 @@
 #include "util/StringBuffer.h"
 #include "util/Random.h"
 #include "storage/BerkeleyDBStore.h"
+#include "storage/StorageConfig.h"
 #include "serialize/TypeShims.h"
 
 using namespace oasys;
@@ -16,13 +17,16 @@ const char*    g_config_dir   = "output/berkeley-db-test/berkeley-db-test";
 typedef SingleTypeDurableTable<StringShim> StringDurableTable;
 
 DECLARE_TEST(DBInit) {
-    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
+    StorageConfig::init("berkeleydb", true, true, 0,
+                        g_db_name, g_config_dir, "error.log", 0);
+    BerkeleyDBStore::init();
     DurableStore::shutdown();
     return 0;
 }
 
 DECLARE_TEST(DBTidy) {
-    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
+    StorageConfig::instance()->tidy_ = true;
+    BerkeleyDBStore::init();
     DurableStore* store = DurableStore::instance();
     StringDurableTable* table1 = NULL;
     
@@ -32,8 +36,9 @@ DECLARE_TEST(DBTidy) {
     table1 = NULL;
     
     DurableStore::shutdown();
-    
-    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, false, 0);
+
+    StorageConfig::instance()->tidy_ = false;
+    BerkeleyDBStore::init();
     store = DurableStore::instance();
 
     CHECK(store->get_table(&table1, "test", 0, NULL) == 0);
@@ -43,7 +48,8 @@ DECLARE_TEST(DBTidy) {
 
     DurableStore::shutdown();
 
-    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
+    StorageConfig::instance()->tidy_ = true;
+    BerkeleyDBStore::init();
     store = DurableStore::instance();
 
     CHECK(store->get_table(&table1, "test", 0, NULL) == DS_NOTFOUND);
@@ -54,7 +60,8 @@ DECLARE_TEST(DBTidy) {
 }
 
 DECLARE_TEST(TableCreate) {
-    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
+    StorageConfig::instance()->tidy_ = true;
+    BerkeleyDBStore::init();
     DurableStore* store = DurableStore::instance();
     
     StringDurableTable* table1 = NULL;
@@ -87,7 +94,8 @@ DECLARE_TEST(TableCreate) {
 }
 
 DECLARE_TEST(TableDelete) {
-    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
+    StorageConfig::instance()->tidy_ = true;
+    BerkeleyDBStore::init();
     DurableStore* store = DurableStore::instance();
     
     StringDurableTable* table = NULL;
@@ -112,7 +120,8 @@ DECLARE_TEST(TableDelete) {
 }
 
 DECLARE_TEST(SingleTypePut) {
-    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
+    StorageConfig::instance()->tidy_ = true;
+    BerkeleyDBStore::init();
     DurableStore* store = DurableStore::instance();
 
     StringDurableTable* table;
@@ -134,7 +143,8 @@ DECLARE_TEST(SingleTypePut) {
 }
 
 DECLARE_TEST(SingleTypeGet) {
-    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
+    StorageConfig::instance()->tidy_ = true;
+    BerkeleyDBStore::init();
     DurableStore* store = DurableStore::instance();
 
     StringDurableTable* table;
@@ -174,7 +184,8 @@ DECLARE_TEST(SingleTypeGet) {
 }
 
 DECLARE_TEST(SingleTypeDelete) {
-    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
+    StorageConfig::instance()->tidy_ = true;
+    BerkeleyDBStore::init();
     DurableStore* store = DurableStore::instance();
 
     StringDurableTable* table;
@@ -207,7 +218,8 @@ DECLARE_TEST(SingleTypeDelete) {
 }
 
 DECLARE_TEST(SingleTypeMultiObject) {
-    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
+    StorageConfig::instance()->tidy_ = true;
+    BerkeleyDBStore::init();
     DurableStore* store = DurableStore::instance();
 
     StringDurableTable* table;
@@ -227,8 +239,10 @@ DECLARE_TEST(SingleTypeMultiObject) {
     table = 0;
     DurableStore::shutdown();
 
-    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, false, 0);
+    StorageConfig::instance()->tidy_ = false;
+    BerkeleyDBStore::init();
     store = DurableStore::instance();
+    
     CHECK(store->get_table(&table, "test", 0, NULL) == 0);
 
     PermutationArray pa(num_objs);
@@ -252,7 +266,8 @@ DECLARE_TEST(SingleTypeMultiObject) {
 }
 
 DECLARE_TEST(SingleTypeIterator) {
-    BerkeleyDBStore::init(g_db_name, g_config_dir, 0, true, 0);
+    StorageConfig::instance()->tidy_ = true;
+    BerkeleyDBStore::init();
     DurableStore* store = DurableStore::instance();
     StringDurableTable* table;
 

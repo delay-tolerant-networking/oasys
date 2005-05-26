@@ -32,11 +32,7 @@ public:
      * Do initialization. Must do this once before you try to obtain
      * an instance of this object.
      */
-    static void init(const std::string& db_name,
-                     const char*        db_dir,
-                     int                db_flags,
-                     bool               tidy_db,
-                     int                tidy_wait);
+    static void init();
 
     /**
      * Shadow the instance method of DurableStore so callees do not
@@ -89,11 +85,7 @@ private:
      * real initialization code
      * @return 0 if no error
      */
-    int do_init(const std::string& db_name,
-                const char*        db_dir,
-                int                db_flags,
-                bool               tidy_db,
-                int                tidy_wait);
+    int do_init();
 };
 
 /**

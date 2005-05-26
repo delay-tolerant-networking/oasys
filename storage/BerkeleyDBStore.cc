@@ -48,6 +48,7 @@
 #include <serialize/TypeShims.h>
 
 #include "BerkeleyDBStore.h"
+#include "StorageConfig.h"
 
 #define NO_TX  0 // for easily going back and changing TX id's later
 
@@ -104,21 +105,14 @@ BerkeleyDBStore::~BerkeleyDBStore()
 }
 
 void 
-BerkeleyDBStore::init(const std::string& db_name,
-                      const char*        db_dir,
-                      int                db_flags,
-                      bool               tidy_db,
-                      int                tidy_wait)
+BerkeleyDBStore::init()
 {
     BerkeleyDBStore* s = new BerkeleyDBStore();
     DurableStore::init(s);
 
     int err;
-    err = s->do_init(db_name,
-                     db_dir,
-                     db_flags,
-                     tidy_db,
-                     tidy_wait);
+    err = s->do_init();
+    
     if(err != 0) {
         PANIC("Can't init() BerkeleyDB");
     }
@@ -131,24 +125,22 @@ BerkeleyDBStore::shutdown_for_debug()
 }
 
 int 
-BerkeleyDBStore::do_init(const std::string& db_name,
-                         const char*        db_dir,
-                         int                db_flags,
-                         bool               tidy_db,
-                         int                tidy_wait)
+BerkeleyDBStore::do_init()
 {
     int err;
+    StorageConfig* cfg = StorageConfig::instance();
 
-    db_name_ = db_name;
-
+    db_name_ = cfg->dbname_ + ".db";
+    
     // XXX/demmer this shouldn't always create the db, rather should
     // look for DS_CREATE and DS_EXCL flags like everything else
-    if (db_flags != 0) {
+    if (cfg->dbflags_ != 0) {
         PANIC("XXX/demmer handle ds_init flags");
     }
 
     // create database directory
     struct stat f_stat;
+    const char* db_dir = cfg->dbdir_.c_str();
 
     if(stat(db_dir, &f_stat) == -1)
     {
@@ -186,10 +178,10 @@ BerkeleyDBStore::do_init(const std::string& db_name,
     }
 
     log_info("using dbdir = %s, errlog = %s", db_dir, err_filename.c_str());
-    if(tidy_db)
+    if (cfg->tidy_)
     {
         char cmd[256];
-        for(int i = tidy_wait; i > 0; --i) {
+        for(int i = cfg->tidy_wait_; i > 0; --i) {
             log_warn("PRUNING CONTENTS OF %s IN %d SECONDS",
                      db_dir, i);
             sleep(1);
@@ -197,6 +189,7 @@ BerkeleyDBStore::do_init(const std::string& db_name,
         sprintf(cmd, "/bin/rm -rf %s", db_dir);
         system(cmd);
     }
+
     if(stat(db_dir, &f_stat) == -1)
     {
         if(errno == ENOENT)
@@ -209,8 +202,13 @@ BerkeleyDBStore::do_init(const std::string& db_name,
                 return DS_ERR;
             }
         }
+        else
+        {
+            log_err("error trying to stat database directory %s: %s",
+                    db_dir, strerror(errno));
+            return DS_ERR;
+        }
     }
-
 
     err = dbenv_->open(dbenv_, 
                        db_dir,
@@ -234,36 +232,6 @@ BerkeleyDBStore::do_init(const std::string& db_name,
         return DS_ERR;
     }
     
-    // Create database file if none exists
-    std::string dbpath = db_dir;
-    dbpath += "/";
-    dbpath += db_name_;
-
-    if(stat(dbpath.c_str(), &f_stat) == -1) 
-    {
-        if(errno == ENOENT)
-        {
-            DB* db;
-
-            err = db_create(&db, dbenv_, 0);
-            if (err != 0) {
-                log_err("error creating database handle: %s", db_strerror(err));
-                return DS_ERR;
-            }
-            
-            err = db->close(db, 0);
-            if (err != 0) {
-                log_err("error closing database handle: %s", db_strerror(err));
-                return DS_ERR;
-            }
-        }
-        else
-        {
-            log_err("Unable to stat database file %d", errno);
-            return DS_ERR;
-        }
-    }
-
     return 0;
 }
 
@@ -534,7 +502,12 @@ BerkeleyDBTable::put(const SerializableObject& key,
 
     // figure out the size of the data
     MarshalSize sizer(Serialize::CONTEXT_LOCAL);
-    sizer.action(data);
+    if (sizer.action(data) != 0) {
+        log_err("error sizing data object");
+        return DS_ERR;
+    }
+
+    log_debug("put: serializing %d byte object", sizer.size());
 
     { // lock
         ScopeLock lock(&scratch_mutex_);

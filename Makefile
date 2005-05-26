@@ -47,6 +47,7 @@ STORAGE_SRCS :=					\
 	storage/DurableStore.cc			\
 	storage/DurableStoreImpl.cc		\
 	storage/BerkeleyDBStore.cc		\
+	storage/StorageConfig.cc		\
 
 TCLCMD_SRCS :=					\
 	tclcmd/TclCommand.cc			\
