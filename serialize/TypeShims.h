@@ -58,6 +58,7 @@ public:
     int value() const { return value_; }
     void assign(int value) { value_ = value; }
 
+    
 private:
     std::string name_;
     int         value_;
@@ -92,7 +93,7 @@ public:
 	free_mem_ = (str == 0);
     }
 
-    NullStringShim(Builder b)
+    NullStringShim(const Builder& b)
         : name_("string"), str_(NULL), free_mem_(false)
     {}
 
@@ -111,6 +112,8 @@ public:
     const char* value() const { return str_; }
 
 private:
+    NullStringShim();
+    
     std::string name_;
     char* str_;
     bool free_mem_;
