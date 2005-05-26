@@ -55,7 +55,8 @@ ScratchBuffer::buf(size_t size)
 {
     if(size > size_)
     {
-        buf_ = static_cast<u_char*>(realloc(buf_, size));        
+        buf_ = static_cast<u_char*>(realloc(buf_, size));
+        size_ = size;
     }
 
     return buf_;
