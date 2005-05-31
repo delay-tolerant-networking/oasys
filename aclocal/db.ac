@@ -67,7 +67,11 @@ AC_DEFUN(AC_OASYS_CONFIG_DB, [
         OASYS_LDFLAGS="$OASYS_LDFLAGS -L$dtn_cv_path_db_lib"
     fi
 
-    OASYS_LIBS="$OASYS_LIBS -l$dtn_cv_lib_db"
+	if test x"$STATIC" = x"yes" ; then
+    		OASYS_LIBS="$OASYS_LIBS ${dtn_cv_path_db_lib}/lib${dtn_cv_lib_db}.a"
+	else
+    		OASYS_LIBS="$OASYS_LIBS -l$dtn_cv_lib_db"
+	fi
 
     fi # DB_ENABLED
 
@@ -144,7 +148,13 @@ AC_DEFUN(AC_OASYS_FIND_DB, [
       for ac_dblib    in db-$ac_dbver; do
 
 	LDFLAGS="$ac_save_LDFLAGS -L$ac_dblibdir"
-	LIBS="$ac_save_LIBS -l$ac_dblib"
+	if test x"$STATIC" = x"yes" ; then
+		my_db_static=${ac_dblibdir}/lib${ac_dblib}.a
+		AC_MSG_NOTICE([Attempting to link with static db library $my_db_static])
+		LIBS="$ac_save_LIBS $my_db_static"
+	else
+		LIBS="$ac_save_LIBS -l$ac_dblib"
+	fi
 
         AC_MSG_CHECKING([for Berkeley DB library in $ac_dblibdir, -l$ac_dblib])
 	AC_LINK_IFELSE(

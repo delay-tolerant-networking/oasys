@@ -44,11 +44,17 @@ AC_DEFUN(AC_OASYS_CONFIG_TCL, [
         OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_tcl_h"
     fi
 
-    if test ! $oasys_cv_path_tcl_lib = /usr/lib ; then
+    if test ! x"$oasys_cv_path_tcl_lib" = x"/usr/lib" ; then
         OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_tcl_lib"
     fi
 
-    OASYS_LIBS="$OASYS_LIBS -l$oasys_cv_lib_tcl"
+    if test x"$STATIC" = x"yes" ; then
+	#tcl library usually needs dynamic loading lib and math lib.
+	#(building without dl is an option in tcl)
+        OASYS_LIBS="$OASYS_LIBS ${oasys_cv_path_tcl_lib}/lib${oasys_cv_lib_tcl}.a -ldl -lm"
+    else
+        OASYS_LIBS="$OASYS_LIBS -l$oasys_cv_lib_tcl"
+    fi
 ])
 
 dnl
@@ -60,6 +66,7 @@ AC_DEFUN(AC_OASYS_FIND_TCL, [
     ac_save_CPPFLAGS="$CPPFLAGS"
     ac_save_LDFLAGS="$LDFLAGS"
     ac_save_LIBS="$LIBS"
+
 
     if test ! x"$ac_tcldir" = x"system" ; then
         ac_tclincdirs=$ac_tcldir/include/
@@ -116,11 +123,22 @@ AC_DEFUN(AC_OASYS_FIND_TCL, [
           ])
 
       for ac_tcllibdir in $ac_tcllibdirs; do
-      for ac_tcllib in tcl tcl$ac_tclver tcl$ac_tclver_major$ac_tclver_minor; do
+      for ac_tcllib in tcl$ac_tclver tcl$ac_tclver_major$ac_tclver_minor tcl; do
 
-        AC_MSG_CHECKING([for tcl library in $ac_tcllibdir, -l$ac_tcllib])
+        #AC_MSG_CHECKING([for tcl library in $ac_tcllibdir, -l$ac_tcllib])
 	LDFLAGS="$ac_save_LDFLAGS -L$ac_tcllibdir"
-	LIBS="$ac_save_LIBS -l$ac_tcllib"
+    	if test x"$STATIC" = x"yes" ; then
+		# gcc -static doesn't do exactly what we want
+		#LIBS="$ac_save_LIBS -static -l$ac_tcllib -ldl -lm"
+
+		my_tcl_static=${ac_tcllibdir}/lib${ac_tcllib}.a
+		#AC_MSG_NOTICE([Attempting to link with static tcl library $my_tcl_static])
+		LIBS="$ac_save_LIBS $my_tcl_static -ldl -lm"
+	else
+		LIBS="$ac_save_LIBS -l$ac_tcllib"
+	fi
+
+        AC_MSG_CHECKING([for tcl library in $ac_tcllibdir: $LIBS])
 
 	AC_LINK_IFELSE(
 	  AC_LANG_PROGRAM(
@@ -142,6 +160,13 @@ AC_DEFUN(AC_OASYS_FIND_TCL, [
               oasys_cv_path_tcl_h=$ac_tclincdir
               oasys_cv_path_tcl_lib=$ac_tcllibdir
               oasys_cv_lib_tcl=$ac_tcllib
+
+              #Buggy 
+              #if test ! x"$STATIC" = x"yes" ; then
+                  #oasys_cv_path_tcl_lib="${ac_tcllibdir} -Wl,-rpath,${ac_tcllibdir}"
+                  #oasys_cv_lib_tcl="${ac_tcllib} -Wl,-rpath,${ac_tcllibdir}"
+              #fi
+
               break 4
           ],
           [
