@@ -68,7 +68,7 @@ AC_DEFUN(AC_OASYS_CONFIG_DB, [
     fi
 
 	if test x"$STATIC" = x"yes" ; then
-    		OASYS_LIBS="$OASYS_LIBS ${dtn_cv_path_db_lib}/lib${dtn_cv_lib_db}.a"
+    		OASYS_LIBS="$OASYS_LIBS -Wl,-Bstatic -l$dtn_cv_lib_db -Wl,-Bdynamic"
 	else
     		OASYS_LIBS="$OASYS_LIBS -l$dtn_cv_lib_db"
 	fi
@@ -149,9 +149,7 @@ AC_DEFUN(AC_OASYS_FIND_DB, [
 
 	LDFLAGS="$ac_save_LDFLAGS -L$ac_dblibdir"
 	if test x"$STATIC" = x"yes" ; then
-		my_db_static=${ac_dblibdir}/lib${ac_dblib}.a
-		AC_MSG_NOTICE([Attempting to link with static db library $my_db_static])
-		LIBS="$ac_save_LIBS $my_db_static"
+		LIBS="$ac_save_LIBS -Wl,-Bstatic -l$ac_dblib -Wl,-Bdynamic"
 	else
 		LIBS="$ac_save_LIBS -l$ac_dblib"
 	fi
