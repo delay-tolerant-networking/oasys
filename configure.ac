@@ -162,8 +162,9 @@ AC_SEARCH_LIBS(gethostbyname, nsl, [],
   AC_MSG_ERROR([can't find required library function (gethostbyname)]))
 AC_SEARCH_LIBS(xdr_int, rpc, [],
   AC_MSG_ERROR([can't find required library function (xdr_int)]))
+
 AC_OASYS_CONFIG_TCL
-AC_OASYS_CONFIG_DB
+AC_OASYS_CONFIG_STORAGE(not required)
 
 dnl -------------------------------------------------------------------------
 dnl Checks for header files.
