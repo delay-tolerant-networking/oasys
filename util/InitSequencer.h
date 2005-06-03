@@ -126,6 +126,11 @@ public:
      */
     void reset();
 
+    /*!
+     * Log a dot graph of the dependencies.
+     */
+    void print_dot();
+
 private:
     typedef std::vector<std::string>              ReverseDepList;
     typedef std::map<std::string, ReverseDepList> ReverseDepEdges;

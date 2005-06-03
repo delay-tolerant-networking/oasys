@@ -53,7 +53,7 @@ void clear_done()
 }
 
 OASYS_DECLARE_INIT_MODULE_0(test, Step1) { g_done[0] = true; return 0; }
-OASYS_DECLARE_INIT_MODULE_0(test, Step2) { g_done[1] = true; return 0; }
+OASYS_DECLARE_INIT_MODULE_1(test, Step2, "test::Step1") { g_done[1] = true; return 0; }
 OASYS_DECLARE_INIT_MODULE_2(test, Step3, "test::Step1", "test::Step2") { g_done[2] = true; return 0; }
 OASYS_DECLARE_INIT_MODULE_0(test, Step4) { g_done[3] = true; return 0; }
 OASYS_DECLARE_INIT_MODULE_2(test, Step5, "test::Step3", "test::Step4") { g_done[4] = true; return 0; }
@@ -97,10 +97,18 @@ DECLARE_TEST(InitSeqTest3) {
     return 0;    
 }
 
+DECLARE_TEST(InitSeqTest4) {
+    Singleton<InitSequencer> seq;
+    seq->print_dot();    
+
+    return 0;
+}
+
 DECLARE_TESTER(InitSeqTest) {
     ADD_TEST(InitSeqTest1);
     ADD_TEST(InitSeqTest2);
     ADD_TEST(InitSeqTest3);
+    ADD_TEST(InitSeqTest4);
 }
 
 DECLARE_TEST_FILE(InitSeqTest, "init sequencer test");

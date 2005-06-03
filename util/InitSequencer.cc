@@ -78,6 +78,26 @@ InitSequencer::reset()
     }
 }
 
+void 
+InitSequencer::print_dot()
+{
+    std::string dotfile;
+
+    log_info("digraph G {");
+    for (StepMap::const_iterator i = steps_.begin(); 
+         i != steps_.end(); ++i)
+    {
+        InitStep* step = i->second;
+
+        for (InitStep::DepList::const_iterator i = step->dependencies().begin();
+             i != step->dependencies().end(); ++i)
+        {
+            log_info("\t\"%s\" -> \"%s\";", i->c_str(), step->name().c_str());
+        }
+    }    
+    log_info("}");
+}
+
 int
 InitSequencer::run_steps()
 {
