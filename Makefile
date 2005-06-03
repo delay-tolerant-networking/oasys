@@ -64,6 +64,7 @@ THREAD_SRCS :=					\
 
 UTIL_SRCS :=					\
 	util/CRC32.cc				\
+	util/InitSequencer.cc			\
 	util/jenkins_hash.c			\
 	util/MD5.cc				\
 	util/md5-rsa.c				\
