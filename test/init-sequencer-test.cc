@@ -42,85 +42,52 @@
 
 using namespace oasys;
 
-class Step1 : public InitStep, public Logger {
-public:
-    Step1() : InitStep("step1"), 
-              Logger("/test/step1") {}
+bool g_done[6] = {false, false, false, false, false,
+                  false};
 
-    int run_component() {
-        log_info("running");
-
-        return 0;
-    }
-       
-};
-
-class Step2 : public InitStep, public Logger {
-public:
-    Step2() : InitStep("step2", 1, "step1"), 
-              Logger("/test/step2") {}
-
-    int run_component() {
-        log_info("running");
-        return 0;
-    }
-       
-};
-
-class Step3 : public InitStep, public Logger {
-public:
-    Step3() : InitStep("step3", 2, "step1", "step2"), 
-              Logger("/test/step3") {}
-
-    int run_component() {
-        log_info("running");
-        return 0;
-    }
-       
-};
-
-class Step4 : public InitStep, public Logger {
-public:
-    Step4() : InitStep("step4"), 
-              Logger("/test/step4") {}
-
-    int run_component() {
-        log_info("running");
-        return 0;
-    }
-       
-};
-
-class Step5 : public InitStep, public Logger {
-public:
-    Step5() : InitStep("step5", 2, "step4", "step2"), 
-              Logger("/test/step5") {}
-
-    int run_component() {
-        log_info("running");
-        return 0;
-    }
-       
-};
-
-Step1 s1;
-Step2 s2;
-Step3 s3;
-Step4 s4;
-Step5 s5;
+OASYS_DECLARE_INIT_MODULE_0(Step1) { g_done[0] = true; return 0; }
+OASYS_DECLARE_INIT_MODULE_0(Step2) { g_done[1] = true; return 0; }
+OASYS_DECLARE_INIT_MODULE(Step3, 2, "Step1", "Step2") { g_done[2] = true; return 0; }
+OASYS_DECLARE_INIT_MODULE_0(Step4) { g_done[3] = true; return 0; }
+OASYS_DECLARE_INIT_MODULE(Step5, 2, "Step3", "Step4") { g_done[4] = true; return 0; }
+OASYS_DECLARE_INIT_CONFIG(StepConfig);
+OASYS_DECLARE_INIT_MODULE(StepConfigDep, 1, "StepConfig") { g_done[5] = true; return 0; }
 
 DECLARE_TEST(InitSeqTest1) {
-    Singleton<InitSequencer>::instance()->start("step3");    
+    Singleton<InitSequencer> seq;
+    seq->start("Step3");    
+
+    CHECK(g_done[0] && g_done[1] && g_done[2]);
+
     return 0;
 }
 DECLARE_TEST(InitSeqTest2) {
-    Singleton<InitSequencer>::instance()->start("step5");    
+    Singleton<InitSequencer> seq;
+    seq->reset();
+    seq->start("Step5");    
+
+    CHECK(g_done[0] && g_done[1] && g_done[2] && g_done[3] && g_done[4]);
+
     return 0;
+}
+
+DECLARE_TEST(InitSeqTest3) {
+    Singleton<InitSequencer> seq;
+    seq->reset();
+
+    OASYS_INIT_CONFIG_DONE(StepConfig);
+    seq->start("StepConfigDep");
+
+    CHECK(g_done[0] && g_done[1] && g_done[2] && g_done[3] && g_done[4] && 
+          g_done[5]);
+
+    return 0;    
 }
 
 DECLARE_TESTER(InitSeqTest) {
     ADD_TEST(InitSeqTest1);
     ADD_TEST(InitSeqTest2);
+    ADD_TEST(InitSeqTest3);
 }
 
 DECLARE_TEST_FILE(InitSeqTest, "init sequencer test");

@@ -58,7 +58,8 @@ class InitStep;
  * COMPONENT_3("name", "a", "b", "c");
  * COMPONENT_2("name", "a", "b");
  * 
- * Singleton<InitSequencer>::instance()->start("component");
+ * Singleton<InitSequencer> sequencer;
+ * sequencer->start("component");
  * 
  * // -- or --
  * 
@@ -66,7 +67,8 @@ class InitStep;
  * plan.push_back(...);
  * ...
  * 
- * Singleton<InitSequencer>::instance()->start("component", &plan);
+ * Singleton<InitSequencer> sequencer;
+ * sequencer->start("component", &plan);
  * @endcode
  */
 class InitSequencer : public Logger {
@@ -94,6 +96,13 @@ public:
      * Get a InitStep* from the name
      */
     InitStep* get_step(const std::string& name);
+
+    /*!
+     * Reset the done state of all of the modules. NOTE: This is
+     * mostly for the testing harness. You better know what you're
+     * doing if you call this.
+     */
+    void reset();
 
 private:
     typedef std::vector<std::string>              ReverseDepList;
@@ -154,17 +163,59 @@ private:
     std::string name_;
     DepList     dependencies_;
 
-    bool        mark_;          // mark for dep checking
-    int         time_;          // finishing time for topo-sort
+    bool mark_;                 // mark for dep checking
+    int  time_;                 // finishing time for topo-sort
 };
 
 class InitConfigStep : public InitStep {
 public:
-    InitConfigStep(const std::string& name) : InitStep(name) {}
-    
-    int run() { return 0; }
-    void set_configured() { done_ = true; }
+    InitConfigStep(const std::string& name) 
+        : InitStep(name) {}
+
+    int  run()                { return 0; } 
+    void configuration_done() { done_ = true; }
+
+protected:
+    int  run_component()      { NOTREACHED; }
 };
+
+#define OASYS_DECLARE_INIT_MODULE_0(_name)                                      \
+class InitModule##_name : public ::oasys::InitStep {                            \
+public:                                                                         \
+    InitModule##_name() : InitStep(#_name) {}                                   \
+protected:                                                                      \
+    int run_component();                                                        \
+};                                                                              \
+InitModule##_name * ::oasys::Singleton<InitModule##_name>::instance_ = 0;       \
+InitModule##_name * init_module_##_name =                                       \
+    ::oasys::Singleton<InitModule##_name>::instance();                          \
+int InitModule##_name::run_component()
+
+#define OASYS_DECLARE_INIT_MODULE(_name, _num_dep, _args...)                    \
+class InitModule##_name : public ::oasys::InitStep {                            \
+public:                                                                         \
+    InitModule##_name() : InitStep(#_name, _num_dep, _args) {}                  \
+protected:                                                                      \
+    int run_component();                                                        \
+};                                                                              \
+InitModule##_name * ::oasys::Singleton<InitModule##_name>::instance_ = 0;       \
+InitModule##_name * init_module_##_name =                                       \
+    ::oasys::Singleton<InitModule##_name>::instance();                          \
+int InitModule##_name::run_component()
+
+#define OASYS_DECLARE_INIT_CONFIG(_name)                                        \
+class InitModule##_name : public InitConfigStep {                               \
+public:                                                                         \
+    InitModule##_name() : InitConfigStep(#_name) {}                             \
+};                                                                              \
+InitModule##_name * ::oasys::Singleton<InitModule##_name>::instance_ = 0;       \
+InitModule##_name * init_module_##_name =                                       \
+    ::oasys::Singleton<InitModule##_name>::instance();
+
+#define OASYS_INIT_CONFIG_DONE(_name)                                           \
+do {                                                                            \
+    ::oasys::Singleton<InitModule##_name>::instance()->configuration_done();    \
+} while (0)
 
 } // namespace oasys
 

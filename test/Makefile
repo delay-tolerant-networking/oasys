@@ -3,6 +3,7 @@ TESTS += \
 	buffered-io-test			\
 	command-test				\
 	hexdump-test				\
+	init-sequencer-test			\
 	log-test				\
 	log-reparse-test			\
 	marshal-test				\

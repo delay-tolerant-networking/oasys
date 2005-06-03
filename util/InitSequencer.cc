@@ -68,6 +68,16 @@ InitSequencer::get_step(const std::string& name)
     return steps_[name];
 }
 
+void
+InitSequencer::reset()
+{
+    for (StepMap::iterator i = steps_.begin(); 
+         i != steps_.end(); ++i)
+    {
+        i->second->done_ = false;
+    }
+}
+
 int
 InitSequencer::run_steps()
 {
@@ -133,8 +143,7 @@ InitSequencer::topo_sort()
     while (step_stack.size() > 0)
     {
         InitStep* step = step_stack.back();
-        step_stack.pop_back();
-        
+        step_stack.pop_back();        
         dfs(step, edges);
     }
 
@@ -199,7 +208,8 @@ InitSequencer::mark_dep(const std::string& target)
         {
             if (steps_.find(*i) == steps_.end())
             {
-                PANIC("Unsatisfied dependency for %s", i->c_str());
+                PANIC("%s is dependent on %s which is bogus", 
+                      step->name().c_str(), i->c_str());
             }
             
             if(!steps_[*i]->mark_)
@@ -231,12 +241,10 @@ InitStep::InitStep(const std::string& name, int depsize, ...)
 {
     va_list ap;
     va_start(ap, depsize);
-
     for (int i=0; i<depsize; ++i)
     {
         dependencies_.push_back(va_arg(ap, const char*));
     }
-
     va_end(ap);
     
     Singleton<InitSequencer>::instance()->add_step(this);
