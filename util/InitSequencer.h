@@ -53,22 +53,43 @@ class InitStep;
  * Automatically checks and sequences initialization. Note, this code
  * assumes single threading among the InitStep objects.
  * 
+ * Suppose you have a singleton style modules A, B and C with an
+ * ::init method and B depends on A and C depends on A and B. C also
+ * has configuration options which need to be set. Then:
+ * 
  * @code
- * COMPONENT_4("name", "a", "b", "c", "d");
- * COMPONENT_3("name", "a", "b", "c");
- * COMPONENT_2("name", "a", "b");
- * 
+ * // A.cc
+ * OASYS_DECLARE_INIT_MODULE_0(example, A) { 
+ *     A::init(); 
+ * }
+ *
+ * // B.cc - depends on A
+ * OASYS_DECLARE_INIT_MODULE_1(example, B, "example::A") { 
+ *     B::init(); 
+ * }
+ *
+ * // C.cc - configuration option
+ * OASYS_DECLARE_INIT_CONFIG(example, C_config);
+ *
+ * // C.cc - depends on A, B and C_config
+ * OASYS_DECLARE_INIT_MODULE_2(example, C, "example::A", 
+ *                             "example::B", "example::C_config") 
+ * { 
+ *     C::init(); 
+ * }
+ * @endcode
+ *
+ * Now to start component "C", something needs to call
+ * OASYS_INIT_CONFIG_DONE(example, C_config) first, and then:
+ *
+ * @code
+ * // ... some configuration setting code
+ * OASYS_INIT_CONFIG_DONE(example, C_config);
+ *
+ * // ...
+ *
  * Singleton<InitSequencer> sequencer;
- * sequencer->start("component");
- * 
- * // -- or --
- * 
- * InitSequencer::Plan plan;
- * plan.push_back(...);
- * ...
- * 
- * Singleton<InitSequencer> sequencer;
- * sequencer->start("component", &plan);
+ * sequencer->start("example::C");
  * @endcode
  */
 class InitSequencer : public Logger {
@@ -111,16 +132,16 @@ private:
     StepMap steps_;
     int     dfs_time_;
 
-    /// Run the steps
+    //! Run the steps
     int run_steps();
 
-    /// Do topological sort
+    //! Do topological sort
     int topo_sort();
 
     // helper function to dfs
     void dfs(InitStep* step, ReverseDepEdges& edges);
     
-    /// Mark steps that are needed to start target 
+    //! Mark steps that are needed to start target 
     void mark_dep(const std::string& target);
 };
 
@@ -136,16 +157,18 @@ public:
     /*!
      * Takes a list of depsize (const char*) dependency names.
      */
-    InitStep(const std::string& name);
-    InitStep(const std::string& name, int depsize, ...);
-    InitStep(const std::string& name, const DepList& deps);
+    InitStep(const std::string& the_namespace, const std::string& name);
+    InitStep(const std::string& the_namespace, 
+             const std::string& name, int depsize, ...);
+    InitStep(const std::string& the_namespace, 
+             const std::string& name, const DepList& deps);
 
     virtual ~InitStep() {}
     
-    /// Run this component. Returns 0 on no error.
+    //! Run this component. Returns 0 on no error.
     virtual int run();
 
-    /// @return true if all dependencies have been met.
+    //! @return true if all dependencies have been met.
     bool dep_are_satisfied();
     
     const DepList& dependencies() { return dependencies_; }
@@ -156,7 +179,7 @@ public:
 protected:
     bool        done_;
 
-    /// Override this to start the component
+    //! Override this to start the component
     virtual int run_component() = 0;
 
 private:
@@ -167,10 +190,16 @@ private:
     int  time_;                 // finishing time for topo-sort
 };
 
+/*!
+ * InitStep for configuration modules. Configurations are not done by
+ * running them, they need to be explicitly set (e.g. configured) to
+ * be marked done.
+ */
 class InitConfigStep : public InitStep {
 public:
-    InitConfigStep(const std::string& name) 
-        : InitStep(name) {}
+    InitConfigStep(const std::string& the_namespace,
+                   const std::string& name) 
+        : InitStep(the_namespace, name) {}
 
     int  run()                { return 0; } 
     void configuration_done() { done_ = true; }
@@ -179,42 +208,73 @@ protected:
     int  run_component()      { NOTREACHED; }
 };
 
-#define OASYS_DECLARE_INIT_MODULE_0(_name)                                      \
-class InitModule##_name : public ::oasys::InitStep {                            \
+/*!
+ * @{
+ * Prefer these macros to declaring the dependencies because they
+ * check the number of arguments passed to the decl.
+ */
+#define OASYS_DECLARE_INIT_MODULE_0(_namespace, _name)                  \
+class InitModule##_namespace##_name : public ::oasys::InitStep {        \
+public:                                                                 \
+    InitModule##_namespace##_name() : InitStep(#_namespace, #_name) {}  \
+protected:                                                              \
+    int run_component();                                                \
+};                                                                      \
+InitModule##_namespace##_name *                                         \
+    ::oasys::Singleton<InitModule##_namespace##_name>::instance_ = 0;   \
+InitModule##_namespace##_name * init_module_##_name =                   \
+    ::oasys::Singleton<InitModule##_namespace##_name>::instance();      \
+int InitModule##_namespace##_name::run_component()
+
+#define OASYS_DECLARE_INIT_MODULE_1(_namespace, _name, _dep1)                   \
+    OASYS_DECLARE_INIT_MODULE(_namespace, _name, 1, _dep1)                 
+#define OASYS_DECLARE_INIT_MODULE_2(_namespace, _name, _dep1, _dep2)    \
+    OASYS_DECLARE_INIT_MODULE(_namespace, _name, 2, _dep1, _dep2)
+#define OASYS_DECLARE_INIT_MODULE_3(_namespace, _name, _dep1, _dep2, _dep3)     \
+    OASYS_DECLARE_INIT_MODULE(_namespace, _name, 3, _dep1, _dep2, _dep3)
+#define OASYS_DECLARE_INIT_MODULE_4(_namespace, _name, _dep1, _dep2, _dep3, _dep4)      \
+    OASYS_DECLARE_INIT_MODULE(_namespace, _name, 4, _dep1, _dep2, _dep3, _dep4)
+//! @}
+
+/*!
+ * Declare an initialization module with _num_dep dependencies. Use
+ * the above macros instead of
+ */
+#define OASYS_DECLARE_INIT_MODULE(_namespace, _name, _num_dep, _args...)        \
+class InitModule##_namespace##_name : public ::oasys::InitStep {                \
 public:                                                                         \
-    InitModule##_name() : InitStep(#_name) {}                                   \
+    InitModule##_namespace##_name()                                             \
+        : InitStep(#_namespace, #_name, _num_dep, _args) {}                     \
 protected:                                                                      \
     int run_component();                                                        \
 };                                                                              \
-InitModule##_name * ::oasys::Singleton<InitModule##_name>::instance_ = 0;       \
-InitModule##_name * init_module_##_name =                                       \
-    ::oasys::Singleton<InitModule##_name>::instance();                          \
-int InitModule##_name::run_component()
+InitModule##_namespace##_name *                                                 \
+    ::oasys::Singleton<InitModule##_namespace##_name>::instance_ = 0;           \
+InitModule##_namespace##_name * init_module_##_name =                           \
+    ::oasys::Singleton<InitModule##_namespace##_name>::instance();              \
+int InitModule##_namespace##_name::run_component()
 
-#define OASYS_DECLARE_INIT_MODULE(_name, _num_dep, _args...)                    \
-class InitModule##_name : public ::oasys::InitStep {                            \
-public:                                                                         \
-    InitModule##_name() : InitStep(#_name, _num_dep, _args) {}                  \
-protected:                                                                      \
-    int run_component();                                                        \
-};                                                                              \
-InitModule##_name * ::oasys::Singleton<InitModule##_name>::instance_ = 0;       \
-InitModule##_name * init_module_##_name =                                       \
-    ::oasys::Singleton<InitModule##_name>::instance();                          \
-int InitModule##_name::run_component()
+/*!
+ * Declare a configuration module. 
+ */
+#define OASYS_DECLARE_INIT_CONFIG(_namespace, _name)                    \
+class InitModule##_namespace##_name : public InitConfigStep {           \
+public:                                                                 \
+    InitModule##_namespace##_name()                                     \
+        : InitConfigStep(#_namespace, #_name) {}                        \
+};                                                                      \
+InitModule##_namespace##_name *                                         \
+    ::oasys::Singleton<InitModule##_namespace##_name>::instance_ = 0;   \
+InitModule##_namespace##_name * init_module_##_name =                   \
+    ::oasys::Singleton<InitModule##_namespace##_name>::instance();
 
-#define OASYS_DECLARE_INIT_CONFIG(_name)                                        \
-class InitModule##_name : public InitConfigStep {                               \
-public:                                                                         \
-    InitModule##_name() : InitConfigStep(#_name) {}                             \
-};                                                                              \
-InitModule##_name * ::oasys::Singleton<InitModule##_name>::instance_ = 0;       \
-InitModule##_name * init_module_##_name =                                       \
-    ::oasys::Singleton<InitModule##_name>::instance();
-
-#define OASYS_INIT_CONFIG_DONE(_name)                                           \
-do {                                                                            \
-    ::oasys::Singleton<InitModule##_name>::instance()->configuration_done();    \
+/*!
+ * Call this to set a configuration module to the "done" state.
+ */
+#define OASYS_INIT_CONFIG_DONE(_namespace, _name)                       \
+do {                                                                    \
+    ::oasys::Singleton<InitModule##_namespace##_name>::instance()       \
+         ->configuration_done();                                        \
 } while (0)
 
 } // namespace oasys
