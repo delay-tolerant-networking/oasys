@@ -47,7 +47,9 @@ namespace oasys {
  * @code
  * Singleton<Foo> s;
  * s->foo()
+ * 
  * // or 
+ *
  * Singleton<Foo>::instance()->foo();
  * @endcode
  */
@@ -66,6 +68,9 @@ public:
 
         return instance_;
     }
+    
+    static void create() { ASSERT(instance_ == 0); instance(); }
+    
 private:
     static _Class* instance_;
 };
