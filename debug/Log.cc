@@ -534,7 +534,7 @@ Log::vlogf(const char *path, log_level_t level, const char *fmt, va_list ap)
         
         len = snprintf(ptr, buflen, "%s%c%s]%s ",
                        pretty_type,
-                       level2str(level)[0],
+                       toupper(level2str(level)[0]),
                        pretty_begin,
                        pretty_end);
         buflen -= len;
