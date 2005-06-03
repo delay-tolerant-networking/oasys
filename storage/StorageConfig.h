@@ -82,7 +82,7 @@ public:
     static StorageConfig* instance()
     {
         if (!instance_) {
-            PANIC("StorageConfig::init_defaults must be called");
+            PANIC("StorageConfig::init() must be called");
         }
 
         return instance_;
