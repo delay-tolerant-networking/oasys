@@ -42,12 +42,14 @@
 #include <map>
 #include <string>
 
+#include "../util/Singleton.h"
 #include "../debug/Logger.h"
 
 namespace oasys {
 
 // predecl
 class InitStep;
+class InitExtraDependency;
 
 /*!
  * Automatically checks and sequences initialization. Note, this code
@@ -94,6 +96,8 @@ class InitStep;
  * @endcode
  */
 class InitSequencer : public Logger {
+    friend class InitExtraDependency;
+
 public:
     typedef std::map<std::string, InitStep*> StepMap;
     typedef std::vector<std::string>         Plan;
@@ -134,9 +138,11 @@ public:
 private:
     typedef std::vector<std::string>              ReverseDepList;
     typedef std::map<std::string, ReverseDepList> ReverseDepEdges;
-
+    
     StepMap steps_;
     int     dfs_time_;
+
+    std::vector<InitExtraDependency*> extra_dependencies_;
 
     //! Run the steps
     int run_steps();
@@ -149,6 +155,12 @@ private:
     
     //! Mark steps that are needed to start target 
     void mark_dep(const std::string& target);
+
+    //! Add this step as a dependency
+    void add_extra_dep(InitExtraDependency* extra_dep);
+
+    //! Actually add the dependencies
+    void add_extra_deps();
 };
 
 /*!
@@ -194,6 +206,8 @@ private:
 
     bool mark_;                 // mark for dep checking
     int  time_;                 // finishing time for topo-sort
+
+    void add_dep(const std::string& dep) { dependencies_.push_back(dep); }
 };
 
 /*!
@@ -215,6 +229,24 @@ protected:
 };
 
 /*!
+ * Adds a dependency to a predefined module. This allows applications
+ * to add a hook to library step without the library knowing about it
+ * apriori.
+ */
+struct InitExtraDependency {
+    InitExtraDependency(const std::string& new_dep,
+                        const std::string& depender) 
+        : new_dep_(new_dep), depender_(depender)
+    {
+        Singleton<InitSequencer>::instance()->add_extra_dep(this);
+    }
+    
+    std::string new_dep_;
+    std::string depender_;
+};
+
+
+/*!
  * @{
  * Prefer these macros to declaring the dependencies because they
  * check the number of arguments passed to the decl.
@@ -232,13 +264,13 @@ InitModule##_namespace##_name * init_module_##_name =                   \
     ::oasys::Singleton<InitModule##_namespace##_name>::instance();      \
 int InitModule##_namespace##_name::run_component()
 
-#define OASYS_DECLARE_INIT_MODULE_1(_namespace, _name, _dep1)                   \
+#define OASYS_DECLARE_INIT_MODULE_1(_namespace, _name, _dep1) \
     OASYS_DECLARE_INIT_MODULE(_namespace, _name, 1, _dep1)                 
-#define OASYS_DECLARE_INIT_MODULE_2(_namespace, _name, _dep1, _dep2)    \
+#define OASYS_DECLARE_INIT_MODULE_2(_namespace, _name, _dep1, _dep2) \
     OASYS_DECLARE_INIT_MODULE(_namespace, _name, 2, _dep1, _dep2)
-#define OASYS_DECLARE_INIT_MODULE_3(_namespace, _name, _dep1, _dep2, _dep3)     \
+#define OASYS_DECLARE_INIT_MODULE_3(_namespace, _name, _dep1, _dep2, _dep3) \
     OASYS_DECLARE_INIT_MODULE(_namespace, _name, 3, _dep1, _dep2, _dep3)
-#define OASYS_DECLARE_INIT_MODULE_4(_namespace, _name, _dep1, _dep2, _dep3, _dep4)      \
+#define OASYS_DECLARE_INIT_MODULE_4(_namespace, _name, _dep1, _dep2, _dep3, _dep4) \
     OASYS_DECLARE_INIT_MODULE(_namespace, _name, 4, _dep1, _dep2, _dep3, _dep4)
 //! @}
 
@@ -272,7 +304,7 @@ public:                                                                 \
 InitModule##_namespace##_name *                                         \
     ::oasys::Singleton<InitModule##_namespace##_name>::instance_ = 0;   \
 InitModule##_namespace##_name * init_module_##_name =                   \
-    ::oasys::Singleton<InitModule##_namespace##_name>::instance();
+    ::oasys::Singleton<InitModule##_namespace##_name>::instance()
 
 /*!
  * Call this to set a configuration module to the "done" state.
@@ -282,6 +314,12 @@ do {                                                                    \
     ::oasys::Singleton<InitModule##_namespace##_name>::instance()       \
          ->configuration_done();                                        \
 } while (0)
+
+/*!
+ * Declare a new dependency to a pre-existing module
+ */
+#define OASYS_INIT_ADD_DEP(_new_dep, _depender) \
+::oasys::InitExtraDependency init_extra_dep_##__LINE__(_new_dep, _depender)
 
 } // namespace oasys
 

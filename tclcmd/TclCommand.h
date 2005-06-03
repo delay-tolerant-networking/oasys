@@ -49,6 +49,7 @@
 
 #include "../compat/inttypes.h"
 #include "../debug/Debug.h"
+#include "../util/Singleton.h"
 
 namespace oasys {
 
@@ -57,7 +58,7 @@ namespace oasys {
  * we need this stupid define, and force cast everything to const in
  * the implementation of tcl_cmd.
  */
-#ifdef CONST84
+#ifdef  CONST84
 #define CONSTTCL84 CONST84
 #else
 #define CONSTTCL84
@@ -73,13 +74,21 @@ class Lock;
  */
 typedef std::list<TclCommand*> TclCommandList;
 
+/*!
+ * Configuration for the TclCommandInterp
+ */
+struct TclCommandInterpConfig {
+    char* objv0_;
+    bool  no_default_cmds_;
+    
+    void configure(char* objv0, bool no_default_cmds = false);
+};
+
 /**
- *
  * Command interpreter class
  * 
  * Command files are Tcl scripts. When a module registers itself, the
  * interpreter binds a new command with the module name.
- *
  */
 class TclCommandInterp : public Logger {
 public:
@@ -96,11 +105,7 @@ public:
     /**
      * Initialize the interpreter instance.
      */
-    static int init(char* objv0, bool no_default_cmds = false) {
-        ASSERT(instance_ == NULL);
-        instance_ = new TclCommandInterp();
-        return instance_->do_init(objv0, no_default_cmds);
-    }
+    static int init();
 
     /**
      * Read in a configuration file and execute its contents
@@ -256,7 +261,6 @@ protected:
 
     static TclCommandInterp* instance_;	///< Singleton instance
 };
-
 
 /** 
  * Extend this class to provide the command hooks for a specific

@@ -22,15 +22,16 @@ struct InitStepSort {
 
 InitSequencer::InitSequencer()
     : Logger("/oasys/init_sequencer")
-{}
+{
+}
 
 int 
 InitSequencer::start(std::string step, Plan* plan)
 {
     int err;
     
+    add_extra_deps(); 
     mark_dep(step);
-
     err = topo_sort();
     if (err != 0) 
     {
@@ -88,6 +89,8 @@ InitSequencer::print_dot()
          i != steps_.end(); ++i)
     {
         InitStep* step = i->second;
+
+        log_info("\t\"%s\";", step->name().c_str());
 
         for (InitStep::DepList::const_iterator i = step->dependencies().begin();
              i != step->dependencies().end(); ++i)
@@ -238,6 +241,32 @@ InitSequencer::mark_dep(const std::string& target)
             }
         }
     }
+}
+
+void
+InitSequencer::add_extra_dep(InitExtraDependency* extra_dep)
+{
+    extra_dependencies_.push_back(extra_dep);
+}
+
+void
+InitSequencer::add_extra_deps()
+{
+    for (std::vector<InitExtraDependency*>::iterator i = extra_dependencies_.begin();
+         i != extra_dependencies_.end(); ++i)
+    {
+        // Check that these modules are legit
+        ASSERT(steps_.find((*i)->new_dep_)  != steps_.end());
+        ASSERT(steps_.find((*i)->depender_) != steps_.end());        
+
+        log_debug("extra dependency of %s to %s", 
+                  (*i)->depender_.c_str(), (*i)->new_dep_.c_str());
+
+        steps_[(*i)->depender_]->add_dep((*i)->new_dep_);
+    }
+    
+    // clear these after the first add
+    extra_dependencies_.clear();
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -49,6 +49,7 @@
 
 #include "BerkeleyDBStore.h"
 #include "StorageConfig.h"
+#include "util/InitSequencer.h"
 
 #define NO_TX  0 // for easily going back and changing TX id's later
 
@@ -62,6 +63,15 @@
 /// @}
 
 namespace oasys {
+
+/*
+ * BerkeleyDB depends on StorageConfig
+ */
+OASYS_DECLARE_INIT_MODULE_1(oasys, BerkeleyDBStore, "oasys::StorageConfig") {
+    BerkeleyDBStore::init();
+    return 0;
+}
+
 
 /******************************************************************************
  *
@@ -83,9 +93,8 @@ BerkeleyDBStore::~BerkeleyDBStore()
     err_str.append("Tables still open at deletion time: ");
     bool busy = false;
 
-    for(RefCountMap::iterator iter = ref_count_.begin(); 
-        iter != ref_count_.end();
-        ++iter)
+    for (RefCountMap::iterator iter = ref_count_.begin(); 
+         iter != ref_count_.end(); ++iter)
     {
         if(iter->second != 0)
         {
@@ -94,7 +103,7 @@ BerkeleyDBStore::~BerkeleyDBStore()
         }
     }
 
-    if(busy)
+    if (busy)
     {
         log_err(err_str.c_str());
     }

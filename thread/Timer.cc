@@ -45,8 +45,15 @@
 
 #include "Timer.h"
 #include "io/IO.h"
+#include "../util/InitSequencer.h"
 
 namespace oasys {
+
+OASYS_DECLARE_INIT_MODULE_0(oasys, TimerSystem) {
+    TimerSystem::init();
+
+    return 0;
+}
 
 TimerSystem* TimerSystem::instance_;
 

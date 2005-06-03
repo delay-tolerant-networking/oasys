@@ -39,6 +39,8 @@
 #include "util/UnitTest.h"
 #include "util/InitSequencer.h"
 #include "util/Singleton.h"
+#include "tclcmd/TclCommand.h"
+#include "storage/BerkeleyDBStore.h"
 
 using namespace oasys;
 
@@ -57,12 +59,13 @@ OASYS_DECLARE_INIT_MODULE_1(test, Step2, "test::Step1") { g_done[1] = true; retu
 OASYS_DECLARE_INIT_MODULE_2(test, Step3, "test::Step1", "test::Step2") { g_done[2] = true; return 0; }
 OASYS_DECLARE_INIT_MODULE_0(test, Step4) { g_done[3] = true; return 0; }
 OASYS_DECLARE_INIT_MODULE_2(test, Step5, "test::Step3", "test::Step4") { g_done[4] = true; return 0; }
+OASYS_INIT_ADD_DEP("test::Step2", "test::Step5");
+
 OASYS_DECLARE_INIT_CONFIG(test, StepConfig);
 OASYS_DECLARE_INIT_MODULE_1(test, StepConfigDep, "test::StepConfig") { g_done[5] = true; return 0; }
 
 DECLARE_TEST(InitSeqTest1) {
     clear_done();
-
     Singleton<InitSequencer> seq;
     seq->start("test::Step3");    
 
@@ -100,6 +103,13 @@ DECLARE_TEST(InitSeqTest3) {
 DECLARE_TEST(InitSeqTest4) {
     Singleton<InitSequencer> seq;
     seq->print_dot();    
+
+    return 0;
+}
+
+DECLARE_TEST(NotATest) {
+    TclCommandInterp::init();
+    BerkeleyDBStore::init();
 
     return 0;
 }

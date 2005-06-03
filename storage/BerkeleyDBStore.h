@@ -49,10 +49,10 @@ public:
     static void shutdown_for_debug();
 
     /// @{ Virtual from DurableStore
-    int get_table(DurableTableImpl**  table,
-                  const std::string&  name,
-                  int                 flags,
-                  PrototypeVector&    prototypes);
+    int get_table(DurableTableImpl** table,
+                  const std::string& name,
+                  int                flags,
+                  PrototypeVector&   prototypes);
     
     int del_table(const std::string& name);
     /// @}
@@ -123,7 +123,7 @@ private:
 
     DB* db_;
 
-    Mutex scratch_mutex_;   ///< This may cause performance problems.
+    Mutex scratch_mutex_;   ///< This may cause thread serialization problems.
     ScratchBuffer scratch_;
 };
 

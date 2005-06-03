@@ -44,8 +44,25 @@
 #include "io/NetUtils.h"
 #include "thread/SpinLock.h"
 #include "util/StringBuffer.h"
+#include "util/InitSequencer.h"
 
 namespace oasys {
+
+OASYS_DECLARE_INIT_CONFIG(oasys, TclCommandInterpConfig);
+OASYS_DECLARE_INIT_MODULE_1(oasys, TclCommandInterp, "oasys::TclCommandInterpConfig") {
+    TclCommandInterp::init();
+    return 0;
+}
+
+void 
+TclCommandInterpConfig::configure(char* objv0, bool no_default_cmds) 
+{
+    objv0_           = objv0;
+    no_default_cmds_ = no_default_cmds;
+    
+    OASYS_INIT_CONFIG_DONE(oasys, TclCommandInterpConfig);
+}
+
 
 /******************************************************************************
  *
@@ -53,8 +70,9 @@ namespace oasys {
  *
  *****************************************************************************/
 // static variables
+TclCommandInterpConfig* Singleton<TclCommandInterpConfig>::instance_;
 TclCommandInterp* TclCommandInterp::instance_;
-TclCommandList* TclCommandInterp::auto_reg_ = NULL;
+TclCommandList*   TclCommandInterp::auto_reg_ = NULL;
 
 #include "command-init-tcl.c"
 
@@ -123,6 +141,18 @@ TclCommandInterp::~TclCommandInterp()
 {
     // the destructor isn't ever called
     NOTREACHED;
+}
+
+int 
+TclCommandInterp::init() 
+{
+    Singleton<TclCommandInterpConfig> config;
+    
+    ASSERT(instance_ == NULL);
+    instance_ = new TclCommandInterp();
+    
+    return instance_->do_init(config->objv0_, 
+                              config->no_default_cmds_);
 }
 
 int

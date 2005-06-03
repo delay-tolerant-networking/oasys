@@ -90,6 +90,8 @@ enum DurableStoreFlags_t {
  * Interface for the generic datastore.
  */
 class DurableStore {
+    friend class BerkeleyDBStore;
+
 public:
     /**
      * Get singleton manager instance. Call init to create the
@@ -107,20 +109,6 @@ public:
     DurableStoreImpl* impl()
     {
         return impl_;
-    }
-
-    /**
-     * Do initialization. Must do this once before you try to obtain
-     * an instance of this object. This is separated out from the
-     * instance() call because we want to have control when the
-     * database is initialized.
-     * 
-     * Subclasses should call this to set the instance_ variable in
-     * their own init methods.
-     */
-    static void init(DurableStoreImpl* impl) {
-        ASSERT(instance_ == 0);
-        instance_ = new DurableStore(impl);
     }
 
     // XXX/bowei should be virtualized
@@ -165,6 +153,20 @@ public:
      * Delete the table (by name) from the datastore.
      */
     int del_table(std::string table_name);
+
+protected:
+    /*!
+     * Do initialization. This is separated out from the instance()
+     * call because we want to have control when the database is
+     * initialized.
+     * 
+     * Subclasses should call this to set the instance_ variable in
+     * their own init methods.
+     */
+    static void init(DurableStoreImpl* impl) {
+        ASSERT(instance_ == 0);
+        instance_ = new DurableStore(impl);
+    }
     
 private:
     /**
