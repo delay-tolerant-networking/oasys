@@ -274,7 +274,7 @@ public:
      *
      *  @param name Name of the module
      */
-    TclCommand(const char* name);
+    TclCommand(const char* name, const char* theNamespace = 0);
     virtual ~TclCommand();
     
     /** 
@@ -313,7 +313,7 @@ public:
     /** 
      * Get the name of the module.
      */
-    const char* name() const { return name_; }
+    const char* name() const { return name_.c_str(); }
 
     /**
      * Return the help string for this command.
@@ -323,7 +323,7 @@ public:
 protected:
     friend class TclCommandInterp;
     
-    const char* name_;          ///< Name of the module
+    std::string name_;          ///< Name of the module
     std::string help_;		///< Help string
     bool do_builtins_;		///< Set to false if a module doesn't want
                                 ///< builtin commands like "set"
@@ -507,8 +507,8 @@ protected:
  */
 class AutoTclCommand : public TclCommand {
 public:
-    AutoTclCommand(const char* name)
-        : TclCommand(name)
+    AutoTclCommand(const char* name, const char* theNamespace = 0)
+        : TclCommand(name, theNamespace)
     {
         TclCommandInterp::auto_reg(this);
     }

@@ -219,7 +219,7 @@ TclCommandInterp::reg(TclCommand *command)
     }
                  
     Tcl_CreateObjCommand(interp_, 
-                         (char*)command->name(),
+                         const_cast<char*>(command->name()),
                          TclCommandInterp::tcl_cmd,
                          (ClientData)command,
                          NULL);
@@ -384,10 +384,17 @@ TclCommandInterp::get_result()
  * TclCommand
  *
  *****************************************************************************/
-TclCommand::TclCommand(const char* name)
-    : name_(name), do_builtins_(true)
+TclCommand::TclCommand(const char* name, const char* theNamespace)
+    : do_builtins_(true)
 {
     logpathf("/command/%s", name);
+
+    if (theNamespace != 0) {
+        name_ += theNamespace;
+        name_ += "::";
+    }
+
+    name_ += name;
 }
 
 TclCommand::~TclCommand()
