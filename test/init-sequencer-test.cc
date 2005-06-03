@@ -44,27 +44,38 @@ using namespace oasys;
 
 bool g_done[6] = {false, false, false, false, false,
                   false};
+void clear_done() 
+{ 
+    for (int i=0; i<6; ++i) 
+    { 
+        g_done[i] = false; 
+    } 
+}
 
-OASYS_DECLARE_INIT_MODULE_0(Step1) { g_done[0] = true; return 0; }
-OASYS_DECLARE_INIT_MODULE_0(Step2) { g_done[1] = true; return 0; }
-OASYS_DECLARE_INIT_MODULE(Step3, 2, "Step1", "Step2") { g_done[2] = true; return 0; }
-OASYS_DECLARE_INIT_MODULE_0(Step4) { g_done[3] = true; return 0; }
-OASYS_DECLARE_INIT_MODULE(Step5, 2, "Step3", "Step4") { g_done[4] = true; return 0; }
-OASYS_DECLARE_INIT_CONFIG(StepConfig);
-OASYS_DECLARE_INIT_MODULE(StepConfigDep, 1, "StepConfig") { g_done[5] = true; return 0; }
+OASYS_DECLARE_INIT_MODULE_0(test, Step1) { g_done[0] = true; return 0; }
+OASYS_DECLARE_INIT_MODULE_0(test, Step2) { g_done[1] = true; return 0; }
+OASYS_DECLARE_INIT_MODULE_2(test, Step3, "test::Step1", "test::Step2") { g_done[2] = true; return 0; }
+OASYS_DECLARE_INIT_MODULE_0(test, Step4) { g_done[3] = true; return 0; }
+OASYS_DECLARE_INIT_MODULE_2(test, Step5, "test::Step3", "test::Step4") { g_done[4] = true; return 0; }
+OASYS_DECLARE_INIT_CONFIG(test, StepConfig);
+OASYS_DECLARE_INIT_MODULE_1(test, StepConfigDep, "test::StepConfig") { g_done[5] = true; return 0; }
 
 DECLARE_TEST(InitSeqTest1) {
+    clear_done();
+
     Singleton<InitSequencer> seq;
-    seq->start("Step3");    
+    seq->start("test::Step3");    
 
     CHECK(g_done[0] && g_done[1] && g_done[2]);
 
     return 0;
 }
 DECLARE_TEST(InitSeqTest2) {
+    clear_done();
+
     Singleton<InitSequencer> seq;
     seq->reset();
-    seq->start("Step5");    
+    seq->start("test::Step5");    
 
     CHECK(g_done[0] && g_done[1] && g_done[2] && g_done[3] && g_done[4]);
 
@@ -72,14 +83,16 @@ DECLARE_TEST(InitSeqTest2) {
 }
 
 DECLARE_TEST(InitSeqTest3) {
+    clear_done();
+
     Singleton<InitSequencer> seq;
     seq->reset();
 
-    OASYS_INIT_CONFIG_DONE(StepConfig);
-    seq->start("StepConfigDep");
+    OASYS_INIT_CONFIG_DONE(test, StepConfig);
+    seq->start("test::StepConfigDep");
 
-    CHECK(g_done[0] && g_done[1] && g_done[2] && g_done[3] && g_done[4] && 
-          g_done[5]);
+    CHECK(g_done[5]);
+    CHECK(!g_done[0] && !g_done[1] && !g_done[2] && !g_done[3]);
 
     return 0;    
 }

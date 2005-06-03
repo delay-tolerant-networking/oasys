@@ -224,18 +224,20 @@ InitSequencer::mark_dep(const std::string& target)
 //
 // InitStep
 //
-InitStep::InitStep(const std::string& name)
+InitStep::InitStep(const std::string& the_namespace, 
+                   const std::string& name)
     : done_(false),
-      name_(name),
+      name_(the_namespace + "::" + name),
       mark_(false),
       time_(-1)
 {
     Singleton<InitSequencer>::instance()->add_step(this);    
 }
 
-InitStep::InitStep(const std::string& name, int depsize, ...)
+InitStep::InitStep(const std::string& the_namespace, 
+                   const std::string& name, int depsize, ...)
     : done_(false),
-      name_(name),
+      name_(the_namespace + "::" + name),
       mark_(false),
       time_(-1)
 {
@@ -250,9 +252,10 @@ InitStep::InitStep(const std::string& name, int depsize, ...)
     Singleton<InitSequencer>::instance()->add_step(this);
 }
 
-InitStep::InitStep(const std::string& name, const DepList& deps)
+InitStep::InitStep(const std::string& the_namespace, 
+                   const std::string& name, const DepList& deps)
     : done_(false),
-      name_(name),
+      name_(the_namespace + "::" + name),
       dependencies_(deps),
       mark_(false),
       time_(-1)

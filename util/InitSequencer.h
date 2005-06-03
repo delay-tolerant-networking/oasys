@@ -55,7 +55,8 @@ class InitStep;
  * 
  * Suppose you have a singleton style modules A, B and C with an
  * ::init method and B depends on A and C depends on A and B. C also
- * has configuration options which need to be set. Then:
+ * has configuration options which need to be set. example is the
+ * namespace of the modules A, B and C.
  * 
  * @code
  * // A.cc
