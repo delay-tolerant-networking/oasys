@@ -106,6 +106,7 @@ public:
      * Initialize the interpreter instance.
      */
     static int init();
+    static int init(char* objv0, bool no_default_cmds = false);
 
     /**
      * Read in a configuration file and execute its contents

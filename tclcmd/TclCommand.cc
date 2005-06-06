@@ -156,6 +156,15 @@ TclCommandInterp::init()
 }
 
 int
+TclCommandInterp::init(char* objv0, bool no_default_cmds)
+{
+    ASSERT(instance_ == NULL);
+    instance_ = new TclCommandInterp();
+    
+    return instance_->do_init(objv0, no_default_cmds);
+}
+
+int
 TclCommandInterp::exec_file(const char* file)
 {
     int err;
