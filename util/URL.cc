@@ -98,7 +98,7 @@ URL::parse_internal()
         std::string portstr(url_, beg, end - beg);
         u_int32_t portval = strtoul(portstr.c_str(), &endstr, 10);
         
-        if (portval > 65536)
+        if (portval > 65535)
             return URLPARSE_BADPORT;
 
         if (endstr != (portstr.c_str() + portstr.length()))
