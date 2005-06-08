@@ -41,8 +41,6 @@
 
 namespace oasys {
 
-OASYS_DECLARE_INIT_CONFIG(oasys, StorageConfig);
-
 StorageConfig* StorageConfig::instance_ = NULL;
 
 void
@@ -68,8 +66,6 @@ StorageConfig::init(
     instance_->dbdir_ 	= dbdir;
     instance_->dberrlog_ = dberrlog;
     instance_->dbflags_	= dbflags;
-    
-    OASYS_INIT_CONFIG_DONE(oasys, StorageConfig);
 }
 
 } // namespace oasys

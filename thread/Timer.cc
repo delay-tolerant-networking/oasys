@@ -49,12 +49,6 @@
 
 namespace oasys {
 
-OASYS_DECLARE_INIT_MODULE_0(oasys, TimerSystem) {
-    TimerSystem::init();
-
-    return 0;
-}
-
 TimerSystem* TimerSystem::instance_;
 
 TimerSystem::TimerSystem()

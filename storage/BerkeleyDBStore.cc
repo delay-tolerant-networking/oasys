@@ -67,11 +67,6 @@ namespace oasys {
 /*
  * BerkeleyDB depends on StorageConfig
  */
-OASYS_DECLARE_INIT_MODULE_1(oasys, BerkeleyDBStore, "oasys::StorageConfig") {
-    BerkeleyDBStore::init();
-    return 0;
-}
-
 
 /******************************************************************************
  *

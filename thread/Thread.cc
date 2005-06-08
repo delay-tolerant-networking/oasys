@@ -51,18 +51,6 @@ sigset_t Thread::interrupt_sigset_;
 bool Thread::start_barrier_enabled_ = false;
 std::vector<Thread*> Thread::threads_in_barrier_;
 
-OASYS_DECLARE_INIT_MODULE_0(oasys, ThreadStartCreateBarrier) {
-    oasys::Thread::activate_start_barrier();
-    return 0;
-}
-
-OASYS_DECLARE_INIT_MODULE_1(oasys, ThreadReleaseCreateBarrier, 
-                            "oasys::ThreadStartCreateBarrier") 
-{
-    oasys::Thread::release_start_barrier();
-    return 0;
-}
-
 void
 Thread::interrupt_signal(int sig)
 {

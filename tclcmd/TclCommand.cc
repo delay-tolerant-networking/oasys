@@ -48,19 +48,11 @@
 
 namespace oasys {
 
-OASYS_DECLARE_INIT_CONFIG(oasys, TclCommandInterpConfig);
-OASYS_DECLARE_INIT_MODULE_1(oasys, TclCommandInterp, "oasys::TclCommandInterpConfig") {
-    TclCommandInterp::init();
-    return 0;
-}
-
 void 
 TclCommandInterpConfig::configure(char* objv0, bool no_default_cmds) 
 {
     objv0_           = objv0;
     no_default_cmds_ = no_default_cmds;
-    
-    OASYS_INIT_CONFIG_DONE(oasys, TclCommandInterpConfig);
 }
 
 
