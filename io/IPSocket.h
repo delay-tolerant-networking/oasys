@@ -52,8 +52,15 @@
 
 namespace oasys {
 
-// XXX/demmer this should be in some system header somewhere
-#define MAX_UDP_PACKET 65536
+/**
+ * The maximum length of a UDP packet. This isn't really accurate as a
+ * maximum payload size since it doesn't take into account the space
+ * for the IP header or the UDP header, but is a valid upper bound for
+ * the purposes of buffer allocation.
+ *
+ * XXX/demmer is this in some system header somewhere?
+ */
+#define MAX_UDP_PACKET 65535
 
 #ifndef INADDR_NONE
 #define INADDR_NONE 0
