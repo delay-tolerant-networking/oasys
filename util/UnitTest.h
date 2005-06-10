@@ -230,6 +230,18 @@ void _name::add_tests()                                         \
                     "CHECK '" #a "' (%d) == '" #b "' (%d)", (int)(a), (int)(b));        \
     } } while(0)
 
+#define CHECK_EQUAL_U64(a, b)                                                           \
+    do { if ((a) != (b)) {                                                              \
+        oasys::logf("/test", oasys::LOG_CRIT,                                           \
+                    "CHECK FAILED: '" #a "' (%llu) != '" #b "' (%llu) at %s:%d",        \
+                    (u_int64_t)(a), (u_int64_t)(b), __FILE__, __LINE__);                \
+        return oasys::UNIT_TEST_FAILED;                                                 \
+    } else {                                                                            \
+        oasys::logf("/test", oasys::LOG_DEBUG,                                          \
+                    "CHECK '" #a "' (%llu) == '" #b "' (%llu)",                         \
+                    (u_int64_t)(a), (u_int64_t)(b));                                    \
+    } } while(0)
+
 #define CHECK_EQUALSTR(a, b)                                                    \
     do { if (strcmp((a), (b)) != 0) {                                           \
         oasys::logf("/test", oasys::LOG_CRIT,                                   \
