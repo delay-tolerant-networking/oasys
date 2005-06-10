@@ -14,6 +14,7 @@ TESTS += \
 	options-test				\
 	optparser-test				\
 	sample-test				\
+	sdnv-test				\
 	serialize-test				\
 	spin-lock-test				\
 	static-buffer-test			\
