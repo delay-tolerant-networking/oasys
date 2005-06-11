@@ -232,7 +232,15 @@ BerkeleyDBStore::do_init()
                             DB_AUTO_COMMIT, // op is automatically in a tx
                             1);
     if(err != 0) {
-        log_crit("DB: %s, cannot set flags", db_strerror(err));
+        log_crit("DB: %s, cannot set autocommit flag", db_strerror(err));
+        return DS_ERR;
+    }
+
+    err = dbenv_->set_flags(dbenv_,
+                            DB_LOG_AUTOREMOVE, // log files cleared automatically
+                            1);
+    if(err != 0) {
+        log_crit("DB: %s, cannot set log_autoremove flag", db_strerror(err));
         return DS_ERR;
     }
     
