@@ -125,7 +125,7 @@ TclCommandInterp::~TclCommandInterp()
 }
 
 int
-TclCommandInterp::init(char* objv0, bool no_default_cmds)
+TclCommandInterp::init(char* argv0, bool no_default_cmds)
 {
     ASSERT(instance_ == NULL);
     instance_ = new TclCommandInterp();
