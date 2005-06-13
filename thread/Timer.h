@@ -48,6 +48,7 @@
 #include "../config.h"
 #include "../debug/Debug.h"
 #include "../debug/Log.h"
+#include "../util/Singleton.h"
 #include "MsgQueue.h"
 #include "Notifier.h"
 #include "Thread.h"
@@ -100,15 +101,10 @@ public:
 /**
  * The main Timer system implementation.
  */
-class TimerSystem : public Thread, public Logger {
+class TimerSystem : public Singleton<TimerSystem>, 
+                    public Thread, 
+                    public Logger {
 public:
-    static TimerSystem* instance() {
-        ASSERT(instance_ != NULL);
-        return instance_;
-    }
-
-    static void init();
-
     void schedule_at(struct timeval *when, Timer* timer);
     void schedule_in(int milliseconds, Timer* timer);
     void schedule_immediate(Timer* timer);
@@ -128,12 +124,12 @@ public:
     void run();
 
 private:
+    friend class Singleton<TimerSystem>;
+
     TimerSystem();
     
     void pop_timer(struct timeval *now);
     
-    static TimerSystem* instance_;
-
     SpinLock* system_lock_;
     Notifier signal_;
     std::priority_queue<Timer*, std::vector<Timer*>, TimerCompare> timers_;
@@ -196,9 +192,10 @@ private:
     friend class TimerCompare;
     
     struct timeval when_;
-    bool pending_;
+    bool           pending_;
+
 protected:
-    bool cancelled_;
+    bool           cancelled_;
     cancel_flags_t cancel_flags_;
 };
 

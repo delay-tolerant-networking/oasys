@@ -49,7 +49,7 @@
 
 namespace oasys {
 
-TimerSystem* TimerSystem::instance_;
+TimerSystem* Singleton<TimerSystem>::instance_;
 
 TimerSystem::TimerSystem()
     : Thread(Thread::INTERRUPTABLE),
@@ -62,13 +62,6 @@ TimerSystem::TimerSystem()
     memset(handlers_, 0, sizeof(handlers_));
     memset(signals_, 0, sizeof(signals_));
     sigfired_ = false;
-}
-
-void
-TimerSystem::init()
-{
-    instance_ = new TimerSystem();
-    instance_->start();
 }
 
 void
@@ -225,8 +218,9 @@ TimerSystem::run()
     Timer* next_timer;
     
     system_lock_->lock();
-        
-    while (1) {
+
+    while (1) 
+    {
         timeout = -1; // default is to block forever
 
         if (sigfired_) {
@@ -240,7 +234,8 @@ TimerSystem::run()
             sigfired_ = 0;
         }
 
-        if (! timers_.empty()) {
+        if (!timers_.empty()) 
+        {
             ::gettimeofday(&now, 0);
             next_timer = timers_.top();
             
@@ -249,14 +244,14 @@ TimerSystem::run()
             // handle any immediate timers immediately, then re-loop
             if ((next_timer->when_.tv_sec == 0 &&
                  next_timer->when_.tv_usec == 0) ||
-                (timeout == 0))
+                (timeout == 0)) 
             {
                 pop_timer(&now);
                 continue;
             }
 
-            
-            if (timeout < 0) {
+            if (timeout < 0) 
+            {
                 log_warn("timer in the past, calling immediately");
                 pop_timer(&now);
                 continue;
@@ -272,17 +267,22 @@ TimerSystem::run()
         // and re-take the lock on return
         system_lock_->lock();
 
-        if (cc == -1 && errno == EINTR) {
+        if (cc == -1 && errno == EINTR) 
+        {
             log_debug("poll interrupted, looping");
         }
         
-        if (cc == 0) {
+        if (cc == 0) 
+        {
             log_debug("poll returned due to timeout");
-            
-        } else if (cc == 1) {
+        } 
+        else if (cc == 1) 
+        {
             log_debug("poll returned due to signal");
             signal_.drain_pipe();
-        } else {
+        } 
+        else 
+        {
             if (errno == EINTR) continue;
             log_err("unexpected return of %d from poll errno %d", cc, errno);
             continue; // XXX/demmer ??

@@ -101,6 +101,11 @@ public:
      * pending threads.
      */
     static void release_start_barrier();
+    
+    //! @return Status of start barrier
+    static bool start_barrier_enabled() { 
+        return start_barrier_enabled_;
+    }
 
     /**
      * Yield the current process. Needed for capriccio to yield the
