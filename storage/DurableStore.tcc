@@ -34,7 +34,8 @@ DurableStore::get_table(SingleTypeDurableTable<_DataType>** table,
         return err;
     }
     
-    *table = new SingleTypeDurableTable<_DataType>(table_impl, table_name, cache);
+    *table = new SingleTypeDurableTable<_DataType>
+             (table_impl, table_name, cache);
 
     return 0;
 }

@@ -56,10 +56,8 @@ class DurableTableImpl;
 class DurableIterator;
 class DurableObjectCache;
 
-/**
+/*!
  * Enumeration for error return codes from the datastore functions
- *
- * XXX/bowei - change these names
  */
 enum DurableStoreResult_t {
     DS_OK        = 0,           ///< Success
@@ -67,10 +65,10 @@ enum DurableStoreResult_t {
     DS_BUFSIZE   = 2,           ///< Buffer too small.
     DS_BUSY      = 3,           ///< Table is still open, can't delete.
     DS_EXISTS    = 4,           ///< Key already exists
-    DS_ERR       = 1000,        ///< xxx/bowei placeholder for now
+    DS_ERR       = 1000,        ///< XXX/bowei placeholder for now
 };
 
-/**
+/*!
  * Enumeration for flags to the datastore functions.
  */
 enum DurableStoreFlags_t {
@@ -93,35 +91,23 @@ class DurableStore {
     friend class BerkeleyDBStore;
 
 public:
-    /**
-     * Get singleton manager instance. Call init to create the
-     * singleton instance.
+    /*!
+     * Create a DurableStore, which needs to be backed by an
+     * impl. DurableStore will assume ownership of the impl.
      */
-    static inline DurableStore* instance() 
-    {
-        ASSERT(instance_);      // use init() please
-        return instance_;      
+    DurableStore(DurableStoreImpl* impl) : impl_(impl) 
+    { 
+        ASSERT(impl_ != 0); 
     }
 
-    /**
-     * Return the implementation pointer.
-     */
-    DurableStoreImpl* impl()
-    {
-        return impl_;
+    ~DurableStore() 
+    { 
+        delete impl_; 
+        impl_ = 0; 
     }
 
-    // XXX/bowei should be virtualized
-    static void shutdown() {
-        delete instance_->impl_;
-        delete instance_;
-        instance_ = NULL;
-    }
-
-    /**
-     * Destructor
-     */
-    virtual ~DurableStore() {}
+    //! Return the implementation pointer.
+    DurableStoreImpl* impl() { return impl_; }
 
     /**
      * Get a new handle on a single-type table.
@@ -136,7 +122,7 @@ public:
                   int                 flags,
                   DurableObjectCache* cache);
 
-    /**
+    /*!
      * Get a new handle on a multi-type table.
      *
      * @param flags options for creating the table
@@ -149,25 +135,11 @@ public:
                   int                 flags,
                   DurableObjectCache* cache);
 
-    /**
+    /*!
      * Delete the table (by name) from the datastore.
      */
     int del_table(std::string table_name);
 
-protected:
-    /*!
-     * Do initialization. This is separated out from the instance()
-     * call because we want to have control when the database is
-     * initialized.
-     * 
-     * Subclasses should call this to set the instance_ variable in
-     * their own init methods.
-     */
-    static void init(DurableStoreImpl* impl) {
-        ASSERT(instance_ == 0);
-        instance_ = new DurableStore(impl);
-    }
-    
 private:
     /**
      * Typedef for the list of objects passed to the implementation to
@@ -175,17 +147,9 @@ private:
      */
     typedef DurableStoreImpl::PrototypeVector PrototypeVector;
     
-    /**
-     * The constructor should only be called by DurableStore::init.
-     */
-    DurableStore(DurableStoreImpl* impl) : impl_(impl) {}
-
-    /**
-     * The copy constructor should never be called.
-     */
+    //! The copy constructor should never be called.
     DurableStore(const DurableStore& other);
 
-    static DurableStore* instance_; 	///< singleton instance
     DurableStoreImpl*    impl_;		///< the storage implementation
 };
 

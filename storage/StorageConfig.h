@@ -47,8 +47,7 @@ namespace oasys {
  * Simple singleton class that just contains the storage-specific
  * configuration variables.
  */
-class StorageConfig {
-public:
+struct StorageConfig {
     std::string type_;		///< storage type [berkeleydb/mysql/postgres]
     bool        init_;		///< Create new databases on init
     bool        tidy_;		///< Prune out the database on init
@@ -65,7 +64,7 @@ public:
      * Static initialization function. Must be called by the
      * application before initializing any storage systems.
      */
-    static void init(
+    StorageConfig(
         const std::string& type,
         bool               init,
         bool               tidy,
@@ -74,22 +73,14 @@ public:
         const std::string& dbdir,
         const std::string& dberrlog,
         int                dbflags
-        );
-    
-    /**
-     * Singleton accessor.
-     */
-    static StorageConfig* instance()
-    {
-        if (!instance_) {
-            PANIC("StorageConfig::init() must be called");
-        }
-
-        return instance_;
-    }
-    
-protected:
-    static StorageConfig* instance_;
+    ) : type_(type),
+        init_(init),
+        tidy_(tidy),
+        tidy_wait_(tidy_wait),
+        dbname_(dbname),
+        dbdir_(dbdir),
+        dberrlog_(dberrlog),
+        dbflags_(dbflags) {}
 };
 
 } // namespace oasys

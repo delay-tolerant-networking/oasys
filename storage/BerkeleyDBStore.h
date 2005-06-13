@@ -1,3 +1,41 @@
+/*
+ * IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING. By
+ * downloading, copying, installing or using the software you agree to
+ * this license. If you do not agree to this license, do not download,
+ * install, copy or use the software.
+ * 
+ * Intel Open Source License 
+ * 
+ * Copyright (c) 2004 Intel Corporation. All rights reserved. 
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ * 
+ *   Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ * 
+ *   Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+ * 
+ *   Neither the name of the Intel Corporation nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ *  
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE INTEL OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #ifndef __BERKELEY_TABLE_STORE_H__
 #define __BERKELEY_TABLE_STORE_H__
 
@@ -18,6 +56,7 @@ namespace oasys {
 class BerkeleyDBStore;
 class BerkeleyDBTable;
 class BerkeleyDBIterator;
+class StorageConfig;
 
 /**
  * Interface for the generic datastore
@@ -26,66 +65,59 @@ class BerkeleyDBStore : public DurableStoreImpl, public Logger {
     friend class BerkeleyDBTable;
 
 public:
-    virtual ~BerkeleyDBStore();
+    BerkeleyDBStore();
 
-    /**
-     * Do initialization. Must do this once before you try to obtain
-     * an instance of this object.
-     */
-    static void init();
+    // Can't copy or =, don't implement these
+    BerkeleyDBStore& operator=(const BerkeleyDBStore&);
+    BerkeleyDBStore(const BerkeleyDBStore&);
 
-    /**
-     * Shadow the instance method of DurableStore so callees do not
-     * need to do the downcast.
-     */
-    static BerkeleyDBStore* instance()
-    {
-        return static_cast<BerkeleyDBStore*>(DurableStore::instance()->impl());
-    }
+    ~BerkeleyDBStore();
 
-    /**
-     * Shutdown BerkeleyDB and free associated resources.
-     */
-    static void shutdown_for_debug();
+    //! @{ Virtual from DurableStoreImpl
+    //! Initialize BerkeleyDBStore
+    int init(StorageConfig* cfg);
 
-    /// @{ Virtual from DurableStore
     int get_table(DurableTableImpl** table,
                   const std::string& name,
                   int                flags,
                   PrototypeVector&   prototypes);
-    
+
     int del_table(const std::string& name);
     /// @}
 
 private:
+    typedef std::map<std::string, int> RefCountMap;
+
+    bool        init_;        //!< Initialized?
     FILE*       err_log_;     ///< db err log file
     std::string db_name_;     ///< Name of the database file
     DB_ENV*     dbenv_;       ///< database environment for all tables
 
-    SpinLock ref_count_lock_;
-    typedef std::map<std::string, int> RefCountMap;
+    SpinLock    ref_count_lock_;
     RefCountMap ref_count_;   ///< Ref. count for open tables.
 
     /// Id that represents the metatable of tables
     static const std::string META_TABLE_NAME;
 
-    /// Constructor - protected for singleton
-    BerkeleyDBStore();
-    BerkeleyDBStore(const BerkeleyDBStore&);
-
     /// Get meta-table
     int get_meta_table(BerkeleyDBTable** table);
     
-    /// @{ Changes the ref count on the tables, used by BerkeleyDBTable 
+    /// @{ Changes the ref count on the tables, used by
+    /// BerkeleyDBTable
     int acquire_table(const std::string& table);
     int release_table(const std::string& table);
     /// @}
 
-    /**
-     * real initialization code
-     * @return 0 if no error
+    void prune_db_dir(int tidy_wait, const char* dir);
+
+    /*! 
+     * Check for the db directory
+     * @param dir_exists Pass in pointer to be set if directory exists.
      */
-    int do_init();
+    int check_db_dir(const char* db_dir, bool* dir_exists);
+
+    //! Create database directory
+    int create_db_dir(const char* db_dir);
 };
 
 /**
@@ -113,18 +145,19 @@ public:
     /// @}
 
 private:
-    /**
-     * Only BerkeleyDBStore can create BerkeleyDBTables
-     */
-    BerkeleyDBTable(std::string name, DB* db);
+    DB*              db_;
+    BerkeleyDBStore* store_;
+
+    //! This may cause thread serialization problems.
+    Mutex         scratch_mutex_;   
+    ScratchBuffer scratch_;
+
+    //! Only BerkeleyDBStore can create BerkeleyDBTables
+    BerkeleyDBTable(BerkeleyDBStore* store, 
+                    std::string name, DB* db);
 
     /// Whether a specific key exists in the table.
     int key_exists(const void* key, size_t key_len);
-
-    DB* db_;
-
-    Mutex scratch_mutex_;   ///< This may cause thread serialization problems.
-    ScratchBuffer scratch_;
 };
 
 /**

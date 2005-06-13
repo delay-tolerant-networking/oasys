@@ -38,6 +38,8 @@
 #ifndef _OASYS_DURABLE_STORE_IMPL_H_
 #define _OASYS_DURABLE_STORE_IMPL_H_
 
+class StorageConfig;
+
 /**
  * Storage implementation specific pieces of the data store.
  */
@@ -47,6 +49,13 @@ public:
      * Typedef for the list of objects passed to get_table.
      */
     typedef std::vector<SerializableObject*> PrototypeVector;
+
+    virtual ~DurableStoreImpl() {}
+
+    /*!
+     * Initialize the storage impl.
+     */
+    virtual int init(StorageConfig* config) = 0;
 
     /**
      * Hook to get or create the implementation-specific components of
