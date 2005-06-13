@@ -61,15 +61,13 @@ TclCommandList*   TclCommandInterp::auto_reg_ = NULL;
 
 TclCommandInterp::TclCommandInterp()
     : Logger("/command")
-{
-}
+{}
 
 int
 TclCommandInterp::do_init(char* argv0, bool no_default_cmds)
 {
     interp_ = Tcl_CreateInterp();
-    
-    lock_ = new SpinLock();
+    lock_   = new SpinLock();
 
     // for some reason, this needs to be called to set up the various
     // locale strings and get things like the "ascii" encoding defined
@@ -126,11 +124,12 @@ TclCommandInterp::~TclCommandInterp()
     NOTREACHED;
 }
 
-int 
-TclCommandInterp::init(char* argv0, bool no_default_cmds)
+int
+TclCommandInterp::init(char* objv0, bool no_default_cmds)
 {
     ASSERT(instance_ == NULL);
     instance_ = new TclCommandInterp();
+    
     return instance_->do_init(argv0, no_default_cmds);
 }
 
