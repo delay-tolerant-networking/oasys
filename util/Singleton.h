@@ -42,24 +42,10 @@
 
 namespace oasys {
 
-/**
- * Two usage patterns:
- * @code
- * Singleton<Foo> s;
- * s->foo()
- * 
- * // or 
- *
- * Singleton<Foo>::instance()->foo();
- * @endcode
- */
+//! Singleton
 template<typename _Class>
 class Singleton {
 public:
-    _Class* operator->() {
-	return instance();
-    }
-
     static _Class* instance() {
         if(instance_ == 0) {
             instance_ = new _Class();
@@ -71,8 +57,17 @@ public:
     
     static void create() { ASSERT(instance_ == 0); instance(); }
     
-private:
+protected:
     static _Class* instance_;
+};
+
+//! Reference to a Singleton
+template<typename _Class>
+class SingletonRef {
+public:
+    _Class* operator->() {
+	return Singleton<_Class>::instance();
+    }
 };
 
 } // namespace oasys
