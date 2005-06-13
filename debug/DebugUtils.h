@@ -114,6 +114,11 @@ public:
      */
     static void break_here();
 };
+
+//! Make sure to null out after deleting an object (sigh....)
+#define delete_z(_obj) \
+    do { delete _obj; _obj = 0; } while (0)
+
 } // namespace oasys
 
 #include "../memory/Memory.h"
