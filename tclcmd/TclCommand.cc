@@ -62,7 +62,7 @@ TclCommandInterpConfig::configure(char* objv0, bool no_default_cmds)
  *
  *****************************************************************************/
 // static variables
-TclCommandInterpConfig* Singleton<TclCommandInterpConfig>::instance_;
+template<> TclCommandInterpConfig* Singleton<TclCommandInterpConfig>::instance_;
 TclCommandInterp* TclCommandInterp::instance_;
 TclCommandList*   TclCommandInterp::auto_reg_ = NULL;
 

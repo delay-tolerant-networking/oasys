@@ -9,7 +9,7 @@ namespace oasys {
 //
 // InitSequencer
 //
-InitSequencer* Singleton<InitSequencer>::instance_;
+template<> InitSequencer* Singleton<InitSequencer>::instance_;
 
 /// Sort in decreasing order
 struct InitStepSort {
