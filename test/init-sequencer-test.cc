@@ -108,8 +108,8 @@ DECLARE_TEST(InitSeqTest4) {
 }
 
 DECLARE_TEST(NotATest) {
-    TclCommandInterp::init();
-    BerkeleyDBStore::init();
+//    TclCommandInterp::init();
+//    BerkeleyDBStore::init();
 
     return 0;
 }
