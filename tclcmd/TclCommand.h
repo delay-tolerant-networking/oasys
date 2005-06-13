@@ -74,16 +74,6 @@ class Lock;
  */
 typedef std::list<TclCommand*> TclCommandList;
 
-/*!
- * Configuration for the TclCommandInterp
- */
-struct TclCommandInterpConfig {
-    char* objv0_;
-    bool  no_default_cmds_;
-    
-    void configure(char* objv0, bool no_default_cmds = false);
-};
-
 /**
  * Command interpreter class
  * 
@@ -105,7 +95,6 @@ public:
     /**
      * Initialize the interpreter instance.
      */
-    static int init();
     static int init(char* objv0, bool no_default_cmds = false);
 
     /**

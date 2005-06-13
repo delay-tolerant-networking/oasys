@@ -48,21 +48,12 @@
 
 namespace oasys {
 
-void 
-TclCommandInterpConfig::configure(char* objv0, bool no_default_cmds) 
-{
-    objv0_           = objv0;
-    no_default_cmds_ = no_default_cmds;
-}
-
-
 /******************************************************************************
  *
  * TclCommandInterp
  *
  *****************************************************************************/
 // static variables
-template<> TclCommandInterpConfig* Singleton<TclCommandInterpConfig>::instance_;
 TclCommandInterp* TclCommandInterp::instance_;
 TclCommandList*   TclCommandInterp::auto_reg_ = NULL;
 
@@ -136,24 +127,11 @@ TclCommandInterp::~TclCommandInterp()
 }
 
 int 
-TclCommandInterp::init() 
-{
-    Singleton<TclCommandInterpConfig> config;
-    
-    ASSERT(instance_ == NULL);
-    instance_ = new TclCommandInterp();
-    
-    return instance_->do_init(config->objv0_, 
-                              config->no_default_cmds_);
-}
-
-int
-TclCommandInterp::init(char* objv0, bool no_default_cmds)
+TclCommandInterp::init(char* argv0, bool no_default_cmds)
 {
     ASSERT(instance_ == NULL);
     instance_ = new TclCommandInterp();
-    
-    return instance_->do_init(objv0, no_default_cmds);
+    return instance_->do_init(argv0, no_default_cmds);
 }
 
 int
