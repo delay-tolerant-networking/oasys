@@ -167,6 +167,9 @@ public:
         return oasys::__log_enabled(level, logpath_);
     }
 
+    //! @return current logpath
+    const char* logpath() { return logpath_; }
+
 protected:
     char logpath_[LOG_MAX_PATHLEN];
     size_t baselen_;
