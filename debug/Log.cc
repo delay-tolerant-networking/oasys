@@ -502,7 +502,7 @@ Log::vlogf(const char *path, log_level_t level, const char *fmt, va_list ap)
     }
 
     if (prefix_.size() > 0) {
-        len = snprintf(ptr, buflen, "%s[%s", 
+        len = snprintf(ptr, buflen, "%s[%s ", 
                        pretty_begin, prefix_.c_str());
         buflen -= len;
         ptr += len;
