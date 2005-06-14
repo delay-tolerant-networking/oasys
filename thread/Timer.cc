@@ -92,12 +92,11 @@ TimerSystem::schedule_at(struct timeval *when, Timer* timer)
         // expose a new "reschedule" api call to make it explicit that
         // it's a different operation.
         PANIC("rescheduling timers not implemented");
-        
-    } else {
-        timer->pending_ = 1;
-        timer->cancelled_ = 0;
-        timers_.push(timer);
     }
+    
+    timer->pending_ = 1;
+    timer->cancelled_ = 0;
+    timers_.push(timer);
 
     // notify the timer thread (which is likely blocked in poll) that
     // we've stuck something new on the queue
@@ -241,10 +240,10 @@ TimerSystem::run()
             
             timeout = TIMEVAL_DIFF_MSEC(next_timer->when_, now);
 
-            // handle any immediate timers immediately, then re-loop
-            if ((next_timer->when_.tv_sec == 0 &&
-                 next_timer->when_.tv_usec == 0) ||
-                (timeout == 0)) 
+            // handle any ready or immediate timers immediately, then re-loop
+            if ((timeout == 0) ||
+                (next_timer->when_.tv_sec == 0 &&
+                 next_timer->when_.tv_usec == 0))
             {
                 pop_timer(&now);
                 continue;
