@@ -142,7 +142,7 @@ Getopt::getopt(const char* progname, int argc, char* const argv[])
             
         case -1:
             // end of list
-            return optind;
+            goto done;
             
         default:
             if (c < 0 || c > 256) {
@@ -167,6 +167,10 @@ Getopt::getopt(const char* progname, int argc, char* const argv[])
             
         }
     }
+
+ done:
+    free(long_opts);
+    return optind;
 }
 
 void
