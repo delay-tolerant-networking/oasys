@@ -46,13 +46,13 @@ namespace oasys {
 
 #define MINMAX(_Type)                           \
                                                 \
-inline bool                                     \
+inline _Type                                    \
 min(_Type a, _Type b)                           \
 {                                               \
     return (a < b) ? a : b;                     \
 }                                               \
                                                 \
-inline bool                                     \
+inline _Type                                    \
 max(_Type a, _Type b)                           \
 {                                               \
     return (a > b) ? a : b;                     \
