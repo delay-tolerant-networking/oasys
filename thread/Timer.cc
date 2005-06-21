@@ -49,7 +49,7 @@
 
 namespace oasys {
 
-TimerSystem* Singleton<TimerSystem>::instance_;
+template <> TimerSystem* Singleton<TimerSystem>::instance_ = 0;
 
 TimerSystem::TimerSystem()
     : Thread(Thread::INTERRUPTABLE),
