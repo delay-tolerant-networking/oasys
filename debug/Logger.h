@@ -90,7 +90,7 @@ public:
     {
         set_logpath(logpath);
     }
-    
+
     /**
      * Format function for logpath_.
      */
@@ -122,6 +122,15 @@ public:
             strncpy(logpath_, logpath, sizeof(logpath_));
             baselen_ = strlen(logpath);
         }
+    }
+
+    /**
+     * Wrapper around the base __log_enabled function that uses the
+     * logpath_ instance.
+     */
+    inline bool log_enabled(log_level_t level) const
+    {
+        return oasys::__log_enabled(level, logpath_);
     }
 
     /**
