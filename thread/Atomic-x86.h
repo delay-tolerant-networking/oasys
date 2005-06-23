@@ -39,7 +39,7 @@
 #ifndef _OASYS_ATOMIC_X86_H_
 #define _OASYS_ATOMIC_X86_H_
 
-#include "../debug/Debug.h"
+#include "../debug/DebugUtils.h"
 
 namespace oasys {
 

@@ -41,7 +41,7 @@
 
 #include "TCPClient.h"
 #include "NetUtils.h"
-#include "debug/Debug.h"
+#include "debug/DebugUtils.h"
 #include "debug/Log.h"
 
 namespace oasys {

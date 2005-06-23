@@ -39,7 +39,7 @@
 #ifndef _OASYS_LOGGER_H_
 #define _OASYS_LOGGER_H_
 
-#include "Debug.h"
+#include "DebugUtils.h"
 
 namespace oasys {
 

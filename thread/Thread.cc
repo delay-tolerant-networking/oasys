@@ -39,7 +39,7 @@
 #include <errno.h>
 
 #include "Thread.h"
-#include "debug/Debug.h"
+#include "debug/DebugUtils.h"
 #include "debug/Log.h"
 #include "util/InitSequencer.h"
 #include "memory/Memory.h"

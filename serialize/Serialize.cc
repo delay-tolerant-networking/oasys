@@ -36,7 +36,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "Serialize.h"
-#include "debug/Debug.h"
+#include "debug/DebugUtils.h"
 
 namespace oasys {
 

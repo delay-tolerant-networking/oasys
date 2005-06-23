@@ -37,7 +37,7 @@
  */
 
 #include "SDNV.h"
-#include "debug/Debug.h"
+#include "debug/DebugUtils.h"
 
 namespace oasys {
 

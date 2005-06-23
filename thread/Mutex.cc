@@ -45,7 +45,7 @@
 #include <synch.h>
 #endif
 
-#include "debug/Debug.h"
+#include "debug/DebugUtils.h"
 #include "debug/Log.h"
 #include "Mutex.h"
 

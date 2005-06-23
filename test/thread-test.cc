@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include <debug/Debug.h>
+#include <debug/DebugUtils.h>
 #include <thread/Thread.h>
 
 #define THREADS_TO_CREATE 10

@@ -41,7 +41,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include <debug/Debug.h>
+#include <debug/DebugUtils.h>
 #include <util/StringBuffer.h>
 #include <util/Pointers.h>
 #include <serialize/MarshalSerialize.h>

@@ -38,7 +38,7 @@
 
 #include "NetUtils.h"
 #include "TCPServer.h"
-#include "debug/Debug.h"
+#include "debug/DebugUtils.h"
 #include "debug/Log.h"
 
 #include <errno.h>

@@ -23,7 +23,7 @@
 #include "../config.h"
 #include "NetUtils.h"
 #include "compat/inet_aton.h"
-#include "debug/Debug.h"
+#include "debug/DebugUtils.h"
 #include "thread/SpinLock.h"
 #include <stdlib.h>
 #include <string.h>

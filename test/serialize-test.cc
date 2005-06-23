@@ -37,7 +37,7 @@
  */
 
 #include <iostream>
-#include <debug/Debug.h>
+#include <debug/DebugUtils.h>
 
 #include "util/UnitTest.h"
 #include "serialize/MarshalSerialize.h"

@@ -1,6 +1,6 @@
 #include <cstdlib>
 
-#include "../debug/Debug.h"
+#include "../debug/DebugUtils.h"
 #include "Random.h"
 
 namespace oasys {

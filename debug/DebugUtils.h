@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _OASYS_DEBUG_H_
-#define _OASYS_DEBUG_H_
+#ifndef _OASYS_DEBUG_UTILS_H_
+#define _OASYS_DEBUG_UTILS_H_
 
 #include <stdlib.h>
 
@@ -123,4 +123,4 @@ public:
 
 #include "../memory/Memory.h"
 
-#endif /* _OASYS_DEBUG_H_ */
+#endif /* _OASYS_DEBUG_UTILS_H_ */

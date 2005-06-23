@@ -40,7 +40,7 @@
 #include "DebugCommand.h"
 #include "LogCommand.h"
 
-#include "debug/Debug.h"
+#include "debug/DebugUtils.h"
 #include "io/NetUtils.h"
 #include "thread/SpinLock.h"
 #include "util/StringBuffer.h"

@@ -39,7 +39,7 @@
 #ifndef __OASYS_DURABLE_STORE_H__
 #define __OASYS_DURABLE_STORE_H__
 
-#include "../debug/Debug.h"
+#include "../debug/DebugUtils.h"
 #include "../debug/Log.h"
 #include "../serialize/Serialize.h"
 #include "../serialize/TypeCollection.h"

@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#include <debug/Debug.h>
+#include <debug/DebugUtils.h>
 #include <debug/Log.h>
 #include <thread/Thread.h>
 #include <io/NetUtils.h>

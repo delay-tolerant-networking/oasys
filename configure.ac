@@ -151,7 +151,6 @@ AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 AC_PROG_RANLIB
 AC_OASYS_CONFIG_GCC
-AC_OASYS_FIX_APPLE_DEBUG_H
 AC_SEARCH_LIBS(pthread_create, pthread, [], 
   AC_MSG_ERROR([can't find required library function (pthread_create)]))
 AC_CHECK_FUNC(pthread_yield, [], [AC_SEARCH_LIBS(sched_yield, rt, [],

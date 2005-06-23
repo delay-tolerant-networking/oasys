@@ -38,7 +38,7 @@
 
 #include "FdIOClient.h"
 #include "IO.h"
-#include "debug/Debug.h"
+#include "debug/DebugUtils.h"
 
 namespace oasys {
 

@@ -46,7 +46,7 @@
 #include <algorithm>
 
 #include "config.h"
-#include "Debug.h"
+#include "DebugUtils.h"
 #include "Log.h"
 #include "compat/inttypes.h"
 #include "thread/SpinLock.h"
@@ -58,7 +58,7 @@
  */
 namespace oasys {
 
-// we can't use the ASSERT from Debug.h since that one calls logf :-)
+// we can't use the ASSERT from DebugUtils.h since that one calls logf :-)
 #undef ASSERT
 #define ASSERT(x) __log_assert(x, #x, __FILE__, __LINE__)
 
@@ -551,6 +551,10 @@ Log::vlogf(const char *path, log_level_t level, const char *fmt, va_list ap)
         ptr += len;        
     }
 
+    // XXX/demmer add a multi-line option that generates a buffer from
+    // the format string and then loops through the code below to do
+    // the output, repeating the prefix for each line
+    
     // Generate string.
     len = vsnprintf(ptr, buflen, fmt, ap);
 
@@ -586,7 +590,7 @@ Log::vlogf(const char *path, log_level_t level, const char *fmt, va_list ap)
     // jumping in here
     int ret = IO::writeall(logfd_, buf, buflen);    
     ASSERT(ret == buflen);
-    
+
     return buflen;
 };
 

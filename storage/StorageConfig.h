@@ -39,7 +39,7 @@
 #define _OASYS_STORAGE_CONFIG_H_
 
 #include <string>
-#include "../debug/Debug.h"
+#include "../debug/DebugUtils.h"
 
 namespace oasys {
 

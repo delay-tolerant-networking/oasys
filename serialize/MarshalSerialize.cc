@@ -35,7 +35,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "debug/Debug.h"
+#include "debug/DebugUtils.h"
 #include "debug/Log.h"
 #include "util/StringUtils.h"
 #include "util/CRC32.h"

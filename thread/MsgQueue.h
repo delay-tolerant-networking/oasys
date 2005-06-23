@@ -47,7 +47,7 @@
 #include "Notifier.h"
 #include "SpinLock.h"
 #include "../debug/Log.h"
-#include "../debug/Debug.h"
+#include "../debug/DebugUtils.h"
 
 namespace oasys {
 

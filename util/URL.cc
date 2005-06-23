@@ -38,7 +38,7 @@
 
 #include "URL.h"
 #include "StringBuffer.h"
-#include "debug/Debug.h"
+#include "debug/DebugUtils.h"
 
 namespace oasys {
 

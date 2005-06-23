@@ -39,7 +39,7 @@
 #include "IPSocket.h"
 #include "NetUtils.h"
 #include "debug/Log.h"
-#include "debug/Debug.h"
+#include "debug/DebugUtils.h"
 
 #include <string.h>
 #include <unistd.h>
