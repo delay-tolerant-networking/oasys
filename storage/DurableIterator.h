@@ -70,4 +70,6 @@ public:
      * Unserialize the current element into the given key object.
      */
     virtual int get(SerializableObject* key) = 0;
+
+    virtual ~DurableIterator() {}
 };

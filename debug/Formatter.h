@@ -88,6 +88,8 @@ public:
      */
     static inline void assert_valid(Formatter* obj);
 
+    virtual ~Formatter() {}
+
 #ifndef NDEBUG
 #define FORMAT_MAGIC 0xffeeeedd
     Formatter() : format_magic_(FORMAT_MAGIC) {}

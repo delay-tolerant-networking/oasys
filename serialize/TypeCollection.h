@@ -62,6 +62,7 @@ class TypeCollectionHelper {
 public:
     virtual void* new_object() = 0;
     virtual const char* name() const = 0;
+    virtual ~TypeCollectionHelper();
 };
 
 /**

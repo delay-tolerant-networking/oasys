@@ -114,6 +114,8 @@ public:
      */
     virtual const char* get_value(int tuple_no, int field_no) = 0;
     
+    virtual ~SQLImplementation();
+
 protected:
     const char* binary_datatype_;	///< column type for binary data
     const char* boolean_datatype_;	///< column type for boolean data
