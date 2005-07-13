@@ -112,13 +112,14 @@ FileIOClient::truncate(off_t length)
 int
 FileIOClient::mkstemp(char* temp)
 {
-    path_.assign(temp);
     if (fd_ != -1) {
         log_err("can't call mkstemp on open file");
         return -1;
     }
 
     fd_ = IO::mkstemp(temp, logpath_);
+
+    path_.assign(temp);
     return fd_;
 }
 

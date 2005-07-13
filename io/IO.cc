@@ -161,7 +161,7 @@ IO::truncate(int fd, off_t length, const char* log)
 int
 IO::mkstemp(char* templ, const char* log)
 {
-    int ret = mkstemp(templ);
+    int ret = ::mkstemp(templ);
     if (log) {
         logf(log, LOG_DEBUG, "mkstemp %s: %d", templ, ret);
     }
