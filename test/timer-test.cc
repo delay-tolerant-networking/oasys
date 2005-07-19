@@ -106,7 +106,6 @@ protected:
 };
 
 DECLARE_TEST(TimerTest1) {
-    TimerSystem::init();
     TimerSystem::instance()->start();
 
     new OneSecondTimer();

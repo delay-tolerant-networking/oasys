@@ -50,7 +50,6 @@ main(int argc, const char** argv)
     f2->close();
 
     // set up the reparse signal handler
-    TimerSystem::init();
     log->add_reparse_handler(SIGHUP);
 
     // start up the thread, nothing should output (yet)
