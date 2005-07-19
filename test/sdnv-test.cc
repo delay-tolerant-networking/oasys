@@ -87,32 +87,32 @@ DECLARE_TEST(MultiByte) {
 
 DECLARE_TEST(Bounds) {
     // check the boundary cases
-    CHECK(test(0,                  1) == UNIT_TEST_PASSED);
-    CHECK(test(0x7f,               1) == UNIT_TEST_PASSED);
+    CHECK(test(0LL,                  1) == UNIT_TEST_PASSED);
+    CHECK(test(0x7fLL,               1) == UNIT_TEST_PASSED);
     
-    CHECK(test(0x80,               2) == UNIT_TEST_PASSED);
-    CHECK(test(0xfff,              2) == UNIT_TEST_PASSED);
+    CHECK(test(0x80LL,               2) == UNIT_TEST_PASSED);
+    CHECK(test(0xfffLL,              2) == UNIT_TEST_PASSED);
 
-    CHECK(test(0x1000,             3) == UNIT_TEST_PASSED);
-    CHECK(test(0xfffff,            3) == UNIT_TEST_PASSED);
+    CHECK(test(0x1000LL,             3) == UNIT_TEST_PASSED);
+    CHECK(test(0xfffffLL,            3) == UNIT_TEST_PASSED);
 
-    CHECK(test(0x100000,           4) == UNIT_TEST_PASSED);
-    CHECK(test(0xfffffff,          4) == UNIT_TEST_PASSED);
+    CHECK(test(0x100000LL,           4) == UNIT_TEST_PASSED);
+    CHECK(test(0xfffffffLL,          4) == UNIT_TEST_PASSED);
     
-    CHECK(test(0x10000000,         5) == UNIT_TEST_PASSED);
-    CHECK(test(0xfffffffff,        5) == UNIT_TEST_PASSED);
+    CHECK(test(0x10000000LL,         5) == UNIT_TEST_PASSED);
+    CHECK(test(0xfffffffffLL,        5) == UNIT_TEST_PASSED);
 
-    CHECK(test(0x1000000000,       6) == UNIT_TEST_PASSED);
-    CHECK(test(0xfffffffffff,      6) == UNIT_TEST_PASSED);
+    CHECK(test(0x1000000000LL,       6) == UNIT_TEST_PASSED);
+    CHECK(test(0xfffffffffffLL,      6) == UNIT_TEST_PASSED);
 
-    CHECK(test(0x100000000000,     7) == UNIT_TEST_PASSED);
-    CHECK(test(0xfffffffffffff,    7) == UNIT_TEST_PASSED);
+    CHECK(test(0x100000000000LL,     7) == UNIT_TEST_PASSED);
+    CHECK(test(0xfffffffffffffLL,    7) == UNIT_TEST_PASSED);
 
-    CHECK(test(0x10000000000000,   8) == UNIT_TEST_PASSED);
-    CHECK(test(0xfffffffffffffff,  8) == UNIT_TEST_PASSED);
+    CHECK(test(0x10000000000000LL,   8) == UNIT_TEST_PASSED);
+    CHECK(test(0xfffffffffffffffLL,  8) == UNIT_TEST_PASSED);
     
-    CHECK(test(0x1000000000000000, 9) == UNIT_TEST_PASSED);
-    CHECK(test(0xffffffffffffffff, 9) == UNIT_TEST_PASSED);
+    CHECK(test(0x1000000000000000LL, 9) == UNIT_TEST_PASSED);
+    CHECK(test(0xffffffffffffffffLL, 9) == UNIT_TEST_PASSED);
     
     return UNIT_TEST_PASSED;
 }
