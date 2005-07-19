@@ -46,22 +46,22 @@ namespace oasys {
 
 class IntShim : public SerializableObject {
 public:
-    IntShim(int value = 0, const char* name = "int")
+    IntShim(int32_t value = 0, const char* name = "int")
         : name_(name), value_(value) {}
     IntShim(const Builder& b) {}
     
     // virtual from SerializableObject
     void serialize(SerializeAction* a) {
-	a->process(name_.c_str(), &value_);
+	a->process(name_.c_str(), (int32_t*)&value_);
     }
 
-    int value() const { return value_; }
-    void assign(int value) { value_ = value; }
+    int32_t value() const { return value_; }
+    void assign(int32_t value) { value_ = value; }
 
     
 private:
     std::string name_;
-    int         value_;
+    int32_t     value_;
 };
 
 class StringShim : public SerializableObject {
