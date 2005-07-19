@@ -188,7 +188,7 @@ void
 Thread::kill(int sig)
 {
     if (pthread_kill(pthread_, sig) != 0) {
-        PANIC("error in pthread_kill");
+        PANIC("error in pthread_kill: %s", strerror(errno));
     }
 }
 
