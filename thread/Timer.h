@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef tier_timer_h
-#define tier_timer_h
+#ifndef OASYS_TIMER_H
+#define OASYS_TIMER_H
 
 #include <errno.h>
 #include <sys/types.h>
@@ -145,9 +145,20 @@ private:
  */
 class Timer {
 public:
-    Timer() : pending_(false), cancelled_(false), cancel_flags_(NO_DELETE) {}
+    Timer()
+        : pending_(false),
+          cancelled_(false),
+          cancel_flags_(DELETE_ON_CANCEL)
+    {
+    }
     
-    virtual ~Timer() {}
+    virtual ~Timer() {
+        /*
+         * The only time a timer should be deleted is after it fires,
+         * so assert as such.
+         */
+        ASSERTF(pending_ == false, "can't delete a pending timer");
+    }
     
     void schedule_at(struct timeval *when)
     {
@@ -164,14 +175,8 @@ public:
         TimerSystem::instance()->schedule_immediate(this);
     }
 
-    typedef enum {
-        NO_DELETE = 0,
-        DELETE_ON_CANCEL = 1
-    } cancel_flags_t;
-    
-    bool cancel(cancel_flags_t cancel_flags)
+    bool cancel()
     {
-        cancel_flags_ = cancel_flags;
         return TimerSystem::instance()->cancel(this);
     }
 
@@ -187,16 +192,22 @@ public:
     
     virtual void timeout(struct timeval* now) = 0;
 
-private:
+protected:
     friend class TimerSystem;
     friend class TimerCompare;
-    
-    struct timeval when_;
-    bool           pending_;
 
-protected:
-    bool           cancelled_;
-    cancel_flags_t cancel_flags_;
+    /// Enum type for cancel flags related to memory management
+    typedef enum {
+        NO_DELETE = 0,
+        DELETE_ON_CANCEL = 1
+    } cancel_flags_t;
+    
+    struct timeval when_;	///< When the timer should fire
+    bool           pending_;	///< Is the timer currently pending
+    bool           cancelled_;	///< Is this timer cancelled
+    cancel_flags_t cancel_flags_; ///< Should we keep the timer around
+                                  ///  or delete it when the cancelled
+                                  ///  timer bubbles to the top
 };
 
 /**
@@ -249,5 +260,5 @@ protected:
 
 } // namespace oasys
 
-#endif /* tier_timer_h */
+#endif /* OASYS_TIMER_H */
 
