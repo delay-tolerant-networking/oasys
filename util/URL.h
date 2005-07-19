@@ -128,7 +128,8 @@ public:
     /**
      * Cons up this url from constituent pieces.
      */
-    void format(const std::string& proto, const std::string& host, u_int16_t port,
+    void format(const std::string& proto,
+                const std::string& host, u_int16_t port,
                 const std::string& path);
     
     /**
