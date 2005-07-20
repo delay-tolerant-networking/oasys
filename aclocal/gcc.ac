@@ -62,42 +62,6 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC, [
     if test $oasys_cv_prog_gcc_w_no_long_double = yes ; then
         OASYS_CPPFLAGS="$OASYS_CPPFLAGS -Wno-long-double"
     fi
-    
-    AC_CACHE_CHECK([whether std::string::reserve() is broken],
-                   oasys_cv_prog_gcc_string_broken, [	
-        AC_LANG_PUSH(C++)
-        AC_RUN_IFELSE(
-	  AC_LANG_PROGRAM(
-	    [
-               #include <string>
-            ],
-            [
-                std::string s;
-                s.reserve(1);
-                try {
-                    s.replace(0, 1, "X", 1);
-                } catch(...) {
-                    exit(1);
-                }
-                exit(0);
-            ]
-	  ),
-          [ 
-              oasys_cv_prog_gcc_string_broken=no
-          ],
-          [
-              oasys_cv_prog_gcc_string_broken=yes
-          ],
-          [
-              oasys_cv_prog_gcc_string_broken=maybe
-          ]
-        )
-        AC_LANG_POP(C++)
-    ])
-
-    if test $oasys_cv_prog_gcc_string_broken = yes ; then
-        AC_MSG_ERROR([broken std::string::reserve() -- upgrade your compiler])
-    fi
 
     AC_SUBST(DEPFLAGS)
 ])
