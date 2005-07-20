@@ -42,7 +42,21 @@
 
 namespace oasys {
 
-//! Singleton
+/**
+ * Singleton utility template class. Usage:
+ *
+ * @code
+ * // in .h file:
+ * class MyClass : public oasys::Singleton<MyClass> {
+ * private:
+ *     friend class oasys::Singleton<MyClass>;
+ *     MyClass();
+ * };
+ *
+ * // in .cc file:
+ * MyClass* oasys::Singleton<MyClass>::instance_;
+ * @endcode
+ */
 template<typename _Class>
 class Singleton {
 public:
@@ -55,13 +69,27 @@ public:
         return instance_;
     }
     
-    static void create() { ASSERT(instance_ == 0); instance(); }
+    static _Class* create() {
+        if (instance_) {
+            PANIC("Singleton create() method called more than once");
+        }
+        return instance();
+    }
     
 protected:
     static _Class* instance_;
 };
 
-//! Reference to a Singleton
+/**
+ * Reference to a Singleton. Usage:
+ *
+ * @code
+ * void myfunc() {
+ *     oasys::SingletonRef<MySingletonFoo> foo;
+ *     foo->bar();
+ * }
+ * @endcode
+ */
 template<typename _Class>
 class SingletonRef {
 public:
