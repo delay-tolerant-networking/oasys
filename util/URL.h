@@ -58,8 +58,7 @@ typedef enum urlerr_t {
 };
 
 /**
- * A simple class for managing urls that supports parsing, merging,
- * copying, etc.
+ * A simple class for managing internet style URLs.
  */
 class URL {
 public:
