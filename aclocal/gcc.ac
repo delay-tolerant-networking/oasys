@@ -5,7 +5,7 @@ dnl
 AC_DEFUN(AC_OASYS_CONFIG_GCC, [
     AC_CACHE_CHECK(for the version of the gcc compiler, oasys_cv_prog_gccver, [
       oasys_cv_prog_gccver=`$CC --version | head -1`
-      oasys_cv_prog_gccver=`echo $oasys_cv_prog_gccver | sed 's/gcc.*(GCC) //'`
+      oasys_cv_prog_gccver=`echo $oasys_cv_prog_gccver | sed 's/.*gcc.*(GCC) //'`
       oasys_cv_prog_gccver=`echo $oasys_cv_prog_gccver | sed 's/ .*//'`
     ])      
 
