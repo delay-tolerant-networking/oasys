@@ -523,7 +523,7 @@ BerkeleyDBTable::put(const SerializableObject& key,
         return DS_ERR;
     }
 
-    log_debug("put: serializing %d byte object", sizer.size());
+    log_debug("put: serializing %u byte object", (u_int)sizer.size());
 
     { // lock
         ScopeLock lock(&scratch_mutex_);
