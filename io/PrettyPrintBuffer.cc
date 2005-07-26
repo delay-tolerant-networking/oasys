@@ -73,15 +73,9 @@ PrettyPrintBuf::next_str()
             buf.append(buf_[i]);
         }
     }
-    
-    if(bound == len_)
-    {
-        return std::pair<std::string, bool>(buf.c_str(), false);
-    }
-    else
-    {
-        return std::pair<std::string, bool>(buf.c_str(), true);
-    }
+
+    bool full = (bound == len_) ? true : false;
+    return std::pair<std::string, bool>(buf.c_str(), !full);
 }
 
 } // namespace oasys
