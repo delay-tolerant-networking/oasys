@@ -65,4 +65,4 @@ MINMAX(unsigned long)
 
 } // namespace oasys
 
-#endif /* _OASYS_TYPE_UTILS_H_ */
+#endif /* _OASYS_INT_UTILS_H_ */
