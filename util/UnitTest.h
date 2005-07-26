@@ -155,8 +155,8 @@ public:
         fprintf(stderr, "set result { \"%s\" { ", name_.c_str());
     }
     void print_tail() {
-        fprintf(stderr, "} { %d %d %d %d } }\n", 
-                tests_.size(), passed_, failed_, input_);
+        fprintf(stderr, "} { %u %d %d %d } }\n", 
+                (u_int)tests_.size(), passed_, failed_, input_);
     }
 
 protected:
