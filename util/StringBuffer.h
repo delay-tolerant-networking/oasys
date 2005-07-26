@@ -188,7 +188,7 @@ protected:
  * cases where the StringBuffer is used to sprintf a bunch of stuff
  * together.
  */
-template<unsigned int _sz>
+template<size_t _sz>
 class StaticStringBuffer {
 public:
     /**
@@ -257,7 +257,7 @@ private:
     size_t len_;
 };
 
-template<unsigned int _sz>
+template<size_t _sz>
 size_t StaticStringBuffer<_sz>::appendf(const char* fmt, ...) 
 {
     va_list ap;
