@@ -49,7 +49,8 @@ DebugCommand::DebugCommand()
 const char*
 DebugCommand::help_string()
 {
-    return("debug dump_memory\n");
+    return("debug dump_memory\n"
+           "debug dump_memory_diffs\n");
 }
 
 int
