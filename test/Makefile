@@ -13,7 +13,6 @@ TESTS += \
 	options-test				\
 	optparser-test				\
 	sample-test				\
-	sdnv-test				\
 	serialize-test				\
 	spin-lock-test				\
 	static-buffer-test			\
@@ -24,7 +23,6 @@ TESTS += \
 	thread-test				\
 	thread-interrupt-test			\
 	timer-test				\
-	type-collection-test			\
 	url-test				\
 
 
