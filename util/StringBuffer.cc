@@ -93,9 +93,16 @@ StringBuffer::reserve(size_t sz, size_t grow)
         
         buflen_ = grow;
 
-        // make sure it's enough
+
         while ((len_ + sz) > buflen_) {
             buflen_ *= 2;
+
+            // Without this, originally zero length strings get into
+            // infinite loops trying to resize.
+            if (buflen_ == 0) 
+            {
+                buflen_++;
+            }
         }
         
         buf_ = (char*)realloc(buf_, buflen_);
