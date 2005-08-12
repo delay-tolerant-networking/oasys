@@ -43,9 +43,10 @@
 
 namespace oasys {
 
-/**
+/*!
  * Simple singleton class that just contains the storage-specific
- * configuration variables.
+ * configuration variables. An instance of this configuration is given
+ * to Durable storage system to initialize it.
  */
 struct StorageConfig {
     std::string type_;		///< storage type [berkeleydb/mysql/postgres]
@@ -60,10 +61,6 @@ struct StorageConfig {
     std::string dberrlog_;	///< DB internal error log file
     int         dbflags_;       ///< Berkeley DB specific flags
 
-    /**
-     * Static initialization function. Must be called by the
-     * application before initializing any storage systems.
-     */
     StorageConfig(
         const std::string& type,
         bool               init,
