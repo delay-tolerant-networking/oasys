@@ -153,9 +153,9 @@ StringBuffer::vappendf(const char* fmt, va_list ap)
         // Retarded glibc implementation. From the man pages:
         //
         // The glibc implementation of the functions snprintf and
-        // vsnprintf con- forms to the C99 standard, i.e., behaves as
+        // vsnprintf conforms to the C99 standard, i.e., behaves as
         // described above, since glibc version 2.1. Until glibc 2.0.6
-        // they would return -1 when the out- put was truncated.
+        // they would return -1 when the output was truncated.
         while(ret == -1)
         {
             reserve(buflen_ * 2);
