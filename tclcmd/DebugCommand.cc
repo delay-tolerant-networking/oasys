@@ -49,15 +49,19 @@ DebugCommand::DebugCommand()
 const char*
 DebugCommand::help_string()
 {
+#ifdef OASYS_DEBUG_MEMORY_ENABLED
     return("debug dump_memory\n"
            "debug dump_memory_diffs\n");
+#else
+    return("No subcommands are currently implemented for debug.\n");
+#endif
 }
 
 int
 DebugCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
 {
     if (argc < 2) {
-        resultf("need a link subcommand");
+        resultf("need a subcommand");
         return TCL_ERROR;
     }
     const char* cmd = argv[1];
@@ -73,7 +77,7 @@ DebugCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
     }
 #endif // OASYS_DEBUG_MEMORY_ENABLED
     
-    resultf("unimplemented debug subcommand %s", cmd);
+    resultf("unimplemented debug subcommand: %s", cmd);
     return TCL_ERROR;
 }
 
