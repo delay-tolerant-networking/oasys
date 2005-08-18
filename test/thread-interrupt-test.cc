@@ -11,12 +11,12 @@ protected:
     void run() {
         log_info("/test/thread", "Thread running... sleeping");
         while(1) {
-            sleep(10000);
+            int c = fgetc(stdin);
             if (should_stop()) {
-                log_info("/test/thread", "Thread woke up from sleep, stopping");
+                log_info("/test/thread", "Thread woke up from fgetc, stopping. c= %d", c);
                 return;
             } else {
-                log_info("/test/thread", "Thread woke up from sleep, should_stop not set");
+                log_info("/test/thread", "Thread woke up from fgetc, should_stop not set. c = %d", c);
             }
         }
     }
