@@ -154,8 +154,8 @@ public:
     {
         // Check that the given typecode is within the legal bounds
         // for the _Type of the return
-        if(TypeCollectionCode<_Collection, _Type>::TYPECODE_LOW  > typecode ||
-           TypeCollectionCode<_Collection, _Type>::TYPECODE_HIGH < typecode)
+        if(::oasys::TypeCollectionCode<_Collection, _Type>::TYPECODE_LOW  > typecode ||
+           ::oasys::TypeCollectionCode<_Collection, _Type>::TYPECODE_HIGH < typecode)
         {
             return TypeCollectionErr::TYPECODE;
         }
@@ -236,7 +236,7 @@ private:
 #define TYPE_COLLECTION_DECLARE(_Collection, _Class, _code)     \
 namespace oasys {                                               \
     template<>                                                  \
-    struct TypeCollectionCode<_Collection, _Class> {            \
+    struct ::oasys::TypeCollectionCode<_Collection, _Class> {            \
         enum {                                                  \
             TYPECODE_LOW  = _code,                              \
             TYPECODE_HIGH = _code,                              \
@@ -260,7 +260,7 @@ namespace oasys {                                               \
 #define TYPE_COLLECTION_GROUP(_Collection, _Class, _low, _high) \
 namespace oasys {                                               \
     template<>                                                  \
-    struct TypeCollectionCode<_Collection, _Class> {            \
+    struct ::oasys::TypeCollectionCode<_Collection, _Class> {            \
         enum {                                                  \
             TYPECODE_LOW  = _low,                               \
             TYPECODE_HIGH = _high,                              \
@@ -273,7 +273,7 @@ namespace oasys {                                               \
  */
 #define TYPE_COLLECTION_INSTANTIATE(_Collection)        \
 template<> class oasys::TypeCollection<_Collection>*    \
-   oasys::TypeCollection<_Collection>::instance_ = 0;
+   oasys::TypeCollection<_Collection>::instance_ = 0
 
 }; // namespace oasys
 
