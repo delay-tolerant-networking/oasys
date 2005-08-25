@@ -106,7 +106,7 @@ public:
     Marshal(context_t context, u_char* buf, size_t length, int options = 0);
 
     /**
-     * Constructor
+     * Constructor - Defaults with unknown context and no options
      */
     Marshal(u_char* buf, size_t length);
 
