@@ -294,6 +294,14 @@ public:
     virtual int exec(int argc, const char** argv, Tcl_Interp* interp);
 
     /**
+     * Handles the "info" command which prints out the value of the
+     * bound variables for a TclCommand.
+     *
+     * @param interp Tcl interperter
+     */
+    virtual int cmd_info(Tcl_Interp* interp);
+
+    /**
      * Internal handling of the "set" command.
      *
      * @param objc Argument count 

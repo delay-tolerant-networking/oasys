@@ -289,10 +289,21 @@ TclCommandInterp::tcl_cmd(ClientData client_data, Tcl_Interp* interp,
     TclCommand* command = (TclCommand*)client_data;
 
     // first check for builtin commands
-    if (command->do_builtins_ && objc > 2) {
-        const char* cmd = Tcl_GetStringFromObj(objv[1], NULL);
-        if (strcmp(cmd, "set") == 0) {
-            return command->cmd_set(objc, (Tcl_Obj**)objv, interp);
+    if (command->do_builtins_) 
+    {
+        if (objc == 2) 
+        {
+            const char* cmd = Tcl_GetStringFromObj(objv[1], NULL);
+            if (strcmp(cmd, "info") == 0) {
+                return command->cmd_info(interp);
+            }
+        }
+        else if (objc > 2) 
+        {
+            const char* cmd = Tcl_GetStringFromObj(objv[1], NULL);
+            if (strcmp(cmd, "set") == 0) {
+                return command->cmd_set(objc, (Tcl_Obj**)objv, interp);
+            }
         }
     }
 
@@ -446,6 +457,22 @@ TclCommand::append_resultf(const char* fmt, ...)
     va_start(ap, fmt);
     TclCommandInterp::instance()->vresultf(fmt, ap, true);
     va_end(ap);
+}
+
+
+int
+TclCommand::cmd_info(Tcl_Interp* interp)
+{
+    StringBuffer buf;
+
+    for (BindingTable::iterator itr = bindings_.begin();
+         itr != bindings_.end(); ++itr)
+    {
+        buf.appendf("%s ", (*itr).first.c_str());
+    }
+    
+    set_result(buf.c_str());
+    return TCL_OK;
 }
 
 int
