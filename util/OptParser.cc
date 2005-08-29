@@ -135,4 +135,20 @@ OptParser::parse(int argc, const char* const argv[], const char** invalidp)
     return true;
 }
 
+bool
+OptParser::parse(const std::vector<std::string>& args,
+                 const char** invalidp)
+{
+    std::vector<std::string>::const_iterator iter;
+    for (iter = args.begin(); iter != args.end(); ++iter) {
+        if (parse_opt(iter->c_str(), iter->length()) == false) {
+            *invalidp = iter->c_str();
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
 } // namespace oasys

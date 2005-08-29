@@ -81,6 +81,17 @@ public:
      */
     bool parse(int argc, const char* const argv[],
                const char** invalidp = NULL);
+
+    /**
+     * Parse the given argument vector, processing all registered
+     * opts.
+     *
+     * Returns true if the argument string was successfully parsed,
+     * false otherwise. If non-null, invalidp is set to point to the
+     * invalid option string.
+     */
+    bool parse(const std::vector<std::string>& args,
+               const char** invalidp = NULL);
     
 protected:
     bool parse_opt(const char* opt, size_t len);
