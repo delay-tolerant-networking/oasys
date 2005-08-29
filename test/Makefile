@@ -25,6 +25,10 @@ TESTS += \
 	timer-test				\
 	url-test				\
 
+#
+# Make sure test executables are included in 'make clean'
+#
+BINFILES += $(TESTS)
 
 #
 # default rule for tests
