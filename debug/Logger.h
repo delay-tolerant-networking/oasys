@@ -164,6 +164,7 @@ public:
     inline int __logf(log_level_t level, const char *fmt, ...) const
         PRINTFLIKE(3, 4);
 
+
     /**
      * As decribed in Log.h, the log_debug style macros call
      * log_enabled(level, path) before calling __logf. In the case of
@@ -174,6 +175,15 @@ public:
     inline bool __log_enabled(log_level_t level, const char* path) const
     {
         return oasys::__log_enabled(level, logpath_);
+    }
+
+    
+    /**
+     * And finally, one for log_multiline..
+     */
+    inline int log_multiline(log_level_t level, const char* msg) const
+    {
+        return oasys::log_multiline(logpath_, level, msg);
     }
 
     //! @return current logpath

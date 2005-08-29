@@ -194,11 +194,18 @@ public:
     
     /**
      * Core logging function that is the guts of the implementation of
-     * all other variants. Returns the number of bytes written, i.e.
-     * zero if the log line was suppressed.
+     * other variants. Returns the number of bytes written, i.e. zero
+     * if the log line was suppressed.
      */
     int vlogf(const char *path, log_level_t level,
               const char *fmt, va_list ap);
+
+    /**
+     * Alternative core log function that expects a multi-line,
+     * preformatted log buffer. Generates a single prefix that is
+     * repeated for each line of output.
+     */
+    int log_multiline(const char* path, log_level_t level, const char* msg);
 
     /**
      * Return the log level currently enabled for the path.
@@ -304,6 +311,14 @@ private:
     int output_flags_;
 
     /**
+     * Generate the log prefix.
+     *
+     * @return The length of the prefix string.
+     */
+    size_t gen_prefix(char* buf, size_t buflen,
+                      const char* path, log_level_t level);
+
+    /**
      * Find a rule given a path.
      */
     Rule *find_rule(const char *path);
@@ -354,6 +369,15 @@ logf(const char *path, log_level_t level, const char *fmt, ...)
     int ret = Log::instance()->vlogf(path, level, fmt, ap);
     va_end(ap);
     return ret;
+}
+
+/**
+ * Global log_multiline function.
+ */
+inline int
+log_multiline(const char* path, log_level_t level, const char* msg)
+{
+    return Log::instance()->log_multiline(path, level, msg);
 }
 
 /**

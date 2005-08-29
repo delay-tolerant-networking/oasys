@@ -447,50 +447,11 @@ Log::getlogtime(struct timeval* tv)
     ::gettimeofday(tv, 0);
 }
 
-int
-Log::vlogf(const char *path, log_level_t level, const char *fmt, va_list ap)
+size_t
+Log::gen_prefix(char* buf, size_t buflen, const char* path, log_level_t level)
 {
-    ASSERT(inited_);
-
-    char pathbuf[LOG_MAX_PATHLEN];
-
-    // try to catch crashes due to buffer overflow with some guard
-    // bytes at the end
-    static const char guard[] = "[guard]";
-    char buf[LOG_MAX_LINELEN + sizeof(guard)];
-    memcpy(&buf[LOG_MAX_LINELEN], guard, sizeof(guard));
-    
-    // try to catch recursive calls that can result from an
-    // assert/panic from somewhere within the logging code
-    static int threads_in_vlogf = 0;
-    ScopedIncr incr(&threads_in_vlogf);
-    
-    if (threads_in_vlogf > 10) {
-        fprintf(stderr, "fatal error: vlogf called recursively:\n");
-        vfprintf(stderr, fmt, ap);
-        fprintf(stderr, "\n"); // since logf doesn't include newlines
-        abort();
-    }
-    
-    // throw a lock around the whole function
-    ScopeLock l(lock_);
-
-    /* Make sure that paths that don't start with a slash still show up. */
-    if (*path != '/') {
-	snprintf(pathbuf, sizeof pathbuf, "/%s", path);
-	path = pathbuf;
-    }
-
-    // bail if we're not going to output the line.
-    if (! __log_enabled(level, path))
-        return 0;
-    
-    // format the log string
+    size_t len;
     char *ptr = buf;
-    int buflen = LOG_MAX_LINELEN - 1; /* Save a character for newline. */
-    int len;
-
-    // print header
     char* pretty_begin = "";
     char* pretty_end   = "";
     char* pretty_type  = "";
@@ -550,12 +511,58 @@ Log::vlogf(const char *path, log_level_t level, const char *fmt, va_list ap)
         buflen -= len;
         ptr += len;        
     }
-
-    // XXX/demmer add a multi-line option that generates a buffer from
-    // the format string and then loops through the code below to do
-    // the output, repeating the prefix for each line
     
-    // Generate string.
+    return ptr - buf;
+}
+
+int
+Log::vlogf(const char *path, log_level_t level, const char *fmt, va_list ap)
+{
+    ASSERT(inited_);
+
+    char pathbuf[LOG_MAX_PATHLEN];
+
+    // try to catch crashes due to buffer overflow with some guard
+    // bytes at the end
+    static const char guard[] = "[guard]";
+    char buf[LOG_MAX_LINELEN + sizeof(guard)];
+    memcpy(&buf[LOG_MAX_LINELEN], guard, sizeof(guard));
+    char* ptr = buf;
+    
+    // try to catch recursive calls that can result from an
+    // assert/panic from somewhere within the logging code
+    static int threads_in_vlogf = 0;
+    ScopedIncr incr(&threads_in_vlogf);
+    
+    if (threads_in_vlogf > 10) {
+        fprintf(stderr, "fatal error: vlogf called recursively:\n");
+        vfprintf(stderr, fmt, ap);
+        fprintf(stderr, "\n"); // since logf doesn't include newlines
+        abort();
+    }
+    
+    // throw a lock around the whole function
+    ScopeLock l(lock_);
+
+    /* Make sure that paths that don't start with a slash still show up. */
+    if (*path != '/') {
+	snprintf(pathbuf, sizeof pathbuf, "/%s", path);
+	path = pathbuf;
+    }
+
+    // bail if we're not going to output the line.
+    if (! __log_enabled(level, path))
+        return 0;
+    
+    size_t buflen = LOG_MAX_LINELEN - 1; /* Save a character for newline. */
+    size_t len;
+
+    // generate the log prefix
+    len = gen_prefix(buf, buflen, path, level);
+    buflen -= len;
+    ptr += len;
+    
+    // generate the log string
     len = vsnprintf(ptr, buflen, fmt, ap);
 
     if (len >= buflen) {
@@ -589,9 +596,70 @@ Log::vlogf(const char *path, log_level_t level, const char *fmt, va_list ap)
     // set to nonblocking, the spin lock prevents other threads from
     // jumping in here
     int ret = IO::writeall(logfd_, buf, buflen);    
-    ASSERT(ret == buflen);
+    ASSERT(ret == (int)buflen);
 
     return buflen;
 };
+
+int
+Log::log_multiline(const char* path, log_level_t level, const char* msg)
+{
+    ASSERT(inited_);
+
+    char pathbuf[LOG_MAX_PATHLEN];
+
+    // throw a lock around the whole function
+    ScopeLock l(lock_);
+
+    /* Make sure that paths that don't start with a slash still show up. */
+    if (*path != '/') {
+	snprintf(pathbuf, sizeof pathbuf, "/%s", path);
+	path = pathbuf;
+    }
+
+    // bail if we're not going to output the line.
+    if (! __log_enabled(level, path))
+        return 0;
+
+    // generate the log prefix
+    char prefix[LOG_MAX_LINELEN];
+    size_t prefix_len = gen_prefix(prefix, sizeof(prefix), path, level);
+
+    size_t iov_total = 128; // 64 lines of output
+    struct iovec  static_iov[iov_total];
+    struct iovec* dynamic_iov = NULL;
+    struct iovec* iov = static_iov;
+    size_t iov_cnt = 0;
+    
+    // scan the string, generating an entry for the prefix and the
+    // message line for each one.
+    const char* end = msg;
+    while (*msg != '\0') {
+        end = strchr(msg, '\n');
+        if (end == NULL) {
+            PANIC("multiline log message must end in trailing newline");
+        }
+        iov[iov_cnt].iov_base = prefix;
+        iov[iov_cnt].iov_len  = prefix_len;
+        ++iov_cnt;
+        
+        iov[iov_cnt].iov_base = (void*)msg;
+        iov[iov_cnt].iov_len  = end - msg + 1; // include newline
+        ++iov_cnt;
+
+        msg = end + 1;
+
+        if (iov_cnt == iov_total) {
+            PANIC("XXX/demmer implement dynamic_iov for > 64 lines");
+            (void)dynamic_iov;
+        }
+    }
+    
+    // do the write, making sure to drain the buffer. since stdout was
+    // set to nonblocking, the spin lock prevents other threads from
+    // jumping in here
+    int ret = IO::writevall(logfd_, iov, iov_cnt);
+    return ret;
+}
 
 } // namespace oasys

@@ -158,11 +158,23 @@ shouldntprint()
     SHOULD(log_crit("/test/disabled",  "but print me!!"));
 }
 
+void
+multiline()
+{
+    SHOULD(log_multiline("/test/multiline", LOG_DEBUG,
+                         "print me\n"
+                         "and me\n"
+                         "and me\n"));
+    
+    SHOULDNOT(log_multiline("/test/disabled", LOG_DEBUG,
+                            "not me\n"
+                            "nor me\n"
+                            "nor me\n"));
+}
+
 int
 main(int argc, const char** argv)
 {
-    setenv("CAPRICCIO_DISKIO", "blocking", 0);
-    
     Log::init(LOG_ERR);
     
     Log::instance()->add_debug_rule("/test", LOG_DEBUG);
@@ -184,6 +196,7 @@ main(int argc, const char** argv)
     foo();
     shouldprint();
     shouldntprint();
+    multiline();
 
     BoundsTest bft;
     logf("/test/bounfs", LOG_DEBUG, "bounds test: *%p *%p", &fmt, &bft);
