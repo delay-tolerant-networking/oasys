@@ -63,6 +63,10 @@ public:
      */
     void set_size(size_t size);
 
+    /** @return Pointer to the beginning of the total buffer
+     * (including potentially consumed parts */
+    char* data() { return &buf_[0]; }
+    
     /** @return Pointer to the beginning of the data. */
     char* start();
     
@@ -80,6 +84,9 @@ public:
 
     /** Clear all data from the buffer */
     void clear();
+
+    /** Total size of the buffer, including full and empty bytes */
+    size_t size()   { return size_; }
     
     /** Amount of bytes stored in the stream buffer */
     size_t fullbytes();
