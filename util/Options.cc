@@ -39,6 +39,7 @@
 #include <unistd.h>
 
 #include "Options.h"
+#include "io/NetUtils.h"
 
 namespace oasys {
 
@@ -161,6 +162,39 @@ UIntOpt::set(const char* val, size_t len)
     return 0;
 }
 
+UInt16Opt::UInt16Opt(const char* opt, u_int16_t* valp,
+                     const char* valdesc, const char* desc, bool* setp)
+    : Opt(0, opt, valp, setp, true, valdesc, desc)
+{
+}
+
+UInt16Opt::UInt16Opt(char shortopt, const char* longopt, u_int16_t* valp,
+                     const char* valdesc, const char* desc, bool* setp)
+    : Opt(shortopt, longopt, valp, setp, true, valdesc, desc)
+{
+}
+
+int
+UInt16Opt::set(const char* val, size_t len)
+{
+    u_int newval;
+    char* endptr = 0;
+
+    newval = strtoul(val, &endptr, 0);
+    if (endptr != (val + len))
+        return -1;
+
+    if (newval > 65535)
+        return -1;
+            
+    *((u_int16_t*)valp_) = (u_int16_t)newval;
+    
+    if (setp_)
+        *setp_ = true;
+    
+    return 0;
+}
+
 DoubleOpt::DoubleOpt(const char* opt, double* valp,
                      const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)
@@ -208,6 +242,35 @@ StringOpt::set(const char* val, size_t len)
 {
     ((std::string*)valp_)->assign(val, len);
 
+    if (setp_)
+        *setp_ = true;
+    
+    return 0;
+}
+
+InAddrOpt::InAddrOpt(const char* opt, in_addr_t* valp,
+                     const char* valdesc, const char* desc, bool* setp)
+    : Opt(0, opt, valp, setp, true, valdesc, desc)
+{
+}
+
+InAddrOpt::InAddrOpt(char shortopt, const char* longopt, in_addr_t* valp,
+                     const char* valdesc, const char* desc, bool* setp)
+    : Opt(shortopt, longopt, valp, setp, true, valdesc, desc)
+{
+}
+
+int
+InAddrOpt::set(const char* val, size_t len)
+{
+    in_addr_t newval;
+
+    if (oasys::gethostbyname(val, &newval) != 0) {
+        return -1;
+    }
+        
+    *((in_addr_t*)valp_) = newval;
+    
     if (setp_)
         *setp_ = true;
     

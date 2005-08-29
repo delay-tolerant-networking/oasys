@@ -40,6 +40,7 @@
 
 #include <string>
 #include <vector>
+#include "../compat/inet_aton.h"
 
 namespace oasys {
 
@@ -192,7 +193,46 @@ protected:
 };
 
 /**
- * Doubleeger option class.
+ * Unsigned short integer option class.
+ */
+class UInt16Opt : public Opt {
+public:
+    /**
+     * Basic constructor.
+     *
+     * @param opt     the option string
+     * @param valp    pointer to the value
+     * @param valdesc short description for the value 
+     * @param desc    descriptive string
+     * @param setp    optional pointer to indicate whether or not
+                      the option was set
+     */
+    UInt16Opt(const char* opt, u_int16_t* valp,
+              const char* valdesc = "", const char* desc = "",
+              bool* setp = NULL);
+    
+    /**
+     * Alternative constructor with both short and long options,
+     * suitable for getopt calls.
+     *
+     * @param shortopt  short option character
+     * @param longopt   long option string
+     * @param valp      pointer to the value
+     * @param valdesc short description for the value 
+     * @param desc      descriptive string
+     * @param setp      optional pointer to indicate whether or not
+                        the option was set
+     */
+    UInt16Opt(char shortopt, const char* longopt, u_int16_t* valp,
+              const char* valdesc = "", const char* desc = "",
+              bool* setp = NULL);
+    
+protected:
+    int set(const char* val, size_t len);
+};
+
+/**
+ * Double option class.
  */
 class DoubleOpt : public Opt {
 public:
@@ -200,10 +240,10 @@ public:
      * Basic constructor.
      *
      * @param opt     the option string
-     * @param valp    podoubleer to the value
+     * @param valp    pointer to the value
      * @param valdesc short description for the value 
      * @param desc    descriptive string
-     * @param setp    optional podoubleer to indicate whether or not
+     * @param setp    optional pointer to indicate whether or not
                       the option was set
      */
     DoubleOpt(const char* opt, double* valp,
@@ -216,10 +256,10 @@ public:
      *
      * @param shortopt  short option character
      * @param longopt   long option string
-     * @param valp      podoubleer to the value
+     * @param valp      pointer to the value
      * @param valdesc short description for the value 
      * @param desc      descriptive string
-     * @param setp      optional podoubleer to indicate whether or not
+     * @param setp      optional pointer to indicate whether or not
                         the option was set
      */
     DoubleOpt(char shortopt, const char* longopt, double* valp,
@@ -239,10 +279,10 @@ public:
      * Basic constructor.
      *
      * @param opt     the option string
-     * @param valp    podoubleer to the value
+     * @param valp    pointer to the value
      * @param valdesc short description for the value 
      * @param desc    descriptive string
-     * @param setp    optional podoubleer to indicate whether or not
+     * @param setp    optional pointer to indicate whether or not
                       the option was set
      */
     StringOpt(const char* opt, std::string* valp,
@@ -255,13 +295,52 @@ public:
      *
      * @param shortopt  short option character
      * @param longopt   long option string
-     * @param valp      podoubleer to the value
-     * @param valdesc short description for the value 
+     * @param valp      pointer to the value
+     * @param valdesc	short description for the value 
      * @param desc      descriptive string
-     * @param setp      optional podoubleer to indicate whether or not
+     * @param setp      optional pointer to indicate whether or not
                         the option was set
      */
     StringOpt(char shortopt, const char* longopt, std::string* valp,
+              const char* valdesc = "", const char* desc = "",
+              bool* setp = NULL);
+
+protected:
+    int set(const char* val, size_t len);
+};
+
+/**
+ * Internet address (dotted-quad or DNS name) option class.
+ */
+class InAddrOpt : public Opt {
+public:
+    /**
+     * Basic constructor.
+     *
+     * @param opt     the option string
+     * @param valp    pointer to the value
+     * @param valdesc short description for the value 
+     * @param desc    descriptive string
+     * @param setp    optional pointer to indicate whether or not
+                      the option was set
+     */
+    InAddrOpt(const char* opt, in_addr_t* valp,
+              const char* valdesc = "", const char* desc = "",
+              bool* setp = NULL);
+    
+    /**
+     * Alternative constructor with both short and long options,
+     * suitable for getopt calls.
+     *
+     * @param shortopt  short option character
+     * @param longopt   long option string
+     * @param valp      pointer to the value
+     * @param valdesc 	short description for the value 
+     * @param desc      descriptive string
+     * @param setp      optional pointer to indicate whether or not
+                        the option was set
+     */
+    InAddrOpt(char shortopt, const char* longopt, in_addr_t* valp,
               const char* valdesc = "", const char* desc = "",
               bool* setp = NULL);
 
