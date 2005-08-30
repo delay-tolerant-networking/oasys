@@ -35,17 +35,19 @@ class TestTcpWriter : public TCPClient, public Thread {
  public:
     TestTcpWriter() : TCPClient()
     {
+        logpathf("/testtcpwriter");
+
+        // force a small send buffer of 4K
+        params_.send_bufsize_ = 4097;
     }
 
     void run()
     {
-        // force a small send buffer of 4K
-        params_.send_bufsize_ = 4097;
-        configure();
-        
-        while(state() != ESTABLISHED)
+        while(state() != ESTABLISHED) {
             connect(htonl(INADDR_LOOPBACK), PORT);
+        }
 
+        configure();
         sleep(1);
 
         int* bufp = (int*)sndbuf;
@@ -81,16 +83,17 @@ class TestTcpWriter : public TCPClient, public Thread {
 class TestTcpReader : public TCPClient, public Thread {
 public:
     TestTcpReader(int fd, in_addr_t host, u_int16_t port) :
-        TCPClient(fd, host, port), Thread(DELETE_ON_EXIT)
+        TCPClient(fd, host, port), Thread(DELETE_ON_EXIT | CREATE_JOINABLE)
     {
+        logpathf("/testtcpreader");
+
         params_.recv_bufsize_ = 4097;
-        configure();
     }
 
     void run()
     {
+        configure();
         int done = 0;
-
         while (1) {
             int cc = read(&rcvbuf[done], 4096);
             if (cc <= 0) {
@@ -129,7 +132,7 @@ public:
 class TestTcpServer : public TCPServerThread {
 public:
     TestTcpServer()
-        : TCPServerThread("/test-server")
+        : TCPServerThread("/test-server", CREATE_JOINABLE)
     {
         log_info("starting up");
         bind(htonl(INADDR_LOOPBACK), PORT);
