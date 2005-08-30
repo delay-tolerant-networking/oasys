@@ -79,44 +79,67 @@ IO::close(int fd, const char* log, const char* filename)
 }
 
 int
-IO::read(int fd, char* bp, size_t len, const char* log)
+IO::read(int fd, char* bp, size_t len, const char* log, bool retry_on_intr)
 {
+  retry:
     int cc = ::read(fd, (void*)bp, len);
+    if (retry_on_intr && cc < 0 && errno == EINTR) {
+        goto retry;
+    }
+    
     if (log) logf(log, LOG_DEBUG, "read %d/%u", cc, (u_int)len);
     return cc;
 }
 
 int
-IO::readv(int fd, const struct iovec* iov, int iovcnt, const char* log)
+IO::readv(int fd, const struct iovec* iov, int iovcnt, const char* log, 
+	  bool retry_on_intr)
 {
     size_t total = 0;
     for (int i = 0; i < iovcnt; ++i) {
         total += iov[i].iov_len;
     }
 
+  retry:
     int cc = ::readv(fd, iov, iovcnt);
-    if (log) logf(log, LOG_DEBUG, "readv %d/%u", cc, (u_int)total);
+    if (retry_on_intr && cc < 0 && errno == EINTR) {
+        goto retry;
+    }
+    if (log) {
+        logf(log, LOG_DEBUG, "readv %d/%u", cc, (u_int)total);
+    }
     
     return cc;
 }
     
 int
-IO::write(int fd, const char* bp, size_t len, const char* log)
+IO::write(int fd, const char* bp, size_t len, const char* log, 
+	  bool retry_on_intr)
 {
+  retry:
     int cc = ::write(fd, (void*)bp, len);
-    if (log) logf(log, LOG_DEBUG, "write %d/%u", cc, (u_int)len);
+    if (retry_on_intr && cc < 0 && errno == EINTR) {
+        goto retry;
+    }
+    if (log) {
+        logf(log, LOG_DEBUG, "write %d/%u", cc, (u_int)len);
+    }
+
     return cc;
 }
 
 int
-IO::writev(int fd, const struct iovec* iov, int iovcnt, const char* log)
+IO::writev(int fd, const struct iovec* iov, int iovcnt, const char* log,
+	   bool retry_on_intr)
 {
     size_t total = 0;
     for (int i = 0; i < iovcnt; ++i) {
         total += iov[i].iov_len;
     }
 
+  retry:
     int cc = ::writev(fd, iov, iovcnt);
+    if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
     if (log) logf(log, LOG_DEBUG, "writev %d/%u", cc, (u_int)total);
     
     return cc;
@@ -170,9 +193,11 @@ IO::mkstemp(char* templ, const char* log)
 
 int
 IO::send(int fd, const char* bp, size_t len, int flags,
-         const char* log)
+         const char* log, bool retry_on_intr)
 {
+  retry:
     int cc = ::send(fd, (void*)bp, len, flags);
+    if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
     if (log) logf(log, LOG_DEBUG, "send %d/%u", cc, (u_int)len);
     return cc;
 }
@@ -180,52 +205,69 @@ IO::send(int fd, const char* bp, size_t len, int flags,
 int
 IO::sendto(int fd, char* bp, size_t len, int flags,
            const struct sockaddr* to, socklen_t tolen,
-           const char* log)
+           const char* log, bool retry_on_intr)
 {
+  retry:
     int cc = ::sendto(fd, (void*)bp, len, flags, to, tolen);
+    if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
     if (log) logf(log, LOG_DEBUG, "sendto %d/%u", cc, (u_int)len);
     return cc;
 }
 
 int
 IO::sendmsg(int fd, const struct msghdr* msg, int flags,
-            const char* log)
+            const char* log, bool retry_on_intr)
 {
+  retry:    
     int cc = ::sendmsg(fd, msg, flags);
+    if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
     if (log) logf(log, LOG_DEBUG, "sendmsg: %d", cc);
     return cc;
 }
 
 int
 IO::recv(int fd, char* bp, size_t len, int flags,
-            const char* log)
+            const char* log, bool retry_on_intr)
 {
+  retry:
     int cc = ::recv(fd, (void*)(bp), len, flags);
-    if (log) logf(log, LOG_DEBUG, "recv %d/%u", cc, (u_int)len);
+    if (retry_on_intr && cc < 0 && errno == EINTR) {
+        goto retry;
+    }
+
+    if (log) {
+        logf(log, LOG_DEBUG, "recv %d/%u", cc, (u_int)len);
+    }
+
     return cc;
 }
 
 int
 IO::recvfrom(int fd, char* bp, size_t len, int flags,
              struct sockaddr* from, socklen_t* fromlen,
-             const char* log)
+             const char* log, bool retry_on_intr)
 {
+  retry:
     int cc = ::recvfrom(fd, (void*)bp, len, flags, from, fromlen);
+    if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
     if (log) logf(log, LOG_DEBUG, "recvfrom %d/%u", cc, (u_int)len);
     return cc;
 }
 
 int
 IO::recvmsg(int fd, struct msghdr* msg, int flags,
-            const char* log)
+            const char* log, bool retry_on_intr)
 {
+  retry:
     int cc = ::recvmsg(fd, msg, flags);
+    if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
     if (log) logf(log, LOG_DEBUG, "recvmsg: %d", cc);
     return cc;
 }
 
 int
-IO::poll(int fd, int events, int* revents, int timeout_ms, const char* log)
+IO::poll(int fd, int events, int* revents, int timeout_ms, const char* log,
+	 bool retry_on_intr)
 {
     int cc;
     struct pollfd pollfd;
@@ -234,13 +276,18 @@ IO::poll(int fd, int events, int* revents, int timeout_ms, const char* log)
     pollfd.events = events;
     pollfd.revents = 0;
 
+    // Handling EINTR this way screws up precise timing, but it should
+    // be a rare occurance and not change any expected behavior
+  retry:
     cc = ::poll(&pollfd, 1, timeout_ms);
-
-    if (log)
+    if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
+    
+    if (log) {
         logf(log, LOG_DEBUG,
              "poll: events 0x%x timeout %d revents 0x%x cc %d",
              events, timeout_ms, pollfd.revents, cc);
-                  
+    }
+    
     if (cc < 0) {
         if (log && errno != EINTR)
             logf(log, LOG_ERR, "error in poll: %s", strerror(errno));
@@ -264,17 +311,21 @@ IO::poll(int fd, int events, int* revents, int timeout_ms, const char* log)
 }
 
 int
-IO::rwall(rw_func_t rw, int fd, char* bp, size_t len, const char* log)
+IO::rwall(rw_func_t rw, int fd, char* bp, size_t len, const char* log,
+	  bool retry_on_intr)
 {
     int cc, done = 0;
     do {
+      retry:
         cc = (*rw)(fd, bp, len);
         if (cc < 0) {
             if (errno == EAGAIN) continue;
+            if (retry_on_intr && errno == EINTR)  goto retry;
+            
             return cc;
         }
         
-        if (cc == 0)
+        if (cc == 0) 
             return done;
         
         done += cc;
@@ -282,14 +333,14 @@ IO::rwall(rw_func_t rw, int fd, char* bp, size_t len, const char* log)
         len -= cc;
         
     } while (len > 0);
-
+    
     return done;
 }
 
 int
 IO::readall(int fd, char* bp, size_t len, const char* log)
 {
-    int cc = rwall(::read, fd, bp, len, log);
+    int cc = rwall(::read, fd, bp, len, log, true);
     if (log) logf(log, LOG_DEBUG, "readall %d/%u", cc, (u_int)len);
     return cc;
 }
@@ -297,14 +348,14 @@ IO::readall(int fd, char* bp, size_t len, const char* log)
 int
 IO::writeall(int fd, const char* bp, size_t len, const char* log)
 {
-    int cc = rwall((rw_func_t)::write, fd, (char*)bp, len, log);
+    int cc = rwall((rw_func_t)::write, fd, (char*)bp, len, log, true);
     if (log) logf(log, LOG_DEBUG, "writeall %d/%u", cc, (u_int)len);
     return cc;
 }
 
 int
 IO::rwvall(rw_vfunc_t rw, int fd, const struct iovec* const_iov, int iovcnt,
-           const char* log_func, const char* log)
+           const char* log_func, const char* log, bool retry_on_intr)
 {
     struct iovec* iov;
     struct iovec  static_iov[16];
@@ -335,7 +386,10 @@ IO::rwvall(rw_vfunc_t rw, int fd, const struct iovec* const_iov, int iovcnt,
     
     while (1)
     {
+      retry:
         cc = (*rw)(fd, iov, iovcnt);
+        if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
+        
         if (cc < 0) {
             done = cc;
             goto done;
@@ -381,7 +435,7 @@ int
 IO::readvall(int fd, const struct iovec* iov, int iovcnt,
              const char* log)
 {
-    return rwvall(::readv, fd, iov, iovcnt, "readvall", log);
+    return rwvall(::readv, fd, iov, iovcnt, "readvall", log, true);
 
 }
 
@@ -389,7 +443,7 @@ int
 IO::writevall(int fd, const struct iovec* iov, int iovcnt,
               const char* log)
 {
-    return rwvall(::writev, fd, iov, iovcnt, "writevall", log);
+    return rwvall(::writev, fd, iov, iovcnt, "writevall", log, true);
 }
 
 /**
@@ -399,23 +453,26 @@ IO::writevall(int fd, const struct iovec* iov, int iovcnt,
  */
 int
 IO::timeout_read(int fd, char* bp, size_t len, int timeout_ms,
-                 const char* log)
+                 const char* log, bool retry_on_intr)
 {
     ASSERT(timeout_ms >= 0);
     
-    int cc = poll(fd, POLLIN | POLLPRI, NULL, timeout_ms, log);
+    int cc = poll(fd, POLLIN | POLLPRI, NULL, timeout_ms, log, retry_on_intr);
     if (cc < 0)
         return IOERROR;
-
     if (cc == 0) {
         if (log) logf(log, LOG_DEBUG, "poll timed out");
         return IOTIMEOUT;
     }
     
     ASSERT(cc == 1);
-    
+
+  retry:
     cc = read(fd, bp, len);
-    
+    if (retry_on_intr && cc <0 && errno == EINTR) {
+        goto retry;
+    }
+
     if (cc < 0) {
         if (log) logf(log, LOG_ERR, "timeout_read error: %s", strerror(errno));
         return IOERROR;
@@ -430,22 +487,25 @@ IO::timeout_read(int fd, char* bp, size_t len, int timeout_ms,
 
 int
 IO::timeout_readv(int fd, const struct iovec* iov, int iovcnt, int timeout_ms,
-                  const char* log)
+                  const char* log, bool retry_on_intr)
 {
     ASSERT(timeout_ms >= 0);
     
-    int cc = poll(fd, POLLIN | POLLPRI, NULL, timeout_ms, log);
+    int cc = poll(fd, POLLIN | POLLPRI, NULL, timeout_ms, log, retry_on_intr);
     if (cc < 0)
         return IOERROR;
-
     if (cc == 0) {
         if (log) logf(log, LOG_DEBUG, "poll timed out");
         return IOTIMEOUT;
     }
     
     ASSERT(cc == 1);
-    
+
+  retry:
     cc = ::readv(fd, iov, iovcnt);
+    if (retry_on_intr && cc < 0 && errno == EINTR) {
+        goto retry;
+    }    
 
     if (cc < 0) {
         if (log) logf(log, LOG_ERR, "timeout_readv error: %s",
@@ -473,7 +533,7 @@ IO::timeout_readall(int fd, char* bp, size_t len, int timeout_ms,
     }
     
     while (len > 0) {
-        cc = timeout_read(fd, bp, len, timeout_ms, log);
+        cc = timeout_read(fd, bp, len, timeout_ms, log, true);
         if (cc <= 0)
             return cc;
 

@@ -55,7 +55,7 @@ namespace oasys {
 enum IOTimeoutReturn_t {
     IOEOF 	= 0,	/* eof */
     IOERROR 	= -1,	/* error */
-    IOTIMEOUT 	= -2	/* timeout */
+    IOTIMEOUT 	= -2,   /* timeout */
 };
 
 /**
@@ -78,16 +78,16 @@ public:
                      const char* filename = "");
     
     static int read(int fd, char* bp, size_t len,
-                    const char* log = NULL);
+                    const char* log = NULL, bool retry_on_intr = true);
     
     static int readv(int fd, const struct iovec* iov, int iovcnt,
-                     const char* log = NULL);
+                     const char* log = NULL, bool retry_on_intr = true);
     
     static int write(int fd, const char* bp, size_t len,
-                     const char* log = NULL);
+                     const char* log = NULL, bool retry_on_intr = true);
     
     static int writev(int fd, const struct iovec* iov, int iovcnt,
-                      const char* log = NULL);
+                      const char* log = NULL, bool retry_on_intr = true);
 
     static int unlink(const char* path, 
                       const char* log = NULL);
@@ -101,31 +101,31 @@ public:
     static int mkstemp(char* templ, const char* log = NULL);
     
     static int send(int fd, const char* bp, size_t len, int flags,
-                    const char* log = NULL);
+                    const char* log = NULL, bool retry_on_intr = true);
     
     static int sendto(int fd, char* bp, size_t len, int flags,
                       const struct sockaddr* to, socklen_t tolen,
-                      const char* log = NULL);
+                      const char* log = NULL, bool retry_on_intr = true);
                       
     static int sendmsg(int fd, const struct msghdr* msg, int flags,
-                       const char* log = NULL);
+                       const char* log = NULL, bool retry_on_intr = true);
     
     static int recv(int fd, char* bp, size_t len, int flags,
-                    const char* log = NULL);
+                    const char* log = NULL, bool retry_on_intr = true);
     
     static int recvfrom(int fd, char* bp, size_t len, int flags,
                         struct sockaddr* from, socklen_t* fromlen,
-                        const char* log = NULL);
+                        const char* log = NULL, bool retry_on_intr = true);
     
     static int recvmsg(int fd, struct msghdr* msg, int flags,
-                       const char* log = NULL);
+                       const char* log = NULL, bool retry_on_intr = true);
     
     //@}
     
     /// Wrapper around poll() for a single fd
     /// @return -1 for error, 0 or 1 to indicate readiness
     static int poll(int fd, int events, int* revents, int timeout_ms,
-                    const char* log = NULL);
+                    const char* log = NULL, bool retry_on_intr = true);
     
     //@{
     /// Fill in the entire supplied buffer, potentially
@@ -156,10 +156,11 @@ public:
      * IOTimeoutReturn_t code
      */
     static int timeout_read(int fd, char* bp, size_t len, int timeout_ms,
-                            const char* log = NULL);
+                            const char* log = NULL, bool retry_on_intr = true);
     
     static int timeout_readv(int fd, const struct iovec* iov, int iovcnt,
-                             int timeout_ms, const char* log = NULL);
+                             int timeout_ms, const char* log = NULL, 
+			     bool retry_on_intr = true);
     static int timeout_readall(int fd, char* bp, size_t len,
                                int timeout_ms, const char* log = NULL);
     static int timeout_readvall(int fd, const struct iovec* iov, int iovcnt,
@@ -178,11 +179,12 @@ private:
     typedef ssize_t(*rw_vfunc_t)(int, const struct iovec*, int);
 
     static int rwall(rw_func_t rw, int fd, char* bp, size_t len,
-                     const char* log);
+                     const char* log, bool retry_on_intr);
     
     static int rwvall(rw_vfunc_t rw, int fd,
                       const struct iovec* iov, int iovcnt,
-                      const char* log_func, const char* log);
+                      const char* log_func, const char* log, 
+		      bool retry_on_intr);
 };
 
 } // namespace oasys
