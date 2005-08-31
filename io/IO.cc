@@ -87,7 +87,8 @@ IO::read(int fd, char* bp, size_t len, const char* log, bool retry_on_intr)
         goto retry;
     }
     
-    if (log) logf(log, LOG_DEBUG, "read %d/%u", cc, (u_int)len);
+    if (log) logf(log, LOG_DEBUG, "read %d/%u %s", cc, (u_int)len,
+                  (cc < 0) ? strerror(errno) : "");
     return cc;
 }
 
@@ -106,7 +107,8 @@ IO::readv(int fd, const struct iovec* iov, int iovcnt, const char* log,
         goto retry;
     }
     if (log) {
-        logf(log, LOG_DEBUG, "readv %d/%u", cc, (u_int)total);
+        logf(log, LOG_DEBUG, "readv %d/%u %s", cc, (u_int)total,
+             (cc < 0) ? strerror(errno) : "");
     }
     
     return cc;
@@ -122,7 +124,8 @@ IO::write(int fd, const char* bp, size_t len, const char* log,
         goto retry;
     }
     if (log) {
-        logf(log, LOG_DEBUG, "write %d/%u", cc, (u_int)len);
+        logf(log, LOG_DEBUG, "write %d/%u %s", cc, (u_int)len,
+             (cc < 0) ? strerror(errno) : "");
     }
 
     return cc;
@@ -140,7 +143,8 @@ IO::writev(int fd, const struct iovec* iov, int iovcnt, const char* log,
   retry:
     int cc = ::writev(fd, iov, iovcnt);
     if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
-    if (log) logf(log, LOG_DEBUG, "writev %d/%u", cc, (u_int)total);
+    if (log) logf(log, LOG_DEBUG, "writev %d/%u %s", cc, (u_int)total,
+                  (cc < 0) ? strerror(errno) : "");
     
     return cc;
 }
@@ -198,7 +202,8 @@ IO::send(int fd, const char* bp, size_t len, int flags,
   retry:
     int cc = ::send(fd, (void*)bp, len, flags);
     if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
-    if (log) logf(log, LOG_DEBUG, "send %d/%u", cc, (u_int)len);
+    if (log) logf(log, LOG_DEBUG, "send %d/%u %s", cc, (u_int)len,
+                  (cc < 0) ? strerror(errno) : "");
     return cc;
 }
 
@@ -210,7 +215,8 @@ IO::sendto(int fd, char* bp, size_t len, int flags,
   retry:
     int cc = ::sendto(fd, (void*)bp, len, flags, to, tolen);
     if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
-    if (log) logf(log, LOG_DEBUG, "sendto %d/%u", cc, (u_int)len);
+    if (log) logf(log, LOG_DEBUG, "sendto %d/%u %s", cc, (u_int)len,
+                  (cc < 0) ? strerror(errno) : "");
     return cc;
 }
 
@@ -236,7 +242,8 @@ IO::recv(int fd, char* bp, size_t len, int flags,
     }
 
     if (log) {
-        logf(log, LOG_DEBUG, "recv %d/%u", cc, (u_int)len);
+        logf(log, LOG_DEBUG, "recv %d/%u %s", cc, (u_int)len,
+             (cc < 0) ? strerror(errno) : "");
     }
 
     return cc;
@@ -250,7 +257,8 @@ IO::recvfrom(int fd, char* bp, size_t len, int flags,
   retry:
     int cc = ::recvfrom(fd, (void*)bp, len, flags, from, fromlen);
     if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
-    if (log) logf(log, LOG_DEBUG, "recvfrom %d/%u", cc, (u_int)len);
+    if (log) logf(log, LOG_DEBUG, "recvfrom %d/%u %s", cc, (u_int)len,
+                  (cc < 0) ? strerror(errno) : "");
     return cc;
 }
 
@@ -300,7 +308,7 @@ IO::poll(int fd, int events, int* revents, int timeout_ms, const char* log,
 #ifdef __APPLE__
     // there's some strange race condition bug in the poll emulation
     if (cc > 1) {
-        logf(log, LOG_WARN,
+        logf("/io", LOG_WARN,
              "poll: returned bogus high value %d, flooring to 1", cc);
         cc = 1;
     }
@@ -341,7 +349,8 @@ int
 IO::readall(int fd, char* bp, size_t len, const char* log)
 {
     int cc = rwall(::read, fd, bp, len, log, true);
-    if (log) logf(log, LOG_DEBUG, "readall %d/%u", cc, (u_int)len);
+    if (log) logf(log, LOG_DEBUG, "readall %d/%u %s", cc, (u_int)len,
+                  (cc < 0) ? strerror(errno) : "");
     return cc;
 }
 
@@ -349,7 +358,8 @@ int
 IO::writeall(int fd, const char* bp, size_t len, const char* log)
 {
     int cc = rwall((rw_func_t)::write, fd, (char*)bp, len, log, true);
-    if (log) logf(log, LOG_DEBUG, "writeall %d/%u", cc, (u_int)len);
+    if (log) logf(log, LOG_DEBUG, "writeall %d/%u %s", cc, (u_int)len,
+                  (cc < 0) ? strerror(errno) : "");
     return cc;
 }
 
@@ -357,40 +367,29 @@ int
 IO::rwvall(rw_vfunc_t rw, int fd, const struct iovec* const_iov, int iovcnt,
            const char* log_func, const char* log, bool retry_on_intr)
 {
-    struct iovec* iov;
+    bool copied_iov = false;
+    const struct iovec* iov;
+    struct iovec *new_iov;
     struct iovec  static_iov[16];
     struct iovec* dynamic_iov = NULL;
 
-    if (iovcnt <= 16) {
-        iov = static_iov;
-    } else {
-        // maybe this shouldn't be logged at level warning, but for
-        // now, keep it as such since it probably won't ever be an
-        // issue and if it is, we can always demote the level later
-        logf(log, LOG_WARN, "%s required to malloc since iovcnt is %d",
-             log_func, iovcnt);
-        dynamic_iov = (struct iovec*)malloc(sizeof(struct iovec) * iovcnt);
-        iov = dynamic_iov;
-    }
+    // start off with iov pointing to the iovec we were given
+    iov = const_iov;
     
-    memset(static_iov, 0, sizeof(struct iovec) * (iovcnt<16?16:iovcnt));
-    memcpy(iov, const_iov, sizeof(struct iovec) * iovcnt);
-    
+    // sum up the total amount to write
     int cc, total = 0, done = 0;
     for (int i = 0; i < iovcnt; ++i) {
         total += iov[i].iov_len;
     }
 
-    if (log) logf(log, LOG_DEBUG, "%s cnt %d, total %d",
-                  log_func, iovcnt, total);
-    
     while (1)
     {
-      retry:
         cc = (*rw)(fd, iov, iovcnt);
-        if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
         
         if (cc < 0) {
+            if (errno == EINTR && retry_on_intr)
+                continue;
+            
             done = cc;
             goto done;
         }
@@ -400,13 +399,12 @@ IO::rwvall(rw_vfunc_t rw, int fd, const struct iovec* const_iov, int iovcnt,
         }
         
         done += cc;
-        total -= cc;
 
-        if (total == 0) break; // all done
+        if (done == total)
+            goto done;
         
-        /**
-         * Advance iov past any completed chunks, then adjust iov_base
-         * and iov_cnt for the partially completed one.
+        /*
+         * Advance iov past any completed chunks.
          */
         while (cc >= (int)iov[0].iov_len)
         {
@@ -416,18 +414,65 @@ IO::rwvall(rw_vfunc_t rw, int fd, const struct iovec* const_iov, int iovcnt,
             iov++;
             iovcnt--;
         }
-            
-        if (log) logf(log, LOG_DEBUG, "%s skipping %d of %p -> %p", log_func,
-                      cc, iov[0].iov_base, (((char*)iov[0].iov_base) + cc));
+
+        /*
+         * Check if the written portion falls exactly on an iovec
+         * boundary, if so, we can loop again and retry the operation
+         * (potentially avoiding the copy below).
+         */
+        if (cc == 0)
+            continue;
+
+        /*
+         * Now copy the iovecs into a temporary array if we haven't
+         * done so already.
+         */
+        if (! copied_iov)
+        {
+            if (iovcnt <= 16) {
+                new_iov = static_iov;
+                memset(static_iov, 0, sizeof(static_iov));
+            } else {
+                // maybe this shouldn't be logged at level warning, but for
+                // now, keep it as such since it probably won't ever be an
+                // issue and if it is, we can always demote the level later
+                logf("/io", LOG_WARN,
+                     "%s required to malloc since remaining iovcnt is %d",
+                     log_func, iovcnt);
+                dynamic_iov = (struct iovec*)malloc(sizeof(struct iovec) * iovcnt);
+                memset(dynamic_iov, 0, (sizeof(struct iovec) * iovcnt));
+                new_iov = dynamic_iov;
+            }
+    
+            memcpy(new_iov, iov, sizeof(struct iovec) * iovcnt);
+            iov = new_iov;
+            copied_iov = true;
+        }
+
+        /*
+         * Finally, adjust the first entry in the iovec array to
+         * account for the partially handled bytes. Note that since
+         * iov already points to one of static_iov or dynamic_iov, we
+         * can safely cast away the constness to do the adjustment.
+         */
+        if (log) logf(log, LOG_DEBUG, "%s skipping %d bytes of %p -> %p",
+                      log_func, cc, iov[0].iov_base,
+                      (((char*)iov[0].iov_base) + cc));
         
-        iov[0].iov_base = (((char*)iov[0].iov_base) + cc);
-        iov[0].iov_len  -= cc;
+        ((struct iovec*)iov)[0].iov_base = (((char*)iov[0].iov_base) + cc);
+        ((struct iovec*)iov)[0].iov_len  -= cc;
+
+        const_iov = iov;
     }
 
  done:
     if (dynamic_iov != NULL)
         free(dynamic_iov);
     
+    if (log) logf(log, LOG_DEBUG, "%s iovcnt %d: %d/%u %s",
+                  log_func, iovcnt, done, total,
+                  (done < 0) ? strerror(errno) : "");
+
     return done;
 }
 
@@ -560,40 +605,60 @@ IO::timeout_readvall(int fd, const struct iovec* iov, int iovcnt,
 }
 
 int
-IO::set_nonblocking(int fd, bool nonblocking)
+IO::set_nonblocking(int fd, bool nonblocking, const char* log)
 {
     int flags = 0;
+    bool already = 0;
     
     if ((flags = fcntl(fd, F_GETFL)) < 0) {
+        if (log) log_debug(log, "set_nonblocking: fcntl GETFL err %s",
+                           strerror(errno));
         return -1;
     }
     
     if (nonblocking) {
-        if (flags & O_NONBLOCK) return 1; // already nonblocking
+        if (flags & O_NONBLOCK) {
+            already = 1; // already nonblocking
+            goto done;
+        }
         flags = flags | O_NONBLOCK;
     } else {
-        if (!(flags & O_NONBLOCK)) return 1; // already blocking
+        if (!(flags & O_NONBLOCK)) {
+            already = 1; // already blocking
+            goto done;
+        }
+            
         flags = flags & ~O_NONBLOCK;
     }
     
     if (fcntl(fd, F_SETFL, flags) < 0) {
+        if (log) log_debug(log, "set_nonblocking: fcntl SETFL err %s",
+                           strerror(errno));
         return -1;
     }
-    
+
+ done:
+    if (log) log_debug(log, "set_nonblocking: %s mode %s",
+                       nonblocking ? "nonblocking" : "blocking",
+                       already     ? "already set" : "set");
     return 0;
 }
 
 int
-IO::get_nonblocking(int fd, bool *nonblockingp)
+IO::get_nonblocking(int fd, bool *nonblockingp, const char* log)
 {
     int flags = 0;
     ASSERT(nonblockingp);
     
     if ((flags = fcntl(fd, F_GETFL)) < 0) {
+        if (log) log_debug(log, "get_nonblocking: fcntl GETFL err %s",
+                           strerror(errno));
         return -1;
     }
 
     *nonblockingp = (flags & O_NONBLOCK);
+    if (log) log_debug(log, "get_nonblocking: %s mode",
+                       *nonblockingp ? "nonblocking" : "blocking");
     return 0;
 }
 

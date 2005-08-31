@@ -61,7 +61,7 @@ Notifier::Notifier(const char* logpath)
     log_debug("created pipe, fds: %d %d", pipe_[0], pipe_[1]);
     
     for (int n = 0; n < 2; ++n) {
-        if (IO::set_nonblocking(pipe_[n], true) != 0) {
+        if (IO::set_nonblocking(pipe_[n], true, logpath_) != 0) {
             log_crit("error setting fd %d to nonblocking: %s",
                      pipe_[n], strerror(errno));
             exit(1);

@@ -66,7 +66,7 @@ TCPClient::timeout_connect(in_addr_t remote_addr, u_int16_t remote_port,
 
     if (fd_ == -1) init_socket();
 
-    if (IO::set_nonblocking(fd_, true) < 0) {
+    if (IO::set_nonblocking(fd_, true, logpath_) < 0) {
         log_err("error setting fd %d to nonblocking: %s",
                 fd_, strerror(errno));
         if (errp) *errp = errno;
@@ -122,7 +122,7 @@ TCPClient::timeout_connect(in_addr_t remote_addr, u_int16_t remote_port,
     }
 
     // always make sure to set the fd back to blocking
-    if (IO::set_nonblocking(fd_, false) < 0) {
+    if (IO::set_nonblocking(fd_, false, logpath_) < 0) {
         log_err("error setting fd %d back to blocking: %s",
                 fd_, strerror(errno));
         if (errp) *errp = errno;

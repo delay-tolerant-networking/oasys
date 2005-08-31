@@ -169,8 +169,10 @@ public:
     //@}
     
     /// Get and Set the file descriptor's nonblocking status
-    static int get_nonblocking(int fd, bool *nonblocking);
-    static int set_nonblocking(int fd, bool nonblocking);
+    static int get_nonblocking(int fd, bool *nonblocking,
+                               const char* log = NULL);
+    static int set_nonblocking(int fd, bool nonblocking,
+                               const char* log = NULL);
     
 private:
     IO();  // don't ever instantiate
