@@ -197,9 +197,11 @@ public:
     /// logfd can be set to false to disable the appending of the
     /// socket file descriptor
     void set_logfd(bool logfd) { logfd_ = logfd; }
-                                                          
-protected:
+
+    /// Public for use with nonblocking semantics
     void init_socket();
+    
+protected:
     
     static int abort_on_error_;    
     
