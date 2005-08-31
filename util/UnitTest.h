@@ -219,27 +219,27 @@ void _name::add_tests()                                         \
                     "CHECK (" #x ") ok");               \
     } } while(0)
 
-#define CHECK_EQUAL(a, b)                                                               \
-    do { if ((a) != (b)) {                                                              \
-        oasys::logf("/test", oasys::LOG_CRIT,                                           \
-                    "CHECK FAILED: '" #a "' (%d) != '" #b "' (%d) at %s:%d",            \
-                    (int)(a), (int)(b), __FILE__, __LINE__);                            \
-        return oasys::UNIT_TEST_FAILED;                                                 \
-    } else {                                                                            \
-        oasys::logf("/test", oasys::LOG_DEBUG,                                          \
-                    "CHECK '" #a "' (%d) == '" #b "' (%d)", (int)(a), (int)(b));        \
+#define CHECK_EQUAL(_a, _b)                                                      \
+    do { int a = _a; int b = _b; if ((a) != (b)) {                               \
+        oasys::logf("/test", oasys::LOG_CRIT,                                    \
+                    "CHECK FAILED: '" #_a "' (%d) != '" #_b "' (%d) at %s:%d",   \
+                    (a), (b), __FILE__, __LINE__);                               \
+        return oasys::UNIT_TEST_FAILED;                                          \
+    } else {                                                                     \
+        oasys::logf("/test", oasys::LOG_DEBUG,                                   \
+                    "CHECK '" #_a "' (%d) == '" #_b "' (%d)", (a), (b));         \
     } } while(0)
 
-#define CHECK_EQUAL_U64(a, b)                                                           \
-    do { if ((a) != (b)) {                                                              \
-        oasys::logf("/test", oasys::LOG_CRIT,                                           \
-                    "CHECK FAILED: '" #a "' (%llu) != '" #b "' (%llu) at %s:%d",        \
-                    (u_int64_t)(a), (u_int64_t)(b), __FILE__, __LINE__);                \
-        return oasys::UNIT_TEST_FAILED;                                                 \
-    } else {                                                                            \
-        oasys::logf("/test", oasys::LOG_DEBUG,                                          \
-                    "CHECK '" #a "' (%llu) == '" #b "' (%llu)",                         \
-                    (u_int64_t)(a), (u_int64_t)(b));                                    \
+#define CHECK_EQUAL_U64(a, b)                                                    \
+    do { if ((a) != (b)) {                                                       \
+        oasys::logf("/test", oasys::LOG_CRIT,                                    \
+                    "CHECK FAILED: '" #a "' (%llu) != '" #b "' (%llu) at %s:%d", \
+                    (u_int64_t)(a), (u_int64_t)(b), __FILE__, __LINE__);         \
+        return oasys::UNIT_TEST_FAILED;                                          \
+    } else {                                                                     \
+        oasys::logf("/test", oasys::LOG_DEBUG,                                   \
+                    "CHECK '" #a "' (%llu) == '" #b "' (%llu)",                  \
+                    (u_int64_t)(a), (u_int64_t)(b));                             \
     } } while(0)
 
 #define CHECK_EQUALSTR(a, b)                                                    \
@@ -255,13 +255,25 @@ void _name::add_tests()                                         \
 
 #define CHECK_EQUALSTRN(a, b, len)                                              \
     do { if (strncmp((a), (b), (len)) != 0) {                                   \
-        oasys::logf("/test", oasys::LOG_CRIT,                                   \
-                    "CHECK FAILED: '" #a "' (%s) != '" #b "' (%s) at %s:%d",    \
-                    (a), (b), __FILE__, __LINE__);                              \
-        return oasys::UNIT_TEST_FAILED;                                         \
+        if (len <= 32) {                                                        \
+            oasys::logf("/test", oasys::LOG_CRIT, "CHECK FAILED: "              \
+                        "'%s' (%s) != '%s' (%s) at %s:%d",                      \
+                        #a, (a), #b, (b), __FILE__, __LINE__);                  \
+        } else {                                                                \
+            oasys::logf("/test", oasys::LOG_CRIT, "CHECK FAILED: "              \
+                        "'%s' (%.*s...) != '%s' (%.*s...) at %s:%d",            \
+                        #a, 32, (a), #b, 32, (b), __FILE__, __LINE__);          \
+        }                                                                       \
+       return oasys::UNIT_TEST_FAILED;                                          \
     } else {                                                                    \
-        oasys::logf("/test", oasys::LOG_DEBUG,                                  \
-                    "CHECK '" #a "' (%s) == '" #b "' (%s)", (a), (b));          \
+        if (len <= 32) {                                                        \
+            oasys::logf("/test", oasys::LOG_DEBUG,                              \
+                        "CHECK '" #a "' (%s) == '" #b "' (%s)", (a), (b));      \
+        } else {                                                                \
+            oasys::logf("/test", oasys::LOG_DEBUG,                              \
+                        "CHECK '" #a "' (%.*s...) == '" #b "' (%.*s...)",       \
+                        32, (a), 32, (b));                                      \
+        }                                                                       \
     } } while(0)
 
 
