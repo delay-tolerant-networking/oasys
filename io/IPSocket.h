@@ -74,7 +74,6 @@ namespace oasys {
  */
 class IPSocket : public Logger {
 private:
-    IPSocket(); 		///< Prohibited constructor
     IPSocket(const IPSocket&);	///< Prohibited constructor
     
 public:

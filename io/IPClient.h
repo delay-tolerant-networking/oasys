@@ -50,7 +50,6 @@ namespace oasys {
  */
 class IPClient : public IPSocket, public IOClient {
 private:
-    IPClient(); 		///< Prohibited constructor
     IPClient(const IPClient&);	///< Prohibited constructor
     
 public:
