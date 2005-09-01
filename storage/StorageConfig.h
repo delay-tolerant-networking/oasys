@@ -49,6 +49,7 @@ namespace oasys {
  * to Durable storage system to initialize it.
  */
 struct StorageConfig {
+    std::string cmd_;		///< tcl command name for this instance
     std::string type_;		///< storage type [berkeleydb/mysql/postgres]
     bool        init_;		///< Create new databases on init
     bool        tidy_;		///< Prune out the database on init
@@ -62,6 +63,7 @@ struct StorageConfig {
     int         dbflags_;       ///< Berkeley DB specific flags
 
     StorageConfig(
+        const std::string& cmd,
         const std::string& type,
         bool               init,
         bool               tidy,
@@ -70,7 +72,8 @@ struct StorageConfig {
         const std::string& dbdir,
         const std::string& dberrlog,
         int                dbflags
-    ) : type_(type),
+    ) : cmd_(cmd),
+        type_(type),
         init_(init),
         tidy_(tidy),
         tidy_wait_(tidy_wait),
