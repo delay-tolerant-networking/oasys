@@ -62,7 +62,7 @@ class TypeCollectionHelper {
 public:
     virtual void* new_object() = 0;
     virtual const char* name() const = 0;
-    virtual ~TypeCollectionHelper();
+    virtual ~TypeCollectionHelper() {}
 };
 
 /**
@@ -154,8 +154,8 @@ public:
     {
         // Check that the given typecode is within the legal bounds
         // for the _Type of the return
-        if(::oasys::TypeCollectionCode<_Collection, _Type>::TYPECODE_LOW  > typecode ||
-           ::oasys::TypeCollectionCode<_Collection, _Type>::TYPECODE_HIGH < typecode)
+        if(TypeCollectionCode<_Collection, _Type>::TYPECODE_LOW  > typecode ||
+           TypeCollectionCode<_Collection, _Type>::TYPECODE_HIGH < typecode)
         {
             return TypeCollectionErr::TYPECODE;
         }
@@ -236,13 +236,13 @@ private:
 #define TYPE_COLLECTION_DECLARE(_Collection, _Class, _code)     \
 namespace oasys {                                               \
     template<>                                                  \
-    struct ::oasys::TypeCollectionCode<_Collection, _Class> {            \
+    struct TypeCollectionCode<_Collection, _Class> {            \
         enum {                                                  \
             TYPECODE_LOW  = _code,                              \
-            TYPECODE_HIGH = _code,                              \
+            TYPECODE_HIGH = _code                               \
         };                                                      \
         enum {                                                  \
-            TYPECODE = _code,                                   \
+            TYPECODE = _code                                    \
         };                                                      \
     };                                                          \
 }
@@ -260,7 +260,7 @@ namespace oasys {                                               \
 #define TYPE_COLLECTION_GROUP(_Collection, _Class, _low, _high) \
 namespace oasys {                                               \
     template<>                                                  \
-    struct ::oasys::TypeCollectionCode<_Collection, _Class> {            \
+    struct TypeCollectionCode<_Collection, _Class> {            \
         enum {                                                  \
             TYPECODE_LOW  = _low,                               \
             TYPECODE_HIGH = _high,                              \
