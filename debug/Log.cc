@@ -643,7 +643,7 @@ Log::log_multiline(const char* path, log_level_t level, const char* msg)
         iov[iov_cnt].iov_len  = prefix_len;
         ++iov_cnt;
         
-        iov[iov_cnt].iov_base = (void*)msg;
+        iov[iov_cnt].iov_base = (char*)msg;
         iov[iov_cnt].iov_len  = end - msg + 1; // include newline
         ++iov_cnt;
 
