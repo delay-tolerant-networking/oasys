@@ -25,6 +25,7 @@ TESTS += \
 	thread-test				\
 	thread-interrupt-test			\
 	timer-test				\
+	type-collection-test			\
 	url-test				\
 
 #
