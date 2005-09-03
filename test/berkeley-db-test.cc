@@ -21,6 +21,7 @@ typedef SingleTypeDurableTable<StringShim> StringDurableTable;
 
 DECLARE_TEST(DBTestInit) {
     g_config = new StorageConfig(
+        "storage",              // command name
         "berkeleydb",           // type
         true,                   // init
         true,                   // tidy
