@@ -85,9 +85,10 @@ HelpCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
                     help = "(no help, sorry)";
                 }
 
+                StringBuffer buf;
                 if ((*iter)->hasBindings()) {
-                    StringBuffer buf("%s info\n\t%s", (*iter)->name(),
-                                     "Lists settable parameters.\n");
+                    buf.appendf("%s info\n\t%s", (*iter)->name(),
+                                "Lists settable parameters.\n");
                     binfo = buf.c_str();
                 }
 
