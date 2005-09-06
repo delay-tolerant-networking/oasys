@@ -48,6 +48,8 @@
 
 namespace oasys {
 
+const char* TclCommand::NOHELP = "(no help, sorry)";
+
 /******************************************************************************
  *
  * TclCommandInterp
@@ -595,7 +597,7 @@ TclCommand::cmd_set(int objc, Tcl_Obj** objv, Tcl_Interp* interp)
 // boilerplate code
 #define BIND_FUNCTIONS(_fn, _type, _typecode)                           \
 void                                                                    \
-_fn(const char* name, _type* val, char *help)                           \
+_fn(const char* name, _type* val, const char* help)                     \
 {                                                                       \
     if (bindings_.find(name) != bindings_.end())                        \
     {                                                                   \
@@ -610,7 +612,7 @@ _fn(const char* name, _type* val, char *help)                           \
 }                                                                       \
                                                                         \
 void                                                                    \
-_fn(const char* name, _type* val, _type initval, char *help)            \
+_fn(const char* name, _type* val, _type initval, const char* help)      \
 {                                                                       \
     *val = initval;                                                     \
     if (bindings_.find(name) != bindings_.end())                        \
@@ -631,14 +633,8 @@ BIND_FUNCTIONS(TclCommand::bind_b, bool, BINDING_BOOL);
 BIND_FUNCTIONS(TclCommand::bind_addr, in_addr_t, BINDING_ADDR);
 
 void
-TclCommand::bind_s(const char* name, std::string* val, char *help)
-{
-    TclCommand::bind_s(name, val, 0, help);
-}
-
-void
 TclCommand::bind_s(const char* name, std::string* val,
-                   const char* initval, char *help)
+                   const char* initval, const char* help)
 {
     if (initval)
         val->assign(initval);

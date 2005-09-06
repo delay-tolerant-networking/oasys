@@ -382,51 +382,55 @@ protected:
     /**
      * Bind an integer to the set command
      */
-    void bind_i(const char* name, int* val, char *help);
-    void bind_i(const char* name, int* val, int initval, char *help);
+    static const char* NOHELP;
+    void bind_i(const char* name, int* val, const char *help = NOHELP);
+    void bind_i(const char* name, int* val, int initval,
+                const char* help = NOHELP);
 
     ///@{
     /**
      * Aliases for other integer types.
      */
-    void bind_i(const char* name, int16_t* val, char *help)
+    void bind_i(const char* name, int16_t* val, const char* help = NOHELP)
         { bind_i(name, (int*)val, help); }
-    void bind_i(const char* name, int8_t* val, char *help)
+    void bind_i(const char* name, int8_t* val, const char* help = NOHELP)
         { bind_i(name, (int*)val, help); }
-    void bind_i(const char* name, u_int32_t* val, char *help)
+    void bind_i(const char* name, u_int32_t* val, const char* help = NOHELP)
         { bind_i(name, (int*)val, help); }
-    void bind_i(const char* name, u_int16_t* val, char *help)
+    void bind_i(const char* name, u_int16_t* val, const char* help = NOHELP)
         { bind_i(name, (int*)val, help); }
-    void bind_i(const char* name, u_int8_t* val, char *help)
+    void bind_i(const char* name, u_int8_t* val, const char* help = NOHELP)
         { bind_i(name, (int*)val, help); }
     ///@}
     
     /**
      * Bind a double to the set command
      */
-    void bind_d(const char* name, double* val, char *help);
-    void bind_d(const char* name, double* val, double initval, char *help);
+    void bind_d(const char* name, double* val, const char* help = NOHELP);
+    void bind_d(const char* name, double* val, double initval,
+                const char* help = NOHELP);
 
     /**
      * Bind a boolean to the set command
      */
-    void bind_b(const char* name, bool* val, char *help);
-    void bind_b(const char* name, bool* val, bool initval, char *help);
+    void bind_b(const char* name, bool* val, const char* help = NOHELP);
+    void bind_b(const char* name, bool* val, bool initval,
+                const char* help = NOHELP);
     
     /**
      * Bind a string to the set command
      */
-    void bind_s(const char* name, std::string* str, char *help);
     void bind_s(const char* name, std::string* str,
-                const char* initval, char *help);
+                const char* initval = NULL, const char* help = NOHELP);
 
     /**
      * Bind an ip addr for the set command, allowing the user to pass
      * a hostname and/or a dotted quad style address
      */
-    void bind_addr(const char* name, in_addr_t* addrp, char *help);
     void bind_addr(const char* name, in_addr_t* addrp,
-                   in_addr_t initval, char *help);
+                   const char* help = NOHELP);
+    void bind_addr(const char* name, in_addr_t* addrp,
+                   in_addr_t initval, const char* help = NOHELP);
 
     /**
      * Unbind a variable.
