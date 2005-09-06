@@ -414,6 +414,11 @@ TclCommand::TclCommand(const char* name, const char* theNamespace)
     }
 
     name_ += name;
+
+    // workaround for bug seen with Cygwin 3.4.4-1, where
+    // help_ ends up with two copies of the text after a
+    // buffer grow operation.
+    help_.reserve(1024);
 }
 
 TclCommand::~TclCommand()
@@ -590,7 +595,7 @@ TclCommand::cmd_set(int objc, Tcl_Obj** objv, Tcl_Interp* interp)
 // boilerplate code
 #define BIND_FUNCTIONS(_fn, _type, _typecode)                           \
 void                                                                    \
-_fn(const char* name, _type* val)                                       \
+_fn(const char* name, _type* val, char *help)                           \
 {                                                                       \
     if (bindings_.find(name) != bindings_.end())                        \
     {                                                                   \
@@ -600,10 +605,12 @@ _fn(const char* name, _type* val)                                       \
     log_debug("creating %s binding for %s -> %p", #_type, name, val);   \
                                                                         \
     bindings_[name] = new Binding(_typecode, val);                      \
+    StringBuffer subcmd("set %s", name);                                \
+    add_to_help(subcmd.c_str(), help);                                  \
 }                                                                       \
                                                                         \
 void                                                                    \
-_fn(const char* name, _type* val, _type initval)                        \
+_fn(const char* name, _type* val, _type initval, char *help)            \
 {                                                                       \
     *val = initval;                                                     \
     if (bindings_.find(name) != bindings_.end())                        \
@@ -614,6 +621,8 @@ _fn(const char* name, _type* val, _type initval)                        \
     log_debug("creating %s binding for %s -> %p", #_type, name, val);   \
                                                                         \
     bindings_[name] = new Binding(_typecode, val);                      \
+    StringBuffer subcmd("set %s", name);                                \
+    add_to_help(subcmd.c_str(), help);                                  \
 }
 
 BIND_FUNCTIONS(TclCommand::bind_i, int, BINDING_INT);
@@ -622,8 +631,14 @@ BIND_FUNCTIONS(TclCommand::bind_b, bool, BINDING_BOOL);
 BIND_FUNCTIONS(TclCommand::bind_addr, in_addr_t, BINDING_ADDR);
 
 void
+TclCommand::bind_s(const char* name, std::string* val, char *help)
+{
+    TclCommand::bind_s(name, val, 0, help);
+}
+
+void
 TclCommand::bind_s(const char* name, std::string* val,
-                   const char* initval)
+                   const char* initval, char *help)
 {
     if (initval)
         val->assign(initval);
@@ -635,6 +650,8 @@ TclCommand::bind_s(const char* name, std::string* val,
     log_debug("creating string binding for %s -> %p", name, val);
 
     bindings_[name] = new Binding(BINDING_STRING, val);
+    StringBuffer subcmd("set %s", name);
+    add_to_help(subcmd.c_str(), help);
 }
 
 void

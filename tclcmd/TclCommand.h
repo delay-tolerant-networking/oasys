@@ -322,6 +322,11 @@ public:
      */
     virtual const char* help_string() { return help_.c_str(); }
 
+    /**
+     * Does this command have any bindings?
+     */
+    bool hasBindings() { return ! bindings_.empty(); }
+
 protected:
     friend class TclCommandInterp;
     
@@ -377,45 +382,51 @@ protected:
     /**
      * Bind an integer to the set command
      */
-    void bind_i(const char* name, int* val);
-    void bind_i(const char* name, int* val, int initval);
+    void bind_i(const char* name, int* val, char *help);
+    void bind_i(const char* name, int* val, int initval, char *help);
 
     ///@{
     /**
      * Aliases for other integer types.
      */
-    void bind_i(const char* name, int16_t* val)   { bind_i(name, (int*)val); }
-    void bind_i(const char* name, int8_t* val)    { bind_i(name, (int*)val); }
-    void bind_i(const char* name, u_int32_t* val) { bind_i(name, (int*)val); }
-    void bind_i(const char* name, u_int16_t* val) { bind_i(name, (int*)val); }
-    void bind_i(const char* name, u_int8_t* val)  { bind_i(name, (int*)val); }
+    void bind_i(const char* name, int16_t* val, char *help)
+        { bind_i(name, (int*)val, help); }
+    void bind_i(const char* name, int8_t* val, char *help)
+        { bind_i(name, (int*)val, help); }
+    void bind_i(const char* name, u_int32_t* val, char *help)
+        { bind_i(name, (int*)val, help); }
+    void bind_i(const char* name, u_int16_t* val, char *help)
+        { bind_i(name, (int*)val, help); }
+    void bind_i(const char* name, u_int8_t* val, char *help)
+        { bind_i(name, (int*)val, help); }
     ///@}
     
     /**
      * Bind a double to the set command
      */
-    void bind_d(const char* name, double* val);
-    void bind_d(const char* name, double* val, double initval);
+    void bind_d(const char* name, double* val, char *help);
+    void bind_d(const char* name, double* val, double initval, char *help);
 
     /**
      * Bind a boolean to the set command
      */
-    void bind_b(const char* name, bool* val);
-    void bind_b(const char* name, bool* val, bool initval);
+    void bind_b(const char* name, bool* val, char *help);
+    void bind_b(const char* name, bool* val, bool initval, char *help);
     
     /**
      * Bind a string to the set command
      */
+    void bind_s(const char* name, std::string* str, char *help);
     void bind_s(const char* name, std::string* str,
-                const char* initval = 0);
+                const char* initval, char *help);
 
     /**
      * Bind an ip addr for the set command, allowing the user to pass
      * a hostname and/or a dotted quad style address
      */
-    void bind_addr(const char* name, in_addr_t* addrp);
+    void bind_addr(const char* name, in_addr_t* addrp, char *help);
     void bind_addr(const char* name, in_addr_t* addrp,
-                   in_addr_t initval);
+                   in_addr_t initval, char *help);
 
     /**
      * Unbind a variable.
@@ -499,8 +510,9 @@ protected:
         help_.append(name());
         help_.append(" ");
         help_.append(subcmd);
-        help_.append(": ");
+        help_.append("\n\t");
         help_.append(help_str);
+        help_.append("\n");
     }
 };
 

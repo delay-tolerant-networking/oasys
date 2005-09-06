@@ -44,7 +44,8 @@ namespace oasys {
 LogCommand::LogCommand()
     : TclCommand("log")
 {
-    bind_s("logfile", &Log::instance()->logfile_);
+    bind_s("logfile", &Log::instance()->logfile_,
+           "The pathname to the logfile.");
 }
 
 const char*

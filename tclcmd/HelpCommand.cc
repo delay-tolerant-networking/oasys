@@ -58,11 +58,18 @@ HelpCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
 
     if (argc == 1) {
         StringBuffer buf;
-        buf.append("for help on a particular command, type help <cmd>...\n");
-        buf.append("registered commands: ");
+        int len;
+
+        buf.append("For help on a particular command, type \"help <cmd>\".\n");
+        buf.append("The registered commands are: \n\t");
                    
         for (iter = cmdlist->begin(); iter != cmdlist->end(); iter++) {
-            buf.appendf("%s ", (*iter)->name());
+            if (len > 60) {
+                buf.appendf("\n\t");
+                len = 0;
+            }
+
+            len += buf.appendf("%s ", (*iter)->name());
         }
 
         set_result(buf.c_str());
@@ -71,10 +78,20 @@ HelpCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
     } else if (argc == 2) {
         for (iter = cmdlist->begin(); iter != cmdlist->end(); iter++) {
             if (!strcmp((*iter)->name(), argv[1])) {
-                if ((*iter)->help_string()[0] != '\0')
-                    resultf("%s", ((*iter)->help_string()));
-                else
-                    resultf("(no help, sorry)");
+                const char *help = (*iter)->help_string();
+                const char *binfo = "";
+
+                if (!help || (help && help[0] == '\0')) {
+                    help = "(no help, sorry)";
+                }
+
+                if ((*iter)->hasBindings()) {
+                    StringBuffer buf("%s info\n\t%s", (*iter)->name(),
+                                     "Lists settable parameters.\n");
+                    binfo = buf.c_str();
+                }
+
+                resultf("%s%s", binfo, help);
                 
                 return TCL_OK;
             }
