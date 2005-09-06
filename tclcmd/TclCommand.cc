@@ -48,8 +48,6 @@
 
 namespace oasys {
 
-const char* TclCommand::NOHELP = "(no help, sorry)";
-
 /******************************************************************************
  *
  * TclCommandInterp

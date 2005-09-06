@@ -50,6 +50,7 @@
 #include "../compat/inttypes.h"
 #include "../debug/DebugUtils.h"
 #include "../util/Singleton.h"
+#include "../util/StringBuffer.h"
 
 namespace oasys {
 
@@ -331,7 +332,7 @@ protected:
     friend class TclCommandInterp;
     
     std::string name_;          ///< Name of the module
-    std::string help_;		///< Help string
+    StringBuffer help_;		///< Help string
     bool do_builtins_;		///< Set to false if a module doesn't want
                                 ///< builtin commands like "set"
 
@@ -382,55 +383,54 @@ protected:
     /**
      * Bind an integer to the set command
      */
-    static const char* NOHELP;
-    void bind_i(const char* name, int* val, const char *help = NOHELP);
+    void bind_i(const char* name, int* val, const char *help = NULL);
     void bind_i(const char* name, int* val, int initval,
-                const char* help = NOHELP);
+                const char* help = NULL);
 
     ///@{
     /**
      * Aliases for other integer types.
      */
-    void bind_i(const char* name, int16_t* val, const char* help = NOHELP)
+    void bind_i(const char* name, int16_t* val, const char* help = NULL)
         { bind_i(name, (int*)val, help); }
-    void bind_i(const char* name, int8_t* val, const char* help = NOHELP)
+    void bind_i(const char* name, int8_t* val, const char* help = NULL)
         { bind_i(name, (int*)val, help); }
-    void bind_i(const char* name, u_int32_t* val, const char* help = NOHELP)
+    void bind_i(const char* name, u_int32_t* val, const char* help = NULL)
         { bind_i(name, (int*)val, help); }
-    void bind_i(const char* name, u_int16_t* val, const char* help = NOHELP)
+    void bind_i(const char* name, u_int16_t* val, const char* help = NULL)
         { bind_i(name, (int*)val, help); }
-    void bind_i(const char* name, u_int8_t* val, const char* help = NOHELP)
+    void bind_i(const char* name, u_int8_t* val, const char* help = NULL)
         { bind_i(name, (int*)val, help); }
     ///@}
     
     /**
      * Bind a double to the set command
      */
-    void bind_d(const char* name, double* val, const char* help = NOHELP);
+    void bind_d(const char* name, double* val, const char* help = NULL);
     void bind_d(const char* name, double* val, double initval,
-                const char* help = NOHELP);
+                const char* help = NULL);
 
     /**
      * Bind a boolean to the set command
      */
-    void bind_b(const char* name, bool* val, const char* help = NOHELP);
+    void bind_b(const char* name, bool* val, const char* help = NULL);
     void bind_b(const char* name, bool* val, bool initval,
-                const char* help = NOHELP);
+                const char* help = NULL);
     
     /**
      * Bind a string to the set command
      */
     void bind_s(const char* name, std::string* str,
-                const char* initval = NULL, const char* help = NOHELP);
+                const char* initval = NULL, const char* help = NULL);
 
     /**
      * Bind an ip addr for the set command, allowing the user to pass
      * a hostname and/or a dotted quad style address
      */
     void bind_addr(const char* name, in_addr_t* addrp,
-                   const char* help = NOHELP);
+                   const char* help = NULL);
     void bind_addr(const char* name, in_addr_t* addrp,
-                   in_addr_t initval, const char* help = NOHELP);
+                   in_addr_t initval, const char* help = NULL);
 
     /**
      * Unbind a variable.
@@ -511,11 +511,10 @@ protected:
      */
     void add_to_help(const char* subcmd, const char* help_str)
     {
-        help_.append(name());
-        help_.append(" ");
-        help_.append(subcmd);
-        help_.append("\n\t");
-        help_.append(help_str);
+        help_.appendf("%s %s\n", name(), subcmd);
+        if (help_str) {
+            help_.appendf("\t%s\n", help_str);
+        }
         help_.append("\n");
     }
 };
