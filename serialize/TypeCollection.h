@@ -227,7 +227,7 @@ private:
  * Macro to use to define a class to be used by the typecollection.
  */
 #define TYPE_COLLECTION_DEFINE(_collection, _class, _typecode)          \
-    TypeCollectionDispatch<_collection, _class>                         \
+    oasys::TypeCollectionDispatch<_collection, _class>                  \
         _class ## TypeCollection(_typecode, #_collection "::" #_class);
 
 /**
