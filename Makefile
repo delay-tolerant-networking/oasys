@@ -44,7 +44,6 @@ SERIALIZE_SRCS :=				\
 	serialize/SQLSerialize.cc		\
 
 STORAGE_SRCS :=					\
-	storage/DurableStore.cc			\
 	storage/DurableStoreImpl.cc		\
 	storage/BerkeleyDBStore.cc		\
 	storage/StorageConfig.cc		\
