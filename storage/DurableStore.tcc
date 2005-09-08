@@ -48,9 +48,20 @@ DurableStore::get_table(MultiTypeDurableTable<_BaseType, _Collection>** table,
                         DurableObjectCache* cache)
 {
     int err;
+    PrototypeVector prototypes;
+
+    // XXX/demmer this needs to fold into the TypeCollection proper
+    // somehow since the typecode range need not be tightly packed (as
+    // this code assumes). instead, TypeCollection::reg should build
+    // up the vector of prototypes once and have it as a member
+    // variable. since we don't need this for berkeley db (only needed
+    // for sql), just punt on figure this out
+    
+/*
     TypeCollection<_Collection> *collection =
         TypeCollection<_Collection>::instance();
     
+
     typename TypeCollection<_Collection>::TypeCode_t code, low, high;
     _BaseType* obj;
 
@@ -62,7 +73,6 @@ DurableStore::get_table(MultiTypeDurableTable<_BaseType, _Collection>** table,
     // and stuff it in the vector of protypes. Note that the vector
     // stores auto_ptr instances so the objects are cleaned up
     // automatically when the vector is destroyed.
-    PrototypeVector prototypes;
 
     for (code = low; code <= high; ++code)
     {
@@ -83,6 +93,7 @@ DurableStore::get_table(MultiTypeDurableTable<_BaseType, _Collection>** table,
             return DS_ERR;
         }
     }
+*/
 
     DurableTableImpl* table_impl;
     err = impl_->get_table(&table_impl, table_name, flags, prototypes);
