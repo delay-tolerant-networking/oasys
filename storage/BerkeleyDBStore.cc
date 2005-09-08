@@ -155,7 +155,7 @@ BerkeleyDBStore::init(StorageConfig* cfg)
         dbenv_->set_errfile(dbenv_, err_log_);
     }
 
-    log_info("using dbdir = %s, errlog = %s", 
+    log_info("initializing using dbdir = %s, errlog = %s", 
              cfg->dbdir_.c_str(), err_filename.c_str());
 
     err = dbenv_->open(
