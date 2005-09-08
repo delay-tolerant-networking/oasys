@@ -421,7 +421,13 @@ protected:
      * Bind a string to the set command
      */
     void bind_s(const char* name, std::string* str,
-                const char* initval = NULL, const char* help = NULL);
+                const char* initval, const char* help);
+
+    void bind_s(const char* name, std::string* str,
+                const char* help = NULL)
+    {
+        return bind_s(name, str, NULL, help);
+    }
 
     /**
      * Bind an ip addr for the set command, allowing the user to pass
