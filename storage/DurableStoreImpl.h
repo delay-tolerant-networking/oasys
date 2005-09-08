@@ -35,8 +35,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _OASYS_DURABLE_STORE_IMPL_H_
-#define _OASYS_DURABLE_STORE_IMPL_H_
+
+#ifndef __OASYS_DURABLE_STORE_INTERNAL_HEADER__
+#error DurableStoreImpl.h must only be included from within DurableStore.h
+#endif
 
 class StorageConfig;
 
@@ -131,5 +133,3 @@ protected:
 private:
     std::string table_name_;
 };
-
-#endif /* _OASYS_DURABLE_STORE_IMPL_H_ */

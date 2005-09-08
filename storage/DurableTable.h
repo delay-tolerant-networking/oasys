@@ -37,7 +37,7 @@
  */
 
 
-#ifndef __OASYS_DURABLE_STORE_H__
+#ifndef __OASYS_DURABLE_STORE_INTERNAL_HEADER__
 #error DurableTable.h must only be included from within DurableStore.h
 #endif
 

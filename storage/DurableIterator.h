@@ -37,9 +37,10 @@
  */
 
 
-#ifndef __OASYS_DURABLE_STORE_H__
+#ifndef __OASYS_DURABLE_STORE_INTERNAL_HEADER__
 #error DurableIterator.h must only be included from within DurableStore.h
 #endif
+
 
 /**
  * Abstract base class for a table iterator. Note: It is important

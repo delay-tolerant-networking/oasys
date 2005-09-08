@@ -80,9 +80,11 @@ enum DurableStoreFlags_t {
 
 // Pull in the various related class definitions (and template class
 // implementations) after the above declarations
+#define  __OASYS_DURABLE_STORE_INTERNAL_HEADER__
 #include "DurableStoreImpl.h"
 #include "DurableIterator.h"
 #include "DurableTable.h"
+#undef   __OASYS_DURABLE_STORE_INTERNAL_HEADER__
 
 /**
  * Interface for the generic datastore.
