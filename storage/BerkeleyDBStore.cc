@@ -265,11 +265,14 @@ BerkeleyDBStore::get_table(DurableTableImpl**  table,
         return DS_ERR;
     }
     
-    // if the user requested that the table be created, add the entry
-    // to the meta table, and calculate the db type and creation flags
+    // calculate the db type and creation flags
     db_flags = 0;
     if (flags & DS_CREATE) {
         db_flags |= DB_CREATE;
+
+        if (flags & DS_EXCL) {
+            db_flags |= DB_EXCL;
+        }
 
         if (((flags & DS_BTREE) != 0) && ((flags & DS_HASH) != 0)) {
             PANIC("both DS_HASH and DS_BTREE were specified");
@@ -287,10 +290,9 @@ BerkeleyDBStore::get_table(DurableTableImpl**  table,
         {
             db_type = DB_BTREE;
         }
-    }
 
-    if (flags & DS_EXCL) {
-        db_flags |= DB_EXCL;
+    } else {
+        db_type = DB_UNKNOWN;
     }
     
     err = db->open(db, NO_TX, db_name_.c_str(), name.c_str(),
