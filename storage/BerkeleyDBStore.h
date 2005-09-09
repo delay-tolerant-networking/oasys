@@ -140,12 +140,15 @@ public:
             int flags);
     
     int del(const SerializableObject& key);
+
+    size_t size();
     
     DurableIterator* iter();
     /// @}
 
 private:
     DB*              db_;
+    DBTYPE	     db_type_;
     BerkeleyDBStore* store_;
 
     //! This may cause thread serialization problems.
@@ -154,7 +157,7 @@ private:
 
     //! Only BerkeleyDBStore can create BerkeleyDBTables
     BerkeleyDBTable(BerkeleyDBStore* store, 
-                    std::string name, DB* db);
+                    std::string name, DB* db, DBTYPE type);
 
     /// Whether a specific key exists in the table.
     int key_exists(const void* key, size_t key_len);

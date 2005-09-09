@@ -81,6 +81,11 @@ public:
     int del(const SerializableObject& key);
 
     /**
+     * Return the number of elements in the table.
+     */
+    size_t size();
+
+    /**
      * Return a newly allocated iterator for the table. Caller has the
      * responsibility to delete it once finished.
      */

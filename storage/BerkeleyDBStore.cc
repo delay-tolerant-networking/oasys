@@ -313,10 +313,18 @@ BerkeleyDBStore::get_table(DurableTableImpl**  table,
         log_err("DB internal error in get_table: %s", db_strerror(err));
         return DS_ERR;
     }
-    
-    log_debug("get_table -- opened table %s", name.c_str());
 
-    *table = new BerkeleyDBTable(this, name, db);
+    if (db_type == DB_UNKNOWN) {
+        err = db->get_type(db, &db_type);
+        if (err != 0) {
+            log_err("DB internal error in get_type: %s", db_strerror(err));
+            return DS_ERR;
+        }
+    }
+    
+    log_debug("get_table -- opened table %s type %d", name.c_str(), db_type);
+
+    *table = new BerkeleyDBTable(this, name, db, db_type);
 
     return 0;
 }
@@ -382,8 +390,15 @@ BerkeleyDBStore::get_meta_table(BerkeleyDBTable** table)
         log_err("unable to open metatable - DB: %s", db_strerror(err));
         return DS_ERR;
     }
+
+    DBTYPE type;
+    err = db->get_type(db, &type);
+    if (err != 0) {
+        log_err("unable to get metatable type - DB: %s", db_strerror(err));
+        return DS_ERR;
+    }
     
-    *table = new BerkeleyDBTable(this, META_TABLE_NAME, db);
+    *table = new BerkeleyDBTable(this, META_TABLE_NAME, db, type);
     
     return 0;
 }
@@ -420,8 +435,8 @@ BerkeleyDBStore::release_table(const std::string& table)
  *
  *****************************************************************************/
 BerkeleyDBTable::BerkeleyDBTable(BerkeleyDBStore* store, 
-                                 std::string name, DB* db)
-    : DurableTableImpl(name), db_(db), store_(store)
+                                 std::string name, DB* db, DBTYPE db_type)
+    : DurableTableImpl(name), db_(db), db_type_(db_type), store_(store)
 {
     logpathf("/berkeleydb/table(%s)", name.c_str());
     store_->acquire_table(name);
@@ -586,6 +601,48 @@ BerkeleyDBTable::del(const SerializableObject& key)
     }
 
     return 0;
+}
+
+size_t
+BerkeleyDBTable::size()
+{
+    int err;
+    int flags = 0;
+
+    union {
+        void* ptr;
+        struct __db_bt_stat* btree_stats;
+        struct __db_h_stat*  hash_stats;
+    } stats;
+
+    stats.ptr = 0;
+    
+    err = db_->stat(db_, NO_TX, &stats.ptr, flags);
+
+    if (err != 0) {
+        log_crit("error in DB::stat: %d", errno);
+        ASSERT(stats.ptr == 0);
+        return 0;
+    }
+    
+    ASSERT(stats.ptr != 0);
+
+    size_t ret;
+    
+    switch(db_type_) {
+    case DB_BTREE:
+        ret = stats.btree_stats->bt_nkeys;
+        break;
+    case DB_HASH:
+        ret = stats.hash_stats->hash_nkeys;
+        break;
+    default:
+        PANIC("illegal value for db_type %d", db_type_);
+    }
+
+    free(stats.ptr);
+
+    return ret;
 }
 
 DurableIterator*

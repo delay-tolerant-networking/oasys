@@ -36,6 +36,8 @@ DECLARE_TEST(DBTestInit) {
 }
 
 DECLARE_TEST(DBInit) {
+    StringBuffer cmd("mkdir -p %s", g_config_dir);
+    system(cmd.c_str());
     DurableStoreImpl* impl = new BerkeleyDBStore();
     DurableStore* store    = new DurableStore(impl);
     impl->init(g_config);
@@ -152,8 +154,10 @@ DECLARE_TEST(SingleTypePut) {
     IntShim    key(99);
     StringShim data("data");
 
+    CHECK(table->size() == 0);
     CHECK(table->put(key, &data, 0) == DS_NOTFOUND);
     CHECK(table->put(key, &data, DS_CREATE) == 0);
+    CHECK(table->size() == 1);
     CHECK(table->put(key, &data, 0) == 0);
     CHECK(table->put(key, &data, DS_CREATE) == 0);
     CHECK(table->put(key, &data, DS_CREATE | DS_EXCL) == DS_EXISTS);
@@ -177,7 +181,9 @@ DECLARE_TEST(SingleTypeGet) {
     StringShim data("data");
     StringShim* data2 = 0;
 
+    CHECK(table->size() == 0);
     CHECK(table->put(key, &data, DS_CREATE | DS_EXCL) == 0);
+    CHECK(table->size() == 1);
     
     CHECK(table->get(key, &data2) == 0);
     CHECK(data2 != 0);
@@ -218,6 +224,7 @@ DECLARE_TEST(SingleTypeDelete) {
     StringShim* data2;
 
     CHECK(table->put(key, &data, DS_CREATE | DS_EXCL) == 0);
+    CHECK(table->size() == 1);
     
     CHECK(table->get(key, &data2) == 0);
     CHECK(data2 != 0);
@@ -226,11 +233,13 @@ DECLARE_TEST(SingleTypeDelete) {
     data2 = 0;
     
     CHECK(table->del(key) == 0);
+    CHECK(table->size() == 0);
 
     CHECK(table->get(key, &data2) == DS_NOTFOUND);
     CHECK(data2 == 0);
 
     CHECK(table->del(key2) == DS_NOTFOUND);
+    CHECK(table->size() == 0);
     
     delete_z(table);
     delete_z(store);
@@ -256,6 +265,7 @@ DECLARE_TEST(SingleTypeMultiObject) {
         
 	CHECK(table->put(IntShim(i), &data, DS_CREATE | DS_EXCL) == 0);
     }
+    CHECK((int)table->size() == num_objs);
     
     delete_z(table);
     delete_z(store);
@@ -279,6 +289,7 @@ DECLARE_TEST(SingleTypeMultiObject) {
 	CHECK(table->get(key, &data) == 0);
         CHECK_EQUALSTR(buf.c_str(), data->value().c_str());
     }
+    CHECK((int)table->size() == num_objs);
     delete_z(table);
     delete_z(store);
 

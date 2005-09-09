@@ -112,6 +112,11 @@ public:
     virtual int del(const SerializableObject& key) = 0;
 
     /**
+     * Return the number of elements in the table.
+     */
+    virtual size_t size() = 0;
+    
+    /**
      * Get an iterator to this table. 
      *
      * @return The new iterator. Caller deletes this pointer.

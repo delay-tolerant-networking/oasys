@@ -73,3 +73,12 @@ DurableTable::del(const SerializableObject& key)
 {
     return impl_->del(key);
 }
+
+/**
+ * Return the number of elements in the table.
+ */
+inline size_t
+DurableTable::size()
+{
+    return impl_->size();
+}
