@@ -171,7 +171,7 @@ public:
     /**
      * Accessor for the action type.
      */
-    action_t action() { return action_; }
+    action_t action_code() { return action_; }
     
     /**
      * Accessor for the context.
