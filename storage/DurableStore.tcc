@@ -1,4 +1,22 @@
 
+/*!
+ * Pretty print for durable store errors
+ */
+inline const char* durable_strerror(int r)
+{
+    DurableStoreResult_t result = (DurableStoreResult_t)r;
+    
+    switch(result) {
+    case DS_OK:       return "success";
+    case DS_NOTFOUND: return "element not found";
+    case DS_BUFSIZE:  return "buffer too small.";
+    case DS_BUSY:     return "table still open, can't delete";
+    case DS_EXISTS:   return "key already exists";
+    case DS_ERR:      return "unknown error";
+    }
+    NOTREACHED;
+}
+
 /**
  * Get a new handle on a table.
  *

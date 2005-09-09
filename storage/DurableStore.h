@@ -69,6 +69,11 @@ enum DurableStoreResult_t {
 };
 
 /*!
+ * Pretty print for durable store errors
+ */
+const char* durable_strerror(int result);
+
+/*!
  * Enumeration for flags to the datastore functions.
  */
 enum DurableStoreFlags_t {
