@@ -87,10 +87,10 @@ level2str_t log_levelnames[] =
 };
 
 Log* Log::instance_ = NULL;
+bool Log::inited_   = false;
 
 Log::Log()
     : output_flags_(OUTPUT_TIME),
-      inited_(false), 
       logfd_(-1),
       default_threshold_(LOG_DEFAULT_THRESHOLD)
 {

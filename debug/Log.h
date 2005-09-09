@@ -186,6 +186,14 @@ public:
     {
         init("-", defaultlvl);
     }
+
+    /**
+     * Hook to determine if logging is initialized yet.
+     */
+    static bool initialized()
+    {
+        return inited_;
+    }
     
     /**
      *  Sets the time to print for the logging 
@@ -333,7 +341,7 @@ private:
      */
     void print_rules();
 
-    bool inited_;		///< Flag to ensure one-time intialization
+    static bool inited_;	///< Flag to ensure one-time intialization
     std::string logfile_;	///< Log output file (- for stdout)
     int logfd_;			///< Output file descriptor
     RuleList* rule_list_;	///< List of logging rules
