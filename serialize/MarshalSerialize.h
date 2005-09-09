@@ -211,8 +211,20 @@ public:
 
     /** @return Measured size */
     size_t size() { return size_; }
+
+    /// @{
+    /// Static functions to simply return the serialized sizes. Called
+    /// from the various process() variants.
+    static size_t get_size(u_int32_t* i)           { return 4; }
+    static size_t get_size(u_int16_t* i)           { return 2; }
+    static size_t get_size(u_int8_t* i)            { return 1; }
+    static size_t get_size(bool* b)                { return 1; }
+    static size_t get_size(u_char* bp, size_t len) { return len; }
+    static size_t get_size(std::string* s)         { return s->length() + 4; }
+    /// @}
     
-    // Virtual functions inherited from SerializeAction
+    /// @{
+    /// Virtual functions inherited from SerializeAction
     void begin_action();
     void process(const char* name, u_int32_t* i);
     void process(const char* name, u_int16_t* i);
@@ -221,6 +233,7 @@ public:
     void process(const char* name, u_char* bp, size_t len);
     void process(const char* name, u_char** bp, size_t* lenp, int flags);
     void process(const char* name, std::string* s);
+    /// @}
 
 private:
     size_t size_;

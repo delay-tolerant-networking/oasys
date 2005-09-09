@@ -412,31 +412,37 @@ MarshalSize::begin_action()
 void
 MarshalSize::process(const char* name, u_int32_t* i)
 {
-    size_ += 4;
+    size_ += get_size(i);
 }
 
 void
 MarshalSize::process(const char* name, u_int16_t* i)
 {
-    size_ += 2;
+    size_ += get_size(i);
 }
 
 void
 MarshalSize::process(const char* name, u_int8_t* i)
 {
-    size_ += 1;
+    size_ += get_size(i);
 }
 
 void
 MarshalSize::process(const char* name, bool* b)
 {
-    size_ += 1;
+    size_ += get_size(b);
 }
 
 void
 MarshalSize::process(const char* name, u_char* bp, size_t len)
 {
-    size_ += len;
+    size_ += get_size(bp, len);
+}
+
+void
+MarshalSize::process(const char* name, std::string* s)
+{
+    size_ += get_size(s);
 }
 
 void
@@ -449,13 +455,6 @@ MarshalSize::process(const char* name, u_char** bp,
         size_ += *lenp + sizeof(u_int32_t);
     }
 }
-
-void
-MarshalSize::process(const char* name, std::string* s)
-{
-    size_ += s->length() + 4;
-}
-
 
 
 /******************************************************************************
