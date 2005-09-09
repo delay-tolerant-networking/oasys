@@ -52,7 +52,7 @@ public:
     
     // virtual from SerializableObject
     void serialize(SerializeAction* a) {
-	a->process(name_.c_str(), (int32_t*)&value_);
+	a->process(name_.c_str(), &value_);
     }
 
     int32_t value() const { return value_; }
@@ -62,6 +62,26 @@ public:
 private:
     std::string name_;
     int32_t     value_;
+};
+
+class UIntShim : public SerializableObject {
+public:
+    UIntShim(u_int32_t value = 0, const char* name = "u_int")
+        : name_(name), value_(value) {}
+    UIntShim(const Builder& b) {}
+    
+    // virtual from SerializableObject
+    void serialize(SerializeAction* a) {
+	a->process(name_.c_str(), &value_);
+    }
+
+    u_int32_t value() const { return value_; }
+    void assign(u_int32_t value) { value_ = value; }
+
+    
+private:
+    std::string name_;
+    u_int32_t     value_;
 };
 
 class StringShim : public SerializableObject {
