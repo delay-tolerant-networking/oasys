@@ -98,7 +98,7 @@ TYPE_COLLECTION_DEFINE(TestC, Bar, 2);
 DECLARE_TEST(TypeCollection1) {
     Foo* foo;
 
-    CHECK(TypeCollection<TestC>::instance()->
+    CHECK(TypeCollectionInstance<TestC>::instance()->
           new_object(TypeCollectionCode<TestC, Foo>::TYPECODE, &foo) == 0);
     CHECK_EQUAL(foo->id_, Foo::ID);
     CHECK_EQUALSTR(foo->name(), "foo");
@@ -111,7 +111,7 @@ DECLARE_TEST(TypeCollection1) {
 DECLARE_TEST(TypeCollection2) {
     Bar* bar;
 
-    CHECK(TypeCollection<TestC>::instance()->
+    CHECK(TypeCollectionInstance<TestC>::instance()->
           new_object(TypeCollectionCode<TestC, Bar>::TYPECODE, &bar) == 0);
     CHECK(bar->id_ == Bar::ID);
     CHECK_EQUALSTR(bar->name(), "bar");
@@ -122,7 +122,7 @@ DECLARE_TEST(TypeCollection2) {
 
 DECLARE_TEST(TypeCollectionBogusCode) {
     Obj* obj = 0;
-    CHECK(TypeCollection<TestC>::instance()->new_object(9999, &obj) == 
+    CHECK(TypeCollectionInstance<TestC>::instance()->new_object(9999, &obj) == 
           TypeCollectionErr::TYPECODE);
     CHECK(obj == 0);
     
@@ -131,7 +131,7 @@ DECLARE_TEST(TypeCollectionBogusCode) {
 
 DECLARE_TEST(TypeCollectionMismatchCode) {
     Foo* foo = 0;
-    CHECK(TypeCollection<TestC>::instance()->
+    CHECK(TypeCollectionInstance<TestC>::instance()->
           new_object(TypeCollectionCode<TestC, Bar>::TYPECODE, &foo) ==
           TypeCollectionErr::TYPECODE);
     CHECK(foo == 0);
@@ -141,7 +141,7 @@ DECLARE_TEST(TypeCollectionMismatchCode) {
 
 DECLARE_TEST(TypeCollectionGroup) {
     Obj* obj = 0;
-    CHECK(TypeCollection<TestC>::instance()->
+    CHECK(TypeCollectionInstance<TestC>::instance()->
           new_object(TypeCollectionCode<TestC, Foo>::TYPECODE, &obj) == 0);
     
     CHECK(obj != 0);
@@ -154,7 +154,7 @@ DECLARE_TEST(TypeCollectionGroup) {
 
 DECLARE_TEST(TypeCollectionNotInGroup) {
     Obj* obj = 0;
-    CHECK(TypeCollection<TestC>::instance()->
+    CHECK(TypeCollectionInstance<TestC>::instance()->
           new_object(TypeCollectionCode<TestC, Baz>::TYPECODE, &obj) ==
           TypeCollectionErr::TYPECODE);
     CHECK(obj == 0);
@@ -163,9 +163,9 @@ DECLARE_TEST(TypeCollectionNotInGroup) {
 }
 
 DECLARE_TEST(TypeCollectionNames) {
-    CHECK_EQUALSTR(TypeCollection<TestC>::instance()->type_name(1),
+    CHECK_EQUALSTR(TypeCollectionInstance<TestC>::instance()->type_name(1),
 	           "TestC::Foo");
-    CHECK_EQUALSTR(TypeCollection<TestC>::instance()->type_name(2),
+    CHECK_EQUALSTR(TypeCollectionInstance<TestC>::instance()->type_name(2),
 	           "TestC::Bar");
     
     return 0;

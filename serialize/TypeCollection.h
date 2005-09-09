@@ -73,6 +73,39 @@ public:
 template<typename _Collection, typename _Type> class TypeCollectionCode;
 
 /**
+ * Generic base class for templated type collections.
+ */
+class TypeCollection : public Logger {
+public:
+    typedef u_int32_t TypeCode_t;
+
+    enum {
+        UNKNOWN_TYPE = 0xffffffff
+    };
+    
+    TypeCollection() : Logger("/type_collection") {}
+
+    void reg(TypeCode_t typecode, TypeCollectionHelper* helper) {
+        ASSERT(dispatch_.find(typecode) == dispatch_.end());
+        dispatch_[typecode] = helper;
+    }
+
+    /**
+     * Return the stringified type code.
+     */
+    const char* type_name(TypeCode_t typecode) {
+	if(dispatch_.find(typecode) == dispatch_.end()) {
+	    return "";
+	} 
+
+	return dispatch_[typecode]->name();
+    }
+
+protected:
+    std::map<TypeCode_t, TypeCollectionHelper*> dispatch_;
+};
+
+/**
  * This templated type collection accomplishes severals things:
  *
  * - Enables different collections of type codes which can have the
@@ -119,27 +152,18 @@ template<typename _Collection, typename _Type> class TypeCollectionCode;
  * @endcode
  */
 template<typename _Collection>
-class TypeCollection : public Logger {
+class TypeCollectionInstance : public TypeCollection {
 public:    
-    typedef u_int32_t TypeCode_t;
-
-    TypeCollection<_Collection>() : Logger("/type_collection") {}
-
     /** 
      * Note: this should be multithread safe because the instance is
      * created by the static initializers of the program, at which
      * time there should be only one thread.
      */ 
-    static TypeCollection<_Collection>* instance() {
+    static TypeCollectionInstance<_Collection>* instance() {
         if(!instance_) {
-            instance_ = new TypeCollection<_Collection>();
+            instance_ = new TypeCollectionInstance<_Collection>();
         }        
         return instance_;
-    }
-
-    void reg(TypeCode_t typecode, TypeCollectionHelper* helper) {
-        ASSERT(dispatch_.find(typecode) == dispatch_.end());
-        dispatch_[typecode] = helper;
     }
 
     /**
@@ -172,20 +196,8 @@ public:
         return 0;
     }
 
-    /**
-     * Return the stringified type code.
-     */
-    const char* type_name(TypeCode_t typecode) {
-	if(dispatch_.find(typecode) == dispatch_.end()) {
-	    return "";
-	} 
-
-	return dispatch_[typecode]->name();
-    }
-
 private:
-    std::map<TypeCode_t, TypeCollectionHelper*> dispatch_;
-    static TypeCollection<_Collection>*     instance_;
+    static TypeCollectionInstance<_Collection>* instance_;
 };
 
 /**
@@ -197,11 +209,11 @@ template<typename _Collection, typename _Class>
 class TypeCollectionDispatch : public TypeCollectionHelper {
 public:
     /** Register upon creation. */
-    TypeCollectionDispatch<_Collection, _Class>
-	(typename TypeCollection<_Collection>::TypeCode_t typecode,
-	 const char* name) : name_(name)
+    TypeCollectionDispatch<_Collection, _Class>(TypeCollection::TypeCode_t typecode,
+                                                const char* name)
+        : name_(name)
     {
-        TypeCollection<_Collection>::instance()->reg(typecode, this);
+        TypeCollectionInstance<_Collection>::instance()->reg(typecode, this);
     }
 
     /** 
@@ -228,7 +240,7 @@ private:
  */
 #define TYPE_COLLECTION_DEFINE(_collection, _class, _typecode)          \
     oasys::TypeCollectionDispatch<_collection, _class>                  \
-        _class ## TypeCollection(_typecode, #_collection "::" #_class);
+        _class ## TypeCollectionInstance(_typecode, #_collection "::" #_class);
 
 /**
  * Define the typecollection C++ type -> typecode converter
@@ -271,9 +283,9 @@ namespace oasys {                                               \
 /**
  * Macro to wrap the annoyingly finicky template static instantiation.
  */
-#define TYPE_COLLECTION_INSTANTIATE(_Collection)        \
-template<> class oasys::TypeCollection<_Collection>*    \
-   oasys::TypeCollection<_Collection>::instance_ = 0
+#define TYPE_COLLECTION_INSTANTIATE(_Collection)                \
+template<> class oasys::TypeCollectionInstance<_Collection>*    \
+   oasys::TypeCollectionInstance<_Collection>::instance_ = 0
 
 }; // namespace oasys
 
