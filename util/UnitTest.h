@@ -84,8 +84,14 @@ public:
     UnitTester(std::string name) : 
         name_(name), passed_(0), failed_(0), input_(0) 
     {
-        Log::init(LOG_DEBUG);
+        // XXX/demmer move this to run_tests so it can read argv to
+        // get a -l <loglevel> argument and we don't always get debug
+        // output
+        if (! Log::initialized()) {
+            Log::init(LOG_DEBUG);
+        }
     }
+    
     virtual ~UnitTester() {}
 
     int run_tests(int argc, const char* argv[]) {
@@ -102,7 +108,7 @@ public:
         add_tests();
 
         if (in_tcl) {
-            print_header();
+            print_tcl_header();
         }
 
         int test_num = 1;
@@ -145,18 +151,23 @@ public:
         }
 
         if (in_tcl) {
-            print_tail();
+            print_tcl_tail();
+        } else {
+            print_results();
         }
 
         return 0;
     }
 
-    void print_header() {
+    void print_tcl_header() {
         fprintf(stderr, "set result { \"%s\" { ", name_.c_str());
     }
-    void print_tail() {
+    void print_tcl_tail() {
         fprintf(stderr, "} { %u %d %d %d } }\n", 
                 (u_int)tests_.size(), passed_, failed_, input_);
+    }
+    void print_results() {
+        printf("\nTests Complete:\n\t\t%u Passed\t%u Failed\n", passed_, failed_);
     }
 
 protected:
@@ -192,12 +203,14 @@ private:
     };                                                                          \
     int _name ## UnitTest::run()
 
-#define DECLARE_TEST_FILE(_UnitTesterClass, testname)   \
-int main(int argc, const char* argv[]) {                \
-    _UnitTesterClass test(testname);                    \
-                                                        \
-    return test.run_tests(argc, argv);                  \
-}                                               
+#define RUN_TESTER(_UnitTesterClass, testname, argc, argv)      \
+    _UnitTesterClass test(testname);                            \
+    return test.run_tests(argc, argv);
+
+#define DECLARE_TEST_FILE(_UnitTesterClass, testname)           \
+int main(int argc, const char* argv[]) {                        \
+    RUN_TESTER(_UnitTesterClass, testname, argc, argv);         \
+}
 
 #define DECLARE_TESTER(_name)                                   \
 class _name : public oasys::UnitTester {                        \
