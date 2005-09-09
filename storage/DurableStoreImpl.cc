@@ -37,9 +37,17 @@
  */
 
 #include "DurableStore.h"
+#include "debug/DebugUtils.h"
 #include "serialize/MarshalSerialize.h"
 
 namespace oasys {
+
+int
+DurableTableImpl::get_typecode(const SerializableObject& key,
+                               TypeCollection::TypeCode_t* typecode)
+{
+    PANIC("Generic DurableTableImpl get_type method called for multi-type tables");
+}
 
 size_t
 DurableTableImpl::flatten(const SerializableObject& key, 

@@ -136,9 +136,13 @@ public:
             SerializableObject* data);
     
     int put(const SerializableObject& key,
+            TypeCollection::TypeCode_t typecode,
             const SerializableObject* data,
             int flags);
     
+    int get_typecode(const SerializableObject& key,
+                     TypeCollection::TypeCode_t* typecode);
+
     int del(const SerializableObject& key);
 
     size_t size();
@@ -157,7 +161,8 @@ private:
 
     //! Only BerkeleyDBStore can create BerkeleyDBTables
     BerkeleyDBTable(BerkeleyDBStore* store, 
-                    std::string name, DB* db, DBTYPE type);
+                    std::string name, bool multitype,
+                    DB* db, DBTYPE type);
 
     /// Whether a specific key exists in the table.
     int key_exists(const void* key, size_t key_len);

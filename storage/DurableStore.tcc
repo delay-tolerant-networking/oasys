@@ -113,6 +113,9 @@ DurableStore::get_table(MultiTypeDurableTable<_BaseType, _Collection>** table,
     }
 */
 
+    // set the multitype flag for the implementation
+    flags |= DS_MULTITYPE;
+
     DurableTableImpl* table_impl;
     err = impl_->get_table(&table_impl, table_name, flags, prototypes);
     if (err != 0) {

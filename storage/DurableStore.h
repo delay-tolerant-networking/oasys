@@ -79,8 +79,11 @@ const char* durable_strerror(int result);
 enum DurableStoreFlags_t {
     DS_CREATE    = 1 << 0,
     DS_EXCL      = 1 << 1,
-    DS_HASH      = 1 << 2,
-    DS_BTREE     = 1 << 3
+    DS_MULTITYPE = 1 << 2,
+
+    // Berkeley DB Specific flags
+    DS_HASH      = 1 << 10,
+    DS_BTREE     = 1 << 11,
 };
 
 // Pull in the various related class definitions (and template class

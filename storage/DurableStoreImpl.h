@@ -81,11 +81,13 @@ public:
  */
 class DurableTableImpl {
 public:
-    DurableTableImpl(std::string table_name) : table_name_(table_name) {}
+    DurableTableImpl(std::string table_name, bool multitype)
+        : table_name_(table_name), multitype_(multitype) {}
     virtual ~DurableTableImpl() {}
 
     /**
-     * Get the data for key.
+     * Get the data for the given key from the datastore and
+     * unserialize into the given data object.
      *
      * @param key  Key object
      * @param data Data object
@@ -93,18 +95,33 @@ public:
      */
     virtual int get(const SerializableObject& key, 
                     SerializableObject* data) = 0;
-    
+
     /** 
+     * In a multi-type table, get the typecode for the given key.
+     *
+     * Note that a default implementation (that panics) is provided
+     * such that subclasses need not support multi-type tables.
+     *
+     * @param key Key object
+     * @param typecode Typecode pointer
+     * @return DS_OK, DS_ERR // XXX/bowei
+     */
+    virtual int get_typecode(const SerializableObject& key,
+                             TypeCollection::TypeCode_t* typecode);
+
+    /**
      * Put data for key in the database
      *
      * @param key Key object
+     * @param typecode Typecode (if multitype)
      * @param data Data object
      * @return DS_OK, DS_ERR // XXX/bowei
      */
     virtual int put(const SerializableObject& key, 
+                    TypeCollection::TypeCode_t typecode,
                     const SerializableObject* data,
                     int flags) = 0;
-
+    
     /**
      * Delete a (key,data) pair from the database
      * @return DS_OK, DS_NOTFOUND if key is not found
@@ -134,7 +151,7 @@ protected:
      */
     size_t flatten(const SerializableObject& key, 
                    u_char* key_buf, size_t size);
-    
-private:
-    std::string table_name_;
+
+    std::string table_name_;	///< Name of the table
+    bool multitype_;		///< Whether single or multi-type table
 };

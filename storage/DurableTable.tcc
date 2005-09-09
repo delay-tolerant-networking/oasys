@@ -13,7 +13,8 @@
  */
 template <typename _DataType>
 int
-SingleTypeDurableTable<_DataType>::get(const SerializableObject& key, _DataType** data)
+SingleTypeDurableTable<_DataType>::get(const SerializableObject& key,
+                                       _DataType** data)
 {
     int err;
     _DataType* d = new _DataType(Builder());
@@ -28,6 +29,63 @@ SingleTypeDurableTable<_DataType>::get(const SerializableObject& key, _DataType*
     return 0;
 }
 
+/** 
+ * Update the value of the key, data pair in the database. It
+ * should already exist.
+ *
+ * @param key   Key object
+ * @param data  Data object
+ * @param flags Bit vector of DurableStoreFlags_t values.
+ * @return DS_OK, DS_NOTFOUND, DS_ERR
+ */
+template <typename _DataType>
+inline int
+SingleTypeDurableTable<_DataType>::put(const SerializableObject& key,
+                                       const SerializableObject* data,
+                                       int flags)
+{
+    return impl_->put(key, TypeCollection::UNKNOWN_TYPE, data, flags);
+}
+    
+/** 
+ * Update the value of the key, data pair in the database. It
+ * should already exist.
+ *
+ * @param key   Key object
+ * @param data  Data object
+ * @param flags Bit vector of DurableStoreFlags_t values.
+ * @return DS_OK, DS_NOTFOUND, DS_ERR
+ */
+template <typename _BaseType, typename _Collection>
+inline int
+MultiTypeDurableTable<_BaseType, _Collection>::get(const SerializableObject& key,
+                                                   _BaseType** data)
+{
+    TypeCollection::TypeCode_t typecode;
+
+    int err = impl_->get_typecode(key, &typecode);
+    if (err != DS_OK) {
+        return err;
+    }
+
+    
+    err = TypeCollectionInstance<_Collection>::instance()->
+          new_object(typecode, data);
+    if (err != 0) {
+        return DS_ERR;
+    }
+    ASSERT(*data != NULL);
+
+    err = impl_->get(key, *data);
+    if (err != DS_OK) {
+        delete *data;
+        *data = NULL;
+        return err;
+    }
+
+    return DS_OK;
+}
+
 /**
  * Get the data for key from a multitype table, possibly creating a
  * new object based on the typecode in the multitype collection
@@ -38,31 +96,16 @@ SingleTypeDurableTable<_DataType>::get(const SerializableObject& key, _DataType*
  *
  * @return DS_OK, DS_NOTFOUND if key is not found
  */
-template <typename _DataType, typename _Collection>
+template <typename _BaseType, typename _Collection>
 int
-MultiTypeDurableTable<_DataType, _Collection>::get(const SerializableObject& key,
-                                                   _DataType** data)
+MultiTypeDurableTable<_BaseType, _Collection>::put(const SerializableObject& key,
+                                                   TypeCollection::TypeCode_t type,
+                                                   const _BaseType* data,
+                                                   int flags)
 {
-    NOTIMPLEMENTED;
+    return impl_->put(key, type, data, flags);
 }
 
-/** 
- * Update the value of the key, data pair in the database. It
- * should already exist.
- *
- * @param key   Key object
- * @param data  Data object
- * @param flags Bit vector of DurableStoreFlags_t values.
- * @return DS_OK, DS_NOTFOUND, DS_ERR
- */
-inline int
-DurableTable::put(const SerializableObject& key,
-                  const SerializableObject* data,
-                  int flags)
-{
-    return impl_->put(key, data, flags);
-}
-    
 /**
  * Delete a (key,data) pair from the database
  *

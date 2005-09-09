@@ -19,6 +19,54 @@ StorageConfig* g_config = 0;
 
 typedef SingleTypeDurableTable<StringShim> StringDurableTable;
 
+struct TestC {};
+
+TYPE_COLLECTION_INSTANTIATE(TestC);
+
+class Obj : public oasys::SerializableObject {
+public:
+    Obj(int id, const char* static_name) : id_(id), static_name_(static_name) {}
+    Obj(const Builder& b) : id_(0), static_name_("no name") {}
+    
+    virtual const char* name() = 0;
+
+    virtual void serialize(SerializeAction* a) {
+        a->process("name", &static_name_);
+        a->process("id", &id_);
+    }
+
+    int id_;
+    std::string static_name_;
+};
+
+class Foo : public Obj {
+public:
+    static const int ID = 1;
+    Foo() : Obj(ID, "foo") {}
+    Foo(const Builder& b) : Obj(b) {}
+    virtual const char* name() { return "foo"; }
+};
+
+class Bar : public Obj {
+public:
+    static const int ID = 2;
+    Bar() : Obj(ID, "bar") {}
+    Bar(const Builder& b) : Obj(b) {}
+    virtual const char* name() { return "bar"; }
+};
+
+TYPE_COLLECTION_DECLARE(TestC, Foo, 1);
+TYPE_COLLECTION_DECLARE(TestC, Bar, 2);
+TYPE_COLLECTION_GROUP(TestC, Obj, 1, 2);
+
+TYPE_COLLECTION_DEFINE(TestC, Foo, 1);
+TYPE_COLLECTION_DEFINE(TestC, Bar, 2);
+
+#define TYPECODE_FOO (TypeCollectionCode<TestC, Foo>::TYPECODE)
+#define TYPECODE_BAR (TypeCollectionCode<TestC, Bar>::TYPECODE)
+
+typedef MultiTypeDurableTable<Obj, TestC> ObjDurableTable;
+
 DECLARE_TEST(DBTestInit) {
     g_config = new StorageConfig(
         "storage",              // command name
@@ -93,6 +141,7 @@ DECLARE_TEST(TableCreate) {
     
     StringDurableTable* table1 = 0;
     StringDurableTable* table2 = 0;
+    ObjDurableTable*    objtable = 0;
 
     CHECK(store->get_table(&table1, "test", 0, 0) == DS_NOTFOUND);
     CHECK(table1 == 0);
@@ -112,6 +161,10 @@ DECLARE_TEST(TableCreate) {
     CHECK(store->get_table(&table1, "test", DS_CREATE, 0) == 0);
     CHECK(table1 != 0);
     delete_z(table1);
+
+    CHECK(store->get_table(&objtable, "objtable", DS_CREATE | DS_EXCL, 0) == 0);
+    CHECK(objtable != 0);
+    delete_z(objtable);
     delete_z(store);
 
     return 0;
@@ -288,6 +341,7 @@ DECLARE_TEST(SingleTypeMultiObject) {
 
 	CHECK(table->get(key, &data) == 0);
         CHECK_EQUALSTR(buf.c_str(), data->value().c_str());
+        delete_z(data);
     }
     CHECK((int)table->size() == num_objs);
     delete_z(table);
@@ -337,6 +391,53 @@ DECLARE_TEST(SingleTypeIterator) {
     return 0;    
 }
 
+DECLARE_TEST(MultiType) {
+    g_config->tidy_         = true;
+    DurableStoreImpl* impl  = new BerkeleyDBStore();
+    DurableStore*     store = new DurableStore(impl);
+    impl->init(g_config);
+
+    ObjDurableTable* table = 0;
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, 0) == 0);
+    CHECK(table != 0);
+
+    Obj *o1, *o2 = NULL;
+    Foo foo;
+    Bar bar;
+
+    CHECK(table->put(StringShim("foo"), Foo::ID, &foo, DS_CREATE | DS_EXCL) == 0);
+    CHECK(table->put(StringShim("bar"), Bar::ID, &bar, DS_CREATE | DS_EXCL) == 0);
+
+    CHECK(table->get(StringShim("foo"), &o1) == 0);
+    CHECK_EQUAL(o1->id_, Foo::ID);
+    CHECK_EQUALSTR(o1->name(), "foo");
+    CHECK_EQUALSTR(o1->static_name_.c_str(), "foo");
+    CHECK(dynamic_cast<Foo*>(o1) != NULL);
+    delete_z(o1);
+    
+    CHECK(table->get(StringShim("bar"), &o2) == 0);
+    CHECK_EQUAL(o2->id_, Bar::ID);
+    CHECK_EQUALSTR(o2->name(), "bar");
+    CHECK_EQUALSTR(o2->static_name_.c_str(), "bar");
+    CHECK(dynamic_cast<Bar*>(o2) != NULL);
+    delete_z(o2);
+
+    // Check mixed-up typecode and object
+    CHECK(table->put(StringShim("foobar"), Bar::ID, &foo, DS_CREATE | DS_EXCL) == 0);
+    CHECK(table->get(StringShim("foobar"), &o1) == 0);
+    CHECK_EQUAL(o1->id_, Foo::ID);
+    CHECK_EQUALSTR(o1->name(), "bar");
+    CHECK_EQUALSTR(o1->static_name_.c_str(), "foo");
+    CHECK(dynamic_cast<Foo*>(o1) == NULL);
+    CHECK(dynamic_cast<Bar*>(o1) != NULL);
+    delete_z(o1);
+    
+    delete_z(table);
+    delete_z(store);
+
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TESTER(BerkleyDBTester) {
     ADD_TEST(DBTestInit);
     ADD_TEST(DBInit);
@@ -348,6 +449,7 @@ DECLARE_TESTER(BerkleyDBTester) {
     ADD_TEST(SingleTypeDelete);
     ADD_TEST(SingleTypeMultiObject);
     ADD_TEST(SingleTypeIterator);
+    ADD_TEST(MultiType);
 }
 
 DECLARE_TEST_FILE(BerkleyDBTester, "berkeley db test");

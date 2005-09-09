@@ -59,20 +59,6 @@ public:
         delete impl_;
     }
 
-    
-    /** 
-     * Update the value of the key, data pair in the database. It
-     * should already exist.
-     *
-     * @param key   Key object
-     * @param data  Data object
-     * @param flags Bit vector of DurableStoreFlags_t values.
-     * @return DS_OK, DS_NOTFOUND, DS_ERR
-     */
-    int put(const SerializableObject& key,
-            const SerializableObject* data,
-            int flags);
-    
     /**
      * Delete a (key,data) pair from the database
      *
@@ -125,7 +111,20 @@ public:
                            const std::string&  name,
                            DurableObjectCache* cache)
         : DurableTable(impl, name, cache) {}
-    
+
+    /** 
+     * Update the value of the key, data pair in the database. It
+     * should already exist.
+     *
+     * @param key   Key object
+     * @param data  Data object
+     * @param flags Bit vector of DurableStoreFlags_t values.
+     * @return DS_OK, DS_NOTFOUND, DS_ERR
+     */
+    int put(const SerializableObject& key,
+            const SerializableObject* data,
+            int flags);
+
     /**
      * Get the data for key, possibly creating a new object of the
      * template type _DataType. Note that the given type must match
@@ -161,6 +160,20 @@ public:
                           DurableObjectCache* cache)
         : DurableTable(impl, name, cache) {}
     
+    /** 
+     * Update the value of the key, data pair in the database. It
+     * should already exist.
+     *
+     * @param key   Key object
+     * @param data  Data object
+     * @param flags Bit vector of DurableStoreFlags_t values.
+     * @return DS_OK, DS_NOTFOUND, DS_ERR
+     */
+    int put(const SerializableObject& key,
+            TypeCollection::TypeCode_t type,
+            const _BaseType* data,
+            int flags);
+
     /**
      * Get the data for key, possibly creating a new object of the
      * given template type _Type (or some derivative), using the

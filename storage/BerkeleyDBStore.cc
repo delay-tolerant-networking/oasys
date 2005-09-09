@@ -255,7 +255,7 @@ BerkeleyDBStore::get_table(DurableTableImpl**  table,
     int err;
     DBTYPE db_type = DB_BTREE;
     u_int32_t db_flags;
-
+                               
     ASSERT(init_);
 
     // grab a new database handle
@@ -294,7 +294,7 @@ BerkeleyDBStore::get_table(DurableTableImpl**  table,
     } else {
         db_type = DB_UNKNOWN;
     }
-    
+
     err = db->open(db, NO_TX, db_name_.c_str(), name.c_str(),
                    db_type, db_flags, 0);
 
@@ -324,7 +324,7 @@ BerkeleyDBStore::get_table(DurableTableImpl**  table,
     
     log_debug("get_table -- opened table %s type %d", name.c_str(), db_type);
 
-    *table = new BerkeleyDBTable(this, name, db, db_type);
+    *table = new BerkeleyDBTable(this, name, (flags & DS_MULTITYPE), db, db_type);
 
     return 0;
 }
@@ -398,7 +398,7 @@ BerkeleyDBStore::get_meta_table(BerkeleyDBTable** table)
         return DS_ERR;
     }
     
-    *table = new BerkeleyDBTable(this, META_TABLE_NAME, db, type);
+    *table = new BerkeleyDBTable(this, META_TABLE_NAME, false, db, type);
     
     return 0;
 }
@@ -434,9 +434,11 @@ BerkeleyDBStore::release_table(const std::string& table)
  * BerkeleyDBTable
  *
  *****************************************************************************/
-BerkeleyDBTable::BerkeleyDBTable(BerkeleyDBStore* store, 
-                                 std::string name, DB* db, DBTYPE db_type)
-    : DurableTableImpl(name), db_(db), db_type_(db_type), store_(store)
+BerkeleyDBTable::BerkeleyDBTable(BerkeleyDBStore* store,
+                                 std::string name, bool multitype,
+                                 DB* db, DBTYPE db_type)
+    : DurableTableImpl(name, multitype),
+      db_(db), db_type_(db_type), store_(store)
 {
     logpathf("/berkeleydb/table(%s)", name.c_str());
     store_->acquire_table(name);
@@ -485,9 +487,18 @@ BerkeleyDBTable::get(const SerializableObject& key,
         return DS_ERR;
     }
 
+    // if this is a multitype table we need to skip over the typecode
+    // in the flattened buffer
+    size_t typecode_sz = 0;
+    if (multitype_) {
+        TypeCollection::TypeCode_t typecode;
+        typecode_sz = MarshalSize::get_size(&typecode);
+    }
+
+    u_char* bp = (u_char*)d.data + typecode_sz;
+    size_t  sz = d.size - typecode_sz;
     
-    Unmarshal unmarshaller(Serialize::CONTEXT_LOCAL,
-                           (u_char*)(d.data), d.size);
+    Unmarshal unmarshaller(Serialize::CONTEXT_LOCAL, bp, sz);
     
     if (unmarshaller.action(data) != 0) {
         log_err("DB: error unserializing data object");
@@ -497,8 +508,59 @@ BerkeleyDBTable::get(const SerializableObject& key,
     return 0;
 }
 
+int
+BerkeleyDBTable::get_typecode(const SerializableObject& key,
+                              TypeCollection::TypeCode_t* typecode)
+{
+    u_char key_buf[256];
+    size_t key_buf_len;
+
+    key_buf_len = flatten(key, key_buf, sizeof(key_buf));
+    if (key_buf_len == 0) 
+    {
+        log_err("zero or too long key length");
+        return DS_ERR;
+    }
+
+    DBT k, d;
+    bzero(&d, sizeof(d));
+
+    MAKE_DBT(k, key_buf, key_buf_len);
+
+    int err = db_->get(db_, NO_TX, &k, &d, 0);
+     
+    if (err == DB_NOTFOUND) 
+    {
+        return DS_NOTFOUND;
+    }
+    else if (err != 0)
+    {
+        log_err("DB: %s", db_strerror(err));
+        return DS_ERR;
+    }
+
+    u_char* bp = (u_char*)d.data;
+    size_t  sz = d.size;
+
+    Builder b;
+    UIntShim type_shim(b);
+
+    Unmarshal unmarshaller(Serialize::CONTEXT_LOCAL, bp, sz);
+
+    if (unmarshaller.action(&type_shim) != 0) {
+        log_err("DB: error unserializing type code");
+        return DS_ERR;
+    }
+
+    *typecode = type_shim.value();
+
+    return DS_OK;
+}
+
+
 int 
-BerkeleyDBTable::put(const SerializableObject& key, 
+BerkeleyDBTable::put(const SerializableObject& key,
+                     TypeCollection::TypeCode_t typecode,
                      const SerializableObject* data,
                      int                       flags)
 {
@@ -516,7 +578,6 @@ BerkeleyDBTable::put(const SerializableObject& key,
         return DS_ERR;
     }
     MAKE_DBT(k, key_buf, key_buf_len);
-
 
     // if the caller does not want to create new entries, first do a
     // db get to see if the key already exists
@@ -539,19 +600,40 @@ BerkeleyDBTable::put(const SerializableObject& key,
         log_err("error sizing data object");
         return DS_ERR;
     }
+    size_t object_sz = sizer.size();
 
-    log_debug("put: serializing %u byte object", (u_int)sizer.size());
-
+    // and the size of the type code (if multitype)
+    size_t typecode_sz = 0;
+    if (multitype_) {
+        typecode_sz = MarshalSize::get_size(&typecode);
+    }
+    
+    log_debug("put: serializing %u byte object (plus %u byte typecode)",
+              (u_int)object_sz, typecode_sz);
+    
     { // lock
         ScopeLock lock(&scratch_mutex_);
     
-        u_char* buf = scratch_.buf(sizer.size());
-        Marshal m(Serialize::CONTEXT_LOCAL, buf, scratch_.size());
+        u_char* buf = scratch_.buf(typecode_sz + object_sz);
+        
+        // if we're a multitype table, marshal the type code
+        if (multitype_) {
+            Marshal typemarshal(Serialize::CONTEXT_LOCAL, buf, typecode_sz);
+            UIntShim type_shim(typecode);
+            
+            if (typemarshal.action(&type_shim) != 0) {
+                log_err("error serializing type code");
+                return DS_ERR;
+            }
+        }
+        
+        Marshal m(Serialize::CONTEXT_LOCAL, buf + typecode_sz, object_sz);
 	if (m.action(data) != 0) {
             log_err("error serializing data object");
             return DS_ERR;
         }
-        MAKE_DBT(d, buf, sizer.size());
+
+        MAKE_DBT(d, buf, typecode_sz + object_sz);
 
         db_flags = 0;
         if (flags & DS_EXCL) {
