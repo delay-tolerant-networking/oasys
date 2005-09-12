@@ -162,9 +162,6 @@ AC_SEARCH_LIBS(gethostbyname, nsl, [],
 AC_SEARCH_LIBS(xdr_int, rpc, [],
   AC_MSG_ERROR([can't find required library function (xdr_int)]))
 
-AC_OASYS_CONFIG_TCL
-AC_OASYS_CONFIG_STORAGE(not required)
-
 dnl -------------------------------------------------------------------------
 dnl Checks for header files.
 dnl -------------------------------------------------------------------------
@@ -204,6 +201,12 @@ AC_FUNC_STRTOD
 AC_FUNC_VPRINTF
 AC_OASYS_FUNC_FPCLASSIFY
 AC_CHECK_FUNCS([bzero ftruncate getaddrinfo gethostbyname gethostbyname_r getopt_long gettimeofday inet_aton inet_pton isascii localeconv memchr memmove memset pthread_yield sched_yield mkdir setenv socket strcasecmp strncasecmp strchr strcspn strdup strerror strrchr strspn strstr strtol strtoul])
+
+dnl -------------------------------------------------------------------------
+dnl Checks for dependent third-party libraries
+dnl -------------------------------------------------------------------------
+AC_OASYS_CONFIG_TCL
+AC_OASYS_CONFIG_STORAGE(required)
 
 dnl -------------------------------------------------------------------------
 dnl Output

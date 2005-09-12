@@ -55,28 +55,28 @@ AC_DEFUN(AC_OASYS_CONFIG_DB, [
 
     dnl
     dnl Now check if we have a cached value, unless the user specified
-    dnl something explicit with the --with-postgres= argument, in
+    dnl something explicit with the --with-db= argument, in
     dnl which case we force it to redo the checks (i.e. ignore the
     dnl cached values)
     dnl
-    if test "$ac_dbdir" = yes -a ! x$dtn_cv_path_db_h = x ; then
-        echo "checking for Berkeley DB installation... (cached) $dtn_cv_path_db_h/db.h, $dtn_cv_path_db_lib -l$dtn_cv_lib_db"
+    if test "$ac_dbdir" = yes -a ! x$oasys_cv_path_db_h = x ; then
+        echo "checking for Berkeley DB installation... (cached) $oasys_cv_path_db_h/db.h, $oasys_cv_path_db_lib -l$oasys_cv_lib_db"
     else
         AC_OASYS_FIND_DB
     fi
 
-    if test ! $dtn_cv_path_db_h = /usr/include ; then
-        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$dtn_cv_path_db_h"
+    if test ! $oasys_cv_path_db_h = /usr/include ; then
+        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_db_h"
     fi
 
-    if test ! $dtn_cv_path_db_lib = /usr/lib ; then
-        OASYS_LDFLAGS="$OASYS_LDFLAGS -L$dtn_cv_path_db_lib"
+    if test ! $oasys_cv_path_db_lib = /usr/lib ; then
+        OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_db_lib"
     fi
 
     if test x"$STATIC" = x"yes" ; then
-        OASYS_LIBS="$OASYS_LIBS -Wl,-Bstatic -l$dtn_cv_lib_db -Wl,-Bdynamic"
+        OASYS_LIBS="$OASYS_LIBS -Wl,-Bstatic -l$oasys_cv_lib_db -Wl,-Bdynamic"
     else
-    	OASYS_LIBS="$OASYS_LIBS -l$dtn_cv_lib_db"
+    	OASYS_LIBS="$OASYS_LIBS -l$oasys_cv_lib_db"
     fi
 
     fi # LIBDB_ENABLED
@@ -86,15 +86,13 @@ dnl
 dnl Find db
 dnl
 AC_DEFUN(AC_OASYS_FIND_DB, [
-    dtn_cv_path_db_h=
-    dtn_cv_path_db_lib=
-    dtn_cv_lib_db=
+    oasys_cv_path_db_h=
+    oasys_cv_path_db_lib=
+    oasys_cv_lib_db=
 
     ac_save_CPPFLAGS="$CPPFLAGS"
     ac_save_LDFLAGS="$LDFLAGS"
     ac_save_LIBS="$LIBS"
-
-    AC_LANG_PUSH(C++)
 
     for ac_dbver in $ac_dbvers ; do
 
@@ -171,9 +169,9 @@ AC_DEFUN(AC_OASYS_FIND_DB, [
 
           [
               AC_MSG_RESULT([yes])
-              dtn_cv_path_db_h=$ac_dbincdir
-              dtn_cv_path_db_lib=$ac_dblibdir
-              dtn_cv_lib_db=$ac_dblib
+              oasys_cv_path_db_h=$ac_dbincdir
+              oasys_cv_path_db_lib=$ac_dblibdir
+              oasys_cv_lib_db=$ac_dblib
               break 4
           ],
           [
@@ -184,13 +182,11 @@ AC_DEFUN(AC_OASYS_FIND_DB, [
     done
     done
 
-    AC_LANG_POP(C++)
-
     CPPFLAGS="$ac_save_CPPFLAGS"
     LDFLAGS="$ac_save_LDFLAGS"
     LIBS="$ac_save_LIBS"
 
-    if test x$dtn_cv_path_db_h = x ; then
+    if test x$oasys_cv_path_db_h = x ; then
         AC_OASYS_DB_HELP
         AC_MSG_ERROR([can't find usable Berkeley DB installation])
     fi
