@@ -54,17 +54,6 @@
 
 namespace oasys {
 
-/*
- * In tcl8.4, the objv to commands is const, but not so in tcl8.3, so
- * we need this stupid define, and force cast everything to const in
- * the implementation of tcl_cmd.
- */
-#ifdef  CONST84
-#define CONSTTCL84 CONST84
-#else
-#define CONSTTCL84
-#endif
-
 // forward decls
 class TclCommandInterp;
 class TclCommand;
