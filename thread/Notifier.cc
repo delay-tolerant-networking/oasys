@@ -141,9 +141,11 @@ Notifier::wait(SpinLock* lock, int timeout)
     waiter_ = false;
     
     if (ret == IOTIMEOUT) {
+        log_debug("notifier wait timeout");
         return false; // timeout
     } else {
         drain_pipe();
+        log_debug("notifier wait successfully notified");
         return true;
     }
 }
@@ -153,6 +155,7 @@ Notifier::notify()
 {
     char b = 0;
   retry:
+    log_debug("notifier notify");
     int ret = ::write(write_fd(), &b, 1);
     
     if (ret == -1) {
