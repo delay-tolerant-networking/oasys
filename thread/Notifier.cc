@@ -86,6 +86,7 @@ Notifier::drain_pipe(size_t bytes)
 
     while (true)
     {
+        log_debug("drain_pipe: attempting to drain %u bytes", bytes);
         ret = IO::read(read_fd(), buf, 
                        std::min(sizeof(buf), bytes - bytes_drained));
         if (ret <= 0) {
