@@ -195,6 +195,7 @@ Thread::kill(int sig)
 void
 Thread::interrupt()
 {
+    log_debug("/thread", "interrupting thread %p", this);
     kill(INTERRUPT_SIG);
 }
 
