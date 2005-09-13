@@ -699,8 +699,11 @@ BerkeleyDBTable::size()
 
     stats.ptr = 0;
     
+#if ((DB_VERSION_MAJOR == 4) && (DB_VERSION_MINOR == 2))
+    err = db_->stat(db_, &stats.ptr, flags);
+#else
     err = db_->stat(db_, NO_TX, &stats.ptr, flags);
-
+#endif
     if (err != 0) {
         log_crit("error in DB::stat: %d", errno);
         ASSERT(stats.ptr == 0);
