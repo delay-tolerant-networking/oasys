@@ -42,19 +42,23 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 
+#include "IO.h"
+
 namespace oasys {
 
 /**
  * Abstract interface for any stream type output channel.
  */
-class IOClient {
+class IOClient : virtual public InterruptableIO {
 public:
+    virtual ~IOClient() {}
+
     //@{
     /**
      * System call wrappers.
      */
-    virtual int read(char* bp, size_t len) = 0;
-    virtual int write(const char* bp, size_t len) = 0;
+    virtual int read(char* bp, size_t len)                  = 0;
+    virtual int write(const char* bp, size_t len)           = 0;
     virtual int readv(const struct iovec* iov, int iovcnt)  = 0;
     virtual int writev(const struct iovec* iov, int iovcnt) = 0;
     //@}
@@ -66,9 +70,9 @@ public:
      *
      * @return the total number of bytes written, or -1 on error
      */
-    virtual int readall(char* bp, size_t len) = 0;
-    virtual int writeall(const char* bp, size_t len) = 0;
-    virtual int readvall(const struct iovec* iov, int iovcnt) = 0;
+    virtual int readall(char* bp, size_t len)                  = 0;
+    virtual int writeall(const char* bp, size_t len)           = 0;
+    virtual int readvall(const struct iovec* iov, int iovcnt)  = 0;
     virtual int writevall(const struct iovec* iov, int iovcnt) = 0;
     //@}
 
@@ -88,11 +92,9 @@ public:
                                  int timeout_ms) = 0;
     //@}
 
-    /// Set the file descriptor's nonblocking status
+    //! Set the file descriptor's nonblocking status
     virtual int get_nonblocking(bool* nonblockingp) = 0;
-    virtual int set_nonblocking(bool nonblocking) = 0;
-
-    virtual ~IOClient() {}
+    virtual int set_nonblocking(bool nonblocking)   = 0;
 };
 
 } // namespace oasys

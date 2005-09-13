@@ -41,6 +41,7 @@
 
 #include "IOClient.h"
 #include "../debug/Logger.h"
+#include "../thread/Notifier.h"
 
 namespace oasys {
 
@@ -49,7 +50,9 @@ namespace oasys {
  */
 class FdIOClient : public IOClient, public Logger {
 public:
-    FdIOClient(int fd);
+    //! @param fd File descriptor to interact with
+    //! @param intr Optional notifier to use to interrupt blocked I/O
+    FdIOClient(int fd, Notifier* intr = 0);
 
     virtual int read(char* bp, size_t len);
     virtual int readv(const struct iovec* iov, int iovcnt);
@@ -77,7 +80,7 @@ public:
     virtual int set_nonblocking(bool nonblocking);
 
 protected:
-    int fd_;
+    int       fd_;
 };
 
 } // namespace oasys

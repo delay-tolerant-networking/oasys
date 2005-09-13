@@ -53,10 +53,10 @@ private:
     IPClient(const IPClient&);	///< Prohibited constructor
     
 public:
-    IPClient(int socktype, const char* logbase);
+    IPClient(int socktype, const char* logbase, Notifier* intr = 0);
     IPClient(int socktype, int sock,
              in_addr_t remote_addr, u_int16_t remote_port,
-             const char* logbase);
+             const char* logbase, Notifier* intr = 0);
     virtual ~IPClient();
     
     // Virtual from IOClient

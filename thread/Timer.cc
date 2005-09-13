@@ -51,9 +51,9 @@ namespace oasys {
 
 template <> TimerSystem* Singleton<TimerSystem>::instance_ = 0;
 
+//////////////////////////////////////////////////////////////////////////////
 TimerSystem::TimerSystem()
-    : Thread(Thread::INTERRUPTABLE),
-      Logger("/timer"),
+    : Logger("/timer"),
       system_lock_(new SpinLock()),
       signal_("/timer/signal"),
       timers_()
@@ -64,6 +64,7 @@ TimerSystem::TimerSystem()
     sigfired_ = false;
 }
 
+//////////////////////////////////////////////////////////////////////////////
 void
 TimerSystem::schedule_at(struct timeval *when, Timer* timer)
 {
@@ -98,11 +99,10 @@ TimerSystem::schedule_at(struct timeval *when, Timer* timer)
     timer->cancelled_ = 0;
     timers_.push(timer);
 
-    // notify the timer thread (which is likely blocked in poll) that
-    // we've stuck something new on the queue
     signal_.notify();
 }
 
+//////////////////////////////////////////////////////////////////////////////
 void
 TimerSystem::schedule_in(int milliseconds, Timer* timer)
 {
@@ -118,12 +118,14 @@ TimerSystem::schedule_in(int milliseconds, Timer* timer)
     return schedule_at(&when, timer);
 }
 
+//////////////////////////////////////////////////////////////////////////////
 void
 TimerSystem::schedule_immediate(Timer* timer)
 {
     return schedule_at(0, timer);
 }
 
+//////////////////////////////////////////////////////////////////////////////
 bool
 TimerSystem::cancel(Timer* timer)
 {
@@ -139,9 +141,57 @@ TimerSystem::cancel(Timer* timer)
     return false;
 }
 
-/*
- * Pop the timer from the head of the heap and call its handler.
- */
+//////////////////////////////////////////////////////////////////////////////
+void
+TimerSystem::post_signal(int sig)
+{
+    TimerSystem* _this = TimerSystem::instance();
+
+    _this->sigfired_ = true;
+    _this->signals_[sig] = true;
+    
+    _this->signal_.notify();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+void
+TimerSystem::add_sighandler(int sig, __sighandler_t handler)
+{
+    log_debug("adding signal handler 0x%x for signal %d",
+              (u_int)handler, sig);
+    handlers_[sig] = handler;
+    signal(sig, post_signal);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+void
+TimerSystem::run()
+{
+    system_lock_->lock();
+    while (true) 
+    {
+        handle_signals();
+        int timeout = run_expired_timers();            
+
+        system_lock_->unlock(); // sleep without the lock
+        int cc = IO::poll(signal_.read_fd(), POLLIN, NULL, timeout, 
+                          0, logpath_);
+        system_lock_->lock();
+        
+        if (cc == IOTIMEOUT) {
+            log_debug("poll returned due to timeout"); 
+        } else if (cc == 1) {
+            log_debug("poll returned due to interruption"); 
+            signal_.drain_pipe();
+        } else {
+            PANIC("poll on fd returned error %d", cc);
+        }
+    } // while(true)
+
+    NOTREACHED;
+}
+
+//////////////////////////////////////////////////////////////////////////////
 void
 TimerSystem::pop_timer(struct timeval* now)
 {
@@ -154,151 +204,66 @@ TimerSystem::pop_timer(struct timeval* now)
     ASSERT(next_timer->pending_);
     next_timer->pending_ = 0;
     
-    // call the handler if it wasn't cancelled, otherwise delete the
-    // timer object if asked
     if (! next_timer->cancelled_) {
-        log_debug("popping timer at %u.%u",
+        log_debug("popping timer %p at %u.%u", next_timer,
                   (u_int)now->tv_sec, (u_int)now->tv_usec);
         next_timer->timeout(now);
     } else {
-        log_debug("popping cancelled timer at %u.%u",
+        log_debug("popping cancelled timer %p at %u.%u", next_timer,
                   (u_int)now->tv_sec, (u_int)now->tv_usec);
         next_timer->cancelled_ = 0;
         
         if (next_timer->cancel_flags_ == Timer::DELETE_ON_CANCEL) {
-            log_debug("deleting cancelled timer at %u.%u",
+            log_debug("deleting cancelled timer %p at %u.%u", next_timer,
                       (u_int)now->tv_sec, (u_int)now->tv_usec);
             delete next_timer;
         }
     }
 }
 
-/**
- * Hook called from an the actual signal handler that notifies the
- * timer sysetem thread to call the signal handler function.
- *
- * By setting the bit to indicate that the signal fired and calling
- * the thread's interrupt routine, we make sure to wake up the timer
- * thread if it's blocked in poll, causing it to actually execute the
- * signal handler.
- */
+//////////////////////////////////////////////////////////////////////////////
 void
-TimerSystem::post_signal(int sig)
-{
-    TimerSystem* _this = TimerSystem::instance();
-
-    _this->sigfired_ = true;
-    _this->signals_[sig] = true;
-    _this->interrupt();
-}
-
-/**
- * Hook to use the timer thread to safely handle a signal.
- */
-void
-TimerSystem::add_sighandler(int sig, __sighandler_t handler)
-{
-    log_debug("adding signal handler 0x%x for signal %d",
-              (u_int)handler, sig);
-    handlers_[sig] = handler;
-    signal(sig, post_signal);
-}
-
-/**
- * The main system thread function that blocks in poll() waiting for
- * either the first timer to fire or for another thread to schedule a
- * timer.
- */
-void
-TimerSystem::run()
-{
-    int timeout;
-    struct timeval now;
-    Timer* next_timer;
-    
-    system_lock_->lock();
-
-    while (1) 
-    {
-        timeout = -1; // default is to block forever
-
-        if (sigfired_) {
-            log_debug("sigfired_ set, calling registered handlers");
-            for (int i = 0; i < NSIG; ++i) {
-                if (signals_[i]) {
-                    handlers_[i](i);
-                    signals_[i] = 0;
-                }
+TimerSystem::handle_signals()
+{        
+    // KNOWN ISSUE: race condition
+    if (sigfired_) {
+        log_debug("sigfired_ set, calling registered handlers");
+        for (int i = 0; i < NSIG; ++i) {
+            if (signals_[i]) {
+                handlers_[i](i);
+                signals_[i] = 0;
             }
-            sigfired_ = 0;
         }
-
-        if (!timers_.empty()) 
-        {
-            ::gettimeofday(&now, 0);
-            next_timer = timers_.top();
-            
-            timeout = TIMEVAL_DIFF_MSEC(next_timer->when_, now);
-
-            // handle any ready or immediate timers immediately, then re-loop
-            if ((timeout == 0) ||
-                (next_timer->when_.tv_sec == 0 &&
-                 next_timer->when_.tv_usec == 0))
-            {
-                pop_timer(&now);
-                continue;
-            }
-
-            if (timeout < 0) 
-            {
-                log_warn("timer in the past, calling immediately");
-                pop_timer(&now);
-                continue;
-            }
-
-            ASSERT(timeout > 0);
-        }
-
-        // unlock the lock before calling poll
-        system_lock_->unlock();
-        int cc = IO::poll(signal_.read_fd(), POLLIN, NULL, timeout, logpath_);
-
-        // and re-take the lock on return
-        system_lock_->lock();
-
-        if (cc == -1 && errno == EINTR) 
-        {
-            log_debug("poll interrupted, looping");
-        }
-        
-        if (cc == 0) 
-        {
-            log_debug("poll returned due to timeout");
-        } 
-        else if (cc == 1) 
-        {
-            log_debug("poll returned due to signal");
-            signal_.drain_pipe();
-        } 
-        else 
-        {
-            if (errno == EINTR) continue;
-            log_err("unexpected return of %d from poll errno %d", cc, errno);
-            continue; // XXX/demmer ??
-        }
-        
-        // now check for any ready timers
-	::gettimeofday(&now, NULL);
-        while (! timers_.empty()) {
-            next_timer = timers_.top();
-	    if (TIMEVAL_LT(now, next_timer->when_)) {
-                break;
-	    }
-            
-            pop_timer(&now);
-        }
+        sigfired_ = 0;
     }
-    // don't ever return
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int
+TimerSystem::run_expired_timers()
+{
+    struct timeval now;    
+    while (! timers_.empty()) 
+    {
+        if (::gettimeofday(&now, 0) != 0) {
+            PANIC("gettimeofday");
+        }
+
+        Timer* next_timer = timers_.top();
+        if (TIMEVAL_LT(now, next_timer->when_)) {
+            // make sure timers not too far behind
+            struct timeval absolute_diff;
+            TIMEVAL_DIFF(now, next_timer->when_, absolute_diff);
+            ASSERT(absolute_diff.tv_sec <= 2);
+
+            int diff_ms = TIMEVAL_DIFF_MSEC(next_timer->when_, now);
+            log_debug("new timeout %d", diff_ms);
+            return diff_ms;
+        }
+        pop_timer(&now);
+    }
+
+    return -1;
 }
 
 } // namespace oasys

@@ -92,17 +92,17 @@ TCPClient::timeout_connect(in_addr_t remote_addr, u_int16_t remote_port,
     {
         ASSERT(errno == EINPROGRESS);
         log_debug("EINPROGRESS from connect(), calling poll()");
-        ret = IO::poll(fd_, POLLOUT, NULL, timeout_ms, logpath_);
+        ret = IO::poll(fd_, POLLOUT, NULL, timeout_ms, get_notifier(), logpath_);
         
-        if (ret < 0) {
+        if (ret == IOTIMEOUT)
+        {
+            log_debug("timeout_connect: poll timeout");
+        }
+        else if (ret < 0) 
+        {
             log_err("error in poll(): %s", strerror(errno));
             if (errp) *errp = errno;
             ret = IOERROR;
-        }
-        else if (ret == 0)
-        {
-            log_debug("timeout_connect: poll timeout");
-            ret = IOTIMEOUT;
         }
         else
         {

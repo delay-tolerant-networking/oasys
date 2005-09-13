@@ -78,16 +78,18 @@ Notifier::~Notifier()
 }
 
 void
-Notifier::drain_pipe()
+Notifier::drain_pipe(size_t bytes)
 {
-    int ret;
-    char buf[256];
+    int    ret;
+    char   buf[256];
+    size_t bytes_drained = 0;
 
-    while (1) {
-        ret = IO::read(read_fd(), buf, sizeof(buf));
+    while (true)
+    {
+        ret = IO::read(read_fd(), buf, 
+                       std::min(sizeof(buf), bytes - bytes_drained));
         if (ret <= 0) {
-            if ((ret == -1) && (errno == EAGAIN)) { // all done
-                //log_debug("drain_pipe: read from pipe would have blocked");
+            if (ret == -1 && errno == EAGAIN) {
                 return;
             } else {
                 log_crit("drain_pipe: unexpected error return from read: %s",
@@ -96,71 +98,70 @@ Notifier::drain_pipe()
             }
         }
         
-        log_debug("drain_pipe: drained %d byte(s) from pipe", ret);
+        bytes_drained += ret;
+        log_debug("drain_pipe: drained %u/%u byte(s) from pipe", 
+                  bytes_drained, bytes);
         
-        /*
-         * In the (likely) case that we didn't get a full buf's worth
-         * of data, there's nothing else in the pipe and we can
-         * return. Otherwise, loop again and call read until the pipe
-         * is empty.
-         */
-        if (ret < (int)sizeof(buf))
+        if (bytes != 0 && bytes_drained == bytes) {
             return;
+        }
+        
+        // More bytes were requested from the pipe than there are
+        // bytes in the pipe. This means that the bytes requested is
+        // bogus. This probably is the result of a race condition.
+        if (ret < static_cast<int>(sizeof(buf))) {
+            log_warn("drain_pipe: only possible to drain %u bytes out of %u! "
+                     "race condition?", bytes_drained, bytes);
+            return;
+        }
     }
 }
 
 bool
 Notifier::wait(SpinLock* lock, int timeout)
 {
-    int ret = 0;
-    
     if (waiter_) {
         PANIC("Notifier doesn't support multiple waiting threads");
     }
     waiter_ = true;
 
-    if (lock) 
+    if (lock)
         lock->unlock();
 
-    while (1) {
-        ret = IO::poll(read_fd(), POLLIN, NULL, timeout, logpath_);
-        if (ret < 0) {
-            if (ret == -1 && errno == EINTR) {
-                continue;
-            }
-            PANIC("fatal: error return from notifier poll: %s",
-                  strerror(errno));
-        } else {
-            break;
-        }
+    int ret = IO::poll(read_fd(), POLLIN, 0, timeout, 0, logpath_);
+    if (ret < 0 && ret != IOTIMEOUT) {
+        PANIC("fatal: error return from notifier poll: %s",
+              strerror(errno));
     }
     
-    ASSERT((ret == 0) || (ret == 1));
-
-    if (lock)
+    if (lock) {
         lock->lock();
-    
+    }
+
     waiter_ = false;
-
-    if (ret == 0)
+    
+    if (ret == IOTIMEOUT) {
         return false; // timeout
-
-    drain_pipe();
-    return true;
+    } else {
+        drain_pipe();
+        return true;
+    }
 }
 
 void
 Notifier::notify()
 {
     char b = 0;
+  retry:
     int ret = ::write(write_fd(), &b, 1);
-
+    
     if (ret == -1) {
         if (errno == EAGAIN) {
-            // if the pipe is full, that probably means the
-            // consumer is just slow, so we log it, but keep
-            // going. really, this shouldn't happen though
+            // If the pipe is full, that probably means the consumer
+            // is just slow, but keep trying because otherwise we will
+            // break the semantics of the notifier.
             log_warn("pipe appears to be full");
+            goto retry;
         } else {
             log_err("unexpected error writing to pipe: %s", strerror(errno));
         }

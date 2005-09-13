@@ -94,7 +94,7 @@ public:
         memset(buf2, 0, bufsz);
         bp = buf2;
         for (int i = 0; i < 10; ++i) {
-            cc = IO::readall(fd_, bp, amounts2[i], log);
+            cc = IO::readall(fd_, bp, amounts2[i], 0, log);
             CHECK_EQUAL(cc, amounts2[i]);
             usleep(100);
             bp += cc;
@@ -102,13 +102,13 @@ public:
         CHECK_EQUALSTRN(buf1, buf2, bufsz);
 
         memset(buf2, 0, bufsz);
-        CHECK_EQUAL(IO::readall(fd_, buf2, bufsz, log), bufsz);
+        CHECK_EQUAL(IO::readall(fd_, buf2, bufsz, 0, log), (int)bufsz);
         CHECK_EQUALSTRN(buf1, buf2, bufsz);
 
         memset(buf2, 0, bufsz);
         bp = buf2;
         for (int i = 0; i < 209; ++i) {
-            cc = IO::readall(fd_, bp, amounts3[i], log);
+            cc = IO::readall(fd_, bp, amounts3[i], 0, log);
             CHECK_EQUAL(cc, amounts3[i]);
             usleep(100);
             bp += cc;
@@ -118,7 +118,7 @@ public:
         memset(buf2, 0, bufsz);
         bp = buf2;
         for (int i = 0; i < 10; ++i) {
-            cc = IO::readall(fd_, bp, amounts1[i], log);
+            cc = IO::readall(fd_, bp, amounts1[i], 0, log);
             CHECK_EQUAL(cc, amounts1[i]);
             usleep(100);
             bp += cc;
@@ -144,11 +144,11 @@ public:
     }
 
     int test() {
-        int cc = IO::writeall(fd_, buf1, bufsz, log);
+        int cc = IO::writeall(fd_, buf1, bufsz, 0, log);
     
         char* bp = buf1;
         for (int i = 0; i < 10; ++i) {
-            cc = IO::writeall(fd_, bp, amounts1[i], log);
+            cc = IO::writeall(fd_, bp, amounts1[i], 0, log);
             CHECK_EQUAL(cc, amounts1[i]);
             usleep(100);
             Thread::yield();
@@ -157,7 +157,7 @@ public:
 
         bp = buf1;
         for (int i = 0; i < 10; ++i) {
-            cc = IO::writeall(fd_, bp, amounts2[i], log);
+            cc = IO::writeall(fd_, bp, amounts2[i], 0, log);
             CHECK_EQUAL(cc, amounts2[i]);
             usleep(100);
             Thread::yield();
@@ -166,7 +166,7 @@ public:
 
         bp = buf1;
         for (int i = 0; i < 209; ++i) {
-            cc = IO::writeall(fd_, bp, amounts3[i], log);
+            cc = IO::writeall(fd_, bp, amounts3[i], 0, log);
             CHECK_EQUAL(cc, amounts3[i]);
             usleep(100);
             Thread::yield();
@@ -202,15 +202,15 @@ public:
             iov[i].iov_len = amounts2[i];
             bp += amounts2[i];
         }
-        cc = IO::readvall(fd_, iov, 10, log);
-        CHECK_EQUAL(cc, bufsz);
+        cc = IO::readvall(fd_, iov, 10, 0, log);
+        CHECK_EQUAL(cc, (int)bufsz);
         CHECK_EQUALSTRN(buf1, buf2, bufsz);
 
         memset(buf2, 0, bufsz);
         iov[0].iov_base = buf2;
         iov[0].iov_len  = bufsz;
-        cc = IO::readvall(fd_, iov, 1, log);
-        CHECK_EQUAL(cc, bufsz);
+        cc = IO::readvall(fd_, iov, 1, 0, log);
+        CHECK_EQUAL(cc, (int)bufsz);
         CHECK_EQUALSTRN(buf1, buf2, bufsz);
 
         memset(buf2, 0, bufsz);
@@ -220,8 +220,8 @@ public:
             iov[i].iov_len = amounts3[i];
             bp += amounts3[i];
         }
-        cc = IO::readvall(fd_, iov, 209, log);
-        CHECK_EQUAL(cc, bufsz);
+        cc = IO::readvall(fd_, iov, 209, 0, log);
+        CHECK_EQUAL(cc, (int)bufsz);
         CHECK_EQUALSTRN(buf1, buf2, bufsz);
 
         memset(buf2, 0, bufsz);
@@ -231,8 +231,8 @@ public:
             iov[i].iov_len = amounts1[i];
             bp += amounts1[i];
         }
-        cc = IO::readvall(fd_, iov, 10, log);
-        CHECK_EQUAL(cc, bufsz);
+        cc = IO::readvall(fd_, iov, 10, 0, log);
+        CHECK_EQUAL(cc, (int)bufsz);
         CHECK_EQUALSTRN(buf1, buf2, bufsz);
 
         return UNIT_TEST_PASSED;
@@ -258,8 +258,8 @@ public:
         struct iovec iov[250];
         iov[0].iov_base = buf1;
         iov[0].iov_len = bufsz;
-        cc = IO::writevall(fd_, iov, 1, log);
-        CHECK_EQUAL(cc, bufsz);
+        cc = IO::writevall(fd_, iov, 1, 0, log);
+        CHECK_EQUAL(cc, (int)bufsz);
     
         char* bp = buf1;
         for (int i = 0; i < 10; ++i) {
@@ -267,8 +267,8 @@ public:
             iov[i].iov_len  = amounts1[i];
             bp += amounts1[i];
         }
-        cc = IO::writevall(fd_, iov, 10, log);
-        CHECK_EQUAL(cc, bufsz);
+        cc = IO::writevall(fd_, iov, 10, 0, log);
+        CHECK_EQUAL(cc, (int)bufsz);
 
         bp = buf1;
         for (int i = 0; i < 10; ++i) {
@@ -276,8 +276,8 @@ public:
             iov[i].iov_len  = amounts2[i];
             bp += amounts2[i];
         }
-        cc = IO::writevall(fd_, iov, 10, log);
-        CHECK_EQUAL(cc, bufsz);
+        cc = IO::writevall(fd_, iov, 10, 0, log);
+        CHECK_EQUAL(cc, (int)bufsz);
 
         bp = buf1;
         for (int i = 0; i < 209; ++i) {
@@ -285,8 +285,8 @@ public:
             iov[i].iov_len  = amounts3[i];
             bp += amounts3[i];
         }
-        cc = IO::writevall(fd_, iov, 209, log);
-        CHECK_EQUAL(cc, bufsz);
+        cc = IO::writevall(fd_, iov, 209, 0, log);
+        CHECK_EQUAL(cc, (int)bufsz);
 
         return UNIT_TEST_PASSED;
     }
@@ -301,10 +301,10 @@ rwvall_test(int* fds)
     int cc;
 
     // basic writeall/readall tests
-    cc = IO::writeall(fds[1], buf1, 1024, log);
+    cc = IO::writeall(fds[1], buf1, 1024, 0, log);
     CHECK_EQUAL(cc, 1024);
 
-    cc = IO::readall(fds[0], buf2, 1024, log);
+    cc = IO::readall(fds[0], buf2, 1024, 0, log);
     CHECK_EQUAL(cc, 1024);
     
     CHECK_EQUALSTRN(buf1, buf2, 1024);
@@ -329,10 +329,10 @@ rwvall_test(int* fds)
     iov2[3].iov_base = buf2 + 100;
     iov2[3].iov_len  = 924;
     
-    cc = IO::writevall(fds[1], iov1, 4, log);
+    cc = IO::writevall(fds[1], iov1, 4, 0, log);
     CHECK_EQUAL(cc, 1024);
 
-    cc = IO::readvall(fds[0], iov2, 4, log);
+    cc = IO::readvall(fds[0], iov2, 4, 0, log);
     CHECK_EQUAL(cc, 1024);
     
     CHECK_EQUALSTRN(buf1, buf2, 1024);

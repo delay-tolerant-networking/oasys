@@ -125,18 +125,26 @@ public:
 
 private:
     friend class Singleton<TimerSystem>;
-
-    TimerSystem();
+    typedef std::priority_queue<Timer*, 
+                                std::vector<Timer*>, 
+                                TimerCompare> TimerQueue;
     
-    void pop_timer(struct timeval *now);
-    
-    SpinLock* system_lock_;
-    Notifier signal_;
-    std::priority_queue<Timer*, std::vector<Timer*>, TimerCompare> timers_;
 
+    //! KNOWN ISSUE: Signal handling has race conditions - but it's
+    //! not worth the trouble to fix.
     __sighandler_t handlers_[NSIG];	///< handlers for signals
     bool 	   signals_[NSIG];	///< which signals have fired
     bool	   sigfired_;		///< boolean to check if any fired
+
+    SpinLock*  system_lock_;
+    Notifier   signal_;
+    TimerQueue timers_;
+
+    TimerSystem();
+
+    void pop_timer(struct timeval *now);
+    void handle_signals();
+    int  run_expired_timers();
 };
 
 /**

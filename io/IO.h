@@ -44,7 +44,36 @@
 #include <sys/uio.h>
 #include <sys/socket.h>
 
+#include "../debug/DebugUtils.h"
+#include "../thread/Notifier.h"
+
 namespace oasys {
+
+//! Virtually inherited base class for holding the notifier with
+//! interruptable I/O
+class InterruptableIO {
+public:
+    InterruptableIO(Notifier* intr = 0) 
+        : intr_(intr) {}
+    ~InterruptableIO() { delete_z(intr_); }
+
+    Notifier* get_notifier() { 
+        return intr_; 
+    }
+
+    void interrupt_from_io() {
+        ASSERT(intr_ != 0);
+        intr_->notify();
+    }
+    
+    void set_notifier(Notifier* intr) { 
+        ASSERT(intr_ == 0);
+        intr_ = intr; 
+    }
+    
+private:
+    Notifier* intr_;
+};
 
 /**
  * Return code values for the timeout enabled functions such as
@@ -53,141 +82,195 @@ namespace oasys {
  * information, e.g. the number of bytes read.
  */
 enum IOTimeoutReturn_t {
-    IOEOF 	= 0,	/* eof */
-    IOERROR 	= -1,	/* error */
-    IOTIMEOUT 	= -2,   /* timeout */
+    IOEOF 	= 0,	///< eof
+    IOERROR 	= -1,	///< error
+    IOTIMEOUT 	= -2,   ///< timeout
+    IOINTR      = -3,   ///< interrupted by notifier
 };
 
-/**
- * Static class (never instantiated) that provides simple wrappers for
- * system calls as well as more complicated primitives to deal with
- * short read/write operations and timeouts.
- */
-class IO {
-public:
+
+struct IO {
+    //! @return Text for the io error.
+    static const char* ioerr2str(int err);
+
     //@{
     /// System call wrappers (for logging)
     static int open(const char* path, int flags,
-                    const char* log = NULL);
-
+                    const char* log = 0);
+    
     static int open(const char* path, int flags, mode_t mode,
-                    const char* log = NULL);
-
+                    const char* log = 0);
+    
     static int close(int fd,
-                     const char* log = NULL,
+                     const char* log = 0,
                      const char* filename = "");
     
-    static int read(int fd, char* bp, size_t len,
-                    const char* log = NULL, bool retry_on_intr = true);
-    
-    static int readv(int fd, const struct iovec* iov, int iovcnt,
-                     const char* log = NULL, bool retry_on_intr = true);
-    
-    static int write(int fd, const char* bp, size_t len,
-                     const char* log = NULL, bool retry_on_intr = true);
-    
-    static int writev(int fd, const struct iovec* iov, int iovcnt,
-                      const char* log = NULL, bool retry_on_intr = true);
-
     static int unlink(const char* path, 
-                      const char* log = NULL);
-    
+                      const char* log = 0);    
+
     static int lseek(int fd, off_t offset, int whence,
-                     const char* log = NULL);
+                     const char* log = 0);
     
     static int truncate(int fd, off_t length,
-                        const char* log = NULL);
+                        const char* log = 0);
 
-    static int mkstemp(char* templ, const char* log = NULL);
-    
-    static int send(int fd, const char* bp, size_t len, int flags,
-                    const char* log = NULL, bool retry_on_intr = true);
-    
-    static int sendto(int fd, char* bp, size_t len, int flags,
-                      const struct sockaddr* to, socklen_t tolen,
-                      const char* log = NULL, bool retry_on_intr = true);
-                      
-    static int sendmsg(int fd, const struct msghdr* msg, int flags,
-                       const char* log = NULL, bool retry_on_intr = true);
-    
-    static int recv(int fd, char* bp, size_t len, int flags,
-                    const char* log = NULL, bool retry_on_intr = true);
-    
-    static int recvfrom(int fd, char* bp, size_t len, int flags,
-                        struct sockaddr* from, socklen_t* fromlen,
-                        const char* log = NULL, bool retry_on_intr = true);
-    
-    static int recvmsg(int fd, struct msghdr* msg, int flags,
-                       const char* log = NULL, bool retry_on_intr = true);
-    
+    static int mkstemp(char* templ, const char* log = 0);
     //@}
-    
-    /// Wrapper around poll() for a single fd
-    /// @return -1 for error, 0 or 1 to indicate readiness
-    static int poll(int fd, int events, int* revents, int timeout_ms,
-                    const char* log = NULL, bool retry_on_intr = true);
-    
-    //@{
-    /// Fill in the entire supplied buffer, potentially
-    /// requiring multiple calls to read().
+
+    //! @{ XXX/bowei - more documentation
+    static int read(int fd, char* bp, size_t len,
+                    Notifier* intr = 0, const char* log = 0);    
+
+    static int readv(int fd, const struct iovec* iov, int iovcnt,
+                     Notifier* intr = 0, const char* log = 0);
+
     static int readall(int fd, char* bp, size_t len,
-                       const char* log = NULL);
+                       Notifier* intr = 0, const char* log = 0);
 
     static int readvall(int fd, const struct iovec* iov, int iovcnt,
-                        const char* log = NULL);
-    //@}
+                 Notifier* intr = 0, const char* log = 0);
+
+    static int timeout_read(int fd, char* bp, size_t len, int timeout_ms,
+                            Notifier* intr = 0, const char* log  = 0);
+
+    static int timeout_readv(int fd, const struct iovec* iov, int iovcnt,
+                             int timeout_ms, Notifier* intr = 0, 
+                             const char* log = 0);
+
+    static int timeout_readall(int fd, char* bp, size_t len, int timeout_ms,
+                               Notifier* intr = 0, const char* log = 0);
+
+    static int timeout_readvall(int fd, const struct iovec* iov, int iovcnt,
+                                int timeout_ms, Notifier* intr = 0, 
+                                const char* log = 0);
+
+    static int recv(int fd, char* bp, size_t len, int flags,
+                    Notifier* intr = 0,  const char* log = 0);
+
+    static int recvfrom(int fd, char* bp, size_t len,
+                        int flags, struct sockaddr* from, socklen_t* fromlen,
+                        Notifier* intr = 0, const char* log = 0);
+
+    static int recvmsg(int fd, struct msghdr* msg, int flags,
+                       Notifier* intr = 0, const char* log = 0);
     
-    //@{
-    /// Write out the entire supplied buffer, potentially
-    /// requiring multiple calls to write().
+    static int write(int fd, const char* bp, size_t len,
+                     Notifier* intr = 0, const char* log = 0);
+
+    static int writev(int fd, const struct iovec* iov, int iovcnt,
+                      Notifier* intr = 0, const char* log = 0);
+
     static int writeall(int fd, const char* bp, size_t len,
-                        const char* log = NULL);
+                        Notifier* intr = 0, const char* log = 0);
 
     static int writevall(int fd, const struct iovec* iov, int iovcnt,
-                         const char* log = NULL);
-    //@}
+                         Notifier* intr = 0, const char* log = 0);
 
-    //@{
-    /**
-     * @brief Try to read or recv the specified number of bytes, but
-     * don't block for more than timeout milliseconds.
-     *
-     * @return the number of bytes read or the appropriate
-     * IOTimeoutReturn_t code
-     */
-    static int timeout_read(int fd, char* bp, size_t len, int timeout_ms,
-                            const char* log = NULL, bool retry_on_intr = true);
-    
-    static int timeout_readv(int fd, const struct iovec* iov, int iovcnt,
-                             int timeout_ms, const char* log = NULL, 
-			     bool retry_on_intr = true);
-    static int timeout_readall(int fd, char* bp, size_t len,
-                               int timeout_ms, const char* log = NULL);
-    static int timeout_readvall(int fd, const struct iovec* iov, int iovcnt,
-                                int timeout_ms, const char* log = NULL);
+    static int timeout_write(int fd, char* bp, size_t len, int timeout_ms,
+                             Notifier* intr = 0, const char* log  = 0);
 
-    //@}
+    static int timeout_writev(int fd, const struct iovec* iov, int iovcnt, 
+                              int timeout_ms, Notifier* intr = 0, 
+                              const char* log = 0);
+
+    static int timeout_writeall(int fd, const char* bp, size_t len, 
+                                int timeout_ms,
+                                Notifier* intr = 0, const char* log = 0);
+
+    static int timeout_writevall(int fd, const struct iovec* iov, int iovcnt,
+                                 int timeout_ms, Notifier* intr = 0, 
+                                 const char* log = 0);
     
-    /// Get and Set the file descriptor's nonblocking status
+    static int send(int fd, const char* bp, size_t len, int flags,
+                    Notifier* intr = 0, const char* log = 0);
+    
+    static int sendto(int fd, char* bp, size_t len, 
+                      int flags, const struct sockaddr* to, socklen_t tolen,
+                      Notifier* intr = 0, const char* log = 0);
+
+    static int sendmsg(int fd, const struct msghdr* msg, int flags,
+                       Notifier* intr = 0, const char* log = 0);
+    //! @}
+
+    //! @return IOTIMEOUT, IOINTR, 1 indicates readiness, otherwise
+    //! it's an error.
+    static int poll(int fd, short events, short* revents, int timeout_ms,
+                    Notifier* intr = 0, const char* log = 0);
+    
+    //! @{ Read/Write in the entire supplied buffer, potentially !
+    //! requiring multiple system calls
+    //! @}
+
+    //! @{ Get and Set the file descriptor's nonblocking status
     static int get_nonblocking(int fd, bool *nonblocking,
                                const char* log = NULL);
     static int set_nonblocking(int fd, bool nonblocking,
                                const char* log = NULL);
-    
-private:
-    IO();  // don't ever instantiate
+    //! @}
 
-    typedef ssize_t(*rw_func_t)(int, void*, size_t);
-    typedef ssize_t(*rw_vfunc_t)(int, const struct iovec*, int);
-
-    static int rwall(rw_func_t rw, int fd, char* bp, size_t len,
-                     const char* log, bool retry_on_intr);
+    //! Poll on an fd, interruptable by the notifier.
+    static int poll_with_notifier(Notifier*             intr, 
+                                  int                   fd,
+                                  short                 events,   
+                                  short*                revents,  
+                                  int                   timeout,  
+                                  const struct timeval* start_time,
+                                  const char*           log);
     
-    static int rwvall(rw_vfunc_t rw, int fd,
-                      const struct iovec* iov, int iovcnt,
-                      const char* log_func, const char* log, 
-		      bool retry_on_intr);
-};
+    //! Op code used by rwdatas()
+    enum RwDataOp {
+        READV = 1,
+        RECV,
+        RECVFROM,
+        RECVMSG,
+        WRITEV,
+        SEND,
+        SENDTO,
+        SENDMSG,
+    };
+
+    //! Union used to pass extra arguments to rwdata
+    union RwDataExtraArgs {
+        const struct msghdr* msg_hdr;
+
+        struct {
+            const struct sockaddr* to;
+            socklen_t tolen;
+        } sendto;
+    
+        struct {
+            struct sockaddr* from;
+            socklen_t* fromlen;
+        } recvfrom;
+    };
+
+    //! This is the do all function which will (depending on the flags
+    //! given dispatch to the correct read/write/send/rcv call
+    static int rwdata(RwDataOp              op, 
+                      int                   fd, 
+                      const struct iovec*   iov, 
+                      int                   iovcnt, 
+                      int                   flags, 
+                      int                   timeout,
+                      RwDataExtraArgs*      args,
+                      const struct timeval* start_time,
+                      Notifier*             intr, 
+                      const char*           log);
+    
+    //! Do all function for iovec reading/writing
+    static int rwvall(RwDataOp              op, 
+                      int                   fd, 
+                      const struct iovec*   iov, 
+                      int                   iovcnt,
+                      int                   timeout,
+                      const struct timeval* start,
+                      Notifier*             intr, 
+                      const char*           fcn_name, 
+                      const char*           log);
+    
+    //! Adjust the timeout value given a particular start time
+    static int adjust_timeout(int timeout, const struct timeval* start);
+}; // class IO
 
 } // namespace oasys
 

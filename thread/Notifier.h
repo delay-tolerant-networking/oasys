@@ -80,9 +80,12 @@ public:
     void notify();
 
     /**
-     * Drain the pipe. Never blocks.
+     * @param bytes Drain this many bytes from the pipe. 0 means to
+     *     drain all of the bytes possible in the pipe. The default is to
+     *     drain 1 byte. Anything different will probably be a race
+     *     condition unless there is some kind of locking going on.
      */
-    void drain_pipe();
+    void drain_pipe(size_t bytes = 1);
 
     /**
      * The read side of the pipe, suitable for an explicit call to

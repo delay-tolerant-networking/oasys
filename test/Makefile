@@ -3,6 +3,7 @@ TESTS += \
 	buffered-io-test			\
 	command-test				\
 	hexdump-test				\
+	io-basic-test				\
 	io-core-test                            \
 	io-intr-test                            \
 	log-test				\
@@ -23,7 +24,6 @@ TESTS += \
 	tcp-timeout-read-test			\
 	tcp-writeall-test			\
 	thread-test				\
-	thread-interrupt-test			\
 	timer-test				\
 	type-collection-test			\
 	url-test				\

@@ -72,9 +72,9 @@ namespace oasys {
  * IPSocket is a base class that wraps a network socket. It is a base
  * for TCPClient, TCPServer, and UDPSocket.
  */
-class IPSocket : public Logger {
+class IPSocket : public Logger, virtual public InterruptableIO {
 private:
-    IPSocket(const IPSocket&);	///< Prohibited constructor
+    IPSocket(const IPSocket&); ///< Prohibited constructor
     
 public:
     // Constructor / destructor
@@ -327,7 +327,14 @@ IPSocket::logf(log_level_t level, const char *fmt, ...)
 int
 IPSocket::poll(int events, int* revents, int timeout_ms)
 {
-    return IO::poll(fd_, events, revents, timeout_ms, logpath_);
+    short s_events = events;
+    short s_revents;
+    
+    int cc = IO::poll(fd_, s_events, &s_revents, timeout_ms, 
+                      get_notifier(), logpath_);
+    *revents = s_revents;
+    
+    return cc;
 }
 
 } // namespace oasys

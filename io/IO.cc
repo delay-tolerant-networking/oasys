@@ -43,10 +43,120 @@
 #include <sys/fcntl.h>
 
 #include "IO.h"
+
 #include "debug/Log.h"
+#include "thread/Notifier.h"
 
 namespace oasys {
 
+/////////////////////////////////////////////////////////////////////////////
+//! Small helper class which is a copy-on-write iovec and also handle
+//! adjustment for consumption of the bytes in the iovec.
+class COWIoVec {
+public:
+    COWIoVec(const struct iovec* iov, int iovcnt) 
+	: iov_(const_cast<struct iovec*>(iov)),
+	  iovcnt_(iovcnt),
+	  bytes_left_(0),
+	  copied_(false),
+	  dynamic_iov_(0)
+    {
+	for (int i=0; i<iovcnt_; ++i) {
+	    bytes_left_ += iov_[i].iov_len;
+	}
+    }
+
+    ~COWIoVec() { 
+	if (dynamic_iov_ != 0) {
+	    free(iov_); 
+	    dynamic_iov_ = 0;
+	} 
+    }
+    
+    //! @return number of bytes left in the iovecs
+    void consume(size_t cc) {
+	ASSERT(bytes_left_ >= cc);
+
+	// common case, all the bytes are gone on the first run
+	if (!copied_ && cc == bytes_left_) {
+	    iov_        = 0;
+	    bytes_left_ = 0;
+	    return;
+	}
+	
+	if (!copied_) {
+	    copy();
+        }
+	
+	// consume the iovecs
+	bytes_left_ -= cc;
+	while (cc > 0) {
+	    ASSERT(iovcnt_ > 0);
+
+	    if (iov_[0].iov_len <= cc) {
+		cc -= iov_[0].iov_len;
+		--iovcnt_;
+		++iov_;
+	    } else {
+		iov_[0].iov_base = reinterpret_cast<char*>
+                                   (iov_[0].iov_base) + cc;
+		iov_[0].iov_len  -= cc;
+                cc = 0;
+                break;
+            }
+	}
+        
+        // For safety
+        if (bytes_left_ == 0) {
+            iov_ = 0;
+        }
+    }
+
+    void copy() {
+	ASSERT(!copied_);
+	
+	copied_ = true;
+	if (iovcnt_ <= 16) {
+	    memcpy(static_iov_, iov_, 
+		   iovcnt_ * sizeof(struct iovec));
+	    iov_ = static_iov_;
+	} else {
+	    dynamic_iov_ = static_cast<struct iovec*>
+                           (malloc(iovcnt_ * sizeof(struct iovec)));
+	    memcpy(dynamic_iov_, iov_, iovcnt_* sizeof(struct iovec));
+	    iov_ = dynamic_iov_;
+	}
+    }
+    
+    const struct iovec* iov()        { return iov_; }
+    int                 iovcnt()     { return iovcnt_; }
+    size_t              bytes_left() { return bytes_left_; }
+
+private:
+    struct iovec* iov_;
+    int           iovcnt_;
+    size_t        bytes_left_;
+    
+    bool          copied_;
+    struct iovec  static_iov_[16];
+    struct iovec* dynamic_iov_;
+};
+
+//////////////////////////////////////////////////////////////////////////////
+const char* 
+IO::ioerr2str(int err)
+{
+    switch (err) {
+    case IOEOF:     return "eof";
+    case IOERROR:   return "error";
+    case IOTIMEOUT: return "timeout";
+    case IOINTR:    return "intr";
+    }
+    
+    NOTREACHED;
+}
+
+//////////////////////////////////////////////////////////////////////////////
 int
 IO::open(const char* path, int flags, const char* log)
 {
@@ -57,6 +167,7 @@ IO::open(const char* path, int flags, const char* log)
     return fd;
 }
 
+//////////////////////////////////////////////////////////////////////////////
 int
 IO::open(const char* path, int flags, mode_t mode, const char* log)
 {
@@ -68,6 +179,7 @@ IO::open(const char* path, int flags, mode_t mode, const char* log)
     return fd;
 }
     
+//////////////////////////////////////////////////////////////////////////////
 int
 IO::close(int fd, const char* log, const char* filename)
 {
@@ -78,77 +190,7 @@ IO::close(int fd, const char* log, const char* filename)
     return ret;
 }
 
-int
-IO::read(int fd, char* bp, size_t len, const char* log, bool retry_on_intr)
-{
-  retry:
-    int cc = ::read(fd, (void*)bp, len);
-    if (retry_on_intr && cc < 0 && errno == EINTR) {
-        goto retry;
-    }
-    
-    if (log) logf(log, LOG_DEBUG, "read %d/%u %s", cc, (u_int)len,
-                  (cc < 0) ? strerror(errno) : "");
-    return cc;
-}
-
-int
-IO::readv(int fd, const struct iovec* iov, int iovcnt, const char* log, 
-	  bool retry_on_intr)
-{
-    size_t total = 0;
-    for (int i = 0; i < iovcnt; ++i) {
-        total += iov[i].iov_len;
-    }
-
-  retry:
-    int cc = ::readv(fd, iov, iovcnt);
-    if (retry_on_intr && cc < 0 && errno == EINTR) {
-        goto retry;
-    }
-    if (log) {
-        logf(log, LOG_DEBUG, "readv %d/%u %s", cc, (u_int)total,
-             (cc < 0) ? strerror(errno) : "");
-    }
-    
-    return cc;
-}
-    
-int
-IO::write(int fd, const char* bp, size_t len, const char* log, 
-	  bool retry_on_intr)
-{
-  retry:
-    int cc = ::write(fd, (void*)bp, len);
-    if (retry_on_intr && cc < 0 && errno == EINTR) {
-        goto retry;
-    }
-    if (log) {
-        logf(log, LOG_DEBUG, "write %d/%u %s", cc, (u_int)len,
-             (cc < 0) ? strerror(errno) : "");
-    }
-
-    return cc;
-}
-
-int
-IO::writev(int fd, const struct iovec* iov, int iovcnt, const char* log,
-	   bool retry_on_intr)
-{
-    size_t total = 0;
-    for (int i = 0; i < iovcnt; ++i) {
-        total += iov[i].iov_len;
-    }
-
-  retry:
-    int cc = ::writev(fd, iov, iovcnt);
-    if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
-    if (log) logf(log, LOG_DEBUG, "writev %d/%u %s", cc, (u_int)total,
-                  (cc < 0) ? strerror(errno) : "");
-    
-    return cc;
-}
-
+//////////////////////////////////////////////////////////////////////////////
 int
 IO::unlink(const char* path, const char* log)
 {
@@ -156,9 +198,11 @@ IO::unlink(const char* path, const char* log)
     if (log) {
         logf(log, LOG_DEBUG, "unlink %s: %d", path, ret);
     }
+
     return ret;
 }
 
+//////////////////////////////////////////////////////////////////////////////
 int
 IO::lseek(int fd, off_t offset, int whence, const char* log)
 {
@@ -172,9 +216,11 @@ IO::lseek(int fd, off_t offset, int whence, const char* log)
              "SEEK_INVALID",
              cc);
     }
+
     return cc;
 }
 
+//////////////////////////////////////////////////////////////////////////////
 int
 IO::truncate(int fd, off_t length, const char* log)
 {
@@ -182,9 +228,11 @@ IO::truncate(int fd, off_t length, const char* log)
     if (log) {
         logf(log, LOG_DEBUG, "truncate %u: %d", (u_int)length, ret);
     }
+
     return ret;
 }
 
+//////////////////////////////////////////////////////////////////////////////
 int
 IO::mkstemp(char* templ, const char* log)
 {
@@ -192,418 +240,317 @@ IO::mkstemp(char* templ, const char* log)
     if (log) {
         logf(log, LOG_DEBUG, "mkstemp %s: %d", templ, ret);
     }
+
     return ret;
 }
 
+//////////////////////////////////////////////////////////////////////////////
 int
-IO::send(int fd, const char* bp, size_t len, int flags,
-         const char* log, bool retry_on_intr)
+IO::read(int fd, char* bp, size_t len, 
+         Notifier* intr, const char* log)
 {
-  retry:
-    int cc = ::send(fd, (void*)bp, len, flags);
-    if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
-    if (log) logf(log, LOG_DEBUG, "send %d/%u %s", cc, (u_int)len,
-                  (cc < 0) ? strerror(errno) : "");
-    return cc;
+    struct iovec iov;
+    iov.iov_base = bp;
+    iov.iov_len  = len;
+    return rwdata(READV, fd, &iov, 1, 0, -1, 0, 0, intr, log);
 }
 
+//////////////////////////////////////////////////////////////////////////////
 int
-IO::sendto(int fd, char* bp, size_t len, int flags,
-           const struct sockaddr* to, socklen_t tolen,
-           const char* log, bool retry_on_intr)
+IO::readv(int fd, const struct iovec* iov, int iovcnt, 
+          Notifier* intr, const char* log)
 {
-  retry:
-    int cc = ::sendto(fd, (void*)bp, len, flags, to, tolen);
-    if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
-    if (log) logf(log, LOG_DEBUG, "sendto %d/%u %s", cc, (u_int)len,
-                  (cc < 0) ? strerror(errno) : "");
-    return cc;
+    return rwdata(READV, fd, iov, iovcnt, 0, -1, 0, 0, intr, log);
 }
 
+//////////////////////////////////////////////////////////////////////////////
 int
-IO::sendmsg(int fd, const struct msghdr* msg, int flags,
-            const char* log, bool retry_on_intr)
+IO::readall(int fd, char* bp, size_t len, 
+            Notifier* intr, const char* log)
 {
-  retry:    
-    int cc = ::sendmsg(fd, msg, flags);
-    if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
-    if (log) logf(log, LOG_DEBUG, "sendmsg: %d", cc);
-    return cc;
+    struct iovec iov;
+    iov.iov_base = bp;
+    iov.iov_len  = len;
+
+    return rwvall(READV, fd, &iov, 1, -1, 0, intr, "readall", log);
 }
 
+//////////////////////////////////////////////////////////////////////////////
+int
+IO::readvall(int fd, const struct iovec* iov, int iovcnt,
+             Notifier* intr, const char* log)
+{
+    return rwvall(READV, fd, iov, iovcnt, -1, 0, intr, "readvall", log);
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+int
+IO::timeout_read(int fd, char* bp, size_t len, int timeout_ms,
+                 Notifier* intr, const char* log)
+{
+    struct iovec iov;
+    iov.iov_base = bp;
+    iov.iov_len  = len;
+
+    struct timeval start;
+    gettimeofday(&start, 0);
+
+    return rwdata(READV, fd, &iov, 1, 0, timeout_ms, 0, 
+                  &start, intr, log);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int
+IO::timeout_readv(int fd, const struct iovec* iov, int iovcnt, int timeout_ms,
+                  Notifier* intr, const char* log)
+{
+    struct timeval start;
+    gettimeofday(&start, 0);
+
+    return rwdata(READV, fd, iov, iovcnt, 0, timeout_ms, 0, 
+                  &start, intr, log);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int
+IO::timeout_readall(int fd, char* bp, size_t len, int timeout_ms,
+                    Notifier* intr, const char* log)
+{
+    struct iovec iov;
+    iov.iov_base = bp;
+    iov.iov_len  = len;
+
+    struct timeval start;
+    gettimeofday(&start, 0);    
+
+    return rwvall(READV, fd, &iov, 1, timeout_ms, &start, 
+                  intr, "timeout_readall", log);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int
+IO::timeout_readvall(int fd, const struct iovec* iov, int iovcnt, 
+                     int timeout_ms, Notifier* intr, const char* log)
+{
+    struct timeval start;
+    gettimeofday(&start, 0);        
+
+    return rwvall(READV, fd, iov, iovcnt, timeout_ms, &start, intr, 
+                  "timeout_readvall", log);
+}
+
+//////////////////////////////////////////////////////////////////////////////
 int
 IO::recv(int fd, char* bp, size_t len, int flags,
-            const char* log, bool retry_on_intr)
+         Notifier* intr, const char* log)
 {
-  retry:
-    int cc = ::recv(fd, (void*)(bp), len, flags);
-    if (retry_on_intr && cc < 0 && errno == EINTR) {
-        goto retry;
-    }
-
-    if (log) {
-        logf(log, LOG_DEBUG, "recv %d/%u %s", cc, (u_int)len,
-             (cc < 0) ? strerror(errno) : "");
-    }
-
-    return cc;
+    struct iovec iov;
+    iov.iov_base = bp;
+    iov.iov_len  = len;
+    return rwdata(RECV, fd, &iov, 1, 0, -1, 0, 0, intr, log);
 }
 
+//////////////////////////////////////////////////////////////////////////////
 int
 IO::recvfrom(int fd, char* bp, size_t len, int flags,
              struct sockaddr* from, socklen_t* fromlen,
-             const char* log, bool retry_on_intr)
+             Notifier* intr, const char* log)
 {
-  retry:
-    int cc = ::recvfrom(fd, (void*)bp, len, flags, from, fromlen);
-    if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
-    if (log) logf(log, LOG_DEBUG, "recvfrom %d/%u %s", cc, (u_int)len,
-                  (cc < 0) ? strerror(errno) : "");
-    return cc;
+    struct iovec iov;
+    iov.iov_base = bp;
+    iov.iov_len  = len;
+
+    RwDataExtraArgs args;
+    args.recvfrom.from    = from;
+    args.recvfrom.fromlen = fromlen;
+    return rwdata(RECVFROM, fd, &iov, 1, flags, -1, &args, 0, intr, log);
 }
 
+//////////////////////////////////////////////////////////////////////////////
 int
 IO::recvmsg(int fd, struct msghdr* msg, int flags,
-            const char* log, bool retry_on_intr)
+            Notifier* intr, const char* log)
 {
-  retry:
-    int cc = ::recvmsg(fd, msg, flags);
-    if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
-    if (log) logf(log, LOG_DEBUG, "recvmsg: %d", cc);
-    return cc;
+    RwDataExtraArgs args;
+    args.msg_hdr = msg;
+    return rwdata(RECVMSG, fd, 0, 0, flags, -1, &args, 0, intr, log);
 }
 
-int
-IO::poll(int fd, int events, int* revents, int timeout_ms, const char* log,
-	 bool retry_on_intr)
-{
-    int cc;
-    struct pollfd pollfd;
-    
-    pollfd.fd = fd;
-    pollfd.events = events;
-    pollfd.revents = 0;
 
-    // Handling EINTR this way screws up precise timing, but it should
-    // be a rare occurance and not change any expected behavior
-  retry:
-    cc = ::poll(&pollfd, 1, timeout_ms);
-    if (retry_on_intr && cc < 0 && errno == EINTR) goto retry;
-    
+//////////////////////////////////////////////////////////////////////////////
+int
+IO::write(int fd, const char* bp, size_t len, 
+          Notifier* intr, const char* log)
+{
+    struct iovec iov; 
+    iov.iov_base = const_cast<void*>(static_cast<const void*>(bp));
+    iov.iov_len  = len;
+    return rwdata(WRITEV, fd, &iov, 1, 0, -1, 0, 0, intr, log);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int
+IO::writev(int fd, const struct iovec* iov, int iovcnt, 
+           Notifier* intr, const char* log)
+{
+    return rwdata(WRITEV, fd, iov, iovcnt, 0, -1, 0, 0, intr, log);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int
+IO::writeall(int fd, const char* bp, size_t len, 
+             Notifier* intr, const char* log)
+{
+    struct iovec iov;
+    iov.iov_base = const_cast<char*>(bp);
+    iov.iov_len  = len;
+
+    return rwvall(WRITEV, fd, &iov, 1, -1, 0, intr, "writeall", log);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int
+IO::writevall(int fd, const struct iovec* iov, int iovcnt,
+              Notifier* intr, const char* log)
+{
+    return rwvall(WRITEV, fd, iov, iovcnt, -1, 0, intr, "writevall", log);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int 
+IO::timeout_write(int fd, char* bp, size_t len, int timeout_ms,
+                  Notifier* intr, const char* log)
+{
+    struct iovec iov; 
+    iov.iov_base = const_cast<void*>(static_cast<const void*>(bp));
+    iov.iov_len  = len;
+    return rwdata(WRITEV, fd, &iov, 1, 0, timeout_ms, 0, 0, intr, log);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int 
+IO::timeout_writev(int fd, const struct iovec* iov, int iovcnt, int timeout_ms,
+                   Notifier* intr, const char* log)
+{
+    return rwdata(WRITEV, fd, iov, iovcnt, 0, timeout_ms, 0, 0, intr, log);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int 
+IO::timeout_writeall(int fd, const char* bp, size_t len, int timeout_ms,
+                     Notifier* intr, const char* log)
+{
+    struct iovec iov;
+    iov.iov_base = const_cast<char*>(bp);
+    iov.iov_len  = len;
+
+    struct timeval start;
+    gettimeofday(&start, 0);    
+
+    return rwvall(WRITEV, fd, &iov, 1, timeout_ms, &start, intr, 
+                  "timeout_writeall", log);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int 
+IO::timeout_writevall(int fd, const struct iovec* iov, int iovcnt,
+                      int timeout_ms, Notifier* intr, const char* log)
+{
+    struct timeval start;
+    gettimeofday(&start, 0);    
+
+    return rwvall(WRITEV, fd, iov, iovcnt, timeout_ms, &start, intr, 
+                  "timeout_writevall", log);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int
+IO::send(int fd, const char* bp, size_t len, int flags,
+         Notifier* intr, const char* log)
+{    
+    struct iovec iov;
+    iov.iov_base = const_cast<void*>(static_cast<const void*>(bp));
+    iov.iov_len  = len;
+    return rwdata(SEND, fd, &iov, 1, 0, -1, 0, 0, intr, log);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int
+IO::sendto(int fd, char* bp, size_t len, int flags,
+           const struct sockaddr* to, socklen_t tolen,
+           Notifier* intr, const char* log)
+{
+    struct iovec iov;
+    iov.iov_base = bp;
+    iov.iov_len  = len;
+
+    RwDataExtraArgs args;
+    args.sendto.to    = to;
+    args.sendto.tolen = tolen;
+
+    return rwdata(SENDTO, fd, &iov, 1, flags, -1, &args, 0, intr, log);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int
+IO::sendmsg(int fd, const struct msghdr* msg, int flags,
+            Notifier* intr, const char* log)
+{
+    RwDataExtraArgs args;
+    args.msg_hdr = msg;
+
+    return rwdata(SENDMSG, fd, 0, 0, flags, -1, &args, 0, intr, log);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int
+IO::poll(int fd, short events, short* revents, int timeout_ms, 
+         Notifier* intr, const char* log)
+{   
+    struct timeval start;
+    if (timeout_ms > 0) {
+        gettimeofday(&start, 0);
+    }
+
+    int err = poll_with_notifier(intr, fd, events, revents, timeout_ms, 
+                                 &start, log);
     if (log) {
         logf(log, LOG_DEBUG,
              "poll: events 0x%x timeout %d revents 0x%x cc %d",
-             events, timeout_ms, pollfd.revents, cc);
+             events, timeout_ms, ((revents == 0) ? 0 : *revents), err);
     }
+
+    if (err == 0) {
+        return 1;
+    } else if (err == IOTIMEOUT) {
+        return IOTIMEOUT;
+    } else {
+        ASSERT(err < 0);
+        return err;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int
+IO::get_nonblocking(int fd, bool *nonblockingp, const char* log)
+{
+    int flags = 0;
+    ASSERT(nonblockingp);
     
-    if (cc < 0) {
-        if (log && errno != EINTR)
-            logf(log, LOG_ERR, "error in poll: %s", strerror(errno));
+    if ((flags = fcntl(fd, F_GETFL)) < 0) {
+        if (log) log_debug(log, "get_nonblocking: fcntl GETFL err %s",
+                           strerror(errno));
         return -1;
     }
-    
-    if (revents)
-        *revents = pollfd.revents;
 
-#ifdef __APPLE__
-    // there's some strange race condition bug in the poll emulation
-    if (cc > 1) {
-        logf("/io", LOG_WARN,
-             "poll: returned bogus high value %d, flooring to 1", cc);
-        cc = 1;
-    }
-#endif
-
-    ASSERT(cc == 0 || cc == 1);
-    return cc; // 0 or 1
+    *nonblockingp = (flags & O_NONBLOCK);
+    if (log) log_debug(log, "get_nonblocking: %s mode",
+                       *nonblockingp ? "nonblocking" : "blocking");
+    return 0;
 }
 
-int
-IO::rwall(rw_func_t rw, int fd, char* bp, size_t len, const char* log,
-	  bool retry_on_intr)
-{
-    int cc, done = 0;
-    do {
-      retry:
-        cc = (*rw)(fd, bp, len);
-        if (cc < 0) {
-            if (errno == EAGAIN) continue;
-            if (retry_on_intr && errno == EINTR)  goto retry;
-            
-            return cc;
-        }
-        
-        if (cc == 0) 
-            return done;
-        
-        done += cc;
-        bp += cc;
-        len -= cc;
-        
-    } while (len > 0);
-    
-    return done;
-}
-
-int
-IO::readall(int fd, char* bp, size_t len, const char* log)
-{
-    int cc = rwall(::read, fd, bp, len, log, true);
-    if (log) logf(log, LOG_DEBUG, "readall %d/%u %s", cc, (u_int)len,
-                  (cc < 0) ? strerror(errno) : "");
-    return cc;
-}
-
-int
-IO::writeall(int fd, const char* bp, size_t len, const char* log)
-{
-    int cc = rwall((rw_func_t)::write, fd, (char*)bp, len, log, true);
-    if (log) logf(log, LOG_DEBUG, "writeall %d/%u %s", cc, (u_int)len,
-                  (cc < 0) ? strerror(errno) : "");
-    return cc;
-}
-
-int
-IO::rwvall(rw_vfunc_t rw, int fd, const struct iovec* const_iov, int iovcnt,
-           const char* log_func, const char* log, bool retry_on_intr)
-{
-    bool copied_iov = false;
-    const struct iovec* iov;
-    struct iovec *new_iov;
-    struct iovec  static_iov[16];
-    struct iovec* dynamic_iov = NULL;
-
-    // start off with iov pointing to the iovec we were given
-    iov = const_iov;
-    
-    // sum up the total amount to write
-    int cc, total = 0, done = 0;
-    for (int i = 0; i < iovcnt; ++i) {
-        total += iov[i].iov_len;
-    }
-
-    while (1)
-    {
-        cc = (*rw)(fd, iov, iovcnt);
-        
-        if (cc < 0) {
-            if (errno == EINTR && retry_on_intr)
-                continue;
-            
-            done = cc;
-            goto done;
-        }
-
-        if (cc == 0) {
-            goto done;
-        }
-        
-        done += cc;
-
-        if (done == total)
-            goto done;
-        
-        /*
-         * Advance iov past any completed chunks.
-         */
-        while (cc >= (int)iov[0].iov_len)
-        {
-            if (log) logf(log, LOG_DEBUG, "%s skipping all %u of %p", log_func,
-                          (u_int)iov[0].iov_len, iov[0].iov_base);
-            cc -= iov[0].iov_len;
-            iov++;
-            iovcnt--;
-        }
-
-        /*
-         * Check if the written portion falls exactly on an iovec
-         * boundary, if so, we can loop again and retry the operation
-         * (potentially avoiding the copy below).
-         */
-        if (cc == 0)
-            continue;
-
-        /*
-         * Now copy the iovecs into a temporary array if we haven't
-         * done so already.
-         */
-        if (! copied_iov)
-        {
-            if (iovcnt <= 16) {
-                new_iov = static_iov;
-                memset(static_iov, 0, sizeof(static_iov));
-            } else {
-                // maybe this shouldn't be logged at level warning, but for
-                // now, keep it as such since it probably won't ever be an
-                // issue and if it is, we can always demote the level later
-                logf("/io", LOG_WARN,
-                     "%s required to malloc since remaining iovcnt is %d",
-                     log_func, iovcnt);
-                dynamic_iov = (struct iovec*)malloc(sizeof(struct iovec) * iovcnt);
-                memset(dynamic_iov, 0, (sizeof(struct iovec) * iovcnt));
-                new_iov = dynamic_iov;
-            }
-    
-            memcpy(new_iov, iov, sizeof(struct iovec) * iovcnt);
-            iov = new_iov;
-            copied_iov = true;
-        }
-
-        /*
-         * Finally, adjust the first entry in the iovec array to
-         * account for the partially handled bytes. Note that since
-         * iov already points to one of static_iov or dynamic_iov, we
-         * can safely cast away the constness to do the adjustment.
-         */
-        if (log) logf(log, LOG_DEBUG, "%s skipping %d bytes of %p -> %p",
-                      log_func, cc, iov[0].iov_base,
-                      (((char*)iov[0].iov_base) + cc));
-        
-        ((struct iovec*)iov)[0].iov_base = (((char*)iov[0].iov_base) + cc);
-        ((struct iovec*)iov)[0].iov_len  -= cc;
-
-        const_iov = iov;
-    }
-
- done:
-    if (dynamic_iov != NULL)
-        free(dynamic_iov);
-    
-    if (log) logf(log, LOG_DEBUG, "%s iovcnt %d: %d/%u %s",
-                  log_func, iovcnt, done, total,
-                  (done < 0) ? strerror(errno) : "");
-
-    return done;
-}
-
-int
-IO::readvall(int fd, const struct iovec* iov, int iovcnt,
-             const char* log)
-{
-    return rwvall(::readv, fd, iov, iovcnt, "readvall", log, true);
-
-}
-
-int
-IO::writevall(int fd, const struct iovec* iov, int iovcnt,
-              const char* log)
-{
-    return rwvall(::writev, fd, iov, iovcnt, "writevall", log, true);
-}
-
-/**
- * Implement a blocking read with a timeout. This is really done by
- * first calling poll() and then calling read if there was actually
- * something to do.
- */
-int
-IO::timeout_read(int fd, char* bp, size_t len, int timeout_ms,
-                 const char* log, bool retry_on_intr)
-{
-    ASSERT(timeout_ms >= 0);
-    
-    int cc = poll(fd, POLLIN | POLLPRI, NULL, timeout_ms, log, retry_on_intr);
-    if (cc < 0)
-        return IOERROR;
-    if (cc == 0) {
-        if (log) logf(log, LOG_DEBUG, "poll timed out");
-        return IOTIMEOUT;
-    }
-    
-    ASSERT(cc == 1);
-
-  retry:
-    cc = read(fd, bp, len);
-    if (retry_on_intr && cc <0 && errno == EINTR) {
-        goto retry;
-    }
-
-    if (cc < 0) {
-        if (log) logf(log, LOG_ERR, "timeout_read error: %s", strerror(errno));
-        return IOERROR;
-    }
-
-    if (cc == 0) {
-        return IOEOF;
-    }
-
-    return cc;
-}
-
-int
-IO::timeout_readv(int fd, const struct iovec* iov, int iovcnt, int timeout_ms,
-                  const char* log, bool retry_on_intr)
-{
-    ASSERT(timeout_ms >= 0);
-    
-    int cc = poll(fd, POLLIN | POLLPRI, NULL, timeout_ms, log, retry_on_intr);
-    if (cc < 0)
-        return IOERROR;
-    if (cc == 0) {
-        if (log) logf(log, LOG_DEBUG, "poll timed out");
-        return IOTIMEOUT;
-    }
-    
-    ASSERT(cc == 1);
-
-  retry:
-    cc = ::readv(fd, iov, iovcnt);
-    if (retry_on_intr && cc < 0 && errno == EINTR) {
-        goto retry;
-    }    
-
-    if (cc < 0) {
-        if (log) logf(log, LOG_ERR, "timeout_readv error: %s",
-                      strerror(errno));
-        return IOERROR;
-    }
-
-    if (cc == 0) {
-        return IOEOF;
-    }
-
-    return cc;
-}
-
-int
-IO::timeout_readall(int fd, char* bp, size_t len, int timeout_ms,
-                    const char* log)
-{
-    ASSERT(timeout_ms >= 0);
-    int cc;
-    int total = 0;
-
-    if (len == 0) {
-        return 0;
-    }
-    
-    while (len > 0) {
-        cc = timeout_read(fd, bp, len, timeout_ms, log, true);
-        if (cc <= 0)
-            return cc;
-
-        total += cc;
-
-        if (cc == (int)len) {
-            return total;
-            
-        } else {
-            bp  += cc;
-            len -= cc;
-        }
-    }
-
-    NOTREACHED;
-}
-
-int
-IO::timeout_readvall(int fd, const struct iovec* iov, int iovcnt,
-                     int timeout_ms, const char* log)
-{
-    // XXX/demmer 
-    NOTIMPLEMENTED;
-}
-
+//////////////////////////////////////////////////////////////////////////////
 int
 IO::set_nonblocking(int fd, bool nonblocking, const char* log)
 {
@@ -637,29 +584,285 @@ IO::set_nonblocking(int fd, bool nonblocking, const char* log)
         return -1;
     }
 
- done:
+  done:
     if (log) log_debug(log, "set_nonblocking: %s mode %s",
                        nonblocking ? "nonblocking" : "blocking",
                        already     ? "already set" : "set");
     return 0;
 }
 
+//////////////////////////////////////////////////////////////////////////////
 int
-IO::get_nonblocking(int fd, bool *nonblockingp, const char* log)
-{
-    int flags = 0;
-    ASSERT(nonblockingp);
-    
-    if ((flags = fcntl(fd, F_GETFL)) < 0) {
-        if (log) log_debug(log, "get_nonblocking: fcntl GETFL err %s",
-                           strerror(errno));
-        return -1;
+IO::poll_with_notifier(
+    Notifier*             intr,
+    int                   fd,
+    short                 events,
+    short*                revents,
+    int                   timeout,
+    const struct timeval* start_time,
+    const char*           log
+    )
+{    
+    ASSERT(! (timeout > 0 && start_time == 0));
+    ASSERT(timeout >= -1);
+
+    struct pollfd poll_set[2];
+    int poll_set_size = 1;
+
+    poll_set[0].fd     = fd;
+    poll_set[0].events = events;
+
+    if (intr != 0) {
+        poll_set[1].fd     = intr->read_fd();
+        poll_set[1].events = POLLIN | POLLPRI | POLLERR;
+        ++poll_set_size;
     }
 
-    *nonblockingp = (flags & O_NONBLOCK);
-    if (log) log_debug(log, "get_nonblocking: %s mode",
-                       *nonblockingp ? "nonblocking" : "blocking");
-    return 0;
+  retry:
+    int cc = ::poll(poll_set, poll_set_size, timeout);
+    if (cc < 0 && errno == EINTR) {
+        if (timeout > 0) {
+            timeout = adjust_timeout(timeout, start_time);
+        }
+        goto retry;
+    }
+
+    if (cc < 0) {
+        return IOERROR;
+    } else if (cc == 0) {
+        if (log) {
+            logf(log, LOG_DEBUG, "poll_with_notifier timed out");
+        }
+        return IOTIMEOUT;
+    } else {
+
+#ifdef __APPLE__
+        // there's some strange bug in the poll emulation
+        if (cc > 2) {
+            if (log) {
+                logf(log, LOG_WARN,
+                     "poll_with_notifier: returned bogus high value %d, "
+                     "capping to 2", cc);
+            }
+            cc = 2;
+        }
+#endif
+
+        if (log) {
+            logf(log, LOG_DEBUG, 
+                 "poll_with_notifier: %d fds, status {%hx,%hx}",
+                 cc, poll_set[0].revents, poll_set[1].revents);
+        }
+        
+        // Always prioritize getting data before interrupt via notifier
+        if (poll_set[0].revents & events) {
+            if (revents != 0) {
+                *revents = poll_set[0].revents;
+            }
+
+            return 0;
+        } 
+
+        if (intr != 0 & poll_set[1].revents & POLLERR) {
+            if (log) {
+                logf(log, LOG_DEBUG,
+                     "poll_with_notifier: error in notifier fd!");
+            }
+
+            return IOERROR; // XXX/bowei - technically this is not an
+                            // error with the IO, but there should be
+                            // some kind of signal here that things
+                            // are not right
+        } else if (intr != 0 && poll_set[1].revents & (POLLIN | POLLPRI)) {
+            if (log) {
+                logf(log, LOG_DEBUG,
+                     "poll_with_notifier: interrupted");
+            }
+            intr->drain_pipe();
+            return IOINTR;
+        }
+
+        if (log) {
+            logf(log, LOG_DEBUG, 
+                 "poll_with_notifier: something wrong with revents "
+                 "- not part of watched events");
+        }        
+        return IOERROR;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int 
+IO::rwdata(
+    RwDataOp              op,
+    int                   fd,
+    const struct iovec*   iov,
+    int                   iovcnt,
+    int                   flags,
+    int                   timeout,
+    RwDataExtraArgs*      args,
+    const struct timeval* start_time,
+    Notifier*             intr, 
+    const char*           log
+    )
+{
+    ASSERT(! ((op == READV || op == WRITEV) && 
+              (iov == 0 || flags != 0 || args != 0)));
+    ASSERT(! ((op == RECV  || op == SEND) && 
+              (iovcnt != 1 | args != 0)));
+    ASSERT(! ((op == RECVFROM || op == SENDTO)  && 
+              (iovcnt != 1 || args == 0)));
+    ASSERT(! ((op == RECVMSG || op == SENDMSG) && 
+              (iov != 0 && args == 0)));
+    ASSERT(timeout >= -1);
+    ASSERT(! (timeout > -1 && start_time == 0));
+
+    short events;
+    switch (op) {
+    case READV: case RECV: case RECVFROM: case RECVMSG:
+        events = POLLIN | POLLPRI | POLLERR; break;
+    case WRITEV: case SEND: case SENDTO: case SENDMSG:
+        events = POLLOUT | POLLERR; break;
+    }
+   
+    int cc;
+    while (true) {
+        if (intr || timeout > -1) {
+            cc = poll_with_notifier(intr, fd, events, 0, timeout, start_time, log);
+            if (cc == IOERROR || cc == IOTIMEOUT || cc == IOINTR) {
+                return cc;
+            } 
+        }
+
+        switch (op) {
+        case READV:
+            cc = ::readv(fd, iov, iovcnt);
+            if (log) logf(log, LOG_DEBUG, "::readv() fd %d cc %d", fd, cc);
+            break;
+        case RECV:
+            cc = ::recv(fd, iov[0].iov_base, iov[0].iov_len, flags);
+            if (log) logf(log, LOG_DEBUG, "::recv() fd %d %p/%u cc %d", 
+                          fd, iov[0].iov_base, iov[0].iov_len, cc);
+            break;
+        case RECVFROM:
+            cc = ::recvfrom(fd, iov[0].iov_base, iov[0].iov_len, flags,
+                            args->recvfrom.from, 
+                            args->recvfrom.fromlen);
+            if (log) logf(log, LOG_DEBUG, "::recvfrom() fd %d %p/%u cc %d", 
+                          fd, iov[0].iov_base, iov[0].iov_len, cc);
+            break;
+        case RECVMSG:
+            cc = ::sendmsg(fd, args->msg_hdr, flags);
+            if (log) logf(log, LOG_DEBUG, "::recvmsg() fd %d %p cc %d", 
+                          fd, args->msg_hdr, cc);
+            break;
+        case WRITEV:
+            cc = ::writev(fd, iov, iovcnt);
+            if (log) logf(log, LOG_DEBUG, "::writev() fd %d cc %d", fd, cc);
+            break;
+        case SEND:
+            cc = ::send(fd, iov[0].iov_base, iov[0].iov_len, flags);
+            if (log) logf(log, LOG_DEBUG, "::send() fd %d %p/%u cc %d", 
+                          fd, iov[0].iov_base, iov[0].iov_len, cc);
+            break;
+        case SENDTO:
+            cc = ::sendto(fd, iov[0].iov_base, iov[0].iov_len, flags,
+                          args->sendto.to, args->sendto.tolen);
+            if (log) logf(log, LOG_DEBUG, "::sendto() fd %d %p/%u cc %d", 
+                          fd, iov[0].iov_base, iov[0].iov_len, cc);
+            break;
+        case SENDMSG:
+            cc = ::sendmsg(fd, args->msg_hdr, flags);
+            if (log) logf(log, LOG_DEBUG, "::sendmsg() fd %d %p cc %d", 
+                          fd, args->msg_hdr, cc);
+            break;
+        }
+        
+        if (cc < 0 && (errno == EAGAIN || errno == EINTR) ) {
+            if (timeout > 0) {
+                timeout = adjust_timeout(timeout, start_time);
+            }
+            continue;
+        }
+
+        if (cc < 0) {
+            return IOERROR;
+        } else if (cc == 0) {
+            return IOEOF;
+        } else {
+            return cc;
+        }
+    } // while (true)
+
+    NOTREACHED;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int
+IO::rwvall(
+    RwDataOp              op,
+    int                   fd,
+    const struct iovec*   iov, 
+    int                   iovcnt,
+    int                   timeout,             
+    const struct timeval* start,
+    Notifier*             intr,
+    const char*           fcn_name,
+    const char*           log
+    )
+{
+    ASSERT(op == READV || op == WRITEV);
+    ASSERT(! (timeout != -1 && start == 0));
+
+    COWIoVec cow_iov(iov, iovcnt);
+    int total_bytes = cow_iov.bytes_left();
+
+    while (cow_iov.bytes_left() > 0) {
+	int cc = rwdata(op, fd, cow_iov.iov(), cow_iov.iovcnt(), 
+		        0, timeout, 0, start, intr, log);
+	if (cc < 0) {
+	    if (log && cc != IOTIMEOUT && cc != IOINTR) {
+		logf(log, LOG_DEBUG, "%s %s %s", 
+		     fcn_name, ioerr2str(cc), strerror(errno));
+	    }
+	    return cc;
+	} else if (cc == 0) {
+            if (log) {
+                logf(log, LOG_DEBUG, "%s eof", fcn_name);
+            }
+	    return IOEOF;
+	} else {
+	    cow_iov.consume(cc);
+            if (log) {
+                logf(log, LOG_DEBUG, "%s %d bytes %u left %d total",
+                     fcn_name, cc, cow_iov.bytes_left(), total_bytes);
+            }
+            
+            if (timeout > 0) {
+                timeout = adjust_timeout(timeout, start);
+            }
+	}
+    }
+
+    return total_bytes;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int
+IO::adjust_timeout(int timeout, const struct timeval* start)
+{
+    struct timeval now;
+    int err = gettimeofday(&now, 0);
+    ASSERT(err == 0);
+    
+    now.tv_sec  -= start->tv_sec;
+    now.tv_usec -= start->tv_usec;
+    timeout -= now.tv_sec * 1000 + now.tv_usec / 1000;
+    if (timeout < 0) {
+        timeout = 0;
+    }
+
+    return timeout;
 }
 
 } // namespace oasys

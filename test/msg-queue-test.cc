@@ -41,8 +41,6 @@ protected:
             logf("/test", LOG_INFO, "producer enqueue %d", curr);
             q_->push(curr);
             curr++;
-            
-            yield();
         }
     }
     

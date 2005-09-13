@@ -595,7 +595,7 @@ Log::vlogf(const char *path, log_level_t level, const char *fmt, va_list ap)
     // do the write, making sure to drain the buffer. since stdout was
     // set to nonblocking, the spin lock prevents other threads from
     // jumping in here
-    int ret = IO::writeall(logfd_, buf, buflen);    
+    int ret = IO::writeall(logfd_, buf, buflen);
     ASSERT(ret == (int)buflen);
 
     return buflen;

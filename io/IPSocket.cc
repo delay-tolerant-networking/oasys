@@ -61,14 +61,14 @@ int IPSocket::abort_on_error_ = 0;
 IPSocket::IPSocket(int socktype, const char* logbase)
     : Logger(logbase)
 {
-    state_ = INIT;
-    local_addr_ = INADDR_ANY;
-    local_port_ = 0;
+    state_       = INIT;
+    local_addr_  = INADDR_ANY;
+    local_port_  = 0;
     remote_addr_ = INADDR_NONE;
     remote_port_ = 0;
-    fd_ = -1;
-    socktype_ = socktype;
-    logfd_ = true;
+    fd_          = -1;
+    socktype_    = socktype;
+    logfd_       = true;
 }
 
 void
@@ -97,13 +97,13 @@ IPSocket::IPSocket(int socktype, int sock,
                    in_addr_t remote_addr, u_int16_t remote_port,
                    const char* logbase)
 {
-    fd_ = sock;
+    fd_       = sock;
     socktype_ = socktype;
     logpathf("%s/%d", logbase, sock);
     
-    state_ = ESTABLISHED;
-    local_addr_ = INADDR_NONE;
-    local_port_ = 0;
+    state_       = ESTABLISHED;
+    local_addr_  = INADDR_NONE;
+    local_port_  = 0;
     remote_addr_ = remote_addr;
     remote_port_ = remote_port;
     
@@ -324,7 +324,7 @@ IPSocket::shutdown(int how)
 int
 IPSocket::send(const char* bp, size_t len, int flags)
 {
-    return IO::send(fd_, bp, len, flags, logpath_);
+    return IO::send(fd_, bp, len, flags, get_notifier(), logpath_);
 }
 
 int
@@ -337,19 +337,21 @@ IPSocket::sendto(char* bp, size_t len, int flags,
     sa.sin_addr.s_addr = addr;
     sa.sin_port = htons(port);
 
-    return IO::sendto(fd_, bp, len, flags, (sockaddr*)&sa, sizeof(sa));
+    return IO::sendto(fd_, bp, len, flags, (sockaddr*)&sa, 
+                      sizeof(sa), get_notifier(), logpath_);
 }
 
 int
 IPSocket::sendmsg(const struct msghdr* msg, int flags)
 {
-    return IO::sendmsg(fd_, msg, flags, logpath_);
+    return IO::sendmsg(fd_, msg, flags, get_notifier(), logpath_);
 }
 
 int
 IPSocket::recv(char* bp, size_t len, int flags)
 {
-    return IO::recv(fd_, bp, len, flags, logpath_);
+    return IO::recv(fd_, bp, len, flags, 
+                    get_notifier(), logpath_);
 }
 
 int
@@ -360,10 +362,11 @@ IPSocket::recvfrom(char* bp, size_t len, int flags,
     socklen_t sl = sizeof(sa);
     memset(&sa, 0, sizeof(sa));
     
-    int cc = IO::recvfrom(fd_, bp, len, flags, (sockaddr*)&sa, &sl, logpath_);
+    int cc = IO::recvfrom(fd_, bp, len, flags, (sockaddr*)&sa, &sl, 
+                          get_notifier(), logpath_);
     
-    if (cc == -1) {   
-        if (errno != EINTR)
+    if (cc < 0) {
+        if (cc != IOINTR)
             logf(LOG_ERR, "error in recv(): %s", strerror(errno));
         return cc;
     }
@@ -380,7 +383,7 @@ IPSocket::recvfrom(char* bp, size_t len, int flags,
 int
 IPSocket::recvmsg(struct msghdr* msg, int flags)
 {
-    return IO::recvmsg(fd_, msg, flags, logpath_);
+    return IO::recvmsg(fd_, msg, flags, get_notifier(), logpath_);
 }
 
 

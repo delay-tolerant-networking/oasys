@@ -5,12 +5,14 @@
 #include <io/IO.h>
 #include <debug/DebugUtils.h>
 #include <thread/Thread.h>
+#include <thread/Notifier.h>
 
 using namespace oasys;
 
 class MyThread : public Thread {
 public:
-    MyThread() : Thread(DELETE_ON_EXIT | CREATE_JOINABLE | INTERRUPTABLE) {}
+    MyThread() : Thread(DELETE_ON_EXIT | CREATE_JOINABLE) {}
+
 protected:
     void run() {
         int  fds[2];
@@ -30,21 +32,31 @@ protected:
             } 
 
             // read on the first, timeout on the second time
-            if (i == 0) {
+            if (i == 0)	    
+	    {
                 log_info("/test/thread", "sleeping like the dead - interrupt");
-                int err = IO::read(fds[0], buf, 256, "/test/thread", false);
-                ASSERT(err == IOERROR && errno == EINTR);
+                int err = IO::read(fds[0], buf, 256, &intr_, "/test/thread");
+                ASSERT(err == IOINTR);
                 log_info("/test/thread", "interrupted out of read");
-            } else if (i == 1) {
-                log_info("/test/thread", "sleeping with timeout - don't interrupt");
+            } 
+	    else if (i == 1) 
+	    {
+                log_info("/test/thread", "sleeping with timeout - "
+			 "don't interrupt");
                 int err = IO::timeout_read(fds[0], buf, 256, 3000, 
-                                           "/test/thread", true);
+                                           0, "/test/thread");
                 ASSERT(err == IOTIMEOUT);
                 log_info("/test/thread", "timed out of sleeping");
             }
         }
 
     }
+
+private:
+    Notifier intr_;
+
+public:
+    void intr() { intr_.notify(); }
 };
     
 int
@@ -58,20 +70,18 @@ main()
     sleep(1);
 
     log_info("/test/main", "should interrupt");
-    t->interrupt();
+    t->intr();
     sleep(1);
 
     log_info("/test/main", "shouldn't interrupt");
-    t->interrupt();
+    t->intr();
     sleep(1);
 
     log_info("/test/main", "interrupting and stopping test thread...");
     t->set_should_stop();
-    t->interrupt();
+    t->intr();
 
     log_info("/test/main", "waiting for test thread...");
     t->join();
-
-    ASSERT(t->is_stopped());
     log_info("/test/main", "test complete...");
 }

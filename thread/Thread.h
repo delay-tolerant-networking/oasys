@@ -65,9 +65,8 @@ public:
     enum thread_flags_t {
         CREATE_JOINABLE	= 1 << 0,	///< inverse of PTHREAD_CREATE_DETACHED
         DELETE_ON_EXIT  = 1 << 1,	///< delete thread when run() completes
-        INTERRUPTABLE   = 1 << 2,	///< thread can be interrupted
-        SHOULD_STOP   	= 1 << 3,	///< bit to signal the thread to stop
-        STOPPED   	= 1 << 4,	///< bit indicating the thread has stopped
+        SHOULD_STOP   	= 1 << 2,	///< bit to signal the thread to stop
+        STOPPED   	= 1 << 3,	///< bit indicating the thread has stopped
     };
 
     /**
@@ -139,23 +138,6 @@ public:
     void kill(int sig);
 
     /**
-     * Send an interrupt signal to the thread to unblock it if it's
-     * stuck in a system call. Implemented with SIGUSR1.
-     */
-    void interrupt();
-
-    /**
-     * Set the interruptable state of the thread (default off). If
-     * interruptable, a thread can receive SIGUSR1 signals to
-     * interrupt any system calls.
-     *
-     * Note: This must be called by the thread itself. To set the
-     * interruptable state before a thread is created, use the
-     * INTERRUPTABLE flag.
-     */
-    void set_interruptable(bool interruptable);
-    
-    /**
      * Set a bit to stop the thread
      *
      * This simply sets a bit in the thread's flags that can be
@@ -208,15 +190,11 @@ protected:
     virtual void run() = 0;
 
     static void* thread_run(void* t);
-    static void interrupt_signal(int sig);
 
     pthread_t pthread_;
-    int flags_;
+    int       flags_;
 
-    static bool signals_inited_;
-    static sigset_t interrupt_sigset_;
-
-    static bool start_barrier_enabled_;
+    static bool                 start_barrier_enabled_;
     static std::vector<Thread*> threads_in_barrier_;
 };
 
