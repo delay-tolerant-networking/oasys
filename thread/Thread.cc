@@ -46,8 +46,15 @@
 
 namespace oasys {
 
+bool                 Thread::signals_inited_ = false;
+sigset_t             Thread::interrupt_sigset_;
 bool                 Thread::start_barrier_enabled_ = false;
 std::vector<Thread*> Thread::threads_in_barrier_;
+
+void
+Thread::interrupt_signal(int sig)
+{
+}
 
 void*
 Thread::thread_run(void* t)
@@ -64,6 +71,8 @@ Thread::thread_run(void* t)
      */
     thr->pthread_ = Thread::current();
     
+    thr->set_interruptable((thr->flags_ & INTERRUPTABLE));
+
     thr->flags_ &= ~STOPPED;
     thr->flags_ &= ~SHOULD_STOP;
 
@@ -122,6 +131,15 @@ Thread::release_start_barrier()
 void
 Thread::start()
 {
+    // if this is the first thread, set up signals
+    if (!signals_inited_) {
+        sigemptyset(&interrupt_sigset_);
+        sigaddset(&interrupt_sigset_, INTERRUPT_SIG);
+        signal(INTERRUPT_SIG, interrupt_signal);
+        siginterrupt(INTERRUPT_SIG, 1);
+        signals_inited_ = true;
+    }
+
     // check if the creation barrier is enabled
     if (start_barrier_enabled_) {
         log_debug("/thread", "delaying start of thread %p due to barrier",
@@ -171,6 +189,23 @@ Thread::kill(int sig)
 {
     if (pthread_kill(pthread_, sig) != 0) {
         PANIC("error in pthread_kill: %s", strerror(errno));
+    }
+}
+
+void
+Thread::interrupt()
+{
+    kill(INTERRUPT_SIG);
+}
+
+void
+Thread::set_interruptable(bool interruptable)
+{
+    ASSERT(Thread::current() == pthread_);
+    
+    int block = (interruptable ? SIG_UNBLOCK : SIG_BLOCK);
+    if (pthread_sigmask(block, &interrupt_sigset_, NULL) != 0) {
+        PANIC("error in pthread_sigmask");
     }
 }
 
