@@ -74,6 +74,7 @@ Notifier::Notifier(const char* logpath)
 
 Notifier::~Notifier()
 {
+    log_debug("Notifier shutting down");
     close(pipe_[0]);
     close(pipe_[1]);
 }
@@ -152,7 +153,7 @@ Notifier::wait(SpinLock* lock, int timeout)
         log_debug("notifier wait timeout");
         return false; // timeout
     } else {
-        drain_pipe();
+        drain_pipe(1);
         log_debug("notifier wait successfully notified");
         return true;
     }
@@ -175,7 +176,8 @@ Notifier::notify()
             log_warn("pipe appears to be full");
             goto retry;
         } else {
-            log_err("unexpected error writing to pipe: %s", strerror(errno));
+            log_err("unexpected error writing to pipe fd %d: %s",
+                    write_fd(), strerror(errno));
         }
     } else if (ret == 0) {
         log_err("unexpected eof writing to pipe");

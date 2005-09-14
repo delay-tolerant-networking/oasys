@@ -85,7 +85,7 @@ public:
      *     drain 1 byte. Anything different will probably be a race
      *     condition unless there is some kind of locking going on.
      */
-    void drain_pipe(size_t bytes = 1);
+    void drain_pipe(size_t bytes);
 
     /**
      * The read side of the pipe, suitable for an explicit call to
