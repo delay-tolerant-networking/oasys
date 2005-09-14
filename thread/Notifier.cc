@@ -46,6 +46,7 @@
 namespace oasys {
 
 Notifier::Notifier(const char* logpath)
+    : count_(0)
 {
     if (logpath) {
         set_logpath(logpath);
@@ -91,7 +92,7 @@ Notifier::drain_pipe(size_t bytes)
                        std::min(sizeof(buf), bytes - bytes_drained));
         if (ret <= 0) {
             if (ret == -1 && errno == EAGAIN) {
-                return;
+                break;
             } else {
                 log_crit("drain_pipe: unexpected error return from read: %s",
                          strerror(errno));
@@ -102,9 +103,10 @@ Notifier::drain_pipe(size_t bytes)
         bytes_drained += ret;
         log_debug("drain_pipe: drained %u/%u byte(s) from pipe", 
                   bytes_drained, bytes);
-        
+        count_ -= ret;
+
         if (bytes != 0 && bytes_drained == bytes) {
-            return;
+            break;
         }
         
         // More bytes were requested from the pipe than there are
@@ -113,9 +115,11 @@ Notifier::drain_pipe(size_t bytes)
         if (ret < static_cast<int>(sizeof(buf))) {
             log_warn("drain_pipe: only possible to drain %u bytes out of %u! "
                      "race condition?", bytes_drained, bytes);
-            return;
+            break;
         }
     }
+
+    log_debug("drain pipe count = %d", count_);
 }
 
 bool
@@ -126,6 +130,9 @@ Notifier::wait(SpinLock* lock, int timeout)
     }
     waiter_ = true;
 
+    log_debug("attempting to wait on %p, count = %d", 
+              this, count_);
+    
     if (lock)
         lock->unlock();
 
@@ -155,6 +162,7 @@ void
 Notifier::notify()
 {
     char b = 0;
+
   retry:
     log_debug("notifier notify");
     int ret = ::write(write_fd(), &b, 1);
@@ -173,6 +181,8 @@ Notifier::notify()
         log_err("unexpected eof writing to pipe");
     } else {
         ASSERT(ret == 1);
+        ++count_;
+        log_debug("notify count = %d", count_);
     }
 }
 

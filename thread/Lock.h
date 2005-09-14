@@ -142,6 +142,13 @@ protected:
  */
 class ScopeLock {
 public:
+    ScopeLock(const Lock* l) : lock_(const_cast<Lock*>(l))
+    {
+        int ret = lock_->lock();
+        ASSERT(ret == 0);
+        lock_->scope_lock_count_++;
+    }
+
     ScopeLock(Lock* l) : lock_(l)
     {
         int ret = lock_->lock();

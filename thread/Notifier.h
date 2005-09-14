@@ -100,7 +100,8 @@ public:
     
 protected:
     bool waiter_; // for debugging only
-    int pipe_[2];
+    int  count_;  // for debugging as well
+    int  pipe_[2];
 };
 
 } // namespace oasys

@@ -105,7 +105,7 @@ public:
     }
 
 protected:
-    SpinLock* lock_;
+    SpinLock*          lock_;
     std::deque<_elt_t> queue_;
 };
 
