@@ -9,11 +9,11 @@ using namespace oasys;
 
 class FormatterTest : public Formatter {
 public:
-    virtual int format(char* buf, size_t sz);
+    virtual int format(char* buf, size_t sz) const;
 };
 
 int
-FormatterTest::format(char* buf, size_t sz)
+FormatterTest::format(char* buf, size_t sz) const
 {
     int x = 100;
     char* s = "fox";
@@ -24,11 +24,11 @@ FormatterTest::format(char* buf, size_t sz)
 
 class BoundsTest : public Formatter {
 public:
-    virtual int format(char* buf, size_t sz);
+    virtual int format(char* buf, size_t sz) const;
 };
 
 int
-BoundsTest::format(char* buf, size_t sz)
+BoundsTest::format(char* buf, size_t sz) const
 {
     int n = sz;
     for (int i = 0; i < n; ++i) {
@@ -39,11 +39,11 @@ BoundsTest::format(char* buf, size_t sz)
 
 class TruncateTest : public Formatter {
 public:
-    virtual int format(char* buf, size_t sz);
+    virtual int format(char* buf, size_t sz) const;
 };
 
 int
-TruncateTest::format(char* buf, size_t sz)
+TruncateTest::format(char* buf, size_t sz) const
 {
     int n = sz;
     for (int i = 0; i < n; ++i) {
@@ -54,11 +54,11 @@ TruncateTest::format(char* buf, size_t sz)
 
 class OverflowTest : public Formatter {
 public:
-    virtual int format(char* buf, size_t sz);
+    virtual int format(char* buf, size_t sz) const;
 };
 
 int
-OverflowTest::format(char* buf, size_t sz)
+OverflowTest::format(char* buf, size_t sz) const
 {
     int n = sz + 10; // danger!
     for (int i = 0; i < n; ++i) {
@@ -76,7 +76,7 @@ public:
 
 class MultiFormatter : public SomethingVirtual, public Formatter, public Logger {
 public:
-    int format(char* buf, size_t sz) {
+    int format(char* buf, size_t sz) const {
         return snprintf(buf, sz, "i'm a multiformatter %p logpath %p",
                         this, &logpath_);
     }

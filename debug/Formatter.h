@@ -78,7 +78,7 @@ public:
      * return is the number of bytes written, or the number of bytes
      * that would have been written if the output is truncated.
      */
-    virtual int format(char* buf, size_t sz) = 0;
+    virtual int format(char* buf, size_t sz) const = 0;
 
     /**
      * Assertion check to make sure that obj is a valid formatter.
@@ -86,7 +86,7 @@ public:
      * situation where each base class has virtual functions,
      * Formatter _must_ be the first class in the inheritance chain.
      */
-    static inline void assert_valid(Formatter* obj);
+    static inline void assert_valid(const Formatter* obj);
 
     virtual ~Formatter() {}
 
@@ -101,7 +101,7 @@ public:
 void __log_assert(bool x, const char* what, const char* file, int line);
 
 inline void
-Formatter::assert_valid(Formatter* obj)
+Formatter::assert_valid(const Formatter* obj)
 {
 #ifndef NDEBUG
     __log_assert(obj->format_magic_ == FORMAT_MAGIC,

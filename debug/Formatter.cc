@@ -668,7 +668,7 @@ vsnprintf(char *str, size_t strsz, const char *fmt0, va_list ap) __THROW
 	int nextarg;            /* 1-based argument index */
 	va_list orgap;          /* original argument pointer */
 	char *convbuf;		/* wide to multibyte conversion result */
-	Formatter* fmtobj;	/* pointer to object of type Formatter */
+	const Formatter* fmtobj;/* pointer to object of type Formatter */
 
 	/*
 	 * Choose PADSIZE to trade efficiency vs. size.  If larger printf
@@ -1188,7 +1188,7 @@ fp_begin:
 				strsz++;
 				ret--;
 
-				fmtobj = GETARG(Formatter *);
+				fmtobj = GETARG(const Formatter *);
 
                                 if (! fmtobj) {
                                     strncpy(str, "(null)", strsz);
