@@ -66,11 +66,23 @@ _elt_t MsgQueue<_elt_t>::pop_blocking()
     /*
      * If the queue is empty, wait for new input.
      */
-    while (queue_.size() == 0) {
+    bool used_wait = false;
+
+    if (queue_.empty()) {
         wait(lock_);
         ASSERT(lock_->is_locked_by_me());
+        used_wait = true;
     }
 
+    /*
+     * Can't be empty now.
+     */
+    ASSERT(!queue_.empty());
+
+    if (!used_wait) {
+        drain_pipe(1);
+    }
+    
     _elt_t elt  = queue_.front();
     queue_.pop_front();
     
