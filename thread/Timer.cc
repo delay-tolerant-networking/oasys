@@ -171,22 +171,9 @@ TimerSystem::run()
     while (true) 
     {
         handle_signals();
-        int timeout = run_expired_timers();            
-
-        system_lock_->unlock(); // sleep without the lock
-        int cc = IO::poll(signal_.read_fd(), POLLIN, NULL, timeout, 
-                          0, logpath_);
-        system_lock_->lock();
-        
-        if (cc == IOTIMEOUT) {
-            log_debug("poll returned due to timeout"); 
-        } else if (cc == 1) {
-            log_debug("poll returned due to interruption"); 
-            signal_.drain_pipe();
-        } else {
-            PANIC("poll on fd returned error %d", cc);
-        }
-    } // while(true)
+        int timeout = run_expired_timers();
+        signal_.wait(system_lock_, timeout);
+    }
 
     NOTREACHED;
 }
@@ -225,8 +212,12 @@ TimerSystem::pop_timer(struct timeval* now)
 void
 TimerSystem::handle_signals()
 {        
-    // KNOWN ISSUE: race condition
+    // KNOWN ISSUE: if a second signal is received before the first is
+    // handled it is ignored, i.e. sending signal gives at-least-once
+    // semantics, not exactly-once semantics
     if (sigfired_) {
+        sigfired_ = 0;
+        
         log_debug("sigfired_ set, calling registered handlers");
         for (int i = 0; i < NSIG; ++i) {
             if (signals_[i]) {
@@ -234,7 +225,6 @@ TimerSystem::handle_signals()
                 signals_[i] = 0;
             }
         }
-        sigfired_ = 0;
     }
 }
 
