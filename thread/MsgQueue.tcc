@@ -45,8 +45,6 @@ void MsgQueue<_elt_t>::push(_elt_t msg, bool at_back)
     else
         queue_.push_front(msg);
 
-    queue_.size();
-
     // note that we make sure to unlock the spin lock _before_ calling
     // write since there's a (pretty good) chance that the write to
     // the pipe will cause the OS scheduler to wake up a waiter (and
@@ -94,7 +92,7 @@ bool MsgQueue<_elt_t>::try_pop(_elt_t* eltp)
     // but if there is something in the queue, then return it
     *eltp = queue_.front();
     queue_.pop_front();
-    wait(); // This should NEVER block
+    drain_pipe();
         
     return true;
 }
