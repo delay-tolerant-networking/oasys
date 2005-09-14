@@ -54,10 +54,14 @@ namespace oasys {
 Mutex::Mutex(const char* name, lock_type_t type, bool keep_quiet)
     : Lock(), type_(type), keep_quiet_(keep_quiet), lock_count_(0)
 {
-    if (name[0] == '/')
+    if (name != NULL && name[0] == '/')
         ++name;
-    
-    if (strcmp(name, "lock") == 0) 
+
+    if (name == NULL)
+    {
+        set_logpath("");
+    }
+    else if (strcmp(name, "lock") == 0) 
     {
         logpathf("/mutex/%s(%p)", name, this);
     }
@@ -101,7 +105,8 @@ Mutex::Mutex(const char* name, lock_type_t type, bool keep_quiet)
 Mutex::~Mutex()
 {
     pthread_mutex_destroy(&mutex_);
-    logf(LOG_DEBUG, "destroyed");
+    if (logpath_[0] != 0)
+        log_debug("destroyed");
 }
 
 int
@@ -114,7 +119,8 @@ Mutex::lock()
     }
 
     ++lock_count_;
-    logf(LOG_DEBUG, "locked (count %d)", lock_count_);
+    if (logpath_[0] != 0)
+        log_debug("locked (count %d)", lock_count_);
     lock_holder_ = Thread::current();
 
     return err;
@@ -135,7 +141,8 @@ Mutex::unlock()
         PANIC("error in pthread_mutex_unlock: %s", strerror(errno));
     }
 
-    logf(LOG_DEBUG, "unlocked (count %d)", lock_count_);
+    if (logpath_[0] != 0)
+        log_debug("unlocked (count %d)", lock_count_);
     
     return err;
 }
@@ -146,14 +153,17 @@ Mutex::try_lock()
     int err = pthread_mutex_trylock(&mutex_);
 
     if (err == EBUSY) {
-        logf(LOG_DEBUG, "try_lock busy");
+        if (logpath_[0] != 0) {
+            log_debug("try_lock busy");
+        }
         return EBUSY;
     } else if (err != 0) {
         PANIC("error in pthread_mutex_trylock: %s", strerror(errno));
     }
 
     ++lock_count_;
-    logf(LOG_DEBUG, "try_lock locked (count %d)", lock_count_);
+    if (logpath_[0] != 0)
+        log_debug("try_lock locked (count %d)", lock_count_);
     lock_holder_ = Thread::current();
     
     return err;
