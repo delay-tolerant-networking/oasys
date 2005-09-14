@@ -678,7 +678,7 @@ IO::poll_with_notifier(
                 logf(log, LOG_DEBUG,
                      "poll_with_notifier: interrupted");
             }
-            intr->drain_pipe();
+            intr->drain_pipe(1);
             return IOINTR;
         }
 
