@@ -29,7 +29,7 @@ inline int
 DurableStore::get_table(SingleTypeDurableTable<_DataType>** table,
                         std::string         table_name,
                         int                 flags,
-                        DurableObjectCache* cache)
+                        DurableObjectCache<_DataType>* cache)
 {
     int err;
 
@@ -63,7 +63,7 @@ inline int
 DurableStore::get_table(MultiTypeDurableTable<_BaseType, _Collection>** table,
                         std::string         table_name,
                         int                 flags,
-                        DurableObjectCache* cache)
+                        DurableObjectCache<_BaseType>* cache)
 {
     int err;
     PrototypeVector prototypes;

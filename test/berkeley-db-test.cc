@@ -103,7 +103,7 @@ DECLARE_TEST(DBTidy) {
     impl->init(g_config);
 
     StringDurableTable* table1 = 0;    
-    CHECK(store->get_table(&table1, "test", DS_CREATE | DS_EXCL, 0) == 0);
+    CHECK(store->get_table(&table1, "test", DS_CREATE | DS_EXCL) == 0);
     CHECK(table1 != 0);
 
     delete_z(table1);
@@ -115,7 +115,7 @@ DECLARE_TEST(DBTidy) {
     store           = new DurableStore(impl);
     impl->init(g_config);
 
-    CHECK(store->get_table(&table1, "test", 0, 0) == 0);
+    CHECK(store->get_table(&table1, "test", 0) == 0);
     CHECK(table1 != 0);
     delete_z(table1);
     delete_z(store);
@@ -126,7 +126,7 @@ DECLARE_TEST(DBTidy) {
     store           = new DurableStore(impl);
     impl->init(g_config);
 
-    CHECK(store->get_table(&table1, "test", 0, 0) == DS_NOTFOUND);
+    CHECK(store->get_table(&table1, "test", 0) == DS_NOTFOUND);
     CHECK(table1 == 0);
     delete_z(store);
 
@@ -143,26 +143,26 @@ DECLARE_TEST(TableCreate) {
     StringDurableTable* table2 = 0;
     ObjDurableTable*    objtable = 0;
 
-    CHECK(store->get_table(&table1, "test", 0, 0) == DS_NOTFOUND);
+    CHECK(store->get_table(&table1, "test", 0) == DS_NOTFOUND);
     CHECK(table1 == 0);
     
-    CHECK(store->get_table(&table1, "test", DS_CREATE, 0) == 0);
+    CHECK(store->get_table(&table1, "test", DS_CREATE) == 0);
     CHECK(table1 != 0);
     delete_z(table1);
     
-    CHECK(store->get_table(&table2, "test", DS_CREATE | DS_EXCL, 0) 
+    CHECK(store->get_table(&table2, "test", DS_CREATE | DS_EXCL) 
           == DS_EXISTS);
     CHECK(table2 == 0);
     
-    CHECK(store->get_table(&table2, "test", 0, 0) == 0);
+    CHECK(store->get_table(&table2, "test", 0) == 0);
     CHECK(table2 != 0);
     delete_z(table2);
 
-    CHECK(store->get_table(&table1, "test", DS_CREATE, 0) == 0);
+    CHECK(store->get_table(&table1, "test", DS_CREATE) == 0);
     CHECK(table1 != 0);
     delete_z(table1);
 
-    CHECK(store->get_table(&objtable, "objtable", DS_CREATE | DS_EXCL, 0) == 0);
+    CHECK(store->get_table(&objtable, "objtable", DS_CREATE | DS_EXCL) == 0);
     CHECK(objtable != 0);
     delete_z(objtable);
     delete_z(store);
@@ -178,16 +178,16 @@ DECLARE_TEST(TableDelete) {
     
     StringDurableTable* table = 0;
 
-    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, 0) == 0);
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
     CHECK(table != 0);
     delete_z(table);
 
     CHECK(store->del_table("test") == 0);
     
-    CHECK(store->get_table(&table, "test", 0, 0) == DS_NOTFOUND);
+    CHECK(store->get_table(&table, "test", 0) == DS_NOTFOUND);
     CHECK(table == 0);
 
-    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, 0) == 0);
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
     CHECK(table != 0);
     delete_z(table);
     delete_z(store);
@@ -202,7 +202,7 @@ DECLARE_TEST(SingleTypePut) {
     impl->init(g_config);
 
     StringDurableTable* table;
-    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, 0) == 0);
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
 
     IntShim    key(99);
     StringShim data("data");
@@ -227,7 +227,7 @@ DECLARE_TEST(SingleTypeGet) {
     impl->init(g_config);
 
     StringDurableTable* table;
-    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, 0) == 0);
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
 
     IntShim    key(99);
     IntShim    key2(101);
@@ -269,7 +269,7 @@ DECLARE_TEST(SingleTypeDelete) {
     impl->init(g_config);
 
     StringDurableTable* table;
-    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, 0) == 0);
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
 
     IntShim    key(99);
     IntShim    key2(101);
@@ -307,7 +307,7 @@ DECLARE_TEST(SingleTypeMultiObject) {
     impl->init(g_config);
 
     StringDurableTable* table;
-    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, 0) == 0);
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
 
     int num_objs = 100;
     
@@ -328,7 +328,7 @@ DECLARE_TEST(SingleTypeMultiObject) {
     store = new DurableStore(impl);
     impl->init(g_config);
     
-    CHECK(store->get_table(&table, "test", 0, 0) == 0);
+    CHECK(store->get_table(&table, "test", 0) == 0);
 
     PermutationArray pa(num_objs);
 
@@ -359,7 +359,7 @@ DECLARE_TEST(SingleTypeIterator) {
     StringDurableTable* table;
     static const int num_objs = 100;
      
-    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, 0) == 0);
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
     
     for(int i=0; i<num_objs; ++i) {
         StaticStringBuffer<256> buf;
@@ -398,7 +398,7 @@ DECLARE_TEST(MultiType) {
     impl->init(g_config);
 
     ObjDurableTable* table = 0;
-    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, 0) == 0);
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
     CHECK(table != 0);
 
     Obj *o1, *o2 = NULL;

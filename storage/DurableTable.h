@@ -42,16 +42,16 @@
 #endif
 
 /**
- * Object that encapsulates a single durable table. The class has no
- * derivatives, but rather is responsible for managing the translation
- * of memory <-> datastore. The interactioon with the underlying
- * storage implementation is handled by the DurableTableImpl class.
+ * Object that encapsulates a single durable table. The interaction
+ * with the underlying storage implementation is handled by the
+ * DurableTableImpl class.
  */
+template <typename _Type>
 class DurableTable {
 public:
     DurableTable(DurableTableImpl*   impl,
                  const std::string&  name,
-                 DurableObjectCache* cache)
+                 DurableObjectCache<_Type>* cache)
         : impl_(impl), name_(name), cache_(cache) {}
     
     ~DurableTable()
@@ -90,7 +90,7 @@ public:
 protected:
     DurableTableImpl*   impl_;
     std::string         name_;
-    DurableObjectCache* cache_;
+    DurableObjectCache<_Type>* cache_;
 
 private:
     DurableTable();
@@ -102,15 +102,15 @@ private:
  * represented by the template parameter _DataType.
  */
 template <typename _DataType>
-class SingleTypeDurableTable : public DurableTable {
+class SingleTypeDurableTable : public DurableTable<_DataType> {
 public:
     /**
      * Constructor
      */
     SingleTypeDurableTable(DurableTableImpl*   impl,
                            const std::string&  name,
-                           DurableObjectCache* cache)
-        : DurableTable(impl, name, cache) {}
+                           DurableObjectCache<_DataType>* cache)
+        : DurableTable<_DataType>(impl, name, cache) {}
 
     /** 
      * Update the value of the key, data pair in the database. It
@@ -122,7 +122,7 @@ public:
      * @return DS_OK, DS_NOTFOUND, DS_ERR
      */
     int put(const SerializableObject& key,
-            const SerializableObject* data,
+            const _DataType* data,
             int flags);
 
     /**
@@ -150,15 +150,15 @@ private:
  * template parameter _Collection.
  */
 template <typename _BaseType, typename _Collection>
-class MultiTypeDurableTable : public DurableTable {
+class MultiTypeDurableTable : public DurableTable<_BaseType> {
 public:
     /**
      * Constructor
      */
     MultiTypeDurableTable(DurableTableImpl*   impl,
                           const std::string&  name,
-                          DurableObjectCache* cache)
-        : DurableTable(impl, name, cache) {}
+                          DurableObjectCache<_BaseType>* cache)
+        : DurableTable<_BaseType>(impl, name, cache) {}
     
     /** 
      * Update the value of the key, data pair in the database. It
@@ -192,6 +192,3 @@ private:
     MultiTypeDurableTable();
     MultiTypeDurableTable(const MultiTypeDurableTable&);
 };
-
-
-#include "DurableTable.tcc"

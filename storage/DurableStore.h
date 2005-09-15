@@ -39,22 +39,28 @@
 #ifndef __OASYS_DURABLE_STORE_H__
 #define __OASYS_DURABLE_STORE_H__
 
-#include "../debug/DebugUtils.h"
+#include <list>
+#include <string>
 #include "../debug/Log.h"
+#include "../debug/DebugUtils.h"
 #include "../serialize/Serialize.h"
+#include "../serialize/StringSerialize.h"
 #include "../serialize/TypeCollection.h"
+#include "../thread/SpinLock.h"
+#include "../util/LRUList.h"
+#include "../util/StringUtils.h"
 
 namespace oasys {
 
 // forward decls
 class DurableStore;
 class DurableStoreImpl;
-class DurableTable;
+template <typename _Type> class DurableTable;
 template <typename _Type> class SingleTypeDurableTable;
 template <typename _Type, typename _Collection> class MultiTypeDurableTable;
+template <typename _Type> class DurableObjectCache;
 class DurableTableImpl;
 class DurableIterator;
-class DurableObjectCache;
 
 /*!
  * Enumeration for error return codes from the datastore functions
@@ -92,6 +98,9 @@ enum DurableStoreFlags_t {
 #include "DurableStoreImpl.h"
 #include "DurableIterator.h"
 #include "DurableTable.h"
+#include "DurableObjectCache.h"
+#include "DurableTable.tcc"
+#include "DurableObjectCache.tcc"
 #undef   __OASYS_DURABLE_STORE_INTERNAL_HEADER__
 
 /**
@@ -130,7 +139,7 @@ public:
     int get_table(SingleTypeDurableTable<_DataType>** table,
                   std::string         table_name,
                   int                 flags,
-                  DurableObjectCache* cache);
+                  DurableObjectCache<_DataType>* cache = NULL);
 
     /*!
      * Get a new handle on a multi-type table.
@@ -143,7 +152,7 @@ public:
     int get_table(MultiTypeDurableTable<_BaseType, _Collection>** table,
                   std::string         table_name,
                   int                 flags,
-                  DurableObjectCache* cache);
+                  DurableObjectCache<_BaseType>* cache = NULL);
 
     /*!
      * Delete the table (by name) from the datastore.

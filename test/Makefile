@@ -2,6 +2,7 @@ TESTS += \
 	berkeley-db-test			\
 	buffered-io-test			\
 	command-test				\
+	durable-cache-test			\
 	hexdump-test				\
 	io-basic-test				\
 	io-core-test                            \

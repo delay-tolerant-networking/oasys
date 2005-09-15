@@ -12,7 +12,7 @@
  * @return DS_OK, DS_NOTFOUND if key is not found
  */
 template <typename _DataType>
-int
+inline int
 SingleTypeDurableTable<_DataType>::get(const SerializableObject& key,
                                        _DataType** data)
 {
@@ -41,7 +41,7 @@ SingleTypeDurableTable<_DataType>::get(const SerializableObject& key,
 template <typename _DataType>
 inline int
 SingleTypeDurableTable<_DataType>::put(const SerializableObject& key,
-                                       const SerializableObject* data,
+                                       const _DataType* data,
                                        int flags)
 {
     return impl_->put(key, TypeCollection::UNKNOWN_TYPE, data, flags);
@@ -97,7 +97,7 @@ MultiTypeDurableTable<_BaseType, _Collection>::get(const SerializableObject& key
  * @return DS_OK, DS_NOTFOUND if key is not found
  */
 template <typename _BaseType, typename _Collection>
-int
+inline int
 MultiTypeDurableTable<_BaseType, _Collection>::put(const SerializableObject& key,
                                                    TypeCollection::TypeCode_t type,
                                                    const _BaseType* data,
@@ -111,8 +111,9 @@ MultiTypeDurableTable<_BaseType, _Collection>::put(const SerializableObject& key
  *
  * @return DS_OK, DS_NOTFOUND if key is not found
  */
+template <typename _Type>
 inline int
-DurableTable::del(const SerializableObject& key)
+DurableTable<_Type>::del(const SerializableObject& key)
 {
     return impl_->del(key);
 }
@@ -120,8 +121,9 @@ DurableTable::del(const SerializableObject& key)
 /**
  * Return the number of elements in the table.
  */
+template <typename _Type>
 inline size_t
-DurableTable::size()
+DurableTable<_Type>::size()
 {
     return impl_->size();
 }
