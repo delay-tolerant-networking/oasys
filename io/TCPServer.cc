@@ -96,7 +96,7 @@ int
 TCPServer::timeout_accept(int *fd, in_addr_t *addr, u_int16_t *port,
                           int timeout_ms)
 {
-    int ret = poll(POLLIN, NULL, timeout_ms);
+    int ret = poll_sockfd(POLLIN, NULL, timeout_ms);
 
     if (ret < 0)  return IOERROR;
     if (ret == 0) return IOTIMEOUT;

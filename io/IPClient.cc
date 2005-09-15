@@ -95,19 +95,6 @@ IPClient::writev(const struct iovec* iov, int iovcnt)
 }
 
 int
-IPClient::poll(int events, int* revents, int timeout_ms)
-{
-    short s_events = events;
-    short s_revents;
-
-    int cc = IO::poll(fd_, s_events, &s_revents, 
-                      timeout_ms, get_notifier(), logpath_);
-    *revents = s_revents;
-    
-    return cc;
-}
-
-int
 IPClient::readall(char* bp, size_t len)
 {
     return IO::readall(fd_, bp, len, get_notifier(), logpath_);

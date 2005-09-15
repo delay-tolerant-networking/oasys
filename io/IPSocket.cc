@@ -56,8 +56,6 @@
 
 namespace oasys {
 
-int IPSocket::abort_on_error_ = 0;
-
 IPSocket::IPSocket(int socktype, const char* logbase)
     : Logger(logbase)
 {
@@ -69,28 +67,6 @@ IPSocket::IPSocket(int socktype, const char* logbase)
     fd_          = -1;
     socktype_    = socktype;
     logfd_       = true;
-}
-
-void
-IPSocket::init_socket()
-{
-    // should only be called at real init time or after a call to close()
-    ASSERT(state_ == INIT || state_ == FINI);
-    ASSERT(fd_ == -1);
-    state_ = INIT;
-    
-    fd_ = socket(PF_INET, socktype_, 0);
-    if (fd_ == -1) {
-        logf(LOG_ERR, "error creating socket: %s", strerror(errno));
-        return;
-    }
-
-    if (logfd_)
-        Logger::logpath_appendf("/%d", fd_);
-    
-    logf(LOG_DEBUG, "created socket %d", fd_);
-    
-    configure();
 }
 
 IPSocket::IPSocket(int socktype, int sock,
@@ -113,6 +89,28 @@ IPSocket::IPSocket(int socktype, int sock,
 IPSocket::~IPSocket()
 {
     close();
+}
+
+void
+IPSocket::init_socket()
+{
+    // should only be called at real init time or after a call to close()
+    ASSERT(state_ == INIT || state_ == FINI);
+    ASSERT(fd_ == -1);
+    state_ = INIT;
+    
+    fd_ = socket(PF_INET, socktype_, 0);
+    if (fd_ == -1) {
+        logf(LOG_ERR, "error creating socket: %s", strerror(errno));
+        return;
+    }
+
+    if (logfd_)
+        Logger::logpath_appendf("/%d", fd_);
+    
+    logf(LOG_DEBUG, "created socket %d", fd_);
+    
+    configure();
 }
 
 const char*
@@ -386,5 +384,17 @@ IPSocket::recvmsg(struct msghdr* msg, int flags)
     return IO::recvmsg(fd_, msg, flags, get_notifier(), logpath_);
 }
 
+int
+IPSocket::poll_sockfd(int events, int* revents, int timeout_ms)
+{
+    short s_events = events;
+    short s_revents;
+    
+    int cc = IO::poll_single(fd_, s_events, &s_revents, timeout_ms, 
+                      get_notifier(), logpath_);
+    *revents = s_revents;
+    
+    return cc;
+}
 
 } // namespace oasys

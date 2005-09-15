@@ -64,7 +64,6 @@ public:
     virtual int write(const char* bp, size_t len);
     virtual int readv(const struct iovec* iov, int iovcnt);
     virtual int writev(const struct iovec* iov, int iovcnt);
-    virtual int poll(int events, int* revents, int timeout_ms);
     
     virtual int readall(char* bp, size_t len);
     virtual int writeall(const char* bp, size_t len);

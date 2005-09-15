@@ -45,6 +45,7 @@
 #include "IO.h"
 
 #include "debug/Log.h"
+#include "util/StringBuffer.h"
 #include "thread/Notifier.h"
 
 namespace oasys {
@@ -505,31 +506,40 @@ IO::sendmsg(int fd, const struct msghdr* msg, int flags,
 
 //////////////////////////////////////////////////////////////////////////////
 int
-IO::poll(int fd, short events, short* revents, int timeout_ms, 
-         Notifier* intr, const char* log)
+IO::poll_single(int fd, short events, short* revents, int timeout_ms, 
+                Notifier* intr, const char* log)
 {   
+    struct pollfd fds;
+    fds.fd      = fd;
+    fds.events  = events;
+    
+    int cc = poll_multiple(&fds, 1, timeout_ms, intr, log);
+    if (revents != 0) {
+        *revents = fds.revents;
+    }
+
+    return cc;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int
+IO::poll_multiple(struct pollfd* fds, int nfds, int timeout_ms,
+                  Notifier* intr, const char* log)
+{
     struct timeval start;
     if (timeout_ms > 0) {
         gettimeofday(&start, 0);
     }
-
-    int err = poll_with_notifier(intr, fd, events, revents, timeout_ms, 
-                                 &start, log);
-    if (log) {
-        logf(log, LOG_DEBUG,
-             "poll: events 0x%x timeout %d revents 0x%x cc %d",
-             events, timeout_ms, ((revents == 0) ? 0 : *revents), err);
-    }
-
-    if (err == 0) {
-        return 1;
-    } else if (err == IOTIMEOUT) {
-        return IOTIMEOUT;
+    
+    int cc = poll_with_notifier(intr, fds, nfds, timeout_ms, 
+                                (timeout_ms > 0) ? &start : 0, log);
+    ASSERT(cc != 0);
+    if (cc > 0) {
+        return cc;
     } else {
-        ASSERT(err < 0);
-        return err;
+        return cc;
     }
-}
+} 
 
 //////////////////////////////////////////////////////////////////////////////
 int
@@ -595,9 +605,8 @@ IO::set_nonblocking(int fd, bool nonblocking, const char* log)
 int
 IO::poll_with_notifier(
     Notifier*             intr,
-    int                   fd,
-    short                 events,
-    short*                revents,
+    struct pollfd*        fds,
+    size_t                nfds,
     int                   timeout,
     const struct timeval* start_time,
     const char*           log
@@ -606,91 +615,141 @@ IO::poll_with_notifier(
     ASSERT(! (timeout > 0 && start_time == 0));
     ASSERT(timeout >= -1);
 
-    struct pollfd poll_set[2];
-    int poll_set_size = 1;
+    struct pollfd  static_poll_set[16];
+    struct pollfd* dynamic_poll_set = 0;
+    struct pollfd* poll_set;
+    
 
-    poll_set[0].fd     = fd;
-    poll_set[0].events = events;
-
-    if (intr != 0) {
-        poll_set[1].fd     = intr->read_fd();
-        poll_set[1].events = POLLIN | POLLPRI | POLLERR;
-        ++poll_set_size;
+    if (intr == 0) {
+        poll_set = fds;
+    } else {
+        if (nfds <= 15) {
+            poll_set = static_poll_set;
+        } else {
+            dynamic_poll_set = static_cast<pollfd*>
+                               (calloc(nfds + 1, sizeof(struct pollfd)));
+            ASSERT(dynamic_poll_set != 0);
+            poll_set = dynamic_poll_set;
+        }
+  
+        for (size_t i=0; i<nfds; ++i) {
+            poll_set[i].fd      = fds[i].fd;
+            poll_set[i].events  = fds[i].events;
+            poll_set[i].revents = 0;
+        }
+        poll_set[nfds].fd     = intr->read_fd();
+        poll_set[nfds].events = POLLIN | POLLPRI | POLLERR;
+        ++nfds;
     }
 
+    // poll loop
   retry:
-    int cc = ::poll(poll_set, poll_set_size, timeout);
+    int cc = ::poll(poll_set, nfds, timeout);
     if (cc < 0 && errno == EINTR) {
         if (timeout > 0) {
             timeout = adjust_timeout(timeout, start_time);
         }
         goto retry;
     }
-
-    if (cc < 0) {
+    
+    if (cc < 0) 
+    {
         return IOERROR;
-    } else if (cc == 0) {
+    } 
+    else if (cc == 0) 
+    {
         if (log) {
             logf(log, LOG_DEBUG, "poll_with_notifier timed out");
         }
         return IOTIMEOUT;
-    } else {
-
+    } 
+    else 
+    {
 #ifdef __APPLE__
         // there's some strange bug in the poll emulation
-        if (cc > 2) {
+        if (cc > nfds) {
             if (log) {
                 logf(log, LOG_WARN,
                      "poll_with_notifier: returned bogus high value %d, "
-                     "capping to 2", cc);
+                     "capping to %d", cc, nfds);
             }
-            cc = 2;
+            cc = nfds;
         }
 #endif
 
-        if (log) {
+        if (log) 
+        {
+            StringBuffer buf;
+            for (size_t i=0; i<nfds; ++i) 
+            {
+                buf.appendf("0x%hx ", poll_set[i].revents);
+            }
             logf(log, LOG_DEBUG, 
-                 "poll_with_notifier: %d fds, status {%hx,%hx}",
-                 cc, poll_set[0].revents, poll_set[1].revents);
+                 "poll_with_notifier: %d fds, status %s",
+                 cc, buf.c_str());
         }
         
         // Always prioritize getting data before interrupt via notifier
-        if (poll_set[0].revents & events) {
-            if (revents != 0) {
-                *revents = poll_set[0].revents;
+        bool got_event = false;
+        for (size_t i=0; i<((intr != 0) ? (nfds - 1) : nfds); ++i) 
+        {
+            if (poll_set[i].revents & 
+                (poll_set[i].events | POLLERR | POLLHUP | POLLNVAL)) 
+            {
+                got_event      = true;
+                fds[i].revents = poll_set[i].revents;
             }
-
-            return 0;
-        } 
-
-        if (intr != 0 & poll_set[1].revents & POLLERR) {
+        }
+        
+        ASSERT(! (intr == 0 && !got_event));
+        if (got_event) {
+            if (log) { 
+                logf(log, LOG_DEBUG, 
+                     "poll_with_notifier: normal fd has event"); 
+            }
+            
+            if (intr != 0 && (poll_set[nfds - 1].revents &
+                              (POLLIN | POLLPRI | POLLERR)) )
+            {
+                ASSERT(cc > 1);
+                return cc - 1;
+            }
+            else 
+            {
+                return cc;
+            }
+        }
+        
+        // We got notified
+        if (intr != 0 && (poll_set[nfds - 1].revents & POLLERR))
+        {
             if (log) {
                 logf(log, LOG_DEBUG,
                      "poll_with_notifier: error in notifier fd!");
             }
 
-            return IOERROR; // XXX/bowei - technically this is not an
-                            // error with the IO, but there should be
-                            // some kind of signal here that things
-                            // are not right
-        } else if (intr != 0 && poll_set[1].revents & (POLLIN | POLLPRI)) {
+            return IOERROR; // Technically this is not an error with
+                            // the IO, but there should be some kind
+                            // of signal here that things are not
+                            // right
+        } 
+        else if (intr != 0 && 
+                 (poll_set[nfds - 1].revents & (POLLIN | POLLPRI)) )
+        {
             if (log) {
-                logf(log, LOG_DEBUG,
-                     "poll_with_notifier: interrupted");
+                logf(log, LOG_DEBUG, "poll_with_notifier: interrupted");
             }
             intr->drain_pipe(1);
+            
             return IOINTR;
         }
-
-        if (log) {
-            logf(log, LOG_DEBUG, 
-                 "poll_with_notifier: something wrong with revents "
-                 "- not part of watched events");
-        }        
-        return IOERROR;
+        
+        PANIC("poll_with_notifier: should not have left poll");
     }
-}
 
+    NOTREACHED;
+}
+    
 //////////////////////////////////////////////////////////////////////////////
 int 
 IO::rwdata(
@@ -717,18 +776,20 @@ IO::rwdata(
     ASSERT(timeout >= -1);
     ASSERT(! (timeout > -1 && start_time == 0));
 
-    short events;
+    struct pollfd poll_fd;
+    poll_fd.fd = fd;
     switch (op) {
     case READV: case RECV: case RECVFROM: case RECVMSG:
-        events = POLLIN | POLLPRI | POLLERR; break;
+        poll_fd.events = POLLIN | POLLPRI | POLLERR; break;
     case WRITEV: case SEND: case SENDTO: case SENDMSG:
-        events = POLLOUT | POLLERR; break;
+        poll_fd.events = POLLOUT | POLLERR; break;
     }
    
     int cc;
     while (true) {
         if (intr || timeout > -1) {
-            cc = poll_with_notifier(intr, fd, events, 0, timeout, start_time, log);
+            cc = poll_with_notifier(intr, &poll_fd, 1, timeout, 
+                                    start_time, log);
             if (cc == IOERROR || cc == IOTIMEOUT || cc == IOINTR) {
                 return cc;
             } 

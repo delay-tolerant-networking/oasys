@@ -194,9 +194,15 @@ struct IO {
 
     //! @return IOTIMEOUT, IOINTR, 1 indicates readiness, otherwise
     //! it's an error.
-    static int poll(int fd, short events, short* revents, int timeout_ms,
-                    Notifier* intr = 0, const char* log = 0);
-    
+    static int poll_single(int fd, short events, short* revents, 
+                           int timeout_ms,
+                           Notifier* intr = 0, const char* log = 0);
+
+    //! @return IOTIMEOUT, IOINTR, 1 indicates readiness, otherwise
+    //! it's an error
+    static int poll_multiple(struct pollfd* fds, int nfds, int timeout_ms,
+                             Notifier* intr = 0, const char* log = 0);
+
     //! @{ Read/Write in the entire supplied buffer, potentially !
     //! requiring multiple system calls
     //! @}
@@ -210,9 +216,8 @@ struct IO {
 
     //! Poll on an fd, interruptable by the notifier.
     static int poll_with_notifier(Notifier*             intr, 
-                                  int                   fd,
-                                  short                 events,   
-                                  short*                revents,  
+                                  struct pollfd*        fds,
+                                  size_t                nfds,
                                   int                   timeout,  
                                   const struct timeval* start_time,
                                   const char*           log);

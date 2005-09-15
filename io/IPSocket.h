@@ -114,7 +114,7 @@ public:
      */
     
     /// Wrapper around poll() for this socket's fd
-    virtual inline int poll(int events, int* revents, int timeout_ms);
+    virtual int poll_sockfd(int events, int* revents, int timeout_ms);
     
     /// Socket State values
     enum state_t {
@@ -155,7 +155,7 @@ public:
     } params_;
     
     /// The socket file descriptor
-    inline int fd();
+    inline int fd() { return fd_; }
     
     /// The local address that the socket is bound to
     inline in_addr_t local_addr();
@@ -181,18 +181,11 @@ public:
     /// Set the remote port that the socket is connected to
     inline void set_remote_port(u_int16_t port);
                                                   
-    /**
-     * Hook to abort a test if any unexpected errors occur within the
-     * socket. Implemented by trapping all the logf calls and aborting
-     * on logs of error or higher.
-     */
-    static void abort_on_error() {
-        abort_on_error_ = 1;
-    }
-    
+    /* 
     /// Wrapper around the logging function needed for abort_on_error
     inline int logf(log_level_t level, const char *fmt, ...) PRINTFLIKE(3, 4);
-     
+    */
+
     /// logfd can be set to false to disable the appending of the
     /// socket file descriptor
     void set_logfd(bool logfd) { logfd_ = logfd; }
@@ -201,13 +194,10 @@ public:
     void init_socket();
     
 protected:
-    
-    static int abort_on_error_;    
-    
-    int fd_;
-    int socktype_;
+    int     fd_;
+    int     socktype_;
     state_t state_;
-    bool logfd_;
+    bool    logfd_;
     
     in_addr_t local_addr_;
     u_int16_t local_port_;
@@ -221,12 +211,6 @@ protected:
     inline void get_remote();
     
 };
-
-int
-IPSocket::fd()
-{
-    return fd_;
-}
 
 in_addr_t
 IPSocket::local_addr()
@@ -306,35 +290,6 @@ IPSocket::get_remote()
         remote_addr_ = sin.sin_addr.s_addr;
         remote_port_ = ntohs(sin.sin_port);
     }
-}
-
-int
-IPSocket::logf(log_level_t level, const char *fmt, ...)
-{
-    va_list ap;
-    va_start(ap, fmt);
-    int ret = vlogf(level, fmt, ap);
-    va_end(ap);
-
-    if (abort_on_error_ && (level >= LOG_ERR)) {
-        Logger::logf(LOG_CRIT, "aborting due to previous error");
-        abort();
-    }
-        
-    return ret;
-}
-
-int
-IPSocket::poll(int events, int* revents, int timeout_ms)
-{
-    short s_events = events;
-    short s_revents;
-    
-    int cc = IO::poll(fd_, s_events, &s_revents, timeout_ms, 
-                      get_notifier(), logpath_);
-    *revents = s_revents;
-    
-    return cc;
 }
 
 } // namespace oasys
