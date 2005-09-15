@@ -97,7 +97,7 @@ public:
     /**
      * @return length of the buffer.
      */
-    size_t length() { return len_; }
+    size_t length() const { return len_; }
 
     /**
      * @return the data buffer, ensuring null termination.
