@@ -156,8 +156,8 @@ private:
     BerkeleyDBStore* store_;
 
     //! This may cause thread serialization problems.
-    Mutex         scratch_mutex_;   
-    ScratchBuffer scratch_;
+    Mutex scratch_mutex_;
+    oasys::ScratchBuffer<u_char> scratch_;
 
     //! Only BerkeleyDBStore can create BerkeleyDBTables
     BerkeleyDBTable(BerkeleyDBStore* store, 
