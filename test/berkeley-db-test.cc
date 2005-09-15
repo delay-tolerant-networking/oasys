@@ -18,6 +18,7 @@ DurableStore*  g_store  = 0;
 StorageConfig* g_config = 0;
 
 typedef SingleTypeDurableTable<StringShim> StringDurableTable;
+typedef DurableObjectCache<StringShim> StringDurableCache;
 
 struct TestC {};
 
@@ -42,7 +43,7 @@ public:
 class Foo : public Obj {
 public:
     static const int ID = 1;
-    Foo() : Obj(ID, "foo") {}
+    Foo(const char* name = "foo") : Obj(ID, name) {}
     Foo(const Builder& b) : Obj(b) {}
     virtual const char* name() { return "foo"; }
 };
@@ -50,7 +51,7 @@ public:
 class Bar : public Obj {
 public:
     static const int ID = 2;
-    Bar() : Obj(ID, "bar") {}
+    Bar(const char* name = "bar") : Obj(ID, name) {}
     Bar(const Builder& b) : Obj(b) {}
     virtual const char* name() { return "bar"; }
 };
@@ -66,6 +67,7 @@ TYPE_COLLECTION_DEFINE(TestC, Bar, 2);
 #define TYPECODE_BAR (TypeCollectionCode<TestC, Bar>::TYPECODE)
 
 typedef MultiTypeDurableTable<Obj, TestC> ObjDurableTable;
+typedef DurableObjectCache<Obj> ObjDurableCache;
 
 DECLARE_TEST(DBTestInit) {
     g_config = new StorageConfig(
@@ -438,6 +440,265 @@ DECLARE_TEST(MultiType) {
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(SingleTypeCache) {
+    g_config->tidy_           = true;
+    DurableStoreImpl*   impl  = new BerkeleyDBStore();
+    DurableStore*       store = new DurableStore(impl);
+    StringDurableCache* cache = new StringDurableCache(32);
+    impl->init(g_config);
+
+    StringDurableTable* table;
+
+    impl->init(g_config);
+
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, cache) == 0);
+
+    StringShim* s;
+    StringShim* s1 = new StringShim("test");
+    StringShim* s2 = new StringShim("test test");
+    StringShim* s3 = new StringShim("test test test");
+    StringShim* s4 = new StringShim("test test test test");
+
+    CHECK(table->put(IntShim(1), s1, 0) == DS_NOTFOUND);
+    CHECK_EQUAL(cache->size(), 0);
+    
+    CHECK(table->put(IntShim(1), s1, DS_CREATE) == DS_OK);
+    CHECK_EQUAL(cache->size(), 8);
+
+    CHECK(table->put(IntShim(1), s1, 0) == DS_OK);
+    CHECK_EQUAL(cache->size(), 8);
+    
+    CHECK(table->put(IntShim(1), s1, DS_EXCL) == DS_EXISTS);
+    CHECK_EQUAL(cache->size(), 8);
+    CHECK_EQUAL(cache->count(), 1);
+    
+    CHECK(table->put(IntShim(2), s2, DS_CREATE | DS_EXCL) == DS_OK);
+    CHECK_EQUAL(cache->size(), 21);
+
+    CHECK(table->put(IntShim(3), s3, DS_CREATE | DS_EXCL) == DS_OK);
+    CHECK_EQUAL(cache->size(), 39);
+
+    CHECK(table->put(IntShim(4), s4, DS_CREATE | DS_EXCL) == DS_OK);
+    CHECK_EQUAL(cache->size(), 62);
+
+    CHECK_EQUAL(cache->count(), 4);
+    CHECK_EQUAL(cache->live(), 4);
+
+    // make sure all four objects are in cache
+    CHECK(table->get(IntShim(1), &s) == DS_OK);
+    CHECK_EQUAL(cache->hits(),  1);
+    CHECK(s == s1);
+
+    CHECK(table->get(IntShim(2), &s) == DS_OK);
+    CHECK_EQUAL(cache->hits(),  2);
+    CHECK(s == s2);
+    
+    CHECK(table->get(IntShim(3), &s) == DS_OK);
+    CHECK_EQUAL(cache->hits(),  3);
+    CHECK(s == s3);
+    
+    CHECK(table->get(IntShim(4), &s) == DS_OK);
+    CHECK_EQUAL(cache->hits(),  4);
+    CHECK(s == s4);
+
+    // now release them all in reverse order which will cause s3 and
+    // s4 to be evicted
+    CHECK(cache->release(IntShim(4), s4) == DS_OK);
+    CHECK(cache->release(IntShim(3), s3) == DS_OK);
+    CHECK(cache->release(IntShim(2), s2) == DS_OK);
+    CHECK(cache->release(IntShim(1), s1) == DS_OK);
+
+    CHECK_EQUAL(cache->size(), 21);
+    CHECK_EQUAL(cache->count(), 2);
+    CHECK_EQUAL(cache->live(), 0);
+
+    // make sure s1 and s2 are still in-cache
+    CHECK(table->get(IntShim(1), &s) == DS_OK);
+    CHECK_EQUAL(cache->hits(),  5);
+    CHECK(s == s1);
+
+    CHECK(table->get(IntShim(2), &s) == DS_OK);
+    CHECK_EQUAL(cache->hits(),  6);
+    CHECK(s == s2);
+
+    // release s1 and s2, then try to get s3 and s4 which should
+    // create new objects, leaving only s4 in cache when we're done
+    CHECK(cache->release(IntShim(1), s1) == DS_OK);
+    CHECK(cache->release(IntShim(2), s2) == DS_OK);
+
+    CHECK(table->get(IntShim(3), &s) == DS_OK);
+    CHECK_EQUAL(cache->hits(),  6);
+    CHECK_EQUAL(cache->misses(), 1);
+    CHECK_EQUALSTR(s->value().c_str(), "test test test");
+    CHECK_EQUAL(cache->evictions(), 3);
+    CHECK(cache->release(IntShim(3), s) == DS_OK);
+    CHECK_EQUAL(cache->count(), 2);
+    CHECK_EQUAL(cache->live(), 0);
+    
+    CHECK(table->get(IntShim(4), &s) == DS_OK);
+    CHECK_EQUAL(cache->hits(),  6);
+    CHECK_EQUAL(cache->misses(), 2);
+    CHECK_EQUALSTR(s->value().c_str(), "test test test test");
+    CHECK_EQUAL(cache->evictions(), 5);
+    CHECK(cache->release(IntShim(4), s) == DS_OK);
+    CHECK_EQUAL(cache->count(), 1);
+    CHECK_EQUAL(cache->live(), 0);
+
+    // delete an object out of cache, a live object in cache, and a
+    // dead object in cache
+    CHECK(table->get(IntShim(1), &s) == DS_OK);
+    CHECK_EQUAL(cache->count(), 2);
+    CHECK_EQUAL(cache->live(), 1);
+    
+    CHECK(table->del(IntShim(1)) == DS_OK);
+    CHECK(table->get(IntShim(1), &s) == DS_NOTFOUND);
+    CHECK(table->del(IntShim(2)) == DS_OK);
+    CHECK(table->get(IntShim(2), &s) == DS_NOTFOUND);
+    CHECK(table->del(IntShim(3)) == DS_OK);
+    CHECK(table->get(IntShim(3), &s) == DS_NOTFOUND);
+    CHECK(table->del(IntShim(4)) == DS_OK);
+    CHECK(table->get(IntShim(4), &s) == DS_NOTFOUND);
+    
+    CHECK_EQUAL(cache->count(), 0);
+    CHECK_EQUAL(cache->live(),  0);
+    CHECK_EQUAL(cache->size(),  0);
+    
+    delete_z(table);
+    delete_z(store);
+    delete_z(cache);
+    
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(MultiTypeCache) {
+    g_config->tidy_           = true;
+    DurableStoreImpl*   impl  = new BerkeleyDBStore();
+    DurableStore*       store = new DurableStore(impl);
+    ObjDurableCache*    cache = new ObjDurableCache(36);
+    impl->init(g_config);
+
+    ObjDurableTable* table = 0;
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, cache) == 0);
+
+    Obj* o;
+    Foo* f1 = new Foo("test");
+    Foo* f2 = new Foo("test2");
+    Bar* b1 = new Bar("test test");
+    Bar* b2 = new Bar("test test test");
+
+    CHECK(table->put(IntShim(1), Foo::ID, f1, 0) == DS_NOTFOUND);
+    CHECK_EQUAL(cache->size(), 0);
+    
+    CHECK(table->put(IntShim(1), Foo::ID, f1, DS_CREATE) == DS_OK);
+    CHECK_EQUAL(cache->size(), 12);
+
+    CHECK(table->put(IntShim(1), Foo::ID, f1, 0) == DS_OK);
+    CHECK_EQUAL(cache->size(), 12);
+    
+    CHECK(table->put(IntShim(1), Foo::ID, f1, DS_EXCL) == DS_EXISTS);
+    CHECK_EQUAL(cache->size(), 12);
+    CHECK_EQUAL(cache->count(), 1);
+    
+    CHECK(table->put(IntShim(2), Foo::ID, f2, DS_CREATE | DS_EXCL) == DS_OK);
+    CHECK_EQUAL(cache->size(), 25);
+
+    CHECK(table->put(IntShim(3), Bar::ID, b1, DS_CREATE | DS_EXCL) == DS_OK);
+    CHECK_EQUAL(cache->size(), 42);
+
+    CHECK(table->put(IntShim(4), Bar::ID, b2, DS_CREATE | DS_EXCL) == DS_OK);
+    CHECK_EQUAL(cache->size(), 64);
+
+    CHECK_EQUAL(cache->count(), 4);
+    CHECK_EQUAL(cache->live(), 4);
+
+    // make sure all four objects are in cache
+    CHECK(table->get(IntShim(1), &o) == DS_OK);
+    CHECK_EQUAL(cache->hits(),  1);
+    CHECK(o == f1);
+
+    CHECK(table->get(IntShim(2), &o) == DS_OK);
+    CHECK_EQUAL(cache->hits(),  2);
+    CHECK(o == f2);
+    
+    CHECK(table->get(IntShim(3), &o) == DS_OK);
+    CHECK_EQUAL(cache->hits(),  3);
+    CHECK(o == b1);
+    
+    CHECK(table->get(IntShim(4), &o) == DS_OK);
+    CHECK_EQUAL(cache->hits(),  4);
+    CHECK(o == b2);
+
+    // now release them all in reverse order which will cause b1 and
+    // b2 to be evicted
+    CHECK(cache->release(IntShim(4), b2) == DS_OK);
+    CHECK(cache->release(IntShim(3), b1) == DS_OK);
+    CHECK(cache->release(IntShim(2), f2) == DS_OK);
+    CHECK(cache->release(IntShim(1), f1) == DS_OK);
+
+    CHECK_EQUAL(cache->size(), 25);
+    CHECK_EQUAL(cache->count(), 2);
+    CHECK_EQUAL(cache->live(), 0);
+
+    // make sure f1 and f2 are still in-cache
+    CHECK(table->get(IntShim(1), &o) == DS_OK);
+    CHECK_EQUAL(cache->hits(),  5);
+    CHECK(o == f1);
+
+    CHECK(table->get(IntShim(2), &o) == DS_OK);
+    CHECK_EQUAL(cache->hits(),  6);
+    CHECK(o == f2);
+
+    // release f1 and f2, then try to get b1 and b2 which should
+    // create new objects, leaving only b1 in cache when we're done
+    CHECK(cache->release(IntShim(1), f1) == DS_OK);
+    CHECK(cache->release(IntShim(2), f2) == DS_OK);
+
+    CHECK(table->get(IntShim(3), &o) == DS_OK);
+    CHECK_EQUAL(cache->hits(),  6);
+    CHECK_EQUAL(cache->misses(), 1);
+    CHECK_EQUALSTR(o->name(), "bar");
+    CHECK_EQUALSTR(o->static_name_.c_str(), "test test");
+    CHECK_EQUAL(cache->evictions(), 3);
+    CHECK(cache->release(IntShim(3), o) == DS_OK);
+    CHECK_EQUAL(cache->count(), 2);
+    CHECK_EQUAL(cache->live(), 0);
+    
+    CHECK(table->get(IntShim(4), &o) == DS_OK);
+    CHECK_EQUAL(cache->hits(),  6);
+    CHECK_EQUAL(cache->misses(), 2);
+    CHECK_EQUALSTR(o->name(), "bar");
+    CHECK_EQUALSTR(o->static_name_.c_str(), "test test test");
+    CHECK_EQUAL(cache->evictions(), 5);
+    CHECK(cache->release(IntShim(4), o) == DS_OK);
+    CHECK_EQUAL(cache->count(), 1);
+    CHECK_EQUAL(cache->live(), 0);
+
+    // delete an object out of cache, a live object in cache, and a
+    // dead object in cache
+    CHECK(table->get(IntShim(1), &o) == DS_OK);
+    CHECK_EQUAL(cache->count(), 2);
+    CHECK_EQUAL(cache->live(), 1);
+    
+    CHECK(table->del(IntShim(1)) == DS_OK);
+    CHECK(table->get(IntShim(1), &o) == DS_NOTFOUND);
+    CHECK(table->del(IntShim(2)) == DS_OK);
+    CHECK(table->get(IntShim(2), &o) == DS_NOTFOUND);
+    CHECK(table->del(IntShim(3)) == DS_OK);
+    CHECK(table->get(IntShim(3), &o) == DS_NOTFOUND);
+    CHECK(table->del(IntShim(4)) == DS_OK);
+    CHECK(table->get(IntShim(4), &o) == DS_NOTFOUND);
+    
+    CHECK_EQUAL(cache->count(), 0);
+    CHECK_EQUAL(cache->live(),  0);
+    CHECK_EQUAL(cache->size(),  0);
+    
+    delete_z(table);
+    delete_z(store);
+    delete_z(cache);
+    
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TESTER(BerkleyDBTester) {
     ADD_TEST(DBTestInit);
     ADD_TEST(DBInit);
@@ -449,7 +710,9 @@ DECLARE_TESTER(BerkleyDBTester) {
     ADD_TEST(SingleTypeDelete);
     ADD_TEST(SingleTypeMultiObject);
     ADD_TEST(SingleTypeIterator);
+    ADD_TEST(SingleTypeCache);
     ADD_TEST(MultiType);
+    ADD_TEST(MultiTypeCache);
 }
 
 DECLARE_TEST_FILE(BerkleyDBTester, "berkeley db test");

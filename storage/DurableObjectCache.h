@@ -54,7 +54,7 @@ public:
      * object list. Note that this may cause some other object(s) to
      * be evicted from the cache.
      */
-    int add(const SerializableObject& key, const _DataType* data);
+    int put(const SerializableObject& key, const _DataType* data, int flags);
     
     /**
      * Look up a given object in the cache.
@@ -69,7 +69,7 @@ public:
     /**
      * Forcibly remove an object from the cache.
      */
-    int del(const SerializableObject& key, _DataType* data);
+    int del(const SerializableObject& key);
 
     /// @{
     /// Accessors

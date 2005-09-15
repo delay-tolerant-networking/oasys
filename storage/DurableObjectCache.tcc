@@ -79,8 +79,9 @@ DurableObjectCache<_DataType>::evict_last()
  */
 template <typename _DataType>
 int
-DurableObjectCache<_DataType>::add(const SerializableObject& key,
-                                   const _DataType* object)
+DurableObjectCache<_DataType>::put(const SerializableObject& key,
+                                   const _DataType* object,
+                                   int flags)
 {
     ScopeLock l(lock_);
     
@@ -92,21 +93,32 @@ DurableObjectCache<_DataType>::add(const SerializableObject& key,
     std::string cache_key;
     get_cache_key(&cache_key, key);
 
-    // first make sure the object doesn't exist in the cache
+    // first check if the object exists in the cache
     cache_iter = cache_.find(cache_key);
-
+    
     if (cache_iter != cache_.end()) {
         cache_elem = cache_iter->second;
+
+        if (flags & DS_EXCL) {
+            log_debug("put(%s): object already exists and DS_EXCL set",
+                      cache_key.c_str());
+            return DS_EXISTS;
+        }
         
         if (cache_elem->object_ == object) {
-            log_err("add(%s): object already exists!!", cache_key.c_str());
+            log_debug("put(%s): object already exists", cache_key.c_str());
+            return DS_OK;
+
         } else {
-            PANIC("add(%s): multiple objects %p %p for same key",
+            PANIC("put(%s): cannot handle different objects %p %p for same key",
                   cache_key.c_str(), object, cache_elem->object_);
         }
-        return DS_EXISTS;
     }
 
+    // note that we ignore the DS_CREATE flag since and always create
+    // the item (the underlying data store should have already ensured
+    // that the item doesn't exist if the DS_CREATE flag isn't set)
+    
     // figure out the size of the new object
     MarshalSize sizer(Serialize::CONTEXT_LOCAL);
     if (sizer.action(object) != 0) {
@@ -114,7 +126,7 @@ DurableObjectCache<_DataType>::add(const SerializableObject& key,
     }
     size_t object_size = sizer.size();
 
-    log_debug("add(%s): object %p size %u",
+    log_debug("put(%s): object %p size %u",
               cache_key.c_str(), object, (u_int)object_size);
 
     // now try to evict elements if the new object will put us over
@@ -227,11 +239,11 @@ DurableObjectCache<_DataType>::release(const SerializableObject& key,
 }
 
 /**
- * Forcibly remove an object from the cache.
+ * Forcibly try to remove an object from the cache.
  */
 template <typename _DataType>
 int
-DurableObjectCache<_DataType>::del(const SerializableObject& key, _DataType* data)
+DurableObjectCache<_DataType>::del(const SerializableObject& key)
 {
     ScopeLock l(lock_);
 
@@ -241,20 +253,22 @@ DurableObjectCache<_DataType>::del(const SerializableObject& key, _DataType* dat
     typename CacheTable::iterator cache_iter = cache_.find(cache_key);
 
     if (cache_iter == cache_.end()) {
-        log_warn("del(%s): no match for object %p", cache_key.c_str(), data);
+        log_debug("del(%s): no match for key", cache_key.c_str());
         return DS_NOTFOUND;
     }
     
     CacheElement* cache_elem = cache_iter->second;
-    ASSERT(cache_elem->object_ == data);
     
-    if (! cache_elem->live_) {
-        log_err("del(%s): object %p on LRU list!!", cache_key.c_str(), data);
+    if (cache_elem->live_) {
+        log_debug("del(%s): removing live object %p size %u from cache",
+                  cache_key.c_str(), cache_elem->object_,
+                  cache_elem->object_size_);
+    } else {
         lru_.erase(cache_elem->lru_iter_);
+        log_debug("del(%s): removing non-live object %p size %u from cache",
+                  cache_key.c_str(), cache_elem->object_,
+                  cache_elem->object_size_);
     }
-
-    log_debug("del(%s): removing object %p (size %u) from cache",
-              cache_key.c_str(), data, cache_elem->object_size_);
     
     cache_.erase(cache_iter);
     size_ -= cache_elem->object_size_;

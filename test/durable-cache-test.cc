@@ -12,22 +12,25 @@ DECLARE_TEST(Init) {
     return UNIT_TEST_PASSED;
 }
 
-DECLARE_TEST(Add) {
+DECLARE_TEST(Put) {
     StringShim* s = new StringShim("test");
-    CHECK(cache_->add(IntShim(1), s) == DS_OK);
+    CHECK(cache_->put(IntShim(1), s, 0) == DS_OK);
     CHECK_EQUAL(cache_->size(), 8);
 
-    CHECK(cache_->add(IntShim(1), s) == DS_EXISTS);
+    CHECK(cache_->put(IntShim(1), s, 0) == DS_OK);
     CHECK_EQUAL(cache_->size(), 8);
     
-    CHECK(cache_->add(IntShim(2), new StringShim("test test")) == DS_OK);
+    CHECK(cache_->put(IntShim(1), s, DS_EXCL) == DS_EXISTS);
+    CHECK_EQUAL(cache_->size(), 8);
+    
+    CHECK(cache_->put(IntShim(2), new StringShim("test test"), 0) == DS_OK);
     CHECK_EQUAL(cache_->size(), 21);
 
     // both these items put the cache over capacity
-    CHECK(cache_->add(IntShim(3), new StringShim("test test test")) == DS_OK);
+    CHECK(cache_->put(IntShim(3), new StringShim("test test test"), 0) == DS_OK);
     CHECK_EQUAL(cache_->size(), 39);
 
-    CHECK(cache_->add(IntShim(4), new StringShim("test")) == DS_OK);
+    CHECK(cache_->put(IntShim(4), new StringShim("test"), 0) == DS_OK);
     CHECK_EQUAL(cache_->size(), 47);
 
     CHECK_EQUAL(cache_->count(), 4);
@@ -98,9 +101,9 @@ DECLARE_TEST(Release) {
     return UNIT_TEST_PASSED;
 }
 
-DECLARE_TEST(AddEvict) {
+DECLARE_TEST(PutEvict) {
     StringShim* s;
-    CHECK(cache_->add(IntShim(1), new StringShim("test test")) == DS_OK);
+    CHECK(cache_->put(IntShim(1), new StringShim("test test"), 0) == DS_OK);
     CHECK(cache_->evictions() == 3);
     CHECK_EQUAL(cache_->count(), 2);
     CHECK_EQUAL(cache_->live(), 1);
@@ -115,7 +118,7 @@ DECLARE_TEST(AddEvict) {
     CHECK(cache_->release(IntShim(1), s) == DS_OK);
     
     s = new StringShim("really really really really really really big");
-    CHECK(cache_->add(IntShim(2), s) == DS_OK);
+    CHECK(cache_->put(IntShim(2), s, 0) == DS_OK);
     CHECK(cache_->evictions() == 5);
     CHECK_EQUAL(cache_->count(), 1);
     CHECK_EQUAL(cache_->live(), 1);
@@ -130,24 +133,24 @@ DECLARE_TEST(AddEvict) {
     
 DECLARE_TEST(Del) {
     StringShim* s;
-    CHECK(cache_->add(IntShim(1), new StringShim("test")) == DS_OK);
+    CHECK(cache_->put(IntShim(1), new StringShim("test"), 0) == DS_OK);
     CHECK(cache_->get(IntShim(1), &s) == DS_OK);
-    CHECK(cache_->del(IntShim(1), s) == DS_OK);
+    CHECK(cache_->del(IntShim(1)) == DS_OK);
     CHECK_EQUAL(cache_->count(), 0);
     CHECK_EQUAL(cache_->live(), 0);
     CHECK_EQUAL(cache_->size(), 0);
 
-    CHECK(cache_->del(IntShim(2), s) == DS_NOTFOUND);
+    CHECK(cache_->del(IntShim(2)) == DS_NOTFOUND);
     
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TESTER(CacheTester) {
     ADD_TEST(Init);
-    ADD_TEST(Add);
+    ADD_TEST(Put);
     ADD_TEST(Get);
     ADD_TEST(Release);
-    ADD_TEST(AddEvict);
+    ADD_TEST(PutEvict);
     ADD_TEST(Del);
 }
 
