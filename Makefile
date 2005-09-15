@@ -41,6 +41,7 @@ MEMORY_SRCS :=                                  \
 SERIALIZE_SRCS :=				\
 	serialize/Serialize.cc			\
 	serialize/MarshalSerialize.cc		\
+	serialize/StringSerialize.cc		\
 	serialize/SQLSerialize.cc		\
 
 STORAGE_SRCS :=					\
