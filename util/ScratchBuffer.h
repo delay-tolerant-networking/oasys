@@ -39,6 +39,7 @@
 #define __SCRATCH_BUFFER__
 
 #include <cstdlib>
+#include "../debug/DebugUtils.h"
 
 namespace oasys {
 
@@ -47,22 +48,41 @@ namespace oasys {
  * the need to constantly malloc, the free a buffer in order to
  * serialize into/out of. Warning: multi-threaded use.
  */
+template<typename _memory_t = void*>
 class ScratchBuffer {
 public:
-    ScratchBuffer(size_t size = 0);
-    ~ScratchBuffer();
+    ScratchBuffer(size_t size = 0)
+        : buf_(0), size_(size)
+    {
+        if(size_ == 0) {
+            size_ = INIT_SIZE;
+        }
+
+        buf_ = static_cast<_memory_t*>(malloc(size_));
+        ASSERT(buf_);
+    }
+
+    ~ScratchBuffer() { free(buf_) ;}
     
-    u_char* buf(size_t size);
-    u_char* buf() { return buf_; }
-    size_t size() { return size_; }
+    _memory_t* buf(size_t size) {
+        if(size > size_)
+        {
+            buf_ = static_cast<_memory_t*>(realloc(buf_, size));
+            size_ = size;
+        }
+        return buf_;
+    }
+
+    _memory_t* buf() { return buf_; }
+    size_t size()    { return size_; }
     
 private:
     static const int INIT_SIZE = 256;
     
-    u_char* buf_;
-    size_t  size_;
+    _memory_t* buf_;
+    size_t     size_;
 };
 
-}; // namespace oasys
+} // namespace oasys
 
 #endif //__SCRATCH_BUFFER_H__

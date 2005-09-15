@@ -75,7 +75,6 @@ UTIL_SRCS :=					\
 	util/ProgressPrinter.cc			\
 	util/Random.cc				\
 	util/RateEstimator.cc			\
-	util/ScratchBuffer.cc			\
 	util/StreamBuffer.cc			\
 	util/StringBuffer.cc			\
 	util/StringUtils.cc			\
