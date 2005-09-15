@@ -137,7 +137,7 @@ Notifier::wait(SpinLock* lock, int timeout)
     if (lock)
         lock->unlock();
 
-    int ret = IO::poll(read_fd(), POLLIN, 0, timeout, 0, logpath_);
+    int ret = IO::poll_single(read_fd(), POLLIN, 0, timeout, 0, logpath_);
     if (ret < 0 && ret != IOTIMEOUT) {
         PANIC("fatal: error return from notifier poll: %s",
               strerror(errno));
