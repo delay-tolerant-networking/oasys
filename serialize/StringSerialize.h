@@ -52,11 +52,8 @@ public:
     /**
      * Constructor
      */
-    StringSerialize(context_t context = CONTEXT_UNKNOWN, int options = 0)
-        : SerializeAction(Serialize::INFO, context, options)
-    {
-    }
-
+    StringSerialize(context_t context, int options);
+ 
     /**
      * We can tolerate a const object.
      */
@@ -79,6 +76,7 @@ public:
 
     /// @{
     /// Virtual functions inherited from SerializeAction
+    void end_action();
     void process(const char* name, u_int32_t* i);
     void process(const char* name, u_int16_t* i);
     void process(const char* name, u_int8_t* i);
@@ -89,7 +87,8 @@ public:
     /// @}
 
 private:
-    StringBuffer buf_;
+    StringBuffer buf_; ///< string buffer
+    char         sep_; ///< separator character (either " " or ".")
 };
 
 } // namespace oasys

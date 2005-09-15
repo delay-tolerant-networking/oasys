@@ -40,54 +40,91 @@
 
 namespace oasys {
 
+StringSerialize::StringSerialize(context_t context, int options)
+    : SerializeAction(Serialize::INFO, context, options)
+{
+    if (options_ & DOT_SEPARATED) {
+        sep_ = '.';
+    } else {
+        sep_ = ' ';
+    }
+}
+
 void
 StringSerialize::process(const char* name, u_int32_t* i)
 {
-    buf_.appendf("%s %d ", name, *i);
+    if (options_ & INCLUDE_NAME)
+        buf_.appendf("%s%c", name, sep_);
+    
+    buf_.appendf("%d%c", *i, sep_);
 }
 
 void
 StringSerialize::process(const char* name, u_int16_t* i)
 {
-    buf_.appendf("%s %d ", name, *i);
+    if (options_ & INCLUDE_NAME)
+        buf_.appendf("%s%c", name, sep_);
+    
+    buf_.appendf("%d%c", *i, sep_);
 }
 
 void
 StringSerialize::process(const char* name, u_int8_t* i)
 {
-    buf_.appendf("%s %d ", name, *i);
+    if (options_ & INCLUDE_NAME)
+        buf_.appendf("%s%c", name, sep_);
+    
+    buf_.appendf("%d%c", *i, sep_);
 }
 
 void
 StringSerialize::process(const char* name, bool* b)
 {
-    if (*b) {
-        buf_.appendf("%s true", name);
-    } else {
-        buf_.appendf("%s false", name);
-    }
+    if (options_ & INCLUDE_NAME)
+        buf_.appendf("%s%c", name, sep_);
+    
+    buf_.appendf("%s%c", *b ? "true" : "false", sep_);
 }
 
 void
 StringSerialize::process(const char* name, u_char* bp, size_t len)
 {
-    buf_.appendf("%s %.*s", name, len, bp);
+    if (options_ & INCLUDE_NAME)
+        buf_.appendf("%s%c", name, sep_);
+    
+    buf_.appendf("%.*s%c", len, bp, sep_);
 }
 
 void
 StringSerialize::process(const char* name, std::string* s)
 {
-    buf_.appendf("%s %.*s", name, s->size(), s->data());
+    if (options_ & INCLUDE_NAME)
+        buf_.appendf("%s%c", name, sep_);
+    
+    buf_.appendf("%.*s%c", s->size(), s->data(), sep_);
 }
 
 void
 StringSerialize::process(const char* name, u_char** bp,
                          size_t* lenp, int flags)
 {
+    if (options_ & INCLUDE_NAME)
+        buf_.appendf("%s%c", name, sep_);
+    
     if (flags & Serialize::NULL_TERMINATED) {
-        buf_.appendf("%s %s", name, *bp);
+        buf_.appendf("%s%c", *bp, sep_);
     } else {
-        buf_.appendf("%s %.*s", name, *lenp, *bp);
+        buf_.appendf("%.*s%c", *lenp, *bp, sep_);
     }
 }
+
+void
+StringSerialize::end_action()
+{
+    // trim trailing separator
+    if (buf_.length() != 0) {
+        buf_.trim(1);
+    }
+}
+
 } // namespace oasys
