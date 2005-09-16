@@ -61,6 +61,7 @@
  *
  * @code
  * # my ~/.debug file
+ * % brief color
  * /some/path debug
  * /other info
  * /other/more/specific debug
@@ -89,6 +90,17 @@
  * In addition, under non-debug builds, all calls to log_debug are
  * completely compiled out.
  *
+ * .debug file options:
+ * 
+ * There are several options that can be used to customize the display
+ * of debug output, and these options are specified on a line in the
+ * .debug file prefixed with '%' (see example above):
+ *
+ * no_time - Don't display time stamp
+ * brief   - Truncate log name to a fixed length
+ * color   - Use terminal escape code to colorize output
+ * object  - When possible, display the address of the object that 
+ *           generated the log.
  */
 
 #include <stdarg.h>
@@ -205,7 +217,7 @@ public:
      * other variants. Returns the number of bytes written, i.e. zero
      * if the log line was suppressed.
      */
-    int vlogf(const char *path, log_level_t level,
+    int vlogf(const char *path, log_level_t level, const void* obj,
               const char *fmt, va_list ap);
 
     /**
@@ -213,7 +225,8 @@ public:
      * preformatted log buffer. Generates a single prefix that is
      * repeated for each line of output.
      */
-    int log_multiline(const char* path, log_level_t level, const char* msg);
+    int log_multiline(const char* path, log_level_t level, 
+                      const char* msg, const void* obj);
 
     /**
      * Return the log level currently enabled for the path.
@@ -314,7 +327,8 @@ private:
     enum {
         OUTPUT_TIME   = 1<<0,   // output time in logs
         OUTPUT_SHORT  = 1<<1,   // shorten names
-        OUTPUT_PRETTY = 1<<2,   // beauty
+        OUTPUT_COLOR  = 1<<2,   // colorific
+        OUTPUT_OBJ    = 1<<3,   // output the obj generating the log
     };
     int output_flags_;
 
@@ -324,7 +338,7 @@ private:
      * @return The length of the prefix string.
      */
     size_t gen_prefix(char* buf, size_t buflen,
-                      const char* path, log_level_t level);
+                      const char* path, log_level_t level, const void* obj);
 
     /**
      * Find a rule given a path.
@@ -355,10 +369,11 @@ private:
  * Global vlogf function.
  */
 inline int
-vlogf(const char *path, log_level_t level, const char *fmt, va_list ap)
+vlogf(const char *path, log_level_t level, 
+      const char *fmt, va_list ap)
 {
-    if (!path) return -1;
-    return Log::instance()->vlogf(path, level, fmt, ap);
+    if (path == 0) { return -1; } // XXX/bowei arghh..
+    return Log::instance()->vlogf(path, level, 0, fmt, ap);
 }
 
 /**
@@ -374,7 +389,7 @@ logf(const char *path, log_level_t level, const char *fmt, ...)
     if (!path) return -1;
     va_list ap;
     va_start(ap, fmt);
-    int ret = Log::instance()->vlogf(path, level, fmt, ap);
+    int ret = Log::instance()->vlogf(path, level, 0, fmt, ap);
     va_end(ap);
     return ret;
 }
@@ -385,7 +400,7 @@ logf(const char *path, log_level_t level, const char *fmt, ...)
 inline int
 log_multiline(const char* path, log_level_t level, const char* msg)
 {
-    return Log::instance()->log_multiline(path, level, msg);
+    return Log::instance()->log_multiline(path, level, msg, 0);
 }
 
 /**

@@ -40,6 +40,7 @@
 #define _OASYS_LOGGER_H_
 
 #include "DebugUtils.h"
+#include "Log.h"
 
 namespace oasys {
 
@@ -138,7 +139,7 @@ public:
      */
     inline int vlogf(log_level_t level, const char *fmt, va_list args) const
     {
-        return oasys::vlogf(logpath_, level, fmt, args);
+        return Log::instance()->vlogf(logpath_, level, this, fmt, args);
     }
 
     /**
@@ -166,7 +167,7 @@ public:
 
 
     /**
-     * As decribed in Log.h, the log_debug style macros call
+     * As described in Log.h, the log_debug style macros call
      * log_enabled(level, path) before calling __logf. In the case of
      * the Logger, the path parameter isn't really the path, but is
      * actually the format string, so we actually call log_enabled on
@@ -183,7 +184,8 @@ public:
      */
     inline int log_multiline(log_level_t level, const char* msg) const
     {
-        return oasys::log_multiline(logpath_, level, msg);
+        return Log::instance()->log_multiline(logpath_, level, 
+                                              msg, this);
     }
 
     //! @return current logpath
@@ -238,7 +240,7 @@ Logger::logf(const char* logpath, log_level_t level,
 {
     va_list ap;
     va_start(ap, fmt);
-    int ret = oasys::vlogf(logpath, level, fmt, ap);
+    int ret = Log::instance()->vlogf(logpath, level, this, fmt, ap);
     va_end(ap);
     return ret;
 }

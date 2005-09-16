@@ -220,9 +220,13 @@ Log::parse_debug_file(const char* debug_path)
                 if (strstr(logpath, "brief") != 0) {
                     output_flags_ |= OUTPUT_SHORT;
                 }
-                if (strstr(logpath, "pretty") != 0) {
-                    output_flags_ |= OUTPUT_PRETTY;
+                if (strstr(logpath, "color") != 0) {
+                    output_flags_ |= OUTPUT_COLOR;
                 }
+                if (strstr(logpath, "object") != 0) {
+                    output_flags_ |= OUTPUT_OBJ;
+                }
+                
                 continue;
             }
 
@@ -448,15 +452,24 @@ Log::getlogtime(struct timeval* tv)
 }
 
 size_t
-Log::gen_prefix(char* buf, size_t buflen, const char* path, log_level_t level)
+Log::gen_prefix(char* buf, size_t buflen, 
+                const char* path, log_level_t level, const void* obj)
 {
     size_t len;
     char *ptr = buf;
+
     char* pretty_begin = "";
     char* pretty_end   = "";
     char* pretty_type  = "";
+    
+    char obj_address[16];
+    obj_address[0] = '\0';
 
-    if(output_flags_ & OUTPUT_PRETTY) {
+    if ( (output_flags_ & OUTPUT_OBJ) && obj != 0) {
+        snprintf(obj_address, 16, "%p ", obj);
+    }
+
+    if(output_flags_ & OUTPUT_COLOR) {
         pretty_begin = "\033[33m";
         pretty_end   = "\033[0m";
         pretty_type  = "\033[36m";
@@ -493,8 +506,9 @@ Log::gen_prefix(char* buf, size_t buflen, const char* path, log_level_t level)
             *ptr++ = ' ';
         }
         
-        len = snprintf(ptr, buflen, "%s%c%s]%s ",
+        len = snprintf(ptr, buflen, "%s%s%c%s]%s ",
                        pretty_type,
+                       obj_address,
                        toupper(level2str(level)[0]),
                        pretty_begin,
                        pretty_end);
@@ -502,9 +516,10 @@ Log::gen_prefix(char* buf, size_t buflen, const char* path, log_level_t level)
         ptr    += len;
     } else {
         len = snprintf(ptr, buflen, 
-                       "%s %s%s%s]%s ", 
+                       "%s %s%s%s%s]%s ",
                        path, 
                        pretty_type,
+                       obj_address,
                        level2str(level),
                        pretty_begin,
                        pretty_end);
@@ -516,7 +531,8 @@ Log::gen_prefix(char* buf, size_t buflen, const char* path, log_level_t level)
 }
 
 int
-Log::vlogf(const char *path, log_level_t level, const char *fmt, va_list ap)
+Log::vlogf(const char* path, log_level_t level, const void* obj,
+           const char* fmt, va_list ap)
 {
     ASSERT(inited_);
 
@@ -558,7 +574,7 @@ Log::vlogf(const char *path, log_level_t level, const char *fmt, va_list ap)
     size_t len;
 
     // generate the log prefix
-    len = gen_prefix(buf, buflen, path, level);
+    len = gen_prefix(buf, buflen, path, level, obj);
     buflen -= len;
     ptr += len;
     
@@ -602,7 +618,8 @@ Log::vlogf(const char *path, log_level_t level, const char *fmt, va_list ap)
 };
 
 int
-Log::log_multiline(const char* path, log_level_t level, const char* msg)
+Log::log_multiline(const char* path, log_level_t level, const char* msg,
+                   const void* obj)
 {
     ASSERT(inited_);
 
@@ -623,7 +640,7 @@ Log::log_multiline(const char* path, log_level_t level, const char* msg)
 
     // generate the log prefix
     char prefix[LOG_MAX_LINELEN];
-    size_t prefix_len = gen_prefix(prefix, sizeof(prefix), path, level);
+    size_t prefix_len = gen_prefix(prefix, sizeof(prefix), path, level, obj);
 
     size_t iov_total = 128; // 64 lines of output
     struct iovec  static_iov[iov_total];
