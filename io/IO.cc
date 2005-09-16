@@ -50,7 +50,7 @@
 
 namespace oasys {
 
-/////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 //! Small helper class which is a copy-on-write iovec and also handle
 //! adjustment for consumption of the bytes in the iovec.
 class COWIoVec {
@@ -143,7 +143,7 @@ private:
     struct iovec* dynamic_iov_;
 };
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 const char* 
 IO::ioerr2str(int err)
 {
@@ -157,7 +157,7 @@ IO::ioerr2str(int err)
     NOTREACHED;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::open(const char* path, int flags, const char* log)
 {
@@ -168,7 +168,7 @@ IO::open(const char* path, int flags, const char* log)
     return fd;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::open(const char* path, int flags, mode_t mode, const char* log)
 {
@@ -180,7 +180,7 @@ IO::open(const char* path, int flags, mode_t mode, const char* log)
     return fd;
 }
     
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::close(int fd, const char* log, const char* filename)
 {
@@ -191,7 +191,7 @@ IO::close(int fd, const char* log, const char* filename)
     return ret;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::unlink(const char* path, const char* log)
 {
@@ -203,7 +203,7 @@ IO::unlink(const char* path, const char* log)
     return ret;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::lseek(int fd, off_t offset, int whence, const char* log)
 {
@@ -221,7 +221,7 @@ IO::lseek(int fd, off_t offset, int whence, const char* log)
     return cc;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::truncate(int fd, off_t length, const char* log)
 {
@@ -233,7 +233,7 @@ IO::truncate(int fd, off_t length, const char* log)
     return ret;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::mkstemp(char* templ, const char* log)
 {
@@ -245,7 +245,7 @@ IO::mkstemp(char* templ, const char* log)
     return ret;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::read(int fd, char* bp, size_t len, 
          Notifier* intr, const char* log)
@@ -256,7 +256,7 @@ IO::read(int fd, char* bp, size_t len,
     return rwdata(READV, fd, &iov, 1, 0, -1, 0, 0, intr, log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::readv(int fd, const struct iovec* iov, int iovcnt, 
           Notifier* intr, const char* log)
@@ -264,7 +264,7 @@ IO::readv(int fd, const struct iovec* iov, int iovcnt,
     return rwdata(READV, fd, iov, iovcnt, 0, -1, 0, 0, intr, log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::readall(int fd, char* bp, size_t len, 
             Notifier* intr, const char* log)
@@ -276,7 +276,7 @@ IO::readall(int fd, char* bp, size_t len,
     return rwvall(READV, fd, &iov, 1, -1, 0, intr, "readall", log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::readvall(int fd, const struct iovec* iov, int iovcnt,
              Notifier* intr, const char* log)
@@ -285,7 +285,7 @@ IO::readvall(int fd, const struct iovec* iov, int iovcnt,
 }
 
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::timeout_read(int fd, char* bp, size_t len, int timeout_ms,
                  Notifier* intr, const char* log)
@@ -301,7 +301,7 @@ IO::timeout_read(int fd, char* bp, size_t len, int timeout_ms,
                   &start, intr, log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::timeout_readv(int fd, const struct iovec* iov, int iovcnt, int timeout_ms,
                   Notifier* intr, const char* log)
@@ -313,7 +313,7 @@ IO::timeout_readv(int fd, const struct iovec* iov, int iovcnt, int timeout_ms,
                   &start, intr, log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::timeout_readall(int fd, char* bp, size_t len, int timeout_ms,
                     Notifier* intr, const char* log)
@@ -329,7 +329,7 @@ IO::timeout_readall(int fd, char* bp, size_t len, int timeout_ms,
                   intr, "timeout_readall", log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::timeout_readvall(int fd, const struct iovec* iov, int iovcnt, 
                      int timeout_ms, Notifier* intr, const char* log)
@@ -341,7 +341,7 @@ IO::timeout_readvall(int fd, const struct iovec* iov, int iovcnt,
                   "timeout_readvall", log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::recv(int fd, char* bp, size_t len, int flags,
          Notifier* intr, const char* log)
@@ -352,7 +352,7 @@ IO::recv(int fd, char* bp, size_t len, int flags,
     return rwdata(RECV, fd, &iov, 1, 0, -1, 0, 0, intr, log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::recvfrom(int fd, char* bp, size_t len, int flags,
              struct sockaddr* from, socklen_t* fromlen,
@@ -368,7 +368,7 @@ IO::recvfrom(int fd, char* bp, size_t len, int flags,
     return rwdata(RECVFROM, fd, &iov, 1, flags, -1, &args, 0, intr, log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::recvmsg(int fd, struct msghdr* msg, int flags,
             Notifier* intr, const char* log)
@@ -379,7 +379,7 @@ IO::recvmsg(int fd, struct msghdr* msg, int flags,
 }
 
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::write(int fd, const char* bp, size_t len, 
           Notifier* intr, const char* log)
@@ -390,7 +390,7 @@ IO::write(int fd, const char* bp, size_t len,
     return rwdata(WRITEV, fd, &iov, 1, 0, -1, 0, 0, intr, log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::writev(int fd, const struct iovec* iov, int iovcnt, 
            Notifier* intr, const char* log)
@@ -398,7 +398,7 @@ IO::writev(int fd, const struct iovec* iov, int iovcnt,
     return rwdata(WRITEV, fd, iov, iovcnt, 0, -1, 0, 0, intr, log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::writeall(int fd, const char* bp, size_t len, 
              Notifier* intr, const char* log)
@@ -410,7 +410,7 @@ IO::writeall(int fd, const char* bp, size_t len,
     return rwvall(WRITEV, fd, &iov, 1, -1, 0, intr, "writeall", log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::writevall(int fd, const struct iovec* iov, int iovcnt,
               Notifier* intr, const char* log)
@@ -418,7 +418,7 @@ IO::writevall(int fd, const struct iovec* iov, int iovcnt,
     return rwvall(WRITEV, fd, iov, iovcnt, -1, 0, intr, "writevall", log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int 
 IO::timeout_write(int fd, char* bp, size_t len, int timeout_ms,
                   Notifier* intr, const char* log)
@@ -429,7 +429,7 @@ IO::timeout_write(int fd, char* bp, size_t len, int timeout_ms,
     return rwdata(WRITEV, fd, &iov, 1, 0, timeout_ms, 0, 0, intr, log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int 
 IO::timeout_writev(int fd, const struct iovec* iov, int iovcnt, int timeout_ms,
                    Notifier* intr, const char* log)
@@ -437,7 +437,7 @@ IO::timeout_writev(int fd, const struct iovec* iov, int iovcnt, int timeout_ms,
     return rwdata(WRITEV, fd, iov, iovcnt, 0, timeout_ms, 0, 0, intr, log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int 
 IO::timeout_writeall(int fd, const char* bp, size_t len, int timeout_ms,
                      Notifier* intr, const char* log)
@@ -453,7 +453,7 @@ IO::timeout_writeall(int fd, const char* bp, size_t len, int timeout_ms,
                   "timeout_writeall", log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int 
 IO::timeout_writevall(int fd, const struct iovec* iov, int iovcnt,
                       int timeout_ms, Notifier* intr, const char* log)
@@ -465,7 +465,7 @@ IO::timeout_writevall(int fd, const struct iovec* iov, int iovcnt,
                   "timeout_writevall", log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::send(int fd, const char* bp, size_t len, int flags,
          Notifier* intr, const char* log)
@@ -476,7 +476,7 @@ IO::send(int fd, const char* bp, size_t len, int flags,
     return rwdata(SEND, fd, &iov, 1, 0, -1, 0, 0, intr, log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::sendto(int fd, char* bp, size_t len, int flags,
            const struct sockaddr* to, socklen_t tolen,
@@ -493,7 +493,7 @@ IO::sendto(int fd, char* bp, size_t len, int flags,
     return rwdata(SENDTO, fd, &iov, 1, flags, -1, &args, 0, intr, log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::sendmsg(int fd, const struct msghdr* msg, int flags,
             Notifier* intr, const char* log)
@@ -504,7 +504,7 @@ IO::sendmsg(int fd, const struct msghdr* msg, int flags,
     return rwdata(SENDMSG, fd, 0, 0, flags, -1, &args, 0, intr, log);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::poll_single(int fd, short events, short* revents, int timeout_ms, 
                 Notifier* intr, const char* log)
@@ -521,7 +521,7 @@ IO::poll_single(int fd, short events, short* revents, int timeout_ms,
     return cc;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::poll_multiple(struct pollfd* fds, int nfds, int timeout_ms,
                   Notifier* intr, const char* log)
@@ -541,7 +541,7 @@ IO::poll_multiple(struct pollfd* fds, int nfds, int timeout_ms,
     }
 } 
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::get_nonblocking(int fd, bool *nonblockingp, const char* log)
 {
@@ -560,7 +560,7 @@ IO::get_nonblocking(int fd, bool *nonblockingp, const char* log)
     return 0;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::set_nonblocking(int fd, bool nonblocking, const char* log)
 {
@@ -601,7 +601,7 @@ IO::set_nonblocking(int fd, bool nonblocking, const char* log)
     return 0;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::poll_with_notifier(
     Notifier*             intr,
@@ -750,7 +750,7 @@ IO::poll_with_notifier(
     NOTREACHED;
 }
     
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int 
 IO::rwdata(
     RwDataOp              op,
@@ -858,7 +858,7 @@ IO::rwdata(
     NOTREACHED;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::rwvall(
     RwDataOp              op,
@@ -908,7 +908,7 @@ IO::rwvall(
     return total_bytes;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 int
 IO::adjust_timeout(int timeout, const struct timeval* start)
 {

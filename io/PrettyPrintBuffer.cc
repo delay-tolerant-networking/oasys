@@ -43,7 +43,7 @@ namespace oasys {
 
 const int PrettyPrintBuf::MAX_COL = 40;
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 PrettyPrintBuf::PrettyPrintBuf(const char* buf, int len)
     : buf_(buf), cur_(0), len_(len)
 {
@@ -53,7 +53,7 @@ PrettyPrintBuf::PrettyPrintBuf(const char* buf, int len)
     }
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 std::pair<std::string, bool>
 PrettyPrintBuf::next_str()
 {
