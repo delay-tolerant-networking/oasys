@@ -392,8 +392,11 @@ IPSocket::poll_sockfd(int events, int* revents, int timeout_ms)
     
     int cc = IO::poll_single(fd_, s_events, &s_revents, timeout_ms, 
                       get_notifier(), logpath_);
-    *revents = s_revents;
-    
+
+    if (revents != 0) {
+        *revents = s_revents;
+    }
+
     return cc;
 }
 
