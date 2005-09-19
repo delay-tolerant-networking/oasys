@@ -755,7 +755,7 @@ IO::poll_with_notifier(
 //----------------------------------------------------------------------------
 int 
 IO::rwdata(
-    RwDataOp              op,
+    IO_Op_t               op,
     int                   fd,
     const struct iovec*   iov,
     int                   iovcnt,
@@ -788,6 +788,8 @@ IO::rwdata(
     case WRITEV: case SEND: case SENDTO: case SENDMSG:
         poll_fd.events = POLLOUT; 
 	break;
+    default:
+        PANIC("Unknown IO type");
     }
    
     int cc;
@@ -843,6 +845,8 @@ IO::rwdata(
             if (log) logf(log, LOG_DEBUG, "::sendmsg() fd %d %p cc %d", 
                           fd, args->msg_hdr, cc);
             break;
+        default:
+            PANIC("Unknown IO type");
         }
         
         if (cc < 0 && 
@@ -873,7 +877,7 @@ IO::rwdata(
 //----------------------------------------------------------------------------
 int
 IO::rwvall(
-    RwDataOp              op,
+    IO_Op_t               op,
     int                   fd,
     const struct iovec*   iov, 
     int                   iovcnt,

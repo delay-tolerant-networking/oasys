@@ -65,7 +65,8 @@ public:
      *
      * @return 0 on timeout, 1 on success, -1 on error
      */
-    int timeout_accept(int *fd, in_addr_t *addr, u_int16_t *port, int timeout_ms);
+    int timeout_accept(int *fd, in_addr_t *addr, u_int16_t *port, 
+                       int timeout_ms);
 };
 
 /**

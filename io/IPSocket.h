@@ -72,7 +72,8 @@ namespace oasys {
  * IPSocket is a base class that wraps a network socket. It is a base
  * for TCPClient, TCPServer, and UDPSocket.
  */
-class IPSocket : public Logger, virtual public InterruptableIO {
+class IPSocket : public Logger, 
+                 virtual public IOHandlerBase {
 private:
     IPSocket(const IPSocket&); ///< Prohibited constructor
     

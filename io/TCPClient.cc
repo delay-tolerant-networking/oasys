@@ -129,6 +129,8 @@ TCPClient::timeout_connect(in_addr_t remote_addr, u_int16_t remote_port,
         if (errp) *errp = errno;
         return IOERROR;
     }
+    
+    monitor(IO::CONNECT, 0); // XXX/bowei
 
     return ret;
 }

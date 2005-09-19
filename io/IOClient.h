@@ -49,7 +49,7 @@ namespace oasys {
 /**
  * Abstract interface for any stream type output channel.
  */
-class IOClient : virtual public InterruptableIO {
+class IOClient : virtual public IOHandlerBase {
 public:
     virtual ~IOClient() {}
 

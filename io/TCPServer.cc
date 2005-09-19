@@ -89,6 +89,8 @@ TCPServer::accept(int *fd, in_addr_t *addr, u_int16_t *port)
     *addr = sa.sin_addr.s_addr;
     *port = ntohs(sa.sin_port);
 
+    monitor(IO::ACCEPT, 0); // XXX/bowei
+
     return 0;
 }
 
@@ -107,6 +109,8 @@ TCPServer::timeout_accept(int *fd, in_addr_t *addr, u_int16_t *port,
     if (ret < 0) {
         return IOERROR;
     }
+
+    monitor(IO::ACCEPT, 0); // XXX/bowei
 
     return 1; // accept'd
 }

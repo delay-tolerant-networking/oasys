@@ -45,27 +45,23 @@
 namespace oasys {
 
 IPClient::IPClient(int socktype, const char* logbase, Notifier* intr)
-    : InterruptableIO(intr), IPSocket(socktype, logbase)
-{
-}
+    : IOHandlerBase(intr), IPSocket(socktype, logbase)
+{}
 
 IPClient::IPClient(int socktype, int sock,
                    in_addr_t remote_addr, u_int16_t remote_port,
                    const char* logbase, Notifier* intr)
-    : InterruptableIO(intr), 
+    : IOHandlerBase(intr), 
       IPSocket(socktype, sock, remote_addr, remote_port, logbase)
-{
-}
+{}
 
-IPClient::~IPClient()
-{
-}
+IPClient::~IPClient() {}
 
 int
 IPClient::read(char* bp, size_t len)
 {
-// debugging hookto make sure that callers can handle short reads
-// #define TEST_SHORT_READ
+    // debugging hookto make sure that callers can handle short reads
+    // #define TEST_SHORT_READ
 #ifdef TEST_SHORT_READ
     if (len > 64) {
         int rnd = rand() % len;
@@ -73,85 +69,128 @@ IPClient::read(char* bp, size_t len)
         len = rnd;
     }
 #endif
-    return IO::read(fd_, bp, len, get_notifier(), logpath_);
+
+    int cc = IO::read(fd_, bp, len, get_notifier(), logpath_);
+    monitor(IO::READV, 0); // XXX/bowei
+
+    return cc;
 }
 
 int
 IPClient::readv(const struct iovec* iov, int iovcnt)
 {
-    return IO::readv(fd_, iov, iovcnt, get_notifier(), logpath_);
+    int cc = IO::readv(fd_, iov, iovcnt, get_notifier(), logpath_);
+    monitor(IO::READV, 0); // XXX/bowei
+
+    return cc;
 }
 
 int
 IPClient::write(const char* bp, size_t len)
 {
-    return IO::write(fd_, bp, len, get_notifier(), logpath_);
+    int cc = IO::write(fd_, bp, len, get_notifier(), logpath_);
+    monitor(IO::WRITEV, 0); // XXX/bowei
+
+    return cc;
 }
 
 int
 IPClient::writev(const struct iovec* iov, int iovcnt)
 {
-    return IO::writev(fd_, iov, iovcnt, get_notifier(), logpath_);
+    int cc = IO::writev(fd_, iov, iovcnt, get_notifier(), logpath_);
+    monitor(IO::WRITEV, 0); // XXX/bowei
+
+    return cc;
 }
 
 int
 IPClient::readall(char* bp, size_t len)
 {
-    return IO::readall(fd_, bp, len, get_notifier(), logpath_);
+    int cc = IO::readall(fd_, bp, len, get_notifier(), logpath_);
+    monitor(IO::READV, 0); // XXX/bowei
+
+    return cc;
 }
 
 int
 IPClient::writeall(const char* bp, size_t len)
 {
-    return IO::writeall(fd_, bp, len, get_notifier(), logpath_);
+    int cc = IO::writeall(fd_, bp, len, get_notifier(), logpath_);
+    monitor(IO::WRITEV, 0); // XXX/bowei
+
+    return cc;
 }
 
 int
 IPClient::readvall(const struct iovec* iov, int iovcnt)
 {
-    return IO::readvall(fd_, iov, iovcnt, get_notifier(), logpath_);
+    int cc = IO::readvall(fd_, iov, iovcnt, get_notifier(), logpath_);
+    monitor(IO::READV, 0); // XXX/bowei
+
+    return cc;
 }
 
 int
 IPClient::writevall(const struct iovec* iov, int iovcnt)
 {
-    return IO::writevall(fd_, iov, iovcnt, get_notifier(), logpath_);
+    int cc = IO::writevall(fd_, iov, iovcnt, get_notifier(), logpath_);
+    monitor(IO::WRITEV, 0); // XXX/bowei
+
+    return cc;
 }
 
 int
 IPClient::timeout_read(char* bp, size_t len, int timeout_ms)
 {
-    return IO::timeout_read(fd_, bp, len, timeout_ms, get_notifier(), logpath_);
+    int cc = IO::timeout_read(fd_, bp, len, timeout_ms, 
+                            get_notifier(), logpath_);
+    monitor(IO::READV, 0); // XXX/bowei
+
+    return cc;
 }
 
 int
 IPClient::timeout_readv(const struct iovec* iov, int iovcnt, int timeout_ms)
 {
-    return IO::timeout_readv(fd_, iov, iovcnt, timeout_ms, get_notifier(), logpath_);
+    int cc = IO::timeout_readv(fd_, iov, iovcnt, timeout_ms, 
+                             get_notifier(), logpath_);
+    monitor(IO::READV, 0); // XXX/bowei
+
+    return cc;
 }
 
 int
 IPClient::timeout_readall(char* bp, size_t len, int timeout_ms)
 {
-    return IO::timeout_readall(fd_, bp, len, timeout_ms, get_notifier(), logpath_);
+    int cc = IO::timeout_readall(fd_, bp, len, timeout_ms, 
+                               get_notifier(), logpath_);
+    monitor(IO::READV, 0); // XXX/bowei
+
+    return cc;
 }
 
 int
 IPClient::timeout_readvall(const struct iovec* iov, int iovcnt, int timeout_ms)
 {
-    return IO::timeout_readvall(fd_, iov, iovcnt, timeout_ms, get_notifier(), logpath_);
+    int cc = IO::timeout_readvall(fd_, iov, iovcnt, timeout_ms, 
+                                get_notifier(), logpath_);
+    monitor(IO::READV, 0); // XXX/bowei
+
+    return cc;
 }
 
 int
 IPClient::get_nonblocking(bool *nonblockingp)
 {
-    return IO::get_nonblocking(fd_, nonblockingp, logpath_);
+    int cc = IO::get_nonblocking(fd_, nonblockingp, logpath_);
+    return cc;
 }
 
 int
 IPClient::set_nonblocking(bool nonblocking)
 {
-    return IO::set_nonblocking(fd_, nonblocking, logpath_);
+    int cc = IO::set_nonblocking(fd_, nonblocking, logpath_);
+    return cc;
 }
 
 } // namespace oasys

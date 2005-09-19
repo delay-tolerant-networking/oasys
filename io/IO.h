@@ -49,31 +49,7 @@
 
 namespace oasys {
 
-//! Virtually inherited base class for holding the notifier with
-//! interruptable I/O
-class InterruptableIO {
-public:
-    InterruptableIO(Notifier* intr = 0) 
-        : intr_(intr) {}
-    ~InterruptableIO() { delete_z(intr_); }
-
-    Notifier* get_notifier() { 
-        return intr_; 
-    }
-
-    void interrupt_from_io() {
-        ASSERT(intr_ != 0);
-        intr_->notify();
-    }
-    
-    void set_notifier(Notifier* intr) { 
-        ASSERT(intr_ == 0);
-        intr_ = intr; 
-    }
-    
-private:
-    Notifier* intr_;
-};
+class IOMonitor;
 
 /**
  * Return code values for the timeout enabled functions such as
@@ -91,6 +67,21 @@ enum IOTimeoutReturn_t {
 
 
 struct IO {
+    //! Op code used by general IO functions
+    enum IO_Op_t {
+        READV = 1,
+        RECV,
+        RECVFROM,
+        RECVMSG,
+        WRITEV,
+        SEND,
+        SENDTO,
+        SENDMSG,
+
+        CONNECT,
+        ACCEPT,
+    };
+
     //! @return Text for the io error.
     static const char* ioerr2str(int err);
 
@@ -232,18 +223,6 @@ struct IO {
                                   int                   timeout,  
                                   const struct timeval* start_time,
                                   const char*           log);
-    
-    //! Op code used by rwdatas()
-    enum RwDataOp {
-        READV = 1,
-        RECV,
-        RECVFROM,
-        RECVMSG,
-        WRITEV,
-        SEND,
-        SENDTO,
-        SENDMSG,
-    };
 
     //! Union used to pass extra arguments to rwdata
     union RwDataExtraArgs {
@@ -262,7 +241,7 @@ struct IO {
 
     //! This is the do all function which will (depending on the flags
     //! given dispatch to the correct read/write/send/rcv call
-    static int rwdata(RwDataOp              op, 
+    static int rwdata(IO_Op_t               op, 
                       int                   fd, 
                       const struct iovec*   iov, 
                       int                   iovcnt, 
@@ -275,7 +254,7 @@ struct IO {
                       const char*           log);
     
     //! Do all function for iovec reading/writing
-    static int rwvall(RwDataOp              op, 
+    static int rwvall(IO_Op_t               op, 
                       int                   fd, 
                       const struct iovec*   iov, 
                       int                   iovcnt,
@@ -288,6 +267,59 @@ struct IO {
     //! Adjust the timeout value given a particular start time
     static int adjust_timeout(int timeout, const struct timeval* start);
 }; // class IO
+
+//! Class used to intercept I/O operations for monitoring purposes
+class IOMonitor {
+public:
+    struct info_t {
+        int timeout_ms_;
+        int err_code_;
+        // XXX/bowei - todo
+    };
+
+    virtual void monitor(IO::IO_Op_t op, const info_t* info) = 0;
+};
+
+//! Virtually inherited base class for holding common elements of an
+//! I/O handling class. IOHandlerBase will possess the notifier
+//! associated with it XXX/bowei - don't know whether this is
+//! appropriate
+class IOHandlerBase {
+public:
+    IOHandlerBase(Notifier* intr = 0) 
+        : intr_(intr), monitor_(0) {}
+    ~IOHandlerBase() { delete_z(intr_); }
+
+    Notifier* get_notifier() { 
+        return intr_; 
+    }
+
+    void interrupt_from_io() {
+        ASSERT(intr_ != 0);
+        intr_->notify();
+    }
+    
+    void set_notifier(Notifier* intr) { 
+        ASSERT(intr_ == 0);
+        intr_ = intr; 
+    }
+
+    void set_monitor(IOMonitor* monitor) {
+        monitor_ = monitor;
+    }
+    
+    void monitor(IO::IO_Op_t op, 
+                 const IOMonitor::info_t* info) 
+    {
+        if (monitor_ != 0) {
+            monitor_->monitor(op, info);
+        }
+    }
+
+private:
+    Notifier* intr_;
+    IOMonitor*  monitor_;
+};
 
 } // namespace oasys
 

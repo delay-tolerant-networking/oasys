@@ -43,7 +43,7 @@
 namespace oasys {
 
 FdIOClient::FdIOClient(int fd, Notifier* intr)
-    : InterruptableIO(intr), 
+    : IOHandlerBase(intr), 
       Logger("/fdio"), 
       fd_(fd)
 {}
