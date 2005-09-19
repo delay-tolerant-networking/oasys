@@ -267,7 +267,7 @@ void _name::add_tests()                                         \
     } } while(0);
 
 #define CHECK_EQUALSTRN(a, b, len)                                              \
-    do { if (strncmp((a), (b), (len)) != 0) {                                   \
+    do { if (strncmp((const char*)(a), (const char*)(b), (len)) != 0) {         \
         if (len <= 32) {                                                        \
             oasys::logf("/test", oasys::LOG_CRIT, "CHECK FAILED: "              \
                         "'%s' (%s) != '%s' (%s) at %s:%d",                      \
