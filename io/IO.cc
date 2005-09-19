@@ -45,6 +45,7 @@
 #include "IO.h"
 
 #include "debug/Log.h"
+#include "util/ScratchBuffer.h"
 #include "util/StringBuffer.h"
 #include "thread/Notifier.h"
 
@@ -253,7 +254,7 @@ IO::read(int fd, char* bp, size_t len,
     struct iovec iov;
     iov.iov_base = bp;
     iov.iov_len  = len;
-    return rwdata(READV, fd, &iov, 1, 0, -1, 0, 0, intr, log);
+    return rwdata(READV, fd, &iov, 1, 0, -1, 0, 0, intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -261,7 +262,7 @@ int
 IO::readv(int fd, const struct iovec* iov, int iovcnt, 
           Notifier* intr, const char* log)
 {
-    return rwdata(READV, fd, iov, iovcnt, 0, -1, 0, 0, intr, log);
+    return rwdata(READV, fd, iov, iovcnt, 0, -1, 0, 0, intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -298,7 +299,7 @@ IO::timeout_read(int fd, char* bp, size_t len, int timeout_ms,
     gettimeofday(&start, 0);
 
     return rwdata(READV, fd, &iov, 1, 0, timeout_ms, 0, 
-                  &start, intr, log);
+                  &start, intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -310,7 +311,7 @@ IO::timeout_readv(int fd, const struct iovec* iov, int iovcnt, int timeout_ms,
     gettimeofday(&start, 0);
 
     return rwdata(READV, fd, iov, iovcnt, 0, timeout_ms, 0, 
-                  &start, intr, log);
+                  &start, intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -349,7 +350,7 @@ IO::recv(int fd, char* bp, size_t len, int flags,
     struct iovec iov;
     iov.iov_base = bp;
     iov.iov_len  = len;
-    return rwdata(RECV, fd, &iov, 1, 0, -1, 0, 0, intr, log);
+    return rwdata(RECV, fd, &iov, 1, 0, -1, 0, 0, intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -365,7 +366,8 @@ IO::recvfrom(int fd, char* bp, size_t len, int flags,
     RwDataExtraArgs args;
     args.recvfrom.from    = from;
     args.recvfrom.fromlen = fromlen;
-    return rwdata(RECVFROM, fd, &iov, 1, flags, -1, &args, 0, intr, log);
+    return rwdata(RECVFROM, fd, &iov, 1, flags, -1, &args, 0, intr, 
+	          false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -375,7 +377,8 @@ IO::recvmsg(int fd, struct msghdr* msg, int flags,
 {
     RwDataExtraArgs args;
     args.msg_hdr = msg;
-    return rwdata(RECVMSG, fd, 0, 0, flags, -1, &args, 0, intr, log);
+    return rwdata(RECVMSG, fd, 0, 0, flags, -1, &args, 0, 
+	          intr, false, log);
 }
 
 
@@ -387,7 +390,8 @@ IO::write(int fd, const char* bp, size_t len,
     struct iovec iov; 
     iov.iov_base = const_cast<void*>(static_cast<const void*>(bp));
     iov.iov_len  = len;
-    return rwdata(WRITEV, fd, &iov, 1, 0, -1, 0, 0, intr, log);
+    return rwdata(WRITEV, fd, &iov, 1, 0, -1, 0, 0, 
+	          intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -395,7 +399,8 @@ int
 IO::writev(int fd, const struct iovec* iov, int iovcnt, 
            Notifier* intr, const char* log)
 {
-    return rwdata(WRITEV, fd, iov, iovcnt, 0, -1, 0, 0, intr, log);
+    return rwdata(WRITEV, fd, iov, iovcnt, 0, -1, 0, 0, 
+	          intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -426,7 +431,8 @@ IO::timeout_write(int fd, char* bp, size_t len, int timeout_ms,
     struct iovec iov; 
     iov.iov_base = const_cast<void*>(static_cast<const void*>(bp));
     iov.iov_len  = len;
-    return rwdata(WRITEV, fd, &iov, 1, 0, timeout_ms, 0, 0, intr, log);
+    return rwdata(WRITEV, fd, &iov, 1, 0, timeout_ms, 0, 0, 
+	          intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -434,7 +440,8 @@ int
 IO::timeout_writev(int fd, const struct iovec* iov, int iovcnt, int timeout_ms,
                    Notifier* intr, const char* log)
 {
-    return rwdata(WRITEV, fd, iov, iovcnt, 0, timeout_ms, 0, 0, intr, log);
+    return rwdata(WRITEV, fd, iov, iovcnt, 0, timeout_ms, 0, 0, 
+	          intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -473,7 +480,7 @@ IO::send(int fd, const char* bp, size_t len, int flags,
     struct iovec iov;
     iov.iov_base = const_cast<void*>(static_cast<const void*>(bp));
     iov.iov_len  = len;
-    return rwdata(SEND, fd, &iov, 1, 0, -1, 0, 0, intr, log);
+    return rwdata(SEND, fd, &iov, 1, 0, -1, 0, 0, intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -490,7 +497,8 @@ IO::sendto(int fd, char* bp, size_t len, int flags,
     args.sendto.to    = to;
     args.sendto.tolen = tolen;
 
-    return rwdata(SENDTO, fd, &iov, 1, flags, -1, &args, 0, intr, log);
+    return rwdata(SENDTO, fd, &iov, 1, flags, -1, &args, 0, 
+	          intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -501,7 +509,8 @@ IO::sendmsg(int fd, const struct msghdr* msg, int flags,
     RwDataExtraArgs args;
     args.msg_hdr = msg;
 
-    return rwdata(SENDMSG, fd, 0, 0, flags, -1, &args, 0, intr, log);
+    return rwdata(SENDMSG, fd, 0, 0, flags, -1, &args, 0, 
+	          intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -615,22 +624,15 @@ IO::poll_with_notifier(
     ASSERT(! (timeout > 0 && start_time == 0));
     ASSERT(timeout >= -1);
 
-    struct pollfd  static_poll_set[16];
-    struct pollfd* dynamic_poll_set = 0;
+    oasys::StaticBuffer<16 * sizeof(struct pollfd), 
+	                struct pollfd*> intr_poll_set;
     struct pollfd* poll_set;
     
-
     if (intr == 0) {
         poll_set = fds;
     } else {
-        if (nfds <= 15) {
-            poll_set = static_poll_set;
-        } else {
-            dynamic_poll_set = static_cast<pollfd*>
-                               (calloc(nfds + 1, sizeof(struct pollfd)));
-            ASSERT(dynamic_poll_set != 0);
-            poll_set = dynamic_poll_set;
-        }
+	intr_poll_set.buf(sizeof(struct pollfd) * (nfds + 1));
+	poll_set = intr_poll_set.buf();
   
         for (size_t i=0; i<nfds; ++i) {
             poll_set[i].fd      = fds[i].fd;
@@ -762,6 +764,7 @@ IO::rwdata(
     RwDataExtraArgs*      args,
     const struct timeval* start_time,
     Notifier*             intr, 
+    bool                  ignore_eagain,
     const char*           log
     )
 {
@@ -780,13 +783,16 @@ IO::rwdata(
     poll_fd.fd = fd;
     switch (op) {
     case READV: case RECV: case RECVFROM: case RECVMSG:
-        poll_fd.events = POLLIN | POLLPRI | POLLERR; break;
+        poll_fd.events = POLLIN | POLLPRI; 
+	break;
     case WRITEV: case SEND: case SENDTO: case SENDMSG:
-        poll_fd.events = POLLOUT | POLLERR; break;
+        poll_fd.events = POLLOUT; 
+	break;
     }
    
     int cc;
-    while (true) {
+    while (true) 
+    {
         if (intr || timeout > -1) {
             cc = poll_with_notifier(intr, &poll_fd, 1, timeout, 
                                     start_time, log);
@@ -839,7 +845,9 @@ IO::rwdata(
             break;
         }
         
-        if (cc < 0 && (errno == EAGAIN || errno == EINTR) ) {
+        if (cc < 0 && 
+	    ( (errno == EAGAIN && ignore_eagain) || errno == EINTR) ) 
+	{
             if (timeout > 0) {
                 timeout = adjust_timeout(timeout, start_time);
             }
@@ -847,7 +855,11 @@ IO::rwdata(
         }
 
         if (cc < 0) {
-            return IOERROR;
+	    if (errno == EAGAIN) {
+		return IOAGAIN;
+	    } else {
+		return IOERROR;
+	    }
         } else if (cc == 0) {
             return IOEOF;
         } else {
@@ -880,7 +892,7 @@ IO::rwvall(
 
     while (cow_iov.bytes_left() > 0) {
 	int cc = rwdata(op, fd, cow_iov.iov(), cow_iov.iovcnt(), 
-		        0, timeout, 0, start, intr, log);
+		        0, timeout, 0, start, intr, true, log);
 	if (cc < 0) {
 	    if (log && cc != IOTIMEOUT && cc != IOINTR) {
 		logf(log, LOG_DEBUG, "%s %s %s", 
