@@ -46,7 +46,7 @@ namespace oasys {
 /**
  * This is a class which caches a reusable scratch buffer, obviating
  * the need to constantly malloc, the free a buffer in order to
- * serialize into/out of. Warning: multi-threaded use.
+ * serialize into/out of. Warning: must lock for multi-threaded use.
  */
 template<typename _memory_t = void*>
 class ScratchBuffer {
@@ -58,29 +58,75 @@ public:
             size_ = INIT_SIZE;
         }
 
-        buf_ = static_cast<_memory_t*>(malloc(size_));
+        buf_ = static_cast<_memory_t>(malloc(size_));
         ASSERT(buf_);
     }
 
     ~ScratchBuffer() { free(buf_) ;}
     
-    _memory_t* buf(size_t size) {
+    _memory_t buf(size_t size) {
         if(size > size_)
         {
-            buf_ = static_cast<_memory_t*>(realloc(buf_, size));
+            buf_ = static_cast<_memory_t>(realloc(buf_, size));
             size_ = size;
         }
         return buf_;
     }
 
-    _memory_t* buf() { return buf_; }
-    size_t size()    { return size_; }
+    _memory_t buf()  { return buf_; }
+    size_t    size() { return size_; }
     
 private:
     static const int INIT_SIZE = 256;
     
-    _memory_t* buf_;
-    size_t     size_;
+    _memory_t buf_;
+    size_t    size_;
+};
+
+//! A initially stack allocated chunk of memory. Useful for those
+//! occasions when the common case is under a certain size, but
+//! arbitrary size also need to be handled.
+template<size_t _size, typename _memory_t = void*>
+class StaticBuffer {
+public:
+    StaticBuffer()
+        : buf_(reinterpret_cast<_memory_t>(static_buf_)), 
+	  size_(_size)
+    {}
+
+    ~StaticBuffer() { 
+	if (using_malloc())
+	    free(buf_);
+    }
+    
+    _memory_t buf() { return buf_; }
+    _memory_t buf(size_t size) {
+        if (size > size_)
+        {
+	    if (! using_malloc()) {
+		buf_ = static_cast<_memory_t>(malloc(size));
+		ASSERT(buf_);
+
+		memcpy(buf_, static_buf_, size_);
+	    } else {
+		buf_ = static_cast<_memory_t>(realloc(buf_, size));
+		ASSERT(buf_);
+	    }
+            size_ = size;
+        }
+
+        return buf_;
+    }
+    size_t size() { return size_; }
+    
+private:
+    _memory_t buf_;
+    size_t    size_;
+    char      static_buf_[_size];
+
+    bool using_malloc() { 
+	return reinterpret_cast<char*>(buf_) != static_buf_; 
+    }
 };
 
 } // namespace oasys
