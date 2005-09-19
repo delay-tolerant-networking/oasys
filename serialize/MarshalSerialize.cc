@@ -184,20 +184,23 @@ void
 Marshal::process(const char* name, u_char** bp,
                  size_t* lenp, int flags)
 {
-    ASSERT(*lenp > 0 || (flags & Serialize::NULL_TERMINATED));
     int str_len;
 
-    if(flags & Serialize::NULL_TERMINATED) {
+    if (flags & Serialize::NULL_TERMINATED) {
         str_len = strlen(reinterpret_cast<char*>(*bp)) + 1;
     } else {
-        process(name, (u_int32_t*)lenp);
+        std::string len_name = name;
+        len_name += ".len";
+        process(len_name.c_str(), (u_int32_t*)lenp);
         str_len = *lenp;
     }
 
-    u_char* buf = next_slice(str_len);
-    if (buf == NULL) return;
+    if (*lenp != 0) {
+        u_char* buf = next_slice(str_len);
+        if (buf == NULL) return;
     
-    memcpy(buf, *bp, str_len);
+        memcpy(buf, *bp, str_len);
+    }
     
     if (log_) {
         std::string s;
@@ -333,38 +336,43 @@ Unmarshal::process(const char* name, u_char* bp, size_t len)
 void 
 Unmarshal::process(const char* name, u_char** bp, size_t* lenp, int flags)
 {
-    if(flags & Serialize::NULL_TERMINATED) {
+    if (flags & Serialize::NULL_TERMINATED) {
         u_char* cbuf = buf() + offset();
         int new_len = 0;
 	
-        while(cbuf != buf() + length()) {
+        while (cbuf != buf() + length()) {
             if(*cbuf == '\0')
                 break;
             cbuf++;
             new_len++;
         }
         
-        if(cbuf == buf() + length()) {
+        if (cbuf == buf() + length()) {
             // no null character found
             error_ = true;
             return;
         }
         *lenp = new_len + 1; // length of string + '\0'
     } else {
-        process(name, (u_int32_t*)lenp);
+        std::string len_name = name;
+        len_name += ".len";
+        process(len_name.c_str(), (u_int32_t*)lenp);
     }
 
     ASSERT(*lenp >= 0);
-    ASSERT(*bp == 0);
-    
-    u_char* buf = next_slice(*lenp);
-    if (buf == NULL) return;
-    
-    if (flags & Serialize::ALLOC_MEM) {
-        *bp = (u_char*)malloc(*lenp);
-        memcpy(*bp, buf, *lenp);
+
+    if (*lenp != 0) {
+        u_char* buf = next_slice(*lenp);
+        if (buf == NULL) return;
+        
+        if (flags & Serialize::ALLOC_MEM) {
+            *bp = (u_char*)malloc(*lenp);
+            memcpy(*bp, buf, *lenp);
+        } else {
+            *bp = buf;
+        }
     } else {
-        *bp = buf;
+        *bp = 0;
     }
     
     if (log_) {
