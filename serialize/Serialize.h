@@ -225,21 +225,27 @@ public:
 
     /**
      * Process function for a constant length char buffer.
+     * 
+     * @param name   field name
+     * @param bp     buffer
+     * @param len    buffer length
      */
     virtual void process(const char* name, u_char* bp, size_t len) = 0;
 
     /**
      * Process function for a variable length char buffer.
-     * 
-     * @param bp buffer, allocated by SerializeAction if ALLOC_MEM flag is
-     * set.
-     * @param len IN: If ALLOC_MEM flags is set, then len is the length of
-     * the buffer allocated.
-     * @param flags ALLOC_MEM, NULL_TERMINATED specifies that the data
-     * stored will be a null-terminated C-string. 
+     *
+     * @param name   field name
+     * @param bp     buffer, allocated by SerializeAction if ALLOC_MEM 
+     *               flag is set.
+     * @param lenp   IN: If ALLOC_MEM flags is set, then len is the 
+     *               length of the buffer allocated.
+     *               OUT: contains the length of the buffer
+     * @param flags  ALLOC_MEM as above, NULL_TERMINATED specifies that
+     *               the data stored will be a null-terminated C-string. 
      */
     virtual void process(const char* name, u_char** bp,
-                         size_t* len, int flags) = 0;
+                         size_t* lenp, int flags) = 0;
 
     /**
      * Process function for a c++ string.

@@ -112,9 +112,10 @@ public:
     /**
      * Put data for key in the database
      *
-     * @param key Key object
+     * @param key      Key object
      * @param typecode Typecode (if multitype)
-     * @param data Data object
+     * @param data     Data object
+     * @param flags    Bit vector of DurableStoreFlags_t values.
      * @return DS_OK, DS_ERR // XXX/bowei
      */
     virtual int put(const SerializableObject& key, 

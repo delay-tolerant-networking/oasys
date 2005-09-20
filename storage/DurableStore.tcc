@@ -1,7 +1,4 @@
 
-/*!
- * Pretty print for durable store errors
- */
 inline const char* durable_strerror(int r)
 {
     DurableStoreResult_t result = (DurableStoreResult_t)r;
@@ -17,13 +14,6 @@ inline const char* durable_strerror(int r)
     NOTREACHED;
 }
 
-/**
- * Get a new handle on a table.
- *
- * @param flags options for creating the table
- * @param id what the id of the table should be if specified
- * @return DS_OK, DS_NOTFOUND, DS_EXISTS, DS_ERR
- */
 template <typename _DataType>
 inline int
 DurableStore::get_table(SingleTypeDurableTable<_DataType>** table,

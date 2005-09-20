@@ -82,7 +82,9 @@ struct IO {
         ACCEPT,
     };
 
-    //! @return Text for the io error.
+    /**
+     * @return Text for the io error.
+     */
     static const char* ioerr2str(int err);
 
     //@{
@@ -206,7 +208,9 @@ struct IO {
                                const char* log = NULL);
     //! @}
 
-    //! @return total bytes in the iovec to be written
+    /**
+     * @return total bytes in the iovec to be written
+     */
     static size_t iovec_size(struct iovec* iov, int num) {
 	size_t size = 0;
 	for (int i=0; i<num; ++i) {

@@ -110,13 +110,14 @@ private:
 
     void prune_db_dir(int tidy_wait, const char* dir);
 
-    /*! 
+    /**
      * Check for the db directory
-     * @param dir_exists Pass in pointer to be set if directory exists.
+     * @param db_dir     Directory to check
+     * @param dir_exists To be set if directory exists.
      */
     int check_db_dir(const char* db_dir, bool* dir_exists);
 
-    //! Create database directory
+    /// Create database directory
     int create_db_dir(const char* db_dir);
 };
 

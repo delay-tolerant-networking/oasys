@@ -165,6 +165,7 @@ public:
      * should already exist.
      *
      * @param key   Key object
+     * @param type  Type code for the object
      * @param data  Data object
      * @param flags Bit vector of DurableStoreFlags_t values.
      * @return DS_OK, DS_NOTFOUND, DS_ERR

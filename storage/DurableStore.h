@@ -74,7 +74,7 @@ enum DurableStoreResult_t {
     DS_ERR       = 1000,        ///< XXX/bowei placeholder for now
 };
 
-/*!
+/**
  * Pretty print for durable store errors
  */
 const char* durable_strerror(int result);
@@ -131,8 +131,11 @@ public:
     /**
      * Get a new handle on a single-type table.
      *
-     * @param flags options for creating the table
-     * @param id what the id of the table should be if specified
+     * @param table      Pointer to the table to be created
+     * @param flags      Options for creating the table
+     * @param table_name Name of the table
+     * @param cache      Optional cache for the table
+     *
      * @return DS_OK, DS_NOTFOUND, DS_EXISTS, DS_ERR
      */
     template <typename _DataType>
@@ -141,11 +144,13 @@ public:
                   int                 flags,
                   DurableObjectCache<_DataType>* cache = NULL);
 
-    /*!
-     * Get a new handle on a multi-type table.
+    /**
+     * Get a new handle on a table.
      *
-     * @param flags options for creating the table
-     * @param id what the id of the table should be if specified
+     * @param table      Pointer to the table to be created
+     * @param flags      Options for creating the table
+     * @param table_name Name of the table
+     * @param cache      Optional cache for the table
      * @return DS_OK, DS_NOTFOUND, DS_EXISTS, DS_ERR
      */
     template <typename _BaseType, typename _Collection>

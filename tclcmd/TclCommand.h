@@ -256,7 +256,8 @@ public:
     /** 
      * Constructor
      *
-     *  @param name Name of the module
+     * @param name Name of the module
+     * @param theNamespace Optional tcl namespace
      */
     TclCommand(const char* name, const char* theNamespace = 0);
     virtual ~TclCommand();

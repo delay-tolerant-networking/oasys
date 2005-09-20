@@ -188,7 +188,9 @@ public:
                                               msg, this);
     }
 
-    //! @return current logpath
+    /**
+     * @return current logpath
+     */
     const char* logpath() { return logpath_; }
 
 protected:

@@ -104,10 +104,10 @@ public:
 
     InitSequencer();
 
-    /*!
+    /**
      * Perform the actions needed to start the component.
      *
-     * @param component to start
+     * @param step which step to start
      * @param plan optional plan (made by humans) which the
      *        InitSequencer will try to execute.
      */
@@ -183,10 +183,14 @@ public:
 
     virtual ~InitStep() {}
     
-    //! Run this component. Returns 0 on no error.
+    /**
+     * Run this component. Returns 0 on no error.
+     */
     virtual int run();
 
-    //! @return true if all dependencies have been met.
+    /**
+     * @return true if all dependencies have been met.
+     */
     bool dep_are_satisfied();
     
     const DepList& dependencies() { return dependencies_; }
@@ -246,8 +250,8 @@ struct InitExtraDependency {
 };
 
 
-/*!
- * @{
+/// @{
+/**
  * Prefer these macros to declaring the dependencies because they
  * check the number of arguments passed to the decl.
  */
@@ -272,9 +276,9 @@ int InitModule##_namespace##_name::run_component()
     OASYS_DECLARE_INIT_MODULE(_namespace, _name, 3, _dep1, _dep2, _dep3)
 #define OASYS_DECLARE_INIT_MODULE_4(_namespace, _name, _dep1, _dep2, _dep3, _dep4) \
     OASYS_DECLARE_INIT_MODULE(_namespace, _name, 4, _dep1, _dep2, _dep3, _dep4)
-//! @}
+/// @}
 
-/*!
+/**
  * Declare an initialization module with _num_dep dependencies. Use
  * the above macros instead of
  */

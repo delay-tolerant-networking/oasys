@@ -75,7 +75,9 @@ public:
 	} 
     }
     
-    //! @return number of bytes left in the iovecs
+    /**
+     * @return number of bytes left in the iovecs
+     */
     void consume(size_t cc) {
 	ASSERT(bytes_left_ >= cc);
 

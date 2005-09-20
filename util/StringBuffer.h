@@ -192,8 +192,10 @@ template<size_t _sz>
 class StaticStringBuffer {
 public:
     /**
-     * @init_str Initial string value. If the string is longer than
-     * _sz, then the string is truncated.
+     * Default constructor
+     *
+     * @param init_str Initial string value. If the string is longer
+     * than _sz, then the string is truncated.
      */
     StaticStringBuffer(char* init_str = 0) : len_(0) {
         buf_[_sz] = '\0';
