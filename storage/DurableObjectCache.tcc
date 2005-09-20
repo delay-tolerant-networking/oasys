@@ -200,7 +200,7 @@ DurableObjectCache<_DataType>::get(const SerializableObject& key,
 template <typename _DataType>
 int
 DurableObjectCache<_DataType>::release(const SerializableObject& key,
-                                       _DataType* data)
+                                       const _DataType* data)
 {
     ScopeLock l(lock_);
 

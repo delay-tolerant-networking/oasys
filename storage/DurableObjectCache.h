@@ -64,7 +64,7 @@ public:
     /**
      * Release the given object, making it eligible for eviction.
      */
-    int release(const SerializableObject& key, _DataType* data);
+    int release(const SerializableObject& key, const _DataType* data);
     
     /**
      * Forcibly remove an object from the cache.
