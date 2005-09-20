@@ -51,7 +51,7 @@ class LRUList : public std::list<_Type> {
 public:
     void move_to_back(typename std::list<_Type>::iterator iter)
     {
-        splice(end(), *this, iter);
+        splice(this->end(), *this, iter);
     }
 };
 
