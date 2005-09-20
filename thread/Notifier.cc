@@ -92,7 +92,10 @@ Notifier::drain_pipe(size_t bytes)
         ret = IO::read(read_fd(), buf, 
                        std::min(sizeof(buf), bytes - bytes_drained));
         if (ret <= 0) {
-            if (ret == -1 && errno == EAGAIN) {
+            if (ret == IOAGAIN) {
+                PANIC("drain_pipe: trying to drain with not enough notify "
+                      "calls, count = %u and trying to drain %u bytes", 
+                      count_, bytes);
                 break;
             } else {
                 log_crit("drain_pipe: unexpected error return from read: %s",
