@@ -84,14 +84,17 @@ proc distfiles {manifest_list host_list basedir targetdir subst {verbose 0}} {
     set distdir [create-dist $manifest_list $basedir $subst $verbose]
 
     if {$verbose} { puts "% copying files" }
+    
+    set i 0
     foreach host $host_list {
 	if [is-localhost $host] {
-	    if {$verbose} { puts "% $distdir -> $distdir-$host" }
-	    exec cp -r $distdir $targetdir-$host
+	    if {$verbose} { puts "% $distdir -> $distdir-$host-$i" }
+	    exec cp -r $distdir $targetdir-$host-$i
 	} else {
-	    if {$verbose} { puts "% $distdir -> $host:$targetdir-$host" }
-	    exec scp -C -r $distdir $host:$targetdir-$host
+	    if {$verbose} { puts "% $distdir -> $host:$targetdir-$host-$i" }
+	    exec scp -C -r $distdir $host:$targetdir-$host-$i
 	}
+	incr i
     }
 
     if {$verbose} { puts "% removing $distdir" }

@@ -19,16 +19,26 @@ case $CHOICE in
 	gdb $EXEC_FILE -x run-script.gdb ;;
     "1 1 0") 
 	screen -c /dev/null -d -m -S $RUN_ID \
-	    gdb bin/tierd -x run-script.gdb $GDB_OPTS ;;
+	    gdb bin/tierd -x run-script.gdb $GDB_OPTS
+	echo $RUN_ID
+	;;
     "1 0 1") 
-	$EXEC_FILE $EXEC_OPTS ;;
+	$EXEC_FILE $EXEC_OPTS
+	echo $! 
+	;;
     "1 0 0") 
-	screen -c /dev/null -d -m -S $TEST_ID $EXEC_FILE $EXEC_OPTS ;;
-    "0 1 0"|"0 1 1") 
+	screen -c /dev/null -d -m -S $TEST_ID $EXEC_FILE $EXEC_OPTS 
+	echo $RUN_ID
+	;;
+    "0 1 0" | "0 1 1")
 	gdb -batch -x run-script.gdb $GDB_OPTS $EXEC_FILE \
-	    >$RUNDIR/$EXEC_FILE.err >$RUNDIR/$EXEC_FILE.std & ;;
-    "0 0 0"|"0 0 1") 
-	$EXEC_FILE $EXEC_OPTS >$RUNDIR/$EXEC_FILE.err >$RUNDIR/log.std ;;
+	    >$RUNDIR/$EXEC_FILE.err >$RUNDIR/$EXEC_FILE.std & 
+	echo $!
+	;;
+    "0 0 0" | "0 0 1")
+	$EXEC_FILE $EXEC_OPTS >$RUNDIR/$EXEC_FILE.err >$RUNDIR/log.std 
+	echo $!
+	;;
     *) echo "! garbage arguments to run script"; exit ;;
 esac
 
