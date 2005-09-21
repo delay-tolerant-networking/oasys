@@ -30,9 +30,9 @@ proc create-dist {manifest_list basedir subst verbose} {
 	    set type [lindex $entry 0]
 	    switch $type {
 		"F" {
-		    set src [lindex $l 1]
+		    set src [lindex $entry 1]
 		    foreach {k v} $subst { regsub $k $src $v src }
-		    set dst [lindex $l 2]
+		    set dst [lindex $entry 2]
 		    foreach {k v} $subst { regsub $k $dst $v dst }
 		    set dir [file dirname $dst]
 		    if [string length $dir] {
@@ -41,8 +41,8 @@ proc create-dist {manifest_list basedir subst verbose} {
 		    if {$verbose} {
 			puts "% $basedir/$src -> $tmpdir/$dst"
 		    }
+		    exec cp "$basedir/$src" "$tmpdir/$dst"
 		}
-		exec cp "$basedir/$src" "$tmpdir/$dst"
 		
 		"D" {
 		    set new_dir [lindex $entry 1]
@@ -69,20 +69,31 @@ proc is-localhost { host } {
     return 0
 }
 
-proc distfiles {manifest_list host_list basedir subst {verbose 0}} {
-    set distdir [create-dst $manifest_list $basedir $subst $verbose]
+#
+# Distribute files to localhost/remote hosts
+#
+# @param manifest_list List of manifest files
+# @param host_list     List of destination hosts
+# @param basedir       Basedir from which the files are taken
+# @param targetdir     Target directory
+# @param subst         A list of mappings to be done in the 
+#                      manifests, e.g. { exe stripped }
+# @param verbose       Print out what is happening
+#
+proc distfiles {manifest_list host_list basedir targetdir subst {verbose 0}} {
+    set distdir [create-dist $manifest_list $basedir $subst $verbose]
 
     if {$verbose} { puts "% copying files" }
     foreach host $host_list {
 	if [is-localhost $host] {
-	    if {$verbose} { puts "% $tmpdir -> $tmpdir-$host" }
-	    exec cp -r $tmpdir $targetdir-$host
+	    if {$verbose} { puts "% $distdir -> $distdir-$host" }
+	    exec cp -r $distdir $targetdir-$host
 	} else {
-	    if {$verbose} { puts "% $tmpdir -> $host:$targetdir-$host" }
-	    exec scp -C -r $tmpdir $host:$targetdir-$host
+	    if {$verbose} { puts "% $distdir -> $host:$targetdir-$host" }
+	    exec scp -C -r $distdir $host:$targetdir-$host
 	}
     }
 
-    if {$verbose} { puts "% removing $tmpdir" }
-    exec rm -rf $tmpdir
+    if {$verbose} { puts "% removing $distdir" }
+    exec rm -rf $distdir
 }
