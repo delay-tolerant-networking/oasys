@@ -96,11 +96,12 @@ public:
      * Copy constructor.
      */
     Ref(const Ref& other)
+        : what1_(other.what1_),
+          what2_(other.what2_)
     {
-        what1_ = other.what1_;
-        what2_ = other.what2_;
-        
-        assign(other.object());
+        object_ = other.object();
+        if (object_) 
+            object_->add_ref(what1_, what2_);
     }
 
     /**
@@ -169,6 +170,15 @@ public:
     Ref& operator=(_Type* o)
     {
         assign(o);
+        return *this;
+    }
+
+    /**
+     * Assignment operator.
+     */
+    Ref& operator=(const Ref<_Type>& other)
+    {
+        assign(other.object_);
         return *this;
     }
 
