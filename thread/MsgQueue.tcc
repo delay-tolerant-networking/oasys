@@ -38,19 +38,13 @@ MsgQueue<_elt_t>::~MsgQueue()
 template<typename _elt_t> 
 void MsgQueue<_elt_t>::push(_elt_t msg, bool at_back)
 {
-    lock_->lock();
+    ScopeLock l(lock_);
     
     if (at_back)
         queue_.push_back(msg);
     else
         queue_.push_front(msg);
 
-    // note that we make sure to unlock the spin lock _before_ calling
-    // write since there's a (pretty good) chance that the write to
-    // the pipe will cause the OS scheduler to wake up a waiter (and
-    // put us to sleep) which then could cause the waiter to bang
-    // unnecessarily on the spin lock
-    lock_->unlock();
     notify();
 }
 
