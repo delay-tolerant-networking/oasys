@@ -56,12 +56,14 @@ public:
 
     /**
      * Lock destructor. Asserts that the lock is not locked by another
-     * thread at the time of destruction.
+     * thread or by a scope lock.
      */
     virtual ~Lock()
     {
-        ASSERT(!is_locked() ||
-               (is_locked_by_me() && scope_lock_count_ == 0));
+        if (is_locked()) {
+            ASSERT(is_locked_by_me());
+            ASSERT(scope_lock_count_ == 0);
+        }
     }
     
     /**
