@@ -1,0 +1,4 @@
+set args %exec_opts%
+%gdb_extra%
+handle SIGPIPE nostop
+run

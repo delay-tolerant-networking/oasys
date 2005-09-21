@@ -1,0 +1,38 @@
+#!/bin/bash
+EXEC_FILE="%exec_file%"
+EXEC_OPTS="%exec_opts%"
+GDB_OPTS="%gdb_opts%"
+RUN_DIR="%run_dir%"
+RUN_ID="%run_id%"
+
+GDB=%gdb%
+LOCAL=%local%
+PAUSE_AFTER=%pause_after%
+XTERM=%xterm%
+
+ulimit -c unlimited
+cd $RUNDIR
+
+CHOICE="${XTERM} ${GDB} ${LOCAL}"
+case $CHOICE in
+    "1 1 1") 
+	gdb $EXEC_FILE -x run-script.gdb ;;
+    "1 1 0") 
+	screen -c /dev/null -d -m -S $RUN_ID \
+	    gdb bin/tierd -x run-script.gdb $GDB_OPTS ;;
+    "1 0 1") 
+	$EXEC_FILE $EXEC_OPTS ;;
+    "1 0 0") 
+	screen -c /dev/null -d -m -S $TEST_ID $EXEC_FILE $EXEC_OPTS ;;
+    "0 1 0"|"0 1 1") 
+	gdb -batch -x run-script.gdb $GDB_OPTS $EXEC_FILE \
+	    >$RUNDIR/$EXEC_FILE.err >$RUNDIR/$EXEC_FILE.std & ;;
+    "0 0 0"|"0 0 1") 
+	$EXEC_FILE $EXEC_OPTS >$RUNDIR/$EXEC_FILE.err >$RUNDIR/log.std ;;
+    *) echo "! garbage arguments to run script"; exit ;;
+esac
+
+if [ \( "$LOCAL" = 1 \) -a \( "$PAUSE_AFTER" = 1 \) ]; then
+    echo Done, hit any key to close...
+    read
+fi
