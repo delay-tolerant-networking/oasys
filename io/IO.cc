@@ -45,7 +45,7 @@
 #include "IO.h"
 
 #include "debug/Log.h"
-#include "util/ScratchBuffer.h"
+#include "util/StaticScratchBuffer.h"
 #include "util/StringBuffer.h"
 #include "thread/Notifier.h"
 
@@ -626,8 +626,8 @@ IO::poll_with_notifier(
     ASSERT(! (timeout > 0 && start_time == 0));
     ASSERT(timeout >= -1);
 
-    oasys::StaticBuffer<16 * sizeof(struct pollfd), 
-	                struct pollfd*> intr_poll_set;
+    oasys::StaticScratchBuffer<16 * sizeof(struct pollfd),
+                               struct pollfd*> intr_poll_set;
     struct pollfd* poll_set;
     
     if (intr == 0) {
