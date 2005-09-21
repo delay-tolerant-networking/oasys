@@ -41,6 +41,7 @@
 
 #include <fcntl.h>
 #include <stdlib.h>
+#include <sys/poll.h>
 #include <sys/uio.h>
 #include <sys/socket.h>
 
