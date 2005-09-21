@@ -129,6 +129,8 @@ TimerSystem::schedule_immediate(Timer* timer)
 bool
 TimerSystem::cancel(Timer* timer)
 {
+    ScopeLock l(system_lock_);
+
     // There's no good way to get a timer out of a heap, so we let it
     // stay in there and mark it as cancelled so when it bubbles to
     // the top, we don't bother with it. This makes rescheduling a
