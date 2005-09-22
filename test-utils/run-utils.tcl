@@ -1,41 +1,12 @@
 #!/usr/bin/tclsh
+
+namespace eval run {
+    
 proc dbg { msg } {
     global opt
     if {$opt(verbose) > 0} {
 	puts $msg
     }
-}
-
-proc usage {} {
-    puts "Options:"
-    puts "    -g                   Run program with gdb"
-    puts "    -h | -help | --help  Print help message"
-    puts "    -l <log dir>         Set a different directory for logs"
-    puts "    -n <# nodes>         Number of nodes, unless overridden by test"
-    puts "    -p                   Pause after apps dies, applies only to"
-    puts "                         xterm option"
-    puts "    -r <run dir>         /tmp/run dir will be the test directory"
-    puts "    -v                   Verbose mode"
-    puts "    -x                   Run each instance in an xterm"
-    puts ""
-    puts "Extended options:"
-    puts "    --extra-gdbrc <script>     Add an extra gdbrc to be run"
-    puts "    --gdb-opts    <options...> Extra options to gdb"
-    puts "    --opts        <options...> Extra options to the program"
-    puts "    --gdbrc       <tmpl>       Change remote gdbrc template"
-    puts "    --script      <tmpl>       Change remote run script template"
-    puts "    --crap                     Kill baby seals"
-}
-
-proc hostlist {} {
-    global net::host net::nodes
-    set hosts {}
-
-    for {set i 0} {$i<$net::nodes} {incr i} {
-	lappend hosts $net::host($i)
-    }
-
-    return $hosts
 }
 
 proc process_template {template var_array} {
@@ -54,7 +25,7 @@ proc process_template {template var_array} {
     return "$script\n"
 }
 
-proc generate-run-script {id exec_opts_fcn} {
+proc generate_script {id exec_opts_fcn} {
     global opt net::host conf::conf test::testname
 
     set hostname $net::host($id)
@@ -70,7 +41,7 @@ proc generate-run-script {id exec_opts_fcn} {
     set script(run_dir)     $rundir
     set script(run_id)      "$exec_opts(exec_file)-$hostname-$id"
     set script(gdb)         $opt(gdb)
-    set script(local)       [is-localhost $hostname]
+    set script(local)       [net::is_localhost $hostname]
     set script(pause_after) $opt(pause)
     set script(xterm)       $opt(xterm)
 
@@ -92,7 +63,7 @@ proc generate-run-script {id exec_opts_fcn} {
     }
     dbg "% tclscript = \n$tclscript"
     
-    if [is-localhost $hostname] {
+    if [net::is_localhost $hostname] {
 	exec cat > $rundir/run-test.sh  << "$runscript"
 	dbg "% wrote $hostname:$id:$rundir/run-test.sh"
 
@@ -128,7 +99,29 @@ proc arg1 { l } {
     return [lindex $l 0]
 }
 
-proc run {args tcl_script netdef_script basedir tmpl_dir exec_opts_fcn} {
+proc usage {} {
+    puts "Options:"
+    puts "    -h | -help | --help  Print help message"
+    puts "    -g | -gdb  | --gdb   Run program with gdb"
+    puts "    -x | -xterm          Run each instance in an xterm"
+    puts "    -net <file>          Select the net file"
+    puts "    -l <log dir>         Set a different directory for logs"
+    puts "    -n <# nodes>         Number of nodes, unless overridden by test"
+    puts "    -p                   Pause after apps dies, applies only to"
+    puts "                         xterm option"
+    puts "    -r <rundir>          /tmp/<rundir> will be the test directory"
+    puts "    -v                   Verbose mode"
+    puts ""
+    puts "Extended options:"
+    puts "    --extra-gdbrc <script>     Add an extra gdbrc to be run"
+    puts "    --gdb-opts    <options...> Extra options to gdb"
+    puts "    --opts        <options...> Extra options to the program"
+    puts "    --gdbrc       <tmpl>       Change remote gdbrc template"
+    puts "    --script      <tmpl>       Change remote run script template"
+    puts "    --crap                     Kill baby seals"
+}
+
+proc run {test_script args tmpl_dir exec_opts_fcn} {
     global opt manifest::manifest manifest::subst net::nodes
 
     set opt(gdb)           0
@@ -138,6 +131,7 @@ proc run {args tcl_script netdef_script basedir tmpl_dir exec_opts_fcn} {
     set opt(verbose)       0
     set opt(xterm)         0
     set opt(crap)          0
+    set opt(net)           ""
 
     set opt(gdb_extra)   ""
     set opt(gdbopts)     ""
@@ -148,44 +142,57 @@ proc run {args tcl_script netdef_script basedir tmpl_dir exec_opts_fcn} {
     # parse options
     while {[llength $args] > 0} {
 	switch -- [lindex $args 0] {
-	    -h     -
-	    -help  -
-	    --help { usage; exit }
-	    -g     {set opt(gdb) 1}
-	    -l     {shift args; set opt(logdir) [arg1 $args] }
-	    -p     {set opt(pause) 1}
-	    -r     {shift args; set opt(rundir_prefix) [arg1] }
-	    -v     {set opt(verbose) 1}
-	    -x     {set opt(xterm) 1}
+	    -h            -
+	    -help         -
+	    --help        { usage; exit }
+	    
+	    -g            -
+	    -gdb          -
+	    --gdb         {set opt(gdb) 1}
+	    
+	    -x            -
+	    -xterm        -
+	    --xterm       {set opt(xterm) 1}
+	    
+	    -l            {shift args; set opt(logdir) [arg1 $args] }
+	    -p            {set opt(pause) 1}
+	    -r            {shift args; set opt(rundir_prefix) [arg1] }
+	    -v            {set opt(verbose) 1}
+	    
+	    -net          -
+	    --net         {shift args; set opt(net)         [arg1 $args] }
+	    
 	    --extra-gdbrc {shift args; set opt(gdb_extra)   [arg1 $args] }
 	    --gdb-opts    {shift args; set opt(gdbopts)     [arg1 $args] }
 	    --opts        {shift args; set opt(opts)        [arg1 $args] }
 	    --gdb-tmpl    {shift args; set opt(gdb_tmpl)    [arg1 $args] }
 	    --script-tmpl {shift args; set opt(script_tmpl) [arg1 $args] }
 	    --crap        {set opt(crap) 1}
-	    default       {puts "Illegal option [arg1 $args]"; usage }
+	    default       {puts "illegal option [arg1 $args]"; usage; exit }
 	}
 	shift args
     }
+
+    puts "* Reading net definition file $opt(net)"
+    import $opt(net)
     
     puts "* Reading configuration scripts"
-    source $netdef_script
-    source $tcl_script
+    source $test_script
 
     puts "* Distributing files"
-    distfiles $manifest::manifest [hostlist] $basedir $opt(rundir_prefix) \
-	$manifest::subst $opt(verbose)
+    dist::files $manifest::manifest [net::hostlist] [pwd] \
+	    $opt(rundir_prefix) $manifest::subst $opt(verbose)
     
     puts "* Generating scripts"
     for {set i 0} {$i < $net::nodes} {incr i} {
-	generate-run-script $i $exec_opts_fcn
+	generate_script $i $exec_opts_fcn
     }
 
     puts "* Running program"
     for {set i 0} {$i < $net::nodes} {incr i} {
 	set hostname $net::host($i)
 	
-	switch "[is-localhost $hostname] $opt(xterm)" {
+	switch "[net::is_localhost $hostname] $opt(xterm)" {
 	    "1 1" { 
 		dbg "xterm -e $opt(rundir_prefix)-$hostname-$i/run-test.sh &"
 		exec xterm -e $opt(rundir_prefix)-$hostname-$i/run-test.sh & 
@@ -209,4 +216,6 @@ proc run {args tcl_script netdef_script basedir tmpl_dir exec_opts_fcn} {
 	    }
 	}
     }
+}
+
 }

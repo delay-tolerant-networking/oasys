@@ -1,3 +1,9 @@
+
+#
+# File distribution utilities
+#
+namespace eval dist {
+
 #
 # Generate a distribution set
 # 
@@ -12,7 +18,8 @@
 # { F local-filename remote-filename}
 # { D remote-directory }
 #
-proc create-dist {manifest basedir subst verbose} {
+
+proc create {manifest basedir subst verbose} {
     set tmpdir "/tmp/distrun.tcl-[pid]"
     exec mkdir $tmpdir
 
@@ -47,7 +54,7 @@ proc create-dist {manifest basedir subst verbose} {
     }
 
     return $tmpdir
-}   
+}
 
 #
 # Distribute files to localhost/remote hosts
@@ -60,14 +67,15 @@ proc create-dist {manifest basedir subst verbose} {
 #                      manifests, e.g. { exe stripped }
 # @param verbose       Print out what is happening
 #
-proc distfiles {manifest_list host_list basedir targetdir subst {verbose 0}} {
-    set distdir [create-dist $manifest_list $basedir $subst $verbose]
+    
+proc files {manifest_list host_list basedir targetdir subst {verbose 0}} {
+    set distdir [dist::create $manifest_list $basedir $subst $verbose]
 
     if {$verbose} { puts "% copying files" }
     
     set i 0
     foreach host $host_list {
-	if [is-localhost $host] {
+	if [net::is_localhost $host] {
 	    if {$verbose} { puts "% $distdir -> $host:$targetdir-$host-$i" }
 	    exec cp -r $distdir $targetdir-$host-$i
 	} else {
@@ -81,18 +89,7 @@ proc distfiles {manifest_list host_list basedir targetdir subst {verbose 0}} {
     exec rm -rf $distdir
 }
 
-# 
-# @return 1 if host is localhost, o.w. 0 
-#
-proc is-localhost { host } {
-    if {[string equal $host "localhost"]    ||
-	[regexp {172\.16\.\d+\.\d+}  $host] ||
-	[regexp {192\.168\.\d+\.\d+} $host] ||
-	[regexp {10\.\d+\.\d+\.\d+}  $host]} {
-	return 1
-    }
-
-    return 0
+# namespace eval dist
 }
 
 #
@@ -116,64 +113,3 @@ namespace eval manifest {
     }
 }
 
-#
-# Manage network topology
-#
-namespace eval net {
-    set nodes 0
-    
-    # Network definitions
-    proc node { node_id hostname new_portbase {new_extra {} } } {
-	global net::host net::portbase net::extra net::nodes
-
-	set  net::host($node_id)      $hostname
-	set  net::portbase($node_id)  $new_portbase
-	set  net::extra($node_id)     $new_extra
-	incr net::nodes
-    }
-    
-    proc num_nodes { {num -1} } {
-	global net::nodes
-	if {$num != -1} {
-	    set net::nodes $num
-	}
-	return $net::nodes
-    }
-}
-
-#
-# Manage each node's tcl configuration file
-#
-namespace eval conf {
-    proc add { node text } {
-	global conf::conf
-	append conf::conf($node) $text
-    }
-    proc get { node } {
-	global conf::conf
-	return $conf::conf($node)
-    }
-}
-
-#
-# Functions for running the test
-# 
-namespace eval test {
-    set run_actions ""
-    set testname    ""
-
-    # Script actions to be performed after launching everything
-    proc decl { actions } {
-	global test::run_actions
-	set test::run_actions $actions
-    }
-
-    # Set test name
-    proc name { {name ""} } {
-	global test::testname
-	if {$name != ""} {
-	    set test::testname $name
-	}
-	return $test::testname
-    }
-}
