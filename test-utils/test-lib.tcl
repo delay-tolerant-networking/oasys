@@ -132,9 +132,12 @@ namespace eval net {
 	incr net::nodes
     }
     
-    proc set_nodes { num } {
+    proc num_nodes { {num -1} } {
 	global net::nodes
-	set net::nodes $num
+	if {$num != -1} {
+	    set net::nodes $num
+	}
+	return $net::nodes
     }
 }
 
@@ -166,8 +169,11 @@ namespace eval test {
     }
 
     # Set test name
-    proc set_name { name } {
+    proc name { {name ""} } {
 	global test::testname
-	set test::testname $name
+	if {$name != ""} {
+	    set test::testname $name
+	}
+	return $test::testname
     }
 }
