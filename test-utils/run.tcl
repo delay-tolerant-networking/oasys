@@ -24,6 +24,7 @@ proc usage {} {
     puts "    --opts        <options...> Extra options to the program"
     puts "    --gdbrc       <tmpl>       Change remote gdbrc template"
     puts "    --script      <tmpl>       Change remote run script template"
+    puts "    --crap                     Kill baby seals"
 }
 
 proc hostlist {} {
@@ -54,10 +55,11 @@ proc process_template {template var_array} {
 }
 
 proc generate-run-script {id exec_opts_fcn} {
-    global opt net::host conf::conf
+    global opt net::host conf::conf test::name
 
     set hostname $net::host($id)
     set rundir   "$opt(rundir_prefix)-$hostname-$id"
+    set confname $test::name
 
     array set exec_opts [$exec_opts_fcn $id]
 
@@ -78,7 +80,6 @@ proc generate-run-script {id exec_opts_fcn} {
 
     # debug script
     set gdb(exec_opts)      $exec_opts(exec_opts)
-    # XXX/bowei - finish me
     set gdb(gdb_extra)      $opt(gdb_extra)
     set gdbscript [process_template $opt(gdb_tmpl) gdb]    
     dbg "% gdbscript = \n$gdbscript"
@@ -92,29 +93,29 @@ proc generate-run-script {id exec_opts_fcn} {
     dbg "% tclscript = \n$tclscript"
     
     if [is-localhost $hostname] {
-	exec cat > $rundir/run-script.sh  << "$runscript"
-	dbg "% wrote $hostname:$id:$rundir/run-script.sh"
+	exec cat > $rundir/run-test.sh  << "$runscript"
+	dbg "% wrote $hostname:$id:$rundir/run-test.sh"
 
-	exec cat > $rundir/run-script.gdb << "$gdbscript"
-	dbg "% wrote $hostname:$id:$rundir/run-script.gdb"
+	exec cat > $rundir/run-test.gdb << "$gdbscript"
+	dbg "% wrote $hostname:$id:$rundir/run-test.gdb"
 
-	exec cat > $rundir/run-script.tcl << "$tclscript"
-	dbg "% wrote $hostname:$id:$rundir/run-script.tcl"
+	exec cat > $rundir/$confname.tcl << "$tclscript"
+	dbg "% wrote $hostname:$id:$rundir/$confname.conf"
 
-	exec chmod +x $rundir/run-script.sh
-	dbg "% chmod +x $hostname:$id:$rundir/run-script.sh"
+	exec chmod +x $rundir/run-test.sh
+	dbg "% chmod +x $hostname:$id:$rundir/run-test.sh"
     } else {
-	exec ssh $hostname "cat > $rundir/run-script.sh" << "$runscript"
-	dbg "% wrote $hostname:$id:$rundir/run-script.sh"
+	exec ssh $hostname "cat > $rundir/run-test.sh" << "$runscript"
+	dbg "% wrote $hostname:$id:$rundir/run-test.sh"
 
-	exec ssh $hostname "cat > $rundir/run-script.gdb" << "$gdbscript"
-	dbg "% wrote $hostname:$id:$rundir/run-script.gdb"
+	exec ssh $hostname "cat > $rundir/run-test.gdb" << "$gdbscript"
+	dbg "% wrote $hostname:$id:$rundir/run-test.gdb"
 
-	exec ssh $hostname "cat > $rundir/run-script.tcl" << "$tclscript"
-	dbg "% wrote $hostname:$id:$rundir/run-script.tcl"
+	exec ssh $hostname "cat > $rundir/$confname.conf" << "$tclscript"
+	dbg "% wrote $hostname:$id:$rundir/$confname.conf"
 
-	exec ssh $hostname "chmod +x $rundir/run-script.sh"
-	dbg "% chmod +x $hostname:$id:$rundir/run-script.sh"
+	exec ssh $hostname "chmod +x $rundir/run-test.sh"
+	dbg "% chmod +x $hostname:$id:$rundir/run-test.sh"
     }
 }
 
@@ -132,12 +133,12 @@ proc run {args tcl_script netdef_script basedir tmpl_dir exec_opts_fcn} {
 
     set opt(gdb)           0
     set opt(logdir)        "."
-    set opt(nodes)         0
     set opt(pause)         0
     set opt(rundir_prefix) "/tmp/run-[pid]"
     set opt(verbose)       0
     set opt(xterm)         0
-    
+    set opt(crap)          0
+
     set opt(gdb_extra)   ""
     set opt(gdbopts)     ""
     set opt(opts)        ""
@@ -152,7 +153,6 @@ proc run {args tcl_script netdef_script basedir tmpl_dir exec_opts_fcn} {
 	    --help { usage; exit }
 	    -g     {set opt(gdb) 1}
 	    -l     {shift args; set opt(logdir) [arg1 $args] }
-	    -n     {shift args; set opt(nodes)  [arg1 $args] }
 	    -p     {set opt(pause) 1}
 	    -r     {shift args; set opt(rundir_prefix) [arg1] }
 	    -v     {set opt(verbose) 1}
@@ -162,6 +162,7 @@ proc run {args tcl_script netdef_script basedir tmpl_dir exec_opts_fcn} {
 	    --opts        {shift args; set opt(opts)        [arg1 $args] }
 	    --gdb-tmpl    {shift args; set opt(gdb_tmpl)    [arg1 $args] }
 	    --script-tmpl {shift args; set opt(script_tmpl) [arg1 $args] }
+	    --crap        {set opt(crap) 1}
 	    default       {puts "Illegal option [arg1 $args]"; usage }
 	}
 	shift args
@@ -190,10 +191,10 @@ proc run {args tcl_script netdef_script basedir tmpl_dir exec_opts_fcn} {
 		exec xterm -e $opt(rundir_prefix)-$hostname-$i/run-script.sh & 
 	    }
 	    "0 1" {
-		dbg "% ssh $host $opt(rundir_prefix)-$hostname-$i/run-script.sh"
+		dbg "% ssh $hostname $opt(rundir_prefix)-$hostname-$i/run-script.sh"
 		set screen_id \
-		    [exec ssh $host $opt(rundir_prefix)-$hostname-$i/run-script.sh]
-		dbg "% $host tierd instance is PID $remote_pid"
+		    [exec ssh $hostname $opt(rundir_prefix)-$hostname-$i/run-script.sh]
+		dbg "% $hostname tierd instance is PID $remote_pid"
 		exec xterm -e ssh -t $hostname "screen -r $screen_id" &
 	    }
 	    "1 0" {

@@ -131,6 +131,11 @@ namespace eval net {
 	set  net::extra($node_id)     $new_extra
 	incr net::nodes
     }
+    
+    proc set_nodes { num } {
+	global net::nodes
+	set net::nodes $num
+    }
 }
 
 #
@@ -152,11 +157,17 @@ namespace eval conf {
 # 
 namespace eval test {
     set run_actions ""
-    
+    set testname    ""
+
     # Script actions to be performed after launching everything
     proc decl { actions } {
 	global test::run_actions
 	set test::run_actions $actions
     }
-}
 
+    # Set test name
+    proc set_name { name } {
+	global test::testname
+	set test::testname $name
+    }
+}
