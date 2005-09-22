@@ -16,10 +16,10 @@ cd $RUN_DIR
 CHOICE="${XTERM} ${GDB} ${LOCAL}"
 case $CHOICE in
     "1 1 1") 
-	gdb $EXEC_FILE -x run-script.gdb ;;
+	gdb $EXEC_FILE -x run-test.gdb ;;
     "1 1 0") 
 	screen -c /dev/null -d -m -S $RUN_ID \
-	    gdb bin/tierd -x run-script.gdb $GDB_OPTS
+	    gdb bin/tierd -x run-test.gdb $GDB_OPTS
 	echo $RUN_ID
 	;;
     "1 0 1") 
@@ -31,7 +31,7 @@ case $CHOICE in
 	echo $RUN_ID
 	;;
     "0 1 0" | "0 1 1")
-	gdb -batch -x run-script.gdb $GDB_OPTS $EXEC_FILE \
+	gdb -batch -x run-test.gdb $GDB_OPTS $EXEC_FILE \
 	    >$RUN_DIR/$EXEC_FILE.err >$RUN_DIR/$EXEC_FILE.std & 
 	echo $!
 	;;

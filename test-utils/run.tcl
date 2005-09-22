@@ -55,11 +55,11 @@ proc process_template {template var_array} {
 }
 
 proc generate-run-script {id exec_opts_fcn} {
-    global opt net::host conf::conf test::name
+    global opt net::host conf::conf test::testname
 
     set hostname $net::host($id)
     set rundir   "$opt(rundir_prefix)-$hostname-$id"
-    set confname $test::name
+    set confname $test::testname
 
     array set exec_opts [$exec_opts_fcn $id]
 
@@ -99,7 +99,7 @@ proc generate-run-script {id exec_opts_fcn} {
 	exec cat > $rundir/run-test.gdb << "$gdbscript"
 	dbg "% wrote $hostname:$id:$rundir/run-test.gdb"
 
-	exec cat > $rundir/$confname.tcl << "$tclscript"
+	exec cat > $rundir/$confname.conf << "$tclscript"
 	dbg "% wrote $hostname:$id:$rundir/$confname.conf"
 
 	exec chmod +x $rundir/run-test.sh
