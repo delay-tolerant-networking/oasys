@@ -124,8 +124,7 @@ namespace eval net {
     
     # Network definitions
     proc node { node_id hostname new_portbase {new_extra {} } } {
-	global net::host net::portbase net::extra
-	global net::nodes
+	global net::host net::portbase net::extra net::nodes
 
 	set  net::host($node_id)      $hostname
 	set  net::portbase($node_id)  $new_portbase
