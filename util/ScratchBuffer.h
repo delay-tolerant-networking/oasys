@@ -49,7 +49,7 @@ namespace oasys {
  * This can be used either for a one-time-use malloc'd buffer which
  * then is automatically freed in the destructor, or as a reusable
  * scratch buffer, obviating the need to constantly malloc, then free
- * a buffer in order to serialize into/out of. In this context the
+ * a buffer in order to serialize into/out of. In the latter case the
  * caller must externally lock for multi-threaded use.
  */
 template<typename _memory_t = void*>
