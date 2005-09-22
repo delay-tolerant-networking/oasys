@@ -9,9 +9,16 @@ import "run-utils.tcl"
 namespace eval conf {
     proc add { exec_name node text } {
 	global conf::conf
-	append conf::conf($exec_name,$node) $text
+
+	if {$node == "*"} {
+	    foreach i [net::nodelist] {
+		conf::add $exec_name $i $text
+	    }
+	} else {
+	    append conf::conf($exec_name,$node) "$text\n"
+	}
     }
-    
+
     proc get { exec_name node } {
 	global conf::conf
 	return $conf::conf($exec_name,$node)
