@@ -100,7 +100,7 @@ public:
      */
     size_t size()
     {
-        ScopeLock l(lock_);
+        ScopeLock l(lock_, "MsgQueue::size");
         return queue_.size();
     }
 
