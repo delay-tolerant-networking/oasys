@@ -57,10 +57,17 @@ Thread::interrupt_signal(int sig)
 }
 
 void*
-Thread::thread_run(void* t)
+Thread::pre_thread_run(void* t)
 {
     Thread* thr = (Thread*)t;
+    pthread_t pthread_id = Thread::current();
+    thr->thread_run(pthread_id);
+    NOTREACHED;
+}
 
+void
+Thread::thread_run(pthread_t pthread_id)
+{
     /*
      * There's a potential race between the starting of the new thread
      * and the storing of the thread id in the pthread_ member
@@ -69,23 +76,23 @@ Thread::thread_run(void* t)
      * for the new thread (specifically for set_interruptable's
      * assertion.
      */
-    thr->pthread_ = Thread::current();
+    pthread_ = pthread_id;
     
-    thr->set_interruptable((thr->flags_ & INTERRUPTABLE));
+    set_interruptable((flags_ & INTERRUPTABLE));
 
-    thr->flags_ &= ~STOPPED;
-    thr->flags_ &= ~SHOULD_STOP;
+    flags_ &= ~STOPPED;
+    flags_ &= ~SHOULD_STOP;
 
     try {
-        thr->run();
+        run();
     } catch (...) {
         PANIC("unexpected exception caught from Thread::run");
     }
     
-    thr->flags_ |= STOPPED;
+    flags_ |= STOPPED;
     
-    if (thr->flags_ & DELETE_ON_EXIT) {
-        delete thr;
+    if (flags_ & DELETE_ON_EXIT) {
+        delete this;
     }
 
     pthread_exit(0);
@@ -151,7 +158,7 @@ Thread::start()
     log_debug("/thread", "starting thread %p", this);
     
     int ntries = 0;
-    while (pthread_create(&pthread_, 0, Thread::thread_run, this) != 0) {
+    while (pthread_create(&pthread_, 0, Thread::pre_thread_run, this) != 0) {
         if (++ntries == 10000) {
             PANIC("maximum thread creation attempts");
 #ifdef OASYS_DEBUG_MEMORY_ENABLED
