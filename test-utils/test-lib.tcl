@@ -7,13 +7,14 @@ import "run-utils.tcl"
 # Manage each node's tcl configuration file
 #
 namespace eval conf {
-    proc add { node text } {
+    proc add { exec_name node text } {
 	global conf::conf
-	append conf::conf($node) $text
+	append conf::conf($exec_name,$node) $text
     }
-    proc get { node } {
+    
+    proc get { exec_name node } {
 	global conf::conf
-	return $conf::conf($node)
+	return $conf::conf($exec_name,$node)
     }
 }
 

@@ -25,12 +25,34 @@ proc process_template {template var_array} {
     return "$script\n"
 }
 
+proc write_script {id dir filename contents do_chmod} {
+    global net::host
+    set hostname $net::host($id)
+
+    set path [file join $dir $filename]
+    
+    if [net::is_localhost $hostname] {
+	exec cat > $path << $contents
+	if {$do_chmod} {
+	    exec chmod +x $path
+	}
+	
+    } else {
+	exec ssh $hostname "cat > $path" << $contents
+	if {$do_chmod} {
+	    exec ssh $hostname "chmod +x $path"
+	}
+    }
+
+
+    dbg "% wrote $hostname:$id:$path"
+}
+
 proc generate_script {id exec_opts_fcn} {
-    global opt net::host conf::conf test::testname
+    global opt net::host test::testname
 
     set hostname $net::host($id)
-    set rundir   "$opt(rundir_prefix)-$hostname-$id"
-    set confname $test::testname
+    set rundir   $opt(rundir_prefix)-$hostname-$id
 
     array set exec_opts [$exec_opts_fcn $id]
 
@@ -39,7 +61,7 @@ proc generate_script {id exec_opts_fcn} {
     set script(exec_opts)   $exec_opts(exec_opts)
     set script(gdb_opts)    $opt(gdbopts)
     set script(run_dir)     $rundir
-    set script(run_id)      "$exec_opts(exec_file)-$hostname-$id"
+    set script(run_id)      $exec_opts(exec_file)-$hostname-$id
     set script(gdb)         $opt(gdb)
     set script(local)       [net::is_localhost $hostname]
     set script(pause_after) $opt(pause)
@@ -54,39 +76,17 @@ proc generate_script {id exec_opts_fcn} {
     set gdb(gdb_extra)      $opt(gdb_extra)
     set gdbscript [process_template $opt(gdb_tmpl) gdb]    
     dbg "% gdbscript = \n$gdbscript"
+
+    set run_base "run-$exec_opts(exec_file)"
     
-    # tcl script
-    if [info exist conf::conf($id)] {
-	set tclscript [conf::get $id]
-    } else {
-	set tclscript ""
-    }
-    dbg "% tclscript = \n$tclscript"
+    write_script $id $rundir $run_base.sh  $runscript true
+    write_script $id $rundir $run_base.gdb $gdbscript true
     
-    if [net::is_localhost $hostname] {
-	exec cat > $rundir/run-test.sh  << "$runscript"
-	dbg "% wrote $hostname:$id:$rundir/run-test.sh"
+    set confname $exec_opts(confname)
+    set conf     $exec_opts(conf)
 
-	exec cat > $rundir/run-test.gdb << "$gdbscript"
-	dbg "% wrote $hostname:$id:$rundir/run-test.gdb"
-
-	exec cat > $rundir/$confname.conf << "$tclscript"
-	dbg "% wrote $hostname:$id:$rundir/$confname.conf"
-
-	exec chmod +x $rundir/run-test.sh
-	dbg "% chmod +x $hostname:$id:$rundir/run-test.sh"
-    } else {
-	exec ssh $hostname "cat > $rundir/run-test.sh" << "$runscript"
-	dbg "% wrote $hostname:$id:$rundir/run-test.sh"
-
-	exec ssh $hostname "cat > $rundir/run-test.gdb" << "$gdbscript"
-	dbg "% wrote $hostname:$id:$rundir/run-test.gdb"
-
-	exec ssh $hostname "cat > $rundir/$confname.conf" << "$tclscript"
-	dbg "% wrote $hostname:$id:$rundir/$confname.conf"
-
-	exec ssh $hostname "chmod +x $rundir/run-test.sh"
-	dbg "% chmod +x $hostname:$id:$rundir/run-test.sh"
+    if {$confname != ""} {
+	write_script $id $rundir $confname $conf false
     }
 }
 
@@ -121,9 +121,9 @@ proc usage {} {
     puts "    --crap                     Kill baby seals"
 }
 
-proc run {test_script args tmpl_dir exec_opts_fcn} {
-    global opt manifest::manifest manifest::subst net::nodes
-
+proc init {args test_script} {
+    global opt
+    
     set opt(gdb)           0
     set opt(logdir)        "."
     set opt(pause)         0
@@ -133,11 +133,11 @@ proc run {test_script args tmpl_dir exec_opts_fcn} {
     set opt(crap)          0
     set opt(net)           ""
 
-    set opt(gdb_extra)   ""
-    set opt(gdbopts)     ""
-    set opt(opts)        ""
-    set opt(gdb_tmpl)    "$tmpl_dir/gdbrc.template"
-    set opt(script_tmpl) "$tmpl_dir/script.template"
+    set opt(gdb_extra)     ""
+    set opt(gdbopts)       ""
+    set opt(opts)          ""
+    set opt(gdb_tmpl)      [import_find gdbrc.template]
+    set opt(script_tmpl)   [import_find script.template]
     
     # parse options
     while {[llength $args] > 0} {
@@ -145,23 +145,18 @@ proc run {test_script args tmpl_dir exec_opts_fcn} {
 	    -h            -
 	    -help         -
 	    --help        { usage; exit }
-	    
 	    -g            -
 	    -gdb          -
 	    --gdb         {set opt(gdb) 1}
-	    
 	    -x            -
 	    -xterm        -
 	    --xterm       {set opt(xterm) 1}
-	    
 	    -l            {shift args; set opt(logdir) [arg1 $args] }
 	    -p            {set opt(pause) 1}
 	    -r            {shift args; set opt(rundir_prefix) [arg1] }
 	    -v            {set opt(verbose) 1}
-	    
 	    -net          -
 	    --net         {shift args; set opt(net)         [arg1 $args] }
-	    
 	    --extra-gdbrc {shift args; set opt(gdb_extra)   [arg1 $args] }
 	    --gdb-opts    {shift args; set opt(gdbopts)     [arg1 $args] }
 	    --opts        {shift args; set opt(opts)        [arg1 $args] }
@@ -176,43 +171,53 @@ proc run {test_script args tmpl_dir exec_opts_fcn} {
     puts "* Reading net definition file $opt(net)"
     import $opt(net)
     
-    puts "* Reading configuration scripts"
+    puts "* Reading test script $test_script"
     source $test_script
 
     puts "* Distributing files"
     dist::files $manifest::manifest [net::hostlist] [pwd] \
 	    $opt(rundir_prefix) $manifest::subst $opt(verbose)
+}
+
+#
+# Run a given program on the specified list of nodes
+#
+proc run {nodelist exec_opts_fcn} {
+    global opt manifest::manifest manifest::subst net::nodes
+
+    array set exec_opts [$exec_opts_fcn 0]
+    set exec_file $exec_opts(exec_file)
     
-    puts "* Generating scripts"
-    for {set i 0} {$i < $net::nodes} {incr i} {
+    puts "* Generating scripts for $exec_file on nodes $nodelist"
+    foreach i $nodelist {
 	generate_script $i $exec_opts_fcn
     }
 
-    puts "* Running program"
-    for {set i 0} {$i < $net::nodes} {incr i} {
+    puts "* Running program $exec_file on nodes $nodelist"
+
+    foreach i $nodelist {
 	set hostname $net::host($i)
+	set script "$opt(rundir_prefix)-$hostname-$i/run-$exec_file.sh"
 	
 	switch "[net::is_localhost $hostname] $opt(xterm)" {
 	    "1 1" { 
-		dbg "xterm -e $opt(rundir_prefix)-$hostname-$i/run-test.sh &"
-		exec xterm -e $opt(rundir_prefix)-$hostname-$i/run-test.sh & 
+		dbg "xterm -e $script &"
+		exec xterm -e $script & 
 	    }
 	    "0 1" {
-		dbg "% ssh $hostname $opt(rundir_prefix)-$hostname-$i/run-test.sh"
-		set screen_id \
-		    [exec ssh $hostname $opt(rundir_prefix)-$hostname-$i/run-test.sh]
-		dbg "% $hostname tierd instance is PID $remote_pid"
+		dbg "% ssh $hostname $script"
+		set screen_id [exec ssh $hostname $script]
+		dbg "% $hostname $exec_file instance is PID $remote_pid"
 		exec xterm -e ssh -t $hostname "screen -r $screen_id" &
 	    }
 	    "1 0" {
-		dbg "% $opt(rundir_prefix)-$hostname-$i/run-test.sh &"
-		exec $opt(rundir_prefix)-$hostname-$i/run-test.sh &
+		dbg "% $script &"
+		exec $script &
 	    }
 	    "0 0" {
-		dbg "% ssh $hostname $opt(rundir_prefix)-$hostname-$i/run-test.sh"
-		set remote_pid \
-		    [exec ssh $hostname $opt(rundir_prefix)-$hostname-$i/run-test.sh]
-		dbg "% $hostname tierd instance is PID $remote_pid"
+		dbg "% ssh $hostname $script"
+		set remote_pid [exec ssh $hostname $script]
+		dbg "% $hostname $exec_file instance is PID $remote_pid"
 	    }
 	}
     }
