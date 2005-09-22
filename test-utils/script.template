@@ -16,18 +16,27 @@ cd $RUN_DIR
 CHOICE="${XTERM} ${GDB} ${LOCAL}"
 case $CHOICE in
     "1 1 1") 
-	gdb $RUN_DIR/$EXEC_FILE -x run-$EXEC_FILE.gdb ;;
+	gdb $RUN_DIR/$EXEC_FILE -x run-$EXEC_FILE.gdb | \
+	    tee $EXEC_FILE.out
+	;;
     "1 1 0") 
-	screen -c /dev/null -d -m -S $RUN_ID \
-	    gdb $RUN_DIR/$EXEC_FILE -x run-$EXEC_FILE.gdb $GDB_OPTS
+	echo "stderr was redirected to $EXEC_FILE.out" >> $EXEC_FILE.err
+	echo "gdb $RUN_DIR/$EXEC_FILE -x run-$EXEC_FILE.gdb $GDB_OPTS 2>&1 | \\ " \
+	    >> $run-${EXEC_FILE}-helper.sh
+	echo "    tee $EXEC_FILE.out" >> $run-$EXEC_FILE-helper.sh 
+	chmod +x $run-${EXEC_FILE}-helper.sh
+	screen -c /dev/null -d -m -S $RUN_ID $run-${EXEC_FILE}-helper.sh 
 	echo $RUN_ID
 	;;
     "1 0 1") 
-	$RUN_DIR/$EXEC_FILE $EXEC_OPTS
-	echo $! 
+	$RUN_DIR/$EXEC_FILE $EXEC_OPTS | tee $EXEC_FILE.out
 	;;
     "1 0 0") 
-	screen -c /dev/null -d -m -S $TEST_ID $RUN_DIR/$EXEC_FILE $EXEC_OPTS 
+	echo "stderr was redirected to $EXEC_FILE.out" >> $EXEC_FILE.err
+	echo "$TEST_ID $RUN_DIR/$EXEC_FILE $EXEC_OPTS 2>&1 | tee $EXEC_FILE.out" >> \
+	    $run-$EXEC_FILE-helper.sh 
+	chmod +x $run-${EXEC_FILE}-helper.sh
+	screen -c /dev/null -d -m -S $RUN_ID $run-${EXEC_FILE}-helper.sh 
 	echo $RUN_ID
 	;;
     "0 1 0" | "0 1 1")
