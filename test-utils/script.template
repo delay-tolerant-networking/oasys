@@ -16,10 +16,10 @@ cd $RUN_DIR
 CHOICE="${XTERM} ${GDB} ${LOCAL}"
 case $CHOICE in
     "1 1 1") 
-	gdb $RUN_DIR/$EXEC_FILE -x run-test.gdb ;;
+	gdb $RUN_DIR/$EXEC_FILE -x run-$EXEC_FILE.gdb ;;
     "1 1 0") 
 	screen -c /dev/null -d -m -S $RUN_ID \
-	    gdb $RUN_DIR/$EXEC_FILE -x run-test.gdb $GDB_OPTS
+	    gdb $RUN_DIR/$EXEC_FILE -x run-$EXEC_FILE.gdb $GDB_OPTS
 	echo $RUN_ID
 	;;
     "1 0 1") 
