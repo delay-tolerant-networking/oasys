@@ -138,6 +138,8 @@ proc init {args test_script} {
     set opt(opts)          ""
     set opt(gdb_tmpl)      [import_find gdbrc.template]
     set opt(script_tmpl)   [import_find script.template]
+
+    set num_nodes_override 0
     
     # parse options
     while {[llength $args] > 0} {
@@ -155,6 +157,7 @@ proc init {args test_script} {
 	    -p            {set opt(pause) 1}
 	    -r            {shift args; set opt(rundir_prefix) [arg1] }
 	    -v            {set opt(verbose) 1}
+	    -n            {shift args; set num_nodes_override [arg1 $args] }
 	    -net          -
 	    --net         {shift args; set opt(net)         [arg1 $args] }
 	    --extra-gdbrc {shift args; set opt(gdb_extra)   [arg1 $args] }
@@ -174,6 +177,11 @@ proc init {args test_script} {
     puts "* Reading test script $test_script"
     source $test_script
 
+    if {$num_nodes_override != 0} {
+	puts "* Setting num_nodes to $num_nodes_override"
+	net::num_nodes $num_nodes_override
+    }
+    
     puts "* Distributing files"
     dist::files $manifest::manifest [net::hostlist] [pwd] \
 	    $opt(rundir_prefix) $manifest::subst $opt(verbose)
