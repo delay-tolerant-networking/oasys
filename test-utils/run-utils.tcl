@@ -118,7 +118,7 @@ proc usage {} {
     puts "    --opts        <options...> Extra options to the program"
     puts "    --gdbrc       <tmpl>       Change remote gdbrc template"
     puts "    --script      <tmpl>       Change remote run script template"
-    puts "    --crap                     Kill baby seals"
+    puts "    --crap                     Pollute the /tmp dir"
 }
 
 proc init {args test_script} {
