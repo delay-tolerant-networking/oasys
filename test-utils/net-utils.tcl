@@ -23,6 +23,15 @@ proc num_nodes { {num -1} } {
     return $net::nodes
 }
 
+proc nodelist {} {
+    global net::nodes
+    set ret {}
+    for {set i 0} {$i < $net::nodes} {incr i} {
+	lappend ret $i
+    }
+    return $ret
+}
+
 proc hostlist {} {
     global net::host net::nodes
     set hosts {}
@@ -33,6 +42,7 @@ proc hostlist {} {
 
     return $hosts
 }
+
 
 # 
 # @return 1 if host is localhost, o.w. 0 
