@@ -141,9 +141,11 @@ proc init {args test_script} {
 
     set num_nodes_override 0
     
-    if [string equal test_script "invalid"] {
-	usage
-	exit
+    switch $test_script {
+	invalid -
+	-h      -
+	-help   -
+	--help  { usage; exit }
     }
     
     # parse options
