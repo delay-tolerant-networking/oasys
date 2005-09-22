@@ -134,7 +134,7 @@ Log::do_init(const char* logfile, log_level_t defaultlvl,
         prefix_.assign(prefix);
 
     ASSERT(lock_);
-    ScopeLock lock(lock_);
+    ScopeLock lock(lock_, "Log::do_init");
 
     default_threshold_ = defaultlvl;
     parse_debug_file(debug_path);
@@ -263,7 +263,7 @@ Log::parse_debug_file(const char* debug_path)
 
     sort_rules(new_rule_list);
 
-    lock_->lock();
+    lock_->lock("Log::parse_debug_file");
     old_rule_list = rule_list_;
     rule_list_ = new_rule_list;
     if (inited_) {
@@ -300,7 +300,7 @@ void
 Log::print_rules()
 {
     ASSERT(inited_);
-    ScopeLock l(lock_);
+    ScopeLock l(lock_, "Log::print_rules");
     
     RuleList::iterator iter = rule_list_->begin();
     printf("Logging rules:\n");
@@ -313,7 +313,7 @@ Log::Rule *
 Log::find_rule(const char *path)
 {
     ASSERT(inited_);
-    ScopeLock l(lock_);
+    ScopeLock l(lock_, "Log::find_rule");
     
     /*
      * The rules are stored in decreasing path lengths, so the first
@@ -347,7 +347,7 @@ void
 Log::add_debug_rule(const char* path, log_level_t threshold)
 {
     ASSERT(inited_);
-    ScopeLock l(lock_);
+    ScopeLock l(lock_, "Log::add_debug_rule");
     ASSERT(path);
     rule_list_->push_back(Rule(path, threshold));
     sort_rules(rule_list_);
@@ -356,7 +356,7 @@ Log::add_debug_rule(const char* path, log_level_t threshold)
 void
 Log::rotate()
 {
-    ScopeLock l(lock_);
+    ScopeLock l(lock_, "Log::rotate");
 
     if (logfd_ == 1) {
         logf("/log", LOG_WARN, "can't rotate when using stdout for logging");
@@ -558,7 +558,7 @@ Log::vlogf(const char* path, log_level_t level, const void* obj,
     }
     
     // throw a lock around the whole function
-    ScopeLock l(lock_);
+    ScopeLock l(lock_, "Log::vlogf");
 
     /* Make sure that paths that don't start with a slash still show up. */
     if (*path != '/') {
@@ -626,7 +626,7 @@ Log::log_multiline(const char* path, log_level_t level, const char* msg,
     char pathbuf[LOG_MAX_PATHLEN];
 
     // throw a lock around the whole function
-    ScopeLock l(lock_);
+    ScopeLock l(lock_, "Log::log_multiline");
 
     /* Make sure that paths that don't start with a slash still show up. */
     if (*path != '/') {

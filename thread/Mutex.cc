@@ -110,7 +110,7 @@ Mutex::~Mutex()
 }
 
 int
-Mutex::lock()
+Mutex::lock(const char* lock_user)
 {
     int err = pthread_mutex_lock(&mutex_);
 
@@ -121,8 +121,9 @@ Mutex::lock()
     ++lock_count_;
     if (logpath_[0] != 0)
         log_debug("locked (count %d)", lock_count_);
-    lock_holder_ = Thread::current();
-
+    lock_holder_      = Thread::current();
+    lock_holder_name_ = lock_user;
+    
     return err;
 }
 
@@ -148,7 +149,7 @@ Mutex::unlock()
 }
 
 int
-Mutex::try_lock()
+Mutex::try_lock(const char* lock_user)
 {
     int err = pthread_mutex_trylock(&mutex_);
 
@@ -164,8 +165,8 @@ Mutex::try_lock()
     ++lock_count_;
     if (logpath_[0] != 0)
         log_debug("try_lock locked (count %d)", lock_count_);
-    lock_holder_ = Thread::current();
-    
+    lock_holder_      = Thread::current();
+    lock_holder_name_ = lock_user;
     return err;
 }
 

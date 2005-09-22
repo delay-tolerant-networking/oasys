@@ -147,7 +147,7 @@ Notifier::wait(SpinLock* lock, int timeout)
     }
     
     if (lock) {
-        lock->lock();
+        lock->lock("Notifier::wait");
     }
 
     waiter_ = false;

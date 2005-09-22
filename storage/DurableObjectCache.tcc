@@ -84,7 +84,7 @@ DurableObjectCache<_DataType>::put(const SerializableObject& key,
                                    const _DataType* object,
                                    int flags)
 {
-    ScopeLock l(lock_);
+    ScopeLock l(lock_, "DurableObjectCache::put");
     
     CacheElement* cache_elem;
     
@@ -166,7 +166,7 @@ int
 DurableObjectCache<_DataType>::get(const SerializableObject& key,
                                    _DataType** objectp)
 {
-    ScopeLock l(lock_);
+    ScopeLock l(lock_, "DurableObjectCache::get");
 
     std::string cache_key;
     get_cache_key(&cache_key, key);
@@ -202,7 +202,7 @@ int
 DurableObjectCache<_DataType>::release(const SerializableObject& key,
                                        const _DataType* data)
 {
-    ScopeLock l(lock_);
+    ScopeLock l(lock_, "DurableObjectCache::release");
 
     std::string cache_key;
     get_cache_key(&cache_key, key);
@@ -246,7 +246,7 @@ template <typename _DataType>
 int
 DurableObjectCache<_DataType>::del(const SerializableObject& key)
 {
-    ScopeLock l(lock_);
+    ScopeLock l(lock_, "DurableObjectCache::del");
 
     std::string cache_key;
     get_cache_key(&cache_key, key);

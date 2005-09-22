@@ -137,7 +137,7 @@ int
 TclCommandInterp::exec_file(const char* file)
 {
     int err;
-    ScopeLock l(lock_);
+    ScopeLock l(lock_, "TclCommandInterp::exec_file");
 
     log_debug("executing command file %s", file);
     
@@ -156,7 +156,7 @@ int
 TclCommandInterp::exec_command(const char* command)
 {
     int err;
-    ScopeLock l(lock_);
+    ScopeLock l(lock_, "TclCommandInterp::exec_command");
 
     // ignore empty command lines
     if (command[0] == '\0')
@@ -216,7 +216,7 @@ TclCommandInterp::event_loop()
 void
 TclCommandInterp::reg(TclCommand *command)
 {
-    ScopeLock l(lock_);
+    ScopeLock l(lock_, "TclCommandInterp::reg");
     
     command->logf(LOG_DEBUG, "%s command registering", command->name());
 
@@ -278,7 +278,7 @@ TclCommandInterp::auto_reg(TclCommand *command)
 void
 TclCommandInterp::reg_atexit(void(*fn)(void*), void* data)
 {
-    ScopeLock l(lock_);
+    ScopeLock l(lock_, "TclCommandInterp::reg_atexit");
     Tcl_CreateExitHandler(fn, data);
 }
     

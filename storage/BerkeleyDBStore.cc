@@ -612,7 +612,7 @@ BerkeleyDBTable::put(const SerializableObject& key,
               (u_int)object_sz, typecode_sz);
     
     { // lock
-        ScopeLock lock(&scratch_mutex_);
+        ScopeLock lock(&scratch_mutex_, "BerkeleyDBStore::put");
     
         u_char* buf = scratch_.buf(typecode_sz + object_sz);
         

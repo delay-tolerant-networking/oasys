@@ -60,9 +60,9 @@ public:
 
     /// @{
     /// Virtual override from Lock
-    int lock();
+    int lock(const char* lock_user);
     int unlock();
-    int try_lock();
+    int try_lock(const char* lock_user);
     /// @}
     
 private:

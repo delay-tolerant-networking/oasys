@@ -68,7 +68,7 @@ TimerSystem::TimerSystem()
 void
 TimerSystem::schedule_at(struct timeval *when, Timer* timer)
 {
-    ScopeLock l(system_lock_);
+    ScopeLock l(system_lock_, "TimerSystem::schedule_at");
     
     struct timeval now;
     
@@ -129,7 +129,7 @@ TimerSystem::schedule_immediate(Timer* timer)
 bool
 TimerSystem::cancel(Timer* timer)
 {
-    ScopeLock l(system_lock_);
+    ScopeLock l(system_lock_, "TimerSystem::cancel");
 
     // There's no good way to get a timer out of a heap, so we let it
     // stay in there and mark it as cancelled so when it bubbles to
@@ -169,7 +169,7 @@ TimerSystem::add_sighandler(int sig, __sighandler_t handler)
 void
 TimerSystem::run()
 {
-    system_lock_->lock();
+    system_lock_->lock("TimerSystem::run");
     while (true) 
     {
         handle_signals();

@@ -38,7 +38,7 @@ MsgQueue<_elt_t>::~MsgQueue()
 template<typename _elt_t> 
 void MsgQueue<_elt_t>::push(_elt_t msg, bool at_back)
 {
-    ScopeLock l(lock_);
+    ScopeLock l(lock_, "MsgQueue::push");
     
     if (at_back)
         queue_.push_back(msg);
@@ -55,7 +55,7 @@ _elt_t MsgQueue<_elt_t>::pop_blocking()
      * We can't use a scoped lock since we need to release the lock
      * before we block in wait().
      */
-    lock_->lock();
+    lock_->lock("MsgQueue::pop_blocking");
 
     /*
      * If the queue is empty, wait for new input.

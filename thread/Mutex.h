@@ -68,15 +68,11 @@ public:
           bool keep_quiet = false);
     ~Mutex();
 
-    /// Aquire mutex.
-    int lock();
-
-    /// Release mutex.
+    //! @{ Virtual from Lock
+    int lock(const char* lock_user);
     int unlock();
-
-    /// Try to acquire a lock. If already locked, fail.
-    /// \return 0 on success, -1 on failure.
-    int try_lock();
+    int try_lock(const char* lock_user);
+    //! @}
 
     /// Override to implement keep_quiet_ in a sane way
     int logf(log_level_t level, const char *fmt, ...) PRINTFLIKE(3, 4);

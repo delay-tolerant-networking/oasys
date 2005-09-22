@@ -47,7 +47,7 @@ unsigned int SpinLock::total_spins_  = 0;
 unsigned int SpinLock::total_yields_ = 0;
 
 int
-SpinLock::lock()
+SpinLock::lock(const char* lock_user)
 {
     pthread_t me = Thread::current();
     int nspins;
@@ -71,12 +71,14 @@ SpinLock::lock()
         }
 #endif
     }
-
     atomic_decr(&lock_waiters_);
 
     ASSERT(lock_holder_ == me);
     ASSERT(lock_count_ == 0);
+
     lock_count_ = 1;
+    lock_holder_name_ = lock_user;
+
     return 0;
 };
 
@@ -85,7 +87,9 @@ SpinLock::unlock() {
     ASSERT(lock_holder_ == Thread::current());
     ASSERT(lock_count_ > 0);
 
+    lock_holder_name_ = 0;
     lock_count_--;
+
     if (lock_count_ == 0) {
         lock_holder_ = 0;
         if (__noalias__(&lock_waiters_).value != 0) {
@@ -100,7 +104,7 @@ SpinLock::unlock() {
 };
  
 int
-SpinLock::try_lock()
+SpinLock::try_lock(const char* lock_user)
 {
     pthread_t me = Thread::current();
     int lock_holder = atomic_cmpxchg32(&lock_holder_, 0, (unsigned int)me);
@@ -108,6 +112,8 @@ SpinLock::try_lock()
     if (lock_holder == 0) {
         ASSERT(lock_count_ == 0);
         lock_count_++;
+        lock_holder_name_ = lock_user;
+        
         return 0; // success
     } else {
         return 1; // already locked
