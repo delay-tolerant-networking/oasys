@@ -11,7 +11,7 @@ PAUSE_AFTER=%pause_after%
 XTERM=%xterm%
 
 ulimit -c unlimited
-cd $RUNDIR
+cd $RUN_DIR
 
 CHOICE="${XTERM} ${GDB} ${LOCAL}"
 case $CHOICE in
@@ -32,11 +32,11 @@ case $CHOICE in
 	;;
     "0 1 0" | "0 1 1")
 	gdb -batch -x run-script.gdb $GDB_OPTS $EXEC_FILE \
-	    >$RUNDIR/$EXEC_FILE.err >$RUNDIR/$EXEC_FILE.std & 
+	    >$RUN_DIR/$EXEC_FILE.err >$RUN_DIR/$EXEC_FILE.std & 
 	echo $!
 	;;
     "0 0 0" | "0 0 1")
-	$EXEC_FILE $EXEC_OPTS >$RUNDIR/$EXEC_FILE.err >$RUNDIR/log.std 
+	$EXEC_FILE $EXEC_OPTS >$RUN_DIR/$EXEC_FILE.err >$RUN_DIR/log.std 
 	echo $!
 	;;
     *) echo "! garbage arguments to run script"; exit ;;

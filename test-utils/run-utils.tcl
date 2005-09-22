@@ -1,7 +1,4 @@
 #!/usr/bin/tclsh
-source "distfile.tcl"
-source "resolve-path.tcl"
-
 proc dbg { msg } {
     global opt
     if {$opt(verbose) > 0} {
@@ -29,11 +26,12 @@ proc usage {} {
     puts "    --script      <tmpl>       Change remote run script template"
 }
 
-proc hostlist { netdef } {
+proc hostlist {} {
+    global net::host net::nodes
     set hosts {}
-    foreach entry $netdef {
-	array set net $entry
-	lappend hosts $net(host)
+
+    for {set i 0} {$i<$net::nodes} {incr i} {
+	lappend hosts $net::host($i)
     }
 
     return $hosts
@@ -55,58 +53,83 @@ proc process_template {template var_array} {
     return "$script\n"
 }
 
-proc generate-run-script {netdef netentry_id exec_opts_fcn} {
-    global opt
-    
-    set netentry [lindex $netdef $netentry_id]
+proc generate-run-script {id exec_opts_fcn} {
+    global opt net::host conf::conf
 
-    array set net $netentry
-    array set exec_opts [$exec_opts_fcn $netentry]
+    set hostname $net::host($id)
+    set rundir   "$opt(rundir_prefix)-$hostname-$id"
 
-    set rundir "$opt(rundir_prefix)-$host-$netentry_id"
+    array set exec_opts [$exec_opts_fcn $id]
 
+    # runscript
     set script(exec_file)   $exec_opts(exec_file)
     set script(exec_opts)   $exec_opts(exec_opts)
     set script(gdb_opts)    $opt(gdbopts)
     set script(run_dir)     $rundir
-    set script(run_id)      "$exec_opts(exec_file)-$host-$netentry_id"
+    set script(run_id)      "$exec_opts(exec_file)-$hostname-$id"
     set script(gdb)         $opt(gdb)
-    set script(local)       [is-localhost $net(host)]
+    set script(local)       [is-localhost $hostname]
     set script(pause_after) $opt(pause)
     set script(xterm)       $opt(xterm)
 
+    # run script
     set runscript [process_template $opt(script_tmpl) script]    
     dbg "% runscript = \n$runscript"
 
+    # debug script
     set gdb(exec_opts)      $exec_opts(exec_opts)
-    set gdb(gdb_extra)      $opt(gdb_extra) # XXX/bowei - finish me
+    # XXX/bowei - finish me
+    set gdb(gdb_extra)      $opt(gdb_extra)
     set gdbscript [process_template $opt(gdb_tmpl) gdb]    
     dbg "% gdbscript = \n$gdbscript"
     
-    if [is-localhost $net(host)] {
-	exec cat > $rundir/run-script.sh  << "$runscript"
-	dbg "% wrote $net(host):$netentry_id:$rundir/run-script.sh"
-	exec cat > $rundir/run-script.gdb << "$gdbscript"
-	dbg "% wrote $net(host):$netentry_id:$rundir/run-script.gdb"
-	exec cat > $rundir/network.tcl << "$netentry"
-	dbg "% wrote $net(host):$netentry_id:$rundir/network.tcl"
-	exec chmod +x $rundir/run-script.sh
-	dbg "% chmod +x $net(host):$netentry_id:$rundir/run-script.sh"
+    # tcl script
+    if [info exist conf::conf($id)] {
+	set tclscript [conf::get $id]
     } else {
-	exec ssh $net(host) "cat > $rundir/run-script.sh" << "$runscript"
-	dbg "% wrote $net(host):$netentry_id:$rundir/run-script.sh"
-	exec ssh $net(host) "cat > $rundir/run-script.gdb" << "$gdbscript"
-	dbg "% wrote $net(host):$netentry_id:$rundir/run-script.gdb"
-	exec ssh $net(host) "cat > $rundir/network.tcl" << "$netentry"
-	dbg "% wrote $net(host):$netentry_id:$rundir/network.tcl"
-	exec ssh $net(host) "chmod +x $rundir/run-script.sh"
-	dbg "% chmod +x $net(host):$netentry_id:$rundir/run-script.sh"
+	set tclscript ""
+    }
+    dbg "% tclscript = \n$tclscript"
+    
+    if [is-localhost $hostname] {
+	exec cat > $rundir/run-script.sh  << "$runscript"
+	dbg "% wrote $hostname:$id:$rundir/run-script.sh"
+
+	exec cat > $rundir/run-script.gdb << "$gdbscript"
+	dbg "% wrote $hostname:$id:$rundir/run-script.gdb"
+
+	exec cat > $rundir/run-script.tcl << "$tclscript"
+	dbg "% wrote $hostname:$id:$rundir/run-script.tcl"
+
+	exec chmod +x $rundir/run-script.sh
+	dbg "% chmod +x $hostname:$id:$rundir/run-script.sh"
+    } else {
+	exec ssh $hostname "cat > $rundir/run-script.sh" << "$runscript"
+	dbg "% wrote $hostname:$id:$rundir/run-script.sh"
+
+	exec ssh $hostname "cat > $rundir/run-script.gdb" << "$gdbscript"
+	dbg "% wrote $hostname:$id:$rundir/run-script.gdb"
+
+	exec ssh $hostname "cat > $rundir/run-script.tcl" << "$tclscript"
+	dbg "% wrote $hostname:$id:$rundir/run-script.tcl"
+
+	exec ssh $hostname "chmod +x $rundir/run-script.sh"
+	dbg "% chmod +x $hostname:$id:$rundir/run-script.sh"
     }
 }
 
-proc run {args manifest_list manifest_subst $basedir netdef exec_opts_fcn} {
-    global opt
-    
+proc shift { l } {
+    upvar $l xx
+    set xx [lrange $xx 1 end]
+}
+
+proc arg1 { l } {
+    return [lindex $l 0]
+}
+
+proc run {args tcl_script netdef_script basedir tmpl_dir exec_opts_fcn} {
+    global opt manifest::manifest manifest::subst net::nodes
+
     set opt(gdb)           0
     set opt(logdir)        "."
     set opt(nodes)         0
@@ -118,69 +141,70 @@ proc run {args manifest_list manifest_subst $basedir netdef exec_opts_fcn} {
     set opt(gdb_extra)   ""
     set opt(gdbopts)     ""
     set opt(opts)        ""
-    set opt(gdb_tmpl)    "gdbrc.template"
-    set opt(script_tmpl) "script.template"
+    set opt(gdb_tmpl)    "$tmpl_dir/gdbrc.template"
+    set opt(script_tmpl) "$tmpl_dir/script.template"
     
     # parse options
     while {[llength $args] > 0} {
-	if {[llength $args] > 1} {
-	    set arg1 [lindex $args 1]
-	} else {
-	    set arg1 ""
-	}
-	
 	switch -- [lindex $args 0] {
 	    -h     -
 	    -help  -
 	    --help { usage; exit }
 	    -g     {set opt(gdb) 1}
-	    -l     {shift; set opt(logdir) $arg1 }
-	    -n     {shift; set opt(nodes)  $arg1 }
+	    -l     {shift args; set opt(logdir) [arg1 $args] }
+	    -n     {shift args; set opt(nodes)  [arg1 $args] }
 	    -p     {set opt(pause) 1}
-	    -r     {shift; set opt(rundir_prefix) $arg1 }
+	    -r     {shift args; set opt(rundir_prefix) [arg1] }
 	    -v     {set opt(verbose) 1}
 	    -x     {set opt(xterm) 1}
-	    --extra-gdbrc {shift; set opt(gdb_extra)  $arg1 }
-	    --gdb-opts    {shift; set opt(gdbopts)    $arg1 }
-	    --opts        {shift; set opt(opts)       $arg1 }
-	    --gdb-tmpl    {shift; set opt(gdb_tmpl)    $arg1 }
-	    --script-tmpl {shift; set opt(script_tmpl) $arg1 }
-	    default       { puts "Illegal option $arg1"; usage }
+	    --extra-gdbrc {shift args; set opt(gdb_extra)   [arg1 $args] }
+	    --gdb-opts    {shift args; set opt(gdbopts)     [arg1 $args] }
+	    --opts        {shift args; set opt(opts)        [arg1 $args] }
+	    --gdb-tmpl    {shift args; set opt(gdb_tmpl)    [arg1 $args] }
+	    --script-tmpl {shift args; set opt(script_tmpl) [arg1 $args] }
+	    default       {puts "Illegal option [arg1 $args]"; usage }
 	}
-	shift
+	shift args
     }
     
+    puts "* Reading configuration scripts"
+    source $netdef_script
+    source $tcl_script
+
     puts "* Distributing files"
-    distfile $manifest_list [hostlist $netdef] $basedir $opt(rundir_prefix) \
-	$manifest_subst $opt(verbose)
-    for {set i 0} {$i < [llength $netdef]} {incr i} {
-	generate-run-script $netdef $i $exec_opts_fcn
+    distfiles $manifest::manifest [hostlist] $basedir $opt(rundir_prefix) \
+	$manifest::subst $opt(verbose)
+    
+    puts "* Generating scripts"
+    for {set i 0} {$i < $net::nodes} {incr i} {
+	generate-run-script $i $exec_opts_fcn
     }
 
     puts "* Running program"
-    for {set i 0} {$i < [llength $netdef]} {incr i} {
-	array set net [lindex $netdef $i]
-	switch "[is-localhost $net(host)] $opt(xterm)" {
+    for {set i 0} {$i < $net::nodes} {incr i} {
+	set hostname $net::host($i)
+	
+	switch "[is-localhost $hostname] $opt(xterm)" {
 	    "1 1" { 
-		dbg "xterm -e $opt(rundir_prefix)-$host-$i/run-script.sh &"
-		exec xterm -e $opt(rundir_prefix)-$host-$i/run-script.sh & 
+		dbg "xterm -e $opt(rundir_prefix)-$hostname-$i/run-script.sh &"
+		exec xterm -e $opt(rundir_prefix)-$hostname-$i/run-script.sh & 
 	    }
 	    "0 1" {
-		dbg "% ssh $host $opt(rundir_prefix)-$host-$i/run-script.sh"
+		dbg "% ssh $host $opt(rundir_prefix)-$hostname-$i/run-script.sh"
 		set screen_id \
-		    [exec ssh $host $opt(rundir_prefix)-$host-$i/run-script.sh]
+		    [exec ssh $host $opt(rundir_prefix)-$hostname-$i/run-script.sh]
 		dbg "% $host tierd instance is PID $remote_pid"
-		exec xterm -e ssh -t $host "screen -r $screen_id" &
+		exec xterm -e ssh -t $hostname "screen -r $screen_id" &
 	    }
 	    "1 0" {
-		dbg "% $opt(rundir_prefix)-$host-$i/run-script.sh &"
-		exec $opt(rundir_prefix)-$host-$i/run-script.sh &
+		dbg "% $opt(rundir_prefix)-$hostname-$i/run-script.sh &"
+		exec $opt(rundir_prefix)-$hostname-$i/run-script.sh &
 	    }
 	    "0 0" {
-		dbg "% ssh $host $opt(rundir_prefix)-$host-$i/run-script.sh"
+		dbg "% ssh $hostname $opt(rundir_prefix)-$hostname-$i/run-script.sh"
 		set remote_pid \
-		    [exec ssh $host $opt(rundir_prefix)-$host-$i/run-script.sh]
-		dbg "% $host tierd instance is PID $remote_pid"
+		    [exec ssh $hostname $opt(rundir_prefix)-$hostname-$i/run-script.sh]
+		dbg "% $hostname tierd instance is PID $remote_pid"
 	    }
 	}
     }
