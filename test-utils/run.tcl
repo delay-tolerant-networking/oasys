@@ -187,24 +187,24 @@ proc run {args tcl_script netdef_script basedir tmpl_dir exec_opts_fcn} {
 	
 	switch "[is-localhost $hostname] $opt(xterm)" {
 	    "1 1" { 
-		dbg "xterm -e $opt(rundir_prefix)-$hostname-$i/run-script.sh &"
-		exec xterm -e $opt(rundir_prefix)-$hostname-$i/run-script.sh & 
+		dbg "xterm -e $opt(rundir_prefix)-$hostname-$i/run-test.sh &"
+		exec xterm -e $opt(rundir_prefix)-$hostname-$i/run-test.sh & 
 	    }
 	    "0 1" {
-		dbg "% ssh $hostname $opt(rundir_prefix)-$hostname-$i/run-script.sh"
+		dbg "% ssh $hostname $opt(rundir_prefix)-$hostname-$i/run-test.sh"
 		set screen_id \
-		    [exec ssh $hostname $opt(rundir_prefix)-$hostname-$i/run-script.sh]
+		    [exec ssh $hostname $opt(rundir_prefix)-$hostname-$i/run-test.sh]
 		dbg "% $hostname tierd instance is PID $remote_pid"
 		exec xterm -e ssh -t $hostname "screen -r $screen_id" &
 	    }
 	    "1 0" {
-		dbg "% $opt(rundir_prefix)-$hostname-$i/run-script.sh &"
-		exec $opt(rundir_prefix)-$hostname-$i/run-script.sh &
+		dbg "% $opt(rundir_prefix)-$hostname-$i/run-test.sh &"
+		exec $opt(rundir_prefix)-$hostname-$i/run-test.sh &
 	    }
 	    "0 0" {
-		dbg "% ssh $hostname $opt(rundir_prefix)-$hostname-$i/run-script.sh"
+		dbg "% ssh $hostname $opt(rundir_prefix)-$hostname-$i/run-test.sh"
 		set remote_pid \
-		    [exec ssh $hostname $opt(rundir_prefix)-$hostname-$i/run-script.sh]
+		    [exec ssh $hostname $opt(rundir_prefix)-$hostname-$i/run-test.sh]
 		dbg "% $hostname tierd instance is PID $remote_pid"
 	    }
 	}
