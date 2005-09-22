@@ -217,13 +217,14 @@ proc run {nodelist exec_opts_fcn} {
 	switch "[net::is_localhost $hostname] $opt(xterm)" {
 	    "1 1" { 
 		dbg "xterm -e $script &"
-		exec xterm -e $script & 
+		exec xterm -title "$hostname - $i" -e $script & 
 	    }
 	    "0 1" {
 		dbg "% ssh $hostname $script"
 		set screen_id [exec ssh $hostname $script]
 		dbg "% $hostname $exec_file instance is PID $remote_pid"
-		exec xterm -e ssh -t $hostname "screen -r $screen_id" &
+		exec xterm -title "$hostname - $i" -e ssh -t $hostname \
+		    "screen -r $screen_id" &
 	    }
 	    "1 0" {
 		dbg "% $script &"
