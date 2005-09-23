@@ -21,56 +21,37 @@ function dbg {
 ulimit -c unlimited
 cd $RUN_DIR
 
-CHOICE="${XTERM} ${GDB} ${LOCAL}"
+CHOICE="${XTERM} ${GDB}"
 case $CHOICE in
-    "1 1 1") 
+    "1 1") 
 	dbg "gdb $RUN_DIR/$EXEC_FILE -x run-test.gdb"
-	gdb $RUN_DIR/$EXEC_FILE -x run-$EXEC_FILE.gdb | \
+	echo "stderr was redirected to $EXEC_FILE.out" >> $EXEC_FILE.err
+	gdb $RUN_DIR/$EXEC_FILE -x run-$EXEC_FILE.gdb 2>&1 | \
 	    tee $EXEC_FILE.out
 	;;
-    "1 1 0") 
-	dbg "screen -c /dev/null -d -m -S $RUN_ID \\ "
-	dbg "    gdb $RUN_DIR/$EXEC_FILE -x run-test.gdb $GDB_OPTS"
-	echo "stderr was redirected to $EXEC_FILE.out" >> $EXEC_FILE.err
-	echo "gdb $RUN_DIR/$EXEC_FILE -x run-$EXEC_FILE.gdb $GDB_OPTS 2>&1 | \\ " \
-	    >> run-${EXEC_FILE}-helper.sh
-	echo "    tee $EXEC_FILE.out" >> run-$EXEC_FILE-helper.sh 
-	chmod +x run-${EXEC_FILE}-helper.sh
-	screen -c /dev/null -d -m -S $RUN_ID run-${EXEC_FILE}-helper.sh 
-	echo "{ pid $! run_id \"$RUN_ID\" }"
-	;;
-    "1 0 1") 
+    "1 0") 
 	dbg "$RUN_DIR/$EXEC_FILE $EXEC_OPTS"
-	$RUN_DIR/$EXEC_FILE $EXEC_OPTS | tee $EXEC_FILE.out
-	echo "{ pid $! run_id \"\" }"
-	;;
-    "1 0 0") 
-	dbg "screen -c /dev/null -d -m -S $TEST_ID $RUN_DIR/$EXEC_FILE $EXEC_OPTS"
 	echo "stderr was redirected to $EXEC_FILE.out" >> $EXEC_FILE.err
-	echo "$TEST_ID $RUN_DIR/$EXEC_FILE $EXEC_OPTS 2>&1 | tee $EXEC_FILE.out" >> \
-	    run-$EXEC_FILE-helper.sh 
-	chmod +x run-${EXEC_FILE}-helper.sh
-	screen -c /dev/null -d -m -S $RUN_ID run-${EXEC_FILE}-helper.sh 
-	echo "{ pid $! run_id \"$RUN_ID\" }"
+	$RUN_DIR/$EXEC_FILE $EXEC_OPTS 2>&1 | tee $EXEC_FILE.out
 	;;
-    "0 1 0" | "0 1 1")
+    "0 1")
 	dbg "gdb -batch -x run-test.gdb $GDB_OPTS $RUN_DIR/$EXEC_FILE"
 	dbg "    >$RUN_DIR/$EXEC_FILE.err >$RUN_DIR/$EXEC_FILE.std &"
 	gdb -batch -x run-test.gdb $GDB_OPTS $RUN_DIR/$EXEC_FILE \
-	    >$RUN_DIR/$EXEC_FILE.err >$RUN_DIR/$EXEC_FILE.out & 
-	echo "{ pid $! run_id \"\" }"
+	    2>$RUN_DIR/$EXEC_FILE.err >$RUN_DIR/$EXEC_FILE.out & 
+	echo $!
 	;;
-    "0 0 0" | "0 0 1")
+    "0 0")
 	dbg "$RUN_DIR/$EXEC_FILE $EXEC_OPTS >$RUN_DIR/$EXEC_FILE.err \\ "
 	dbg "    >$RUN_DIR/log.std"
-	$RUN_DIR/$EXEC_FILE $EXEC_OPTS >$RUN_DIR/$EXEC_FILE.err \
-	    >$RUN_DIR/$EXEC_FILE.out
-	echo "{ pid $! run_id \"\" }"
+	$RUN_DIR/$EXEC_FILE $EXEC_OPTS 2>$RUN_DIR/$EXEC_FILE.err \
+	    >$RUN_DIR/$EXEC_FILE.out &
+	echo $!
 	;;
     *) echo "! garbage arguments to run script"; exit ;;
 esac
 
-if [ \( "$LOCAL" = 1 \) -a \( "$PAUSE_AFTER" = 1 \) ]; then
+if [ \( "$XTERM" = 1 \) -a \( "$PAUSE_AFTER" = 1 \) ]; then
     echo Done, hit any key to close...
     read
 fi

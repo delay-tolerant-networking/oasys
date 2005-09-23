@@ -60,7 +60,7 @@ proc init {args test_script} {
 
     set num_nodes_override 0
     
-    switch $test_script {
+    switch -- $test_script {
 	invalid -
 	-h      -
 	-help   -
@@ -144,6 +144,7 @@ proc generate_script {id exec_file exec_opts confname conf} {
     set script(gdb)         $opt(gdb)
     set script(local)       [net::is_localhost $hostname]
     set script(pause_after) $opt(pause)
+    set script(verbose)     $opt(verbose)
     set script(xterm)       $opt(xterm)
 
     # run script
@@ -194,7 +195,7 @@ proc write_script {id dir filename contents do_chmod} {
 #
 proc run {id exec_file exec_opts confname conf} {
     global opt manifest::manifest manifest::subst 
-    global run::pids run::dirs
+    global run::pids run::dirs run::xterm
 
     set hostname $net::host($id)
 
@@ -204,32 +205,36 @@ proc run {id exec_file exec_opts confname conf} {
     set script "$opt(rundir_prefix)-$hostname-$id/run-$exec_file.sh"
     set run::dirs($id) "$opt(rundir_prefix)-$hostname-$id"
 
+    # NB: When running in an xterm, the PID collected is the PID of
+    # the local xterm instance, not the remote process instance
     switch "[net::is_localhost $hostname] $opt(xterm)" {
 	"1 1" { 
-	    dbg "xterm -title \"$hostname - $id\" -e $script &"
+	    dbg "xterm -title \"$hostname-$id\" -e $script &"
 	    set exec_pid [exec xterm -title "$hostname - $id" -e $script &]
 	    set run::pids($id) $exec_pid
+	    set run::xterm($id) 1
 	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
 	"0 1" {
-	    # XXX/bowei
-	    dbg "% ssh $hostname $script"
-	    set screen_id [exec ssh $hostname $script]
-	    dbg "% $hostname $exec_file instance is PID $remote_pid"
-	    exec xterm -title "$hostname - $id" -e ssh -t $hostname \
-		"screen -r $screen_id" &
+	    dbg "% xterm -title \"$hostname-$id\" -e ssh -t $hostname $script"
+	    set exec_pid [exec xterm -title "$hostname - $id" \
+			      -e ssh -t $hostname $script &]
+	    set run::pids($id) $exec_pid
+	    set run::xterm($id) 1
+	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
 	"1 0" {
 	    dbg "% $script &"
 	    set exec_pid [exec $script &]
-	    set run::pids($id) $exec_pid
-
+	    set run::pids($id)  $exec_pid
+	    set run::xterm($id) 0
 	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
 	"0 0" {
 	    dbg "% ssh $hostname $script"
 	    set exec_pid [exec ssh $hostname $script]
 	    set run::pids($id) $exec_pid
+	    set run::xterm($id) 0
 
 	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
@@ -240,7 +245,7 @@ proc run {id exec_file exec_opts confname conf} {
 # Wait for all running test programs to exit
 #
 proc wait_for_programs {} {
-    global net::host run::pids
+    global net::host run::pids run::xterm
      
     set num_alive 1
 
@@ -253,24 +258,26 @@ proc wait_for_programs {} {
 	    set pid      $run::pids($i)
 
 	    # zero pid means the process died
-	    if {$run::pids($i) == 0} {
+	    if [expr $run::pids($i) == 0] {
 		continue
 	    }
 	    
-	    if [net::is_localhost $hostname] {
-		if [catch { exec ps -p $pid }] {
+	    if {[net::is_localhost $hostname] || $run::xterm($i)} {
+		dbg "% ps h -p $pid"
+		if [catch { exec ps h -p $pid }] {
 		    puts "    $hostname:$i finished"
-		    set $run::pids($i) 0 
+		    set run::pids($i) 0 
 		} else {
 		    dbg "% $hostname still alive"
 		    incr num_alive
 		}
 	    } else {
-		if [catch { exec ssh $hostname ps -p $pid }] {
+		dbg "% ssh $hostname ps h -p $pid"
+		if [catch { exec ssh $hostname ps h -p $pid }] {
 		    puts "    $hostname:$i finished"
-		    set $run::pids($i) 0 
+		    set run::pids($i) 0 
 		} else {
-		    dbg "% $hostname still alive"
+		    dbg "% $hostname:$i still alive"
 		    incr num_alive
 		}
 	    }
@@ -312,8 +319,8 @@ proc collect_logs {} {
 
 	    dbg "% logs = $logs"
 	    foreach l $logs {
-		dbg "% exec cp $l $opt(logdir)/$i-hostname-[file tail $l]"
-		exec cp $l $opt(logdir)/$i-hostname-[file tail $l]
+		dbg "% exec cp $l $opt(logdir)/$i-$hostname-[file tail $l]"
+		exec cp $l $opt(logdir)/$i-$hostname-[file tail $l]
 	    }
 	} else {
 	    set logs ""
@@ -326,8 +333,8 @@ proc collect_logs {} {
 
 	    dbg "% logs = $logs"
 	    foreach l $logs {
-		dbg "% exec scp $hostname:$l $opt(logdir)/$i-hostname-[file tail $l]"
-		exec scp $hostname:$l $opt(logdir)/$i-hostname-[file tail $l]
+		dbg "% exec scp $hostname:$l $opt(logdir)/$i-$hostname-[file tail $l]"
+		exec scp $hostname:$l $opt(logdir)/$i-$hostname-[file tail $l]
 	    }
 	}
     }
