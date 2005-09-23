@@ -1,92 +1,11 @@
 #!/usr/bin/tclsh
 
 namespace eval run {
-    
+
 proc dbg { msg } {
     global opt
     if {$opt(verbose) > 0} {
 	puts $msg
-    }
-}
-
-proc process_template {template var_array} {
-    upvar $var_array ar
-
-    dbg "% processing template \"$template\" with \"$var_array\""
-
-    set tmpl [open $template "r"]
-    set script [read -nonewline $tmpl]
-    close $tmpl
-    
-    foreach {k v} [array get ar] {
-	regsub -all "%$k%" $script $v script
-    }
-
-    return "$script\n"
-}
-
-proc write_script {id dir filename contents do_chmod} {
-    global net::host
-    set hostname $net::host($id)
-
-    set path [file join $dir $filename]
-    
-    if [net::is_localhost $hostname] {
-	exec cat > $path << $contents
-	if {$do_chmod} {
-	    exec chmod +x $path
-	}
-	
-    } else {
-	exec ssh $hostname "cat > $path" << $contents
-	if {$do_chmod} {
-	    exec ssh $hostname "chmod +x $path"
-	}
-    }
-
-
-    dbg "% wrote $hostname:$id:$path"
-}
-
-proc generate_script {id exec_opts_fcn} {
-    global opt net::host test::testname
-
-    set hostname $net::host($id)
-    set rundir   $opt(rundir_prefix)-$hostname-$id
-
-    array set exec_opts [$exec_opts_fcn $id]
-
-    # runscript
-    set script(exec_file)   $exec_opts(exec_file)
-    set script(exec_opts)   $exec_opts(exec_opts)
-    set script(gdb_opts)    $opt(gdbopts)
-    set script(run_dir)     $rundir
-    set script(run_id)      $exec_opts(exec_file)-$hostname-$id
-    set script(gdb)         $opt(gdb)
-    set script(local)       [net::is_localhost $hostname]
-    set script(pause_after) $opt(pause)
-    set script(xterm)       $opt(xterm)
-
-    # run script
-    set runscript [process_template $opt(script_tmpl) script]    
-    dbg "% runscript = \n$runscript"
-
-    # debug script
-    set gdb(exec_opts)      $exec_opts(exec_opts)
-    set gdb(gdb_extra)      $opt(gdb_extra)
-    set gdbscript [process_template $opt(gdb_tmpl) gdb]    
-    dbg "% gdbscript = \n$gdbscript"
-
-    set run_base "run-$exec_opts(exec_file)"
-    
-    write_script $id $rundir $run_base.sh  $runscript true
-    write_script $id $rundir $run_base.gdb $gdbscript true
-    
-    set confname $exec_opts(confname)
-    set conf     $exec_opts(conf)
-
-    if {$confname != ""} {
-	write_script $id $rundir $confname $conf false
     }
 }
 
@@ -194,49 +113,186 @@ proc init {args test_script} {
 	    $opt(rundir_prefix) $manifest::subst $opt(verbose)
 }
 
+proc process_template {template var_array} {
+    upvar $var_array ar
+
+    dbg "% processing template \"$template\" with \"$var_array\""
+
+    set tmpl [open $template "r"]
+    set script [read -nonewline $tmpl]
+    close $tmpl
+    
+    foreach {k v} [array get ar] {
+	regsub -all "%$k%" $script $v script
+    }
+
+    return "$script\n"
+}
+
+proc generate_script {id exec_file exec_opts confname conf} {
+    global opt net::host test::testname
+
+    set hostname $net::host($id)
+    set rundir   $opt(rundir_prefix)-$hostname-$id
+
+    # runscript
+    set script(exec_file)   $exec_file
+    set script(exec_opts)   $exec_opts
+    set script(gdb_opts)    $opt(gdbopts)
+    set script(run_dir)     $rundir
+    set script(run_id)      $exec_file-$hostname-$id
+    set script(gdb)         $opt(gdb)
+    set script(local)       [net::is_localhost $hostname]
+    set script(pause_after) $opt(pause)
+    set script(xterm)       $opt(xterm)
+
+    # run script
+    set runscript [process_template $opt(script_tmpl) script]    
+    dbg "% runscript = \n$runscript"
+
+    # debug script
+    set gdb(exec_opts)      $exec_opts
+    set gdb(gdb_extra)      $opt(gdb_extra)
+    set gdbscript [process_template $opt(gdb_tmpl) gdb]    
+    dbg "% gdbscript = \n$gdbscript"
+
+    set run_base "run-$exec_file"
+    
+    write_script $id $rundir $run_base.sh  $runscript true
+    write_script $id $rundir $run_base.gdb $gdbscript true
+
+    if {$confname != ""} {
+	write_script $id $rundir $confname $conf false
+    }
+}
+
+proc write_script {id dir filename contents do_chmod} {
+    global net::host
+    set hostname $net::host($id)
+
+    set path [file join $dir $filename]
+    
+    if [net::is_localhost $hostname] {
+	exec cat > $path << $contents
+	if {$do_chmod} {
+	    exec chmod +x $path
+	}
+	
+    } else {
+	exec ssh $hostname "cat > $path" << $contents
+	if {$do_chmod} {
+	    exec ssh $hostname "chmod +x $path"
+	}
+    }
+
+
+    dbg "% wrote $hostname:$id:$path"
+}
+
 #
 # Run a given program on the specified list of nodes
 #
-proc run {nodelist exec_opts_fcn} {
-    global opt manifest::manifest manifest::subst net::nodes
+proc run {id exec_file exec_opts confname conf} {
+    global opt manifest::manifest manifest::subst 
+    global run::pids run::dirs
 
-    array set exec_opts [$exec_opts_fcn 0]
-    set exec_file $exec_opts(exec_file)
-    
-    puts "* Generating scripts for $exec_file on nodes $nodelist"
-    foreach i $nodelist {
-	generate_script $i $exec_opts_fcn
-    }
+    set hostname $net::host($id)
 
-    puts "* Running program $exec_file on nodes $nodelist"
+    puts "* Generating scripts for $exec_file for $hostname:$id"
+    generate_script $id $exec_file $exec_opts $confname $conf
 
-    foreach i $nodelist {
-	set hostname $net::host($i)
-	set script "$opt(rundir_prefix)-$hostname-$i/run-$exec_file.sh"
-	
-	switch "[net::is_localhost $hostname] $opt(xterm)" {
-	    "1 1" { 
-		dbg "xterm -e $script &"
-		exec xterm -title "$hostname - $i" -e $script & 
-	    }
-	    "0 1" {
-		dbg "% ssh $hostname $script"
-		set screen_id [exec ssh $hostname $script]
-		dbg "% $hostname $exec_file instance is PID $remote_pid"
-		exec xterm -title "$hostname - $i" -e ssh -t $hostname \
-		    "screen -r $screen_id" &
-	    }
-	    "1 0" {
-		dbg "% $script &"
-		exec $script &
-	    }
-	    "0 0" {
-		dbg "% ssh $hostname $script"
-		set remote_pid [exec ssh $hostname $script]
-		dbg "% $hostname $exec_file instance is PID $remote_pid"
-	    }
+    set script "$opt(rundir_prefix)-$hostname-$id/run-$exec_file.sh"
+    set run::dirs($id) "$opt(rundir_prefix)-$hostname-$id"
+
+    switch "[net::is_localhost $hostname] $opt(xterm)" {
+	"1 1" { 
+	    dbg "xterm -title \"$hostname - $id\" -e $script &"
+	    set exec_pid [exec xterm -title "$hostname - $id" -e $script &]
+	    set run::pids($id) $exec_pid
+	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
+	}
+	"0 1" {
+	    # XXX/bowei
+	    dbg "% ssh $hostname $script"
+	    set screen_id [exec ssh $hostname $script]
+	    dbg "% $hostname $exec_file instance is PID $remote_pid"
+	    exec xterm -title "$hostname - $id" -e ssh -t $hostname \
+		"screen -r $screen_id" &
+	}
+	"1 0" {
+	    dbg "% $script &"
+	    set exec_pid [exec $script &]
+	    set run::pids($id) $exec_pid
+
+	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
+	}
+	"0 0" {
+	    dbg "% ssh $hostname $script"
+	    set exec_pid [exec ssh $hostname $script]
+	    set run::pids($id) $exec_pid
+
+	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
     }
 }
 
+#
+# Wait for all running test programs to exit
+#
+proc wait_for_programs {} {
+    global net::host run::pids
+     
+    set num_alive 1
+
+    while {$num_alive} {
+	set num_alive 0
+
+	for {set i 0} {$i < [net::num_nodes]} {incr $i} {
+	    set hostname $net::host($i)
+	    set pid      $run::pids($i)
+
+	    # zero pid means the process died
+	    if {$run::pids($i) == 0} {
+		continue
+	    }
+	    
+	    if [net::is_localhost $hostname] {
+		if [catch { exec ps -p $pid }] {
+		    set $run::pids($i) 0 
+		} else {
+		    incr num_alive
+		}
+	    } else {
+		if [catch { exec ssh $hostname ps -p $pid }] {
+		    set $run::pids($i) 0 
+		} else {
+		    incr num_alive
+		}
+	    }
+	}
+	after 500
+    }
+}
+
+#
+# Collect the logs/cores left by all of the executing processes
+# 
+proc collect_logs {} {
+    puts "* Collecting logs/cores"
+    
+}
+
+#
+# Cleanup the directories created by the test
+#
+proc cleanup {} {
+    global opt
+
+    if {$opt(crap)} { return }
+
+    puts "* Getting rid of run files"
+    
+}
+
+# namespace run
 }

@@ -38,6 +38,12 @@ namespace eval test {
 	set test::run_actions $actions
     }
 
+    # Run the script actions
+    proc run_script {} {
+	global test::run_actions
+	eval $test::run_actions
+    }
+
     # Set test name
     proc name { {name ""} } {
 	global test::testname
