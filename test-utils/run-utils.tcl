@@ -294,7 +294,7 @@ proc wait_for_programs {} {
 proc collect_logs {} {
     global opt net::host run::dirs
 
-    puts "* Collecting logs/cores"
+    puts "* Collecting logs/cores into $opt(logdir)"
     if {! [file isdirectory $opt(logdir)]} {
 	if [file exists $opt(logdir)] {
 	    puts "$opt(logdir) exists, putting logs into $opt(logdir)-logs"

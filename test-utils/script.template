@@ -52,6 +52,6 @@ case $CHOICE in
 esac
 
 if [ \( "$XTERM" = 1 \) -a \( "$PAUSE_AFTER" = 1 \) ]; then
-    echo Done, hit any key to close...
+    echo Done, hit any enter to close...
     read
 fi
