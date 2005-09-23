@@ -245,7 +245,7 @@ proc wait_for_programs {} {
     set num_alive 1
 
     puts "* Waiting for programs"
-    while {$num_alive} {
+    while {$num_alive > 0} {
 	set num_alive 0
 
 	for {set i 0} {$i < [net::num_nodes]} {incr i} {
@@ -259,14 +259,18 @@ proc wait_for_programs {} {
 	    
 	    if [net::is_localhost $hostname] {
 		if [catch { exec ps -p $pid }] {
+		    puts "    $hostname:$i finished"
 		    set $run::pids($i) 0 
 		} else {
+		    dbg "% $hostname still alive"
 		    incr num_alive
 		}
 	    } else {
 		if [catch { exec ssh $hostname ps -p $pid }] {
+		    puts "    $hostname:$i finished"
 		    set $run::pids($i) 0 
 		} else {
+		    dbg "% $hostname still alive"
 		    incr num_alive
 		}
 	    }
@@ -274,27 +278,83 @@ proc wait_for_programs {} {
 	after 500
     }
 
-    puts "* Programs done"
+    puts "* All programs done"
 }
 
 #
 # Collect the logs/cores left by all of the executing processes
 # 
 proc collect_logs {} {
+    global opt net::host run::dirs
+
     puts "* Collecting logs/cores"
-    
+    if {! [file isdirectory $opt(logdir)]} {
+	if [file exists $opt(logdir)] {
+	    puts "$opt(logdir) exists, putting logs into $opt(logdir)-logs"
+	    set opt(logdir) $opt(logdir)-logs
+	}
+	
+	exec mkdir -p $opt(logdir)
+    }
+
+    for {set i 0} {$i < [net::num_nodes]} {incr i} {
+	set hostname $net::host($i)
+	set dir      $run::dirs($i)
+	
+	if [net::is_localhost $hostname] {
+	    set logs ""
+	    dbg "exec sh << \"ls -1 $dir/*core* $dir/*.out $dir/*.err\""
+	    catch { append logs [exec sh << "ls -1 $dir/*core*"]}
+	    append logs " "
+	    catch { append logs [exec sh << "ls -1 $dir/*.out"]}
+	    append logs " "
+	    catch { append logs [exec sh << "ls -1 $dir/*.err"]}
+
+	    dbg "% logs = $logs"
+	    foreach l $logs {
+		dbg "% exec cp $l $opt(logdir)/$i-hostname-[file tail $l]"
+		exec cp $l $opt(logdir)/$i-hostname-[file tail $l]
+	    }
+	} else {
+	    set logs ""
+	    dbg "exec sh << \"ls -1 $dir/*core* $dir/*.out $dir/*.err\""
+	    catch { append logs [exec ssh $hostname sh << "ls -1 $dir/*core*"]}
+	    append logs " "
+	    catch { append logs [exec ssh $hostname sh << "ls -1 $dir/*.out"]}
+	    append logs " "
+	    catch { append logs [exec ssh $hostname sh << "ls -1 $dir/*.err"]}
+
+	    dbg "% logs = $logs"
+	    foreach l $logs {
+		dbg "% exec scp $hostname:$l $opt(logdir)/$i-hostname-[file tail $l]"
+		exec scp $hostname:$l $opt(logdir)/$i-hostname-[file tail $l]
+	    }
+	}
+    }
 }
 
 #
 # Cleanup the directories created by the test
 #
 proc cleanup {} {
-    global opt
+    global opt net::host run::dirs
 
     if {$opt(crap)} { return }
 
     puts "* Getting rid of run files"
-    
+    for {set i 0} {$i < [net::num_nodes]} {incr i} {
+	set hostname $net::host($i)
+	set dir      $run::dirs($i)
+
+	dbg "% removing $hostname:$i:$dir"
+	if [net::is_localhost $hostname] {
+	    exec rm -r $dirs($i)
+	    dbg "exec rm -r $dirs($i)"
+	} else {
+	    exec ssh $hostname rm -r $dirs($i)
+	    dbg "exec ssh $hostname rm -r $dirs($i)"
+	}
+    }
 }
 
 # namespace run
