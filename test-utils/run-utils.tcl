@@ -244,10 +244,11 @@ proc wait_for_programs {} {
      
     set num_alive 1
 
+    puts "* Waiting for programs"
     while {$num_alive} {
 	set num_alive 0
 
-	for {set i 0} {$i < [net::num_nodes]} {incr $i} {
+	for {set i 0} {$i < [net::num_nodes]} {incr i} {
 	    set hostname $net::host($i)
 	    set pid      $run::pids($i)
 
@@ -272,6 +273,8 @@ proc wait_for_programs {} {
 	}
 	after 500
     }
+
+    puts "* Programs done"
 }
 
 #
