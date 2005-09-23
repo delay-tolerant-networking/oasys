@@ -5,10 +5,18 @@ GDB_OPTS="%gdb_opts%"
 RUN_DIR="%run_dir%"
 RUN_ID="%run_id%"
 
+
 GDB=%gdb%
 LOCAL=%local%
 PAUSE_AFTER=%pause_after%
+VERBOSE=%verbose%
 XTERM=%xterm%
+
+function dbg {
+    if [ ! -z $VERBOSE ]; then
+	echo $*
+    fi
+}
 
 ulimit -c unlimited
 cd $RUN_DIR
@@ -16,37 +24,48 @@ cd $RUN_DIR
 CHOICE="${XTERM} ${GDB} ${LOCAL}"
 case $CHOICE in
     "1 1 1") 
+	dbg "gdb $RUN_DIR/$EXEC_FILE -x run-test.gdb"
 	gdb $RUN_DIR/$EXEC_FILE -x run-$EXEC_FILE.gdb | \
 	    tee $EXEC_FILE.out
 	;;
     "1 1 0") 
+	dbg "screen -c /dev/null -d -m -S $RUN_ID \\ "
+	dbg "    gdb $RUN_DIR/$EXEC_FILE -x run-test.gdb $GDB_OPTS"
 	echo "stderr was redirected to $EXEC_FILE.out" >> $EXEC_FILE.err
 	echo "gdb $RUN_DIR/$EXEC_FILE -x run-$EXEC_FILE.gdb $GDB_OPTS 2>&1 | \\ " \
-	    >> $run-${EXEC_FILE}-helper.sh
-	echo "    tee $EXEC_FILE.out" >> $run-$EXEC_FILE-helper.sh 
-	chmod +x $run-${EXEC_FILE}-helper.sh
-	screen -c /dev/null -d -m -S $RUN_ID $run-${EXEC_FILE}-helper.sh 
-	echo $RUN_ID
+	    >> run-${EXEC_FILE}-helper.sh
+	echo "    tee $EXEC_FILE.out" >> run-$EXEC_FILE-helper.sh 
+	chmod +x run-${EXEC_FILE}-helper.sh
+	screen -c /dev/null -d -m -S $RUN_ID run-${EXEC_FILE}-helper.sh 
+	echo "{ pid $! run_id \"$RUN_ID\" }"
 	;;
     "1 0 1") 
+	dbg "$RUN_DIR/$EXEC_FILE $EXEC_OPTS"
 	$RUN_DIR/$EXEC_FILE $EXEC_OPTS | tee $EXEC_FILE.out
+	echo "{ pid $! run_id \"\" }"
 	;;
     "1 0 0") 
+	dbg "screen -c /dev/null -d -m -S $TEST_ID $RUN_DIR/$EXEC_FILE $EXEC_OPTS"
 	echo "stderr was redirected to $EXEC_FILE.out" >> $EXEC_FILE.err
 	echo "$TEST_ID $RUN_DIR/$EXEC_FILE $EXEC_OPTS 2>&1 | tee $EXEC_FILE.out" >> \
-	    $run-$EXEC_FILE-helper.sh 
-	chmod +x $run-${EXEC_FILE}-helper.sh
-	screen -c /dev/null -d -m -S $RUN_ID $run-${EXEC_FILE}-helper.sh 
-	echo $RUN_ID
+	    run-$EXEC_FILE-helper.sh 
+	chmod +x run-${EXEC_FILE}-helper.sh
+	screen -c /dev/null -d -m -S $RUN_ID run-${EXEC_FILE}-helper.sh 
+	echo "{ pid $! run_id \"$RUN_ID\" }"
 	;;
     "0 1 0" | "0 1 1")
+	dbg "gdb -batch -x run-test.gdb $GDB_OPTS $RUN_DIR/$EXEC_FILE"
+	dbg "    >$RUN_DIR/$EXEC_FILE.err >$RUN_DIR/$EXEC_FILE.std &"
 	gdb -batch -x run-test.gdb $GDB_OPTS $RUN_DIR/$EXEC_FILE \
 	    >$RUN_DIR/$EXEC_FILE.err >$RUN_DIR/$EXEC_FILE.out & 
-	echo $!
+	echo "{ pid $! run_id \"\" }"
 	;;
     "0 0 0" | "0 0 1")
-	$RUN_DIR/$EXEC_FILE $EXEC_OPTS >$RUN_DIR/$EXEC_FILE.err >$RUN_DIR/$EXEC_FILE.out
-	echo $!
+	dbg "$RUN_DIR/$EXEC_FILE $EXEC_OPTS >$RUN_DIR/$EXEC_FILE.err \\ "
+	dbg "    >$RUN_DIR/log.std"
+	$RUN_DIR/$EXEC_FILE $EXEC_OPTS >$RUN_DIR/$EXEC_FILE.err \
+	    >$RUN_DIR/$EXEC_FILE.out
+	echo "{ pid $! run_id \"\" }"
 	;;
     *) echo "! garbage arguments to run script"; exit ;;
 esac
