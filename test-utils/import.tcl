@@ -2,35 +2,44 @@
 # Tcl doesn't have a useful import mechanism so we just do a simple one
 #
 
+namespace eval import {
+    set scripts {}
+}
+
 proc import_find {script} {
-    global import_path
+    global import::path
 
     # check for full paths
     if [file readable $script] {
 	return $script
     }
     
-    # otherwise we need the import_path
-    if {![info exists import_path]} {
-	error "cannot import without setting import_path"
+    # otherwise we need the import::path
+    if {![info exists import::path]} {
+	error "cannot import without setting import::path"
     }
 
-    foreach dir $import_path {
-	set path [file join $dir $script]
-	if {[file readable $path]} {
-	    return $path
+    foreach dir $import::path {
+	set my_path [file join $dir $script]
+	if {[file readable $my_path]} {
+	    return $my_path
 	}
     }
     
-    error "can't find script $script in import_path $import_path"
+    error "can't find script $script in import::path $import::path"
 }
     
 proc import {script} {
+    global import::scripts
+
     if {$script == ""} {
 	error "must specify a script to import"
     }
-    
+
+    if {[lsearch -exact $import::scripts $script] != -1} {
+	return
+    }
+
+    lappend $import::scripts $script
     source [import_find $script]
 }
-
-
