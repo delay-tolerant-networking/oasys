@@ -258,7 +258,8 @@ proc wait_for_programs {} {
 	    set pid      $run::pids($i)
 
 	    # zero pid means the process died
-	    if [expr $run::pids($i) == 0] {
+	    if { (! [info exist $run::pids($i)]) || 
+		 $run::pids($i) == 0} {
 		continue
 	    }
 	    
