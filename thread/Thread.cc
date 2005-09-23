@@ -100,10 +100,10 @@ Thread::thread_run(pthread_t pthread_id)
     NOTREACHED;
 }
 
-Thread::Thread(int flags)
-    : flags_(flags)
+Thread::Thread(const char* name, int flags)
+    : flags_(flags), name_(name)
 {
-  pthread_=0;
+    pthread_ = 0;
 }
 
 Thread::~Thread()

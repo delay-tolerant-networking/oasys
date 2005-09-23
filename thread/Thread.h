@@ -81,7 +81,7 @@ public:
     /**
      * Constructor / Destructor
      */
-    Thread(int flags = 0);
+    Thread(const char* name, int flags = 0);
     virtual ~Thread();
     
     /**
@@ -229,6 +229,8 @@ protected:
     
     static bool                 start_barrier_enabled_;
     static std::vector<Thread*> threads_in_barrier_;
+
+    const char* name_;
 };
 
 inline pthread_t

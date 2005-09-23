@@ -53,7 +53,8 @@ template <> TimerSystem* Singleton<TimerSystem>::instance_ = 0;
 
 //////////////////////////////////////////////////////////////////////////////
 TimerSystem::TimerSystem()
-    : Logger("/timer"),
+    : Thread("TimerSystem"),
+      Logger("/timer"),
       system_lock_(new SpinLock()),
       signal_("/timer/signal"),
       timers_()
