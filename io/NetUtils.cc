@@ -131,7 +131,7 @@ gethostbyname(const char* name, in_addr_t* addr)
 #elif defined(HAVE_GETHOSTBYNAME)
     // make it thread-safe by using a global lock
     static SpinLock gethostbyname_lock;
-    ScopeLock l(&gethostbyname_lock);
+    ScopeLock l(&gethostbyname_lock, "gethostbyname");
     
     struct hostent *hent;
     hent = ::gethostbyname(name);
