@@ -154,14 +154,13 @@ MultiUncheckedDurableTable::put(
     int                       flags
     )
 {
+    /*
     int err;
     
     ASSERT(this->cache_ == 0); // XXX/bowei - don't support caches for now
     ScratchBuffer<u_char*, 128> scratch;
    
-    /*
     _DataType* d = new _DataType(Builder());
-    */
     
     err = this->impl_->get(key, d);
     if (err != 0) {
@@ -171,6 +170,8 @@ MultiUncheckedDurableTable::put(
 
     *data = d;
     return 0;    
+    */
+    return DS_ERR;
 }
 
 //----------------------------------------------------------------------------
@@ -181,6 +182,7 @@ MultiUncheckedDurableTable::get(
     _Type**                   data
     )
 {
+    /*
     ASSERT(this->cache_ == 0); // XXX/bowei - don't support caches for now
 
     int ret = this->impl_->put(key, TypeCollection::UNKNOWN_TYPE, data, flags);
@@ -194,5 +196,7 @@ MultiUncheckedDurableTable::get(
         ASSERT(ret == DS_OK);
     }
     
-    return ret;    
+    return ret;
+    */
+    return DS_ERR;
 }
