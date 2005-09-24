@@ -23,7 +23,7 @@ proc usage {} {
     puts "    -h | -help | --help  Print help message"
     puts "    -g | -gdb  | --gdb   Run program with gdb"
     puts "    -x | -xterm          Run each instance in an xterm"
-    puts "    -net <file>          Select the net file"
+    puts "    -net | --net <file>  Select the net file"
     puts "    -l <log dir>         Set a different directory for logs"
     puts "    -n <# nodes>         Number of nodes, unless overridden by test"
     puts "    -p                   Pause after apps dies, applies only to"
@@ -37,7 +37,9 @@ proc usage {} {
     puts "    --opts        <options...> Extra options to the program"
     puts "    --gdbrc       <tmpl>       Change remote gdbrc template"
     puts "    --script      <tmpl>       Change remote run script template"
+    puts "    --no-logs                  Don't collect logs/cores"
     puts "    --crap                     Pollute the /tmp dir"
+    puts "    --strip                    Strip execs before copying"
 }
 
 proc init {args test_script} {
@@ -50,6 +52,7 @@ proc init {args test_script} {
     set opt(verbose)       0
     set opt(xterm)         0
     set opt(crap)          0
+    set opt(no_logs)       0
     set opt(net)           ""
 
     set opt(gdb_extra)     ""
@@ -91,8 +94,10 @@ proc init {args test_script} {
 	    --opts        {shift args; set opt(opts)        [arg1 $args] }
 	    --gdb-tmpl    {shift args; set opt(gdb_tmpl)    [arg1 $args] }
 	    --script-tmpl {shift args; set opt(script_tmpl) [arg1 $args] }
+	    --no-logs     {set opt(no_logs) 1 }
 	    --crap        {set opt(crap) 1}
-	    default       {puts "illegal option [arg1 $args]"; usage; exit }
+	    --strip       { puts "XXX/bowei -- not implemented yet"; exit }
+	    default       { puts "illegal option [arg1 $args]"; usage; exit }
 	}
 	shift args
     }
@@ -293,6 +298,8 @@ proc wait_for_programs {} {
 # 
 proc collect_logs {} {
     global opt net::host run::dirs
+
+    if {$opt(no_logs)} { return }
 
     puts "* Collecting logs/cores into $opt(logdir)"
     if {! [file isdirectory $opt(logdir)]} {
