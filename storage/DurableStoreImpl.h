@@ -152,7 +152,27 @@ protected:
      */
     size_t flatten(const SerializableObject& key, 
                    u_char* key_buf, size_t size);
-
+    
+    template<size_t _size>
+    size_t flatten(const SerializableObject&      key,
+                   ScratchBuffer<u_char*, _size>* scratch);
+    
     std::string table_name_;	///< Name of the table
     bool multitype_;		///< Whether single or multi-type table
 };
+
+template<size_t _size>
+size_t
+DurableTableImpl::flatten(const SerializableObject&      key,
+                          ScratchBuffer<u_char*, _size>* scratch)
+{
+    MarshalSize sizer(Serialize::CONTEXT_LOCAL);
+    sizer.action(&key);
+
+    Marshal marshaller(Serialize::CONTEXT_LOCAL, 
+                       scratch->buf(sizer.size()), 
+                       sizer.size());
+    const_cast<SerializableObject&>(key).serialize(&marshaller);
+    
+    return scratch->size();
+}

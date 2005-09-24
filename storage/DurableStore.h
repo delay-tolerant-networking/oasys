@@ -49,6 +49,7 @@
 #include "../thread/SpinLock.h"
 #include "../util/LRUList.h"
 #include "../util/StringUtils.h"
+#include "../util/ScratchBuffer.h"
 
 namespace oasys {
 
