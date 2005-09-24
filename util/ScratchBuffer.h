@@ -6,7 +6,7 @@
  * 
  * Intel Open Source License 
  * 
- * Copyright (c) 2004 Intel Corporation. All rights reserved. 
+ * Copyright (c) 2005 Intel Corporation. All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -35,25 +35,28 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __SCRATCH_BUFFER__
-#define __SCRATCH_BUFFER__
+#ifndef __STATIC_SCRATCH_BUFFER__
+#define __STATIC_SCRATCH_BUFFER__
 
 #include <cstdlib>
+#include <cstring>
 #include "../debug/DebugUtils.h"
 
 namespace oasys {
 
-/**
- * This is a class which wraps a malloc'd buffer.
+/*!
+ * ScratchBuffer template.
  *
- * This can be used either for a one-time-use malloc'd buffer which
- * then is automatically freed in the destructor, or as a reusable
- * scratch buffer, obviating the need to constantly malloc, then free
- * a buffer in order to serialize into/out of. In the latter case the
- * caller must externally lock for multi-threaded use.
+ * @param _memory_t    Memory type to return from buf()
+ * @param _static_size Size of the buffer to allocate statically from
+ *     the stack. This is useful where the size is commonly small, but
+ *     unusual and large sizes need to be handled as well.
  */
-template<typename _memory_t = void*>
-class ScratchBuffer {
+template<typename _memory_t = void*, size_t _static_size = 0>
+class ScratchBuffer;
+
+template<typename _memory_t>
+class ScratchBuffer<_memory_t, 0> {
 public:
     ScratchBuffer(size_t size = 0)
         : buf_(0), size_(size)
@@ -63,8 +66,15 @@ public:
             ASSERT(buf_);
         }
     }
+    
+    ~ScratchBuffer() { 
+        if (buf_ != 0) 
+            free(buf_);
+    }
 
-    ~ScratchBuffer() { free(buf_) ;}
+    _memory_t buf() { 
+        return buf_; 
+    }
     
     _memory_t buf(size_t size) {
         if (size > size_)
@@ -74,37 +84,33 @@ public:
         }
         return buf_;
     }
-
-    _memory_t buf()  { return buf_; }
+    
     size_t    size() { return size_; }
     
 private:
-    static const int INIT_SIZE = 256;
-    
     _memory_t buf_;
     size_t    size_;
 };
 
-/**
- * An initially stack allocated chunk of memory that switches to
- * malloc if it gets too big. Useful for those occasions when the
- * common case is under a certain size, but arbitrary sizes also need
- * to be handled.
- */
-template<size_t _size, typename _memory_t = void*>
-class StaticBuffer {
+
+template<typename _memory_t, size_t _static_size>
+class ScratchBuffer {
 public:
-    StaticBuffer()
-        : buf_(reinterpret_cast<_memory_t>(static_buf_)), 
-	  size_(_size)
+    ScratchBuffer()
+        : buf_(reinterpret_cast<_memory_t>(static_buf_)),
+	  size_(_static_size)
     {}
 
-    ~StaticBuffer() { 
-	if (using_malloc())
+    ~ScratchBuffer() { 
+	if (using_malloc()) {
 	    free(buf_);
+        }
     }
     
-    _memory_t buf() { return buf_; }
+    _memory_t buf() { 
+        return buf_; 
+    }
+
     _memory_t buf(size_t size) {
         if (size > size_)
         {
@@ -127,13 +133,13 @@ public:
 private:
     _memory_t buf_;
     size_t    size_;
-    char      static_buf_[_size];
-
+    char      static_buf_[_static_size];
+    
     bool using_malloc() { 
-	return reinterpret_cast<char*>(buf_) != static_buf_; 
+	return reinterpret_cast<char*>(buf_) != static_buf_;
     }
 };
 
 } // namespace oasys
 
-#endif //__SCRATCH_BUFFER_H__
+#endif //__STATIC_SCRATCH_BUFFER_H__

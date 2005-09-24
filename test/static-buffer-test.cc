@@ -37,6 +37,7 @@
  */
 #include "util/UnitTest.h"
 #include "util/StringBuffer.h"
+#include "util/ScratchBuffer.h"
 
 using namespace oasys;
 
@@ -47,7 +48,6 @@ DECLARE_TEST(StringTest1) {
 
     return (strncmp("X", buf.c_str(), 10) == 0) ? 0 : UNIT_TEST_FAILED;
 }
-
 
 DECLARE_TEST(StringTest2) {
     StaticStringBuffer<10> buf;
@@ -62,9 +62,29 @@ DECLARE_TEST(StringTest2) {
     return (strncmp(buf2, buf.c_str(), 10) == 0) ? 0 : UNIT_TEST_FAILED;
 }
 
+DECLARE_TEST(ScratchTest1) {
+    ScratchBuffer<char*> buf;
+    char* buf2 = "1234567890";
+
+    memcpy(buf.buf(11), buf2, 11);
+
+    return (strncmp(buf2, buf.buf(), 10) == 0) ? 0 : UNIT_TEST_FAILED;
+}
+
+DECLARE_TEST(ScratchTest2) {
+    ScratchBuffer<char*, 11> buf;
+    char* buf2 = "1234567890";
+
+    memcpy(buf.buf(11), buf2, 11);
+
+    return (strncmp(buf2, buf.buf(), 10) == 0) ? 0 : UNIT_TEST_FAILED;
+}
+
 DECLARE_TESTER(Test) {    
     ADD_TEST(StringTest1);
     ADD_TEST(StringTest2);
+    ADD_TEST(ScratchTest1);
+    ADD_TEST(ScratchTest2);
 }
 
-DECLARE_TEST_FILE(Test, "static string buffer test");
+DECLARE_TEST_FILE(Test, "static buffer test");
