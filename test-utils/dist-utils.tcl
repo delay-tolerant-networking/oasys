@@ -5,7 +5,11 @@
 namespace eval dist {
 
 #
-# Generate a distribution set
+# Generate a distribution set. 
+#
+# XXX/bowei -- optimize for duplicate files by making the last #
+# duplicate win. Right now there is an extra copy op, but the behavior
+# is the same
 # 
 # @param manifest_list List of manifest files
 # @param basedir       Basedir from which the files are taken
