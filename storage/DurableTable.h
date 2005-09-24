@@ -139,7 +139,7 @@ public:
     int get(const SerializableObject& key, _DataType** data);
 
 private:
-    SingleTypeDurableTable();
+    // Not implemented on purpose -- can't copy
     SingleTypeDurableTable(const SingleTypeDurableTable&);
 };
 
@@ -190,6 +190,38 @@ public:
     int get(const SerializableObject& key, _BaseType** data);
 
 private:
-    MultiTypeDurableTable();
+    // Not implemented on purpose -- can't copy
     MultiTypeDurableTable(const MultiTypeDurableTable&);
+};
+
+/**
+ * Class for a durable table that can store objects which share no
+ * base class and have no typecode. This is used for tables (such as a
+ * property table) which have specified compile time programmer
+ * defined types and have no need for creating a class hierarchy of
+ * serializable types to handle. (e.g. a table containing both strings
+ * and sequence #s)
+ *
+ * The underlying DurableObjectCache is specialized with u_char*.
+ */
+class MultiUncheckedDurableTable : public DurableTable< u_char* > {
+public:
+    /**
+     * Constructor - We don't support caches for now. These tables are
+     * usually small in size.
+     */
+    MultiUncheckedDurableTable(DurableTableImpl*   impl,
+                               const std::string&  name)
+        : DurableTable< u_char* >(impl, name, 0) {}
+    
+    
+    template<typename _Type>
+    int put(const SerializableObject& key, const _Type* data, int flags);
+
+    template<typename _Type>
+    int get(const SerializableObject& key, _Type** data);
+
+private:
+    // Not implemented on purpose -- can't copy
+    MultiUncheckedDurableTable(const MultiUncheckedDurableTable&);
 };
