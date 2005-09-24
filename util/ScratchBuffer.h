@@ -48,13 +48,18 @@ namespace oasys {
  * ScratchBuffer template.
  *
  * @param _memory_t    Memory type to return from buf()
+ *
  * @param _static_size Size of the buffer to allocate statically from
  *     the stack. This is useful where the size is commonly small, but
- *     unusual and large sizes need to be handled as well.
+ *     unusual and large sizes need to be handled as well. Specifying 
+ *     this value will can potentially save many calls to malloc().
  */
 template<typename _memory_t = void*, size_t _static_size = 0>
 class ScratchBuffer;
 
+/*!
+ * ScratchBuffer class that doesn't use a static stack to begin with.
+ */
 template<typename _memory_t>
 class ScratchBuffer<_memory_t, 0> {
 public:
@@ -92,7 +97,10 @@ private:
     size_t    size_;
 };
 
-
+/*!
+ * ScratchBuffer class that uses a static stack allocated to begin
+ * with.
+ */
 template<typename _memory_t, size_t _static_size>
 class ScratchBuffer {
 public:
