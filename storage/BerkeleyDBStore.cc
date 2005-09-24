@@ -460,20 +460,15 @@ int
 BerkeleyDBTable::get(const SerializableObject& key, 
                      SerializableObject*       data)
 {
-    u_char key_buf[256];
-    size_t key_buf_len;
+    ScratchBuffer<u_char*, 256> key_buf;
+    size_t key_buf_len = flatten(key, &key_buf);
 
-    key_buf_len = flatten(key, key_buf, sizeof(key_buf));
-    if (key_buf_len == 0) 
-    {
-        log_err("zero or too long key length");
-        return DS_ERR;
-    }
+    ASSERT(key_buf_len != 0);
 
     DBT k, d;
     bzero(&d, sizeof(d));
 
-    MAKE_DBT(k, key_buf, key_buf_len);
+    MAKE_DBT(k, key_buf.buf(), key_buf_len);
 
     int err = db_->get(db_, NO_TX, &k, &d, 0);
      
