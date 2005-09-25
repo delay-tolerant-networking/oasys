@@ -1,7 +1,9 @@
 
+import "command-init.tcl"
 import "dist-utils.tcl"
 import "net-utils.tcl"
 import "run-utils.tcl"
+import "tell-utils.tcl"
 
 #
 # Manage each node's tcl configuration file

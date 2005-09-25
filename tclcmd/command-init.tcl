@@ -26,7 +26,7 @@ proc event_loop {} {
 # Callback when there's data ready to be processed.
 #
 proc command_process {input output} {
-    global command command_prompt command_info
+    global command command_prompt command_info tell_encode
 
     # Grab the line, append it to the batched up command, and check if
     # it's complete
@@ -40,22 +40,39 @@ proc command_process {input output} {
 	}
     }
 
+    if {$line == "tell_encode"} {
+	set tell_encode($output) 1
+	puts $output "\ntell_encode"
+	flush $output
+	return
+    } elseif {$line == "no_tell_encode"} {
+	set tell_encode($output) 0
+	puts $output "\nno_tell_encode"
+	flush $output
+	return
+    }
+
     append command($input) $line
     if {![info complete $command($input)]} {
 	return
     }
-
+    
     # trim and evaluate the command
     set command($input) [string trim $command($input)]
     if {[catch {uplevel \#0 $command($input)} result]} {
 	global errorInfo
-	puts $output "error: $result\nwhile executing\n$errorInfo"
-    } elseif {$result != ""} {
-	puts $output $result
+	set result "error: $result\nwhile executing\n$errorInfo"
     }
-    
     set command($input) ""
-    puts -nonewline $output $command_prompt
+
+    if {$tell_encode($output)} {
+	regsub -all -- {\n} $result {\\n} result
+    }
+    puts $output $result
+    
+    if {! $tell_encode($output)} {
+	puts -nonewline $output $command_prompt
+    }
     flush $output
 }
 
@@ -63,12 +80,13 @@ proc command_process {input output} {
 # Run the simple (i.e. no tclreadline) command loop
 #
 proc simple_command_loop {prompt} {
-    global command_prompt forever
+    global command_prompt forever tell_encode
     set command_prompt "${prompt}% "
     
     puts -nonewline $command_prompt
     flush stdout
     
+    set tell_encode(stdin)  0
     fileevent stdin readable "command_process stdin stdout"
     
     after_forever
@@ -109,9 +127,10 @@ proc command_loop {prompt} {
 # Proc that's called when a new command connection arrives
 #
 proc command_connection {chan host port} {
-    global command_info command_prompt
+    global command_info command_prompt tell_encode
 
     set command_info($chan) "$host:$port"
+    set tell_encode($chan)  0
     log /command debug "new command connection $chan from $host:$port"
     fileevent $chan readable "command_process $chan $chan"
 
