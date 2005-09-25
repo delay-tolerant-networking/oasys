@@ -23,33 +23,28 @@ cd $RUN_DIR
 
 CHOICE="${XTERM} ${GDB}"
 case $CHOICE in
-    "1 1") 
-	dbg "gdb $RUN_DIR/$EXEC_FILE -x run-test.gdb"
+    "1 1")
+	CMD="gdb $RUN_DIR/$EXEC_FILE -x run-$EXEC_FILE.gdb 2>&1 | \
+               tee $EXEC_FILE.out"
 	echo "stderr was redirected to $EXEC_FILE.out" >> $EXEC_FILE.err
-	gdb $RUN_DIR/$EXEC_FILE -x run-$EXEC_FILE.gdb 2>&1 | \
-	    tee $EXEC_FILE.out
 	;;
     "1 0") 
-	dbg "$RUN_DIR/$EXEC_FILE $EXEC_OPTS"
+	CMD="$RUN_DIR/$EXEC_FILE $EXEC_OPTS 2>&1 | tee $EXEC_FILE.out"
 	echo "stderr was redirected to $EXEC_FILE.out" >> $EXEC_FILE.err
-	$RUN_DIR/$EXEC_FILE $EXEC_OPTS 2>&1 | tee $EXEC_FILE.out
 	;;
     "0 1")
-	dbg "gdb -batch -x run-test.gdb $GDB_OPTS $RUN_DIR/$EXEC_FILE"
-	dbg "    >$RUN_DIR/$EXEC_FILE.err >$RUN_DIR/$EXEC_FILE.std &"
-	gdb -batch -x run-test.gdb $GDB_OPTS $RUN_DIR/$EXEC_FILE \
-	    2>$RUN_DIR/$EXEC_FILE.err >$RUN_DIR/$EXEC_FILE.out & 
-	echo $!
+	CMD="gdb -batch -x run-test.gdb $GDB_OPTS $RUN_DIR/$EXEC_FILE \
+	    2>$RUN_DIR/$EXEC_FILE.err >$RUN_DIR/$EXEC_FILE.out "
 	;;
     "0 0")
-	dbg "$RUN_DIR/$EXEC_FILE $EXEC_OPTS >$RUN_DIR/$EXEC_FILE.err \\ "
-	dbg "    >$RUN_DIR/log.std"
-	$RUN_DIR/$EXEC_FILE $EXEC_OPTS 2>$RUN_DIR/$EXEC_FILE.err \
-	    >$RUN_DIR/$EXEC_FILE.out &
-	echo $!
+	CMD="$RUN_DIR/$EXEC_FILE $EXEC_OPTS 2>$RUN_DIR/$EXEC_FILE.err \
+	    >$RUN_DIR/$EXEC_FILE.out"
 	;;
     *) echo "! garbage arguments to run script"; exit ;;
 esac
+
+dbg "% $CMD"
+eval $CMD
 
 if [ \( "$XTERM" = 1 \) -a \( "$PAUSE_AFTER" = 1 \) ]; then
     echo
