@@ -216,6 +216,7 @@ proc run {id exec_file exec_opts confname conf} {
 	"1 1" { 
 	    dbg "xterm -title \"$hostname-$id\" -e $script &"
 	    set exec_pid [exec xterm -title "$hostname - $id" -e $script &]
+	    dbg "xterm pid: $exec_pid"
 	    set run::pids($id) $exec_pid
 	    set run::xterm($id) 1
 	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
@@ -224,13 +225,15 @@ proc run {id exec_file exec_opts confname conf} {
 	    dbg "% xterm -title \"$hostname-$id\" -e ssh -t $hostname $script"
 	    set exec_pid [exec xterm -title "$hostname - $id" \
 			      -e ssh -t $hostname $script &]
+	    dbg "xterm pid: $exec_pid"
 	    set run::pids($id) $exec_pid
 	    set run::xterm($id) 1
 	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
 	"1 0" {
 	    dbg "% $script &"
-	    set exec_pid [exec $script &]
+	    set exec_pid [exec sh $script &]
+	    dbg "script pid: $exec_pid"
 	    set run::pids($id)  $exec_pid
 	    set run::xterm($id) 0
 	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
@@ -238,6 +241,7 @@ proc run {id exec_file exec_opts confname conf} {
 	"0 0" {
 	    dbg "% ssh $hostname $script"
 	    set exec_pid [exec ssh $hostname $script]
+	    dbg "script pid: $exec_pid"
 	    set run::pids($id) $exec_pid
 	    set run::xterm($id) 0
 
