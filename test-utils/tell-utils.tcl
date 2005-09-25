@@ -8,10 +8,6 @@ proc tell {host port cmd} {
 }
 
 namespace eval tell {
-    proc wait_for_server {host port {timeout 30000}} {
-	# XXX/matt todo
-    }
-    
     proc connect {host port} {
 	global tell::sockets
 
@@ -25,6 +21,19 @@ namespace eval tell {
 	}
 
 	set tell::sockets($host:$port) $sock
+    }
+
+    proc wait {host port {timeout 30000}} {
+	set start [clock clicks -milliseconds]
+	while {[clock clicks -milliseconds] < $start + $timeout} {
+	    if [catch {tell::connect $host $port} err] {
+		continue
+	    }
+
+	    return
+	}
+	
+	error "timeout connecting to $host:$port"
     }
     
     proc tell {host port cmd} {
