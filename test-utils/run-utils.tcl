@@ -23,6 +23,7 @@ proc usage {} {
     puts "    -h | -help | --help  Print help message"
     puts "    -g | -gdb  | --gdb   Run program with gdb"
     puts "    -x | -xterm          Run each instance in an xterm"
+    puts "    -geom | -geometry    Specify the xterm geometry (implies -x)"
     puts "    -net | --net <file>  Select the net file"
     puts "    -l <log dir>         Set a different directory for logs"
     puts "    -n <# nodes>         Number of nodes, unless overridden by test"
@@ -58,6 +59,7 @@ proc init {args test_script} {
     set opt(gdb_extra)     ""
     set opt(gdbopts)       ""
     set opt(opts)          ""
+    set opt(geometry)      ""
     set opt(gdb_tmpl)      [import_find gdbrc.template]
     set opt(script_tmpl)   [import_find script.template]
 
@@ -82,6 +84,9 @@ proc init {args test_script} {
 	    -x            -
 	    -xterm        -
 	    --xterm       {set opt(xterm) 1}
+	    -geom         -
+	    -geometry     -
+	    --geometry    {shift args; set opt(xterm) 1; set opt(geometry) [arg1 $args] }
 	    -l            {shift args; set opt(logdir) [arg1 $args] }
 	    -p            {set opt(pause) 1}
 	    -r            {shift args; set opt(rundir_prefix) [arg1] }
@@ -151,6 +156,7 @@ proc generate_script {id exec_file exec_opts confname conf} {
     set script(pause_after) $opt(pause)
     set script(verbose)     $opt(verbose)
     set script(xterm)       $opt(xterm)
+    set script(geometry)    $opt(geometry)
 
     # run script
     set runscript [process_template $opt(script_tmpl) script]    
@@ -210,20 +216,22 @@ proc run {id exec_file exec_opts confname conf} {
     set script "$opt(rundir_prefix)-$hostname-$id/run-$exec_file.sh"
     set run::dirs($id) "$opt(rundir_prefix)-$hostname-$id"
 
+    set geometry $opt(geometry)
+    
     # NB: When running in an xterm, the PID collected is the PID of
     # the local xterm instance, not the remote process instance
     switch "[net::is_localhost $hostname] $opt(xterm)" {
 	"1 1" { 
-	    dbg "xterm -title \"$hostname-$id\" -e $script &"
-	    set exec_pid [exec xterm -title "$hostname - $id" -e $script &]
+	    dbg "xterm -title \"$hostname-$id\" -geometry $geometry -e $script &"
+	    set exec_pid [exec xterm -title "$hostname - $id" -geometry $geometry -e $script &]
 	    dbg "xterm pid: $exec_pid"
 	    set run::pids($id) $exec_pid
 	    set run::xterm($id) 1
 	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
 	"0 1" {
-	    dbg "% xterm -title \"$hostname-$id\" -e ssh -t $hostname $script"
-	    set exec_pid [exec xterm -title "$hostname - $id" \
+	    dbg "% xterm -title \"$hostname-$id\" -geometry $geometry -e ssh -t $hostname $script"
+	    set exec_pid [exec xterm -title "$hostname - $id" -geometry $geometry\
 			      -e ssh -t $hostname $script &]
 	    dbg "xterm pid: $exec_pid"
 	    set run::pids($id) $exec_pid
