@@ -132,11 +132,44 @@ public:
     const char* value() const { return str_; }
 
 private:
-    NullStringShim();
-    
     std::string name_;
     char* str_;
     bool free_mem_;
+};
+
+class ByteBufShim: public SerializableObject {
+public:
+    ByteBufShim(char* buf, size_t size)
+	: buf_(buf), size_(size), own_buf_(false) {}
+
+    ByteBufShim(const Builder& b) 
+	: buf_(0), size_(0), own_buf_(false) {}
+
+    ~ByteBufShim() {
+	if (buf_ != 0 && own_buf_) {
+	    free(buf_);
+	}
+    }
+
+    // virtual from SerializableObject
+    void serialize(SerializeAction* a)
+    {
+	a->process("bytes", &reinterpret_cast<u_char*>(buf_), 
+                   &size_, Serialize::ALLOC_MEM);
+
+        if (a->action_code() == Serialize::UNMARSHAL) {
+            own_buf_ = true;
+        }
+    }
+ 
+    const char* value() const { return buf_; }
+    char*       take_buf()    { own_buf_ = false; return buf_; }
+    size_t      size()  const { return size_; }
+
+private:
+    char*  buf_;
+    size_t size_;    
+    bool   own_buf_;
 };
 
 }; // namespace oasys
