@@ -16,13 +16,13 @@ volatile int count2 = 0;
 
 class Thread1 : public Thread {
 public:
-    Thread1(SpinLock* l) : Thread(CREATE_JOINABLE), lock_(l) {}
+    Thread1(SpinLock* l) : Thread("Thread1", CREATE_JOINABLE), lock_(l) {}
     
 protected:
     virtual void run() {
         for (int i = 0; i < nspins; ++i) {
             if (lock_)
-                lock_->lock();
+                lock_->lock("Thread1");
             ++count1;
             ++total;
             if (lock_)
@@ -35,13 +35,13 @@ protected:
 
 class Thread2 : public Thread {
 public:
-    Thread2(SpinLock* l) : Thread(CREATE_JOINABLE), lock_(l) {}
+    Thread2(SpinLock* l) : Thread("Thread2", CREATE_JOINABLE), lock_(l) {}
     
 protected:
     virtual void run() {
         for (int i = 0; i < nspins; ++i) {
             if (lock_)
-                lock_->lock();
+                lock_->lock("Thread2");
             
             ++count2;
             ++total;

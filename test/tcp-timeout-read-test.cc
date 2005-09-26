@@ -24,7 +24,7 @@ using namespace oasys;
 
 class TestTcpWriter : public TCPClient, public Thread {
  public:
-    TestTcpWriter() : TCPClient()
+    TestTcpWriter() : Thread("TestTcpWriter")
     {
     }
 
@@ -46,7 +46,7 @@ class TestTcpWriter : public TCPClient, public Thread {
 class TestTcpReader : public TCPClient, public Thread {
 public:
     TestTcpReader(int fd, in_addr_t host, u_int16_t port) :
-        TCPClient(fd, host, port), Thread(DELETE_ON_EXIT | CREATE_JOINABLE)
+        TCPClient(fd, host, port), Thread("TestTcpReader", DELETE_ON_EXIT | CREATE_JOINABLE)
     {
     }
 
@@ -74,7 +74,7 @@ public:
 class TestTcpServer : public TCPServerThread {
 public:
     TestTcpServer()
-        : TCPServerThread("/test-server", CREATE_JOINABLE)
+        : TCPServerThread("TestTcpServer", "/test-server", CREATE_JOINABLE)
     {
         log_info("starting up");
         bind(htonl(INADDR_LOOPBACK), PORT);

@@ -10,6 +10,10 @@
 using namespace oasys;
 
 class LoggerThread : public Thread {
+public:
+    LoggerThread() : Thread("LoggerThread") {}
+    
+protected:
     virtual void run () {
         int i;
         while (1) {

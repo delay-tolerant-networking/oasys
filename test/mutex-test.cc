@@ -13,7 +13,7 @@ int invariant[1000];
 
 class Thread1 : public Thread {
 public:
-    Thread1(Mutex* m) : mutex_(m) {}
+    Thread1(Mutex* m) : Thread("Thread1"), mutex_(m) {}
     
 protected:
     virtual void run() {
@@ -22,7 +22,7 @@ protected:
         while(true)
         {
             ASSERT(! mutex_->is_locked_by_me());
-            mutex_->lock();
+            mutex_->lock("Thread1");
             ASSERT(mutex_->is_locked_by_me());
 
             fprintf(stderr, "Thread1: grabbed lock, sleeping\n");
@@ -57,7 +57,7 @@ protected:
 
 class Thread2 : public Thread {
 public:
-    Thread2(Mutex* m) : mutex_(m) {}
+    Thread2(Mutex* m) : Thread("Thread2"), mutex_(m) {}
     
 protected:
     virtual void run() {
@@ -66,14 +66,14 @@ protected:
         while(true)
         {
             ASSERT(!mutex_->is_locked_by_me());
-            mutex_->lock();
+            mutex_->lock("Thread2");
             ASSERT(mutex_->is_locked_by_me());
 
             fprintf(stderr, "Thread2: grabbed lock, sleeping\n");
             
             // recursive locking test
             {
-                ScopeLock lock2(mutex_);
+                ScopeLock lock2(mutex_, "Thread2");
                 gettimeofday(&start, NULL);
             }
 
@@ -109,12 +109,12 @@ protected:
 
 class Thread3 : public Thread {
 public:
-    Thread3(Mutex* m) : mutex_(m) {}
+    Thread3(Mutex* m) : Thread("Thread3"), mutex_(m) {}
     
 protected:
     virtual void run() {
         while(true) {
-            int ret = mutex_->try_lock();
+            int ret = mutex_->try_lock("Thread3");
             if (ret != EBUSY) {
                 // very unlikely
                 fprintf(stderr, "Thread3: grabbed lock, releasing and sleeping\n");

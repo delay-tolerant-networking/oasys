@@ -10,7 +10,7 @@ using namespace oasys;
 
 class Consumer : public Thread {
 public:
-    Consumer(MsgQueue<int>* q) : q_(q) {}
+    Consumer(MsgQueue<int>* q) : Thread("Consumer"), q_(q) {}
 protected:
     virtual void run() {
         int prev = -1;
@@ -32,7 +32,7 @@ protected:
 
 class Producer : public Thread {
 public:
-    Producer(MsgQueue<int>* q) : q_(q) {}
+    Producer(MsgQueue<int>* q) : Thread("Producer"), q_(q) {}
 protected:
     virtual void run() {
         int curr = 0;

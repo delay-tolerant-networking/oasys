@@ -80,7 +80,7 @@ DECLARE_TEST(Init) {
 class ReadThread : public Thread {
 public:
     ReadThread(int fd)
-        : Thread(CREATE_JOINABLE), fd_(fd), done_(false) {}
+        : Thread("ReadThread", CREATE_JOINABLE), fd_(fd), done_(false) {}
 
     void run() {
         result_ = test();
@@ -136,7 +136,7 @@ public:
 class WriteThread : public Thread {
 public:
     WriteThread(int fd)
-        : Thread(CREATE_JOINABLE), fd_(fd), done_(false) {}
+        : Thread("WriteThread", CREATE_JOINABLE), fd_(fd), done_(false) {}
 
     void run() {
         result_ = test();
@@ -183,7 +183,7 @@ public:
 class ReadvThread : public Thread {
 public:
     ReadvThread(int fd)
-        : Thread(CREATE_JOINABLE), fd_(fd), done_(false) {}
+        : Thread("ReadvThread", CREATE_JOINABLE), fd_(fd), done_(false) {}
 
     void run() {
         result_ = test();
@@ -246,7 +246,7 @@ public:
 class WritevThread : public Thread {
 public:
     WritevThread(int fd)
-        : Thread(CREATE_JOINABLE), fd_(fd), done_(false) {}
+        : Thread("WritevThread", CREATE_JOINABLE), fd_(fd), done_(false) {}
 
     void run() {
         result_ = test();

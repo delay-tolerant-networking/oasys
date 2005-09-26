@@ -137,7 +137,7 @@ protected:
 
     struct Writer : public Thread {
         Writer(IOTester* target) 
-            : Thread(CREATE_JOINABLE), target_(target) {}
+            : Thread("Writer", CREATE_JOINABLE), target_(target) {}
 
         void run() { 
             target_->run_writer_pre();
@@ -150,7 +150,7 @@ protected:
 
     struct Reader : public Thread {
         Reader(IOTester* target) 
-            : Thread(CREATE_JOINABLE),target_(target) {}
+            : Thread("Reader", CREATE_JOINABLE),target_(target) {}
 
         void run() { 
             target_->run_reader_pre();

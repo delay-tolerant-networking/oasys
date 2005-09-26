@@ -11,7 +11,7 @@ using namespace oasys;
 
 class MyThread : public Thread {
 public:
-    MyThread() : Thread(DELETE_ON_EXIT | CREATE_JOINABLE) {}
+    MyThread() : Thread("MyThread", DELETE_ON_EXIT | CREATE_JOINABLE) {}
 
 protected:
     void run() {

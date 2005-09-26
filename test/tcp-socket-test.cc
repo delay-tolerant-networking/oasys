@@ -17,7 +17,7 @@ using namespace oasys;
 // The client side socket that initiates the ping
 class TestTcpPing : public TCPClient, public Thread {
 public:
-    TestTcpPing() : TCPClient()
+    TestTcpPing() : Thread("TestTcpPing")
     {
     }
     
@@ -48,7 +48,7 @@ class TestTcpPong : public TCPClient, public Thread {
 public:
     // The server side accept()ed socket that responds
     TestTcpPong(int fd, in_addr_t host, u_int16_t port) :
-        TCPClient(fd, host, port), Thread(DELETE_ON_EXIT)
+        TCPClient(fd, host, port), Thread("TestTcpPong", DELETE_ON_EXIT)
     {
         snprintf(outpkt_, sizeof(outpkt_), "pong");
     }
@@ -80,7 +80,7 @@ public:
 class TestTcpServer : public TCPServerThread {
 public:
     TestTcpServer()
-        : TCPServerThread("/test-server", CREATE_JOINABLE)
+        : TCPServerThread("TCPServerThread", "/test-server", CREATE_JOINABLE)
     {
         log_info("starting up");
         bind(htonl(INADDR_LOOPBACK), PORT);
