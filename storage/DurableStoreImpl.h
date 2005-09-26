@@ -161,6 +161,7 @@ protected:
     bool multitype_;		///< Whether single or multi-type table
 };
 
+// Implementation of the templated method must be in the header
 template<size_t _size>
 size_t
 DurableTableImpl::flatten(const SerializableObject&      key,

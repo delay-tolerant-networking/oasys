@@ -148,55 +148,40 @@ MultiTypeDurableTable<_BaseType, _Collection>::put(
 //----------------------------------------------------------------------------
 template<typename _Type>
 inline int 
-MultiUncheckedDurableTable::put(
+NonTypedDurableTable::put(
     const SerializableObject& key,
     const _Type*              data,
     int                       flags
     )
 {
-    /*
-    int err;
-    
     ASSERT(this->cache_ == 0); // XXX/bowei - don't support caches for now
-    ScratchBuffer<u_char*, 128> scratch;
-   
-    _DataType* d = new _DataType(Builder());
-    
-    err = this->impl_->get(key, d);
-    if (err != 0) {
-        delete d;
-        return err;
-    }
+    int ret = this->impl_->put(key, TypeCollection::UNKNOWN_TYPE, 
+                               data, flags);
+    ASSERT(ret == DS_OK);
 
-    *data = d;
-    return 0;    
-    */
-    return DS_ERR;
+    return ret;
 }
 
 //----------------------------------------------------------------------------
 template<typename _Type>
 inline int 
-MultiUncheckedDurableTable::get(
+NonTypedDurableTable::get(
     const SerializableObject& key,
     _Type**                   data
     )
 {
-    /*
     ASSERT(this->cache_ == 0); // XXX/bowei - don't support caches for now
 
-    int ret = this->impl_->put(key, TypeCollection::UNKNOWN_TYPE, data, flags);
+    _Type* new_obj = new _Type(Builder());
+    ASSERT(new_obj != 0);
+    int err = this->impl_->get(key, *data);
 
-    if (ret != DS_OK) {
-        return ret;
+    if (err != DS_OK) {
+        delete_z(new_obj);
+        *data = 0;
+
+        return err;
     }
-    
-    if (this->cache_ != 0) {
-        ret = this->cache_->put(key, data, flags);
-        ASSERT(ret == DS_OK);
-    }
-    
-    return ret;
-    */
-    return DS_ERR;
+
+    return DS_OK;
 }

@@ -202,17 +202,19 @@ private:
  * serializable types to handle. (e.g. a table containing both strings
  * and sequence #s)
  *
- * The underlying DurableObjectCache is specialized with u_char*.
+ * The underlying DurableObjectCache is specialized with 
+ * SerializableObject.
  */
-class MultiUncheckedDurableTable : public DurableTable< u_char* > {
+class NonTypedDurableTable : public DurableTable< SerializableObject > {
 public:
     /**
      * Constructor - We don't support caches for now. These tables are
-     * usually small in size.
+     * usually small in size and have contents which need to be
+     * immediately durable, so this should not be a problem.
      */
-    MultiUncheckedDurableTable(DurableTableImpl*   impl,
-                               const std::string&  name)
-        : DurableTable< u_char* >(impl, name, 0) {}
+    NonTypedDurableTable(DurableTableImpl*   impl,
+                         const std::string&  name)
+        : DurableTable< SerializableObject >(impl, name, 0) {}
     
     
     template<typename _Type>
@@ -223,5 +225,5 @@ public:
 
 private:
     // Not implemented on purpose -- can't copy
-    MultiUncheckedDurableTable(const MultiUncheckedDurableTable&);
+    NonTypedDurableTable(const NonTypedDurableTable&);
 };

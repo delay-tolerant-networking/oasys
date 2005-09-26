@@ -160,6 +160,20 @@ public:
                   int                 flags,
                   DurableObjectCache<_BaseType>* cache = NULL);
 
+    /**
+     * Get a new handle on a table.
+     *
+     * @param table      Pointer to the table to be created
+     * @param flags      Options for creating the table
+     * @param table_name Name of the table
+     * @param cache      Optional cache for the table
+     * @return DS_OK, DS_NOTFOUND, DS_EXISTS, DS_ERR
+     */
+    int get_table(NonTypedDurableTable** table, 
+                  std::string            table_name,
+                  int                    flags,
+                  DurableObjectCache< SerializableObject >* cache = NULL);
+
     /*!
      * Delete the table (by name) from the datastore.
      */

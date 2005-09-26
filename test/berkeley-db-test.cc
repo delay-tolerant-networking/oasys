@@ -440,6 +440,36 @@ DECLARE_TEST(MultiType) {
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(NoTypeTable) {
+    g_config->tidy_ = true;
+    DurableStoreImpl* impl  = new BerkeleyDBStore();
+    DurableStore*     store = new DurableStore(impl);
+    impl->init(g_config);
+
+    NonTypedDurableTable* table = 0;
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
+    CHECK(table != 0);
+
+    StringShim serial_string("01234567890");
+    IntShim    serial_int(42);
+    
+    CHECK(table->put(StringShim("foo"), 
+                     &serial_string, 0));
+    CHECK(table->put(StringShim("bar"),
+                     &serial_int, 0));
+
+    StringShim* str;
+    IntShim*    i;
+    
+    CHECK(table->get(StringShim("foo"), &str));
+    CHECK(table->get(StringShim("bar"), &i));
+
+    CHECK_EQUALSTR(str->value().c_str(), "01234567890");
+    CHECK_EQUAL(i->value(), 42);
+
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TEST(SingleTypeCache) {
     g_config->tidy_           = true;
     DurableStoreImpl*   impl  = new BerkeleyDBStore();
@@ -711,6 +741,7 @@ DECLARE_TESTER(BerkleyDBTester) {
     ADD_TEST(SingleTypeMultiObject);
     ADD_TEST(SingleTypeIterator);
     ADD_TEST(SingleTypeCache);
+    ADD_TEST(NoTypeTable);
     ADD_TEST(MultiType);
     ADD_TEST(MultiTypeCache);
 }

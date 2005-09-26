@@ -1,3 +1,4 @@
+// included by DurableStore.h
 
 inline const char* durable_strerror(int r)
 {
