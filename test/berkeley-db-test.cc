@@ -440,7 +440,7 @@ DECLARE_TEST(MultiType) {
     return UNIT_TEST_PASSED;
 }
 
-DECLARE_TEST(NoTypeTable) {
+DECLARE_TEST(NonTypedTable) {
     g_config->tidy_ = true;
     DurableStoreImpl* impl  = new BerkeleyDBStore();
     DurableStore*     store = new DurableStore(impl);
@@ -741,7 +741,7 @@ DECLARE_TESTER(BerkleyDBTester) {
     ADD_TEST(SingleTypeIterator);
     ADD_TEST(SingleTypeCache);
 
-    ADD_TEST(NoTypeTable);
+    ADD_TEST(NonTypedTable);
     ADD_TEST(MultiType);
     ADD_TEST(MultiTypeCache);
 }
