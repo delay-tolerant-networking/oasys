@@ -154,7 +154,7 @@ public:
     // virtual from SerializableObject
     void serialize(SerializeAction* a)
     {
-	a->process("bytes", &reinterpret_cast<u_char*>(buf_), 
+	a->process("bytes", (u_char**)&buf_,
                    &size_, Serialize::ALLOC_MEM);
 
         if (a->action_code() == Serialize::UNMARSHAL) {
