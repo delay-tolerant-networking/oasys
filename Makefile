@@ -108,7 +108,7 @@ CPPS := $(CPPS:.c=.E)
 # Default target is to build the library and the compat library
 #
 LIBFILES := liboasys.a liboasyscompat.a
-all: checkconfigure $(LIBFILES)
+all: checkconfigure $(LIBFILES) tests
 
 #
 # Rule to generate the doxygen documentation
