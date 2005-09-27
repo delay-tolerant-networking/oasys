@@ -381,16 +381,24 @@ protected:
     /**
      * Aliases for other integer types.
      */
-    void bind_i(const char* name, int16_t* val, const char* help = NULL)
-        { bind_i(name, (int*)val, help); }
-    void bind_i(const char* name, int8_t* val, const char* help = NULL)
-        { bind_i(name, (int*)val, help); }
-    void bind_i(const char* name, u_int32_t* val, const char* help = NULL)
-        { bind_i(name, (int*)val, help); }
-    void bind_i(const char* name, u_int16_t* val, const char* help = NULL)
-        { bind_i(name, (int*)val, help); }
-    void bind_i(const char* name, u_int8_t* val, const char* help = NULL)
-        { bind_i(name, (int*)val, help); }
+#define BIND_I_ALIAS(_type)                                     \
+    void bind_i(const char* name, _type* val,                   \
+                const char* help = NULL)                        \
+    {                                                           \
+        bind_i(name, (int*)val, help);                          \
+    }                                                           \
+                                                                \
+    void bind_i(const char* name, _type* val, _type initval,    \
+                const char* help = NULL)                        \
+    {                                                           \
+        bind_i(name, (int*)val, initval, help);                 \
+    }
+
+    BIND_I_ALIAS(u_int32_t);
+    BIND_I_ALIAS(int16_t);
+    BIND_I_ALIAS(u_int16_t);
+    BIND_I_ALIAS(int8_t);
+    BIND_I_ALIAS(u_int8_t);
     ///@}
     
     /**

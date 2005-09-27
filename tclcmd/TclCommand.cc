@@ -185,6 +185,7 @@ void
 TclCommandInterp::command_server(const char* prompt,
                                  in_addr_t addr, u_int16_t port)
 {
+    log_debug("starting command server on %s:%d", intoa(addr), port);
     StringBuffer cmd("command_server %s %s %d", prompt, intoa(addr), port);
     
     if (Tcl_Eval(interp_, cmd.c_str()) != TCL_OK) {
@@ -598,11 +599,15 @@ void                                                                    \
 _fn(const char* name, _type* val, const char* help)                     \
 {                                                                       \
     if (bindings_.find(name) != bindings_.end())                        \
-    {                                                                   \
-        log_warn("warning, binding for %s already exists", name);       \
+    {   if (Log::initialized()) {                                       \
+            log_warn("warning, binding for %s already exists", name);   \
+        }                                                               \
     }                                                                   \
                                                                         \
-    log_debug("creating %s binding for %s -> %p", #_type, name, val);   \
+    if (Log::initialized()) {                                           \
+        log_debug("creating %s binding for %s -> %p",                   \
+                  #_type, name, val);                                   \
+    }                                                                   \
                                                                         \
     bindings_[name] = new Binding(_typecode, val);                      \
     StringBuffer subcmd("set %s", name);                                \
@@ -615,10 +620,16 @@ _fn(const char* name, _type* val, _type initval, const char* help)      \
     *val = initval;                                                     \
     if (bindings_.find(name) != bindings_.end())                        \
     {                                                                   \
-        log_warn("warning, binding for %s already exists", name);       \
+        if (Log::initialized()) {                                       \
+            log_warn("warning, binding for %s already exists", name);   \
+        }                                                               \
     }                                                                   \
                                                                         \
-    log_debug("creating %s binding for %s -> %p", #_type, name, val);   \
+                                                                        \
+    if (Log::initialized()) {                                           \
+        log_debug("creating %s binding for %s -> %p",                   \
+                  #_type, name, val);                                   \
+    }                                                                   \
                                                                         \
     bindings_[name] = new Binding(_typecode, val);                      \
     StringBuffer subcmd("set %s", name);                                \
@@ -638,10 +649,14 @@ TclCommand::bind_s(const char* name, std::string* val,
         val->assign(initval);
     
     if (bindings_.find(name) != bindings_.end()) {
-        log_warn("warning, binding for %s already exists", name);
+        if (Log::initialized()) {
+            log_warn("warning, binding for %s already exists", name);
+        }
     }
 
-    log_debug("creating string binding for %s -> %p", name, val);
+    if (Log::initialized()) {
+        log_debug("creating string binding for %s -> %p", name, val);
+    }
 
     bindings_[name] = new Binding(BINDING_STRING, val);
     StringBuffer subcmd("set %s", name);
@@ -654,11 +669,15 @@ TclCommand::unbind(const char* name)
     BindingTable::iterator iter = bindings_.find(name);
 
     if (iter == bindings_.end()) {
-        log_warn("warning, binding for %s doesn't exist", name);
+        if (Log::initialized()) {
+            log_warn("warning, binding for %s doesn't exist", name);
+        }
         return;
     }
 
-    log_debug("removing binding for %s", name);
+    if (Log::initialized()) {
+        log_debug("removing binding for %s", name);
+    }
 
     Binding* old = iter->second;
     bindings_.erase(iter);
