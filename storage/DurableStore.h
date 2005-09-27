@@ -169,9 +169,9 @@ public:
      * @param cache      Optional cache for the table
      * @return DS_OK, DS_NOTFOUND, DS_EXISTS, DS_ERR
      */
-    int get_table(NonTypedDurableTable** table, 
-                  std::string            table_name,
-                  int                    flags,
+    int get_table(StaticTypedDurableTable** table, 
+                  std::string               table_name,
+                  int                       flags,
                   DurableObjectCache< SerializableObject >* cache = NULL);
 
     /*!

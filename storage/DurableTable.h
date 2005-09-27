@@ -205,15 +205,15 @@ private:
  * The underlying DurableObjectCache is specialized with 
  * SerializableObject.
  */
-class NonTypedDurableTable : public DurableTable< SerializableObject > {
+class StaticTypedDurableTable : public DurableTable< SerializableObject > {
 public:
     /**
      * Constructor - We don't support caches for now. These tables are
      * usually small in size and have contents which need to be
      * immediately durable, so this should not be a problem.
      */
-    NonTypedDurableTable(DurableTableImpl*   impl,
-                         const std::string&  name)
+    StaticTypedDurableTable(DurableTableImpl*   impl,
+                            const std::string&  name)
         : DurableTable< SerializableObject >(impl, name, 0) {}
     
     
@@ -225,5 +225,5 @@ public:
 
 private:
     // Not implemented on purpose -- can't copy
-    NonTypedDurableTable(const NonTypedDurableTable&);
+    StaticTypedDurableTable(const StaticTypedDurableTable&);
 };

@@ -446,7 +446,7 @@ DECLARE_TEST(NonTypedTable) {
     DurableStore*     store = new DurableStore(impl);
     impl->init(g_config);
 
-    NonTypedDurableTable* table = 0;
+    StaticTypedDurableTable* table = 0;
     CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
     CHECK(table != 0);
 

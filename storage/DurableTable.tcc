@@ -148,7 +148,7 @@ MultiTypeDurableTable<_BaseType, _Collection>::put(
 //----------------------------------------------------------------------------
 template<typename _Type>
 inline int 
-NonTypedDurableTable::put(
+StaticTypedDurableTable::put(
     const SerializableObject& key,
     const _Type*              data,
     int                       flags
@@ -165,7 +165,7 @@ NonTypedDurableTable::put(
 //----------------------------------------------------------------------------
 template<typename _Type>
 inline int 
-NonTypedDurableTable::get(
+StaticTypedDurableTable::get(
     const SerializableObject& key,
     _Type**                   data
     )

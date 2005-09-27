@@ -3,14 +3,16 @@
 namespace oasys {
 
 int 
-DurableStore::get_table(NonTypedDurableTable** table, 
-                        std::string            table_name,
-                        int                    flags,
+DurableStore::get_table(StaticTypedDurableTable** table, 
+                        std::string               table_name,
+                        int                       flags,
                         DurableObjectCache<SerializableObject>* cache)
 {
     ASSERT(cache == 0); // no cache for now
-    PrototypeVector prototypes;  // XXX/bowei -- can't support tables that require 
-                                 // prototyping...
+
+    // XXX/bowei -- can't support tables that require 
+    // prototyping...
+    PrototypeVector prototypes;  
 
     DurableTableImpl* table_impl;
     int err = impl_->get_table(&table_impl, table_name, flags, prototypes);
@@ -18,7 +20,7 @@ DurableStore::get_table(NonTypedDurableTable** table,
         return err;
     }
 
-    *table = new NonTypedDurableTable(table_impl, table_name);
+    *table = new StaticTypedDurableTable(table_impl, table_name);
     return 0;
 }
 
