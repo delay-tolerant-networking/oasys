@@ -223,6 +223,7 @@ void _name::add_tests()                                         \
 
 #define CHECK(x)                                        \
     do { if (! (x)) {                                   \
+        ::oasys::Breaker::break_here();                 \
         oasys::logf("/test", oasys::LOG_CRIT,           \
                     "CHECK FAILED (" #x ") at %s:%d",   \
                     __FILE__, __LINE__);                \
@@ -234,6 +235,7 @@ void _name::add_tests()                                         \
 
 #define CHECK_EQUAL(_a, _b)                                                      \
     do { int a = _a; int b = _b; if ((a) != (b)) {                               \
+        ::oasys::Breaker::break_here();                                          \
         oasys::logf("/test", oasys::LOG_CRIT,                                    \
                     "CHECK FAILED: '" #_a "' (%d) != '" #_b "' (%d) at %s:%d",   \
                     (a), (b), __FILE__, __LINE__);                               \
@@ -245,6 +247,7 @@ void _name::add_tests()                                         \
 
 #define CHECK_EQUAL_U64(a, b)                                                    \
     do { if ((a) != (b)) {                                                       \
+        ::oasys::Breaker::break_here();                                          \
         oasys::logf("/test", oasys::LOG_CRIT,                                    \
                     "CHECK FAILED: '" #a "' (%llu) != '" #b "' (%llu) at %s:%d", \
                     (u_int64_t)(a), (u_int64_t)(b), __FILE__, __LINE__);         \
@@ -257,6 +260,7 @@ void _name::add_tests()                                         \
 
 #define CHECK_EQUALSTR(a, b)                                                    \
     do { if (strcmp((a), (b)) != 0) {                                           \
+        ::oasys::Breaker::break_here();                                         \
         oasys::logf("/test", oasys::LOG_CRIT,                                   \
                     "CHECK FAILED: '" #a "' (%s) != '" #b "' (%s) at %s:%d",    \
                     (a), (b), __FILE__, __LINE__);                              \
@@ -269,6 +273,7 @@ void _name::add_tests()                                         \
 #define CHECK_EQUALSTRN(a, b, len)                                              \
     do { if (strncmp((const char*)(a), (const char*)(b), (len)) != 0) {         \
         if (len <= 32) {                                                        \
+            ::oasys::Breaker::break_here();                                     \
             oasys::logf("/test", oasys::LOG_CRIT, "CHECK FAILED: "              \
                         "'%s' (%s) != '%s' (%s) at %s:%d",                      \
                         #a, (a), #b, (b), __FILE__, __LINE__);                  \
