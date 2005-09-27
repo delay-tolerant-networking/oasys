@@ -53,10 +53,10 @@ namespace eval tell {
 	set result    [string range $resultvec 2 end]
 
 	regsub -all -- {\\n} $result "\n" result
-	if {$cmd_error == 0} {
+	if {$cmd_error == 0 || $result == ""} {
 	    return $result
 	} else {
-	    error $result
+	    error "error executing tell command:\n$result"
 	}
     }
 }
