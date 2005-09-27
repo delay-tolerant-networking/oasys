@@ -46,7 +46,8 @@ int
 DurableTableImpl::get_typecode(const SerializableObject& key,
                                TypeCollection::TypeCode_t* typecode)
 {
-    PANIC("Generic DurableTableImpl get_type method called for multi-type tables");
+    PANIC("Generic DurableTableImpl get_type method called for "
+          "multi-type tables");
 }
 
 size_t
@@ -62,7 +63,7 @@ DurableTableImpl::flatten(const SerializableObject& key,
     }
 
     Marshal marshaller(Serialize::CONTEXT_LOCAL, key_buf, 256);
-    const_cast<SerializableObject&>(key).serialize(&marshaller);
+    marshaller.action(&key);
     
     return sizer.size();
 }

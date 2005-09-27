@@ -386,11 +386,13 @@ Unmarshal::process(const char* name, u_char** bp, size_t* lenp, int flags)
 void 
 Unmarshal::process(const char* name, std::string* s)
 {
+    ASSERT(s != 0);
+
     size_t len;
     process(name, (u_int32_t*)&len);
 
     u_char* buf = next_slice(len);
-    if (buf == NULL) return;
+    if (buf == 0) return;
     
     s->assign((char*)buf, len);
     if (log_) {

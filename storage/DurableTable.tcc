@@ -174,14 +174,16 @@ NonTypedDurableTable::get(
 
     _Type* new_obj = new _Type(Builder());
     ASSERT(new_obj != 0);
-    int err = this->impl_->get(key, *data);
+    int err = this->impl_->get(key, new_obj);
 
     if (err != DS_OK) {
         delete_z(new_obj);
-        *data = 0;
+	*data = 0;
 
         return err;
     }
+	
+    *data = new_obj;
 
     return DS_OK;
 }

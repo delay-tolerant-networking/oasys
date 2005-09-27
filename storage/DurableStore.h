@@ -68,11 +68,11 @@ class DurableIterator;
  */
 enum DurableStoreResult_t {
     DS_OK        = 0,           ///< Success
-    DS_NOTFOUND  = 1,           ///< Database element not found.
-    DS_BUFSIZE   = 2,           ///< Buffer too small.
-    DS_BUSY      = 3,           ///< Table is still open, can't delete.
-    DS_EXISTS    = 4,           ///< Key already exists
-    DS_ERR       = 1000,        ///< XXX/bowei placeholder for now
+    DS_NOTFOUND  = -1,          ///< Database element not found.
+    DS_BUFSIZE   = -2,          ///< Buffer too small.
+    DS_BUSY      = -3,          ///< Table is still open, can't delete.
+    DS_EXISTS    = -4,          ///< Key already exists
+    DS_ERR       = -1000,       ///< XXX/bowei placeholder for now
 };
 
 /**

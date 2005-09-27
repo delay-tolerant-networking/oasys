@@ -462,7 +462,6 @@ BerkeleyDBTable::get(const SerializableObject& key,
 {
     ScratchBuffer<u_char*, 256> key_buf;
     size_t key_buf_len = flatten(key, &key_buf);
-
     ASSERT(key_buf_len != 0);
 
     DBT k, d;
@@ -507,10 +506,8 @@ int
 BerkeleyDBTable::get_typecode(const SerializableObject& key,
                               TypeCollection::TypeCode_t* typecode)
 {
-    u_char key_buf[256];
-    size_t key_buf_len;
-
-    key_buf_len = flatten(key, key_buf, sizeof(key_buf));
+    ScratchBuffer<u_char*, 256> key_buf;
+    size_t key_buf_len = flatten(key, &key_buf);
     if (key_buf_len == 0) 
     {
         log_err("zero or too long key length");
@@ -520,7 +517,7 @@ BerkeleyDBTable::get_typecode(const SerializableObject& key,
     DBT k, d;
     bzero(&d, sizeof(d));
 
-    MAKE_DBT(k, key_buf, key_buf_len);
+    MAKE_DBT(k, key_buf.buf(), key_buf_len);
 
     int err = db_->get(db_, NO_TX, &k, &d, 0);
      
@@ -559,30 +556,22 @@ BerkeleyDBTable::put(const SerializableObject& key,
                      const SerializableObject* data,
                      int                       flags)
 {
-    u_char key_buf[256];
-    size_t key_buf_len;
+    ScratchBuffer<u_char*, 256> key_buf;
+    size_t key_buf_len = flatten(key, &key_buf);
     DBT k, d;
-    int db_flags = 0;
     int err;
 
     // flatten and fill in the key
-    key_buf_len = flatten(key, key_buf, 256);
-    if (key_buf_len == 0) 
-    {
-        log_err("zero or too long key length");
-        return DS_ERR;
-    }
-    MAKE_DBT(k, key_buf, key_buf_len);
+    MAKE_DBT(k, key_buf.buf(), key_buf_len);
 
     // if the caller does not want to create new entries, first do a
     // db get to see if the key already exists
-    if ((flags & DB_CREATE) == 0) {
+    if ((flags & DS_CREATE) == 0) {
         bzero(&d, sizeof(d));
 
         err = db_->get(db_, NO_TX, &k, &d, 0);
         if (err == DB_NOTFOUND) {
             return DS_NOTFOUND;
-
         } else if (err != 0) {
             log_err("put -- DB internal error: %s", db_strerror(err));
             return DS_ERR;
@@ -612,7 +601,8 @@ BerkeleyDBTable::put(const SerializableObject& key,
         u_char* buf = scratch_.buf(typecode_sz + object_sz);
         
         // if we're a multitype table, marshal the type code
-        if (multitype_) {
+        if (multitype_) 
+        {
             Marshal typemarshal(Serialize::CONTEXT_LOCAL, buf, typecode_sz);
             UIntShim type_shim(typecode);
             
@@ -630,7 +620,7 @@ BerkeleyDBTable::put(const SerializableObject& key,
 
         MAKE_DBT(d, buf, typecode_sz + object_sz);
 
-        db_flags = 0;
+        int db_flags = 0;
         if (flags & DS_EXCL) {
             db_flags |= DB_NOOVERWRITE;
         }
@@ -639,7 +629,6 @@ BerkeleyDBTable::put(const SerializableObject& key,
 
         if (err == DB_KEYEXIST) {
             return DS_EXISTS;
-
         } else if (err != 0) {
             log_err("DB internal error: %s", db_strerror(err));
             return DS_ERR;

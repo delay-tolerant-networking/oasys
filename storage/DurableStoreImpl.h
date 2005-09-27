@@ -175,5 +175,5 @@ DurableTableImpl::flatten(const SerializableObject&      key,
                        sizer.size());
     const_cast<SerializableObject&>(key).serialize(&marshaller);
     
-    return scratch->size();
+    return sizer.size();
 }
