@@ -55,6 +55,7 @@ proc init {args test_script} {
     set opt(crap)          0
     set opt(no_logs)       0
     set opt(net)           ""
+    set opt(daemon)        0
 
     set opt(gdb_extra)     ""
     set opt(gdbopts)       ""
@@ -84,6 +85,9 @@ proc init {args test_script} {
 	    -x            -
 	    -xterm        -
 	    --xterm       {set opt(xterm) 1}
+	    -d            -
+	    -daemon       -
+	    --daemon      {set opt(daemon) 1}
 	    -geom         -
 	    -geometry     -
 	    --geometry    {shift args; set opt(xterm) 1; set opt(geometry) [arg1 $args] }
@@ -110,14 +114,14 @@ proc init {args test_script} {
     puts "* Reading net definition file $opt(net)"
     import $opt(net)
     
-    puts "* Reading test script $test_script"
-    source $test_script
-
     if {$num_nodes_override != 0} {
 	puts "* Setting num_nodes to $num_nodes_override"
 	net::num_nodes $num_nodes_override
     }
     
+    puts "* Reading test script $test_script"
+    source $test_script
+
     puts "* Distributing files"
     dist::files $manifest::manifest [net::hostlist] [pwd] \
 	    $opt(rundir_prefix) $manifest::subst $opt(verbose)
@@ -210,22 +214,24 @@ proc run {id exec_file exec_opts confname conf} {
 
     set hostname $net::host($id)
 
-    puts "* Generating scripts for $exec_file for $hostname:$id"
+    dbg "* Generating scripts for $exec_file for $hostname:$id"
     generate_script $id $exec_file $exec_opts $confname $conf
 
     set script "$opt(rundir_prefix)-$hostname-$id/run-$exec_file.sh"
     set run::dirs($id) "$opt(rundir_prefix)-$hostname-$id"
 
     set geometry $opt(geometry)
+
+    puts "* Running $exec_file on $hostname:$id"
     
     # NB: When running in an xterm, the PID collected is the PID of
     # the local xterm instance, not the remote process instance
     switch "[net::is_localhost $hostname] $opt(xterm)" {
 	"1 1" { 
-	    dbg "xterm -title \"$hostname-$id\" -geometry $geometry -e $script &"
+	    dbg "% xterm -title \"$hostname-$id\" -geometry $geometry -e $script &"
 	    set exec_pid [exec xterm -title "$hostname - $id" -geometry $geometry -e $script &]
-	    dbg "xterm pid: $exec_pid"
-	    set run::pids($id) $exec_pid
+	    dbg "* xterm pid: $exec_pid"
+	    lappend run::pids($id) $exec_pid
 	    set run::xterm($id) 1
 	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
@@ -233,24 +239,24 @@ proc run {id exec_file exec_opts confname conf} {
 	    dbg "% xterm -title \"$hostname-$id\" -geometry $geometry -e ssh -t $hostname $script"
 	    set exec_pid [exec xterm -title "$hostname - $id" -geometry $geometry\
 			      -e ssh -t $hostname $script &]
-	    dbg "xterm pid: $exec_pid"
-	    set run::pids($id) $exec_pid
+	    dbg "* xterm pid: $exec_pid"
+	    lappend run::pids($id) $exec_pid
 	    set run::xterm($id) 1
 	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
 	"1 0" {
 	    dbg "% $script &"
 	    set exec_pid [exec sh $script &]
-	    dbg "script pid: $exec_pid"
-	    set run::pids($id)  $exec_pid
+	    dbg "* script pid: $exec_pid"
+	    lappend run::pids($id)  $exec_pid
 	    set run::xterm($id) 0
 	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
 	"0 0" {
 	    dbg "% ssh $hostname $script"
 	    set exec_pid [exec ssh $hostname $script]
-	    dbg "script pid: $exec_pid"
-	    set run::pids($id) $exec_pid
+	    dbg "* script pid: $exec_pid"
+	    lappend run::pids($id) $exec_pid
 	    set run::xterm($id) 0
 
 	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
@@ -261,48 +267,69 @@ proc run {id exec_file exec_opts confname conf} {
 #
 # Wait for all running test programs to exit
 #
-proc wait_for_programs {} {
+proc wait_for_programs {{timeout 10000}} {
     global net::host run::pids run::xterm
-     
-    set num_alive 1
+    set num_alive 0
 
-    puts "* Waiting for programs"
-    while {$num_alive > 0} {
-	set num_alive 0
+    puts "* Waiting for spawned programs to exit"
 
-	for {set i 0} {$i < [net::num_nodes]} {incr i} {
-	    set hostname $net::host($i)
-	    set pid      $run::pids($i)
+    foreach signal {none INT KILL} {
+	set start [clock clicks -milliseconds]
+	
+	while {[clock clicks -milliseconds] < $start + $timeout} {
+	    set num_alive 0
+	    
+	    for {set i 0} {$i < [net::num_nodes]} {incr i} {
+		set hostname $net::host($i)
+		set livepids {}
 
-	    # zero pid means the process died
-	    if {$run::pids($i) == 0} {
-		continue
+		# check if all pids have died
+		if {[llength run::pids($i)] == 0} {
+		    continue
+		}
+
+		if {[net::is_localhost $hostname] || $run::xterm($i)} {
+		    set ssh ""
+		} else {
+		    set ssh "ssh $hostname "
+		}
+
+		foreach pid $run::pids($i) {
+		    set cmd "$ssh ps h -p $pid"
+		    dbg "% $cmd"
+		    if {![catch {eval exec $cmd}]} {
+			dbg "% $hostname:$i pid $pid still alive"
+			if {$signal != "none"} {
+			    puts "* ERROR: pid $pid on host $hostname:$i still alive"
+			    puts "* ERROR: sending $signal signal"
+			    
+			    set cmd "$ssh kill -s $signal $pid"
+			    dbg "% $cmd"
+			    catch {eval exec $cmd} err
+			}
+			lappend livepids $pid
+		    }
+		}
+
+		if {[llength $livepids] == 0} {
+		    puts "    $hostname:$i all processes finished"
+		} else {
+		    dbg "* $hostname:$i [llength livepids] pids still alive ($livepids)"
+		    set run::pids($i) $livepids
+		    incr num_alive [llength $livepids]
+		}
 	    }
 	    
-	    if {[net::is_localhost $hostname] || $run::xterm($i)} {
-		dbg "% ps h -p $pid"
-		if [catch { exec ps h -p $pid }] {
-		    puts "    $hostname:$i finished"
-		    set run::pids($i) 0 
-		} else {
-		    dbg "% $hostname still alive"
-		    incr num_alive
-		}
-	    } else {
-		dbg "% ssh $hostname ps h -p $pid"
-		if [catch { exec ssh $hostname ps h -p $pid }] {
-		    puts "    $hostname:$i finished"
-		    set run::pids($i) 0 
-		} else {
-		    dbg "% $hostname:$i still alive"
-		    incr num_alive
-		}
+	    if {$num_alive == 0} {
+		puts "* All programs done"
+		return
 	    }
+
+	    after 1000
 	}
-	after 500
     }
 
-    puts "* All programs done"
+    error "$num_alive pids still exist after sending all kill signals"
 }
 
 #

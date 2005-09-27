@@ -13,7 +13,7 @@ VERBOSE=%verbose%
 XTERM=%xterm%
 
 function dbg {
-    if [ ! -z $VERBOSE ]; then
+    if [ $VERBOSE = 1 ]; then
 	echo $*
     fi
 }
@@ -43,10 +43,13 @@ case $CHOICE in
     *) echo "! garbage arguments to run script"; exit ;;
 esac
 
-dbg "% $CMD"
-eval $CMD
 
+dbg "% $CMD"
 if [ \( "$XTERM" = 1 \) -a \( "$PAUSE_AFTER" = 1 \) ]; then
+    eval $CMD
     echo
     read -s -n1 -p "== Hit any key to close xterm ==" keypress
+else
+    dbg "% $CMD"
+    eval exec $CMD
 fi
