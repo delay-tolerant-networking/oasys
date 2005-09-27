@@ -32,8 +32,9 @@ namespace eval conf {
 # Functions for running the test
 # 
 namespace eval test {
-    set run_actions ""
-    set testname    ""
+    set run_actions  ""
+    set exit_actions ""
+    set testname     ""
 
     # Script actions to be performed after launching everything
     proc script { actions } {
@@ -41,10 +42,24 @@ namespace eval test {
 	set test::run_actions $actions
     }
 
+    # Script to run after everything has shut down
+    proc exit_script { actions } {
+	global test::exit_actions
+	set test::exit_actions $actions
+    }
+
     # Run the script actions
     proc run_script {} {
 	global test::run_actions
 	eval $test::run_actions
+    }
+
+    # Run the exit script actions
+    proc run_exit_script {} {
+	global test::exit_actions
+	if {$test::exit_actions != ""} {
+	    eval $test::exit_actions
+	}
     }
 
     # Set test name
