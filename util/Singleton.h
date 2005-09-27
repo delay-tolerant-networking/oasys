@@ -57,11 +57,11 @@ namespace oasys {
  * MyClass* oasys::Singleton<MyClass>::instance_;
  * @endcode
  */
-template<typename _Class>
+template<typename _Class, bool _auto_create = true>
 class Singleton {
 public:
     static _Class* instance() {
-        if(instance_ == 0) {
+        if(_auto_create && instance_ == 0) {
             instance_ = new _Class();
         }
         ASSERT(instance_);
@@ -73,7 +73,9 @@ public:
         if (instance_) {
             PANIC("Singleton create() method called more than once");
         }
-        return instance();
+        
+        instance_ = new _Class();
+        return instance_;
     }
     
 protected:
