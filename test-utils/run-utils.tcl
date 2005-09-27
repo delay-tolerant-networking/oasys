@@ -23,6 +23,7 @@ proc usage {} {
     puts "    -h | -help | --help  Print help message"
     puts "    -g | -gdb  | --gdb   Run program with gdb"
     puts "    -x | -xterm          Run each instance in an xterm"
+    puts "    -d | -daemon         Daemon mode (no command loop)"
     puts "    -geom | -geometry    Specify the xterm geometry (implies -x)"
     puts "    -net | --net <file>  Select the net file"
     puts "    -l <log dir>         Set a different directory for logs"
@@ -39,7 +40,7 @@ proc usage {} {
     puts "    --gdbrc       <tmpl>       Change remote gdbrc template"
     puts "    --script      <tmpl>       Change remote run script template"
     puts "    --no-logs                  Don't collect logs/cores"
-    puts "    --crap                     Pollute the /tmp dir"
+    puts "    --leave-crap               Leave all crap /tmp dir"
     puts "    --strip                    Strip execs before copying"
 }
 
@@ -52,7 +53,7 @@ proc init {args test_script} {
     set opt(rundir_prefix) "/tmp/run-[pid]"
     set opt(verbose)       0
     set opt(xterm)         0
-    set opt(crap)          0
+    set opt(leave_crap)    0
     set opt(no_logs)       0
     set opt(net)           ""
     set opt(daemon)        0
@@ -104,7 +105,7 @@ proc init {args test_script} {
 	    --gdb-tmpl    {shift args; set opt(gdb_tmpl)    [arg1 $args] }
 	    --script-tmpl {shift args; set opt(script_tmpl) [arg1 $args] }
 	    --no-logs     {set opt(no_logs) 1 }
-	    --crap        {set opt(crap) 1}
+	    --leave-crap  {set opt(leave_crap) 1}
 	    --strip       { puts "XXX/bowei -- not implemented yet"; exit }
 	    default       { puts "illegal option [arg1 $args]"; usage; exit }
 	}
@@ -182,27 +183,22 @@ proc generate_script {id exec_file exec_opts confname conf} {
     }
 }
 
+proc run_cmd {hostname args} {
+    if [net::is_localhost $hostname] {
+	dbg "% [join $args]"
+	return [eval exec $args]
+    } else {
+	dbg "% ssh $hostname [join $args]"
+	return [eval exec ssh $hostname $args]
+    }
+}
+
 proc write_script {id dir filename contents do_chmod} {
     global net::host
     set hostname $net::host($id)
-
     set path [file join $dir $filename]
-    
-    if [net::is_localhost $hostname] {
-	exec cat > $path << $contents
-	if {$do_chmod} {
-	    exec chmod +x $path
-	}
-	
-    } else {
-	exec ssh $hostname "cat > $path" << $contents
-	if {$do_chmod} {
-	    exec ssh $hostname "chmod +x $path"
-	}
-    }
-
-
-    dbg "% wrote $hostname:$id:$path"
+    run_cmd $hostname cat > $path << $contents
+    run_cmd $hostname chmod +x $path
 }
 
 #
@@ -227,38 +223,30 @@ proc run {id exec_file exec_opts confname conf} {
     # NB: When running in an xterm, the PID collected is the PID of
     # the local xterm instance, not the remote process instance
     switch "[net::is_localhost $hostname] $opt(xterm)" {
-	"1 1" { 
-	    dbg "% xterm -title \"$hostname-$id\" -geometry $geometry -e $script &"
-	    set exec_pid [exec xterm -title "$hostname - $id" -geometry $geometry -e $script &]
-	    dbg "* xterm pid: $exec_pid"
+	"1 1" {
+	    set exec_pid [run_cmd localhost xterm -title "$hostname-$id" \
+		    -geometry $geometry -e $script &]
 	    lappend run::pids($id) $exec_pid
 	    set run::xterm($id) 1
 	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
 	"0 1" {
-	    dbg "% xterm -title \"$hostname-$id\" -geometry $geometry -e ssh -t $hostname $script"
-	    set exec_pid [exec xterm -title "$hostname - $id" -geometry $geometry\
-			      -e ssh -t $hostname $script &]
-	    dbg "* xterm pid: $exec_pid"
+	    set exec_pid [run_cmd localhost  xterm -title "$hostname - $id" \
+		    -geometry $geometry -e ssh -t $hostname $script &]
 	    lappend run::pids($id) $exec_pid
 	    set run::xterm($id) 1
 	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
 	"1 0" {
-	    dbg "% $script &"
-	    set exec_pid [exec sh $script &]
-	    dbg "* script pid: $exec_pid"
+	    set exec_pid [run_cmd localhost sh $script &]
 	    lappend run::pids($id)  $exec_pid
 	    set run::xterm($id) 0
 	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
 	"0 0" {
-	    dbg "% ssh $hostname $script"
-	    set exec_pid [exec ssh $hostname $script]
-	    dbg "* script pid: $exec_pid"
+	    set exec_pid [run_cmd $hostname sh $script &]
 	    lappend run::pids($id) $exec_pid
 	    set run::xterm($id) 0
-
 	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
     }
@@ -273,7 +261,7 @@ proc wait_for_programs {{timeout 10000}} {
 
     puts "* Waiting for spawned programs to exit"
 
-    foreach signal {none INT KILL} {
+    foreach signal {none TERM KILL} {
 	set start [clock clicks -milliseconds]
 	
 	while {[clock clicks -milliseconds] < $start + $timeout} {
@@ -288,24 +276,20 @@ proc wait_for_programs {{timeout 10000}} {
 		    continue
 		}
 
-		if {[net::is_localhost $hostname] || $run::xterm($i)} {
-		    set ssh ""
+		# all xterm pid actions are local
+		if {$run::xterm($i)} {
+		    set kill_hostname localhost
 		} else {
-		    set ssh "ssh $hostname "
+		    set kill_hostname $hostname
 		}
 
 		foreach pid $run::pids($i) {
-		    set cmd "$ssh ps h -p $pid"
-		    dbg "% $cmd"
-		    if {![catch {eval exec $cmd}]} {
+		    if {![catch {run_cmd $kill_hostname ps h -p $pid}]} {
 			dbg "% $hostname:$i pid $pid still alive"
 			if {$signal != "none"} {
 			    puts "* ERROR: pid $pid on host $hostname:$i still alive"
 			    puts "* ERROR: sending $signal signal"
-			    
-			    set cmd "$ssh kill -s $signal $pid"
-			    dbg "% $cmd"
-			    catch {eval exec $cmd} err
+			    catch {run_cmd $kill_hostname kill -s $signal $pid} err
 			}
 			lappend livepids $pid
 		    }
@@ -351,36 +335,39 @@ proc collect_logs {} {
     }
 
     for {set i 0} {$i < [net::num_nodes]} {incr i} {
+	set cores {}
+	set logs  {}
+	
 	set hostname $net::host($i)
 	set dir      $run::dirs($i)
 	
-	if [net::is_localhost $hostname] {
-	    set logs ""
-	    dbg "exec sh << \"ls -1 $dir/*core* $dir/*.out $dir/*.err\""
-	    catch { append logs [exec sh << "ls -1 $dir/*core*"]}
-	    append logs " "
-	    catch { append logs [exec sh << "ls -1 $dir/*.out"]}
-	    append logs " "
-	    catch { append logs [exec sh << "ls -1 $dir/*.err"]}
+	catch { lappend cores [split [run_cmd $hostname sh << "ls -1 $dir/*core*"]] }
+	catch { lappend logs  [split [run_cmd $hostname sh << "ls -1 $dir/*.out"]]}
+	catch { lappend logs  [split [run_cmd $hostname sh << "ls -1 $dir/*.err"]]}
+	
+	dbg "* $hostname:$i cores = $cores"
+	dbg "* $hostname:$i logs = $logs"
 
-	    dbg "% logs = $logs"
-	    foreach l $logs {
-		dbg "% exec cp $l $opt(logdir)/$i-$hostname-[file tail $l]"
-		exec cp $l $opt(logdir)/$i-$hostname-[file tail $l]
+	foreach c $cores {
+	    if [net::is_localhost $hostname] {
+		set cp "cp "
+	    } else {
+		set cp "scp $hostname:"
 	    }
-	} else {
-	    set logs ""
-	    dbg "exec sh << \"ls -1 $dir/*core* $dir/*.out $dir/*.err\""
-	    catch { append logs [exec ssh $hostname sh << "ls -1 $dir/*core*"]}
-	    append logs " "
-	    catch { append logs [exec ssh $hostname sh << "ls -1 $dir/*.out"]}
-	    append logs " "
-	    catch { append logs [exec ssh $hostname sh << "ls -1 $dir/*.err"]}
 
-	    dbg "% logs = $logs"
-	    foreach l $logs {
-		dbg "% exec scp $hostname:$l $opt(logdir)/$i-$hostname-[file tail $l]"
-		exec scp $hostname:$l $opt(logdir)/$i-$hostname-[file tail $l]
+	    set clocal $opt(logdir)/$i-$hostname-[file tail $c]
+	    puts "error: found core file $c (copying to $clocal)"
+	    eval exec $cp$c $clocal
+	}
+
+	foreach l $logs {
+	    set contents [run_cmd $hostname cat $l]
+	    set contents [string trim $contents]
+	    if {[string length $contents] != 0} {
+		puts "***"
+		puts "*** $hostname:$i [file tail $l]:"
+		puts "***"
+		puts $contents
 	    }
 	}
     }
@@ -392,7 +379,7 @@ proc collect_logs {} {
 proc cleanup {} {
     global opt net::host run::dirs
 
-    if {$opt(crap)} { return }
+    if {$opt(leave_crap)} { return }
 
     puts "* Getting rid of run files"
     for {set i 0} {$i < [net::num_nodes]} {incr i} {
@@ -400,13 +387,7 @@ proc cleanup {} {
 	set dir      $run::dirs($i)
 
 	dbg "% removing $hostname:$i:$dir"
-	if [net::is_localhost $hostname] {
-	    exec rm -r $dirs($i)
-	    dbg "exec rm -r $dirs($i)"
-	} else {
-	    exec ssh $hostname rm -r $dirs($i)
-	    dbg "exec ssh $hostname rm -r $dirs($i)"
-	}
+	run_cmd $hostname /bin/rm -r $dirs($i)
     }
 }
 
