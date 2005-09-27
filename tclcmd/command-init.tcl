@@ -63,6 +63,14 @@ proc command_process {input output} {
     set command($input) [string trim $command($input)]
     set cmd_error 0
     if {[catch {uplevel \#0 $command($input)} result]} {
+	if {$result == "exit_command"} {
+	    if {$input == "stdin"} {
+		set stdin_exited 1
+		return
+	    } else {
+		real_exit
+	    }
+	}
 	global errorInfo
 	set result "error: $result\nwhile executing\n$errorInfo"
 	set cmd_error 1
@@ -103,21 +111,13 @@ proc simple_command_loop {prompt} {
 # Run the command loop with the given prompt
 #
 proc command_loop {prompt} {
-    global command_prompt no_tclreadline
+    global command_prompt
 
-    if [info exists no_tclreadline] {
-	simple_command_loop $prompt
-	return
-    }
-    
     set command_prompt "${prompt}% "
 
     if [catch {
 	package require tclreadline
-	tclreadline::readline eofchar "error tclreadline_command_exit"
-	proc exit {} {
-	    error tclreadline_command_exit
-	}
+	tclreadline::readline eofchar "error exit_command"
 	tclreadline_loop
 	
     } err] {
@@ -131,6 +131,16 @@ proc command_loop {prompt} {
 	simple_command_loop $prompt
     }
     puts ""
+}
+
+# Handle the behavior that we want for the 'exit' proc -- when running
+# as the console loop (either tclreadline or not), we just want it to
+# exit the loop so the caller knows to clean up properly. To implement
+# that, we error with the special string "exit_command" which is
+# caught by callers who DTRT with it.
+rename exit real_exit
+proc exit {} {
+    error "exit_command"
 }
 
 #
@@ -155,7 +165,7 @@ proc tclreadline_loop {} {
 		    append LINE [tclreadline::readline read ${prompt2}]
 		}
 	    } ::tclreadline::errorMsg]} {
-		if {$::tclreadline::errorMsg == "tclreadline_command_exit"} {
+		if {$::tclreadline::errorMsg == "exit_command"} {
 		    break
 		}
 		puts stderr [list tclreadline::Loop: error. \
@@ -182,7 +192,7 @@ proc tclreadline_loop {} {
 		}
 		set result ""
 	    } ::tclreadline::errorMsg] {
-		if {$::tclreadline::errorMsg == "tclreadline_command_exit"} {
+		if {$::tclreadline::errorMsg == "exit_command"} {
 		    break
 		}
 		puts stderr $::tclreadline::errorMsg
