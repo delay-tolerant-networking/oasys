@@ -130,6 +130,7 @@ proc command_loop {prompt} {
 	$logger "fall back to simple command loop"
 	simple_command_loop $prompt
     }
+    puts ""
 }
 
 #

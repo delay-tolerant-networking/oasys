@@ -131,6 +131,7 @@ static const char* INIT_COMMAND =
 "	$logger \"fall back to simple command loop\"\n"
 "	simple_command_loop $prompt\n"
 "    }\n"
+"    puts \"\"\n"
 "}\n"
 "\n"
 "#\n"
