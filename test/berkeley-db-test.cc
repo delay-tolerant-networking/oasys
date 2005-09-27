@@ -453,16 +453,14 @@ DECLARE_TEST(NoTypeTable) {
     StringShim serial_string("01234567890");
     IntShim    serial_int(42);
     
-    CHECK(table->put(StringShim("foo"), 
-                     &serial_string, 0));
-    CHECK(table->put(StringShim("bar"),
-                     &serial_int, 0));
+    CHECK(table->put(StringShim("foo"), &serial_string, DS_CREATE) == 0);
+    CHECK(table->put(StringShim("bar"), &serial_int, DS_CREATE) == 0);
 
-    StringShim* str;
-    IntShim*    i;
+    StringShim* str = 0;
+    IntShim*    i   = 0;
     
-    CHECK(table->get(StringShim("foo"), &str));
-    CHECK(table->get(StringShim("bar"), &i));
+    CHECK(table->get(StringShim("foo"), &str) == 0);
+    CHECK(table->get(StringShim("bar"), &i)   == 0);
 
     CHECK_EQUALSTR(str->value().c_str(), "01234567890");
     CHECK_EQUAL(i->value(), 42);
@@ -735,12 +733,14 @@ DECLARE_TESTER(BerkleyDBTester) {
     ADD_TEST(DBTidy);
     ADD_TEST(TableCreate);
     ADD_TEST(TableDelete);
+
     ADD_TEST(SingleTypePut);
     ADD_TEST(SingleTypeGet);
     ADD_TEST(SingleTypeDelete);
     ADD_TEST(SingleTypeMultiObject);
     ADD_TEST(SingleTypeIterator);
     ADD_TEST(SingleTypeCache);
+
     ADD_TEST(NoTypeTable);
     ADD_TEST(MultiType);
     ADD_TEST(MultiTypeCache);
