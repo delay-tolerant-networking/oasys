@@ -51,6 +51,7 @@ STORAGE_SRCS :=					\
 
 TCLCMD_SRCS :=					\
 	tclcmd/TclCommand.cc			\
+	tclcmd/ConsoleCommand.cc		\
 	tclcmd/DebugCommand.cc			\
 	tclcmd/HelpCommand.cc			\
 	tclcmd/LogCommand.cc			\
