@@ -1,5 +1,6 @@
 
 import "command-init.tcl"
+import "tcl-utils.tcl"
 import "dist-utils.tcl"
 import "net-utils.tcl"
 import "run-utils.tcl"
