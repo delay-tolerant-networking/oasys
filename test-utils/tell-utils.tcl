@@ -24,20 +24,22 @@ namespace eval tell {
     }
 
     proc wait {host port {timeout 30000}} {
-	set start [clock clicks -milliseconds]
-	while {[clock clicks -milliseconds] < $start + $timeout} {
-	    if [catch {tell::connect $host $port} err] {
-		continue
+	do_until "connecting to $host:$port" $timeout {
+	    if {![catch {tell::connect $host $port} err]} {
+		return
 	    }
-
-	    return
 	}
-	
-	error "timeout connecting to $host:$port"
     }
     
     proc tell {host port cmd} {
 	global tell::sockets
+
+	set cmd [string trim $cmd]
+	set lines [split $cmd "\n"]
+	if {[llength $lines] != 1} {
+	    # XXX/demmer could be fixed if i wanted to...
+	    error "cannot pass multi-line command '$cmd' to tell"
+	}
 	
 	if {![info exists sockets($host:$port)]} {
 	    tell::connect $host $port
@@ -46,9 +48,15 @@ namespace eval tell {
 	set sock $sockets($host:$port)
 	puts $sock $cmd
 	flush $sock
-	set result [gets $sock]
+	set resultvec [gets $sock]
+	set cmd_error [string index $resultvec 0]
+	set result    [string range $resultvec 2 end]
 
 	regsub -all -- {\\n} $result "\n" result
-	return $result
+	if {$cmd_error == 0} {
+	    return $result
+	} else {
+	    error $result
+	}
     }
 }
