@@ -92,10 +92,14 @@ public:
      */
     bool parse(const std::vector<std::string>& args,
                const char** invalidp = NULL);
-    
-protected:
+
+    /**
+     * Parse a single option (or option=value) string.
+     * @return true if valid, false otherwise
+     */
     bool parse_opt(const char* opt, size_t len);
                   
+protected:
     typedef std::vector<Opt*> OptList;
     OptList allopts_;
 };
