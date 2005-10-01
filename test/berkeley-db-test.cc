@@ -26,7 +26,8 @@ TYPE_COLLECTION_INSTANTIATE(TestC);
 
 class Obj : public oasys::SerializableObject {
 public:
-    Obj(int id, const char* static_name) : id_(id), static_name_(static_name) {}
+    Obj(int32_t id, const char* static_name)
+        : id_(id), static_name_(static_name) {}
     Obj(const Builder& b) : id_(0), static_name_("no name") {}
     
     virtual const char* name() = 0;
@@ -36,7 +37,7 @@ public:
         a->process("id", &id_);
     }
 
-    int id_;
+    int32_t id_;
     std::string static_name_;
 };
 
