@@ -76,6 +76,13 @@ public:
      */
     int del(const SerializableObject& key);
 
+    /**
+     * Flush all evictable (i.e. not live) objects from the cache.
+     *
+     * @return the number of objects evicted
+     */
+    size_t flush();
+
     /// @{
     /// Accessors
     size_t size()   { return size_; }

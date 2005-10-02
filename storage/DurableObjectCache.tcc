@@ -57,7 +57,7 @@ DurableObjectCache<_DataType>::evict_last()
     ASSERT(cache_elem->lru_iter_ == lru_iter);
     ASSERT(!cache_elem->live_);
 
-    log_debug("cache at or near capacity (%u/%u) -- "
+    log_debug("cache (capacity %u/%u) -- "
               "evicting key '%s' object %p size %u",
               size_, capacity_, lru_iter->c_str(),
               cache_elem->object_, (u_int)cache_elem->object_size_);
@@ -290,9 +290,11 @@ DurableObjectCache<_DataType>::del(const SerializableObject& key)
     CacheElement* cache_elem = cache_iter->second;
     
     if (cache_elem->live_) {
-        log_debug("del(%s): removing live object %p size %u from cache",
+        log_debug("del(%s): can't remove live object %p size %u from cache",
                   cache_key.c_str(), cache_elem->object_,
                   cache_elem->object_size_);
+        return DS_ERR;
+        
     } else {
         lru_.erase(cache_elem->lru_iter_);
         log_debug("del(%s): removing non-live object %p size %u from cache",
@@ -306,3 +308,17 @@ DurableObjectCache<_DataType>::del(const SerializableObject& key)
     delete cache_elem;
     return DS_OK;
 }
+
+template <typename _DataType>
+size_t
+DurableObjectCache<_DataType>::flush()
+{
+    ScopeLock l(lock_, "DurableObjectCache::flush");
+    size_t count = 0;
+    while (!lru_.empty()) {
+        evict_last();
+        ++count;
+    }
+    return count;
+}
+

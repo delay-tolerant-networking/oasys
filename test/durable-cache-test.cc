@@ -135,12 +135,45 @@ DECLARE_TEST(Del) {
     StringShim* s;
     CHECK(cache_->put(IntShim(1), new StringShim("test"), 0) == DS_OK);
     CHECK(cache_->get(IntShim(1), &s) == DS_OK);
+    CHECK(cache_->del(IntShim(1)) == DS_ERR); // still live
+    CHECK(cache_->release(IntShim(1), s) == DS_OK);
     CHECK(cache_->del(IntShim(1)) == DS_OK);
+    CHECK(cache_->del(IntShim(1)) == DS_NOTFOUND);
     CHECK_EQUAL(cache_->count(), 0);
     CHECK_EQUAL(cache_->live(), 0);
     CHECK_EQUAL(cache_->size(), 0);
 
-    CHECK(cache_->del(IntShim(2)) == DS_NOTFOUND);
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(Flush) {
+    StringShim* s1 = new StringShim("test");
+    StringShim* s2 = new StringShim("test 2");
+    CHECK(cache_->put(IntShim(1), s1, 0) == DS_OK);
+    CHECK(cache_->release(IntShim(1), s1) == DS_OK);
+    CHECK(cache_->put(IntShim(2), s2, 0) == DS_OK);
+    
+    CHECK_EQUAL(cache_->count(), 2);
+    CHECK_EQUAL(cache_->live(), 1);
+    
+    CHECK_EQUAL(cache_->flush(), 1);
+
+    CHECK_EQUAL(cache_->count(), 1);
+    CHECK_EQUAL(cache_->live(), 1);
+
+    StringShim* s;
+    CHECK(cache_->get(IntShim(1), &s) == DS_NOTFOUND);
+    CHECK(cache_->get(IntShim(2), &s) == DS_OK);
+
+    CHECK(s == s2);
+    CHECK(cache_->release(IntShim(2), s) == DS_OK);
+    CHECK_EQUAL(cache_->flush(), 1);
+    
+    CHECK_EQUAL(cache_->count(), 0);
+    CHECK_EQUAL(cache_->live(), 0);
+    CHECK_EQUAL(cache_->size(), 0);
+    
+    CHECK_EQUAL(cache_->flush(), 0);
     
     return UNIT_TEST_PASSED;
 }
@@ -152,6 +185,7 @@ DECLARE_TESTER(CacheTester) {
     ADD_TEST(Release);
     ADD_TEST(PutEvict);
     ADD_TEST(Del);
+    ADD_TEST(Flush);
 }
 
 DECLARE_TEST_FILE(CacheTester, "DurableCache tester");
