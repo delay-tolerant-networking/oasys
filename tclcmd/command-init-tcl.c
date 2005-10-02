@@ -101,7 +101,7 @@ static const char* INIT_COMMAND =
 "    puts -nonewline $command_prompt\n"
 "    flush stdout\n"
 "    \n"
-"    set tell_encode(stdin)  0\n"
+"    set tell_encode(stdout) 0\n"
 "    set stdin_exited        0\n"
 "    fileevent stdin readable \"command_process stdin stdout\"\n"
 "\n"

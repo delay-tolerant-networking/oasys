@@ -100,7 +100,7 @@ proc simple_command_loop {prompt} {
     puts -nonewline $command_prompt
     flush stdout
     
-    set tell_encode(stdin)  0
+    set tell_encode(stdout) 0
     set stdin_exited        0
     fileevent stdin readable "command_process stdin stdout"
 
