@@ -103,6 +103,17 @@ public:
     }
 
     /**
+     * Assignment operator.
+     */
+    TempRef& operator=(_Type* object)
+    {
+        ASSERTF(object_ == NULL,
+                "TempRef can only assign to null reference");
+        object_ = object;
+        return *this;
+    }
+
+    /**
      * Accessor for the object.
      */
     _Type* object() const {
@@ -148,6 +159,9 @@ public:
     {
         return (object_ != o);
     }
+
+    const char* what1() const { return what1_; } 
+    const char* what2() const { return what2_; }
     
 private:
     /**

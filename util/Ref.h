@@ -84,12 +84,14 @@ public:
      * Constructor that takes a temporary ref.
      */
     Ref(const TempRef<_Type> temp)
-        : what1_(temp.what1_),
-          what2_(temp.what2_)
+        : what1_(temp.what1()),
+          what2_(temp.what2())
     {
         object_ = temp.object();
-        object_->add_ref(what1_, what2_);
-        temp.release();
+        if (object_) {
+            object_->add_ref(what1_, what2_);
+            temp.release();
+        }
     }
 
     /**
