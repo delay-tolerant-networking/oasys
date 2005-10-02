@@ -197,6 +197,35 @@ DurableObjectCache<_DataType>::get(const SerializableObject& key,
     return DS_OK;
 }
 
+/**
+ * Return whether or not the key is currently live in in the cache.
+ */
+template <typename _DataType>
+bool
+DurableObjectCache<_DataType>::is_live(const SerializableObject& key)
+{
+    ScopeLock l(lock_, "DurableObjectCache::is_live");
+    
+    std::string cache_key;
+    get_cache_key(&cache_key, key);
+
+    typename CacheTable::iterator cache_iter = cache_.find(cache_key);
+    
+    if (cache_iter == cache_.end()) {
+        log_debug("is_live(%s): no element", cache_key.c_str());
+        return false;
+    } 
+
+    CacheElement* cache_elem = cache_iter->second;
+    if (cache_elem->live_) {
+        log_debug("is_live(%s): live", cache_key.c_str());
+        return true;
+    } else {
+        log_debug("is_live(%s): not live", cache_key.c_str());
+        return false;
+    }
+}
+
 template <typename _DataType>
 int
 DurableObjectCache<_DataType>::release(const SerializableObject& key,

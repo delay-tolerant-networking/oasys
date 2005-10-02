@@ -60,6 +60,12 @@ public:
     }
 
     /**
+     * Return whether or not the given key is live in the cache (if
+     * there is a cache configured).
+     */
+    bool is_live_in_cache(const SerializableObject& key) const;
+
+    /**
      * Delete a (key,data) pair from the database
      *
      * @return DS_OK, DS_NOTFOUND if key is not found

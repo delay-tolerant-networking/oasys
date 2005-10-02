@@ -62,6 +62,11 @@ public:
     int get(const SerializableObject& key, _DataType** data);
 
     /**
+     * Return whether or not the key is currently live in in the cache.
+     */
+    bool is_live(const SerializableObject& key);
+
+    /**
      * Release the given object, making it eligible for eviction.
      */
     int release(const SerializableObject& key, const _DataType* data);

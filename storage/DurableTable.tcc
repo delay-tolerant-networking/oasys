@@ -1,5 +1,17 @@
 // Included by DurableTable.h
 
+
+//----------------------------------------------------------------------------
+template <typename _Type>
+inline bool
+DurableTable<_Type>::is_live_in_cache(const SerializableObject& key) const
+{
+    if (this->cache_ != 0) {
+        return this->cache_->is_live(key);
+    }
+    return false;
+}
+
 //----------------------------------------------------------------------------
 template <typename _Type>
 inline int
