@@ -1,24 +1,14 @@
 // Included by DurableTable.h
 
-
-//----------------------------------------------------------------------------
-template <typename _Type>
-inline bool
-DurableTable<_Type>::is_live_in_cache(const SerializableObject& key) const
-{
-    if (this->cache_ != 0) {
-        return this->cache_->is_live(key);
-    }
-    return false;
-}
-
 //----------------------------------------------------------------------------
 template <typename _Type>
 inline int
 DurableTable<_Type>::del(const SerializableObject& key)
 {
     if (this->cache_ != 0) {
-        this->cache_->del(key); // ignore return
+        int err = this->cache_->del(key);
+        if (err == DS_ERR)
+            return err; // otherwise fall through
     }
     
     return this->impl_->del(key);
