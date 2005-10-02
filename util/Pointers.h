@@ -1,6 +1,8 @@
 #ifndef __POINTERS_H__
 #define __POINTERS_H__
 
+#include "../debug/DebugUtils.h"
+
 namespace oasys {
 
 /**
@@ -21,11 +23,21 @@ public:
     _Class* operator->() const { return ptr_; }
 
     /**
+     * Assignment operator that ensures there is no currently assigned
+     * pointer before claiming the given one.
+     */
+    ScopePtr& operator=(_Class* ptr) {
+        ASSERT(ptr_ == NULL);
+        ptr_ = ptr;
+        return *this;
+    }
+    
+    /**
      * This construction basically allows you to pass the ptr_ to a
      * double pointer taking function, cleaning up the syntax quite a
      * bit.
      */
-    _Class*& get() { return ptr_; }
+    _Class*& ptr() { return ptr_; }
 
     /**
      * Not implemented on purpose. Don't handle assignment to another
