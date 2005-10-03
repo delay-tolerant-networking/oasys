@@ -40,7 +40,7 @@ proc command_process {input output} {
 	}
     }
 
-    # handle tell_encode commands
+    # handle tell_encode / no_tell_encode commands
     if {$line == "tell_encode"} {
 	set tell_encode($output) 1
 	puts $output "\ntell_encode"
@@ -53,10 +53,21 @@ proc command_process {input output} {
 	return
     }
 
-    # append it to the batched up command, and check if it's complete
-    append command($input) $line
-    if {![info complete $command($input)]} {
-	return
+    if {$tell_encode($output)} {
+	# if we're in tell encoding mode, decode the message
+
+	if {$command($input) != ""} {
+	    error "unexpected partial command '$command($input)' in tell mode"
+	}
+	regsub -all -- {\\n} $line "\n" command($input)
+    } else {
+	# otherwise, append the line to the batched up command, and
+	# check if it's complete
+	
+	append command($input) $line
+	if {![info complete $command($input)]} {
+	    return
+	}
     }
     
     # trim and evaluate the command
@@ -94,12 +105,13 @@ proc command_process {input output} {
 # Run the simple (i.e. no tclreadline) command loop
 #
 proc simple_command_loop {prompt} {
-    global command_prompt forever tell_encode
+    global command command_prompt forever tell_encode
     set command_prompt "${prompt}% "
     
     puts -nonewline $command_prompt
     flush stdout
-    
+
+    set command(stdin)      ""
     set tell_encode(stdout) 0
     set stdin_exited        0
     fileevent stdin readable "command_process stdin stdout"
@@ -211,9 +223,10 @@ proc tclreadline_loop {} {
 # Proc that's called when a new command connection arrives
 #
 proc command_connection {chan host port} {
-    global command_info command_prompt tell_encode
+    global command command_info command_prompt tell_encode
 
     set command_info($chan) "$host:$port"
+    set command($chan)      ""
     set tell_encode($chan)  0
     log /command debug "new command connection $chan from $host:$port"
     fileevent $chan readable "command_process $chan $chan"

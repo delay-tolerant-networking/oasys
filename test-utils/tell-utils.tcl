@@ -34,18 +34,13 @@ namespace eval tell {
     proc tell {host port cmd} {
 	global tell::sockets
 
-	set cmd [string trim $cmd]
-	set lines [split $cmd "\n"]
-	if {[llength $lines] != 1} {
-	    # XXX/demmer could be fixed if i wanted to...
-	    error "cannot pass multi-line command '$cmd' to tell"
-	}
 	
 	if {![info exists sockets($host:$port)]} {
 	    tell::connect $host $port
 	}
-
 	set sock $sockets($host:$port)
+	
+	regsub -all -- {\n} [string trim $cmd] {\\n} cmd
 	puts $sock $cmd
 	flush $sock
 	
