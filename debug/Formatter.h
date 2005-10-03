@@ -74,9 +74,13 @@ public:
      * Virtual callback, called from this vsnprintf implementation
      * whenever it encounters a format string of the form "*%p".
      *
-     * The output routine must not write more than sz bytes. The
-     * return is the number of bytes written, or the number of bytes
-     * that would have been written if the output is truncated.
+     * The output routine must not write more than sz bytes and is not
+     * null terminated.
+     *
+     * @return The number of bytes written, or the number of bytes
+     * that would have been written if the output is
+     * truncated. XXX/bowei -- actually this contract is pretty
+     * annoying
      */
     virtual int format(char* buf, size_t sz) const = 0;
 
