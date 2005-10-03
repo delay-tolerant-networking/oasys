@@ -115,6 +115,16 @@ proc command_loop {prompt} {
 
     set command_prompt "${prompt}% "
 
+    # Handle the behavior that we want for the 'exit' proc -- when running
+    # as the console loop (either tclreadline or not), we just want it to
+    # exit the loop so the caller knows to clean up properly. To implement
+    # that, we error with the special string "exit_command" which is
+    # caught by callers who DTRT with it.
+    rename exit real_exit
+    proc exit {} {
+	error "exit_command"
+    }
+
     if [catch {
 	package require tclreadline
 	tclreadline::readline eofchar "error exit_command"
@@ -131,16 +141,10 @@ proc command_loop {prompt} {
 	simple_command_loop $prompt
     }
     puts ""
-}
 
-# Handle the behavior that we want for the 'exit' proc -- when running
-# as the console loop (either tclreadline or not), we just want it to
-# exit the loop so the caller knows to clean up properly. To implement
-# that, we error with the special string "exit_command" which is
-# caught by callers who DTRT with it.
-rename exit real_exit
-proc exit {} {
-    error "exit_command"
+    # fix up the exit proc
+    rename exit ""
+    rename real_exit exit
 }
 
 #

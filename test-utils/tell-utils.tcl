@@ -48,15 +48,19 @@ namespace eval tell {
 	set sock $sockets($host:$port)
 	puts $sock $cmd
 	flush $sock
+	
 	set resultvec [gets $sock]
 	set cmd_error [string index $resultvec 0]
 	set result    [string range $resultvec 2 end]
-
 	regsub -all -- {\\n} $result "\n" result
+	
 	if {$cmd_error == 0 || $result == ""} {
 	    return $result
 	} else {
-	    error "error executing tell command:\n$result"
+	    set eol [string first "\n" $result]
+	    set errorValue [string range $result 7 [expr $eol - 1]]
+	    set errorInfo  [string range $result $eol end]
+	    error $errorValue $errorInfo
 	}
     }
 }

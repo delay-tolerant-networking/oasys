@@ -71,7 +71,7 @@ proc init {args test_script} {
 	invalid -
 	-h      -
 	-help   -
-	--help  { usage; real_exit }
+	--help  { usage; exit }
     }
     
     # parse options
@@ -79,7 +79,7 @@ proc init {args test_script} {
 	switch -- [lindex $args 0] {
 	    -h            -
 	    -help         -
-	    --help        { usage; real_exit }
+	    --help        { usage; exit }
 	    -g            -
 	    -gdb          -
 	    --gdb         {set opt(gdb) 1}
