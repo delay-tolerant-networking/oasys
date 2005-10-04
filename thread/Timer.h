@@ -188,7 +188,7 @@ public:
         return TimerSystem::instance()->cancel(this);
     }
 
-    int pending()
+    bool pending()
     {
         return pending_;
     }
