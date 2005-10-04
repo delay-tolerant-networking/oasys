@@ -8,10 +8,25 @@ proc tell {host port cmd} {
 }
 
 namespace eval tell {
-    proc connect {host port} {
-	global tell::sockets
+    set tell_verbose 0
 
+    proc verbose {{val ""}} {
+	global tell::tell_verbose
+	if {$val != ""} {
+	    set tell_verbose $val
+	}
+	return $tell_verbose
+    }
+    
+    proc connect {host port} {
+	global tell::sockets tell::tell_verbose
+	
+	if {$tell_verbose} {
+	    puts "tell:connect trying to connect to $host:$port"
+	}
+	
 	set sock [socket $host $port]
+
 	puts $sock "tell_encode"
 	flush $sock
 	set ret1 [gets $sock]; # the prompt
@@ -21,6 +36,10 @@ namespace eval tell {
 	}
 
 	set tell::sockets($host:$port) $sock
+
+	if {$tell_verbose} {
+	    puts "tell::connect success to $host:$port (sock $sock)"
+	}
     }
 
     proc wait {host port {timeout 30000}} {
@@ -28,17 +47,21 @@ namespace eval tell {
 	    if {![catch {tell::connect $host $port} err]} {
 		return
 	    }
+	    after 1000
 	}
     }
     
     proc tell {host port cmd} {
-	global tell::sockets
+	global tell::sockets tell::tell_verbose
 
-	
 	if {![info exists sockets($host:$port)]} {
 	    tell::connect $host $port
 	}
 	set sock $sockets($host:$port)
+	
+	if {$tell_verbose} {
+	    puts "tell::tell: sending command \"$cmd\""
+	}
 	
 	regsub -all -- {\n} [string trim $cmd] {\\n} cmd
 	puts $sock $cmd
@@ -50,6 +73,10 @@ namespace eval tell {
 	regsub -all -- {\\n} $result "\n" result
 	
 	if {$cmd_error == 0 || $result == ""} {
+	    if {$tell_verbose} {
+		puts "tell::tell: result \"$result\""
+	    }
+	    
 	    return $result
 	} else {
 	    set eol [string first "\n" $result]
