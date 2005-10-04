@@ -135,6 +135,25 @@ OptParser::parse(int argc, const char* const argv[], const char** invalidp)
     return true;
 }
 
+
+int
+OptParser::parse_and_shift(int argc, const char* argv[])
+{
+    int last_slot = 0;
+    int valid_count = 0;
+
+    for (int i = 0; i < argc; ++i) {
+        if (parse_opt(argv[i], strlen(argv[i])) == true) {
+            ++valid_count;
+        } else {
+            argv[last_slot] = argv[i];
+            last_slot++;
+        }
+    }
+    
+    return valid_count;
+}
+
 bool
 OptParser::parse(const std::vector<std::string>& args,
                  const char** invalidp)

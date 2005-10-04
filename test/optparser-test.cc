@@ -4,116 +4,170 @@
 
 #include <debug/Log.h>
 #include <util/OptParser.h>
+#include <util/UnitTest.h>
 
 using namespace oasys;
 
-bool test = 0;
-bool test_set = 0;
-int port = 10;
-int xyz = 50;
-double f = 10.5;
+bool test 	= 0;
+bool test_set 	= 0;
+int port 	= 10;
+int xyz 	= 50;
+double f 	= 10.5;
 std::string name("name");
 
 OptParser p;
 
-void
-testfn(const char* teststr, bool expected)
-{
-    const char* invalid;
-    bool valid = p.parse(teststr, &invalid);
-    
-    if (expected && !valid) {
-        printf("TEST ERROR '%s': arg %s invalid\n", teststr, invalid);
-        
-    } else if (!expected && valid) {
-        printf("TEST ERROR '%s': unexpectedly valid \n", teststr);
-        
-    } else if (expected && valid) {
-        printf("TEST OK    '%s'\n", teststr);
-
-    } else if (!expected && !valid) {
-        printf("TEST OK    '%s': invalid '%s'\n", teststr, invalid);
-    }
-}
-
-int
-main(int argc, char *const* argv)
-{
-    Log::init();
-    
+DECLARE_TEST(Init) {
     p.addopt(new BoolOpt("test", &test, "test flag", &test_set));
     p.addopt(new IntOpt("port", &port, "<port>", "listen port"));
     p.addopt(new IntOpt("xyz",  &xyz,  "<val>", "x y z"));
     p.addopt(new DoubleOpt("f", &f, "<f>", "f"));
     p.addopt(new StringOpt("name", &name, "<name>", "app name"));
 
-    const char* invalid;
-    bool valid = p.parse(argc-1, argv+1, &invalid);
-
-    if (valid) {
-        printf("TEST OK    argv\n");
-    } else {
-        printf("TEST ERROR argv: arg '%s' invalid\n", invalid);
-        exit(1);
-    }
-
-    printf("  test: %d\n", test); 
-    printf("  test_set: %d\n", test_set);
-    printf("  port: %d\n", port);
-    printf("  name: %s\n", name.c_str());
-    printf("  xyz: %d\n", xyz);
-
-    testfn("test port=100 name=mike xyz=10 f=100.4", true);
-    ASSERT(test == true);
-    ASSERT(test_set == true);
-    ASSERT(port == 100);
-    ASSERT(name.compare("mike") == 0);
-    ASSERT(xyz == 10);
-    ASSERT(f == 100.4);
-
-    testfn("test=false", true);
-    ASSERT(test == false);
-    ASSERT(test_set == true);
-    
-    testfn("test=F", true);
-    ASSERT(test == false);
-    ASSERT(test_set == true);
-    
-    testfn("test=0", true);
-    ASSERT(test == false);
-    ASSERT(test_set == true);
-    
-    testfn("test=TRUE", true);
-    ASSERT(test == true);
-    ASSERT(test_set == true);
-
-    testfn("test=T", true);
-    ASSERT(test == true);
-    ASSERT(test_set == true);
-    
-    testfn("test=1", true);
-    ASSERT(test == true);
-    ASSERT(test_set == true);
-    
-    testfn("test=abc", false);
-    
-    testfn("", true);
-    ASSERT(test == true);
-    ASSERT(test_set == true);
-    ASSERT(port == 100);
-    ASSERT(name.compare("mike") == 0);
-    ASSERT(xyz == 10);
-
-    testfn("port", false);
-    testfn("port=", false);
-    testfn("port=foo", false);
-    testfn("port=10.5", false);
-
-    testfn("test=", false);
-    testfn("test=foo", false);
-
-    testfn("f", false);
-    testfn("f=", false);
-    testfn("f=10", true);
-    testfn("f=10.5", true);
+    return UNIT_TEST_PASSED;
 }
+
+DECLARE_TEST(ValidArgString) {
+    const char* invalid;
+
+    CHECK(p.parse(""));
+    CHECK_EQUAL(test, false);
+    CHECK_EQUAL(test_set, false);
+    CHECK_EQUAL(port, 10);
+    CHECK_EQUALSTR(name.c_str(), "name");
+    CHECK_EQUAL(xyz, 50);
+    CHECK(f == 10.5);
+    
+    CHECK(p.parse("test port=100 name=mike xyz=10 f=100.4", &invalid));
+    CHECK_EQUAL(test, true);
+    CHECK_EQUAL(test_set, true);
+    CHECK_EQUAL(port, 100);
+    CHECK_EQUALSTR(name.c_str(), "mike");
+    CHECK_EQUAL(xyz, 10);
+    CHECK(f == 100.4);
+
+    CHECK(p.parse("test=false"));
+    CHECK_EQUAL(test, false);
+    CHECK_EQUAL(test_set, true);
+    
+    CHECK(p.parse("test=F"));
+    CHECK_EQUAL(test, false);
+    CHECK_EQUAL(test_set, true);
+    
+    CHECK(p.parse("test=0"));
+    CHECK_EQUAL(test, false);
+    CHECK_EQUAL(test_set, true);
+    
+    CHECK(p.parse("test=TRUE"));
+    CHECK_EQUAL(test, true);
+    CHECK_EQUAL(test_set, true);
+
+    CHECK(p.parse("test=T"));
+    CHECK_EQUAL(test, true);
+    CHECK_EQUAL(test_set, true);
+    
+    CHECK(p.parse("test=1"));
+    CHECK_EQUAL(test, true);
+    CHECK_EQUAL(test_set, true);
+    
+    CHECK(p.parse(""));
+    CHECK_EQUAL(test, true);
+    CHECK_EQUAL(test_set, true);
+    CHECK_EQUAL(port, 100);
+    CHECK_EQUALSTR(name.c_str(), "mike");
+    CHECK_EQUAL(xyz, 10);
+
+    CHECK(p.parse("f=10"));
+    CHECK(f == 10);
+
+    CHECK(p.parse("f=.10"));
+    CHECK(f == .10);
+    
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(InvalidArgStr) {
+    const char* invalid;
+    CHECK(p.parse("test=abc", &invalid) == false);
+    
+    CHECK(p.parse("port", &invalid) == false);
+    CHECK(p.parse("port=", &invalid) == false);
+    CHECK(p.parse("port=foo", &invalid) == false);
+    CHECK(p.parse("port=10.5", &invalid) == false);
+
+    CHECK(p.parse("test=", &invalid) == false);
+    CHECK(p.parse("test=foo", &invalid) == false);
+
+    CHECK(p.parse("f", &invalid) == false);
+    CHECK(p.parse("f=", &invalid) == false);
+
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(ValidArgv) {
+    const char* argv[50];
+
+    argv[0] = "test=F";
+    argv[1] = "port=99";
+    argv[2] = "name=bowei";
+    argv[3] = "xyz=1";
+    argv[4] = "f=99.99";
+    
+    CHECK(p.parse(5, argv));
+    CHECK_EQUAL(test, false);
+    CHECK_EQUAL(test_set, true);
+    CHECK_EQUAL(port, 99);
+    CHECK_EQUALSTR(name.c_str(), "bowei");
+    CHECK_EQUAL(xyz, 1);
+    CHECK(f == 99.99);
+
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(ArgvParseAndShift) {
+    const char* argv[50];
+
+    argv[0] = "testfoo=T";
+    argv[1] = "port=9";
+    argv[2] = "bogus";
+    argv[3] = "name=matt";
+    argv[4] = "foo=bar";
+    argv[5] = "f=1.23";
+    
+    CHECK_EQUAL(p.parse_and_shift(6, argv), 3);
+    CHECK_EQUAL(port, 9);
+    CHECK_EQUALSTR(name.c_str(), "matt");
+    CHECK(f == 1.23);
+
+    CHECK_EQUALSTR(argv[0], "testfoo=T");
+    CHECK_EQUALSTR(argv[1], "bogus");
+    CHECK_EQUALSTR(argv[2], "foo=bar");
+
+    argv[0] = "bogus 1";
+    argv[1] = "bogus 2";
+    argv[2] = "bogus 3";
+    argv[3] = "bogus 4";
+    
+    CHECK_EQUAL(p.parse_and_shift(4, argv), 0);
+    CHECK_EQUALSTR(argv[0], "bogus 1");
+    CHECK_EQUALSTR(argv[1], "bogus 2");
+    CHECK_EQUALSTR(argv[2], "bogus 3");
+    CHECK_EQUALSTR(argv[3], "bogus 4");
+
+    CHECK_EQUAL(p.parse_and_shift(0, 0), 0);
+
+    argv[0] = "test";
+    CHECK_EQUAL(p.parse_and_shift(1, argv), 1);
+    
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TESTER(OptParserTester) {
+    ADD_TEST(Init);
+    ADD_TEST(ValidArgString);
+    ADD_TEST(InvalidArgStr);
+    ADD_TEST(ValidArgv);
+    ADD_TEST(ArgvParseAndShift);
+}
+
+DECLARE_TEST_FILE(OptParserTester, "OptParser Tester");

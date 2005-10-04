@@ -65,7 +65,7 @@ public:
      * Parse the given argument string, processing all registered
      * opts.
      *
-     * Returns true if the argument string was successfully parsed,
+     * @return true if the argument string was successfully parsed,
      * false otherwise. If non-null, invalidp is set to point to the
      * invalid option string.
      */
@@ -75,7 +75,7 @@ public:
      * Parse the given argument vector, processing all registered
      * opts.
      *
-     * Returns true if the argument string was successfully parsed,
+     * @return true if the argument string was successfully parsed,
      * false otherwise. If non-null, invalidp is set to point to the
      * invalid option string.
      */
@@ -83,10 +83,19 @@ public:
                const char** invalidp = NULL);
 
     /**
+     * Parse any matching options from the given argument vector,
+     * shifting any non-matching ones to be contiguous at the start of
+     * the argv.
+     *
+     * @return the number of parsed options
+     */
+    int parse_and_shift(int argc, const char* argv[]);
+
+    /**
      * Parse the given argument vector, processing all registered
      * opts.
      *
-     * Returns true if the argument string was successfully parsed,
+     * @return true if the argument string was successfully parsed,
      * false otherwise. If non-null, invalidp is set to point to the
      * invalid option string.
      */
