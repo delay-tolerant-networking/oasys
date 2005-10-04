@@ -58,6 +58,7 @@ proc init {args test_script} {
     set opt(no_logs)       0
     set opt(net)           ""
     set opt(daemon)        0
+    set opt(strip)         0
 
     set opt(gdb_extra)     ""
     set opt(gdbopts)       ""
@@ -83,31 +84,31 @@ proc init {args test_script} {
 	    --help        { usage; exit }
 	    -g            -
 	    -gdb          -
-	    --gdb         {set opt(gdb) 1}
+	    --gdb         { set opt(gdb) 1 }
 	    -x            -
 	    -xterm        -
-	    --xterm       {set opt(xterm) 1}
+	    --xterm       { set opt(xterm) 1 }
 	    -d            -
 	    -daemon       -
-	    --daemon      {set opt(daemon) 1}
+	    --daemon      { set opt(daemon) 1 }
 	    -geom         -
 	    -geometry     -
-	    --geometry    {shift args; set opt(xterm) 1; set opt(geometry) [arg1 $args] }
-	    -l            {shift args; set opt(logdir) [arg1 $args] }
-	    -p            {set opt(pause) 1}
-	    -r            {shift args; set opt(rundir_prefix) [arg1] }
-	    -v            {set opt(verbose) 1}
-	    -n            {shift args; set num_nodes_override [arg1 $args] }
+	    --geometry    { shift args; set opt(xterm) 1; set opt(geometry) [arg1 $args] }
+	    -l            { shift args; set opt(logdir) [arg1 $args] }
+	    -p            { set opt(pause) 1}
+	    -r            { shift args; set opt(rundir_prefix) [arg1] }
+	    -v            { set opt(verbose) 1}
+	    -n            { shift args; set num_nodes_override [arg1 $args] }
 	    -net          -
-	    --net         {shift args; set opt(net)         [arg1 $args] }
-	    --extra-gdbrc {shift args; set opt(gdb_extra)   [arg1 $args] }
-	    --gdb-opts    {shift args; set opt(gdbopts)     [arg1 $args] }
-	    --opts        {shift args; set opt(opts)        [arg1 $args] }
-	    --gdb-tmpl    {shift args; set opt(gdb_tmpl)    [arg1 $args] }
-	    --script-tmpl {shift args; set opt(script_tmpl) [arg1 $args] }
-	    --no-logs     {set opt(no_logs) 1 }
-	    --leave-crap  {set opt(leave_crap) 1}
-	    --strip       { puts "XXX/bowei -- not implemented yet"; exit }
+	    --net         { shift args; set opt(net)         [arg1 $args] }
+	    --extra-gdbrc { shift args; set opt(gdb_extra)   [arg1 $args] }
+	    --gdb-opts    { shift args; set opt(gdbopts)     [arg1 $args] }
+	    --opts        { shift args; set opt(opts)        [arg1 $args] }
+	    --gdb-tmpl    { shift args; set opt(gdb_tmpl)    [arg1 $args] }
+	    --script-tmpl { shift args; set opt(script_tmpl) [arg1 $args] }
+	    --no-logs     { set opt(no_logs) 1 }
+	    --leave-crap  { set opt(leave_crap) 1}
+	    --strip       { set opt(strip) 1 }
 	    default       { puts "illegal option [arg1 $args]"; usage; exit }
 	}
 	shift args
@@ -126,7 +127,7 @@ proc init {args test_script} {
 
     puts "* Distributing files"
     dist::files $manifest::manifest [net::hostlist] [pwd] \
-	$opt(rundir_prefix) $manifest::subst $opt(verbose)
+	$opt(rundir_prefix) $manifest::subst $opt(strip) $opt(verbose)
 }
 
 proc process_template {template var_array} {

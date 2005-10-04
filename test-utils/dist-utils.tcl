@@ -15,6 +15,7 @@ namespace eval dist {
 # @param basedir       Basedir from which the files are taken
 # @param subst         A list of mappings to be done in the 
 #                      manifests, e.g. { exe stripped }
+# @param strip         Strip ELF executables to save transmission time
 # @param verbose       Print out what is happening
 #
 # Manifest file format list of tuples:
@@ -23,7 +24,7 @@ namespace eval dist {
 # { D remote-directory }
 #
 
-proc create {manifest basedir subst verbose} {
+proc create {manifest basedir subst strip verbose} {
     set tmpdir "/tmp/distrun.tcl-[pid]"
     exec mkdir $tmpdir
 
@@ -44,6 +45,14 @@ proc create {manifest basedir subst verbose} {
 		    puts "% $basedir/$src -> $tmpdir/$dst"
 		}
 		exec cp "$basedir/$src" "$tmpdir/$dst"
+
+		if { $strip && [file executable $tmpdir/$dst] } {
+		    # This should be safe, strip bails if it's not an exe
+		    if {$verbose} { 
+			puts "% stripping $tmpdir/$dst"
+		    }
+		    catch { exec strip "$tmpdir/$dst" }
+		}
 	    }
 	    
 	    "D" {
@@ -69,13 +78,14 @@ proc create {manifest basedir subst verbose} {
 # @param targetdir     Target directory
 # @param subst         A list of mappings to be done in the 
 #                      manifests, e.g. { exe stripped }
+# @param strip         Strip executables in the distribution
 # @param verbose       Print out what is happening
 #
     
-proc files {manifest_list host_list basedir targetdir subst {verbose 0}} {
+proc files {manifest_list host_list basedir targetdir subst strip {verbose 0}} {
     global ::dist::distdirs
 
-    set distdir [dist::create $manifest_list $basedir $subst $verbose]
+    set distdir [dist::create $manifest_list $basedir $subst $strip $verbose]
     set dist::distdirs(-1) $distdir
 
     if {$verbose} { puts "% copying files" }
