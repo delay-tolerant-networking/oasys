@@ -1,4 +1,5 @@
 #!/usr/bin/tclsh
+package require Tclx
 
 namespace eval run {
 
@@ -125,7 +126,7 @@ proc init {args test_script} {
 
     puts "* Distributing files"
     dist::files $manifest::manifest [net::hostlist] [pwd] \
-	    $opt(rundir_prefix) $manifest::subst $opt(verbose)
+	$opt(rundir_prefix) $manifest::subst $opt(verbose)
 }
 
 proc process_template {template var_array} {
@@ -377,19 +378,36 @@ proc collect_logs {} {
 # Cleanup the directories created by the test
 #
 proc cleanup {} {
-    global opt net::host run::dirs
+    global opt net::host run::dirs dist::distdirs
 
     if {$opt(leave_crap)} { return }
 
     puts "* Getting rid of run files"
     for {set i 0} {$i < [net::num_nodes]} {incr i} {
 	set hostname $net::host($i)
-	set dir      $run::dirs($i)
+	if [info exist run::dirs($i)] {
+	    dbg "% removing $hostname:$i:$run::dirs($i)"
+	    catch { run_cmd $hostname /bin/rm -r $run::dirs($i) }
+	}
+	if [info exist dist::distdirs($i)] {
+	    dbg "% removing $hostname:$i:$dist::distdirs($i)"
+	    catch { run_cmd $hostname /bin/rm -r $dist::distdirs($i) }
+	}
+    }
 
-	dbg "% removing $hostname:$i:$dir"
-	run_cmd $hostname /bin/rm -r $dirs($i)
+    if [info exist dist::distdirs(-1)] {
+	dbg "% removing distdir"
+	catch { run_cmd $hostname /bin/rm -r $dist::distdirs(-1) }
     }
 }
 
 # namespace run
+}
+
+# Trap SIGINT
+signal trap SIGINT { 
+    set opt(leave_crap) 0
+    puts "* Caught SIGINT, cleaning up"
+    run::cleanup 
+    exit
 }

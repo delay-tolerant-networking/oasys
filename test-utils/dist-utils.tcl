@@ -73,12 +73,16 @@ proc create {manifest basedir subst verbose} {
 #
     
 proc files {manifest_list host_list basedir targetdir subst {verbose 0}} {
+    global ::dist::distdirs
+
     set distdir [dist::create $manifest_list $basedir $subst $verbose]
+    set dist::distdirs(-1) $distdir
 
     if {$verbose} { puts "% copying files" }
     
     set i 0
     foreach host $host_list {
+	set dist::distdirs($i) $targetdir-$host-$i
 	if [net::is_localhost $host] {
 	    if {$verbose} { puts "% $distdir -> $host:$targetdir-$host-$i" }
 	    exec cp -r $distdir $targetdir-$host-$i
