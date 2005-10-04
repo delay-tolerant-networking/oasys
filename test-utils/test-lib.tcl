@@ -24,7 +24,12 @@ namespace eval conf {
 
     proc get { exec_name node } {
 	global conf::conf
-	return $conf::conf($exec_name,$node)
+
+	if [info exist conf::conf($exec_name,$node)] {
+	    return $conf::conf($exec_name,$node)
+	} else {
+	    return ""
+	}
     }
 }
 

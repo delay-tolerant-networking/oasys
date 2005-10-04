@@ -172,6 +172,8 @@ proc generate_script {id exec_file exec_opts confname conf} {
     # debug script
     set gdb(exec_opts)      $exec_opts
     set gdb(gdb_extra)      $opt(gdb_extra)
+    set gdb(gdb_test_extra) [conf::get gdb $id]
+
     set gdbscript [process_template $opt(gdb_tmpl) gdb]    
     dbg "% gdbscript = \n$gdbscript"
 
