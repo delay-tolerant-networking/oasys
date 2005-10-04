@@ -93,7 +93,8 @@ proc init {args test_script} {
 	    --daemon      { set opt(daemon) 1 }
 	    -geom         -
 	    -geometry     -
-	    --geometry    { shift args; set opt(xterm) 1; set opt(geometry) [arg1 $args] }
+	    --geometry    { shift args; set opt(xterm) 1; \
+		            set opt(geometry) [arg1 $args] }
 	    -l            { shift args; set opt(logdir) [arg1 $args] }
 	    -p            { set opt(pause) 1}
 	    -r            { shift args; set opt(rundir_prefix) [arg1] }
@@ -418,6 +419,10 @@ proc cleanup {} {
 signal trap SIGINT { 
     set opt(leave_crap) 0
     puts "* Caught SIGINT, cleaning up"
-    run::cleanup 
-    exit
+    run::cleanup
+    if {[info commands real_exit] != ""} {
+	real_exit
+    } else {
+	exit
+    }
 }
