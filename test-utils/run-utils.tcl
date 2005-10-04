@@ -201,7 +201,14 @@ proc write_script {id dir filename contents do_chmod} {
     global net::host
     set hostname $net::host($id)
     set path [file join $dir $filename]
-    run_cmd $hostname cat > $path << $contents
+
+    if [net::is_localhost $hostname] {
+	dbg "% cat > $path << $contents"
+	exec cat > $path << $contents
+    } else {
+	dbg "% ssh $hostname cat > $path << $contents"
+	exec ssh $hostname "cat > $path" << $contents
+    }
     run_cmd $hostname chmod +x $path
 }
 
