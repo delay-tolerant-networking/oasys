@@ -77,6 +77,13 @@ public:
         instance_ = new _Class();
         return instance_;
     }
+
+    static void set_instance(_Class* instance) {
+        if (instance_) {
+            PANIC("Singleton set_instance() called with existing object");
+        }
+        instance_ = instance;
+    }
     
 protected:
     static _Class* instance_;
