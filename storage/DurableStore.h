@@ -72,6 +72,7 @@ enum DurableStoreResult_t {
     DS_BUFSIZE   = -2,          ///< Buffer too small.
     DS_BUSY      = -3,          ///< Table is still open, can't delete.
     DS_EXISTS    = -4,          ///< Key already exists
+    DS_BADTYPE   = -5,          ///< Error in type collection
     DS_ERR       = -1000,       ///< XXX/bowei placeholder for now
 };
 

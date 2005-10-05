@@ -10,6 +10,7 @@ inline const char* durable_strerror(int r)
     case DS_BUFSIZE:  return "buffer too small.";
     case DS_BUSY:     return "table still open, can't delete";
     case DS_EXISTS:   return "key already exists";
+    case DS_BADTYPE:  return "type collection error";
     case DS_ERR:      return "unknown error";
     }
     NOTREACHED;

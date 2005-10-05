@@ -99,13 +99,13 @@ MultiTypeDurableTable<_BaseType, _Collection>::get(
     if (err != DS_OK) {
         return err;
     }
-
-    
+     
     err = TypeCollectionInstance<_Collection>::instance()->
           new_object(typecode, data);
-    if (err != 0) {
-        return DS_ERR;
+    if (err == TypeCollectionErr::TYPECODE) {
+        return DS_BADTYPE;
     }
+    ASSERT(err == 0);
     ASSERT(*data != NULL);
 
     err = this->impl_->get(key, *data);
