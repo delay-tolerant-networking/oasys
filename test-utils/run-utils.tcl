@@ -26,7 +26,8 @@ proc usage {} {
     puts "    -x | -xterm          Run each instance in an xterm"
     puts "    -d | -daemon         Daemon mode (no command loop)"
     puts "    -geom | -geometry    Specify the xterm geometry (implies -x)"
-    puts "    -net | --net <file>  Select the net file"
+    puts "    -net  | --net <file> Select the net file"
+    puts "    -id   | --id  <id>   Id which is used to select a port slice"
     puts "    -l <log dir>         Set a different directory for logs"
     puts "    -n <# nodes>         Number of nodes, unless overridden by test"
     puts "    -p                   Pause after apps dies, applies only to"
@@ -48,17 +49,18 @@ proc usage {} {
 proc init {args test_script} {
     global opt
     
+    set opt(conf_id)       0
+    set opt(daemon)        0
     set opt(gdb)           0
+    set opt(leave_crap)    0
     set opt(logdir)        "."
+    set opt(net)           ""
+    set opt(no_logs)       0
     set opt(pause)         0
     set opt(rundir_prefix) "/tmp/run-[pid]"
+    set opt(strip)         0
     set opt(verbose)       0
     set opt(xterm)         0
-    set opt(leave_crap)    0
-    set opt(no_logs)       0
-    set opt(net)           ""
-    set opt(daemon)        0
-    set opt(strip)         0
 
     set opt(gdb_extra)     ""
     set opt(gdbopts)       ""
@@ -69,6 +71,17 @@ proc init {args test_script} {
 
     set num_nodes_override 0
     
+    # Load default options if they exist -- You can override options
+    # if you want to with command line arguments.
+    if [file readable "~/.debug_opts"] {
+	set f [open "~/.debug_opts" "r"]
+	set new_args {}
+	eval lappend new_args [read -nonewline $f]
+	concat $new_args $args
+	set args $new_args
+	close $f
+    }
+
     switch -- $test_script {
 	invalid -
 	-h      -
@@ -102,6 +115,8 @@ proc init {args test_script} {
 	    -n            { shift args; set num_nodes_override [arg1 $args] }
 	    -net          -
 	    --net         { shift args; set opt(net)         [arg1 $args] }
+	    -id           -
+	    --id          { shift args; set opt(conf_id)     [arg1 $args] }
 	    --extra-gdbrc { shift args; set opt(gdb_extra)   [arg1 $args] }
 	    --gdb-opts    { shift args; set opt(gdbopts)     [arg1 $args] }
 	    --opts        { shift args; set opt(opts)        [arg1 $args] }
