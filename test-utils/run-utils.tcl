@@ -75,10 +75,9 @@ proc init {args test_script} {
     # if you want to with command line arguments.
     if [file readable "~/.debug_opts"] {
 	set f [open "~/.debug_opts" "r"]
-	set new_args {}
-	eval lappend new_args [read -nonewline $f]
-	concat $new_args $args
-	set args $new_args
+	
+	set new_args [eval list [read -nonewline $f]]
+	set args [concat $new_args $args]
 	close $f
     }
 
