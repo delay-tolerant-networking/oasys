@@ -189,9 +189,9 @@ public:
      */
     Ref& operator=(const TempRef<_Type>& temp)
     {
-        ASSERT(! ((object_ != NULL) && (temp.object() == object_)));
-        
-        assign(temp.object());
+        if (object_ != temp.object()) {
+            assign(temp.object());
+        }
         temp.release();
         return *this;
     }
