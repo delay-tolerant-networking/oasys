@@ -56,14 +56,14 @@ namespace eval test {
     # Run the script actions
     proc run_script {} {
 	global test::run_actions
-	eval $test::run_actions
+	uplevel \#0 $test::run_actions
     }
 
     # Run the exit script actions
     proc run_exit_script {} {
 	global test::exit_actions
 	if {$test::exit_actions != ""} {
-	    eval $test::exit_actions
+	    uplevel \#0 $test::exit_actions
 	}
     }
 
