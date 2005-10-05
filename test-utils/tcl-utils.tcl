@@ -16,7 +16,7 @@ proc do_until {what timeout script} {
     uplevel 1 {
 	while {1} {
 	    if {[clock clicks -milliseconds] > $do_start + $do_timeout} {
-		error "timeout $do_what"
+		error "timeout in '$do_what'"
 	    }
 	    eval $do_script
 	}
