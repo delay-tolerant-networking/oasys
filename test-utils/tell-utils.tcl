@@ -51,7 +51,7 @@ namespace eval tell {
 	}
     }
     
-    proc tell {host port cmd} {
+    proc tell {host port args} {
 	global tell::sockets tell::tell_verbose
 
 	if {![info exists sockets($host:$port)]} {
@@ -61,6 +61,12 @@ namespace eval tell {
 	
 	if {$tell_verbose} {
 	    puts "tell::tell: sending command \"$cmd\""
+	}
+
+	if {[llength $args] == 1} {
+	    set cmd [lindex $args 0]
+	} else {
+	    set cmd $args
 	}
 	
 	regsub -all -- {\n} [string trim $cmd] {\\n} cmd
