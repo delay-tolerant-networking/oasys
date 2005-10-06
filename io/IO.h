@@ -282,6 +282,7 @@ public:
         // XXX/bowei - todo
     };
 
+    virtual ~IOMonitor() {}
     virtual void monitor(IO::IO_Op_t op, const info_t* info) = 0;
 };
 
