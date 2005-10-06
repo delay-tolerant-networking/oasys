@@ -1,6 +1,5 @@
 TESTS += \
 	berkeley-db-test			\
-	command-test				\
 	durable-cache-test			\
 	io-basic-test				\
 	marshal-test				\
