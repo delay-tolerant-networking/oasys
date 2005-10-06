@@ -167,7 +167,13 @@ public:
                 (u_int)tests_.size(), passed_, failed_, input_);
     }
     void print_results() {
-        printf("\nTests Complete:\n\t\t%u Passed\t%u Failed\n", passed_, failed_);
+        printf("\nTests Complete:\n");
+        if (passed_ != 0) {
+            printf("\t\t%u Passed\n", passed_);
+        }
+        if (failed_ != 0) {
+            printf("\t\t%u Failed\n", failed_);
+        }
     }
 
 protected:
