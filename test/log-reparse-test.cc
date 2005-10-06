@@ -15,7 +15,7 @@ public:
     
 protected:
     virtual void run () {
-        int i;
+        int i = 0;
         while (1) {
             if ((i % 1000) == 0) {
                 log_info("/test/1000", "test 1000 (%d)", i / 1000);

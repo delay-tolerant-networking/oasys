@@ -58,7 +58,7 @@ HelpCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
 
     if (argc == 1) {
         StringBuffer buf;
-        int len;
+        int len = 0;
 
         buf.append("For help on a particular command, type \"help <cmd>\".\n");
         buf.append("The registered commands are: \n\t");
