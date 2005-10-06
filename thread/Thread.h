@@ -39,7 +39,7 @@
 #ifndef _OASYS_THREAD_H_
 #define _OASYS_THREAD_H_
 
-#include "../config.h"
+#include "config.h"
 
 #include <pthread.h>
 #include <vector>

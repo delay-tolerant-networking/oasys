@@ -20,7 +20,7 @@
  *
  */
 
-#include "../config.h"
+#include "config.h"
 #include "NetUtils.h"
 #include "compat/inet_aton.h"
 #include "debug/DebugUtils.h"

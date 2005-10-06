@@ -38,7 +38,7 @@
 #ifndef _OASYS_INET_ATON_H_
 #define _OASYS_INET_ATON_H_
 
-#include "../config.h"
+#include "config.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>

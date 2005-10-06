@@ -45,7 +45,7 @@
 #include <queue>
 #include <signal.h>
 
-#include "../config.h"
+#include "config.h"
 #include "../debug/DebugUtils.h"
 #include "../debug/Log.h"
 #include "../util/Singleton.h"

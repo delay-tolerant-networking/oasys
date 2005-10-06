@@ -38,7 +38,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "../config.h"
+#include "config.h"
 
 #ifdef HAVE_GETOPT_LONG
 #include <getopt.h>

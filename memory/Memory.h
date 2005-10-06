@@ -38,7 +38,7 @@
 #ifndef _OASYS_MEMORY_H_
 #define _OASYS_MEMORY_H_
 
-#include "../config.h"
+#include "config.h"
 
 #ifdef OASYS_DEBUG_MEMORY_ENABLED
 

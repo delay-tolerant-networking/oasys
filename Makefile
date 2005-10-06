@@ -139,6 +139,7 @@ GENFILES += debug/arith.h debug/arith-native.h debug/arithchk
 #
 ifeq ($(SRCDIR),)
 SRCDIR	:= .
+CFGDIR	:= .
 endif
 
 #
