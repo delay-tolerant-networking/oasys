@@ -8,7 +8,9 @@ for i in *; do
     if [ -x $i ]; then
 	is_unit_test=`grep "UnitTest\\.h" $i.cc`
 	if [ ! -z "$is_unit_test" ]; then
-	    echo "* Running test $i"
+	    echo "***"
+	    echo "*** $i"
+	    echo "***"
 	    ./$i
 	fi
     fi

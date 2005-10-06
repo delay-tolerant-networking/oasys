@@ -210,12 +210,12 @@ struct ReadRunner : public PipeIOTester {
             int cc = IO::read(fds_[0], g_scratchbuf, rlengths[i], 0, "/read");
             
             if (cc <= 0) { 
-                logf("/read", LOG_INFO, "read on fd %d error %d %s", 
+                logf("/read", LOG_ERR, "read on fd %d error %d %s", 
                      fds_[0], cc, strerror(errno));
                 fail(); 
             } else {
                 if (memcmp(g_testbuf + offset, g_scratchbuf, cc) != 0) {
-                    logf("/read", LOG_INFO, "read memory not equal");
+                    logf("/read", LOG_ERR, "read memory not equal");
                     fail();
                 }
                 offset += cc;
@@ -229,7 +229,7 @@ struct ReadRunner : public PipeIOTester {
         for (int i=0; i<OPS; ++i) {
             int cc = writeall(fds_[1], g_testbuf + offset, wlengths[i]);
             if (cc <= 0) { 
-                logf("/write", LOG_INFO, "write() on fd %d failed %s", 
+                logf("/write", LOG_ERR, "write() on fd %d failed %s", 
                      fds_[1], strerror(errno));
                 fail(); 
             }
@@ -267,7 +267,7 @@ struct ReadVRunner : public PipeIOTester {
         int cc = IO::readv(fds_[0], iov, 10, 0, "/read");
         if (cc <= 0) { fail(); return; }
         if (memcmp(g_testbuf, g_scratchbuf, cc) != 0) {
-            logf("/read", LOG_INFO, "read memory not equal");
+            logf("/read", LOG_ERR, "read memory not equal");
             fail();
         }
     }   
@@ -302,7 +302,7 @@ struct ReadIntrRunner : public PipeIOTester {
             if (cc < 0)       { fail(); break; }
             
             if (memcmp(g_testbuf, g_scratchbuf, cc) != 0) {
-                logf("/read", LOG_INFO, "read memory not equal");
+                logf("/read", LOG_ERR, "read memory not equal");
                 fail();
             }
         }
@@ -339,7 +339,7 @@ struct ReadTimeoutRunner : public PipeIOTester {
             if (cc < 0)          { fail(); break; }
             
             if (memcmp(g_testbuf, g_scratchbuf, cc) != 0) {
-                logf("/read", LOG_INFO, "read memory not equal");
+                logf("/read", LOG_ERR, "read memory not equal");
                 fail();
             }           
         }
@@ -410,13 +410,13 @@ struct ReadAllRunner : public PipeIOTester {
             int cc = IO::readall(fds_[0], g_scratchbuf, rlengths[i], 0, "/read");
             
             if (cc <= 0) { 
-                logf("/read", LOG_INFO, "read on fd %d error %d %s", 
+                logf("/read", LOG_ERR, "read on fd %d error %d %s", 
                      fds_[0], cc, strerror(errno));
                 fail(); 
             } else {
                 if (cc != (int)rlengths[i]) { fail(); }
                 if (memcmp(g_testbuf + offset, g_scratchbuf, cc) != 0) {
-                    logf("/read", LOG_INFO, "read memory not equal");
+                    logf("/read", LOG_ERR, "read memory not equal");
                     fail();
                 }
                 offset += cc;
@@ -430,7 +430,7 @@ struct ReadAllRunner : public PipeIOTester {
         for (int i=0; i<OPS; ++i) {
             int cc = writeall(fds_[1], g_testbuf + offset, wlengths[i]);
             if (cc <= 0) { 
-                logf("/write", LOG_INFO, "write() on fd %d failed %s", 
+                logf("/write", LOG_ERR, "write() on fd %d failed %s", 
                      fds_[1], strerror(errno));
                 fail(); 
             }
@@ -474,10 +474,10 @@ struct ReadVAllRunner : public PipeIOTester {
             if (cc != 10000) { fail(); }
             
             if (memcmp(g_testbuf + read_offset, g_scratchbuf, cc) != 0) {
-                logf("/read", LOG_INFO, "read memory not equal");
+                logf("/read", LOG_ERR, "read memory not equal");
                 fail();
             } else {
-                logf("/read", LOG_INFO, "read memory is equal");
+                logf("/read", LOG_DEBUG, "read memory is equal");
             }
             read_offset += cc;
         }
@@ -493,7 +493,7 @@ struct ReadVAllRunner : public PipeIOTester {
             int cc = writeall(fds_[1], g_testbuf + offset, wlengths[i]);
             usleep(10000);
             if (cc <= 0) { 
-                logf("/write", LOG_INFO, "write() on fd %d failed %s", 
+                logf("/write", LOG_ERR, "write() on fd %d failed %s", 
                      fds_[1], strerror(errno));
                 fail(); 
             }
@@ -541,10 +541,10 @@ struct ReadVAllTimeoutRunner : public PipeIOTester {
             if (cc != 10000) { fail(); }
             
             if (memcmp(g_testbuf + read_offset, g_scratchbuf, cc) != 0) {
-                logf("/read", LOG_INFO, "read memory not equal");
+                logf("/read", LOG_ERR, "read memory not equal");
                 fail();
             } else {
-                logf("/read", LOG_INFO, "read memory is equal");
+                logf("/read", LOG_DEBUG, "read memory is equal");
             }
             read_offset += cc;
         }
@@ -560,7 +560,7 @@ struct ReadVAllTimeoutRunner : public PipeIOTester {
             int cc = writeall(fds_[1], g_testbuf + offset, wlengths[i]);
             usleep(10000);
             if (cc <= 0) { 
-                logf("/write", LOG_INFO, "write() on fd %d failed %s", 
+                logf("/write", LOG_ERR, "write() on fd %d failed %s", 
                      fds_[1], strerror(errno));
                 fail(); 
             }
