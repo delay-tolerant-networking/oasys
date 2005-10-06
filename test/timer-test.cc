@@ -129,7 +129,7 @@ DECLARE_TEST(TimerTest1) {
 
     sleep(10);    
 
-    return UNIT_TEST_INPUT;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TESTER(TimerTest) {
