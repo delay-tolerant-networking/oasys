@@ -101,7 +101,7 @@ BerkeleyDBStore::~BerkeleyDBStore()
     log_info("db closed");
 
     fclose(err_log_);
-    log_info("error log closed");
+    log_info("log file closed");
 }
 
 int 
