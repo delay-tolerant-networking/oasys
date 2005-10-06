@@ -111,6 +111,53 @@ LIBFILES := liboasys.a liboasyscompat.a
 all: checkconfigure $(LIBFILES) tests
 
 #
+# Need special rules for the gdtoa sources adapted from the source
+# distribution. These must be defined before the common rules
+# are pulled in from Rules.make.
+#
+debug/arith-native.h: debug/gdtoa-arithchk.c
+	mkdir -p debug
+	$(CC) $(DEBUG) $(OPTIMIZE) $< -o debug/arithchk
+	debug/arithchk > $@
+	rm -f debug/arithchk
+
+debug/arith.h:
+	$(MAKE) debug/arith-$(TARGET).h
+	cp debug/arith-$(TARGET).h $@
+
+debug/Formatter.cc: debug/arith.h
+
+debug/gdtoa-%.o: debug/gdtoa-%.c debug/arith.h
+	$(CC)  -g -DINFNAN_CHECK -c $< -o $@
+
+GENFILES += debug/arith.h debug/arith-native.h debug/arithchk
+
+#
+# If srcdir isn't set by some other makefile, then it must be .
+#
+ifeq ($(SRCDIR),)
+SRCDIR	:= .
+endif
+
+#
+# Include the common rules
+#
+include Rules.make
+
+#
+# And a special rule to build the command-init-tcl.c file from command.tcl
+#
+tclcmd/TclCommand.o: tclcmd/command-init-tcl.c
+tclcmd/command-init-tcl.c: $(SRCDIR)/tclcmd/command-init.tcl
+	rm -f $@
+	echo "static const char* INIT_COMMAND = " > $@;
+	cat $^ | sed 's|\\|\\\\|g' |\
+		 sed 's|"|\\"|g' | \
+		 sed 's|^|"|g' | \
+		 sed "s|$$|\\\\n\"|g" >> $@;
+	echo ";">> $@
+
+#
 # Rule to generate the doxygen documentation
 #
 doxygen:
@@ -122,12 +169,12 @@ doxygen:
 .PHONY: checkconfigure
 checkconfigure: Rules.make
 
-Rules.make: Rules.make.in configure
+Rules.make: $(SRCDIR)/Rules.make.in $(SRCDIR)/configure
 	@[ ! x`echo "$(MAKECMDGOALS)" | grep clean` = x ] || \
 	(echo "$@ is out of date, need to rerun configure" && \
 	exit 1)
 
-Rules.make.in:
+$(SRCDIR)/Rules.make.in:
 	@echo SRCDIR: $(SRCDIR)
 	@echo error -- Makefile did not set SRCDIR properly
 	@exit 1
@@ -146,43 +193,11 @@ liboasyscompat.a: $(COMPAT_OBJS)
 .PHONY: cpps
 cpps: $(CPPS)
 
-#
-# Need special rules for the gdtoa sources adapted from the source
-# distribution.
-#
-debug/arith-native.h: debug/gdtoa-arithchk.c
-	$(CC) $(DEBUG) $(OPTIMIZE) $< -o debug/arithchk
-	debug/arithchk > $@
-	rm -f debug/arithchk
-
-debug/arith.h:
-	$(MAKE) debug/arith-$(TARGET).h
-	cp debug/arith-$(TARGET).h $@
-
-debug/Formatter.cc: debug/arith.h
-
-debug/gdtoa-%.o: debug/gdtoa-%.c debug/arith.h
-	$(CC)  -g -DINFNAN_CHECK -c $< -o $@
-
-GENFILES += debug/arith.h debug/arith-native.h debug/arithchk
-
-#
-# And a special rule to build the command-init-tcl.c file from command.tcl
-#
-tclcmd/TclCommand.o: tclcmd/command-init-tcl.c
-tclcmd/command-init-tcl.c: tclcmd/command-init.tcl
-	rm -f $@
-	echo "static const char* INIT_COMMAND = " > $@;
-	cat $^ | sed 's|\\|\\\\|g' |\
-		 sed 's|"|\\"|g' | \
-		 sed 's|^|"|g' | \
-		 sed "s|$$|\\\\n\"|g" >> $@;
-	echo ";">> $@
 
 #
 # test files
 #
-include test/Makefile
+include $(SRCDIR)/test/Makefile
 TESTS := $(patsubst %,test/%,$(TESTS))
 .PHONY: test tests
 test tests: $(TESTS)
@@ -191,8 +206,3 @@ test tests: $(TESTS)
 .PHONY: check
 check:
 	cd test; tclsh UnitTest.tcl
-
-#
-# Include the common rules
-#
--include Rules.make

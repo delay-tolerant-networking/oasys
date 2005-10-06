@@ -1,22 +1,21 @@
 #
-# Rules.make: common makefile rules for oasys
+# Rules.make: common makefile rules for oasys / DTN2
 #
 
 #
 # Targets are "native" and "arm"
 # 
-TARGET = @TARGET@
+TARGET 		= @TARGET@
 
 #
 # Common settings extracted from the configure script
 #
-SRCDIR		= @SRCDIR@
 CC		= @CC@
 CXX		= @CXX@
 DEPFLAGS	= @DEPFLAGS@
 DEBUG 		= @DEBUG@
 OPTIMIZE	= @OPTIMIZE@
-CPPFLAGS	= -I$(SRCDIR) @CPPFLAGS@
+CPPFLAGS	= -I$(SRCDIR) -I. @CPPFLAGS@
 WARN		= -Wall -Werror @OPTIMIZE_WARN@
 CFLAGS		= $(CPPFLAGS) $(DEBUG) $(OPTIMIZE) $(DEPFLAGS) $(WARN)
 LIBS		= @LIBS@
@@ -54,6 +53,12 @@ catchdefault:
 	$(CXX) $(CFLAGS) -c $< -E -o $@
 
 #
+# Make stripped binaries from debug binaries
+#
+%.stripped: %.exe
+	cp $< $@ && strip $@
+
+#
 # Always include all the .d files that we can find, based on all the
 # source files we can find (unless they're specified).
 #
@@ -66,6 +71,9 @@ ifneq ($(DEPFILES),)
 -include $(DEPFILES)
 endif
 
+echosrcdir:
+	@echo "srcdir: $(SRCDIR)"
+
 echodep:
 	@echo "allsrcs: $(ALLSRCS)"
 	@echo "depfiles: $(DEPFILES)"
@@ -73,32 +81,39 @@ echodep:
 #
 # Some rules for cleaning object files
 #
-clean: objclean depclean genclean libclean binclean
+clean: $(SUBDIRS) objclean depclean genclean libclean binclean
+
+.PHONY: $(SUBDIRS)
+$(SUBDIRS):
+	$(MAKE) -w -C $@ $(MAKECMDGOALS)
 
 .PHONY: objclean
 objclean:
 	@echo "removing object files..."
-	find . \( -name '*.[Eo]' \) -print0 | xargs -0 rm -f
+	@find . \( -name '*.[Eo]' \) -print | xargs rm -f
 
 .PHONY: depclean
 depclean:
 	@echo "removing dependency files..."
-	find . \( -name '*.d' \) -print0 | xargs -0 rm -f
+	@find . \( -name '*.d' \) -print | xargs rm -f
 
 .PHONY: genclean
 genclean:
-	@echo "removing generated files: $(GENFILES)..."
-	@test -z "$(GENFILES)" || rm -f $(GENFILES)
-
-.PHONY: binclean
-binclean:
-	@echo "removing binary files: $(BINFILES)..."
-	@test -z "$(BINFILES)" || rm -f $(BINFILES)
+	@test -z "$(GENFILES)" || \
+		echo "removing generated files: $(GENFILES)..." && \
+		rm -f $(GENFILES)
 
 .PHONY: libclean
 libclean:
-	@echo "removing library files: $(LIBFILES)..."
-	@test -z "$(LIBFILES)" || rm -f $(LIBFILES)
+	@test -z "$(LIBFILES)" || \
+		echo "removing library files: $(LIBFILES)..." && \
+		rm -f $(LIBFILES)
+
+.PHONY: binclean
+binclean:
+	@test -z "$(BINFILES)" || \
+		echo "removing binary files: $(BINFILES)..." && \
+		rm -f $(BINFILES)
 
 .PHONY: distclean
 CFGFILES := Rules.make config.h config.cache

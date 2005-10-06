@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS SRCDIR TARGET DEBUG OPTIMIZE OPTIMIZE_WARN STATIC CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX AWK INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE RANLIB ac_ct_RANLIB DEPFLAGS CPP EGREP LIBOBJS POW_LIB LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS SRCDIR TARGET DEBUG OPTIMIZE OPTIMIZE_WARN STATIC CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX AWK INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE RANLIB ac_ct_RANLIB DEPFLAGS CPP EGREP LIBOBJS POW_LIB SUBDIR LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1309,11 +1309,12 @@ fi
 
 fi;
 
-# First set srcdir
-ac_prog=$0
-ac_confdir=`echo "$ac_prog" | sed 's%\\/^\\/^\\/*$%%'`
-test "x$ac_confdir" = "x$ac_prog" && ac_confdir=.
-SRCDIR=$ac_confdir
+# First set srcdir, calculated above in AC_CONFIG_SRCDIR
+echo "$as_me:$LINENO: checking location of source directory" >&5
+echo $ECHO_N "checking location of source directory... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: \"$srcdir\"" >&5
+echo "${ECHO_T}\"$srcdir\"" >&6
+SRCDIR=$srcdir
 
 
 
@@ -7695,6 +7696,13 @@ LIBS="$LIBS $OASYS_LIBS"
 
           ac_config_files="$ac_config_files Rules.make"
 
+
+if test ! $SRCDIR = . ; then
+
+             ac_config_files="$ac_config_files Makefile:Makefile-Builddir.in"
+
+fi
+
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -8220,6 +8228,7 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "Rules.make" ) CONFIG_FILES="$CONFIG_FILES Rules.make" ;;
+  "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile:Makefile-Builddir.in" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
@@ -8333,6 +8342,7 @@ s,@CPP@,$CPP,;t t
 s,@EGREP@,$EGREP,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@POW_LIB@,$POW_LIB,;t t
+s,@SUBDIR@,$SUBDIR,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
 

@@ -23,11 +23,10 @@ then
 fi
 ])
 
-# First set srcdir
-ac_prog=$0
-ac_confdir=`echo "$ac_prog" | sed 's%[\\/][^\\/][^\\/]*$%%'`
-test "x$ac_confdir" = "x$ac_prog" && ac_confdir=.
-SRCDIR=$ac_confdir
+# First set srcdir, calculated above in AC_CONFIG_SRCDIR
+AC_MSG_CHECKING([location of source directory])
+AC_MSG_RESULT(\"$srcdir\")
+SRCDIR=$srcdir
 AC_SUBST(SRCDIR)
 
 dnl -------------------------------------------------------------------------
@@ -221,4 +220,10 @@ LDFLAGS="$LDFLAGS $OASYS_LDFLAGS"
 LIBS="$LIBS $OASYS_LIBS"
 
 AC_CONFIG_FILES([Rules.make])
+
+if test ! $SRCDIR = . ; then
+   AC_SUBST(SUBDIR,)
+   AC_CONFIG_FILES([Makefile:Makefile-Builddir.in])
+fi
+
 AC_OUTPUT
