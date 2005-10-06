@@ -4,11 +4,14 @@
 #include "debug/Log.h"
 #include <thread/SpinLock.h>
 #include <thread/Thread.h>
+#include <util/UnitTest.h>
 
 #ifndef __NO_ATOMIC__
 
 using namespace oasys;
 
+SpinLock lock;
+SpinLock lock2;
 volatile int nspins = 10000000;
 volatile int total  = 0;
 volatile int count1 = 0;
@@ -53,10 +56,9 @@ protected:
     SpinLock* lock_;
 };
 
-void
+int
 test(const char* what, SpinLock* lock1, SpinLock* lock2)
 {
-    log_info("/test", "***** testing with %s lock...", what);
     Thread* t1 = new Thread1(lock1);
     Thread* t2 = new Thread2(lock2);
 
@@ -79,8 +81,6 @@ test(const char* what, SpinLock* lock1, SpinLock* lock2)
     log_info("/test", "count2:     %d", count2);
     log_info("/test", "total:      %d", total);
     log_info("/test", "count sum:  %d", count1 + count2);
-
-    log_info("/test", "***** testing with %s lock... done.\n\n", what);
     delete t1;
     delete t2;
 
@@ -89,27 +89,39 @@ test(const char* what, SpinLock* lock1, SpinLock* lock2)
     total = 0;
     SpinLock::total_spins_ = 0;
     SpinLock::total_yields_ = 0;
+
+    return UNIT_TEST_PASSED;
 }
 
-int
-main()
-{
-    Log::init(LOG_DEBUG);
-    SpinLock lock;
-    SpinLock lock2;
+DECLARE_TEST(SharedLock) {
+    return test("shared", &lock, &lock);
+}
 
-    test("shared",   &lock, &lock);
-    test("separate", &lock, &lock2);
-    test("no", 0, 0);
+DECLARE_TEST(SeparateLock) {
+    return test("shared", &lock, &lock2);
+}
+    
+DECLARE_TEST(NoLock) {
+    return test("shared", &lock, &lock2);
+}
+
+DECLARE_TESTER(SpinLockTester) {
+    ADD_TEST(SharedLock);
+    ADD_TEST(SeparateLock);
+    ADD_TEST(NoLock);
 }
 
 #else // __NO_ATOMIC__
 
-int
-main()
-{
-    fprintf(stderr, "spin lock test is meaningless without an atomic.h");
+DECLARE_TEST(Bogus) {
+    log_warn("spin lock test is meaningless without atomic.h");
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TESTER(SpinLockTester) {
+    ADD_TEST(Bogus);
 }
 
 #endif // __NO_ATOMIC__
 
+DECLARE_TEST_FILE(SpinLockTester, "spin lock test");
