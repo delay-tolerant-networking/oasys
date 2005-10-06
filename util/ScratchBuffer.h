@@ -90,7 +90,12 @@ public:
         return buf_;
     }
     
-    size_t    size() { return size_; }
+    /*! 
+     * @return Size of the internal scratch buffer. N.B. Don't use
+     * this as the size of the buffer that has been written into, it
+     * will be unreliable.
+     */
+    size_t scratch_size() { return size_; }
     
 private:
     _memory_t buf_;
@@ -136,7 +141,13 @@ public:
 
         return buf_;
     }
-    size_t size() { return size_; }
+
+    /*! 
+     * @return Size of the internal scratch buffer. N.B. Don't use
+     * this as the size of the buffer that has been written into, it
+     * will be unreliable.
+     */
+    size_t scratch_size() { return size_; }
     
 private:
     _memory_t buf_;
