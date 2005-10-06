@@ -203,6 +203,11 @@ AC_OASYS_FUNC_FPCLASSIFY
 AC_CHECK_FUNCS([bzero ftruncate getaddrinfo gethostbyname gethostbyname_r getopt_long gettimeofday inet_aton inet_pton isascii localeconv memchr memmove memset pthread_yield sched_yield mkdir setenv socket strcasecmp strncasecmp strchr strcspn strdup strerror strrchr strspn strstr strtol strtoul])
 
 dnl -------------------------------------------------------------------------
+dnl Dump the autoconf cache now to try to avoid redundant checks
+dnl -------------------------------------------------------------------------
+AC_CACHE_SAVE
+
+dnl -------------------------------------------------------------------------
 dnl Checks for dependent third-party libraries
 dnl -------------------------------------------------------------------------
 AC_OASYS_CONFIG_TCL
