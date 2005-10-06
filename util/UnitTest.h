@@ -109,6 +109,8 @@ public:
 
         if (in_tcl) {
             print_tcl_header();
+        } else {
+            print_header();
         }
 
         int test_num = 1;
@@ -166,8 +168,12 @@ public:
         fprintf(stderr, "} { %u %d %d %d } }\n", 
                 (u_int)tests_.size(), passed_, failed_, input_);
     }
+    void print_header() {
+        printf("\n\n%s Starting...\n\n", name_.c_str());
+    }
+    
     void print_results() {
-        printf("\nTests Complete:\n");
+        printf("\n%s Complete:\n", name_.c_str());
         if (passed_ != 0) {
             printf("\t\t%u Passed\n", passed_);
         }
