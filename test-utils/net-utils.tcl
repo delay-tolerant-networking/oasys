@@ -21,17 +21,9 @@ proc node { node_id hostname new_portbase {new_extra {} } } {
     global opt
     
     set  net::host($node_id)      $hostname
-    set  net::portbase($node_id)  [net::get_portbase $new_portbase]
+    set  net::portbase($node_id)  [expr $portbase + $opt(conf_id) * 100]
     set  net::extra($node_id)     $new_extra
     incr net::defined_nodes
-}
-
-#
-# Assign a portbase from the conf_id and a new_portbase
-#
-proc get_portbase { portbase } {
-    global opt
-    return [expr $portbase + $opt(conf_id) * 1000]
 }
 
 #
