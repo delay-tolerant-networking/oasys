@@ -27,12 +27,16 @@ DECLARE_TEST(Put) {
     CHECK_EQUAL(cache_->size(), 21);
 
     // both these items put the cache over capacity
+    log_info("flamebox-ignore ign1 cache already at capacity");
+    
     CHECK(cache_->put(IntShim(3), new StringShim("test test test"), 0) == DS_OK);
     CHECK_EQUAL(cache_->size(), 39);
 
     CHECK(cache_->put(IntShim(4), new StringShim("test"), 0) == DS_OK);
     CHECK_EQUAL(cache_->size(), 47);
 
+    log_info("flamebox-ignore-cancel ign1");
+        
     CHECK_EQUAL(cache_->count(), 4);
     CHECK_EQUAL(cache_->live(), 4);
 
@@ -117,8 +121,10 @@ DECLARE_TEST(PutEvict) {
     CHECK(cache_->get(IntShim(1), &s) == DS_OK);
     CHECK(cache_->release(IntShim(1), s) == DS_OK);
     
+    log_info("flamebox-ignore ign1 cache already at capacity");
     s = new StringShim("really really really really really really big");
     CHECK(cache_->put(IntShim(2), s, 0) == DS_OK);
+    log_info("flamebox-ignore-cancel ign1");
     CHECK(cache_->evictions() == 5);
     CHECK_EQUAL(cache_->count(), 1);
     CHECK_EQUAL(cache_->live(), 1);
