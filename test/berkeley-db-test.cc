@@ -573,12 +573,15 @@ DECLARE_TEST(SingleTypeCache) {
     CHECK_EQUAL(cache->count(), 1);
     CHECK_EQUAL(cache->live(), 0);
 
-    // delete an object out of cache, a live object in cache, and a
-    // dead object in cache
+    // delete an object out of cache, a live object in cache (can't
+    // do), and a dead object in cache
     CHECK(table->get(IntShim(1), &s) == DS_OK);
     CHECK_EQUAL(cache->count(), 2);
     CHECK_EQUAL(cache->live(), 1);
     
+    CHECK(table->del(IntShim(1)) == DS_ERR);
+    CHECK(table->get(IntShim(1), &s) == DS_OK);
+    CHECK(cache->release(IntShim(1), s) == DS_OK);
     CHECK(table->del(IntShim(1)) == DS_OK);
     CHECK(table->get(IntShim(1), &s) == DS_NOTFOUND);
     CHECK(table->del(IntShim(2)) == DS_OK);
@@ -702,12 +705,15 @@ DECLARE_TEST(MultiTypeCache) {
     CHECK_EQUAL(cache->count(), 1);
     CHECK_EQUAL(cache->live(), 0);
 
-    // delete an object out of cache, a live object in cache, and a
-    // dead object in cache
+    // delete an object out of cache, a live object in cache (can't
+    // do), and a dead object in cache
     CHECK(table->get(IntShim(1), &o) == DS_OK);
     CHECK_EQUAL(cache->count(), 2);
     CHECK_EQUAL(cache->live(), 1);
     
+    CHECK(table->del(IntShim(1)) == DS_ERR);
+    CHECK(table->get(IntShim(1), &o) == DS_OK);
+    CHECK(cache->release(IntShim(1), o) == DS_OK);
     CHECK(table->del(IntShim(1)) == DS_OK);
     CHECK(table->get(IntShim(1), &o) == DS_NOTFOUND);
     CHECK(table->del(IntShim(2)) == DS_OK);
