@@ -125,10 +125,12 @@ debug/arith.h:
 	$(MAKE) debug/arith-$(TARGET).h
 	cp debug/arith-$(TARGET).h $@
 
-debug/Formatter.cc: debug/arith.h
+debug/Formatter.o:  debug/Formatter.cc debug/arith.h
+	@rm -f $@; mkdir -p $(@D)
+	$(CXX) $(CFLAGS) -I./debug -c $< -o $@
 
 debug/gdtoa-%.o: debug/gdtoa-%.c debug/arith.h
-	$(CC)  -g -DINFNAN_CHECK -c $< -o $@
+	$(CC) -I./debug -g -DINFNAN_CHECK -c $< -o $@
 
 GENFILES += debug/arith.h debug/arith-native.h debug/arithchk
 
