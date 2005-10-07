@@ -49,10 +49,12 @@ TYPE_COLLECTION_INSTANTIATE(TestC);
 class Obj  {
 public:
     Obj(int id) : id_(id) {}
+    virtual ~Obj();
     virtual const char* name() = 0;
 
     int id_;
 };
+Obj::~Obj() {}
 
 class Foo : public Obj {
 public:
