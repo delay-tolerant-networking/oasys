@@ -40,7 +40,9 @@
 
 #include <cstdlib>
 #include <cstring>
+
 #include "../debug/DebugUtils.h"
+#include "../util/DeadBeef.h"
 
 namespace oasys {
 
@@ -68,6 +70,9 @@ public:
     {
         if (size_ != 0) {
             buf_ = static_cast<_memory_t>(malloc(size_));
+#ifndef NDEBUG
+            fill_with_the_beef(buf_, size_);
+#endif
             ASSERT(buf_);
         }
     }
@@ -112,7 +117,11 @@ public:
     ScratchBuffer()
         : buf_(reinterpret_cast<_memory_t>(static_buf_)),
 	  size_(_static_size)
-    {}
+    {
+#ifndef NDEBUG
+        fill_with_the_beef(buf_, size_);
+#endif
+    }
 
     ~ScratchBuffer() { 
 	if (using_malloc()) {
