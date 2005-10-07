@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS SRCDIR TARGET DEBUG OPTIMIZE OPTIMIZE_WARN STATIC CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX AWK INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE RANLIB ac_ct_RANLIB DEPFLAGS CPP EGREP LIBOBJS POW_LIB SUBDIR LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS SRCDIR BUILDDIR TARGET DEBUG OPTIMIZE OPTIMIZE_WARN STATIC CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX AWK INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE RANLIB ac_ct_RANLIB DEPFLAGS CPP EGREP LIBOBJS POW_LIB SUBDIR LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1309,12 +1309,20 @@ fi
 
 fi;
 
-# First set srcdir, calculated above in AC_CONFIG_SRCDIR
+# First set srcdir and builddir, calculated above in AC_CONFIG_SRCDIR
 echo "$as_me:$LINENO: checking location of source directory" >&5
 echo $ECHO_N "checking location of source directory... $ECHO_C" >&6
-echo "$as_me:$LINENO: result: \"$srcdir\"" >&5
-echo "${ECHO_T}\"$srcdir\"" >&6
-SRCDIR=$srcdir
+SRCDIR=`(cd $srcdir && pwd)`
+echo "$as_me:$LINENO: result: \"$SRCDIR\"" >&5
+echo "${ECHO_T}\"$SRCDIR\"" >&6
+
+
+builddir=`pwd`
+echo "$as_me:$LINENO: checking location of build directory" >&5
+echo $ECHO_N "checking location of build directory... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: \"$builddir\"" >&5
+echo "${ECHO_T}\"$builddir\"" >&6
+BUILDDIR=$builddir
 
 
 
@@ -8315,6 +8323,7 @@ s,@ECHO_N@,$ECHO_N,;t t
 s,@ECHO_T@,$ECHO_T,;t t
 s,@LIBS@,$LIBS,;t t
 s,@SRCDIR@,$SRCDIR,;t t
+s,@BUILDDIR@,$BUILDDIR,;t t
 s,@TARGET@,$TARGET,;t t
 s,@DEBUG@,$DEBUG,;t t
 s,@OPTIMIZE@,$OPTIMIZE,;t t

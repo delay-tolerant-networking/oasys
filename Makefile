@@ -138,8 +138,8 @@ GENFILES += debug/arith.h debug/arith-native.h debug/arithchk
 # If srcdir isn't set by some other makefile, then it must be .
 #
 ifeq ($(SRCDIR),)
-SRCDIR	:= .
-CFGDIR	:= .
+SRCDIR   := .
+BUILDDIR := .
 endif
 
 #
