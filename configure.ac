@@ -227,7 +227,7 @@ LIBS="$LIBS $OASYS_LIBS"
 
 AC_CONFIG_FILES([Rules.make])
 
-if test ! $SRCDIR = . ; then
+if test ! $SRCDIR = `pwd` ; then
    AC_SUBST(SUBDIR,)
    AC_CONFIG_FILES([Makefile:Makefile-Builddir.in])
 fi

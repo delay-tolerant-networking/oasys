@@ -7705,7 +7705,7 @@ LIBS="$LIBS $OASYS_LIBS"
           ac_config_files="$ac_config_files Rules.make"
 
 
-if test ! $SRCDIR = . ; then
+if test ! $SRCDIR = `pwd` ; then
 
              ac_config_files="$ac_config_files Makefile:Makefile-Builddir.in"
 
