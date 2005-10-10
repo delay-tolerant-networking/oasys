@@ -1,7 +1,7 @@
 #ifndef __BUFFEREDSERIALIZEACTION_H__
 #define __BUFFEREDSERIALIZEACTION_H__
 
-#include "serialize/Serialize.h"
+#include "Serialize.h"
 
 namespace oasys {
 
