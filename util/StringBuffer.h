@@ -167,8 +167,7 @@ public:
 
     //! Used to workaround bugs in Cygwin
     void reserve(size_t size) {
-        int err = buf_->reserve(size);
-        ASSERT(err == 0);
+        buf_->reserve(size);
     }
 
 private:

@@ -25,7 +25,6 @@ struct ExpandableBuffer {
     virtual ~ExpandableBuffer() { 
         if (buf_ != 0) {
             ASSERT(check_guards());
-
             unpost_guards();
             free(buf_);
             buf_ = 0;
@@ -43,11 +42,9 @@ struct ExpandableBuffer {
      *
      * @return 0 on success.
      */
-    virtual int reserve(size_t size = 0, char* old_mem = 0) {
-        ASSERT(! (old_mem != 0 && buf_ == 0));
-        
+    virtual void reserve(size_t size = 0) {
         if (size == 0) {
-            size = (buf_len_ == 0) ? 1 : (buf_len_ * 2);
+            size = (buf_len_ == 0) ? 32 : (buf_len_ * 2);
         }        
 
         if (size > buf_len_) {
@@ -55,24 +52,13 @@ struct ExpandableBuffer {
             unpost_guards();
             buf_ = static_cast<char*>
                    (realloc(buf_, size + 2 * GUARD_SIZE));
-            
             if (buf_ == 0) {
-                return -1;
+                PANIC("out of memory");
             }
-            
-            size_t old_buf_len_ = buf_len_;
             buf_len_ = size;
             post_guards();
-            
-            if (old_mem != 0) {
-                memcpy(buf_, old_mem, old_buf_len_);
-            }
         }
-            
-
         ASSERT(check_guards());
-
-        return 0;
     }
 
     //! @return bytes free

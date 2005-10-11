@@ -56,8 +56,14 @@ DECLARE_TEST(ExpandableBuffer1) {
 }
 
 DECLARE_TEST(ExpandableBuffer2) {
-    ExpandableBuffer buf;
-
+    ScratchBuffer<char*, 20> scratch;
+    StringBuffer buf(&scratch);
+    
+    buf.appendf("hello, world");
+    buf.appendf("hello, world");
+    buf.appendf("hello, world");
+    buf.appendf("hello, world");
+    
     return UNIT_TEST_PASSED;
 }
 

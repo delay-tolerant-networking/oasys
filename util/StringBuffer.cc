@@ -51,8 +51,7 @@ StringBuffer::StringBuffer(size_t initsz, const char* initstr)
     buf_ = new ExpandableBuffer();
     ASSERT(buf_ != 0);
     
-    int err = buf_->reserve( (initsz == 0) ? 32 : initsz);
-    ASSERT(err == 0);
+    buf_->reserve( (initsz == 0) ? 32 : initsz);
 
     if (initstr) {
         append(initstr);
@@ -129,9 +128,7 @@ StringBuffer::append(const char* str, size_t len)
     // len is not past the end of str
     ASSERT(len == strnlen(str, len));
 
-    int err = buf_->reserve(buf_->len() + len);
-    ASSERT(err == 0);
-
+    buf_->reserve(buf_->len() + len);
     memcpy(buf_->end(), str, len);
     buf_->set_len(buf_->len() + len);
     

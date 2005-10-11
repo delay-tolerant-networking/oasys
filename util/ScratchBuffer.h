@@ -69,10 +69,9 @@ public:
     
     //! @return Pointer of buffer of size, otherwise 0
     _memory_t buf(size_t size = 0) {
-        int err = reserve(size);
-        if (err != 0)
-            return 0;
-        
+        if (size > buf_len_) {
+            reserve(size);
+        }
         return reinterpret_cast<_memory_t>(buf_);
     }
 };
@@ -86,12 +85,11 @@ class ScratchBuffer : public ExpandableBuffer {
 public:
     ScratchBuffer() {
         buf_     = static_buf_ + GUARD_SIZE; 
-        buf_len_ = _static_size;
-        
+        buf_len_ = _static_size;        
         post_guards();
     }
 
-    ~ScratchBuffer() {
+    virtual ~ScratchBuffer() {
         if (! using_malloc()) {
             buf_ = 0;
         }
@@ -100,16 +98,13 @@ public:
     //! @return Pointer of buffer of size, otherwise 0
     _memory_t buf(size_t size = 0) {
         if (size != 0) {
-            int err = reserve(size);
-            if (err != 0) {
-                return 0;
-            }
+            reserve(size);
         }
         return reinterpret_cast<_memory_t>(buf_);
     }
 
     //! virtual from ExpandableBuffer
-    virtual int reserve(size_t size = 0) {
+    virtual void reserve(size_t size = 0) {
         ASSERT(check_guards());
         if (size == 0) {
             size = (buf_len_ == 0) ? 1 : (buf_len_ * 2);
@@ -117,16 +112,17 @@ public:
 
         if (! using_malloc() && size > _static_size) {
             buf_ = 0;
-            return ExpandableBuffer::reserve(size + GUARD_SIZE);
-        }
+            size_t old_buf_len = buf_len_;
 
-        return 0;
+            ExpandableBuffer::reserve(size);
+            memcpy(buf_, static_buf_, old_buf_len);
+        }
     }
 
 private:
     char static_buf_[_static_size + 2 * GUARD_SIZE];
     bool using_malloc() { 
-	return reinterpret_cast<char*>(buf_) != static_buf_ + GUARD_SIZE;
+	return buf_ != static_buf_ + GUARD_SIZE;
     }
 };
 
