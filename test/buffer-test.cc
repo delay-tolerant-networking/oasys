@@ -35,10 +35,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <cstdlib>
+
 #include "util/UnitTest.h"
 #include "util/StringBuffer.h"
 #include "util/ExpandableBuffer.h"
 #include "util/ScratchBuffer.h"
+#include "util/Random.h"
 
 using namespace oasys;
 
@@ -49,18 +52,41 @@ DECLARE_TEST(ExpandableBuffer1) {
     CHECK(buf.buf_len() == 0);
     
     buf.reserve(10);
+
+    const char* str = "1234567890";
+
+    memcpy(buf.raw_buf(), str, 10);
+    CHECK_EQUALSTRN(buf.raw_buf(), str, 10);
     
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(ExpandableBuffer2) {
-    ScratchBuffer<char*, 20> scratch;
+    ScratchBuffer<char*, 10> scratch;
     StringBuffer buf(&scratch);
     
-    buf.appendf("hello, world");
-    buf.appendf("hello, world");
-    buf.appendf("hello, world");
-    buf.appendf("hello, world");
+    buf.appendf("%d%x%s%x%d%x", 1, 2, "abracadabra", 
+                4, 5, 6);
+
+    char str[256];
+    sprintf(str, "%d%x%s%x%d%x", 1, 2, "abracadabra", 
+            4, 5, 6);
+    CHECK_EQUALSTR(buf.c_str(), str);
+    
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(ExpandableBuffer2) {
+    ScratchBuffer<char*, 10> scratch;
+    StringBuffer buf(&scratch);
+    
+    buf.appendf("%d%x%s%x%d%x", 1, 2, "abracadabra", 
+                4, 5, 6);
+
+    char str[256];
+    sprintf(str, "%d%x%s%x%d%x", 1, 2, "abracadabra", 
+            4, 5, 6);
+    CHECK_EQUALSTR(buf.c_str(), str);
     
     return UNIT_TEST_PASSED;
 }
@@ -68,6 +94,7 @@ DECLARE_TEST(ExpandableBuffer2) {
 DECLARE_TESTER(Test) {    
     ADD_TEST(ExpandableBuffer1);
     ADD_TEST(ExpandableBuffer2);
+    ADD_TEST(Memory1);
 }
 
 DECLARE_TEST_FILE(Test, "static buffer test");
