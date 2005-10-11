@@ -11,8 +11,9 @@ namespace oasys {
  * not directly.
  */
 struct ExpandableBuffer {
-#define GUARD_STR  "!ExpBuf!"
-#define GUARD_SIZE 8
+    static const char*  GUARD_STR;
+    static const size_t GUARD_SIZE = 8;
+
     ExpandableBuffer(size_t size = 0) 
         : buf_(0), buf_len_(0), len_(0) 
     {
@@ -42,7 +43,9 @@ struct ExpandableBuffer {
      *
      * @return 0 on success.
      */
-    virtual int reserve(size_t size = 0) {
+    virtual int reserve(size_t size = 0, char* old_mem = 0) {
+        ASSERT(buf_ == 0 && old_mem != 0);
+        
         if (size == 0) {
             size = (buf_len_ == 0) ? 1 : (buf_len_ * 2);
         }        
@@ -51,14 +54,21 @@ struct ExpandableBuffer {
             ASSERT(check_guards());
             unpost_guards();
             buf_ = static_cast<char*>
-                   (realloc(buf_, buf_len_ + 2 * GUARD_SIZE));
+                   (realloc(buf_, size + 2 * GUARD_SIZE));
+            
+            if (buf_ == 0) {
+                return -1;
+            }
+            
+            size_t old_buf_len_ = buf_len_;
             buf_len_ = size;
             post_guards();
+            
+            if (old_mem != 0) {
+                memcpy(buf_, old_mem, old_buf_len_);
+            }
         }
             
-        if (buf_ == 0) {
-            return -1;
-        }
 
         ASSERT(check_guards());
 
@@ -148,9 +158,6 @@ protected:
         }
     }
 };
-
-#undef GUARD_STR
-#undef GUARD_SIZE
 
 } // namespace oasys
 

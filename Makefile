@@ -12,23 +12,23 @@ COMPAT_SRCS :=					\
 	compat/inet_aton.c			\
 
 DEBUG_SRCS :=					\
+	debug/DebugUtils.cc			\
+	debug/Formatter.cc			\
+	debug/Log.cc				\
 	debug/gdtoa-dmisc.c			\
 	debug/gdtoa-dtoa.c			\
 	debug/gdtoa-gdtoa.c			\
 	debug/gdtoa-gmisc.c			\
 	debug/gdtoa-misc.c			\
-	debug/DebugUtils.cc			\
-	debug/Formatter.cc			\
-	debug/Log.cc				\
 
 IO_SRCS :=					\
 	io/BufferedIO.cc			\
-	io/IO.cc				\
 	io/FdIOClient.cc			\
 	io/FileIOClient.cc			\
 	io/FileUtils.cc				\
-	io/IPSocket.cc				\
+	io/IO.cc				\
 	io/IPClient.cc				\
+	io/IPSocket.cc				\
 	io/NetUtils.cc				\
 	io/PrettyPrintBuffer.cc			\
 	io/TCPClient.cc				\
@@ -40,22 +40,22 @@ MEMORY_SRCS :=                                  \
 
 SERIALIZE_SRCS :=				\
 	serialize/BufferedSerializeAction.cc    \
-	serialize/Serialize.cc			\
 	serialize/MarshalSerialize.cc		\
-	serialize/StringSerialize.cc		\
 	serialize/SQLSerialize.cc		\
+	serialize/Serialize.cc			\
+	serialize/StringSerialize.cc		\
 
 STORAGE_SRCS :=					\
+	storage/BerkeleyDBStore.cc		\
 	storage/DurableStore.cc                 \
 	storage/DurableStoreImpl.cc		\
-	storage/BerkeleyDBStore.cc		\
 
 TCLCMD_SRCS :=					\
-	tclcmd/TclCommand.cc			\
 	tclcmd/ConsoleCommand.cc		\
 	tclcmd/DebugCommand.cc			\
 	tclcmd/HelpCommand.cc			\
 	tclcmd/LogCommand.cc			\
+	tclcmd/TclCommand.cc			\
 
 THREAD_SRCS :=					\
 	thread/Mutex.cc				\
@@ -66,15 +66,13 @@ THREAD_SRCS :=					\
 
 UTIL_SRCS :=					\
 	util/CRC32.cc				\
-	util/InitSequencer.cc			\
-	util/jenkins_hash.c			\
-	util/MD5.cc				\
-	util/md5-rsa.c				\
-	util/jenkins_hash.cc			\
+	util/ExpandableBuffer.cc		\
 	util/Getopt.cc				\
 	util/HexDumpBuffer.cc			\
-	util/Options.cc				\
+	util/InitSequencer.cc			\
+	util/MD5.cc				\
 	util/OptParser.cc			\
+	util/Options.cc				\
 	util/ProgressPrinter.cc			\
 	util/Random.cc				\
 	util/RateEstimator.cc			\
@@ -82,6 +80,9 @@ UTIL_SRCS :=					\
 	util/StringBuffer.cc			\
 	util/StringUtils.cc			\
 	util/URL.cc				\
+	util/jenkins_hash.c			\
+	util/jenkins_hash.cc			\
+	util/md5-rsa.c				\
 
 SRCS := \
 	version.c				\

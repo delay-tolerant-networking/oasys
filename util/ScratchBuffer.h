@@ -85,8 +85,10 @@ template<typename _memory_t, size_t _static_size>
 class ScratchBuffer : public ExpandableBuffer {
 public:
     ScratchBuffer() {
-        buf_     = static_buf_; 
+        buf_     = static_buf_ + GUARD_SIZE; 
         buf_len_ = _static_size;
+        
+        post_guards();
     }
 
     ~ScratchBuffer() {
@@ -108,23 +110,23 @@ public:
 
     //! virtual from ExpandableBuffer
     virtual int reserve(size_t size = 0) {
+        ASSERT(check_guards());
         if (size == 0) {
             size = (buf_len_ == 0) ? 1 : (buf_len_ * 2);
         }     
 
         if (! using_malloc() && size > _static_size) {
             buf_ = 0;
-            return ExpandableBuffer::reserve(size);
+            return ExpandableBuffer::reserve(size + GUARD_SIZE);
         }
 
         return 0;
     }
 
 private:
-    char static_buf_[_static_size]; // gcc automatically aligns to
-                                    // maximal data type alignment
+    char static_buf_[_static_size + 2 * GUARD_SIZE];
     bool using_malloc() { 
-	return reinterpret_cast<char*>(buf_) != static_buf_;
+	return reinterpret_cast<char*>(buf_) != static_buf_ + GUARD_SIZE;
     }
 };
 

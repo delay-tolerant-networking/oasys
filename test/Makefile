@@ -1,5 +1,6 @@
 TESTS += \
 	berkeley-db-test			\
+	buffer-test				\
 	durable-cache-test			\
 	io-basic-test				\
 	marshal-test				\
