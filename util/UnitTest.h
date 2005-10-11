@@ -290,6 +290,7 @@ void _name::add_tests()                                         \
                         "'%s' (%s) != '%s' (%s) at %s:%d",                      \
                         #a, (a), #b, (b), __FILE__, __LINE__);                  \
         } else {                                                                \
+            ::oasys::Breaker::break_here();                                     \
             oasys::logf("/test", oasys::LOG_ERR,  "CHECK FAILED: "              \
                         "'%s' (%.*s...) != '%s' (%.*s...) at %s:%d",            \
                         #a, 32, (a), #b, 32, (b), __FILE__, __LINE__);          \
