@@ -11,6 +11,8 @@ namespace oasys {
  * not directly.
  */
 struct ExpandableBuffer {
+#define GUARD_STR  "!ExpBuf!"
+#define GUARD_SIZE 8
     ExpandableBuffer(size_t size = 0) 
         : buf_(0), buf_len_(0), len_(0) 
     {
@@ -21,6 +23,9 @@ struct ExpandableBuffer {
 
     virtual ~ExpandableBuffer() { 
         if (buf_ != 0) {
+            ASSERT(check_guards());
+
+            unpost_guards();
             free(buf_);
             buf_ = 0;
         }
@@ -43,13 +48,19 @@ struct ExpandableBuffer {
         }        
 
         if (size > buf_len_) {
+            ASSERT(check_guards());
+            unpost_guards();
+            buf_ = static_cast<char*>
+                   (realloc(buf_, buf_len_ + 2 * GUARD_SIZE));
             buf_len_ = size;
-            buf_ = static_cast<char*>(realloc(buf_, buf_len_));
+            post_guards();
         }
             
         if (buf_ == 0) {
             return -1;
         }
+
+        ASSERT(check_guards());
 
         return 0;
     }
@@ -57,12 +68,16 @@ struct ExpandableBuffer {
     //! @return bytes free
     int nfree() const {
         ASSERT(buf_len_ >= len_);
+        ASSERT(check_guards());
+
         return buf_len_ - len_;
     }
     
     //! @return raw char buffer
-    char* raw_buf() const { 
+    char* raw_buf() const {
         ASSERT(buf_ != 0); 
+        ASSERT(check_guards());
+
         return buf_; 
     }
 
@@ -70,6 +85,7 @@ struct ExpandableBuffer {
     char* at(size_t offset) const { 
         ASSERT(buf_ != 0);
         ASSERT(offset < buf_len_);
+        ASSERT(check_guards());
 
         return &buf_[offset]; 
     }
@@ -78,6 +94,7 @@ struct ExpandableBuffer {
     char* end() const { 
         ASSERT(buf_ != 0);
         ASSERT(len_ < buf_len_);
+        ASSERT(check_guards());
 
         return at(len_); 
     }
@@ -96,11 +113,44 @@ struct ExpandableBuffer {
         ASSERT(len_ <= buf_len_);
     }
 
+    bool check_guards() const
+    {
+        if (buf_ != 0) 
+        {
+            char* guard = buf_ - GUARD_SIZE;
+            return (memcmp(guard, GUARD_STR, GUARD_SIZE) == 0 &&
+                    memcmp(buf_ + buf_len_, GUARD_STR, GUARD_SIZE) == 0);
+        }
+
+        return true;
+    }
+
 protected:
     char*  buf_;
     size_t buf_len_;
     size_t len_;
+
+    void post_guards() 
+    {
+        if (buf_ != 0) {
+            memcpy(buf_, GUARD_STR, GUARD_SIZE);
+            buf_ += GUARD_SIZE;
+            memcpy(buf_ + buf_len_, GUARD_STR, GUARD_SIZE);
+        }
+    }
+
+    void unpost_guards() 
+    {
+        if (buf_ != 0) {
+            memset(buf_ + buf_len_, 0, GUARD_SIZE);
+            buf_ -= GUARD_SIZE;
+            memset(buf_,  0, GUARD_SIZE);
+        }
+    }
 };
+
+#undef GUARD_STR
+#undef GUARD_SIZE
 
 } // namespace oasys
 

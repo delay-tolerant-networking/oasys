@@ -52,7 +52,7 @@ StringBuffer::StringBuffer(size_t initsz, const char* initstr)
     buf_ = new ExpandableBuffer();
     ASSERT(buf_ != 0);
     
-    int err = buf_->reserve(initsz);
+    int err = buf_->reserve( (initsz == 0) ? 32 : initsz);
     ASSERT(err == 0);
 
     if (initstr) {
@@ -65,7 +65,7 @@ StringBuffer::StringBuffer(const char* fmt, ...)
 {
     buf_ = new ExpandableBuffer();
     ASSERT(buf_);
-    buf_->reserve(1);
+    buf_->reserve(32);
 
     if (fmt != 0) 
     {
@@ -80,7 +80,7 @@ StringBuffer::StringBuffer(ExpandableBuffer* buffer)
     : buf_(buffer)
 {
     ASSERT(buf_ != 0);
-    buf_->reserve(1);
+    buf_->reserve(32);
 }
 
 StringBuffer::StringBuffer(ExpandableBuffer* buffer, 
@@ -88,7 +88,7 @@ StringBuffer::StringBuffer(ExpandableBuffer* buffer,
     : buf_(buffer)
 {
     ASSERT(buf_ != 0);
-    buf_->reserve(1);
+    buf_->reserve(32);
 
     if (fmt != 0) 
     {
@@ -176,11 +176,13 @@ StringBuffer::vappendf(const char* fmt, va_list ap)
         // vsnprintf conforms to the C99 standard, i.e., behaves as
         // described above, since glibc version 2.1. Until glibc 2.0.6
         // they would return -1 when the output was truncated.
-        while(ret == -1)
-        {
+        do {
             buf_->reserve();
             ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
-        }
+        } while(ret == -1);
+        buf_->set_len(buf_->len() + ret);
+
+        return ret;
     }
 
     if(ret >= buf_->nfree())
@@ -189,10 +191,10 @@ StringBuffer::vappendf(const char* fmt, va_list ap)
         ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
         ASSERT(ret > 0 && ret <= buf_->nfree());
     }
-
+    
     ASSERT(ret > 0);
     buf_->set_len(buf_->len() + ret);
-
+        
     return ret;
 }
 
