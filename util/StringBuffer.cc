@@ -39,10 +39,9 @@
 #include <stdlib.h>
 
 #include "StringBuffer.h"
-#include "io/IOClient.h"
 
-// XXX/demmer don't malloc by default in the default constructor but
-// rather wait to allow a reserve call to come in.
+#include "ExpandableBuffer.h"
+#include "io/IOClient.h"
 
 namespace oasys {
 
@@ -128,7 +127,7 @@ StringBuffer::append(const char* str, size_t len)
     }
     
     // len is not past the end of str
-    ASSERT(len == strnlen(str, len));    
+    ASSERT(len == strnlen(str, len));
 
     int err = buf_->reserve(buf_->len() + len);
     ASSERT(err == 0);
@@ -187,7 +186,7 @@ StringBuffer::vappendf(const char* fmt, va_list ap)
 
     if(ret >= buf_->nfree())
     {
-        buf_->reserve(ret + 1);
+        buf_->reserve(buf_->len() + ret + 1);
         ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
         ASSERT(ret > 0 && ret <= buf_->nfree());
     }
