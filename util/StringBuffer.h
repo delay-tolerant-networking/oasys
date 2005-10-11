@@ -35,12 +35,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+
 #ifndef _OASYS_STRING_BUFFER_H_
 #define _OASYS_STRING_BUFFER_H_
 
+#include <algorithm>
+
 #include "../debug/Log.h" 	// for PRINTFLIKE macro
-#include "../util/IntUtils.h"	// for min
+#include "ExpandableBuffer.h"
 
 namespace oasys {
 
@@ -56,57 +58,47 @@ class IOClient;
  */
 class StringBuffer {
 public:
-    /**
-     * Constructor
-     *
+    /*!
      * @param initsz the initial buffer size
      * @param initstr the initial buffer contents 
      */
     StringBuffer(size_t initsz = 256, const char* initstr = 0);
 
-    /**
-     * Constructor
-     *
-     * @param fmt the initial buffer contents
-     */
+    //! @param fmt the initial buffer contents
     StringBuffer(const char* fmt, ...) PRINTFLIKE(2, 3);
 
-    /**
-     * Destructor. Frees the buffer.
-     */
+    //! @{ Create a string buffer with an expandable buffer 
+    StringBuffer(ExpandableBuffer* buffer, const char* fmt, ...) 
+        PRINTFLIKE(3,4);
+    StringBuffer(ExpandableBuffer* buffer);
+    //! @}
+        
     ~StringBuffer();
 
     /**
-     * Reserve buffer space.
-     *
-     * @param sz 	the minimum required free buffer space
-     * @param grow 	size to alloc if needed (default is 2x buflen)
-     */
-    void reserve(size_t sz, size_t grow = 0);
-    
-    /**
      * @return the data buffer (const variant).
      */
-    const char* data() const { return buf_; }
+    const char* data() const { return exbuf_->buf_; }
 
     /**
      * @return the data buffer (non-const variant)
      */
-    char* data() { return buf_; }
+    char* data() { return exbuf_->buf_; }
 
     /**
      * @return length of the buffer.
      */
-    size_t length() const { return len_; }
+    size_t length() const { return exbuf_->len_; }
 
     /**
      * @return the data buffer, ensuring null termination.
      */
     char* c_str()
     {
-        reserve(len_ + 1);
-        buf_[len_] = '\0';
-        return buf_;
+        exbuf_->reserve(exbuf_->len_ + 1);
+        exbuf_->buf_[exbuf_->len_] = '\0';
+
+        return data();
     }
 
     /**
@@ -164,8 +156,8 @@ public:
      */
     void trim(size_t cnt)
     {
-        ASSERT(len_ >= cnt);
-        len_ -= cnt;
+        ASSERT(exbuf_->len_ >= cnt);
+        exbuf_->len_ -= cnt;
     }
 
     /**
@@ -173,15 +165,21 @@ public:
      */
     void set_length(size_t len)
     {
-        ASSERT(buflen_ >= len);
-        len_ = len;
+        ASSERT(exbuf_->buf_len_ >= len);
+        exbuf_->len_ = len;
     }
 
-protected:
-    char*  buf_;
-    size_t len_;
-    size_t buflen_;
+    //! Used to workaround bugs in Cygwin
+    void reserve(size_t size) {
+        int err = exbuf_->reserve(size);
+        ASSERT(err == 0);
+    }
+
+private:
+    ExpandableBuffer* exbuf_;
 };
+
+// XXX/bowei -- getting rid of this
 
 /**
  * Static, stack allocated StringBuffer, which handles the common
@@ -203,7 +201,7 @@ public:
         if(init_str != 0) {
             buf_[_sz - 1] = '\0';
             strncpy(buf_, init_str, _sz);
-            len_ = min(_sz - 1, strlen(init_str));
+            len_ = std::min(_sz - 1, strlen(init_str));
         }
     }
     
@@ -268,7 +266,6 @@ size_t StaticStringBuffer<_sz>::appendf(const char* fmt, ...)
     va_end(ap);
     return ret;
 }
-
 
 } // namespace oasys
 

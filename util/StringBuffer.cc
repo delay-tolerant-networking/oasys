@@ -47,66 +47,57 @@
 namespace oasys {
 
 StringBuffer::StringBuffer(size_t initsz, const char* initstr)
+    : exbuf_(0)
 {
-    buflen_ = initsz;
-    buf_ = (char*)malloc(buflen_);
-    len_ = 0;
-    if (initstr) append(initstr);
+    exbuf_ = new ExpandableBuffer();
+    ASSERT(exbuf_);
+    
+    int err = exbuf_->reserve(initsz, initsz);
+    ASSERT(err == 0);
+
+    if (initstr) {
+        append(initstr);
+    }
 }
 
 StringBuffer::StringBuffer(const char* fmt, ...)
+    : exbuf_(0)
 {
-    buflen_ = 256;
-    buf_ = (char*)malloc(buflen_);
-    len_ = 0;
+    exbuf_ = new ExpandableBuffer();
+    ASSERT(exbuf_);
 
-    if (fmt != 0) {
+    if (fmt != 0) 
+    {
         va_list ap;
         va_start(ap, fmt);
-        size_t ret = vsnprintf(&buf_[0], buflen_, fmt, ap);
-
-        if (ret >= buflen_) {
-            reserve(ret);
-            ret = vsnprintf(&buf_[0], buflen_, fmt, ap);
-        }
-        
-        len_ += ret;
+        vappendf(fmt, ap);
         va_end(ap);
     }
 }
 
-StringBuffer::~StringBuffer()
+StringBuffer::StringBuffer(ExpandableBuffer* buffer)
+    : exbuf_(buffer)
 {
-    free(buf_);
-    buf_ = 0;
-    buflen_ = 0;
-    len_ = 0;
+    ASSERT(exbuf_);
 }
 
-void
-StringBuffer::reserve(size_t sz, size_t grow)
+StringBuffer::StringBuffer(ExpandableBuffer* buffer, 
+                           const char* fmt, ...) 
+    : exbuf_(buffer)
 {
-    if ((len_ + sz) > buflen_) {
-        if (grow == 0) {
-            grow = buflen_ * 2;
-        }
-        
-        buflen_ = grow;
+    ASSERT(exbuf_);
 
-
-        while ((len_ + sz) > buflen_) {
-            buflen_ *= 2;
-
-            // Without this, originally zero length strings get into
-            // infinite loops trying to resize.
-            if (buflen_ == 0) 
-            {
-                buflen_++;
-            }
-        }
-        
-        buf_ = (char*)realloc(buf_, buflen_);
+    if (fmt != 0) 
+    {
+        va_list ap;
+        va_start(ap, fmt);
+        vappendf(fmt, ap);
+        va_end(ap);
     }
+}
+
+StringBuffer::~StringBuffer() {
+    delete_z(exbuf_);
 }
 
 size_t
@@ -116,18 +107,22 @@ StringBuffer::append(const char* str, size_t len)
         len = strlen(str);
     }
     
-    reserve(len_ + len);
+    int err = exbuf_->reserve(exbuf_->len_ + len);    
+    ASSERT(err == 0);
+
+    memcpy(exbuf_->buf_end(), str, len);
+    exbuf_->add_to_len(len);
     
-    memcpy(&buf_[len_], str, len);
-    len_ += len;
     return len;
 }
 
 size_t
 StringBuffer::append(char c)
 {
-    reserve(len_ + 1);
-    buf_[len_++] = c;
+    reserve(exbuf_->len_ + 1);
+    *exbuf_->buf_end() = c;
+    exbuf_->add_to_len(1);
+
     return 1;
 }
 
@@ -137,20 +132,21 @@ StringBuffer::append(char c)
 void
 StringBuffer::append(IOClient* io, size_t len)
 {
-    reserve(len_ + len);
-    io->readall(buf_, len);
-    len_ += len;
+    reserve(exbuf_->len_ + len);
+    io->readall(exbuf_->buf_end(), len);
+    // XXX/bowei -- need to handle errors from readall
+    exbuf_->add_to_len(len);
 }
 
 size_t
 StringBuffer::vappendf(const char* fmt, va_list ap)
 {
-    int nfree = buflen_ - len_;
-    int ret = vsnprintf(&buf_[len_], nfree, fmt, ap);
+    int ret = vsnprintf(exbuf_->buf_end(), exbuf_->nfree(), fmt, ap);
     
     if(ret == -1)
     {
-        // Retarded glibc implementation. From the man pages:
+        // Retarded glibc implementation in Fedora Core 1. From the
+        // man pages:
         //
         // The glibc implementation of the functions snprintf and
         // vsnprintf conforms to the C99 standard, i.e., behaves as
@@ -158,26 +154,17 @@ StringBuffer::vappendf(const char* fmt, va_list ap)
         // they would return -1 when the output was truncated.
         while(ret == -1)
         {
-            reserve(buflen_ * 2);
-            nfree = buflen_ - len_;
-            
-            ret = vsnprintf(&buf_[len_], nfree, fmt, ap);
-
-            log_debug("/stringbuffer", "ret = %d", ret);
+            exbuf_->reserve();
+            ret = vsnprintf(exbuf_->buf_end(), exbuf_->nfree(), fmt, ap);
         }
     }
-    else if(ret >= nfree)
+    else if(ret >= exbuf_->nfree())
     {
-        while(nfree <= ret)
-        {
-            reserve(buflen_ * 2);
-            nfree = buflen_ - len_;
-        }
-        
-        ret = vsnprintf(&buf_[len_], nfree, fmt, ap);
+        exbuf_->reserve(ret + 1);
+        ret = vsnprintf(exbuf_->buf_end(), exbuf_->nfree(), fmt, ap);
     }
 
-    len_ += ret;
+    exbuf_->add_to_len(ret + 1);
 
     return ret;
 }
