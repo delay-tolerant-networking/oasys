@@ -42,9 +42,11 @@
 #include <algorithm>
 
 #include "../debug/Log.h" 	// for PRINTFLIKE macro
-#include "ExpandableBuffer.h"
+#include "ScratchBuffer.h"
 
 namespace oasys {
+
+class ExpandableBuffer;
 
 class IOClient;
 
@@ -173,15 +175,16 @@ private:
     mutable ExpandableBuffer* buf_;
 };
 
-// XXX/bowei -- getting rid of this below
-
 /**
- * Static, stack allocated StringBuffer, which handles the common
+ * Initially stack allocated StringBuffer, which handles the common
  * cases where the StringBuffer is used to sprintf a bunch of stuff
  * together.
+ *
+ * Basically this is just syntactic sugar for passing the correct type
+ * of expandable buffer to the StringBuffer class.
  */
 template<size_t _sz>
-class StaticStringBuffer {
+class StaticStringBuffer : public StringBuffer {
 public:
     /**
      * Default constructor
@@ -189,77 +192,11 @@ public:
      * @param init_str Initial string value. If the string is longer
      * than _sz, then the string is truncated.
      */
-    StaticStringBuffer(char* init_str = 0) : len_(0) {
-        buf_[_sz] = '\0';
+    StaticStringBuffer(char* init_str = 0)
+        : StringBuffer(new ScratchBuffer<char*, _sz>(), init_str)
+    {}
 
-        if(init_str != 0) {
-            buf_[_sz - 1] = '\0';
-            strncpy(buf_, init_str, _sz);
-            len_ = std::min(_sz - 1, strlen(init_str));
-        }
-    }
-    
-    /**
-     * Append the character to the tail of the buffer.
-     *
-     * @param c the character
-     * @return the number of bytes written (always one)
-     */
-    size_t append(char c) {
-        if(len_ < _sz) {
-            buf_[len_++] = c;
-            return 1;
-        }
-        return 0;
-    }
-
-    /**
-     * Formatting append function.
-     *
-     * @param fmt the format string
-     * @return the number of bytes written
-     */
-    size_t appendf(const char* fmt, ...) PRINTFLIKE(2, 3);
-
-    /**
-     * Formatting append function, truncating if necessary.
-     *
-     * @param fmt the format string
-     * @param ap the format argument list
-     * @return the number of bytes written
-     */
-    size_t vappendf(const char* fmt, va_list ap) {
-        size_t nfree = _sz - len_;
-        int ret = vsnprintf(&buf_[len_], nfree, fmt, ap);
-        
-        len_ += ret;
-        
-        return ret;
-    }
-
-    /** @return c-string. */
-    const char* c_str() const { buf_[len_] = '\0'; return buf_; }
-
-    /** @return length */
-    size_t size() const { return len_; }
-    
-    /** Clear the buffer */
-    void clear() { len_ = 0; }
-    
-private:
-    mutable char buf_[_sz + 1];
-    size_t len_;
 };
-
-template<size_t _sz>
-size_t StaticStringBuffer<_sz>::appendf(const char* fmt, ...) 
-{
-    va_list ap;
-    va_start(ap, fmt);
-    size_t ret = vappendf(fmt, ap);
-    va_end(ap);
-    return ret;
-}
 
 } // namespace oasys
 
