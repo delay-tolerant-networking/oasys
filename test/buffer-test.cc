@@ -50,8 +50,6 @@ DECLARE_TEST(ExpandableBuffer1) {
     
     buf.reserve(10);
     
-    CHECK(buf.check_guards());
-
     return UNIT_TEST_PASSED;
 }
 

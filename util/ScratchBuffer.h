@@ -84,9 +84,8 @@ template<typename _memory_t, size_t _static_size>
 class ScratchBuffer : public ExpandableBuffer {
 public:
     ScratchBuffer() {
-        buf_     = static_buf_ + GUARD_SIZE; 
+        buf_     = static_buf_; 
         buf_len_ = _static_size;        
-        post_guards();
     }
 
     virtual ~ScratchBuffer() {
@@ -105,7 +104,6 @@ public:
 
     //! virtual from ExpandableBuffer
     virtual void reserve(size_t size = 0) {
-        ASSERT(check_guards());
         if (size == 0) {
             size = (buf_len_ == 0) ? 1 : (buf_len_ * 2);
         }     
@@ -120,9 +118,9 @@ public:
     }
 
 private:
-    char static_buf_[_static_size + 2 * GUARD_SIZE];
+    char static_buf_[_static_size];
     bool using_malloc() { 
-	return buf_ != static_buf_ + GUARD_SIZE;
+	return buf_ != static_buf_;
     }
 };
 
