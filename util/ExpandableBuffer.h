@@ -35,12 +35,16 @@ struct ExpandableBuffer {
      */
     virtual int reserve(size_t size = 0, size_t grow = 0) {
         if (size == 0) {
-            size = buf_len_ * 2;
+            if (buf_len_ > 0) {
+                size = buf_len_ * 2;
+            } else {
+                size = 16; // XXX/demmer minimum size?
+            }
         }
         
         if ((len_ + size) > buf_len_) {
             if (grow == 0) {
-                grow = buf_len_ * 2;
+                grow = (buf_len_ > 0) ? buf_len_ * 2 : size;
             }
             
             ASSERT(grow > buf_len_);
@@ -48,12 +52,6 @@ struct ExpandableBuffer {
 
             while ((len_ + size) > buf_len_) {
                 buf_len_ *= 2;
-                
-                // bump buf_len_ > 0, o.w. we have an infinite loop
-                if (buf_len_ == 0) 
-                {
-                    buf_len_++;
-                }
             }
             
             buf_ = (char*)realloc(buf_, buf_len_);
