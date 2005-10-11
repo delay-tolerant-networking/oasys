@@ -64,7 +64,10 @@ struct ExpandableBuffer {
     }
 
     //! @return bytes free
-    int nfree() const { return buf_len_ - len_; }
+    int nfree() const {
+        ASSERT(buf_len_ >= len_);
+        return buf_len_ - len_;
+    }
     
     //! @return char* to offset in the buffer
     char* buf_at(size_t offset) const { return &buf_[offset]; }
