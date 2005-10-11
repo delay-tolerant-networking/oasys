@@ -159,13 +159,16 @@ StringBuffer::vappendf(const char* fmt, va_list ap)
             ret = vsnprintf(exbuf_->buf_end(), exbuf_->nfree(), fmt, ap);
         }
     }
-    else if(ret >= exbuf_->nfree())
+
+    if(ret >= exbuf_->nfree())
     {
         exbuf_->reserve(ret + 1);
         ret = vsnprintf(exbuf_->buf_end(), exbuf_->nfree(), fmt, ap);
+        ASSERT(ret > 0 && ret <= exbuf_->nfree());
     }
 
-    exbuf_->add_to_len(ret + 1);
+    ASSERT(ret > 0);
+    exbuf_->add_to_len(ret);
 
     return ret;
 }
