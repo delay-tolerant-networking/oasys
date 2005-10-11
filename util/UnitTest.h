@@ -169,7 +169,7 @@ public:
                 (u_int)tests_.size(), passed_, failed_, input_);
     }
     void print_header() {
-        printf("\n\n%s Starting...\n\n", name_.c_str());
+        printf("\n\nRunning Test: %s\n\n", name_.c_str());
     }
     
     void print_results() {
