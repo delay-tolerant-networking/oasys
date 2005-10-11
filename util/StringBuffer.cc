@@ -47,12 +47,12 @@
 namespace oasys {
 
 StringBuffer::StringBuffer(size_t initsz, const char* initstr)
-    : exbuf_(0)
+    : buf_(0)
 {
-    exbuf_ = new ExpandableBuffer();
-    ASSERT(exbuf_);
+    buf_ = new ExpandableBuffer();
+    ASSERT(buf_ != 0);
     
-    int err = exbuf_->reserve(initsz, initsz);
+    int err = buf_->reserve(initsz);
     ASSERT(err == 0);
 
     if (initstr) {
@@ -61,10 +61,11 @@ StringBuffer::StringBuffer(size_t initsz, const char* initstr)
 }
 
 StringBuffer::StringBuffer(const char* fmt, ...)
-    : exbuf_(0)
+    : buf_(0)
 {
-    exbuf_ = new ExpandableBuffer();
-    ASSERT(exbuf_);
+    buf_ = new ExpandableBuffer();
+    ASSERT(buf_);
+    buf_->reserve(1);
 
     if (fmt != 0) 
     {
@@ -76,16 +77,18 @@ StringBuffer::StringBuffer(const char* fmt, ...)
 }
 
 StringBuffer::StringBuffer(ExpandableBuffer* buffer)
-    : exbuf_(buffer)
+    : buf_(buffer)
 {
-    ASSERT(exbuf_ != 0);
+    ASSERT(buf_ != 0);
+    buf_->reserve(1);
 }
 
 StringBuffer::StringBuffer(ExpandableBuffer* buffer, 
                            const char* fmt, ...) 
-    : exbuf_(buffer)
+    : buf_(buffer)
 {
-    ASSERT(exbuf_ != 0);
+    ASSERT(buf_ != 0);
+    buf_->reserve(1);
 
     if (fmt != 0) 
     {
@@ -97,7 +100,24 @@ StringBuffer::StringBuffer(ExpandableBuffer* buffer,
 }
 
 StringBuffer::~StringBuffer() {
-    delete_z(exbuf_);
+    delete_z(buf_);
+}
+
+const char*
+StringBuffer::c_str() const
+{
+    if (buf_->len() == 0 || 
+        *buf_->at(buf_->len() - 1) != '\0') 
+    {
+        // Don't want the null termination to trigger a doubling
+        // of the size.
+        buf_->reserve(buf_->len() + 1);
+        *buf_->end() = '\0';
+        
+        buf_->set_len(buf_->len() + 1);
+    }
+    
+    return data();
 }
 
 size_t
@@ -107,11 +127,14 @@ StringBuffer::append(const char* str, size_t len)
         len = strlen(str);
     }
     
-    int err = exbuf_->reserve(exbuf_->len() + len);    
+    // len is not past the end of str
+    ASSERT(len == strnlen(str, len));    
+
+    int err = buf_->reserve(buf_->len() + len);
     ASSERT(err == 0);
 
-    memcpy(exbuf_->buf_end(), str, len);
-    exbuf_->add_to_len(len);
+    memcpy(buf_->end(), str, len);
+    buf_->set_len(buf_->len() + len);
     
     return len;
 }
@@ -119,9 +142,9 @@ StringBuffer::append(const char* str, size_t len)
 size_t
 StringBuffer::append(char c)
 {
-    reserve(exbuf_->len() + 1);
-    *exbuf_->buf_end() = c;
-    exbuf_->add_to_len(1);
+    buf_->reserve(buf_->len() + 1);
+    *buf_->end() = c;
+    buf_->set_len(buf_->len() + 1);
 
     return 1;
 }
@@ -132,17 +155,17 @@ StringBuffer::append(char c)
 void
 StringBuffer::append(IOClient* io, size_t len)
 {
-    reserve(exbuf_->len() + len);
-    io->readall(exbuf_->buf_end(), len);
+    reserve(buf_->len() + len);
+    io->readall(buf_->end(), len);
 
     // XXX/bowei -- need to handle errors from readall
-    exbuf_->add_to_len(len);
+    buf_->set_len(buf_->len() + len);
 }
 
 size_t
 StringBuffer::vappendf(const char* fmt, va_list ap)
 {
-    int ret = vsnprintf(exbuf_->buf_end(), exbuf_->nfree(), fmt, ap);
+    int ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
     
     if(ret == -1)
     {
@@ -155,20 +178,20 @@ StringBuffer::vappendf(const char* fmt, va_list ap)
         // they would return -1 when the output was truncated.
         while(ret == -1)
         {
-            exbuf_->reserve();
-            ret = vsnprintf(exbuf_->buf_end(), exbuf_->nfree(), fmt, ap);
+            buf_->reserve();
+            ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
         }
     }
 
-    if(ret >= exbuf_->nfree())
+    if(ret >= buf_->nfree())
     {
-        exbuf_->reserve(ret + 1);
-        ret = vsnprintf(exbuf_->buf_end(), exbuf_->nfree(), fmt, ap);
-        ASSERT(ret > 0 && ret <= exbuf_->nfree());
+        buf_->reserve(ret + 1);
+        ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
+        ASSERT(ret > 0 && ret <= buf_->nfree());
     }
 
     ASSERT(ret > 0);
-    exbuf_->add_to_len(ret);
+    buf_->set_len(buf_->len() + ret);
 
     return ret;
 }

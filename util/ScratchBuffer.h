@@ -69,15 +69,10 @@ public:
     
     //! @return Pointer of buffer of size, otherwise 0
     _memory_t buf(size_t size = 0) {
-        if (size > len_) {
-            int err = reserve(size, size);
-            if (err != 0) {
-                return 0;
-            }
-
-            len_ = size;
-        }
-
+        int err = reserve(size);
+        if (err != 0)
+            return 0;
+        
         return reinterpret_cast<_memory_t>(buf_);
     }
 };
@@ -102,18 +97,27 @@ public:
 
     //! @return Pointer of buffer of size, otherwise 0
     _memory_t buf(size_t size = 0) {
-        if (size > len_) {
-            if (using_malloc() || size <= _static_size) {
-                int err = reserve(size, size);
-                if (err != 0) {
-                    return 0;
-                }
+        if (size != 0) {
+            int err = reserve(size);
+            if (err != 0) {
+                return 0;
             }
+        }
+        return reinterpret_cast<_memory_t>(buf_);
+    }
 
-            len_ = size;
+    //! virtual from ExpandableBuffer
+    virtual int reserve(size_t size = 0) {
+        if (size == 0) {
+            size = (buf_len_ == 0) ? 1 : (buf_len_ * 2);
+        }     
+
+        if (! using_malloc() && size > _static_size) {
+            buf_ = 0;
+            return ExpandableBuffer::reserve(size);
         }
 
-        return reinterpret_cast<_memory_t>(buf_);
+        return 0;
     }
 
 private:

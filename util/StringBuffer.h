@@ -78,35 +78,22 @@ public:
     /**
      * @return the data buffer (const variant).
      */
-    const char* data() const { return exbuf_->raw_buf(); }
+    const char* data() const { return buf_->raw_buf(); }
 
     /**
      * @return the data buffer (non-const variant)
      */
-    char* data() { return exbuf_->raw_buf(); }
+    char* data() { return buf_->raw_buf(); }
 
     /**
      * @return length of the buffer.
      */
-    size_t length() const { return exbuf_->len(); }
+    size_t length() const { return buf_->len(); }
 
     /**
      * @return the data buffer, ensuring null termination.
      */
-    char* c_str()
-    {
-        if (exbuf_->len() == 0 ||
-            ( *exbuf_->buf_at(exbuf_->len() - 1) != '\0') ) 
-        {
-            // Don't want the null termination to trigger a doubling
-            // of the size.
-            exbuf_->reserve(1, exbuf_->buf_len() + 1);
-            *exbuf_->buf_end() = '\0';
-            exbuf_->add_to_len(1);
-        }
-
-        return data();
-    }
+    const char* c_str() const;
 
     /**
      * Append the string to the tail of the buffer.
@@ -163,8 +150,8 @@ public:
      */
     void trim(size_t cnt)
     {
-        ASSERT(exbuf_->len() >= cnt);
-        exbuf_->set_len(exbuf_->len() - cnt);
+        ASSERT(buf_->len() >= cnt);
+        buf_->set_len(buf_->len() - cnt);
     }
 
     /**
@@ -172,18 +159,18 @@ public:
      */
     void set_length(size_t len)
     {
-        ASSERT(exbuf_->buf_len() >= len);
-        exbuf_->set_len(len);
+        ASSERT(buf_->buf_len() >= len);
+        buf_->set_len(len);
     }
 
     //! Used to workaround bugs in Cygwin
     void reserve(size_t size) {
-        int err = exbuf_->reserve(size);
+        int err = buf_->reserve(size);
         ASSERT(err == 0);
     }
 
 private:
-    ExpandableBuffer* exbuf_;
+    mutable ExpandableBuffer* buf_;
 };
 
 // XXX/bowei -- getting rid of this below
