@@ -42,7 +42,7 @@
 #include <cstring>
 
 #include "../debug/DebugUtils.h"
-#include "../util/DeadBeef.h"
+#include "../util/ExpandableBuffer.h"
 
 namespace oasys {
 
@@ -63,48 +63,23 @@ class ScratchBuffer;
  * ScratchBuffer class that doesn't use a static stack to begin with.
  */
 template<typename _memory_t>
-class ScratchBuffer<_memory_t, 0> {
+class ScratchBuffer<_memory_t, 0> : public ExpandableBuffer {
 public:
-    ScratchBuffer(size_t size = 0)
-        : buf_(0), size_(size)
-    {
-        if (size_ != 0) {
-            buf_ = static_cast<_memory_t>(malloc(size_));
-#ifndef NDEBUG
-            fill_with_the_beef(buf_, size_);
-#endif
-            ASSERT(buf_);
-        }
-    }
+    ScratchBuffer(size_t size = 0) : ExpandableBuffer(size) {}
     
-    ~ScratchBuffer() { 
-        if (buf_ != 0) 
-            free(buf_);
-    }
+    //! @return Pointer of buffer of size, otherwise 0
+    _memory_t buf(size_t size = 0) {
+        if (size > len_) {
+            int err = reserve(size, size);
+            if (err != 0) {
+                return 0;
+            }
 
-    _memory_t buf() { 
-        return buf_; 
-    }
-    
-    _memory_t buf(size_t size) {
-        if (size > size_)
-        {
-            buf_ = static_cast<_memory_t>(realloc(buf_, size));
-            size_ = size;
+            len_ = size;
         }
-        return buf_;
+
+        return reinterpret_cast<_memory_t>(buf_);
     }
-    
-    /*! 
-     * @return Size of the internal scratch buffer. N.B. Don't use
-     * this as the size of the buffer that has been written into, it
-     * will be unreliable.
-     */
-    size_t scratch_size() { return size_; }
-    
-private:
-    _memory_t buf_;
-    size_t    size_;
 };
 
 /*!
@@ -112,57 +87,32 @@ private:
  * with.
  */
 template<typename _memory_t, size_t _static_size>
-class ScratchBuffer {
+class ScratchBuffer : public ExpandableBuffer {
 public:
-    ScratchBuffer()
-        : buf_(reinterpret_cast<_memory_t>(static_buf_)),
-	  size_(_static_size)
-    {
-#ifndef NDEBUG
-        fill_with_the_beef(buf_, size_);
-#endif
+    ScratchBuffer() {
+        buf_     = static_buf_; 
+        buf_len_ = _static_size;
     }
 
-    ~ScratchBuffer() { 
-	if (using_malloc()) {
-	    free(buf_);
-        }
-    }
-    
-    _memory_t buf() { 
-        return buf_; 
-    }
+    //! @return Pointer of buffer of size, otherwise 0
+    _memory_t buf(size_t size = 0) {
+        if (size > len_) {
+            if (using_malloc() || size <= _static_size) {
+                int err = reserve(size, size);
+                if (err != 0) {
+                    return 0;
+                }
+            }
 
-    _memory_t buf(size_t size) {
-        if (size > size_)
-        {
-	    if (! using_malloc()) {
-		buf_ = static_cast<_memory_t>(malloc(size));
-		ASSERT(buf_);
-
-		memcpy(buf_, static_buf_, size_);
-	    } else {
-		buf_ = static_cast<_memory_t>(realloc(buf_, size));
-		ASSERT(buf_);
-	    }
-            size_ = size;
+            len_ = size;
         }
 
-        return buf_;
+        return reinterpret_cast<_memory_t>(buf_);
     }
 
-    /*! 
-     * @return Size of the internal scratch buffer. N.B. Don't use
-     * this as the size of the buffer that has been written into, it
-     * will be unreliable.
-     */
-    size_t scratch_size() { return size_; }
-    
 private:
-    _memory_t buf_;
-    size_t    size_;
-    char      static_buf_[_static_size];
-    
+    char static_buf_[_static_size]; // gcc automatically aligns to
+                                    // maximal data type alignment
     bool using_malloc() { 
 	return reinterpret_cast<char*>(buf_) != static_buf_;
     }

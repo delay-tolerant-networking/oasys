@@ -6,12 +6,20 @@
 namespace oasys {
 
 struct ExpandableBuffer {
-    ExpandableBuffer() 
+    ExpandableBuffer(size_t size = 0) 
         : buf_(0), buf_len_(0), len_(0) 
-    {}
+    {
+        if (size != 0) {
+            reserve(size, size);    
+        }
+    }
 
-    ~ExpandableBuffer() { 
-        delete_z(buf_); 
+    virtual ~ExpandableBuffer() { 
+        if (buf_ != 0) {
+            free(buf_);
+            buf_ = 0;
+        }
+
         buf_len_ = 0; 
         len_     = 0; 
     }
@@ -25,7 +33,7 @@ struct ExpandableBuffer {
      *
      * @return 0 on success.
      */
-    int reserve(size_t size = 0, size_t grow = 0) {
+    virtual int reserve(size_t size = 0, size_t grow = 0) {
         if (size == 0) {
             size = buf_len_ * 2;
         }
@@ -57,22 +65,34 @@ struct ExpandableBuffer {
         return 0;
     }
 
-    int nfree() { 
-        return buf_len_ - len_; 
-    }
+    //! @return bytes free
+    int nfree() const { return buf_len_ - len_; }
     
-    char* buf_at(size_t offset) { 
-        return &buf_[offset]; 
-    }
+    //! @return char* to offset in the buffer
+    char* buf_at(size_t offset) const { return &buf_[offset]; }
    
-    char* buf_end() { 
-        return buf_at(len_); 
-    }
+    //! @return char* to end of len_ bytes in the buffer
+    char* buf_end() const { return buf_at(len_); }
     
-    void add_to_len(int amount) { 
+    //! @return Length of the scratch buffer
+    size_t buf_len() const { return buf_len_; }
+
+    //! @return Length of the bytes that have been requested
+    size_t len() const { return len_; }
+
+    //! Set the length to this amount
+    void set_len(size_t len) { len_ = len; }
+
+    //! @return raw char buffer
+    char* raw_buf() const { return buf_; }
+
+    //! Add amount to the length
+    void add_to_len(int amount) {
         len_ += amount; 
+        ASSERT(len_ <= buf_len_);
     }
 
+protected:
     char*  buf_;
     size_t buf_len_;
     size_t len_;

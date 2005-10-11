@@ -78,14 +78,14 @@ StringBuffer::StringBuffer(const char* fmt, ...)
 StringBuffer::StringBuffer(ExpandableBuffer* buffer)
     : exbuf_(buffer)
 {
-    ASSERT(exbuf_);
+    ASSERT(exbuf_ != 0);
 }
 
 StringBuffer::StringBuffer(ExpandableBuffer* buffer, 
                            const char* fmt, ...) 
     : exbuf_(buffer)
 {
-    ASSERT(exbuf_);
+    ASSERT(exbuf_ != 0);
 
     if (fmt != 0) 
     {
@@ -107,7 +107,7 @@ StringBuffer::append(const char* str, size_t len)
         len = strlen(str);
     }
     
-    int err = exbuf_->reserve(exbuf_->len_ + len);    
+    int err = exbuf_->reserve(exbuf_->len() + len);    
     ASSERT(err == 0);
 
     memcpy(exbuf_->buf_end(), str, len);
@@ -119,7 +119,7 @@ StringBuffer::append(const char* str, size_t len)
 size_t
 StringBuffer::append(char c)
 {
-    reserve(exbuf_->len_ + 1);
+    reserve(exbuf_->len() + 1);
     *exbuf_->buf_end() = c;
     exbuf_->add_to_len(1);
 
@@ -132,8 +132,9 @@ StringBuffer::append(char c)
 void
 StringBuffer::append(IOClient* io, size_t len)
 {
-    reserve(exbuf_->len_ + len);
+    reserve(exbuf_->len() + len);
     io->readall(exbuf_->buf_end(), len);
+
     // XXX/bowei -- need to handle errors from readall
     exbuf_->add_to_len(len);
 }
