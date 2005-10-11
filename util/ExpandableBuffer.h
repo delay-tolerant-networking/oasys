@@ -44,7 +44,7 @@ struct ExpandableBuffer {
      * @return 0 on success.
      */
     virtual int reserve(size_t size = 0, char* old_mem = 0) {
-        ASSERT(buf_ == 0 && old_mem != 0);
+        ASSERT(! (old_mem != 0 && buf_ == 0));
         
         if (size == 0) {
             size = (buf_len_ == 0) ? 1 : (buf_len_ * 2);
