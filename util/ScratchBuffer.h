@@ -94,6 +94,12 @@ public:
         buf_len_ = _static_size;
     }
 
+    ~ScratchBuffer() {
+        if (! using_malloc()) {
+            buf_ = 0;
+        }
+    }
+
     //! @return Pointer of buffer of size, otherwise 0
     _memory_t buf(size_t size = 0) {
         if (size > len_) {

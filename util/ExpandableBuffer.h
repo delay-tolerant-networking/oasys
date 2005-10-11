@@ -5,6 +5,16 @@
 
 namespace oasys {
 
+/*!
+ *
+ * ExpandableBuffer useful for pieces of memory that need to be
+ * resizable.
+ *
+ * INVARIANT: raw_buf() will be a legitimate pointer if:
+ *  - ExpandableBuffer is created with a non-zero size
+ *  - reserve() has been called
+ * The pointer otherwise is allowed to be null.
+ */
 struct ExpandableBuffer {
     ExpandableBuffer(size_t size = 0) 
         : buf_(0), buf_len_(0), len_(0) 
@@ -38,7 +48,7 @@ struct ExpandableBuffer {
             if (buf_len_ > 0) {
                 size = buf_len_ * 2;
             } else {
-                size = 16; // XXX/demmer minimum size?
+                size = 16;
             }
         }
         
@@ -70,10 +80,16 @@ struct ExpandableBuffer {
     }
     
     //! @return char* to offset in the buffer
-    char* buf_at(size_t offset) const { return &buf_[offset]; }
+    char* buf_at(size_t offset) const { 
+        ASSERT(buf_ != 0);
+        return &buf_[offset]; 
+    }
    
     //! @return char* to end of len_ bytes in the buffer
-    char* buf_end() const { return buf_at(len_); }
+    char* buf_end() const { 
+        ASSERT(buf_ != 0);
+        return buf_at(len_); 
+    }
     
     //! @return Length of the scratch buffer
     size_t buf_len() const { return buf_len_; }
@@ -85,7 +101,10 @@ struct ExpandableBuffer {
     void set_len(size_t len) { len_ = len; }
 
     //! @return raw char buffer
-    char* raw_buf() const { return buf_; }
+    char* raw_buf() const { 
+        ASSERT(buf_ != 0); 
+        return buf_; 
+    }
 
     //! Add amount to the length
     void add_to_len(int amount) {
