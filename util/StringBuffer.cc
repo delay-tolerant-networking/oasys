@@ -176,9 +176,9 @@ StringBuffer::vappendf(const char* fmt, va_list ap)
             buf_->reserve();
             ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
         } while(ret == -1);
-        buf_->set_len(buf_->len() + ret);
-
-        return ret;
+        
+        // we should be safe now, either the string has been written
+        // or we write it again below
     }
 
     if(ret >= buf_->nfree())
@@ -189,7 +189,7 @@ StringBuffer::vappendf(const char* fmt, va_list ap)
     }
     
     ASSERT(ret > 0);
-    buf_->set_len(buf_->len() + ret);
+    buf_->set_len(buf_->len() + ret + 1);
         
     return ret;
 }
