@@ -55,7 +55,6 @@ DECLARE_TEST(StringTest2) {
     
     buf.appendf("%d%d%d%s", 10, 20, 123, "foobarbaz");
     sprintf(buf2, "%d%d%d%s", 10, 20, 123, "foobarbaz");
-    buf2[9] = '\0';
 
     log_debug("\"%s\" \"%s\"", buf.c_str(), buf2);
 
