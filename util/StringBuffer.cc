@@ -51,7 +51,7 @@ StringBuffer::StringBuffer(size_t initsz, const char* initstr)
     buf_ = new ExpandableBuffer();
     ASSERT(buf_ != 0);
     
-    buf_->reserve( (initsz == 0) ? 256 : initsz);
+    buf_->reserve((initsz == 0) ? 256 : initsz);
 
     if (initstr) {
         append(initstr);
@@ -97,7 +97,8 @@ StringBuffer::StringBuffer(ExpandableBuffer* buffer,
     }
 }
 
-StringBuffer::~StringBuffer() {
+StringBuffer::~StringBuffer()
+{
     if (own_buf_)
         delete_z(buf_);
 }
@@ -149,6 +150,10 @@ StringBuffer::append(char c)
 size_t
 StringBuffer::vappendf(const char* fmt, va_list ap)
 {
+    if (buf_->nfree() == 0) {
+        buf_->reserve();
+    }
+    
     int ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
     
     if(ret == -1)

@@ -159,9 +159,9 @@ public:
     }
 
     //! Used to workaround bugs in Cygwin
-    void reserve(size_t size) {
-        buf_->reserve(size);
-    }
+//     void reserve(size_t size) {
+//         buf_->reserve(size);
+//     }
 
 private:
     mutable ExpandableBuffer* buf_;
