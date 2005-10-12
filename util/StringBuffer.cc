@@ -106,15 +106,12 @@ StringBuffer::~StringBuffer()
 const char*
 StringBuffer::c_str() const
 {
-    if (buf_->len() == 0 || 
-        *buf_->at(buf_->len() - 1) != '\0') 
+    // we make sure there's a null terminator but don't bump up len_
+    // to count it, just like std::string
+    if (buf_->len() == 0 || (*buf_->at(buf_->len() - 1) != '\0'))
     {
-        // Don't want the null termination to trigger a doubling
-        // of the size.
         buf_->reserve(buf_->len() + 1);
         *buf_->end() = '\0';
-        
-        buf_->set_len(buf_->len() + 1);
     }
     
     return data();
@@ -176,13 +173,13 @@ StringBuffer::vappendf(const char* fmt, va_list ap)
 
     if(ret >= buf_->nfree())
     {
-        buf_->reserve(buf_->len() + ret + 1);
+        buf_->reserve(buf_->len() + ret);
         ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
         ASSERT(ret > 0 && ret <= buf_->nfree());
     }
     
     ASSERT(ret > 0);
-    buf_->set_len(buf_->len() + ret + 1);
+    buf_->set_len(buf_->len() + ret);
         
     return ret;
 }
