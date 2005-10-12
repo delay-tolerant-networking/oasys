@@ -46,24 +46,24 @@
 namespace oasys {
 
 StringBuffer::StringBuffer(size_t initsz, const char* initstr)
-    : buf_(0)
+    : buf_(0), own_buf_(true)
 {
     buf_ = new ExpandableBuffer();
     ASSERT(buf_ != 0);
     
-    buf_->reserve( (initsz == 0) ? 32 : initsz);
+    buf_->reserve( (initsz == 0) ? 256 : initsz);
 
     if (initstr) {
         append(initstr);
     }
 }
-
+    
 StringBuffer::StringBuffer(const char* fmt, ...)
-    : buf_(0)
+    : buf_(0), own_buf_(true)
 {
     buf_ = new ExpandableBuffer();
     ASSERT(buf_);
-    buf_->reserve(32);
+    buf_->reserve(256);
 
     if (fmt != 0) 
     {
@@ -75,18 +75,18 @@ StringBuffer::StringBuffer(const char* fmt, ...)
 }
 
 StringBuffer::StringBuffer(ExpandableBuffer* buffer)
-    : buf_(buffer)
+    : buf_(buffer), own_buf_(false)
 {
     ASSERT(buf_ != 0);
-    buf_->reserve(32);
+    buf_->reserve(256);
 }
 
 StringBuffer::StringBuffer(ExpandableBuffer* buffer, 
                            const char* fmt, ...) 
-    : buf_(buffer)
+    : buf_(buffer), own_buf_(false)
 {
     ASSERT(buf_ != 0);
-    buf_->reserve(32);
+    buf_->reserve(256);
 
     if (fmt != 0) 
     {
@@ -98,7 +98,8 @@ StringBuffer::StringBuffer(ExpandableBuffer* buffer,
 }
 
 StringBuffer::~StringBuffer() {
-    delete_z(buf_);
+    if (own_buf_)
+        delete_z(buf_);
 }
 
 const char*
@@ -143,19 +144,6 @@ StringBuffer::append(char c)
     buf_->set_len(buf_->len() + 1);
 
     return 1;
-}
-
-/**
- * Append len bytes from the given IOClient.
- */
-void
-StringBuffer::append(IOClient* io, size_t len)
-{
-    reserve(buf_->len() + len);
-    io->readall(buf_->end(), len);
-
-    // XXX/bowei -- need to handle errors from readall
-    buf_->set_len(buf_->len() + len);
 }
 
 size_t

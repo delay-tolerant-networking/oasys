@@ -48,8 +48,6 @@ namespace oasys {
 
 class ExpandableBuffer;
 
-class IOClient;
-
 /**
  * Utility class that wraps a growable string buffer, similar to
  * std::ostringstream, but with printf() style arguments instead of
@@ -126,11 +124,6 @@ public:
     size_t append(char c);
 
     /**
-     * Fill the buffer by reading len bytes from the given IOClient.
-     */
-    void append(IOClient* io, size_t len);
-    
-    /**
      * Formatting append function.
      *
      * @param fmt the format string
@@ -172,6 +165,7 @@ public:
 
 private:
     mutable ExpandableBuffer* buf_;
+    bool    own_buf_;
 };
 
 /**
