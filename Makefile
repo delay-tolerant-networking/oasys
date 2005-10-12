@@ -211,3 +211,9 @@ test tests: $(TESTS)
 .PHONY: check
 check:
 	cd test; tclsh UnitTest.tcl
+
+# tags
+.PHONY: tag tags
+tag tags:
+	find . -name "*.cc" -o -name "*.h" | xargs ctags
+	find . -name "*.cc" -o -name "*.h" | xargs etags
