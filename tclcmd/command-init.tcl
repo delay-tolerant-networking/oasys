@@ -23,6 +23,18 @@ proc event_loop {} {
 }
 
 #
+# Wrapper proc to handle the fact that we may or may not have a log
+# procedure defined
+#
+proc command_log {level string} {
+    if {[info procs log] != ""} {
+        log /command $level $string
+    } else {
+        puts $string
+    }
+}
+
+#
 # Callback when there's data ready to be processed.
 #
 proc command_process {input output} {
@@ -34,7 +46,7 @@ proc command_process {input output} {
 	    set stdin_exited 1
 	    return
 	} else {
-	    log /command debug "closed connection $command_info($input)"
+	    command_log debug "closed connection $command_info($input)"
 	    catch {close $input}
 	    return
 	}
@@ -143,13 +155,8 @@ proc command_loop {prompt} {
 	tclreadline_loop
 	
     } err] {
-	if {[info procs log] != ""} {
-	    set logger "log /tcl INFO"
-	} else {
-	    set logger "puts"
-	}
-	$logger "can't load tclreadline: $err"
-	$logger "fall back to simple command loop"
+	command_log info "can't load tclreadline: $err"
+	command_log info "fall back to simple command loop"
 	simple_command_loop $prompt
     }
     puts ""
