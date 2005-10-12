@@ -415,11 +415,6 @@ TclCommand::TclCommand(const char* name, const char* theNamespace)
     }
 
     name_ += name;
-
-    // workaround for bug seen with Cygwin 3.4.4-1, where
-    // help_ ends up with two copies of the text after a
-    // buffer grow operation.
-    help_.reserve(1024);
 }
 
 TclCommand::~TclCommand()
