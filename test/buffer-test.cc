@@ -76,18 +76,16 @@ DECLARE_TEST(ExpandableBuffer2) {
     return UNIT_TEST_PASSED;
 }
 
-DECLARE_TEST(ExpandableBuffer2) {
-    ScratchBuffer<char*, 10> scratch;
-    StringBuffer buf(&scratch);
-    
-    buf.appendf("%d%x%s%x%d%x", 1, 2, "abracadabra", 
-                4, 5, 6);
+void memory1Func() {
+    ScratchBuffer<char*, 4096> scratch;
+    scratch.buf();
+}
 
-    char str[256];
-    sprintf(str, "%d%x%s%x%d%x", 1, 2, "abracadabra", 
-            4, 5, 6);
-    CHECK_EQUALSTR(buf.c_str(), str);
-    
+DECLARE_TEST(Memory1) {
+    for (int i=0; i<20000; ++i) {
+        memory1Func();
+    }
+
     return UNIT_TEST_PASSED;
 }
 
