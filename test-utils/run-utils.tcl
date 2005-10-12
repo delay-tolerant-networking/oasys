@@ -1,6 +1,8 @@
 #!/usr/bin/tclsh
 package require Tclx
-rename log tclx_log
+if {[info procs log] != ""} {
+    rename log tclx_log
+}
 
 namespace eval run {
 
