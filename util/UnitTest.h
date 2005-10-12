@@ -283,30 +283,20 @@ void _name::add_tests()                                         \
     } } while(0);
 
 #define CHECK_EQUALSTRN(a, b, len)                                              \
-    do { if (strncmp((const char*)(a), (const char*)(b), (len)) != 0) {         \
-        if (len <= 32) {                                                        \
-            ::oasys::Breaker::break_here();                                     \
-            oasys::logf("/test", oasys::LOG_ERR,  "CHECK FAILED: "              \
-                        "'%s' (%s) != '%s' (%s) at %s:%d",                      \
-                        #a, (a), #b, (b), __FILE__, __LINE__);                  \
-        } else {                                                                \
-            ::oasys::Breaker::break_here();                                     \
-            oasys::logf("/test", oasys::LOG_ERR,  "CHECK FAILED: "              \
-                        "'%s' (%.*s...) != '%s' (%.*s...) at %s:%d",            \
-                        #a, 32, (a), #b, 32, (b), __FILE__, __LINE__);          \
+    do { size_t print_len = (len > 32) ? 32 : len;                              \
+         if (strncmp((const char*)(a), (const char*)(b), (len)) != 0) {         \
+             ::oasys::Breaker::break_here();                                    \
+             oasys::logf("/test", oasys::LOG_ERR,  "CHECK FAILED: "             \
+                         "'" #a "' (%.*s...) != '" #b "' (%.*s...) at %s:%d",   \
+                         print_len, (a), print_len, (b),                        \
+                         __FILE__, __LINE__);                                   \
+             return oasys::UNIT_TEST_FAILED;                                    \
+         } else {                                                               \
+             oasys::logf("/test", oasys::LOG_INFO,                              \
+                         "CHECK '" #a "' (%.*s...) == '" #b "' (%.*s...)",      \
+                         print_len, (a), print_len, (b));                       \
         }                                                                       \
-       return oasys::UNIT_TEST_FAILED;                                          \
-    } else {                                                                    \
-        if (len <= 32) {                                                        \
-            oasys::logf("/test", oasys::LOG_INFO,                               \
-                        "CHECK '" #a "' (%s) == '" #b "' (%s)", (a), (b));      \
-        } else {                                                                \
-            oasys::logf("/test", oasys::LOG_INFO,                               \
-                        "CHECK '" #a "' (%.*s...) == '" #b "' (%.*s...)",       \
-                        32, (a), 32, (b));                                      \
-        }                                                                       \
-    } } while(0)
-
+    } while(0)
 
 /// @}
 
