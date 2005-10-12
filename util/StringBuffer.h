@@ -86,7 +86,8 @@ public:
     char* data() { return buf_->raw_buf(); }
 
     /**
-     * @return length of the buffer.
+     * @return String length of the buffer (excluding any '\0'
+     * character that is added by c_str().
      */
     size_t length() const { return buf_->len(); }
 
