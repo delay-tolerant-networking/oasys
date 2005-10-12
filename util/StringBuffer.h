@@ -158,11 +158,6 @@ public:
         buf_->set_len(len);
     }
 
-    //! Used to workaround bugs in Cygwin
-//     void reserve(size_t size) {
-//         buf_->reserve(size);
-//     }
-
 private:
     mutable ExpandableBuffer* buf_;
     bool    own_buf_;
