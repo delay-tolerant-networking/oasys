@@ -208,11 +208,11 @@ private:
 #define ADD_TEST(_name)                         \
         add(new _name ## UnitTest())
 
-#define DECLARE_TEST(_name)                                                     \
-    struct _name ## UnitTest : public oasys::UnitTest, public oasys::Logger {   \
-        _name ## UnitTest() : UnitTest(#_name), Logger("/unit") {}              \
-        int run();                                                              \
-    };                                                                          \
+#define DECLARE_TEST(_name)                             \
+    struct _name ## UnitTest : public oasys::UnitTest { \
+        _name ## UnitTest() : UnitTest(#_name) {}       \
+        int run();                                      \
+    };                                                  \
     int _name ## UnitTest::run()
 
 #define RUN_TESTER(_UnitTesterClass, testname, argc, argv)      \
@@ -236,13 +236,13 @@ void _name::add_tests()                                         \
 #define CHECK(x)                                        \
     do { if (! (x)) {                                   \
         ::oasys::Breaker::break_here();                 \
-        oasys::logf("/test", oasys::LOG_ERR,            \
-                    "CHECK FAILED (" #x ") at %s:%d",   \
-                    __FILE__, __LINE__);                \
+        ::oasys::__logf(oasys::LOG_ERR, "/test",        \
+                    "CHECK FAILED (%s) at %s:%d",       \
+                    #x, __FILE__, __LINE__);            \
         return oasys::UNIT_TEST_FAILED;                 \
     } else {                                            \
-        oasys::logf("/test", oasys::LOG_INFO,           \
-                    "CHECK (" #x ") ok");               \
+        ::oasys::__logf(oasys::LOG_INFO, "/test",       \
+                    "CHECK (%s) ok", #x);               \
     } } while(0)
 
 #define CHECK_EQUAL(_a, _b)                                                      \
