@@ -63,7 +63,7 @@ DECLARE_TEST(ExpandableBuffer1) {
 
 DECLARE_TEST(ExpandableBuffer2) {
     ScratchBuffer<char*, 10> scratch;
-    StringBuffer buf(&scratch);
+    StringBuffer buf(&scratch, false);
     
     buf.appendf("%d%x%s%x%d%x", 1, 2, "abracadabra", 
                 4, 5, 6);

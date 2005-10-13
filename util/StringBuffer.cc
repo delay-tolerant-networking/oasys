@@ -74,27 +74,11 @@ StringBuffer::StringBuffer(const char* fmt, ...)
     }
 }
 
-StringBuffer::StringBuffer(ExpandableBuffer* buffer)
-    : buf_(buffer), own_buf_(false)
+StringBuffer::StringBuffer(ExpandableBuffer* buffer, bool own_buf)
+    : buf_(buffer), own_buf_(own_buf)
 {
     ASSERT(buf_ != 0);
     buf_->reserve(256);
-}
-
-StringBuffer::StringBuffer(ExpandableBuffer* buffer, 
-                           const char* fmt, ...) 
-    : buf_(buffer), own_buf_(false)
-{
-    ASSERT(buf_ != 0);
-    buf_->reserve(256);
-
-    if (fmt != 0) 
-    {
-        va_list ap;
-        va_start(ap, fmt);
-        vappendf(fmt, ap);
-        va_end(ap);
-    }
 }
 
 StringBuffer::~StringBuffer()

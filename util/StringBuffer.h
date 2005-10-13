@@ -68,9 +68,7 @@ public:
     StringBuffer(const char* fmt, ...) PRINTFLIKE(2, 3);
 
     //! @{ Create a string buffer with an expandable buffer 
-    StringBuffer(ExpandableBuffer* buffer, const char* fmt, ...) 
-        PRINTFLIKE(3,4);
-    StringBuffer(ExpandableBuffer* buffer);
+    StringBuffer(ExpandableBuffer* buffer, bool own_buf);
     //! @}
         
     ~StringBuffer();
@@ -178,13 +176,15 @@ public:
     /**
      * Default constructor
      *
-     * @param init_str Initial string value. If the string is longer
-     * than _sz, then the string is truncated.
+     * @param init_str Initial string value
      */
     StaticStringBuffer(char* init_str = 0)
-        : StringBuffer(new ScratchBuffer<char*, _sz>(), init_str)
-    {}
-
+        : StringBuffer(new ScratchBuffer<char*, _sz>(), true)
+    {
+        if (init_str) {
+            append(init_str);
+        }
+    }
 };
 
 } // namespace oasys
