@@ -5,8 +5,8 @@ GDB_OPTS="%gdb_opts%"
 RUN_DIR="%run_dir%"
 RUN_ID="%run_id%"
 
-
 GDB=%gdb%
+VALGRIND=%valgrind%
 LOCAL=%local%
 PAUSE_AFTER=%pause_after%
 VERBOSE=%verbose%
@@ -21,24 +21,34 @@ function dbg {
 ulimit -c unlimited
 cd $RUN_DIR
 
-CHOICE="${XTERM} ${GDB}"
+CHOICE="${XTERM} ${GDB} ${VALGRIND}"
 case $CHOICE in
-    "1 1")
+    "1 1 0")
 	CMD="gdb $RUN_DIR/$EXEC_FILE -x run-$EXEC_FILE.gdb 2>&1 | \
                tee $EXEC_FILE.out"
 	echo "stderr was redirected to $EXEC_FILE.out" >> $EXEC_FILE.err
 	;;
-    "1 0") 
+    "1 0 1")
+	CMD="valgrind --tool=memcheck --leak-check=yes -v \
+               $RUN_DIR/$EXEC_FILE $EXEC_OPTS 2>&1 | tee $EXEC_FILE.out"
+	echo "stderr was redirected to $EXEC_FILE.out" >> $EXEC_FILE.err
+	;;
+    "1 0 0") 
 	CMD="$RUN_DIR/$EXEC_FILE $EXEC_OPTS 2>&1 | tee $EXEC_FILE.out"
 	echo "stderr was redirected to $EXEC_FILE.out" >> $EXEC_FILE.err
 	;;
-    "0 1")
+    "0 1 0")
 	CMD="gdb -batch -x run-test.gdb $GDB_OPTS $RUN_DIR/$EXEC_FILE \
-	    2>$RUN_DIR/$EXEC_FILE.err >$RUN_DIR/$EXEC_FILE.out "
+	       2>$RUN_DIR/$EXEC_FILE.err >$RUN_DIR/$EXEC_FILE.out "
 	;;
-    "0 0")
-	CMD="$RUN_DIR/$EXEC_FILE $EXEC_OPTS 2>$RUN_DIR/$EXEC_FILE.err \
-	    >$RUN_DIR/$EXEC_FILE.out"
+    "0 0 1")
+	CMD="valgrind --tool=memcheck --leak-check=yes -v \
+               $RUN_DIR/$EXEC_FILE $EXEC_OPTS \
+	       2>$RUN_DIR/$EXEC_FILE.err >$RUN_DIR/$EXEC_FILE.out"
+	;;
+    "0 0 0")
+	CMD="$RUN_DIR/$EXEC_FILE $EXEC_OPTS \
+	       2>$RUN_DIR/$EXEC_FILE.err >$RUN_DIR/$EXEC_FILE.out"
 	;;
     *) echo "! garbage arguments to run script"; exit ;;
 esac

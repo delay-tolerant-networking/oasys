@@ -26,6 +26,7 @@ proc usage {} {
     puts "Options:"
     puts "    -h | -help | --help  Print help message"
     puts "    -g | -gdb  | --gdb   Run program with gdb"
+    puts "    -vg | --valgrind     Run program with valgrind's memcheck"
     puts "    -x | -xterm          Run each instance in an xterm"
     puts "    -d | -daemon         Daemon mode (no command loop)"
     puts "    -geom | -geometry    Specify the xterm geometry (implies -x)"
@@ -55,6 +56,7 @@ proc init {args test_script} {
     set opt(conf_id)       0
     set opt(daemon)        0
     set opt(gdb)           0
+    set opt(valgrind)      0
     set opt(leave_crap)    0
     set opt(logdir)        "."
     set opt(net)           ""
@@ -100,6 +102,9 @@ proc init {args test_script} {
 	    -g            -
 	    -gdb          -
 	    --gdb         { set opt(gdb) 1 }
+	    -vg           -
+	    -valgrind     -
+	    --valgrind    { set opt(valgrind) 1 }
 	    -x            -
 	    -xterm        -
 	    --xterm       { set opt(xterm) 1 }
@@ -130,6 +135,11 @@ proc init {args test_script} {
 	    default       { puts "illegal option [arg1 $args]"; usage; exit }
 	}
 	shift args
+    }
+
+    if {$opt(valgrind) && $opt(gdb)} {
+	puts "ERROR: cannot use both valgrind option and gdb option";
+	exit 1
     }
 
     puts "* Reading net definition file $opt(net)"
@@ -177,6 +187,7 @@ proc generate_script {id exec_file exec_opts confname conf} {
     set script(run_dir)     $rundir
     set script(run_id)      $exec_file-$hostname-$id
     set script(gdb)         $opt(gdb)
+    set script(valgrind)    $opt(valgrind)
     set script(local)       [net::is_localhost $hostname]
     set script(pause_after) $opt(pause)
     set script(verbose)     $opt(verbose)
@@ -284,7 +295,7 @@ proc run {id exec_file exec_opts confname conf} {
 #
 # Wait for all running test programs to exit
 #
-proc wait_for_programs {{timeout 10000}} {
+proc wait_for_programs {{timeout 5000}} {
     global net::host run::pids run::xterm
     set num_alive 0
 
@@ -316,7 +327,8 @@ proc wait_for_programs {{timeout 10000}} {
 		    if {![catch {run_cmd $kill_hostname ps h -p $pid}]} {
 			dbg "% $hostname:$i pid $pid still alive"
 			if {$signal != "none"} {
-			    puts "* ERROR: pid $pid on host $hostname:$i still alive"
+			    puts "* ERROR: pid $pid on host $hostname:$i\
+				    still alive"
 			    puts "* ERROR: sending $signal signal"
 			    catch {run_cmd $kill_hostname kill -s $signal $pid} err
 			}
@@ -325,9 +337,10 @@ proc wait_for_programs {{timeout 10000}} {
 		}
 
 		if {[llength $livepids] == 0} {
-		    puts "    $hostname:$i all processes finished"
+		    puts "    $hostname:$i -- all processes finished"
 		} else {
-		    dbg "* $hostname:$i [llength livepids] pids still alive ($livepids)"
+		    puts "    $hostname:$i -- [llength livepids] pid(s)\
+			    still alive ($livepids)"
 		    set run::pids($i) $livepids
 		    incr num_alive [llength $livepids]
 		}
