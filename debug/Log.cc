@@ -94,8 +94,8 @@ Log::Log()
       logfd_(-1),
       default_threshold_(LOG_DEFAULT_THRESHOLD)
 {
-    lock_      = new SpinLock();
-    rule_list_ = new RuleList();
+    output_lock_ = new SpinLock();
+    rule_list_   = &rule_lists_[1];
 }
 
 void
@@ -112,8 +112,6 @@ Log::do_init(const char* logfile, log_level_t defaultlvl,
 {
     ASSERT(instance_ == NULL);
     ASSERT(!inited_);
-
-    instance_ = this;
 
     // Open the output file descriptor
     logfile_.assign(logfile);
@@ -133,12 +131,11 @@ Log::do_init(const char* logfile, log_level_t defaultlvl,
     if (prefix)
         prefix_.assign(prefix);
 
-    ASSERT(lock_);
-    ScopeLock lock(lock_, "Log::do_init");
-
     default_threshold_ = defaultlvl;
     parse_debug_file(debug_path);
+
     inited_ = true;
+    instance_ = this;
 }
 
 void
@@ -153,11 +150,12 @@ Log::parse_debug_file(const char* debug_path)
     if (debug_path[0] == '\0')
         return;
     
-    // note that we do as much as we can without taking the lock to
-    // avoid holding up other parts of the system. the lock is only
-    // taken to swap the old and new lists
-    RuleList* old_rule_list;
-    RuleList* new_rule_list = new RuleList();
+    // handle double buffering for the rule lists
+    RuleList* old_rule_list = rule_list_;
+    RuleList* new_rule_list = (rule_list_ == &rule_lists_[0]) ?
+                              &rule_lists_[1] : &rule_lists_[0];
+
+    ASSERT(new_rule_list != old_rule_list);
 
     // handle ~/ in the debug_path
     if ((debug_path[0] == '~') && (debug_path[1] == '/')) {
@@ -263,16 +261,11 @@ Log::parse_debug_file(const char* debug_path)
 
     sort_rules(new_rule_list);
 
-    lock_->lock("Log::parse_debug_file");
-    old_rule_list = rule_list_;
     rule_list_ = new_rule_list;
     if (inited_) {
         logf("/log", LOG_ALWAYS, "reparsed debug file... found %d rules",
              (int)new_rule_list->size());
     }
-    lock_->unlock();
-
-    delete old_rule_list;
 }
 
 void
@@ -300,7 +293,6 @@ void
 Log::print_rules()
 {
     ASSERT(inited_);
-    ScopeLock l(lock_, "Log::print_rules");
     
     RuleList::iterator iter = rule_list_->begin();
     printf("Logging rules:\n");
@@ -313,7 +305,6 @@ Log::Rule *
 Log::find_rule(const char *path)
 {
     ASSERT(inited_);
-    ScopeLock l(lock_, "Log::find_rule");
     
     /*
      * The rules are stored in decreasing path lengths, so the first
@@ -344,20 +335,8 @@ Log::find_rule(const char *path)
 }
 
 void
-Log::add_debug_rule(const char* path, log_level_t threshold)
-{
-    ASSERT(inited_);
-    ScopeLock l(lock_, "Log::add_debug_rule");
-    ASSERT(path);
-    rule_list_->push_back(Rule(path, threshold));
-    sort_rules(rule_list_);
-}
-
-void
 Log::rotate()
 {
-    ScopeLock l(lock_, "Log::rotate");
-
     if (logfd_ == 1) {
         logf("/log", LOG_WARN, "can't rotate when using stdout for logging");
         return;
@@ -373,11 +352,15 @@ Log::rotate()
         return;
     }
 
+    output_lock_->lock("Log::rotate");
+
     logf("/log", LOG_INFO, "closing log file for rotation");
     close(logfd_);
     
     logfd_ = newfd;
     logf("/log", LOG_INFO, "reopened log file after log rotate");
+
+    output_lock_->unlock();
 }
 
 static void
@@ -557,9 +540,6 @@ Log::vlogf(const char* path, log_level_t level, const void* obj,
         abort();
     }
     
-    // throw a lock around the whole function
-    ScopeLock l(lock_, "Log::vlogf");
-
     /* Make sure that paths that don't start with a slash still show up. */
     if (*path != '/') {
 	snprintf(pathbuf, sizeof pathbuf, "/%s", path);
@@ -611,9 +591,14 @@ Log::vlogf(const char* path, log_level_t level, const void* obj,
     // do the write, making sure to drain the buffer. since stdout was
     // set to nonblocking, the spin lock prevents other threads from
     // jumping in here
+    output_lock_->lock("Log::vlogf");
     int ret = IO::writeall(logfd_, buf, buflen);
-    ASSERT(ret == (int)buflen);
-
+    output_lock_->unlock();
+    
+    ASSERTF(ret == (int)buflen,
+            "unexpected return from IO::writeall (got %d, expected %d): %s",
+            ret, buflen, strerror(errno));
+    
     return buflen;
 };
 
@@ -624,9 +609,6 @@ Log::log_multiline(const char* path, log_level_t level, const char* msg,
     ASSERT(inited_);
 
     char pathbuf[LOG_MAX_PATHLEN];
-
-    // throw a lock around the whole function
-    ScopeLock l(lock_, "Log::log_multiline");
 
     /* Make sure that paths that don't start with a slash still show up. */
     if (*path != '/') {
@@ -647,6 +629,7 @@ Log::log_multiline(const char* path, log_level_t level, const char* msg,
     struct iovec* dynamic_iov = NULL;
     struct iovec* iov = static_iov;
     size_t iov_cnt = 0;
+    size_t total_len = 0;
     
     // scan the string, generating an entry for the prefix and the
     // message line for each one.
@@ -659,10 +642,12 @@ Log::log_multiline(const char* path, log_level_t level, const char* msg,
         iov[iov_cnt].iov_base = prefix;
         iov[iov_cnt].iov_len  = prefix_len;
         ++iov_cnt;
+        total_len += prefix_len;
         
         iov[iov_cnt].iov_base = (char*)msg;
         iov[iov_cnt].iov_len  = end - msg + 1; // include newline
         ++iov_cnt;
+        total_len += end - msg + 1;
 
         msg = end + 1;
 
@@ -675,7 +660,14 @@ Log::log_multiline(const char* path, log_level_t level, const char* msg,
     // do the write, making sure to drain the buffer. since stdout was
     // set to nonblocking, the spin lock prevents other threads from
     // jumping in here
+    output_lock_->lock("Log::log_multiline");
     int ret = IO::writevall(logfd_, iov, iov_cnt);
+    output_lock_->unlock();
+    
+    ASSERTF(ret == (int)total_len,
+            "unexpected return from IO::writevall (got %d, expected %d): %s",
+            ret, (u_int)total_len, strerror(errno));
+    
     return ret;
 }
 

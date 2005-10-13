@@ -241,11 +241,6 @@ public:
     void parse_debug_file(const char* debug_path = NULL);
 
     /**
-     * Add a new rule to the list.
-     */
-    void add_debug_rule(const char* path, log_level_t threshold);
-
-    /**
      * Set the logging prefix after initialization.
      */
     void set_prefix(const char* prefix)
@@ -358,8 +353,9 @@ private:
     static bool inited_;	///< Flag to ensure one-time intialization
     std::string logfile_;	///< Log output file (- for stdout)
     int logfd_;			///< Output file descriptor
-    RuleList* rule_list_;	///< List of logging rules
-    SpinLock* lock_;		///< Lock for logf and re-parsing
+    RuleList* rule_list_;	///< Pointer to current list of logging rules
+    RuleList  rule_lists_[2];	///< Double-buffered rule lists for reparsing
+    SpinLock* output_lock_;	///< Lock for write calls and rotating
     std::string debug_path_;    ///< Path to the debug file
     std::string prefix_;	///< String to prefix log messages
     log_level_t default_threshold_; ///< The default threshold for log messages
