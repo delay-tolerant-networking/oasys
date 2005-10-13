@@ -3,6 +3,7 @@ TESTS += \
 	buffer-test				\
 	durable-cache-test			\
 	io-basic-test				\
+	log-test				\
 	marshal-test				\
 	optparser-test				\
 	sample-test				\
@@ -20,8 +21,6 @@ OLD_TESTS :=					\
 	buffered-io-test			\
 	hexdump-test				\
 	io-intr-test                            \
-	log-test				\
-	log-reparse-test			\
 	md5-test				\
 	memory-test				\
 	msg-queue-test				\

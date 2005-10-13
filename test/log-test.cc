@@ -1,11 +1,163 @@
 
 #include "debug/Formatter.h"
 #include "debug/Log.h"
+#include "io/FileIOClient.h"
+#include "util/UnitTest.h"
+#include "util/StringBuffer.h"
+#include "thread/Thread.h"
 
 using namespace oasys;
 
-#define SHOULD(x)    if (!(x)) PANIC("should have printed")
-#define SHOULDNOT(x) if ( (x)) PANIC("should not have printed");
+StringBuffer path1, path2;
+FileIOClient *f1, *f2;
+
+const char* debug1 =
+"/log-test          debug\n"
+"/log-test/disabled crit\n"
+"/log-test/thread   info\n";
+    
+const char* debug1_sorted = 
+"/log-test/disabled critical\n"
+"/log-test/thread info\n"
+"/log-test debug\n";
+    
+const char* debug2 =
+"/log-test          debug\n"
+"/log-test/disabled crit\n"
+"/log-test/thread   warn\n";
+
+const char* debug2_sorted = 
+"/log-test/disabled critical\n"
+"/log-test/thread warning\n"
+"/log-test debug\n";
+
+DECLARE_TEST(Init) {
+    // create two files, one with the test rule enabled, one without
+    path1.appendf("/tmp/log-test-%s-1-%d", getenv("USER"), getpid());
+    path2.appendf("/tmp/log-test-%s-2-%d", getenv("USER"), getpid());
+    
+    f1 = new FileIOClient();
+    f2 = new FileIOClient();
+
+    f1->logpathf("/log/file1");
+    f2->logpathf("/log/file2");
+    
+    CHECK(f1->open(path1.c_str(),
+                   O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR) > 0);
+
+    CHECK(f2->open(path2.c_str(),
+                   O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR) > 0);
+
+    CHECK(f1->write(debug1, strlen(debug1)) == (int)strlen(debug1));
+    CHECK(f2->write(debug2, strlen(debug2)) == (int)strlen(debug2));
+    
+    CHECK(f1->close() == 0);
+    CHECK(f2->close() == 0);
+
+    // parse debug1
+    Log::instance()->parse_debug_file(path1.c_str());
+    StringBuffer rules;
+    Log::instance()->dump_rules(&rules);
+    CHECK_EQUALSTR(rules.c_str(), debug1_sorted);
+    
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(RulesTest) {
+    // these should all print
+    CHECK(logf("/log-test", LOG_DEBUG, "print me") != 0);
+    CHECK(logf("/log-test", LOG_INFO,  "print me") != 0);
+    CHECK(logf("/log-test", LOG_WARN,  "print me") != 0);
+    CHECK(logf("/log-test", LOG_ERR,   "print me") != 0);
+    CHECK(logf("/log-test", LOG_CRIT,  "print me") != 0);
+
+    CHECK(log_debug("/log-test", "print me") != 0);
+    CHECK(log_info("/log-test",  "print me") != 0);
+    CHECK(log_warn("/log-test", "print me") != 0);
+    CHECK(log_err("/log-test", "print me") != 0);
+    CHECK(log_crit("/log-test", "print me") != 0);
+
+    CHECK(logf("/log-test/disabled", LOG_CRIT, "print me") != 0);
+
+    CHECK(logf("/log-test/disabled", LOG_DEBUG, "don't print me") == 0);
+    CHECK(logf("/log-test/disabled", LOG_INFO,  "don't print me") == 0);
+    CHECK(logf("/log-test/disabled", LOG_WARN,  "don't print me") == 0);
+    CHECK(logf("/log-test/disabled", LOG_ERR,   "don't print me") == 0);
+
+    CHECK(log_debug("/log-test/disabled", "don't print me") == 0);
+    CHECK(log_info("/log-test/disabled",  "don't print me") == 0);
+    CHECK(log_warn("/log-test/disabled",  "don't print me") == 0);
+    CHECK(log_err("/log-test/disabled",   "don't print me") == 0);
+    
+    CHECK(log_crit("/log-test/disabled",  "but print me!!") != 0);
+
+    CHECK(log_multiline("/log-test/multiline", LOG_DEBUG,
+                         "print me\n"
+                         "and me\n"
+                         "and me\n") != 0);
+    
+    CHECK(log_multiline("/log-test/disabled", LOG_DEBUG,
+                        "not me\n"
+                        "nor me\n"
+                        "nor me\n") == 0);
+    return UNIT_TEST_PASSED;
+}
+
+class LoggerTest : public Logger {
+public:
+    LoggerTest() : Logger("/log-test/loggertest") {}
+    int foo();
+};
+
+int
+LoggerTest::foo() {
+    // test macro call with implicit path
+    CHECK(log_debug("debug message %d", 10) != 0);
+        
+    // and non-macro call
+    CHECK(logf(LOG_DEBUG, "debug message %d", 10) != 0);
+
+    // and with a const char* param
+    CHECK(log_debug("debug %s %d", "message", 10) != 0);
+    CHECK(logf(LOG_DEBUG, "debug %s %d", "message", 10) != 0);
+
+    // test macro calls with explicit path
+    CHECK(__log_debug("/log-test/other/path",
+                      "debug message %d", 10) != 0);
+    CHECK(__log_debug("/log-test/other/path",
+                      "debug %s %d", "message", 10) != 0);
+
+    // and non-macro calls
+    CHECK(logf("/log-test/other/path", LOG_DEBUG,
+               "debug message %d", 10) != 0);
+    CHECK(logf("/log-test/other/path", LOG_DEBUG,
+               "debug %s %d", "message", 10) != 0);
+
+    return UNIT_TEST_PASSED;
+}
+
+int
+foo()
+{
+    // test macro calls with explicit path in a non-logger function
+    CHECK(log_debug("/log-test/path", "debug message %d", 10) != 0);
+    CHECK(log_debug("/log-test/path", "debug %s %d", "message", 10) != 0);
+
+    // and non-macro calls
+    CHECK(logf("/log-test/path", LOG_DEBUG,
+               "debug message %d", 10) != 0);
+    CHECK(logf("/log-test/path", LOG_DEBUG,
+               "debug %s %d", "message", 10) != 0);
+
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(LoggerTest) {
+    LoggerTest test;
+    CHECK(test.foo() == UNIT_TEST_PASSED);
+    CHECK(foo() == UNIT_TEST_PASSED);
+    return UNIT_TEST_PASSED;
+}
 
 class FormatterTest : public Formatter {
 public:
@@ -74,7 +226,10 @@ public:
     }
 };
 
-class MultiFormatter : public SomethingVirtual, public Formatter, public Logger {
+class MultiFormatter : public SomethingVirtual,
+                       public Formatter,
+                       public Logger
+{
 public:
     int format(char* buf, size_t sz) const {
         return snprintf(buf, sz, "i'm a multiformatter %p logpath %p",
@@ -83,130 +238,165 @@ public:
     
 };
 
-class LoggerTest : public Logger {
-public:
-    LoggerTest() : Logger("/test/loggertest") {}
-    void foo();
-};
-
-void
-LoggerTest::foo()
-{
-    // test macro call with implicit path
-    SHOULD(log_debug("debug message %d", 10));
-
-    // and non-macro call
-    SHOULD(logf(LOG_DEBUG, "debug message %d", 10));
-
-    // and with a const char* param
-    SHOULD(log_debug("debug %s %d", "message", 10));
-    SHOULD(logf(LOG_DEBUG, "debug %s %d", "message", 10));
-
-    // test macro calls with explicit path
-    SHOULD(__log_debug("/test/other/path", "debug message %d", 10));
-    SHOULD(__log_debug("/test/other/path", "debug %s %d", "message", 10));
-
-    // and non-macro calls
-    SHOULD(logf("/test/other/path", LOG_DEBUG, "debug message %d", 10));
-    SHOULD(logf("/test/other/path", LOG_DEBUG, "debug %s %d", "message", 10));
-}
-
-void
-foo()
-{
-    // test macro calls with explicit path in a non-logger function
-    SHOULD(log_debug("/test/path", "debug message %d", 10));
-    SHOULD(log_debug("/test/path", "debug %s %d", "message", 10));
-
-    // and non-macro calls
-    SHOULD(logf("/test/path", LOG_DEBUG, "debug message %d", 10));
-    SHOULD(logf("/test/path", LOG_DEBUG, "debug %s %d", "message", 10));
-}
-
-void
-shouldprint()
-{
-    // these should all print
-    SHOULD(logf("/test", LOG_DEBUG, "print me"));
-    SHOULD(logf("/test", LOG_INFO,  "print me"));
-    SHOULD(logf("/test", LOG_WARN,  "print me"));
-    SHOULD(logf("/test", LOG_ERR,   "print me"));
-    SHOULD(logf("/test", LOG_CRIT,  "print me"));
-
-    SHOULD(log_debug("/test", "print me"));
-    SHOULD(log_info("/test",  "print me"));
-    SHOULD(log_warn("/test", "print me"));
-    SHOULD(log_err("/test", "print me"));
-    SHOULD(log_crit("/test", "print me"));
-}
-
-void
-shouldntprint()
-{
-    SHOULDNOT(logf("/test/disabled", LOG_DEBUG, "don't print me"));
-    SHOULDNOT(logf("/test/disabled", LOG_INFO,  "don't print me"));
-    SHOULDNOT(logf("/test/disabled", LOG_WARN,  "don't print me"));
-    SHOULDNOT(logf("/test/disabled", LOG_ERR,   "don't print me"));
-
-    SHOULD(logf("/test/disabled", LOG_CRIT, "but print me!!"));
-
-    SHOULDNOT(log_debug("/test/disabled", "don't print me"));
-    SHOULDNOT(log_info("/test/disabled",  "don't print me"));
-    SHOULDNOT(log_warn("/test/disabled",  "don't print me"));
-    SHOULDNOT(log_err("/test/disabled",   "don't print me"));
-    
-    SHOULD(log_crit("/test/disabled",  "but print me!!"));
-}
-
-void
-multiline()
-{
-    SHOULD(log_multiline("/test/multiline", LOG_DEBUG,
-                         "print me\n"
-                         "and me\n"
-                         "and me\n"));
-    
-    SHOULDNOT(log_multiline("/test/disabled", LOG_DEBUG,
-                            "not me\n"
-                            "nor me\n"
-                            "nor me\n"));
-}
-
-int
-main(int argc, const char** argv)
-{
-    Log::init(LOG_ERR);
-    
-    Log::instance()->add_debug_rule("/test", LOG_DEBUG);
-    Log::instance()->add_debug_rule("/test/ignore", LOG_CRIT);
-    Log::instance()->add_debug_rule("/test/disabled", LOG_CRIT);
-
+DECLARE_TEST(FormatterTest) {
     FormatterTest fmt;
-    logf("/test/formatter", LOG_DEBUG, "formatter: %p *%p", &fmt, &fmt);
-    logf("/test/formatter", LOG_DEBUG, "%p pointer works at beginning", &fmt);
-    logf("/test/formatter", LOG_DEBUG, "*%p pointer works at beginning too", &fmt);
+    CHECK(logf("/log-test/formatter", LOG_DEBUG,
+               "formatter: %p *%p", &fmt, &fmt) != 0);
+
+    CHECK(logf("/log-test/formatter", LOG_DEBUG,
+               "%p pointer works at beginning", &fmt) != 0);
+
+    CHECK(logf("/log-test/formatter", LOG_DEBUG,
+               "*%p pointer works at beginning too", &fmt) != 0);
 
     MultiFormatter mft;
-    logf("/test/multi", LOG_DEBUG, "multiformatter: address is %p *%p",
-         &mft, (Formatter*)&mft);
 
-    LoggerTest test;
-    test.foo();
-
-    foo();
-    shouldprint();
-    shouldntprint();
-    multiline();
+    CHECK(logf("/log-test/multi", LOG_DEBUG,
+               "multiformatter: address is %p *%p",
+               &mft, (Formatter*)&mft) != 0);
 
     BoundsTest bft;
-    logf("/test/bounfs", LOG_DEBUG, "bounds test: *%p *%p", &fmt, &bft);
+    CHECK(logf("/log-test/bounds", LOG_DEBUG,
+               "bounds test: *%p *%p", &fmt, &bft) != 0);
 
     TruncateTest tft;
-    logf("/test/truncate", LOG_DEBUG, "truncate: *%p", &tft);
+    CHECK(logf("/log-test/truncate", LOG_DEBUG,
+               "truncate: *%p", &tft) != 0);
 
-    logf("/test/overflow", LOG_DEBUG, "EXPECT A PANIC:");
     OverflowTest oft;
-    logf("/test/overflow", LOG_DEBUG, "overflow: *%p", &oft);
+    Log::__debug_no_panic_on_overflow = true;
+    CHECK(logf("/log-test/overflow", LOG_DEBUG, "overflow: *%p", &oft) == -1);
 
-    exit(0);
+    return UNIT_TEST_PASSED;
 }
+
+class LoggerThread : public Thread, public Logger {
+public:
+    LoggerThread(int threadid)
+        : Thread("LoggerThread", CREATE_JOINABLE)
+    {
+        logpathf("/log-test/thread/%d", threadid);
+    }
+    
+    virtual void run () {
+        output_ = false;
+
+        int i = 0;
+        while (1) {
+            ++i;
+
+            if (stop_) {
+                return;
+            }
+
+            if (output_) {
+                log_info("loops: %d", i / 1000);
+                output_ = false;
+            }
+            
+            log_debug("never output");
+
+            ++i;
+        }
+    }
+
+    volatile bool output_;
+    static bool stop_;
+};
+
+bool LoggerThread::stop_ = false;
+
+DECLARE_TEST(ReparseTest) {
+    LoggerThread t1(1), t2(2), t3(3), t4(4);
+
+    t1.start();
+    t2.start();
+    t3.start();
+    t4.start();
+
+    CHECK(__log_enabled(LOG_INFO, "/log-test/thread"));
+    t1.output_ = t2.output_ = t3.output_ = t3.output_ = true;
+    sleep(2);
+
+    {
+        Log::instance()->parse_debug_file(path2.c_str());
+        StringBuffer rules;
+        Log::instance()->dump_rules(&rules);
+        CHECK_EQUALSTR(rules.c_str(), debug2_sorted);
+        CHECK(! __log_enabled(LOG_INFO, "/log-test/thread"));
+    }
+    t1.output_ = t2.output_ = t3.output_ = t4.output_ = true;
+    sleep(2);
+    
+    Log::instance()->parse_debug_file(path1.c_str());
+    t1.output_ = t2.output_ = t3.output_ = t4.output_ = true;
+    while (t1.output_ || t2.output_ || t3.output_ || t4.output_) {
+        Thread::yield();
+    }
+    
+    Log::instance()->parse_debug_file(path2.c_str());
+    t1.output_ = t2.output_ = t3.output_ = t4.output_ = true;
+    while (t1.output_ || t2.output_ || t3.output_ || t4.output_) {
+        Thread::yield();
+    }
+    
+    Log::instance()->parse_debug_file(path1.c_str());
+    t1.output_ = t2.output_ = t3.output_ = t4.output_ = true;
+    while (t1.output_ || t2.output_ || t3.output_ || t4.output_) {
+        Thread::yield();
+    }
+    
+    Log::instance()->parse_debug_file(path2.c_str());
+    t1.output_ = t2.output_ = t3.output_ = t4.output_ = true;
+    while (t1.output_ || t2.output_ || t3.output_ || t4.output_) {
+        Thread::yield();
+    }
+    Log::instance()->parse_debug_file(path1.c_str());
+    t1.output_ = t2.output_ = t3.output_ = t4.output_ = true;
+    while (t1.output_ || t2.output_ || t3.output_ || t4.output_) {
+        Thread::yield();
+    }
+    
+    Log::instance()->parse_debug_file(path2.c_str());
+    t1.output_ = t2.output_ = t3.output_ = t4.output_ = true;
+    while (t1.output_ || t2.output_ || t3.output_ || t4.output_) {
+        Thread::yield();
+    }
+    Log::instance()->parse_debug_file(path1.c_str());
+    t1.output_ = t2.output_ = t3.output_ = t4.output_ = true;
+    while (t1.output_ || t2.output_ || t3.output_ || t4.output_) {
+        Thread::yield();
+    }
+    
+    Log::instance()->parse_debug_file(path2.c_str());
+    t1.output_ = t2.output_ = t3.output_ = t4.output_ = true;
+    while (t1.output_ || t2.output_ || t3.output_ || t4.output_) {
+        Thread::yield();
+    }
+
+    LoggerThread::stop_ = true;
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
+
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(Fini) {
+    CHECK(f1->unlink() == 0);
+    CHECK(f2->unlink() == 0);
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TESTER(LogTest) {
+    ADD_TEST(Init);
+    ADD_TEST(RulesTest);
+    ADD_TEST(LoggerTest);
+    ADD_TEST(FormatterTest);
+    ADD_TEST(ReparseTest);
+    ADD_TEST(Fini);
+}
+
+DECLARE_TEST_FILE(LogTest, "LogTest");
+
