@@ -502,7 +502,7 @@ DECLARE_TEST(SingleTypeCache) {
     CHECK_EQUAL(cache->count(), 1);
     
     // both these items put the cache over capacity
-    log_info("flamebox-ignore ign1 cache already at capacity");
+    log_info("/test", "flamebox-ignore ign1 cache already at capacity");
     
     CHECK(table->put(IntShim(2), s2, DS_CREATE | DS_EXCL) == DS_OK);
     CHECK_EQUAL(cache->size(), 21);
@@ -513,7 +513,7 @@ DECLARE_TEST(SingleTypeCache) {
     CHECK(table->put(IntShim(4), s4, DS_CREATE | DS_EXCL) == DS_OK);
     // cancel the warning one line later than would otherwise because
     // the cache warning doesn't pop up until one command later
-    log_info("flamebox-ignore-cancel ign1");
+    log_info("/test", "flamebox-ignore-cancel ign1");
     CHECK_EQUAL(cache->size(), 62);
 
     CHECK_EQUAL(cache->count(), 4);
@@ -638,7 +638,7 @@ DECLARE_TEST(MultiTypeCache) {
     CHECK_EQUAL(cache->count(), 1);
     
     // both these items put the cache over capacity
-    log_info("flamebox-ignore ign1 cache already at capacity");
+    log_info("/test", "flamebox-ignore ign1 cache already at capacity");
     
     CHECK(table->put(IntShim(2), Foo::ID, f2, DS_CREATE | DS_EXCL) == DS_OK);
     CHECK_EQUAL(cache->size(), 25);
@@ -649,7 +649,7 @@ DECLARE_TEST(MultiTypeCache) {
     CHECK(table->put(IntShim(4), Bar::ID, b2, DS_CREATE | DS_EXCL) == DS_OK);
     // cancel the warning one line later than would otherwise because
     // the cache warning doesn't pop up until one command later
-    log_info("flamebox-ignore-cancel ign1");
+    log_info("/test", "flamebox-ignore-cancel ign1");
     CHECK_EQUAL(cache->size(), 64);
 
     CHECK_EQUAL(cache->count(), 4);
