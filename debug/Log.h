@@ -169,6 +169,7 @@ inline log_level_t str2level(const char *level)
 void __log_assert(bool x, const char* what, const char* file, int line);
 
 class SpinLock;
+class StringBuffer;
 
 class Log {
 public:
@@ -265,6 +266,17 @@ public:
      */
     void add_reparse_handler(int sig);
 
+    /**
+     * Debugging function to print the rules list.
+     */
+    void dump_rules(StringBuffer* buf);
+
+    /**
+     * Debugging hook used for the log unit test to test out the
+     * overflow guard without actually triggering a panic.
+     */
+    static bool __debug_no_panic_on_overflow;
+
 protected:
     friend class LogCommand;
     
@@ -344,11 +356,6 @@ private:
      * Sort a rules list.
      */
     static void sort_rules(RuleList* rule_list);
-
-    /**
-     * Debugging function to print the rules list.
-     */
-    void print_rules();
 
     static bool inited_;	///< Flag to ensure one-time intialization
     std::string logfile_;	///< Log output file (- for stdout)

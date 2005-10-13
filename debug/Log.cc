@@ -49,9 +49,10 @@
 #include "DebugUtils.h"
 #include "Log.h"
 #include "compat/inttypes.h"
+#include "io/IO.h"
 #include "thread/SpinLock.h"
 #include "thread/Timer.h"
-#include "io/IO.h"
+#include "util/StringBuffer.h"
 
 /**
  * Namespace for the oasys library of system support classes.
@@ -88,6 +89,7 @@ level2str_t log_levelnames[] =
 
 Log* Log::instance_ = NULL;
 bool Log::inited_   = false;
+bool Log::__debug_no_panic_on_overflow = false;
 
 Log::Log()
     : output_flags_(OUTPUT_TIME),
@@ -156,6 +158,7 @@ Log::parse_debug_file(const char* debug_path)
                               &rule_lists_[1] : &rule_lists_[0];
 
     ASSERT(new_rule_list != old_rule_list);
+    new_rule_list->clear();
 
     // handle ~/ in the debug_path
     if ((debug_path[0] == '~') && (debug_path[1] == '/')) {
@@ -261,11 +264,12 @@ Log::parse_debug_file(const char* debug_path)
 
     sort_rules(new_rule_list);
 
-    rule_list_ = new_rule_list;
     if (inited_) {
         logf("/log", LOG_ALWAYS, "reparsed debug file... found %d rules",
              (int)new_rule_list->size());
     }
+
+    rule_list_ = new_rule_list;
 }
 
 void
@@ -290,14 +294,14 @@ Log::sort_rules(RuleList* rule_list)
 }
 
 void
-Log::print_rules()
+Log::dump_rules(StringBuffer* buf)
 {
     ASSERT(inited_);
-    
-    RuleList::iterator iter = rule_list_->begin();
-    printf("Logging rules:\n");
-    for (iter = rule_list_->begin(); iter != rule_list_->end(); iter++) {
-        printf("\t%s\n", iter->path_.c_str());
+
+    RuleList* rule_list = rule_list_;
+    RuleList::iterator iter = rule_list->begin();
+    for (iter = rule_list->begin(); iter != rule_list->end(); iter++) {
+        buf->appendf("%s %s\n", iter->path_.c_str(), level2str(iter->level_));
     }
 }
 
@@ -314,7 +318,8 @@ Log::find_rule(const char *path)
 
     RuleList::iterator iter;
     Rule* rule;
-    for (iter = rule_list_->begin(); iter != rule_list_->end(); iter++) {
+    RuleList* rule_list = rule_list_;
+    for (iter = rule_list->begin(); iter != rule_list->end(); iter++) {
         rule = &(*iter);
 
         if (rule->path_.length() > pathlen) {
@@ -585,6 +590,10 @@ Log::vlogf(const char* path, log_level_t level, const void* obj,
     }
 
     if (memcmp(&buf[LOG_MAX_LINELEN], guard, sizeof(guard)) != 0) {
+        if (__debug_no_panic_on_overflow) {
+            return -1;
+        }
+        
         PANIC("logf buffer overflow");
     }
 
