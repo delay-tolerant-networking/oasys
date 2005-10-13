@@ -153,7 +153,7 @@ StringBuffer::vappendf(const char* fmt, va_list ap)
     
     int ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
     
-    if(ret == -1)
+    if (ret == -1)
     {
         // Retarded glibc implementation in Fedora Core 1. From the
         // man pages:
@@ -171,15 +171,19 @@ StringBuffer::vappendf(const char* fmt, va_list ap)
         // or we write it again below
     }
 
-    if(ret >= buf_->nfree())
+    if (ret >= buf_->nfree())
     {
-        buf_->reserve(buf_->len() + ret);
+        buf_->reserve(std::max(buf_->len() + ret + 1,
+                               buf_->buf_len() * 2));
+        buf_->reserve(buf_->len() + ret + 1);
         ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
-        ASSERT(ret > 0 && ret <= buf_->nfree());
+        ASSERT(ret > 0);
+        ASSERT(ret < buf_->nfree()); // ret doesn't include null char
     }
     
     ASSERT(ret > 0);
     buf_->set_len(buf_->len() + ret);
+    ASSERT(*buf_->end() == '\0');
         
     return ret;
 }
