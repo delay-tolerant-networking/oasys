@@ -12,6 +12,8 @@ PAUSE_AFTER=%pause_after%
 VERBOSE=%verbose%
 XTERM=%xterm%
 
+%exec_env%
+
 function dbg {
     if [ $VERBOSE = 1 ]; then
 	echo $*

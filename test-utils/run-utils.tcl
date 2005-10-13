@@ -174,7 +174,7 @@ proc process_template {template var_array} {
     return "$script\n"
 }
 
-proc generate_script {id exec_file exec_opts confname conf} {
+proc generate_script {id exec_file exec_opts confname conf exec_env} {
     global opt net::host test::testname
 
     set hostname $net::host($id)
@@ -193,6 +193,13 @@ proc generate_script {id exec_file exec_opts confname conf} {
     set script(verbose)     $opt(verbose)
     set script(xterm)       $opt(xterm)
     set script(geometry)    $opt(geometry)
+
+    # environmental variables:
+    set env_commands ""
+    foreach {var val} $exec_env {
+	set env_commands "$env_commands\nexport $var=$val"
+    }
+    set script(exec_env)    $env_commands
 
     # run script
     set runscript [process_template $opt(script_tmpl) script]    
@@ -244,14 +251,14 @@ proc write_script {id dir filename contents do_chmod} {
 #
 # Run a given program on the specified list of nodes
 #
-proc run {id exec_file exec_opts confname conf} {
+proc run {id exec_file exec_opts confname conf exec_env} {
     global opt manifest::manifest manifest::subst 
     global run::pids run::dirs run::xterm
 
     set hostname $net::host($id)
 
     dbg "* Generating scripts for $exec_file for $hostname:$id"
-    generate_script $id $exec_file $exec_opts $confname $conf
+    generate_script $id $exec_file $exec_opts $confname $conf $exec_env
 
     set script "$opt(rundir_prefix)-$hostname-$id/run-$exec_file.sh"
     set run::dirs($id) "$opt(rundir_prefix)-$hostname-$id"
@@ -383,9 +390,9 @@ proc collect_logs {} {
 	set hostname $net::host($i)
 	set dir      $run::dirs($i)
 	
-	catch { lappend cores [split [run_cmd $hostname sh << "ls -1 $dir/*core*"]] }
-	catch { lappend logs  [split [run_cmd $hostname sh << "ls -1 $dir/*.out"]]}
-	catch { lappend logs  [split [run_cmd $hostname sh << "ls -1 $dir/*.err"]]}
+	catch { set cores [concat $cores [split [run_cmd $hostname sh << "ls -1 $dir/*core*"]]] }
+	catch { set logs  [concat $logs  [split [run_cmd $hostname sh << "ls -1 $dir/*.out" ]]] }
+	catch { set logs  [concat $logs  [split [run_cmd $hostname sh << "ls -1 $dir/*.err" ]]] }
 	
 	dbg "* $hostname:$i cores = $cores"
 	dbg "* $hostname:$i logs = $logs"
