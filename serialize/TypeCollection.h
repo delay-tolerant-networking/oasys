@@ -185,7 +185,8 @@ public:
         }
 
         // Based on the lookup in the dispatch, create a new object
-        // and cast it to the given type.
+        // and cast it to the given type. Note the use of dynamic cast to 
+        // safely downcast.
         ASSERT(dispatch_.find(typecode) != dispatch_.end());
         *obj = dynamic_cast<_Type*>(dispatch_[typecode]->new_object());
         if (*obj == NULL) {
@@ -221,7 +222,8 @@ public:
      * distinguish that the constructor is being called to build the
      * serializable object via a typecollection.
      *
-     * @return new_object
+     * @return new_object. Note the use of a static cast to
+     *     SerializableObject to avoid screwing up the pointers.
      */
     SerializableObject* new_object() {
         return static_cast<SerializableObject*>
