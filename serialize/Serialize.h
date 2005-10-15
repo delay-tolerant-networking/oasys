@@ -120,13 +120,13 @@ public:
  */
 class SerializableObject {
 public:
+    virtual ~SerializableObject() {}
+
     /**
      * This should call v->process() on each of the types that are to
      * be serialized in the object.
      */
     virtual void serialize(SerializeAction* a) = 0;
-
-    virtual ~SerializableObject() {}
 };
 
 /**

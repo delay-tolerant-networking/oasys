@@ -37,6 +37,7 @@
  */
 
 #include "util/UnitTest.h"
+#include "serialize/Serialize.h"
 #include "serialize/TypeCollection.h"
 #include "serialize/TypeShims.h"
 
@@ -46,12 +47,14 @@ struct TestC {};
 
 TYPE_COLLECTION_INSTANTIATE(TestC);
 
-class Obj  {
+class Obj : public SerializableObject {
 public:
     Obj(int id) : id_(id) {}
     virtual ~Obj();
     virtual const char* name() = 0;
 
+    void serialize(SerializeAction* action) {}
+    
     int id_;
 };
 Obj::~Obj() {}
@@ -89,13 +92,33 @@ private:
     Baz(const Baz&);
 };
 
+class MultipleInherit {
+public:
+    virtual int stub() { return 0; }
+};
+ 
+class MultiLeaf : public MultipleInherit, 
+		  public Obj {
+public:
+    static const int ID = 3;
+    MultiLeaf(const Builder& b) : Obj(ID) {}
+    virtual const char* name() { return "MultiLeaf"; }
+
+private:
+    MultiLeaf();
+    MultiLeaf(const MultiLeaf&);
+};
+
 TYPE_COLLECTION_DECLARE(TestC, Foo, 1);
 TYPE_COLLECTION_DECLARE(TestC, Bar, 2);
-TYPE_COLLECTION_DECLARE(TestC, Baz, 3);
-TYPE_COLLECTION_GROUP(TestC, Obj, 1, 2);
+TYPE_COLLECTION_DECLARE(TestC, MultiLeaf, 3);
+TYPE_COLLECTION_DECLARE(TestC, Baz, 4);
+TYPE_COLLECTION_GROUP(TestC, Obj, 1, 3);
 
 TYPE_COLLECTION_DEFINE(TestC, Foo, 1);
 TYPE_COLLECTION_DEFINE(TestC, Bar, 2);
+TYPE_COLLECTION_DEFINE(TestC, MultiLeaf, 3);
+TYPE_COLLECTION_DEFINE(TestC, Baz, 4);
 
 DECLARE_TEST(TypeCollection1) {
     Foo* foo;
@@ -173,6 +196,27 @@ DECLARE_TEST(TypeCollectionNames) {
     return 0;
 }
 
+DECLARE_TEST(MultipleInheritance) {
+    Obj* obj = 0;
+    MultiLeaf* baz = reinterpret_cast<MultiLeaf*>(4);
+
+    CHECK(TypeCollectionInstance<TestC>
+	    ::instance()->new_object(3, &obj) == 0);
+    CHECK_EQUALSTR(obj->name(), "MultiLeaf");
+    printf("obj %p multileaf %p multi %p\n", obj, 
+	   dynamic_cast<MultiLeaf*>(obj), 
+	   static_cast<MultipleInherit*>(dynamic_cast<MultiLeaf*>(obj)));
+    CHECK(dynamic_cast<MultiLeaf*>(obj) != 0);
+    CHECK(reinterpret_cast<void*>(dynamic_cast<MultiLeaf*>(obj)) != 
+	  reinterpret_cast<void*>(obj));
+    CHECK( (reinterpret_cast<int>(obj) - 
+	    reinterpret_cast<int>(dynamic_cast<MultiLeaf*>(obj)) + 4)
+	    ==
+	   (reinterpret_cast<int>(static_cast<Obj*>(baz))) );
+
+    return 0;
+}
+
 DECLARE_TESTER(TypeCollectionTest) {
     ADD_TEST(TypeCollection1);
     ADD_TEST(TypeCollection2);
@@ -181,6 +225,7 @@ DECLARE_TESTER(TypeCollectionTest) {
     ADD_TEST(TypeCollectionGroup);
     ADD_TEST(TypeCollectionNotInGroup);
     ADD_TEST(TypeCollectionNames);
+    ADD_TEST(MultipleInheritance);
 }
 
 DECLARE_TEST_FILE(TypeCollectionTest, "builder test");

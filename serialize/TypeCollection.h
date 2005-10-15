@@ -60,7 +60,7 @@ enum {
  */
 class TypeCollectionHelper {
 public:
-    virtual void* new_object() = 0;
+    virtual SerializableObject* new_object() = 0;
     virtual const char* name() const = 0;
     virtual ~TypeCollectionHelper() {}
 };
@@ -187,7 +187,7 @@ public:
         // Based on the lookup in the dispatch, create a new object
         // and cast it to the given type.
         ASSERT(dispatch_.find(typecode) != dispatch_.end());
-        *obj = static_cast<_Type*>(dispatch_[typecode]->new_object());
+        *obj = dynamic_cast<_Type*>(dispatch_[typecode]->new_object());
         if (*obj == NULL) {
             log_crit("out of memory");
             return TypeCollectionErr::MEMORY;
@@ -221,12 +221,11 @@ public:
      * distinguish that the constructor is being called to build the
      * serializable object via a typecollection.
      *
-     * @return The reason for the void* is to be able to virtualize
-     * this class yet not have the problem of potentially slicing the
-     * object via casting.
+     * @return new_object
      */
-    void* new_object() {
-        return static_cast<void*>(new _Class(Builder()));
+    SerializableObject* new_object() {
+        return static_cast<SerializableObject*>
+	    (new _Class(Builder()));
     }
 
     const char* name() const { return name_; }
