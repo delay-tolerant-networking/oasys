@@ -95,6 +95,7 @@ private:
 class MultipleInherit {
 public:
     virtual int stub() { return 0; }
+    virtual ~MultipleInherit() {}
 };
  
 class MultiLeaf : public MultipleInherit, 
