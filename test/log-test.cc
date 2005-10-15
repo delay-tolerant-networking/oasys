@@ -224,6 +224,8 @@ public:
     virtual void foo() {
         logf("/foo", LOG_INFO, "foo");
     }
+
+    virtual ~SomethingVirtual() {}
 };
 
 class MultiFormatter : public SomethingVirtual,
