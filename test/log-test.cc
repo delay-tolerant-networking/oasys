@@ -32,6 +32,9 @@ const char* debug2_sorted =
 "/log-test debug\n";
 
 DECLARE_TEST(Init) {
+    
+    log_info("/test", "flamebox-ignore logs /log-test");
+
     // create two files, one with the test rule enabled, one without
     path1.appendf("/tmp/log-test-%s-1-%d", getenv("USER"), getpid());
     path2.appendf("/tmp/log-test-%s-2-%d", getenv("USER"), getpid());
@@ -64,6 +67,7 @@ DECLARE_TEST(Init) {
 }
 
 DECLARE_TEST(RulesTest) {
+    
     // these should all print
     CHECK(logf("/log-test", LOG_DEBUG, "print me") != 0);
     CHECK(logf("/log-test", LOG_INFO,  "print me") != 0);
@@ -100,6 +104,7 @@ DECLARE_TEST(RulesTest) {
                         "not me\n"
                         "nor me\n"
                         "nor me\n") == 0);
+
     return UNIT_TEST_PASSED;
 }
 
@@ -388,6 +393,9 @@ DECLARE_TEST(ReparseTest) {
 DECLARE_TEST(Fini) {
     CHECK(f1->unlink() == 0);
     CHECK(f2->unlink() == 0);
+
+    log_info("/test", "flamebox-ignore-cancel logs");
+
     return UNIT_TEST_PASSED;
 }
 
