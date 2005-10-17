@@ -83,6 +83,7 @@ proc init {args test_script} {
     set opt(no_logs)       0
     set opt(pause)         0
     set opt(rundir_prefix) "/tmp/run-[pid]"
+    set opt(local_rundir)  0
     set opt(strip)         0
     set opt(verbose)       0
     set opt(xterm)         0
@@ -138,6 +139,7 @@ proc init {args test_script} {
 	    -l            { shift args; set opt(logdir) [arg1 $args] }
 	    -p            { set opt(pause) 1}
 	    -r            { shift args; set opt(rundir_prefix) [arg1] }
+	    --local-rundir { set opt(local_rundir) 1}
 	    -v            { set opt(verbose) 1}
 	    -n            { shift args; set num_nodes_override [arg1 $args] }
 	    -net          -
@@ -198,7 +200,12 @@ proc generate_script {id exec_file exec_opts confname conf exec_env} {
     global opt net::host test::testname
 
     set hostname $net::host($id)
-    set rundir   $opt(rundir_prefix)-$hostname-$id
+
+    if {$opt(local_rundir) && $hostname == "localhost"} {
+	set rundir "run-$id"
+    } else {
+	set rundir   $opt(rundir_prefix)-$hostname-$id
+    }
 
     # runscript
     set script(exec_file)   $exec_file
@@ -333,7 +340,8 @@ proc check_pid {id pid} {
     }
 
     if {$tcl_platform(platform) != "windows"} {
-	return [catch {run_cmd $hostname ps h -p $pid} err] # use ps exit value
+	# use ps exit value to return
+	return [catch {run_cmd $hostname ps h -p $pid} err]
     } else {
 	# get the whole list
 	set procs [run_cmd $hostname ps -s]
