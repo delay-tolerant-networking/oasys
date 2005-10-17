@@ -90,14 +90,14 @@ gethostbyname(const char* name, in_addr_t* addr)
     
 #if defined(__sun__) // solaris has different args
     if (::gethostbyname_r(name, &h, buf, sizeof(buf), &h_err) < 0) {
-        logf("/net", LOG_ERR, "error return from gethostbyname_r: %s",
-             strerror(h_err));
+        log_err("/net", "error return from gethostbyname_r(%s): %s",
+                  name, strerror(h_err));
         return -1;
     }
 #else
     if (::gethostbyname_r(name, &h, buf, sizeof(buf), &ret, &h_err) < 0) {
-        logf("/net", LOG_ERR, "error return from gethostbyname_r: %s",
-             strerror(h_err));
+        log_err("/net", "error return from gethostbyname_r(%s): %s",
+                name, strerror(h_err));
         return -1;
     }
     if (ret == NULL) {
@@ -106,6 +106,11 @@ gethostbyname(const char* name, in_addr_t* addr)
 #endif
 
     *addr = ((struct in_addr**)h.h_addr_list)[0]->s_addr;
+
+    if (*addr == INADDR_NONE) {
+        log_err("/net", "gethostbyname_r(%s) returned INADDR_NONE", name);
+        return -1;
+    }
     return 0;
 
 #elif defined(HAVE_GETADDRINFO)
@@ -126,6 +131,11 @@ gethostbyname(const char* name, in_addr_t* addr)
     *addr = ((struct sockaddr_in*) res->ai_addr)->sin_addr.s_addr;
     
     freeaddrinfo(res);
+
+    if (*addr == INADDR_NONE) {
+        log_err("/net", "getaddrinfo(%s) returned INADDR_NONE", name);
+        return -1;
+    }
     return 0;
     
 #elif defined(HAVE_GETHOSTBYNAME)
@@ -136,13 +146,19 @@ gethostbyname(const char* name, in_addr_t* addr)
     struct hostent *hent;
     hent = ::gethostbyname(name);
     if (hent == NULL) {
-        logf("/net", LOG_ERR, "error return from gethostbyname: %s",
-             strerror(h_errno));
+        logf("/net", LOG_ERR, "error return from gethostbyname(%s): %s",
+             name, strerror(h_errno));
         return -1;
-    } else {
-        *addr = ((struct in_addr**)hent->h_addr_list)[0]->s_addr;
-        return 0;
     }
+
+    *addr = ((struct in_addr**)hent->h_addr_list)[0]->s_addr;
+    
+    if (*addr == INADDR_NONE) {
+        log_err("/net", "gethostbyname(%s) returned INADDR_NONE", name);
+        return -1;
+    }
+
+    return 0;
     
 #else
 #error No gethostbyname equivalent available for this platform
