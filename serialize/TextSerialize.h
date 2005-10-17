@@ -18,11 +18,11 @@ namespace oasys {
  */
 class TextMarshal : public BufferedSerializeAction {
 public:
-    TextMarshal(context_t context, u_char* buf, 
-                size_t length, 
-                int options         = 0, 
-                const char* comment = 0, 
-                int indent_incr     = 4);
+    TextMarshal(context_t         context,
+                ExpandableBuffer* buf,
+                int               options     = 0,
+                const char*       comment     = 0,
+                int               indent_incr = 4);
 
     //! @{ Virtual functions inherited from SerializeAction
     void process(const char* name, u_int32_t* i);
@@ -35,19 +35,22 @@ public:
     //! @}
 
 private:
+    int indent_;
+    int indent_incr_;
+    StringBuffer buf_;
+
     void indent()   { indent_ += indent_incr_; }
     void unindent() { 
         indent_ -= indent_incr_; 
         ASSERT(indent_ >= 0); 
     }
 
-    int indent_;
-    int indent_incr_;
+    void add_indent();
 };
 
 class TextUnmarshal {
 public:
-    TextMarshal(context_t context, u_char* buf, 
+    TextUnmarshal(context_t context, u_char* buf, 
                 size_t length, int options = 0);
     
     //! @{ Virtual functions inherited from BufferedSerializeAction
