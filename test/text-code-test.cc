@@ -38,10 +38,25 @@
 #include <cstdlib>
 
 #include "util/UnitTest.h"
+#include "util/Random.h"
+#include "util/ScratchBuffer.h"
+#include "util/TextCode.h"
 
 using namespace oasys;
 
 DECLARE_TEST(TextCode1) {
+    ScratchBuffer<char*> buf;
+    ByteGenerator byte_gen;
+    
+    char* cbuf = buf.buf(500);
+    byte_gen.fill_bytes(cbuf, 500);
+
+    ScratchBuffer<char*> out_buf;
+
+    TextCode code(cbuf, 500, &out_buf, 40, ">>>");
+
+    log_info("/test", "output: %s\n", out_buf.buf());
+
     return UNIT_TEST_PASSED;
 }
 

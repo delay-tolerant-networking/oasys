@@ -45,7 +45,9 @@ TextCode::TextCode(const char* input_buf, size_t length,
                    ExpandableBuffer* buf, int cols, const char* pad)
     : input_buf_(input_buf), length_(length), 
       buf_(buf, false), cols_(cols), pad_(pad)
-{}
+{
+    textcodify();
+}
 
 bool
 TextCode::is_not_escaped(int c) {
@@ -71,7 +73,7 @@ TextCode::textcodify()
         if (i != 0 && (i % cols_ == 0)) {
             buf_.appendf("\n%s", pad_);
         }
-        buf_.append(input_buf_[i]);
+        append(input_buf_[i]);
     }
     buf_.appendf("\n%s\n", pad_);
 }
