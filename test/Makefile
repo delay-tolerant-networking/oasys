@@ -11,6 +11,7 @@ TESTS += \
 	spin-lock-test				\
 	static-buffer-test			\
 	string-hash-test			\
+	text-code-test				\
 	timer-test				\
 	type-collection-test			\
 
