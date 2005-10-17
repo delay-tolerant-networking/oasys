@@ -1,7 +1,27 @@
 #!/usr/bin/tclsh
-package require Tclx
-if {[info procs log] != ""} {
-    rename log tclx_log
+
+# Try to set up a signal handler for Control-C, which requires the
+# Tclx package
+if [catch {
+    
+    package require Tclx
+    if {[info procs log] != ""} {
+	rename log tclx_log
+    }
+
+    # Trap SIGINT
+    signal trap SIGINT { 
+	set opt(leave_crap) 0
+	puts "* Caught SIGINT, cleaning up"
+	run::cleanup
+	if {[info commands real_exit] != ""} {
+	    real_exit
+	} else {
+	    exit
+	}
+    }
+} err] {
+    puts "* error setting up signal handler: $err"
 }
 
 namespace eval run {
@@ -300,10 +320,55 @@ proc run {id exec_file exec_opts confname conf exec_env} {
 }
 
 #
+# Check if the given pid is alive on the specified host id
+#
+proc check_pid {id pid} {
+    global net::host run::xterm tcl_platform
+    
+    # all xterm pid actions are local
+    if {$run::xterm($id)} {
+	set hostname localhost
+    } else {
+	set hostname $net::host($id)
+    }
+
+    if {$tcl_platform(platform) != "windows"} {
+	return [catch {run_cmd $hostname ps h -p $pid} err] # use ps exit value
+    } else {
+	# get the whole list
+	set procs [run_cmd $hostname ps -s]
+	foreach pidline [split $procs "\n"] {
+	    set pid2 [lindex $pidline 0]
+	    if {$pid2 == $pid} {
+		return 1
+	    }
+	}
+	    
+	return 0
+    }
+}
+
+#
+# Check if the given pid is alive on the specified host id
+#
+proc kill_pid {id pid signal} {
+    global net::host run::xterm
+
+    # all xterm pid actions are local
+    if {$run::xterm($id)} {
+	set hostname localhost
+    } else {
+	set hostname $net::host($id)
+    }
+
+    return [catch {run_cmd $hostname kill -s $signal $pid} err]
+}
+
+#
 # Wait for all running test programs to exit
 #
 proc wait_for_programs {{timeout 5000}} {
-    global net::host run::pids run::xterm
+    global net::host run::pids
     set num_alive 0
 
     puts "* Waiting for spawned programs to exit"
@@ -323,21 +388,14 @@ proc wait_for_programs {{timeout 5000}} {
 		    continue
 		}
 
-		# all xterm pid actions are local
-		if {$run::xterm($i)} {
-		    set kill_hostname localhost
-		} else {
-		    set kill_hostname $hostname
-		}
-
 		foreach pid $run::pids($i) {
-		    if {![catch {run_cmd $kill_hostname ps h -p $pid}]} {
+		    if {[check_pid $i $pid]} {
 			dbg "% $hostname:$i pid $pid still alive"
 			if {$signal != "none"} {
 			    puts "* ERROR: pid $pid on host $hostname:$i\
 				    still alive"
 			    puts "* ERROR: sending $signal signal"
-			    catch {run_cmd $kill_hostname kill -s $signal $pid} err
+			    kill_pid $i $pid $signal
 			}
 			lappend livepids $pid
 		    }
@@ -450,16 +508,4 @@ proc cleanup {} {
 }
 
 # namespace run
-}
-
-# Trap SIGINT
-signal trap SIGINT { 
-    set opt(leave_crap) 0
-    puts "* Caught SIGINT, cleaning up"
-    run::cleanup
-    if {[info commands real_exit] != ""} {
-	real_exit
-    } else {
-	exit
-    }
 }
