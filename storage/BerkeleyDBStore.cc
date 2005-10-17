@@ -37,7 +37,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <errno.h>
 #include <unistd.h>
 
@@ -71,7 +70,7 @@ namespace oasys {
 const std::string BerkeleyDBStore::META_TABLE_NAME("___META_TABLE___");
 
 BerkeleyDBStore::BerkeleyDBStore() 
-    : Logger("/berkeleydb/store"),
+    : DurableStoreImpl("/storage/berkeleydb"),
       init_(false)
 {}
 
@@ -111,12 +110,11 @@ BerkeleyDBStore::init(StorageConfig* cfg)
 
     // XXX/bowei need to expose options if needed later
     if (cfg->tidy_) {
-        prune_db_dir(cfg->tidy_wait_, cfg->dbdir_.c_str());
+        prune_db_dir(cfg->dbdir_.c_str(), cfg->tidy_wait_);
     }
 
     bool db_dir_exists;
-    int  err = check_db_dir(cfg->dbdir_.c_str(),
-                            &db_dir_exists);
+    int  err = check_db_dir(cfg->dbdir_.c_str(), &db_dir_exists);
     if (err != 0)
     {
         return DS_ERR;
@@ -187,61 +185,6 @@ BerkeleyDBStore::init(StorageConfig* cfg)
     }
     init_ = true;
 
-    return 0;
-}
-
-void
-BerkeleyDBStore::prune_db_dir(int tidy_wait, const char* dir)
-{
-    char cmd[256];
-    for (int i = tidy_wait; i > 0; --i) 
-    {
-        log_warn("PRUNING CONTENTS OF %s IN %d SECONDS", dir, i);
-        sleep(1);
-    }
-    sprintf(cmd, "/bin/rm -rf %s", dir);
-    system(cmd);
-}
-
-int
-BerkeleyDBStore::check_db_dir(const char* db_dir, bool* dir_exists)
-{
-    *dir_exists = false;
-
-    struct stat f_stat;
-    if (stat(db_dir, &f_stat) == -1)
-    {
-        if (errno == ENOENT)
-        {
-            *dir_exists = false;
-        }
-        else 
-        {
-            log_err("error trying to stat database directory %s: %s",
-                    db_dir, strerror(errno));
-            return DS_ERR;
-        }
-    }
-    else
-    {
-        *dir_exists = true;
-    }
-
-    return 0;
-}
-
-int
-BerkeleyDBStore::create_db_dir(const char* db_dir)
-{
-    // create database directory
-    log_info("creating new database directory %s", db_dir);
-            
-    if (mkdir(db_dir, 0700) != 0) 
-    {
-        log_crit("can't create datastore directory %s: %s",
-                 db_dir, strerror(errno));
-        return DS_ERR;
-    }
     return 0;
 }
 

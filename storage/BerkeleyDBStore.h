@@ -42,7 +42,6 @@
 #include <map>
 #include <db.h>
 
-#include "../tclcmd/TclCommand.h"
 #include "../debug/Logger.h"
 #include "../thread/Mutex.h"
 #include "../thread/SpinLock.h"
@@ -61,7 +60,7 @@ class StorageConfig;
 /**
  * Interface for the generic datastore
  */
-class BerkeleyDBStore : public DurableStoreImpl, public Logger {
+class BerkeleyDBStore : public DurableStoreImpl {
     friend class BerkeleyDBTable;
 
 public:
@@ -107,18 +106,6 @@ private:
     int acquire_table(const std::string& table);
     int release_table(const std::string& table);
     /// @}
-
-    void prune_db_dir(int tidy_wait, const char* dir);
-
-    /**
-     * Check for the db directory
-     * @param db_dir     Directory to check
-     * @param dir_exists To be set if directory exists.
-     */
-    int check_db_dir(const char* db_dir, bool* dir_exists);
-
-    /// Create database directory
-    int create_db_dir(const char* db_dir);
 };
 
 /**

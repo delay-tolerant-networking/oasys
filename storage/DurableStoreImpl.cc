@@ -36,11 +36,71 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <unistd.h>
+
 #include "DurableStore.h"
 #include "debug/DebugUtils.h"
 #include "serialize/MarshalSerialize.h"
 
 namespace oasys {
+
+void
+DurableStoreImpl::prune_db_dir(const char* dir, int tidy_wait)
+{
+    char cmd[256];
+    for (int i = tidy_wait; i > 0; --i) 
+    {
+        log_warn("PRUNING CONTENTS OF %s IN %d SECONDS", dir, i);
+        sleep(1);
+    }
+    sprintf(cmd, "/bin/rm -rf %s", dir);
+    system(cmd);
+}
+
+int
+DurableStoreImpl::check_db_dir(const char* db_dir, bool* dir_exists)
+{
+    *dir_exists = false;
+
+    struct stat f_stat;
+    if (stat(db_dir, &f_stat) == -1)
+    {
+        if (errno == ENOENT)
+        {
+            *dir_exists = false;
+        }
+        else 
+        {
+            log_err("error trying to stat database directory %s: %s",
+                    db_dir, strerror(errno));
+            return DS_ERR;
+        }
+    }
+    else
+    {
+        *dir_exists = true;
+    }
+
+    return 0;
+}
+
+int
+DurableStoreImpl::create_db_dir(const char* db_dir)
+{
+    // create database directory
+    log_info("creating new database directory %s", db_dir);
+            
+    if (mkdir(db_dir, 0700) != 0) 
+    {
+        log_crit("can't create datastore directory %s: %s",
+                 db_dir, strerror(errno));
+        return DS_ERR;
+    }
+    return 0;
+}
 
 int
 DurableTableImpl::get_typecode(const SerializableObject& key,

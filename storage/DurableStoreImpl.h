@@ -45,13 +45,21 @@ class StorageConfig;
 /**
  * Storage implementation specific pieces of the data store.
  */
-class DurableStoreImpl {
+class DurableStoreImpl : public Logger {
 public:
     /**
      * Typedef for the list of objects passed to get_table.
      */
     typedef std::vector<SerializableObject*> PrototypeVector;
 
+    /**
+     * Constructor (initializes the log path).
+     */
+    DurableStoreImpl(const char* logpath) : Logger(logpath) {}
+    
+    /**
+     * Destructor
+     */
     virtual ~DurableStoreImpl() {}
 
     /*!
@@ -73,6 +81,26 @@ public:
      * Hook to remove a table (by name) from the data store.
      */
     virtual int del_table(const std::string& db_name) = 0;
+
+protected:
+
+    /**
+     * Check for the db directory
+     * @param db_dir     Directory to check
+     * @param dir_exists To be set if directory exists.
+     */
+    int check_db_dir(const char* db_dir, bool* dir_exists);
+
+    /**
+     * Create database directory.
+     */
+    int create_db_dir(const char* db_dir);
+    
+    /**
+     * Remove the given directory, after waiting the specified
+     * amount of time.
+     */
+    void prune_db_dir(const char* db_dir, int tidy_wait);
 };
 
 
