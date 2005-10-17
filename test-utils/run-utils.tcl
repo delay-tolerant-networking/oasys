@@ -177,7 +177,7 @@ proc init {args test_script} {
 
     puts "* Distributing files"
     dist::files $manifest::manifest [net::hostlist] [pwd] \
-	$opt(rundir_prefix) $manifest::subst $opt(strip) $opt(verbose)
+	$manifest::subst $opt(strip) $opt(verbose)
 }
 
 proc process_template {template var_array} {
@@ -201,12 +201,8 @@ proc generate_script {id exec_file exec_opts confname conf exec_env} {
 
     set hostname $net::host($id)
 
-    if {$opt(local_rundir) && $hostname == "localhost"} {
-	set rundir "run-$id"
-    } else {
-	set rundir   $opt(rundir_prefix)-$hostname-$id
-    }
-
+    set rundir [dist::get_rundir $hostname $id]
+    
     # runscript
     set script(exec_file)   $exec_file
     set script(exec_opts)   $exec_opts
@@ -287,9 +283,8 @@ proc run {id exec_file exec_opts confname conf exec_env} {
     dbg "* Generating scripts for $exec_file for $hostname:$id"
     generate_script $id $exec_file $exec_opts $confname $conf $exec_env
 
-    set script "$opt(rundir_prefix)-$hostname-$id/run-$exec_file.sh"
-    set run::dirs($id) "$opt(rundir_prefix)-$hostname-$id"
-
+    set run::dirs($id) [dist::get_rundir $hostname $id]
+    set script "$run::dirs($id)/run-$exec_file.sh"
     set geometry $opt(geometry)
 
     puts "* Running $exec_file on $hostname:$id"
@@ -502,6 +497,11 @@ proc cleanup {} {
     puts "* Getting rid of run files"
     for {set i 0} {$i < [net::num_nodes]} {incr i} {
 	set hostname $net::host($i)
+
+	if {$opt(local_rundir) && $hostname == "localhost"} {
+	    continue
+	}
+	
 	if [info exist run::dirs($i)] {
 	    dbg "% removing $hostname:$i:$run::dirs($i)"
 	    catch { run_cmd $hostname /bin/rm -r $run::dirs($i) }

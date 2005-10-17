@@ -5,6 +5,20 @@
 namespace eval dist {
 
 #
+# Return the proper run directory for the given hostname / test id
+#
+proc get_rundir {hostname id} {
+    global opt
+    
+    if {$opt(local_rundir) && $hostname == "localhost"} {
+	return "[pwd]/run-$id"
+    } else {
+	return $opt(rundir_prefix)-$hostname-$id
+    }
+}
+
+
+#
 # Generate a distribution set. 
 #
 # XXX/bowei -- optimize for duplicate files by making the last #
@@ -75,14 +89,13 @@ proc create {manifest basedir subst strip verbose} {
 # @param manifest_list List of manifest files
 # @param host_list     List of destination hosts
 # @param basedir       Basedir from which the files are taken
-# @param targetdir     Target directory
 # @param subst         A list of mappings to be done in the 
 #                      manifests, e.g. { exe stripped }
 # @param strip         Strip executables in the distribution
 # @param verbose       Print out what is happening
 #
     
-proc files {manifest_list host_list basedir targetdir subst strip {verbose 0}} {
+proc files {manifest_list host_list basedir subst strip {verbose 0}} {
     global ::dist::distdirs
 
     set distdir [dist::create $manifest_list $basedir $subst $strip $verbose]
@@ -92,13 +105,17 @@ proc files {manifest_list host_list basedir targetdir subst strip {verbose 0}} {
     
     set i 0
     foreach host $host_list {
-	set dist::distdirs($i) $targetdir-$host-$i
+	set targetdir [get_rundir $host $i]
+	set dist::distdirs($i) $targetdir
+
+	if {$verbose} { puts "% $distdir -> $host:$targetdir" }
+
+	run::run_cmd $host rm -rf $targetdir
+	
 	if [net::is_localhost $host] {
-	    if {$verbose} { puts "% $distdir -> $host:$targetdir-$host-$i" }
-	    exec cp -r $distdir $targetdir-$host-$i
+	    exec cp -r $distdir $targetdir
 	} else {
-	    if {$verbose} { puts "% $distdir -> $host:$targetdir-$host-$i" }
-	    exec scp -C -r $distdir $host:$targetdir-$host-$i
+	    exec scp -C -r $distdir $host:$targetdir
 	}
 	incr i
     }
