@@ -340,8 +340,11 @@ proc check_pid {id pid} {
     }
 
     if {$tcl_platform(platform) != "windows"} {
-	# use ps exit value to return
-	return [catch {run_cmd $hostname ps h -p $pid} err]
+	if {[catch {run_cmd $hostname ps h -p $pid} err]} {
+	    return 0
+	}
+
+	return 1
     } else {
 	# get the whole list
 	set procs [run_cmd $hostname ps -s]
