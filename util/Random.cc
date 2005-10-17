@@ -19,6 +19,7 @@ ByteGenerator::fill_bytes(void* buf, size_t size)
     for(size_t i=0; i<size; ++i) {
         *p = cur_ % 256;
         ++p;
+        next();
     }
 }
 

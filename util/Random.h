@@ -22,7 +22,7 @@ public:
 
     static const unsigned int A = 1277;
     static const unsigned int M = 131072;
-    static const unsigned int C = 131072;
+    static const unsigned int C = 29574;
 
 private:
     unsigned int cur_;
