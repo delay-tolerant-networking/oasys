@@ -20,7 +20,6 @@ TESTS += \
 OLD_TESTS :=					\
 	buffered-io-test			\
 	hexdump-test				\
-	io-intr-test                            \
 	md5-test				\
 	memory-test				\
 	msg-queue-test				\
