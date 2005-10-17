@@ -38,7 +38,7 @@ proc shift { l } {
     set xx [lrange $xx 1 end]
 }
 
-proc arg1 { l } {
+proc arg0 { l } {
     return [lindex $l 0]
 }
 
@@ -70,9 +70,9 @@ proc usage {} {
     puts "    --strip                    Strip execs before copying"
 }
 
-proc init {args test_script} {
+proc init {argv} {
     global opt
-    
+
     set opt(conf_id)       0
     set opt(daemon)        0
     set opt(gdb)           0
@@ -96,27 +96,21 @@ proc init {args test_script} {
     set opt(script_tmpl)   [import_find script.template]
 
     set num_nodes_override 0
+    set test_script ""
     
     # Load default options if they exist -- You can override options
     # if you want to with command line arguments.
     if [file readable "~/.debug_opts"] {
 	set f [open "~/.debug_opts" "r"]
 	
-	set new_args [eval list [read -nonewline $f]]
-	set args [concat $new_args $args]
+	set new_argv [read -nonewline $f]
+	set argv [concat $new_argv $argv]
 	close $f
-    }
-
-    switch -- $test_script {
-	invalid -
-	-h      -
-	-help   -
-	--help  { usage; exit }
     }
     
     # parse options
-    while {[llength $args] > 0} {
-	switch -- [lindex $args 0] {
+    while {[llength $argv] > 0} {
+	switch -- [arg0 $argv] {
 	    -h            -
 	    -help         -
 	    --help        { usage; exit }
@@ -134,31 +128,39 @@ proc init {args test_script} {
 	    --daemon      { set opt(daemon) 1 }
 	    -geom         -
 	    -geometry     -
-	    --geometry    { shift args; set opt(xterm) 1; \
-		            set opt(geometry) [arg1 $args] }
-	    -l            { shift args; set opt(logdir) [arg1 $args] }
+	    --geometry    { shift argv; set opt(xterm) 1; \
+		            set opt(geometry) [arg0 $argv] }
+	    -l            { shift argv; set opt(logdir) [arg0 $argv] }
 	    -p            { set opt(pause) 1}
-	    -r            { shift args; set opt(rundir_prefix) [arg1] }
+	    -r            { shift argv; set opt(rundir_prefix) [arg0 $argv] }
 	    --local-rundir { set opt(local_rundir) 1}
 	    -v            { set opt(verbose) 1}
-	    -n            { shift args; set num_nodes_override [arg1 $args] }
+	    -n            { shift argv; set num_nodes_override [arg0 $argv] }
 	    -net          -
-	    --net         { shift args; set opt(net)         [arg1 $args] }
+	    --net         { shift argv; set opt(net)         [arg0 $argv] }
 	    -id           -
-	    --id          { shift args; set opt(conf_id)     [arg1 $args] }
-	    --extra-gdbrc { shift args; set opt(gdb_extra)   [arg1 $args] }
-	    --gdb-opts    { shift args; set opt(gdbopts)     [arg1 $args] }
-	    --opts        { shift args; set opt(opts)        [arg1 $args] }
-	    --gdb-tmpl    { shift args; set opt(gdb_tmpl)    [arg1 $args] }
-	    --script-tmpl { shift args; set opt(script_tmpl) [arg1 $args] }
+	    --id          { shift argv; set opt(conf_id)     [arg0 $argv] }
+	    --extra-gdbrc { shift argv; set opt(gdb_extra)   [arg0 $argv] }
+	    --gdb-opts    { shift argv; set opt(gdbopts)     [arg0 $argv] }
+	    --opts        { shift argv; set opt(opts)        [arg0 $argv] }
+	    --gdb-tmpl    { shift argv; set opt(gdb_tmpl)    [arg0 $argv] }
+	    --script-tmpl { shift argv; set opt(script_tmpl) [arg0 $argv] }
 	    --no-logs     { set opt(no_logs) 1 }
 	    --leave-crap  { set opt(leave_crap) 1}
 	    --strip       { set opt(strip) 1 }
-	    default       { puts "illegal option [arg1 $args]"; usage; exit }
-	}
-	shift args
-    }
 
+	    default  {
+		if {([string index [arg0 $argv] 0] != "-") && \
+			($test_script == "") } {
+		    set test_script [arg0 $argv]
+		} else {
+		    puts "illegal option \"[arg0 $argv]\""; usage; exit
+		}
+	    }
+	}
+	shift argv
+    }
+    
     if {$opt(valgrind) && $opt(gdb)} {
 	puts "ERROR: cannot use both valgrind option and gdb option";
 	exit 1
