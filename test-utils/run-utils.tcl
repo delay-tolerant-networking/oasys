@@ -107,7 +107,7 @@ proc init {argv} {
 	set argv [concat $new_argv $argv]
 	close $f
     }
-    
+
     # parse options
     while {[llength $argv] > 0} {
 	switch -- [arg0 $argv] {
@@ -128,8 +128,7 @@ proc init {argv} {
 	    --daemon      { set opt(daemon) 1 }
 	    -geom         -
 	    -geometry     -
-	    --geometry    { shift argv; set opt(xterm) 1; \
-		            set opt(geometry) [arg0 $argv] }
+	    --geometry    { shift argv; set opt(geometry) [arg0 $argv] }
 	    -l            { shift argv; set opt(logdir) [arg0 $argv] }
 	    -p            { set opt(pause) 1}
 	    -r            { shift argv; set opt(rundir_prefix) [arg0 $argv] }
@@ -160,7 +159,7 @@ proc init {argv} {
 	}
 	shift argv
     }
-    
+
     if {$opt(valgrind) && $opt(gdb)} {
 	puts "ERROR: cannot use both valgrind option and gdb option";
 	exit 1
