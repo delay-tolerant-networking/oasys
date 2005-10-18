@@ -37,6 +37,7 @@
  */
 
 #include "TextSerialize.h"
+#include "../util/TextCode.h"
 
 namespace oasys {
 
@@ -51,75 +52,94 @@ TextMarshal::TextMarshal(context_t         context,
       indent_incr_(indent_incr), 
       buf_(buf, false)
 {
-    buf_->append("# text marshal start\n");
+    buf_.append("# text marshal start\n");
     if (comment != 0) 
-        buf_->append(comment);
+        buf_.append(comment);
 }
 
 //----------------------------------------------------------------------------
 void 
 TextMarshal::process(const char* name, u_int32_t* i)
 {
-    buf_->appendf("%s: %u\n", name, *i);
+    buf_.appendf("%s: %u\n", name, *i);
 }
 
 //----------------------------------------------------------------------------
 void 
 TextMarshal::process(const char* name, u_int16_t* i)
 {
-    buf_->appendf("%s: %u\n", name, (u_int32_t)*i);
+    buf_.appendf("%s: %u\n", name, (u_int32_t)*i);
 }
 
 //----------------------------------------------------------------------------
 void 
 TextMarshal::process(const char* name, u_int8_t* i)
 {
-    buf_->appendf("%s: %u\n", name, (u_int32_t)*i);
+    buf_.appendf("%s: %u\n", name, (u_int32_t)*i);
 }
 
 //----------------------------------------------------------------------------
 void 
 TextMarshal::process(const char* name, bool* b)
 {
-    buf_->appendf("%s: %s\n", name, (*b) ? "true" : "false" );
+    buf_.appendf("%s: %s\n", name, (*b) ? "true" : "false" );
 }
 
 //----------------------------------------------------------------------------
 void 
 TextMarshal::process(const char* name, u_char* bp, size_t len)
 {
-    
+    buf_.appendf("%s:\n", name);
+    TextCode coder(reinterpret_cast<char*>(bp), len,
+                   buf_.expandable_buf(), 40, 
+                   (indent_ + 1) * indent_incr_);
 }
 
 //----------------------------------------------------------------------------
 void 
 TextMarshal::process(const char* name, u_char** bp, size_t* lenp, int flags)
 {
-    
+    buf_.appendf("%s:\n", name);
+    TextCode coder(reinterpret_cast<char*>(*bp), *lenp,
+                   buf_.expandable_buf(), 40, 
+                   (indent_ + 1) * indent_incr_);
 }
 
 //----------------------------------------------------------------------------
 void 
 TextMarshal::process(const char* name, std::string* s)
 {
-    
+    buf_.appendf("%s:\n", name);
+    TextCode coder(reinterpret_cast<const char*>(s->c_str()),
+                   strlen(s->c_str()),
+                   buf_.expandable_buf(), 
+                   40, 
+                   (indent_ + 1) * indent_incr_);
 }
+
+void 
+TextMarshal::process(const char* name, SerializableObject* object)
+{
+    buf_.appendf("%s:\n", name);
+    indent();
+    object->serialize(this);
+    unindent();
+}
+
 
 //----------------------------------------------------------------------------
 void
 TextMarshal::add_indent()
 {
-    ASSERT(buf_);
-
     for (int i=0; i<indent_; ++i)
         for (int j=0; j<indent_incr_; ++j) 
-            buf_->append(' ');
+            buf_.append(' ');
 }
 
 //----------------------------------------------------------------------------
 TextUnmarshal::TextUnmarshal(context_t context, u_char* buf, 
                              size_t length, int options)
-    : SerializeAction(Serialize::UNMARSHAL, context, options);
+    : SerializeAction(Serialize::UNMARSHAL, context, options)
 {}
  
 //----------------------------------------------------------------------------   
@@ -165,6 +185,7 @@ TextUnmarshal::process(const char* name, std::string* s)
 {
 }
 
+/*
 //----------------------------------------------------------------------------
 TextMarshalSize(
     context_t context,
@@ -217,5 +238,6 @@ void
 TextMarshalSize::process(const char* name, std::string* s)
 {
 }
+*/
 
 } // namespace oasys
