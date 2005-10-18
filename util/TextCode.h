@@ -60,14 +60,15 @@ public:
      * @param pad  String to put in front of each line.
      */
     TextCode(const char* input_buf, size_t length, 
-             ExpandableBuffer* buf, int cols, const char* pad = 0);
+             ExpandableBuffer* buf, int cols, int pad);
     
 private:
     const char*  input_buf_;
     size_t       length_;        
     StringBuffer buf_;
-    int          cols_;
-    const char*  pad_;
+
+    int cols_;
+    int pad_;
 
     //! Whether or not the character is printable ascii
     bool is_not_escaped(char c);

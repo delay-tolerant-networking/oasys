@@ -48,8 +48,8 @@ DECLARE_TEST(TextCode1) {
 
     ScratchBuffer<char*> out_buf;
 
-    TextCode code(cbuf, 10, &out_buf, 5, ">");
-    char output[] = "12345\n>\\01\\02\\03\\04\\05\n>\n";
+    TextCode code(cbuf, 10, &out_buf, 5, 2);
+    char output[] = "  12345\n  \\01\\02\\03\\04\\05\n  \n";
 
     CHECK(memcmp(out_buf.buf(), output, strlen(output)) == 0);
 

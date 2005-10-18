@@ -42,7 +42,7 @@
 namespace oasys {
 
 TextCode::TextCode(const char* input_buf, size_t length, 
-                   ExpandableBuffer* buf, int cols, const char* pad)
+                   ExpandableBuffer* buf, int cols, int pad)
     : input_buf_(input_buf), length_(length), 
       buf_(buf, false), cols_(cols), pad_(pad)
 {
@@ -70,12 +70,20 @@ TextCode::textcodify()
 {
     for (size_t i=0; i<length_; ++i) 
     {
-        if (i != 0 && (i % cols_ == 0)) {
-            buf_.appendf("\n%s", pad_ ? pad_ : "");
+        if (i % cols_ == 0) 
+        {
+            if (i != 0) {
+                buf_.append('\n');
+            }            
+            for (int j=0; j<pad_; ++j)
+                buf_.append(' ');
         }
         append(input_buf_[i]);
     }
-    buf_.appendf("\n%s\n", pad_ ? pad_ : "");
+    buf_.append('\n');
+    for (int j=0; j<pad_; ++j)
+        buf_.append(' ');
+    buf_.append("\n");
 }
 
 } // namespace oasys
