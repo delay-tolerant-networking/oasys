@@ -22,3 +22,12 @@ proc do_until {what timeout script} {
 	}
     }
 }
+
+proc gethostbyname {host} {
+    if {![catch {package require Tclx} err]} {
+	return [lindex [host_info addresses $host] 0]
+    }
+
+    # XXX/demmer do something else
+    error "no gethostbyname implementation available"
+}
