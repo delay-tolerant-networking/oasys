@@ -45,14 +45,12 @@ namespace oasys {
 TextMarshal::TextMarshal(context_t         context,
                          ExpandableBuffer* buf,
                          int               options,
-                         const char*       comment, 
-                         int               indent_incr)
+                         const char*       comment)
     : SerializeAction(Serialize::MARSHAL, context, options),
       indent_(0), 
-      indent_incr_(indent_incr), 
       buf_(buf, false)
 {
-    buf_.append("# text marshal start\n");
+    buf_.append("# -- text marshal start --\n");
     if (comment != 0) 
         buf_.append(comment);
 }
@@ -89,38 +87,35 @@ TextMarshal::process(const char* name, bool* b)
 void 
 TextMarshal::process(const char* name, u_char* bp, size_t len)
 {
-    buf_.appendf("%s:\n", name);
+    buf_.appendf("%s: TextCode\n", name);
     TextCode coder(reinterpret_cast<char*>(bp), len,
-                   buf_.expandable_buf(), 40, 
-                   (indent_ + 1) * indent_incr_);
+                   buf_.expandable_buf(), 40, indent_ + 1);
 }
 
 //----------------------------------------------------------------------------
 void 
 TextMarshal::process(const char* name, u_char** bp, size_t* lenp, int flags)
 {
-    buf_.appendf("%s:\n", name);
+    buf_.appendf("%s: TextCode\n", name);
     TextCode coder(reinterpret_cast<char*>(*bp), *lenp,
-                   buf_.expandable_buf(), 40, 
-                   (indent_ + 1) * indent_incr_);
+                   buf_.expandable_buf(), 40, indent_ + 1);
 }
 
 //----------------------------------------------------------------------------
 void 
 TextMarshal::process(const char* name, std::string* s)
 {
-    buf_.appendf("%s:\n", name);
+    buf_.appendf("%s: TextCode\n", name);
     TextCode coder(reinterpret_cast<const char*>(s->c_str()),
                    strlen(s->c_str()),
                    buf_.expandable_buf(), 
-                   40, 
-                   (indent_ + 1) * indent_incr_);
+                   40, indent_ + 1);
 }
 
 void 
 TextMarshal::process(const char* name, SerializableObject* object)
 {
-    buf_.appendf("%s:\n", name);
+    buf_.appendf("%s: SerializableObject\n", name);
     indent();
     object->serialize(this);
     unindent();
@@ -132,44 +127,80 @@ void
 TextMarshal::add_indent()
 {
     for (int i=0; i<indent_; ++i)
-        for (int j=0; j<indent_incr_; ++j) 
-            buf_.append(' ');
+        buf_.append('\t');
 }
 
 //----------------------------------------------------------------------------
 TextUnmarshal::TextUnmarshal(context_t context, u_char* buf, 
                              size_t length, int options)
-    : SerializeAction(Serialize::UNMARSHAL, context, options)
+    : SerializeAction(Serialize::UNMARSHAL, context, options),
+      buf_(reinterpret_cast<char*>(buf)), 
+      length_(length), 
+      cur_(reinterpret_cast<char*>(buf))
 {}
  
 //----------------------------------------------------------------------------   
 void 
 TextUnmarshal::process(const char* name, u_int32_t* i)
 {
+    if (error_) 
+        return;
+
+    u_int32_t num;
+    int err = get_num(name, &num);
+    
+    if (err != 0) 
+        return;
+
+    *i = num;
 }
 
 //----------------------------------------------------------------------------
 void 
 TextUnmarshal::process(const char* name, u_int16_t* i)
 {
+    if (error_) 
+        return;
+
+    u_int32_t num;
+    int err = get_num(name, &num);
+    
+    if (err != 0) 
+        return;
+
+    *i = static_cast<u_int16_t>(num);
 }
 
 //----------------------------------------------------------------------------
 void 
 TextUnmarshal::process(const char* name, u_int8_t* i)
 {
+    if (error_) 
+        return;
+
+    u_int32_t num;
+    int err = get_num(name, &num);
+    
+    if (err != 0) 
+        return;
+
+    *i = static_cast<u_int8_t>(num);
 }
 
 //----------------------------------------------------------------------------
 void 
 TextUnmarshal::process(const char* name, bool* b)
 {
+    if (error_) 
+        return;
 }
 
 //----------------------------------------------------------------------------
 void 
 TextUnmarshal::process(const char* name, u_char* bp, size_t len)
 {
+    if (error_) 
+        return;
 }
 
 //----------------------------------------------------------------------------
@@ -177,12 +208,89 @@ void
 TextUnmarshal::process(const char* name, u_char** bp, 
                        size_t* lenp, int flags)
 {
+    if (error_) 
+        return;
 }
 
 //----------------------------------------------------------------------------
 void 
 TextUnmarshal::process(const char* name, std::string* s)
 {
+    if (error_) 
+        return;
+}
+
+bool 
+TextUnmarshal::is_within_buf(size_t offset)
+{
+    return cur_ + offset < buf_ + length_;
+}
+
+int  
+TextUnmarshal::get_line(char** end)
+{
+  again:    
+    size_t offset = 0;
+    while (is_within_buf(offset) && cur_[offset] != '\n') {
+        ++offset;
+    }
+
+    if (!is_within_buf(offset)) {
+        return -1;
+    }
+
+    // comment, skip to next line
+    if (*cur_ == '#') {
+        cur_ = &cur_[offset] + 1;
+        goto again;
+    }
+    
+    *end = &cur_[offset];
+
+    return 0;
+}
+
+int
+TextUnmarshal::get_num(const char* field_name, u_int32_t* num)
+{
+    // expecting {\t}* field_name: num\n
+    char* eol;
+    if (get_line(&eol) != 0) {
+        error_ = true;
+        return -1;
+    }
+
+    ASSERT(*eol == '\n');
+    
+    char* field_name_ptr = 0;
+    while (is_within_buf(0) && *cur_ != ':') {
+        if (*cur_ != '\t' && *cur_ != ' ' && field_name_ptr == 0)
+            field_name_ptr = cur_;
+        ++cur_;
+    }
+    
+    if (*cur_ != ':' || cur_ > eol) {
+        error_ = true;
+        return -1;
+    }
+
+    if (memcmp(field_name_ptr, field_name, strlen(field_name)) != 0) {
+        error_ = true;
+        return -1;
+    }
+
+    cur_ += 2;
+    if (!is_within_buf(0)) {
+        error_ = true;
+        return -1;
+    }
+
+    *num = strtoul(cur_, &eol, 0);
+    ASSERT(*eol == '\n');
+    
+    cur_ = eol + 1;
+    
+    return 0;
 }
 
 /*

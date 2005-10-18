@@ -22,8 +22,7 @@ public:
     TextMarshal(context_t         context,
                 ExpandableBuffer* buf,
                 int               options     = 0,
-                const char*       comment     = 0,
-                int               indent_incr = 4);
+                const char*       comment     = 0);
 
     //! @{ Virtual functions inherited from SerializeAction
     void process(const char* name, u_int32_t* i);
@@ -39,12 +38,11 @@ public:
 
 private:
     int indent_;
-    int indent_incr_;
     StringBuffer buf_;
 
-    void indent()   { indent_ += indent_incr_; }
+    void indent()   { indent_++; }
     void unindent() { 
-        indent_ -= indent_incr_; 
+        indent_--;
         ASSERT(indent_ >= 0); 
     }
 
@@ -65,7 +63,15 @@ public:
     void process(const char* name, u_char** bp, size_t* lenp, int flags);
     void process(const char* name, std::string* s);
     //! @}
+
 private:
+    char* buf_;
+    size_t  length_;
+    char* cur_;
+    
+    bool is_within_buf(size_t offset);
+    int  get_line(char** end);
+    int  get_num(const char* field_name, u_int32_t* num);
 };
 
 } // namespace oasys

@@ -44,6 +44,7 @@ SERIALIZE_SRCS :=				\
 	serialize/SQLSerialize.cc		\
 	serialize/Serialize.cc			\
 	serialize/StringSerialize.cc		\
+	serialize/TextSerialize.cc		\
 
 STORAGE_SRCS :=					\
 	storage/BerkeleyDBStore.cc		\

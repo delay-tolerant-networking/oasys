@@ -41,7 +41,10 @@
 
 #include "util/UnitTest.h"
 #include "serialize/MarshalSerialize.h"
+#include "serialize/TextSerialize.h"
 #include "serialize/TypeShims.h"
+#include "util/ScratchBuffer.h"
+
 
 using namespace std;
 using namespace oasys;
@@ -177,6 +180,78 @@ DECLARE_TEST(NullStringTest2) {
     return 0;
 }
 
+DECLARE_TEST(TextSerializeTest1) {
+    OneOfEach one;
+    ScratchBuffer<u_char*> buf;
+    
+    TextMarshal marshal(Serialize::CONTEXT_LOCAL, &buf);
+    marshal.action(&one);
+
+    log_info("%s", (const char*)buf.buf());
+        
+    return 0;
+}
+
+struct TestObject : oasys::SerializableObject {
+    TestObject() : next_exists_(false), next_(0) {}
+
+    void serialize(oasys::SerializeAction* action) {
+        action->process("int32", &int32_);
+        action->process("int16", &int16_);
+        action->process("int8", &int8_);
+        
+        action->process("next_exists", &next_exists_);
+        if (next_exists_) {
+            action->process("next", next_);
+        }
+    }
+
+    u_int32_t int32_;
+    u_int32_t int16_;
+    u_int32_t int8_;
+    bool      next_exists_;
+
+    TestObject* next_;
+};
+
+DECLARE_TEST(TextSerializeTest2) {
+    ScratchBuffer<u_char*> buf;
+    TestObject obj1;
+    
+    obj1.int32_ = 1111;
+    obj1.int16_ = 123;
+    obj1.int8_  = 5;
+    
+    TextMarshal marshal(Serialize::CONTEXT_LOCAL, &buf);
+    marshal.action(&obj1);
+
+    log_info("/test", "%s", (const char*)buf.buf());
+
+    const char* txt = "# -- text marshal start --\n"
+                      "# comment\n"
+                      "# another comment\n"
+                      "int32: 1111\n"
+                      "\t\tint16: 123\n"
+                      "int8: 5\n"
+                      "next_exists: false\n";
+
+    TestObject obj2;
+    TextUnmarshal unmarshal(Serialize::CONTEXT_LOCAL, (u_char*)txt, strlen(txt));
+
+    unmarshal.action(&obj2);
+               
+    CHECK(obj2.int32_ == 1111);
+    CHECK(obj2.int16_ == 123);
+    CHECK(obj2.int8_  == 5);
+
+    return 0;
+}
+
+DECLARE_TEST(TextSerializeTest3) {
+
+    return 0;
+}
+
 
 DECLARE_TESTER(MarshalTester) {
     ADD_TEST(SizeTest);
@@ -184,6 +259,9 @@ DECLARE_TESTER(MarshalTester) {
     ADD_TEST(CompareTest_CRC);
     ADD_TEST(NullStringTest1);
     ADD_TEST(NullStringTest2);
+    ADD_TEST(TextSerializeTest1);
+    ADD_TEST(TextSerializeTest2);
+    ADD_TEST(TextSerializeTest3);
 };
 
 DECLARE_TEST_FILE(MarshalTester, "marshalling test");

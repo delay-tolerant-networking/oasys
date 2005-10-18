@@ -76,13 +76,13 @@ TextCode::textcodify()
                 buf_.append('\n');
             }            
             for (int j=0; j<pad_; ++j)
-                buf_.append(' ');
+                buf_.append('\t');
         }
         append(input_buf_[i]);
     }
     buf_.append('\n');
     for (int j=0; j<pad_; ++j)
-        buf_.append(' ');
+        buf_.append('\t');
     buf_.append("\n");
 }
 
