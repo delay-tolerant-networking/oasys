@@ -50,18 +50,18 @@ TextCode::TextCode(const char* input_buf, size_t length,
 }
 
 bool
-TextCode::is_not_escaped(int c) {
+TextCode::is_not_escaped(char c) {
     return c >= 32 && c <= 126 && c != '\\';
 }
 
 void 
-TextCode::append(int c) {
+TextCode::append(char c) {
     if (is_not_escaped(c)) {
         buf_.append(static_cast<char>(c));
     } else if (c == '\\') {
         buf_.appendf("\\\\");
     } else {
-        buf_.appendf("\\%02x", c);
+        buf_.appendf("\\%02x", ((int)c & 0xff));
     }
 }
 
@@ -71,11 +71,11 @@ TextCode::textcodify()
     for (size_t i=0; i<length_; ++i) 
     {
         if (i != 0 && (i % cols_ == 0)) {
-            buf_.appendf("\n%s", pad_);
+            buf_.appendf("\n%s", pad_ ? pad_ : "");
         }
         append(input_buf_[i]);
     }
-    buf_.appendf("\n%s\n", pad_);
+    buf_.appendf("\n%s\n", pad_ ? pad_ : "");
 }
 
 } // namespace oasys

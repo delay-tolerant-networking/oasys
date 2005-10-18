@@ -60,7 +60,7 @@ public:
      * @param pad  String to put in front of each line.
      */
     TextCode(const char* input_buf, size_t length, 
-             ExpandableBuffer* buf, int cols, const char* pad);
+             ExpandableBuffer* buf, int cols, const char* pad = 0);
     
 private:
     const char*  input_buf_;
@@ -70,13 +70,13 @@ private:
     const char*  pad_;
 
     //! Whether or not the character is printable ascii
-    bool is_not_escaped(int c);
+    bool is_not_escaped(char c);
 
     //! Perform the conversion
     void textcodify(); 
 
     //! Append a character to the text code
-    void append(int c);
+    void append(char c);
 };
 
 } // namespace oasys
