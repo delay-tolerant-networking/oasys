@@ -74,6 +74,11 @@ public:
     ~StringBuffer();
 
     /**
+     * @return Expandable buffer.
+     */
+    ExpandableBuffer* expandable_buf() { return buf_; }
+
+    /**
      * @return the data buffer (const variant).
      */
     const char* data() const { return buf_->raw_buf(); }
