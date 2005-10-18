@@ -320,6 +320,7 @@ proc run {id exec_file exec_opts confname conf exec_env} {
 	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
     }
+    return $exec_pid
 }
 
 #
