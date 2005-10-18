@@ -357,6 +357,18 @@ proc check_pid {id pid} {
 }
 
 #
+# Wait for the PID to exit
+#
+proc wait_for_pid_exit {id pid {timeout 30000}} {
+    do_until "waiting for PID $pid to exit" $timeout {
+	if {![check_pid $id $pid]} {
+	    return
+	}
+	after 1000
+    }
+}
+
+#
 # Check if the given pid is alive on the specified host id
 #
 proc kill_pid {id pid signal} {
