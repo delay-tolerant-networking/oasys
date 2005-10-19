@@ -88,7 +88,6 @@ private:
     typedef std::map<std::string, int> RefCountMap;
 
     bool        init_;        //!< Initialized?
-    FILE*       err_log_;     ///< db err log file
     std::string db_name_;     ///< Name of the database file
     DB_ENV*     dbenv_;       ///< database environment for all tables
     bool	sharefile_;   ///< share a single db file
@@ -108,6 +107,10 @@ private:
     int release_table(const std::string& table);
     /// @}
 
+    /// DB internal error log callback
+    static void db_errcall(const DB_ENV* dbenv, const char* errpfx,
+                           const char* msg);
+    
     /// DB internal panic callback
     static void db_panic(DB_ENV* dbenv, int errval);
 };

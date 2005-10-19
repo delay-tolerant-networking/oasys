@@ -59,7 +59,6 @@ struct StorageConfig {
 
     // Berkeley DB specific options
     std::string dbdir_;		///< Path to the database files
-    std::string dberrlog_;	///< DB internal error log file
     int         dbflags_;       ///< Berkeley DB specific flags
     bool	dbsharefile_;	///< Share a single DB file (and a lock)
 
@@ -71,7 +70,6 @@ struct StorageConfig {
         int                tidy_wait,    
         const std::string& dbname,
         const std::string& dbdir,
-        const std::string& dberrlog,
         int                dbflags,
         bool               dbsharefile
     ) : cmd_(cmd),
@@ -81,7 +79,6 @@ struct StorageConfig {
         tidy_wait_(tidy_wait),
         dbname_(dbname),
         dbdir_(dbdir),
-        dberrlog_(dberrlog),
         dbflags_(dbflags),
         dbsharefile_(dbsharefile)
     {}

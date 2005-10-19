@@ -79,7 +79,6 @@ DECLARE_TEST(DBTestInit) {
         0,                      // tidy wait
         g_db_name,              // dbname
         g_config_dir,           // dbdir
-        "error.log",            // errlog
         0,                      // flags
         false			// sharefile
     );   

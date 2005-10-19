@@ -98,9 +98,6 @@ BerkeleyDBStore::~BerkeleyDBStore()
     dbenv_->close(dbenv_, 0);
     dbenv_ = 0;
     log_info("db closed");
-
-    fclose(err_log_);
-    log_info("log file closed");
 }
 
 int 
@@ -140,23 +137,11 @@ BerkeleyDBStore::init(StorageConfig* cfg)
         return DS_ERR;
     }
 
-    std::string err_filename = cfg->dbdir_;
-    err_filename += "/err.log";
-    err_log_ = ::fopen(err_filename.c_str(), "w");
+    dbenv_->set_errcall(dbenv_, BerkeleyDBStore::db_errcall);
 
-    if (err_log_ == NULL) 
-    {
-        log_err("Can't create db error log file");
-        return DS_ERR;
-    }
-    else 
-    {
-        dbenv_->set_errfile(dbenv_, err_log_);
-    }
-
-    log_info("initializing db name=%s (%s), dir=%s, errlog = %s",
+    log_info("initializing db name=%s (%s), dir=%s",
              db_name_.c_str(), sharefile_ ? "shared" : "not shared",
-             cfg->dbdir_.c_str(), err_filename.c_str());
+             cfg->dbdir_.c_str());
 
     err = dbenv_->open(
         dbenv_, 
@@ -165,6 +150,7 @@ BerkeleyDBStore::init(StorageConfig* cfg)
         DB_INIT_MPOOL |         // initialize memory pool
         DB_INIT_LOG   |         // use logging
         DB_INIT_TXN   |         // use transactions
+        DB_INIT_LOCK  |         // use locking
         DB_RECOVER    |         // recover from previous crash (if any)
         DB_PRIVATE,             // only one process can access the db
         0                       // no flags
@@ -398,6 +384,13 @@ BerkeleyDBStore::release_table(const std::string& table)
     log_debug("table %s, -refcount=%d", table.c_str(), ref_count_[table]);
 
     return ref_count_[table];
+}
+
+void
+BerkeleyDBStore::db_errcall(const DB_ENV* dbenv, const char* errpfx,
+                            const char* msg)
+{
+    __log_err("/storage/berkeleydb", "DB internal error: %s", msg);
 }
 
 void
