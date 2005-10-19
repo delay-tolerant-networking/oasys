@@ -112,7 +112,7 @@ CPPS := $(CPPS:.c=.E)
 # Default target is to build the library and the compat library
 #
 LIBFILES := liboasys.a liboasyscompat.a
-all: checkconfigure $(LIBFILES) tests
+all: checkconfigure $(LIBFILES)
 
 #
 # Need special rules for the gdtoa sources adapted from the source
