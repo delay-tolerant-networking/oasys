@@ -109,9 +109,8 @@ namespace eval tell {
 	    return $result
 	} else {
 	    set eol [string first "\n" $result]
-	    set errorValue [string range $result 7 [expr $eol - 1]]
 	    set errorInfo  [string range $result $eol end]
-	    error $errorValue $errorInfo
+	    error $result $errorInfo
 	}
     }
 
@@ -143,7 +142,7 @@ namespace eval tell {
 
 	    tell::close_socket $host $port
 	    set tell::results($host:$port) \
-		    "1 eof while waiting for tell response\n"
+		    "1 error: eof while waiting for tell response\\n"
 	    return
 	}
 
@@ -170,6 +169,6 @@ namespace eval tell {
 	
 	tell::close_socket $host $port
 	set tell::results($host:$port) \
-		"1 error: timeout while waiting for tell response\n"
+		"1 error: timeout while waiting for tell response\\n"
     }
 }
