@@ -249,16 +249,19 @@ BerkeleyDBStore::get_table(DurableTableImpl**  table,
     if (err == ENOENT)
     {
         log_debug("get_table -- notfound database %s", name.c_str());
+        db->close(db, 0);
         return DS_NOTFOUND;
     }
     else if (err == EEXIST)
     {
         log_debug("get_table -- already existing database %s", name.c_str());
+        db->close(db, 0);
         return DS_EXISTS;
     }
     else if (err != 0)
     {
         log_err("DB internal error in get_table: %s", db_strerror(err));
+        db->close(db, 0);
         return DS_ERR;
     }
 
@@ -266,6 +269,7 @@ BerkeleyDBStore::get_table(DurableTableImpl**  table,
         err = db->get_type(db, &db_type);
         if (err != 0) {
             log_err("DB internal error in get_type: %s", db_strerror(err));
+            db->close(db, 0);
             return DS_ERR;
         }
     }
@@ -423,6 +427,7 @@ BerkeleyDBTable::~BerkeleyDBTable()
 
     log_debug("closing db %s", name());
     db_->close(db_, 0); // XXX/bowei - not sure about comment above
+    db_ = NULL;
 }
 
 int 
