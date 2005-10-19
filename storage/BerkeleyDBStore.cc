@@ -150,7 +150,6 @@ BerkeleyDBStore::init(StorageConfig* cfg)
         DB_INIT_MPOOL |         // initialize memory pool
         DB_INIT_LOG   |         // use logging
         DB_INIT_TXN   |         // use transactions
-        DB_INIT_LOCK  |         // use locking
         DB_RECOVER    |         // recover from previous crash (if any)
         DB_PRIVATE,             // only one process can access the db
         0                       // no flags
