@@ -62,29 +62,76 @@ DECLARE_TEST(ExpandableBuffer1) {
 }
 
 DECLARE_TEST(ExpandableBuffer2) {
-    ScratchBuffer<char*, 10> scratch;
-    StringBuffer buf(&scratch, false);
+    ExpandableBuffer buf;
     
-    buf.appendf("%d%x%s%x%d%x", 1, 2, "abracadabra", 
-                4, 5, 6);
+    CHECK(buf.len()     == 0);
+    CHECK(buf.buf_len() == 0);
 
-    char str[256];
-    sprintf(str, "%d%x%s%x%d%x", 1, 2, "abracadabra", 
-            4, 5, 6);
-    CHECK_EQUALSTR(buf.c_str(), str);
+    buf.reserve(10);
+    const char* str = "1234567890";
+    memcpy(buf.raw_buf(), str, 10);
     
+    buf.reserve(1024);
+    CHECK_EQUALSTRN(buf.raw_buf(), str, 10);
+
+    // this is for valgrind to check
+    memset(buf.raw_buf(), 17, 1000);
+
     return UNIT_TEST_PASSED;
 }
 
-void memory1Func() {
-    ScratchBuffer<char*, 4096> scratch;
-    scratch.buf();
+DECLARE_TEST(ScratchBuffer1) {
+    const char* str = "0987654321";
+    ScratchBuffer<char*, 20> scratch;
+    
+    memcpy(scratch.buf(), str, 10);
+    CHECK_EQUALSTRN(scratch.buf(), str, 10);
+
+    scratch.buf(1000);
+    memcpy(scratch.buf()+500, str, 10);
+
+    CHECK_EQUALSTRN(scratch.buf(), str, 10);
+    CHECK_EQUALSTRN(scratch.buf()+500, str, 10);    
+
+    scratch.buf(10000);
+    memcpy(scratch.buf()+5000, str, 10);
+
+    CHECK_EQUALSTRN(scratch.buf(), str, 10);
+    CHECK_EQUALSTRN(scratch.buf()+500, str, 10);
+    CHECK_EQUALSTRN(scratch.buf()+5000, str, 10);    
+
+    scratch.buf(100000);
+    memcpy(scratch.buf()+50000, str, 10);
+
+    CHECK_EQUALSTRN(scratch.buf(), str, 10);
+    CHECK_EQUALSTRN(scratch.buf()+500, str, 10);
+    CHECK_EQUALSTRN(scratch.buf()+5000, str, 10);    
+    CHECK_EQUALSTRN(scratch.buf()+50000, str, 10);    
+    
+    // valgrind
+    memset(scratch.buf(), 17, 100000);
+
+    return UNIT_TEST_PASSED;
 }
 
-DECLARE_TEST(Memory1) {
-    for (int i=0; i<20000; ++i) {
-        memory1Func();
+DECLARE_TEST(StringBuffer1) {
+    StringBuffer buf(256);
+    char scratch[1024];
+
+    memset(scratch, 0, 1024);
+    
+    // append up to the preallocated amount
+    for (int i=0; i<256; ++i) {
+        char c = rand()%26 + 'a';
+        buf.append(c);
+        scratch[i] = c;
     }
+
+    // this should cause a realloc
+    CHECK_EQUALSTR(buf.c_str(), scratch);
+    CHECK(strlen(buf.c_str()) == 256);    
+
+    buf.appendf("this is a story %s %s", "of", "a");
 
     return UNIT_TEST_PASSED;
 }
@@ -92,7 +139,8 @@ DECLARE_TEST(Memory1) {
 DECLARE_TESTER(Test) {    
     ADD_TEST(ExpandableBuffer1);
     ADD_TEST(ExpandableBuffer2);
-    ADD_TEST(Memory1);
+    ADD_TEST(ScratchBuffer1);
+    ADD_TEST(StringBuffer1);
 }
 
-DECLARE_TEST_FILE(Test, "static buffer test");
+DECLARE_TEST_FILE(Test, "buffer test");
