@@ -207,7 +207,7 @@ cpps: $(CPPS)
 include $(SRCDIR)/test/Makefile
 TESTS := $(patsubst %,test/%,$(TESTS))
 .PHONY: test tests
-test tests: $(TESTS)
+test tests: all $(TESTS)
 
 # run tests
 .PHONY: check
