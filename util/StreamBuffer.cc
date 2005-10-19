@@ -89,7 +89,7 @@ StreamBuffer::end()
 void
 StreamBuffer::reserve(size_t amount)
 {
-    if (amount <= size_ - end_) 
+    if (amount <= tailbytes())
     {
         // do nothing
     } 
