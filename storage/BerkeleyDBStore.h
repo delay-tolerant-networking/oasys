@@ -91,6 +91,7 @@ private:
     FILE*       err_log_;     ///< db err log file
     std::string db_name_;     ///< Name of the database file
     DB_ENV*     dbenv_;       ///< database environment for all tables
+    bool	sharefile_;   ///< share a single db file
 
     SpinLock    ref_count_lock_;
     RefCountMap ref_count_;   ///< Ref. count for open tables.
@@ -106,6 +107,9 @@ private:
     int acquire_table(const std::string& table);
     int release_table(const std::string& table);
     /// @}
+
+    /// DB internal panic callback
+    static void db_panic(DB_ENV* dbenv, int errval);
 };
 
 /**

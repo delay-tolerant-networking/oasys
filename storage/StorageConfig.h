@@ -61,6 +61,7 @@ struct StorageConfig {
     std::string dbdir_;		///< Path to the database files
     std::string dberrlog_;	///< DB internal error log file
     int         dbflags_;       ///< Berkeley DB specific flags
+    bool	dbsharefile_;	///< Share a single DB file (and a lock)
 
     StorageConfig(
         const std::string& cmd,
@@ -71,7 +72,8 @@ struct StorageConfig {
         const std::string& dbname,
         const std::string& dbdir,
         const std::string& dberrlog,
-        int                dbflags
+        int                dbflags,
+        bool               dbsharefile
     ) : cmd_(cmd),
         type_(type),
         init_(init),
@@ -80,7 +82,9 @@ struct StorageConfig {
         dbname_(dbname),
         dbdir_(dbdir),
         dberrlog_(dberrlog),
-        dbflags_(dbflags) {}
+        dbflags_(dbflags),
+        dbsharefile_(dbsharefile)
+    {}
 };
 
 } // namespace oasys

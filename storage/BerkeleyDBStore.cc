@@ -106,7 +106,8 @@ BerkeleyDBStore::~BerkeleyDBStore()
 int 
 BerkeleyDBStore::init(StorageConfig* cfg)
 {
-    db_name_ = cfg->dbname_ + ".db";
+    db_name_ = cfg->dbname_;
+    sharefile_ = cfg->dbsharefile_;
 
     // XXX/bowei need to expose options if needed later
     if (cfg->tidy_) {
@@ -153,7 +154,8 @@ BerkeleyDBStore::init(StorageConfig* cfg)
         dbenv_->set_errfile(dbenv_, err_log_);
     }
 
-    log_info("initializing using dbdir = %s, errlog = %s", 
+    log_info("initializing db name=%s (%s), dir=%s, errlog = %s",
+             db_name_.c_str(), sharefile_ ? "shared" : "not shared",
              cfg->dbdir_.c_str(), err_filename.c_str());
 
     err = dbenv_->open(
@@ -183,6 +185,15 @@ BerkeleyDBStore::init(StorageConfig* cfg)
         log_crit("DB: %s, cannot set flags", db_strerror(err));
         return DS_ERR;
     }
+
+    err = dbenv_->set_paniccall(dbenv_, BerkeleyDBStore::db_panic);
+    
+    if (err != 0) 
+    {
+        log_crit("DB: %s, cannot set panic call", db_strerror(err));
+        return DS_ERR;
+    }
+    
     init_ = true;
 
     return 0;
@@ -210,6 +221,7 @@ BerkeleyDBStore::get_table(DurableTableImpl**  table,
     
     // calculate the db type and creation flags
     db_flags = 0;
+    
     if (flags & DS_CREATE) {
         db_flags |= DB_CREATE;
 
@@ -238,9 +250,17 @@ BerkeleyDBStore::get_table(DurableTableImpl**  table,
         db_type = DB_UNKNOWN;
     }
 
-    err = db->open(db, NO_TX, db_name_.c_str(), name.c_str(),
-                   db_type, db_flags, 0);
-
+    if (sharefile_) {
+        oasys::StaticStringBuffer<128> dbfile("%s.db", db_name_.c_str());
+        err = db->open(db, NO_TX, dbfile.c_str(), name.c_str(),
+                       db_type, db_flags, 0);
+    } else {
+        oasys::StaticStringBuffer<128> dbname("%s-%s.db",
+                                              db_name_.c_str(), name.c_str());
+        err = db->open(db, NO_TX, dbname.c_str(), NULL,
+                       db_type, db_flags, 0);
+    }
+        
     if (err == ENOENT)
     {
         log_debug("get_table -- notfound database %s", name.c_str());
@@ -289,8 +309,16 @@ BerkeleyDBStore::del_table(const std::string& name)
     }
 
     log_info("deleting table %s", name.c_str());
-    err = dbenv_->dbremove(dbenv_, NO_TX, db_name_.c_str(), name.c_str(), 0);
-    
+
+    if (sharefile_) {
+        oasys::StaticStringBuffer<128> dbfile("%s.db", db_name_.c_str());
+        err = dbenv_->dbremove(dbenv_, NO_TX, dbfile.c_str(), name.c_str(), 0);
+    } else {
+        oasys::StaticStringBuffer<128> dbfile("%s-%s.db",
+                                              db_name_.c_str(), name.c_str());
+        err = dbenv_->dbremove(dbenv_, NO_TX, dbfile.c_str(), NULL, 0);
+    }
+
     if (err != 0) {
         log_err("DB: del_table %s", db_strerror(err));
 
@@ -370,6 +398,12 @@ BerkeleyDBStore::release_table(const std::string& table)
     log_debug("table %s, -refcount=%d", table.c_str(), ref_count_[table]);
 
     return ref_count_[table];
+}
+
+void
+BerkeleyDBStore::db_panic(DB_ENV* dbenv, int errval)
+{
+    PANIC("fatal berkeley DB internal error: %s", db_strerror(errval));
 }
 
 /******************************************************************************
