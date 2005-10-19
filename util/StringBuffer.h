@@ -180,17 +180,30 @@ class StaticStringBuffer : public StringBuffer {
 public:
     /**
      * Default constructor
+     */
+    StaticStringBuffer()
+        : StringBuffer(new ScratchBuffer<char*, _sz>(), true) {}
+    
+    /**
+     * Constructor with an initial format string.
      *
      * @param init_str Initial string value
      */
-    StaticStringBuffer(char* init_str = 0)
-        : StringBuffer(new ScratchBuffer<char*, _sz>(), true)
-    {
-        if (init_str) {
-            append(init_str);
-        }
-    }
+    StaticStringBuffer(const char* fmt, ...) PRINTFLIKE(2, 3);
 };
+
+template <size_t _sz>
+StaticStringBuffer<_sz>::StaticStringBuffer(const char* fmt, ...)
+    : StringBuffer(new ScratchBuffer<char*, _sz>(), true)
+{
+    if (fmt != 0) 
+    {
+        va_list ap;
+        va_start(ap, fmt);
+        vappendf(fmt, ap);
+        va_end(ap);
+    }
+}
 
 } // namespace oasys
 
