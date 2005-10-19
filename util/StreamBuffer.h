@@ -48,6 +48,9 @@ namespace oasys {
  * StreamBuffer is a resizable buffer which is designed to efficiently
  * support growing at the end of the buffer and consumption of the
  * buffer from the front.
+ *
+ * XXX/demmer rework to use ExpandableBuffer
+ *
  */
 class StreamBuffer {
 public:
