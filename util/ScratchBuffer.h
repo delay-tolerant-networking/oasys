@@ -108,13 +108,21 @@ public:
             size = (buf_len_ == 0) ? 1 : (buf_len_ * 2);
         }     
 
-        if (! using_malloc() && size > _static_size) {
+        if (size <= buf_len_) {
+            return;
+        }
+
+        if (! using_malloc()) 
+        {
+            ASSERT(size > _static_size);
             buf_ = 0;
             size_t old_buf_len = buf_len_;
 
             ExpandableBuffer::reserve(size);
             memcpy(buf_, static_buf_, old_buf_len);
-        } else if (using_malloc() && size > buf_len_) {
+        } 
+        else 
+        {
             ExpandableBuffer::reserve(size);
         }
     }
