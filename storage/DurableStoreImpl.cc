@@ -91,7 +91,12 @@ int
 DurableStoreImpl::create_db_dir(const char* db_dir)
 {
     // create database directory
-    log_info("creating new database directory %s", db_dir);
+    char pwd[PATH_MAX];
+    
+    log_notice("creating new database directory %s%s%s",
+               db_dir[0] == '/' ? "" : getcwd(pwd, PATH_MAX),
+               db_dir[0] == '/' ? "" : "/",
+               db_dir);
             
     if (mkdir(db_dir, 0700) != 0) 
     {
