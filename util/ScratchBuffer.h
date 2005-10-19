@@ -114,6 +114,8 @@ public:
 
             ExpandableBuffer::reserve(size);
             memcpy(buf_, static_buf_, old_buf_len);
+        } else if (using_malloc() && size > buf_len_) {
+            ExpandableBuffer::reserve(size);
         }
     }
 
