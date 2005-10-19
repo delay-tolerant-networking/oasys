@@ -110,6 +110,9 @@ namespace eval tell {
 	} else {
 	    set eol [string first "\n" $result]
 	    set errorInfo  [string range $result $eol end]
+	    if {$result == ""} {
+		set result "(no additional information)"
+	    }
 	    error $result $errorInfo
 	}
     }
@@ -136,9 +139,7 @@ namespace eval tell {
 	set cmd_response [gets $sock]
 
 	if {[eof $sock]} {
-	    if {$tell_verbose} {
-		puts "tell:eof $host:$port"
-	    }
+	    puts "error: eof in tell command to $host:$port"
 
 	    tell::close_socket $host $port
 	    set tell::results($host:$port) \
@@ -163,9 +164,7 @@ namespace eval tell {
     proc timeout {host port} {
 	global tell::results tell::tell_verbose
 
-	if {$tell_verbose} {
-	    puts "tell:timeout $host:$port"
-	}
+	puts "error: timeout in tell command to $host:$port"
 	
 	tell::close_socket $host $port
 	set tell::results($host:$port) \
