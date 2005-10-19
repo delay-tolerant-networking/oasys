@@ -8,7 +8,7 @@ proc tell {host port cmd} {
 }
 
 namespace eval tell {
-    set tell_verbose 1
+    set tell_verbose 0
     set timeout 30000
 
     proc verbose {{val ""}} {
