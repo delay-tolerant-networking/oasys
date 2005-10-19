@@ -72,8 +72,10 @@
  * level debug.
  *
  * In addition to the basic logf interface, there are also a set of
- * macros (log_debug(), log_info(), log_warn(), log_err(), log_crit())
- * that are more efficient. As an example, log_debug expands to
+ * macros (log_debug(), log_info(), log_notice(), log_warn(),
+ * log_err(), log_crit()) that are more efficient.
+ * 
+ * For example, log_debug expands to
  *
  * @code
  * #define log_debug(path, ...)                         \
@@ -129,10 +131,11 @@ typedef enum {
     LOG_INVALID = -1,
     LOG_DEBUG   = 1,
     LOG_INFO    = 2,
-    LOG_WARN    = 3,
-    LOG_ERR     = 4,
-    LOG_CRIT    = 5,
-    LOG_ALWAYS  = 6
+    LOG_NOTICE  = 3,
+    LOG_WARN    = 4,
+    LOG_ERR     = 5,
+    LOG_CRIT    = 6,
+    LOG_ALWAYS  = 7
 } log_level_t;
 
 #ifndef DOXYGEN
@@ -509,6 +512,14 @@ __log_enabled(log_level_t level, const char* path)
     ((oasys::__log_enabled(oasys::LOG_INFO, (p))) ?             \
      oasys::__logf(oasys::LOG_INFO, (p) , ## args) : 0)
 
+#define log_notice(p, args...)                                  \
+    ((__log_enabled(oasys::LOG_NOTICE, (p))) ?                  \
+     __logf(oasys::LOG_NOTICE, (p) , ## args) : 0)
+
+#define __log_notice(p, args...)                                \
+    ((oasys::__log_enabled(oasys::LOG_NOTICE, (p))) ?           \
+     oasys::__logf(oasys::LOG_NOTICE, (p) , ## args) : 0)
+
 #define log_warn(p, args...)                                    \
     ((__log_enabled(oasys::LOG_WARN, (p))) ?                    \
      __logf(oasys::LOG_WARN, (p) , ## args) : 0)
@@ -533,7 +544,15 @@ __log_enabled(log_level_t level, const char* path)
     ((oasys::__log_enabled(oasys::LOG_CRIT, (p))) ?             \
      oasys::__logf(oasys::LOG_CRIT, (p) , ## args) : 0)
 
-// of course) for simplicity.
+#define log_always(p, args...)                                  \
+    ((__log_enabled(oasys::LOG_ALWAYS, (p))) ?                  \
+     __logf(oasys::LOG_ALWAYS, (p) , ## args) : 0)
+
+#define __log_always(p, args...)                                \
+    ((oasys::__log_enabled(oasys::LOG_ALWAYS, (p))) ?           \
+     oasys::__logf(oasys::LOG_ALWAYS, (p) , ## args) : 0)
+
+// Include Logger.h for simplicity.
 #include "Logger.h"
 
 #endif /* _OASYS_LOG_H_ */
