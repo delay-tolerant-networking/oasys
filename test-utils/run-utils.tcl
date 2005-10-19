@@ -475,6 +475,17 @@ proc collect_logs {} {
 	dbg "* $hostname:$i cores = $cores"
 	dbg "* $hostname:$i logs = $logs"
 
+	foreach l $logs {
+	    set contents [run_cmd $hostname cat $l]
+	    set contents [string trim $contents]
+	    if {[string length $contents] != 0} {
+		puts "***"
+		puts "*** $hostname:$i [file tail $l]:"
+		puts "***"
+		puts $contents
+	    }
+	}
+
 	foreach c $cores {
 	    if [net::is_localhost $hostname] {
 		set cp "cp "
@@ -485,17 +496,6 @@ proc collect_logs {} {
 	    set clocal $opt(logdir)/$i-$hostname-[file tail $c]
 	    puts "error: found core file $c (copying to $clocal)"
 	    eval exec $cp$c $clocal
-	}
-
-	foreach l $logs {
-	    set contents [run_cmd $hostname cat $l]
-	    set contents [string trim $contents]
-	    if {[string length $contents] != 0} {
-		puts "***"
-		puts "*** $hostname:$i [file tail $l]:"
-		puts "***"
-		puts $contents
-	    }
 	}
     }
 }
