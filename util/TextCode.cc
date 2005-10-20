@@ -86,4 +86,63 @@ TextCode::textcodify()
     buf_.append("\n");
 }
 
+//----------------------------------------------------------------------------
+TextUncode::TextUncode(const char* input_buf, size_t length,
+                       ExpandableBuffer* buf)
+    : input_buf_(input_buf), 
+      length_(length), 
+      buf_(buf, false), 
+      cur_(input_buf), 
+      error_(false)
+{
+    textuncodify();
+}
+
+//----------------------------------------------------------------------------
+void
+TextUncode::textuncodify()
+{
+    // each line is {\t}*textcoded stuff\n
+    while (true) {
+        if (! in_buffer()) {
+            error_ = true;
+            return;
+        }
+
+        if (*cur_ == '') {
+            break;
+        }
+
+        if (*cur_ == '\t' || *cur_ == '\n') {
+            ++cur_;
+            continue;
+        }
+        
+        if (*cur_ == '\\') {
+            if (!in_buffer(1)) {
+                error_ = true;
+                return;
+            }
+            
+            if (cur_[1] == '\\') {
+                buf_.append('\\');
+                cur_ += 2;
+                continue;
+            }
+            
+            if (!in_buffer(3)) {
+                error_ = true;
+                return;
+            }
+
+            ++cur_;
+            int value = strtol(cur_, 0, 16);
+            buf_.append(static_cast<char>(value));
+        } else {
+            buf_.append(*cur_);
+            ++cur_;
+        }
+    }
+}
+
 } // namespace oasys

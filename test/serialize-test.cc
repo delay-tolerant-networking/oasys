@@ -122,7 +122,7 @@ int CompareTest(bool crc) {
 
     ASSERT(o1.equals(o2));
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(CompareTest_NOCRC) {
@@ -149,7 +149,7 @@ DECLARE_TEST(SizeTest) {
     sizer2.action(&o);
     CHECK_EQUAL(sizer2.size(), sz + 4);
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(NullStringTest1) {
@@ -162,7 +162,7 @@ DECLARE_TEST(NullStringTest1) {
     uv.action(&id);
     CHECK(strcmp(test, id.value()) == 0);
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(NullStringTest2) {
@@ -177,7 +177,7 @@ DECLARE_TEST(NullStringTest2) {
     uv.action(&id);
     CHECK(strcmp(test, id.value()) == 0);
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(TextSerializeTest1) {
@@ -189,7 +189,7 @@ DECLARE_TEST(TextSerializeTest1) {
 
     log_info("%s", (const char*)buf.buf());
         
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 struct TestObject : oasys::SerializableObject {
@@ -198,10 +198,14 @@ struct TestObject : oasys::SerializableObject {
     void serialize(oasys::SerializeAction* action) {
         action->process("int32", &int32_);
         action->process("int16", &int16_);
-        action->process("int8", &int8_);
+        action->process("int8",  &int8_);
+        action->process("str",   &str_);
         
         action->process("next_exists", &next_exists_);
         if (next_exists_) {
+            if (action->action_code() == oasys::Serialize::UNMARSHAL) {
+                next_ = new TestObject;
+            }
             action->process("next", next_);
         }
     }
@@ -209,8 +213,10 @@ struct TestObject : oasys::SerializableObject {
     u_int32_t int32_;
     u_int32_t int16_;
     u_int32_t int8_;
-    bool      next_exists_;
 
+    std::string str_;
+
+    bool      next_exists_;
     TestObject* next_;
 };
 
@@ -221,11 +227,21 @@ DECLARE_TEST(TextSerializeTest2) {
     obj1.int32_ = 1111;
     obj1.int16_ = 123;
     obj1.int8_  = 5;
-    
+    obj1.str_   = "this is a string of great ambition";
+
     TextMarshal marshal(Serialize::CONTEXT_LOCAL, &buf);
     marshal.action(&obj1);
 
-    log_info("/test", "%s", (const char*)buf.buf());
+    char m_txt[] = "# -- text marshal start --\n"
+                   "int32: 1111\n"
+                   "int16: 123\n"
+                   "int8: 5\n"
+                   "str: TextCode\n"
+                   "\tthis is a string of great ambition\n"
+                   "\t\n"
+                   "next_exists: false\n";
+    CHECK(memcmp(buf.buf(), m_txt, strlen(m_txt)) == 0);
+    // log_info("/test", "%s", (const char*)buf.buf());
 
     const char* txt = "# -- text marshal start --\n"
                       "# comment\n"
@@ -233,23 +249,44 @@ DECLARE_TEST(TextSerializeTest2) {
                       "int32: 1111\n"
                       "\t\tint16: 123\n"
                       "int8: 5\n"
+                      "str: TextCode\n"
+                      "this is a string of great \n"
+                      "ambi\n"
+                      "tion\n"
+                      "\n"
+                      "next_exists: true\n"
+                      "next: SerializableObject\n"
+                      "int32: 2222\n"
+                      "int16: 1234\n"
+                      "int8: 24\n"
+                      "str: TextCode\n"
+                      "hello, world\n"
+                      "\n"
                       "next_exists: false\n";
 
     TestObject obj2;
     TextUnmarshal unmarshal(Serialize::CONTEXT_LOCAL, (u_char*)txt, strlen(txt));
 
-    unmarshal.action(&obj2);
+    CHECK(unmarshal.action(&obj2) == 0);
                
     CHECK(obj2.int32_ == 1111);
     CHECK(obj2.int16_ == 123);
     CHECK(obj2.int8_  == 5);
+    CHECK(obj2.str_   == "this is a string of great ambition");
+    CHECK(obj2.next_exists_  == true);
 
-    return 0;
+    CHECK(obj2.next_->int32_ == 2222);
+    CHECK(obj2.next_->int16_ == 1234);
+    CHECK(obj2.next_->int8_  == 24);
+    CHECK(obj2.next_->str_   == "hello, world");    
+    CHECK(obj2.next_->next_exists_ == false);
+    
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(TextSerializeTest3) {
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 

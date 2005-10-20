@@ -62,6 +62,7 @@ public:
     void process(const char* name, u_char* bp, size_t len);
     void process(const char* name, u_char** bp, size_t* lenp, int flags);
     void process(const char* name, std::string* s);
+    void process(const char* name, SerializableObject* object);
     //! @}
 
 private:
@@ -71,7 +72,9 @@ private:
     
     bool is_within_buf(size_t offset);
     int  get_line(char** end);
+    int  match_fieldname(const char* field_name, char* eol);
     int  get_num(const char* field_name, u_int32_t* num);
+    int  get_textcode(ExpandableBuffer* buf);
 };
 
 } // namespace oasys

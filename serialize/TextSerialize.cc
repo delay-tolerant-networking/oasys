@@ -112,6 +112,7 @@ TextMarshal::process(const char* name, std::string* s)
                    40, indent_ + 1);
 }
 
+//----------------------------------------------------------------------------
 void 
 TextMarshal::process(const char* name, SerializableObject* object)
 {
@@ -193,6 +194,32 @@ TextUnmarshal::process(const char* name, bool* b)
 {
     if (error_) 
         return;
+
+    char* eol;
+    if (get_line(&eol) != 0) {
+        error_ = true;
+        return;
+    }
+    ASSERT(*eol == '\n');
+
+    if (match_fieldname(name, eol) != 0)
+        return;
+    
+    if (!is_within_buf(4)) {
+        error_ = true;
+        return;
+    }
+    
+    if (memcmp(cur_, "true", 4) == 0) {
+        *b = true;
+        cur_ = eol + 1;
+    } else if (memcmp(cur_, "fals", 4) == 0) {
+        *b = false;
+        cur_ = eol + 1;
+    } else {
+        error_ = true;
+        return;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -201,6 +228,36 @@ TextUnmarshal::process(const char* name, u_char* bp, size_t len)
 {
     if (error_) 
         return;
+    
+    char* eol;
+    if (get_line(&eol) != 0) {
+        error_ = true;
+        return;
+    }
+
+    if (match_fieldname(name, eol) != 0) {
+        error_ = true;
+        return;        
+    }
+
+    cur_ = eol + 1;
+    if (! is_within_buf(0)) {
+        error_ = true;
+        return;        
+    }
+    
+    ScratchBuffer<char*, 1024> scratch;
+    if (get_textcode(&scratch) != 0) {
+        error_ = true;
+        return;        
+    }
+
+    if (len != scratch.len()) {
+        error_ = true;
+        return;                
+    }
+    
+    memcpy(bp, scratch.buf(), len);
 }
 
 //----------------------------------------------------------------------------
@@ -218,14 +275,68 @@ TextUnmarshal::process(const char* name, std::string* s)
 {
     if (error_) 
         return;
+    
+    char* eol;
+    if (get_line(&eol) != 0) {
+        error_ = true;
+        return;
+    }
+
+    if (match_fieldname(name, eol) != 0) {
+        error_ = true;
+        return;        
+    }
+
+    cur_ = eol + 1;
+    if (! is_within_buf(0)) {
+        error_ = true;
+        return;        
+    }
+    
+    ScratchBuffer<char*, 1024> scratch;
+    if (get_textcode(&scratch) != 0) {
+        error_ = true;
+        return;        
+    }
+
+    *s = std::string(scratch.buf(), scratch.len());
 }
 
+//----------------------------------------------------------------------------
+void 
+TextUnmarshal::process(const char* name, SerializableObject* object)
+{
+    if (error_)
+        return;
+    
+    char* eol;
+    if (get_line(&eol) != 0) {
+        error_ = true;
+        return;
+    }
+
+    if (match_fieldname(name, eol) != 0) {
+        error_ = true;
+        return;
+    }
+    
+    cur_ = eol + 1;
+    if (! is_within_buf(0)) {
+        error_ = true;
+        return;
+    }
+
+    object->serialize(this);
+}
+
+//----------------------------------------------------------------------------
 bool 
 TextUnmarshal::is_within_buf(size_t offset)
 {
     return cur_ + offset < buf_ + length_;
 }
 
+//----------------------------------------------------------------------------
 int  
 TextUnmarshal::get_line(char** end)
 {
@@ -250,18 +361,11 @@ TextUnmarshal::get_line(char** end)
     return 0;
 }
 
-int
-TextUnmarshal::get_num(const char* field_name, u_int32_t* num)
-{
-    // expecting {\t}* field_name: num\n
-    char* eol;
-    if (get_line(&eol) != 0) {
-        error_ = true;
-        return -1;
-    }
-
-    ASSERT(*eol == '\n');
-    
+//----------------------------------------------------------------------------
+int  
+TextUnmarshal::match_fieldname(const char* field_name, char* eol)
+{   
+    // expecting {\t}* field_name: num\n 
     char* field_name_ptr = 0;
     while (is_within_buf(0) && *cur_ != ':') {
         if (*cur_ != '\t' && *cur_ != ' ' && field_name_ptr == 0)
@@ -284,7 +388,24 @@ TextUnmarshal::get_num(const char* field_name, u_int32_t* num)
         error_ = true;
         return -1;
     }
+    
+    return 0;
+}
 
+//----------------------------------------------------------------------------
+int
+TextUnmarshal::get_num(const char* field_name, u_int32_t* num)
+{
+    char* eol;
+    if (get_line(&eol) != 0) {
+        error_ = true;
+        return -1;
+    }
+
+    ASSERT(*eol == '\n');
+    if (match_fieldname(field_name, eol) != 0)
+        return -1;
+    
     *num = strtoul(cur_, &eol, 0);
     ASSERT(*eol == '\n');
     
@@ -293,59 +414,43 @@ TextUnmarshal::get_num(const char* field_name, u_int32_t* num)
     return 0;
 }
 
-/*
-//----------------------------------------------------------------------------
-TextMarshalSize(
-    context_t context,
-    int       options,
-    int       indent_incr
-    ) : SerializeAction(Serialize::INFO, context, options), 
-        indent_incr_(indent_incr)
-{}
-
-//----------------------------------------------------------------------------
-void 
-TextMarshalSize::process(const char* name, u_int32_t* i)
+int
+TextUnmarshal::get_textcode(ExpandableBuffer* buf)
 {
+    // find the ^L+1, which is the end of the text coded portion
+    size_t end_offset = 0;
+    while (true) {
+        if (!is_within_buf(end_offset)) {
+            error_ = true;
+            return -1;
+        }
+        
+        if (cur_[end_offset] == '') {
+            break;
+        }
+
+        ++end_offset;
+    }
+
+    ++end_offset;
+    if (!is_within_buf(end_offset)) {
+        error_ = true;
+        return -1;
+    }
+
+    ASSERT(cur_[end_offset] == '\n');
+
+    ScratchBuffer<char*, 1024> scratch;
+    TextUncode uncoder(cur_, end_offset, buf);
     
-}
+    if (uncoder.error()) {
+        error_ = true;
+        return -1;
+    }
 
-//----------------------------------------------------------------------------
-void 
-TextMarshalSize::process(const char* name, u_int16_t* i)
-{
+    cur_ += end_offset + 1;
+    
+    return 0;
 }
-
-//----------------------------------------------------------------------------
-void 
-TextMarshalSize::process(const char* name, u_int8_t* i)
-{
-}
-
-//----------------------------------------------------------------------------
-void 
-TextMarshalSize::process(const char* name, bool* b)
-{
-}
-
-//----------------------------------------------------------------------------
-void 
-TextMarshalSize::process(const char* name, u_char* bp, size_t len)
-{
-}
-
-//----------------------------------------------------------------------------
-void 
-TextMarshalSize::process(const char* name, u_char** bp, 
-                         size_t* lenp, int flags)
-{
-}
-
-//----------------------------------------------------------------------------
-void 
-TextMarshalSize::process(const char* name, std::string* s)
-{
-}
-*/
 
 } // namespace oasys

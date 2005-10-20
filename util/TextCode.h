@@ -80,6 +80,29 @@ private:
     void append(char c);
 };
 
+class TextUncode {
+public:
+    TextUncode(const char* input_buf, size_t length,
+               ExpandableBuffer* buf);
+
+    bool error() { return error_; }
+
+private:
+    const char* input_buf_;
+    size_t      length_;
+    
+    StringBuffer buf_;
+    const char*  cur_;
+
+    bool error_;
+
+    bool in_buffer(size_t offset = 0) { 
+        return cur_ + offset < input_buf_ + length_; 
+    }
+
+    void textuncodify();
+};
+
 } // namespace oasys
 
 #endif /* __TEXTCODE_H__ */
