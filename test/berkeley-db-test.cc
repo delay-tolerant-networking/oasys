@@ -134,7 +134,7 @@ DECLARE_TEST(DBTidy) {
     CHECK(table1 == 0);
     delete_z(store);
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(TableCreate) {
@@ -171,7 +171,7 @@ DECLARE_TEST(TableCreate) {
     delete_z(objtable);
     delete_z(store);
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(TableDelete) {
@@ -196,7 +196,7 @@ DECLARE_TEST(TableDelete) {
     delete_z(table);
     delete_z(store);
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(SingleTypePut) {
@@ -221,7 +221,7 @@ DECLARE_TEST(SingleTypePut) {
     delete_z(table);
     delete_z(store);
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(SingleTypeGet) {
@@ -263,7 +263,7 @@ DECLARE_TEST(SingleTypeGet) {
     delete_z(table);
     delete_z(store);
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(SingleTypeDelete) {
@@ -301,7 +301,7 @@ DECLARE_TEST(SingleTypeDelete) {
     delete_z(table);
     delete_z(store);
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(SingleTypeMultiObject) {
@@ -351,7 +351,7 @@ DECLARE_TEST(SingleTypeMultiObject) {
     delete_z(table);
     delete_z(store);
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(SingleTypeIterator) {
@@ -392,7 +392,7 @@ DECLARE_TEST(SingleTypeIterator) {
     delete_z(table);
     delete_z(store);
 
-    return 0;    
+    return UNIT_TEST_PASSED;    
 }
 
 DECLARE_TEST(MultiType) {

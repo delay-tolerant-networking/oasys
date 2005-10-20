@@ -72,7 +72,7 @@ DECLARE_TEST(HashSetSmokeTest) {
     CHECK(s.erase("xxx") == 0);
     CHECK(s.find("xxx") == s.end());
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(HashMapSmokeTest) {
@@ -109,7 +109,7 @@ DECLARE_TEST(HashMapSmokeTest) {
     CHECK(m.erase("xxx") == 0);
 
     
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(NullTerminationTest) {
@@ -124,7 +124,7 @@ DECLARE_TEST(NullTerminationTest) {
     m["abcd"] = 1;
     key[4] = 'x';
     CHECK(m.find(key) != m.end());
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 // This test case uses the BadHashMap which has an old bug in the
@@ -149,7 +149,7 @@ DECLARE_TEST(NullTerminationTestBug) {
     CHECK(bm.find(key) == bm.end());
     CHECK(bm.find(key.c_str()) != bm.end());
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TESTER(Test) {    

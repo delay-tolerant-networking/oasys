@@ -192,7 +192,7 @@ DECLARE_TEST(Init) {
 
     reset_data();
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 struct ReadRunner : public PipeIOTester {
@@ -608,11 +608,11 @@ struct WriteTestRunner : public PipeIOTester {
 };
                 
 // XXX/bowei finish these tests
-DECLARE_TEST(WriteTest)        { return 0; }
-DECLARE_TEST(WriteVTest)       { return 0; }
-DECLARE_TEST(WriteIntr)        { return 0; }
-DECLARE_TEST(WriteTimeout)     { return 0; }
-DECLARE_TEST(WriteTimeoutIntr) { return 0; }
+DECLARE_TEST(WriteTest)        { return UNIT_TEST_PASSED; }
+DECLARE_TEST(WriteVTest)       { return UNIT_TEST_PASSED; }
+DECLARE_TEST(WriteIntr)        { return UNIT_TEST_PASSED; }
+DECLARE_TEST(WriteTimeout)     { return UNIT_TEST_PASSED; }
+DECLARE_TEST(WriteTimeoutIntr) { return UNIT_TEST_PASSED; }
 
 DECLARE_TESTER(IoBasicTester) {
     ADD_TEST(Init);

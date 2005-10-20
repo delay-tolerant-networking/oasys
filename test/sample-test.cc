@@ -41,11 +41,11 @@
 using namespace oasys;
 
 DECLARE_TEST(ATest) {
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(AnotherTest) {
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(InputTest) {

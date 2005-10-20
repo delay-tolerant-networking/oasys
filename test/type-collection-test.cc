@@ -130,7 +130,7 @@ DECLARE_TEST(TypeCollection1) {
     CHECK_EQUALSTR(foo->name(), "foo");
     CHECK(dynamic_cast<Foo*>(foo) != NULL);
     
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 
@@ -143,7 +143,7 @@ DECLARE_TEST(TypeCollection2) {
     CHECK_EQUALSTR(bar->name(), "bar");
     CHECK(dynamic_cast<Bar*>(bar) != NULL);
     
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(TypeCollectionBogusCode) {
@@ -152,7 +152,7 @@ DECLARE_TEST(TypeCollectionBogusCode) {
           TypeCollectionErr::TYPECODE);
     CHECK(obj == 0);
     
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(TypeCollectionMismatchCode) {
@@ -162,7 +162,7 @@ DECLARE_TEST(TypeCollectionMismatchCode) {
           TypeCollectionErr::TYPECODE);
     CHECK(foo == 0);
     
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(TypeCollectionGroup) {
@@ -175,7 +175,7 @@ DECLARE_TEST(TypeCollectionGroup) {
     CHECK_EQUALSTR(obj->name(), "foo");
     CHECK(dynamic_cast<Foo*>(obj) != NULL);
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(TypeCollectionNotInGroup) {
@@ -185,7 +185,7 @@ DECLARE_TEST(TypeCollectionNotInGroup) {
           TypeCollectionErr::TYPECODE);
     CHECK(obj == 0);
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(TypeCollectionNames) {
@@ -194,7 +194,7 @@ DECLARE_TEST(TypeCollectionNames) {
     CHECK_EQUALSTR(TypeCollectionInstance<TestC>::instance()->type_name(2),
 	           "TestC::Bar");
     
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(MultipleInheritance) {
@@ -215,7 +215,7 @@ DECLARE_TEST(MultipleInheritance) {
 	    ==
 	   (reinterpret_cast<int>(static_cast<Obj*>(baz))) );
 
-    return 0;
+    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TESTER(TypeCollectionTest) {
