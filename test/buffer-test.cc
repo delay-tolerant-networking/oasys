@@ -131,7 +131,42 @@ DECLARE_TEST(StringBuffer1) {
     CHECK_EQUALSTR(buf.c_str(), scratch);
     CHECK(strlen(buf.c_str()) == 256);    
 
-    buf.appendf("this is a story %s %s", "of", "a");
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(StringBuffer2) {
+    StringBuffer buf(10);
+    char scratch[4096];
+    char* ptr = scratch;
+    
+    memset(scratch, 0, 4096);
+
+    for (int i=0; i<40; ++i) {
+        buf.appendf("You are in a twisty maze of passages, all alike.");
+        ptr += sprintf(ptr, "You are in a twisty maze of passages, all alike.");
+    }
+    
+    CHECK_EQUALSTR(buf.c_str(), scratch);
+
+    return UNIT_TEST_PASSED;
+}
+
+
+DECLARE_TEST(StringBuffer3) {
+    StringBuffer buf(10);
+    char scratch[1024];
+    char* ptr = scratch;
+    
+    memset(scratch, 0, 1024);
+
+    for (int i=0; i<20; ++i) {
+        buf.append("xyzzy");
+        buf.append('c');
+        ptr += sprintf(ptr, "xyzzy");
+        *ptr++ = 'c';
+    }
+    
+    CHECK_EQUALSTR(buf.c_str(), scratch);
 
     return UNIT_TEST_PASSED;
 }
@@ -141,6 +176,8 @@ DECLARE_TESTER(Test) {
     ADD_TEST(ExpandableBuffer2);
     ADD_TEST(ScratchBuffer1);
     ADD_TEST(StringBuffer1);
+    ADD_TEST(StringBuffer2);
+    ADD_TEST(StringBuffer3);
 }
 
 DECLARE_TEST_FILE(Test, "buffer test");
