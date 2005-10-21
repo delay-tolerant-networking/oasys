@@ -32,15 +32,12 @@ struct ExpandableBuffer {
     /*!
      * Reserve buffer space.
      *
-     * @param size The size of the buffer desired. Default is double
-     *     the size.
+     * @param size The size of the buffer desired
      *
      * @return 0 on success.
      */
-    virtual void reserve(size_t size = 0) {
-        if (size == 0) {
-            size = (buf_len_ == 0) ? 32 : (buf_len_ * 2);
-        }        
+    virtual void reserve(size_t size) {
+        ASSERT(size != 0);
 
         if (size > buf_len_) {
             buf_ = static_cast<char*>(realloc(buf_, size));

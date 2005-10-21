@@ -50,8 +50,9 @@ StringBuffer::StringBuffer(size_t initsz, const char* initstr)
 {
     buf_ = new ExpandableBuffer();
     ASSERT(buf_ != 0);
-    
-    buf_->reserve((initsz == 0) ? 256 : initsz);
+
+    ASSERT(initsz != 0);
+    buf_->reserve(initsz);
 
     if (initstr) {
         append(initstr);
@@ -94,7 +95,10 @@ StringBuffer::c_str() const
     // to count it, just like std::string
     if (buf_->len() == 0 || (*buf_->at(buf_->len() - 1) != '\0'))
     {
-        buf_->reserve(buf_->len() + 1);
+        if (buf_->nfree() == 0) {
+            buf_->reserve(buf_->len() + 1);
+        }
+        
         *buf_->end() = '\0';
     }
     
@@ -132,7 +136,8 @@ size_t
 StringBuffer::vappendf(const char* fmt, va_list ap)
 {
     if (buf_->nfree() == 0) {
-        buf_->reserve();
+        ASSERT(buf_->buf_len() != 0);
+        buf_->reserve(buf_->buf_len() * 2);
     }
     
     int ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
@@ -147,7 +152,7 @@ StringBuffer::vappendf(const char* fmt, va_list ap)
         // described above, since glibc version 2.1. Until glibc 2.0.6
         // they would return -1 when the output was truncated.
         do {
-            buf_->reserve();
+            buf_->reserve(buf_->buf_len() * 2);
             ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
         } while(ret == -1);
         
