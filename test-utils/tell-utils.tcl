@@ -129,12 +129,12 @@ namespace eval tell {
 	    return $result
 	} else {
 	    set eol [string first "\n" $result]
-	    set errorInfo  [string range $result $eol end]
+	    set info  [string range $result $eol end]
 	    if {$result == ""} {
 		set result "(no additional information)"
 	    }
-	    puts "tell error '$result' '$errorInfo'"
-	    error $result $errorInfo
+	    puts "tell error '$result' '$info'"
+	    error $result $info
 	}
     }
 
