@@ -108,7 +108,6 @@ namespace eval tell {
 	set tell::results($host:$port) ""
 	while {$tell::results($host:$port) == ""} {
 	    vwait tell::results($host:$port)
-	    puts "tell::tell returned from vwait $host:$port"
 	}
 
 	# cancel the timer (if it exists)
