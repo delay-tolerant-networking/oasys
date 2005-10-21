@@ -11,7 +11,10 @@ proc get_rundir {hostname id} {
     global opt
     
     if {$opt(local_rundir) && $hostname == "localhost"} {
-	return "[pwd]/run-$id"
+	set cwd [pwd]
+	# XXX/demmer cygwin hack
+	regsub -- {C:} $cwd {/cygdrive/c} cwd
+	return "$cwd/run-$id"
     } else {
 	return $opt(rundir_prefix)-$hostname-$id
     }
