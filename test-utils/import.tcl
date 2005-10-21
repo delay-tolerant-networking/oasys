@@ -41,5 +41,5 @@ proc import {script} {
     }
 
     lappend $import::scripts $script
-    source [import_find $script]
+    uplevel \#0 source [import_find $script]
 }

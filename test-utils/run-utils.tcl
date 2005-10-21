@@ -3,7 +3,6 @@
 # Try to set up a signal handler for Control-C, which requires the
 # Tclx package
 if [catch {
-    
     package require Tclx
     if {[info procs log] != ""} {
 	rename log tclx_log
@@ -174,7 +173,7 @@ proc init {argv} {
     }
     
     puts "* Reading test script $test_script"
-    source $test_script
+    uplevel \#0 source $test_script
 
     puts "* Distributing files"
     dist::files $manifest::manifest [net::hostlist] [pwd] \
