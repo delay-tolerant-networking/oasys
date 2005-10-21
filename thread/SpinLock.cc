@@ -67,7 +67,9 @@ SpinLock::lock(const char* lock_user)
 #ifndef NDEBUG
         atomic_incr(&total_spins_);
         if (++nspins > 1000000) {
-            PANIC("SpinLock reached spin limit");
+            fprintf(stderr, "warning: spin lock held by %s reached spin limit",
+                    lock_holder_name_);
+            nspins = 0;
         }
 #endif
     }
