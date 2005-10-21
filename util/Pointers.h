@@ -49,6 +49,48 @@ private:
     _Class* ptr_;
 };
 
+/**
+ * Similar idea but for a malloc'd buffer.
+ */
+class ScopeMalloc {
+public:
+    ScopeMalloc(void* ptr = 0) : ptr_(ptr) {}
+    
+    ~ScopeMalloc() {
+        if (ptr_) {
+            free(ptr_);
+            ptr_ = 0;
+        }
+    }
+
+    /**
+     * Assignment operator that ensures there is no currently assigned
+     * pointer before claiming the given one.
+     */
+    ScopeMalloc& operator=(void* ptr) {
+        ASSERT(ptr_ == NULL);
+        ptr_ = ptr;
+        return *this;
+    }
+    
+    /**
+     * This construction basically allows you to pass the ptr_ to a
+     * double pointer taking function, cleaning up the syntax quite a
+     * bit.
+     */
+    void*& ptr() { return ptr_; }
+
+    /**
+     * Not implemented on purpose. Don't handle assignment to another
+     * ScopeMalloc
+     */
+    ScopeMalloc& operator=(const ScopeMalloc&); 
+    
+private:
+    void* ptr_;
+};
+
+
 } // namespace oasys
 
 #endif //__POINTERS_H__
