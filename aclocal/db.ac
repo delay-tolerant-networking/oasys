@@ -182,6 +182,9 @@ AC_DEFUN(AC_OASYS_FIND_DB, [
     done
     done
 
+    AC_DEFINE_UNQUOTED(BERKELEY_DB_VERSION, $ac_dbver, 
+        [configured version of berkeley db])
+
     CPPFLAGS="$ac_save_CPPFLAGS"
     LDFLAGS="$ac_save_LDFLAGS"
     LIBS="$ac_save_LIBS"

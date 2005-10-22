@@ -1,8 +1,39 @@
 dnl
 dnl Figure out which version of gcc/g++ to use.
 dnl
-
 AC_DEFUN(AC_OASYS_CONFIG_GCC, [
+    dnl
+    dnl Handle --with-cc=CC
+    dnl
+    ac_with_cc=$CC
+    AC_ARG_WITH(cc,
+        AC_HELP_STRING([--with-cc=CC],
+    		   [name (or path) of the C compiler to use]),
+                       ac_with_cc=$withval)
+    
+    if test x$ac_with_cc = x ; then
+        ac_try_cc="gcc gcc-3.3 gcc-3.2 gcc-2.96 gcc296 gcc-2.95 gcc295"
+        ac_try_cxx="g++ g++-3.3 g++-3.2 g++-2.96 g++296 g++-2.95 g++295"
+    else
+        CC=$ac_with_cc
+        ac_try_cc=$ac_with_cc
+        ac_try_cxx=`echo $ac_with_cc | sed 's/cc/++/'`
+    fi
+
+    dnl
+    dnl Check that the compiler specified works
+    dnl
+    AC_MSG_CHECKING([for a C compiler (trying $ac_try_cc)])
+    AC_MSG_RESULT([])
+    AC_PROG_CC($ac_try_cc)
+    AC_MSG_CHECKING([for a C++ compiler (trying $ac_try_cxx)])
+    AC_MSG_RESULT([])
+    AC_PROG_CXX($ac_try_cxx)
+    AC_PROG_GCC_TRADITIONAL
+
+    dnl
+    dnl Figure out the version and set version-specific options
+    dnl
     AC_CACHE_CHECK(for the version of the gcc compiler, oasys_cv_prog_gccver, [
       oasys_cv_prog_gccver=`$CC --version | head -1`
       oasys_cv_prog_gccver=`echo $oasys_cv_prog_gccver | sed 's/.*gcc.*(GCC) //'`
