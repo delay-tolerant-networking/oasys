@@ -39,8 +39,13 @@
 #ifndef __BERKELEY_TABLE_STORE_H__
 #define __BERKELEY_TABLE_STORE_H__
 
+#include "config.h"
 #include <map>
 #include <db.h>
+
+#if DB_VERSION_MAJOR != 4
+#error "must use Berkeley DB major version 4"
+#endif
 
 #include "../debug/Logger.h"
 #include "../thread/Mutex.h"
@@ -107,9 +112,16 @@ private:
     int release_table(const std::string& table);
     /// @}
 
-    /// DB internal error log callback
-    static void db_errcall(const DB_ENV* dbenv, const char* errpfx,
+    /// DB internal error log callback (unfortunately, the function
+    /// signature changed between 4.2 and 4.3)
+
+#if DB_VERSION_MINOR >= 3
+    static void db_errcall(const DB_ENV* dbenv,
+                           const char* errpfx,
                            const char* msg);
+#else
+    static void db_errcall(const char* errpfx, char* msg);
+#endif
     
     /// DB internal panic callback
     static void db_panic(DB_ENV* dbenv, int errval);

@@ -389,12 +389,24 @@ BerkeleyDBStore::release_table(const std::string& table)
     return ref_count_[table];
 }
 
+#if DB_VERSION_MINOR >= 3
 void
-BerkeleyDBStore::db_errcall(const DB_ENV* dbenv, const char* errpfx,
+BerkeleyDBStore::db_errcall(const DB_ENV* dbenv,
+                            const char* errpfx,
                             const char* msg)
 {
     __log_err("/storage/berkeleydb", "DB internal error: %s", msg);
 }
+
+#else
+
+void
+BerkeleyDBStore::db_errcall(const char* errpfx, char* msg)
+{
+    __log_err("/storage/berkeleydb", "DB internal error: %s", msg);
+}
+
+#endif
 
 void
 BerkeleyDBStore::db_panic(DB_ENV* dbenv, int errval)
