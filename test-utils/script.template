@@ -31,7 +31,7 @@ case $CHOICE in
 	echo "stderr was redirected to $EXEC_FILE.out" >> $EXEC_FILE.err
 	;;
     "1 0 1")
-	CMD="valgrind --tool=memcheck --leak-check=yes -v \
+	CMD="valgrind --tool=memcheck --leak-check=yes -v --num-callers=8 \
                $RUN_DIR/$EXEC_FILE $EXEC_OPTS 2>&1 | tee -a $EXEC_FILE.out"
 	echo "stderr was redirected to $EXEC_FILE.out" >> $EXEC_FILE.err
 	;;
@@ -44,7 +44,7 @@ case $CHOICE in
 	       2>>$RUN_DIR/$EXEC_FILE.err >>$RUN_DIR/$EXEC_FILE.out "
 	;;
     "0 0 1")
-	CMD="valgrind --tool=memcheck --leak-check=yes -v \
+	CMD="valgrind --tool=memcheck --leak-check=yes -v --num-callers=8 \
                $RUN_DIR/$EXEC_FILE $EXEC_OPTS \
 	       2>>$RUN_DIR/$EXEC_FILE.err >>$RUN_DIR/$EXEC_FILE.out"
 	;;
