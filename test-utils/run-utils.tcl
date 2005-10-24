@@ -285,56 +285,64 @@ proc run {id exec_file exec_opts confname conf exec_env} {
 
     set run::dirs($id) [dist::get_rundir $hostname $id]
     set script "$run::dirs($id)/run-$exec_file.sh"
-    set geometry $opt(geometry)
+
+    if {$opt(geometry) != ""} {
+	set geometry "-geometry $opt(geometry)"
+    } else {
+	set geometry ""
+    }
 
     puts "* Running $exec_file on $hostname:$id"
+
+    # XXX/demmer get rid of the run::xterm useless vars
     
-    # NB: When running in an xterm, the PID collected is the PID of
-    # the local xterm instance, not the remote process instance
     switch "[net::is_localhost $hostname] $opt(xterm)" {
 	"1 1" {
-	    set exec_pid [run_cmd localhost xterm -title "$hostname-$id" \
-		    -geometry $geometry -e $script &]
-	    lappend run::pids($id) $exec_pid
+	    set cmd "xterm -title \"$hostname-$id\" $geometry \
+		    -e $script"
 	    set run::xterm($id) 1
-	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
 	"0 1" {
-	    set exec_pid [run_cmd localhost  xterm -title "$hostname - $id" \
-		    -geometry $geometry -e ssh -t $hostname $script &]
-	    lappend run::pids($id) $exec_pid
+	    set cmd "xterm -title \"$hostname - $id\" $geometry \
+		    -e ssh -t $hostname $script"
 	    set run::xterm($id) 1
-	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
 	"1 0" {
-	    set exec_pid [run_cmd localhost sh $script &]
-	    lappend run::pids($id)  $exec_pid
+	    set cmd "sh $script < /dev/null"
 	    set run::xterm($id) 0
-	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
 	"0 0" {
-	    set exec_pid [run_cmd $hostname sh $script &]
-	    lappend run::pids($id) $exec_pid
+	    set cmd "ssh $hostname sh $script < /dev/null"
 	    set run::xterm($id) 0
-	    dbg "% $hostname:$id $exec_file instance is PID $exec_pid"
 	}
     }
+
+    dbg "% $hostname:$id exec $exec_file -- cmd '$cmd'"
+    eval exec $cmd &
+
+    do_until "getting exec pid" 10000 {
+	if {![catch {
+	    set exec_pid [run_cmd $hostname cat $run::dirs($id)/$exec_file.pid]
+	} err]} {
+	    return
+	}
+	after 500
+    }
+
+    dbg "% $hostname:$id exec $exec_file -- pid $exec_pid'"
+    
+    run_cmd $hostname /bin/rm -f $run::dirs($id)/$exec_file.pid
+    
+    lappend run::pids($id) $exec_pid
     return $exec_pid
 }
 
 #
-# Check if the given pid is alive on the specified host id
+# Check if the given pid is alive on the specified hostname
 #
-proc check_pid {id pid} {
-    global net::host run::xterm tcl_platform
+proc check_pid {hostname pid} {
+    global net::host tcl_platform
     
-    # all xterm pid actions are local
-    if {$run::xterm($id)} {
-	set hostname localhost
-    } else {
-	set hostname $net::host($id)
-    }
-
     if {$tcl_platform(platform) != "windows"} {
 	if {[catch {run_cmd $hostname ps h -p $pid} err]} {
 	    return 0
@@ -359,8 +367,9 @@ proc check_pid {id pid} {
 # Wait for the PID to exit
 #
 proc wait_for_pid_exit {id pid {timeout 30000}} {
+    global net::host
     do_until "waiting for PID $pid to exit" $timeout {
-	if {![check_pid $id $pid]} {
+	if {![check_pid $net::host($id) $pid]} {
 	    return
 	}
 	after 1000
@@ -368,18 +377,9 @@ proc wait_for_pid_exit {id pid {timeout 30000}} {
 }
 
 #
-# Check if the given pid is alive on the specified host id
+# Check if the given pid is alive on the specified hostname
 #
-proc kill_pid {id pid signal} {
-    global net::host run::xterm
-
-    # all xterm pid actions are local
-    if {$run::xterm($id)} {
-	set hostname localhost
-    } else {
-	set hostname $net::host($id)
-    }
-
+proc kill_pid {hostname pid signal} {
     return [catch {run_cmd $hostname kill -s $signal $pid} err]
 }
 
@@ -407,16 +407,19 @@ proc wait_for_programs {{timeout 5000}} {
 		    continue
 		}
 
+		dbg "% pids on $hostname:$i: $run::pids($i)"
 		foreach pid $run::pids($i) {
-		    if {[check_pid $i $pid]} {
+		    if {[check_pid $hostname $pid]} {
 			dbg "% $hostname:$i pid $pid still alive"
 			if {$signal != "none"} {
 			    puts "* ERROR: pid $pid on host $hostname:$i\
 				    still alive"
 			    puts "* ERROR: sending $signal signal"
-			    kill_pid $i $pid $signal
+			    kill_pid $hostname $pid $signal
 			}
 			lappend livepids $pid
+		    } else {
+			dbg "% $hostname:$i pid $pid exited"
 		    }
 		}
 

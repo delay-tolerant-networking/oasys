@@ -26,42 +26,50 @@ cd $RUN_DIR
 CHOICE="${XTERM} ${GDB} ${VALGRIND}"
 case $CHOICE in
     "1 1 0")
-	CMD="gdb $RUN_DIR/$EXEC_FILE -x run-$EXEC_FILE.gdb 2>&1 | \
-               tee -a $EXEC_FILE.out"
+	CMD="gdb $RUN_DIR/$EXEC_FILE -x run-$EXEC_FILE.gdb"
+	IN="</dev/stdin"
+	OUT="| tee -a $EXEC_FILE.out 2>&1"
 	echo "stderr was redirected to $EXEC_FILE.out" >> $EXEC_FILE.err
 	;;
     "1 0 1")
 	CMD="valgrind --tool=memcheck --leak-check=yes -v --num-callers=8 \
-               $RUN_DIR/$EXEC_FILE $EXEC_OPTS 2>&1 | tee -a $EXEC_FILE.out"
+               $RUN_DIR/$EXEC_FILE $EXEC_OPTS"
+	IN="</dev/stdin"
+	OUT="| tee -a $EXEC_FILE.out 2>&1"
 	echo "stderr was redirected to $EXEC_FILE.out" >> $EXEC_FILE.err
 	;;
     "1 0 0") 
-	CMD="$RUN_DIR/$EXEC_FILE $EXEC_OPTS 2>&1 | tee -a $EXEC_FILE.out"
+	CMD="$RUN_DIR/$EXEC_FILE $EXEC_OPTS"
+	IN="</dev/stdin"
+	OUT="| tee -a $EXEC_FILE.out 2>&1"
 	echo "stderr was redirected to $EXEC_FILE.out" >> $EXEC_FILE.err
 	;;
     "0 1 0")
-	CMD="gdb -batch -x run-test.gdb $GDB_OPTS $RUN_DIR/$EXEC_FILE \
-	       2>>$RUN_DIR/$EXEC_FILE.err >>$RUN_DIR/$EXEC_FILE.out "
+	CMD="gdb -batch -x run-test.gdb $GDB_OPTS $RUN_DIR/$EXEC_FILE"
+	IN=""
+	OUT=">>$RUN_DIR/$EXEC_FILE.out 2>&1"
 	;;
     "0 0 1")
 	CMD="valgrind --tool=memcheck --leak-check=yes -v --num-callers=8 \
-               $RUN_DIR/$EXEC_FILE $EXEC_OPTS \
-	       2>>$RUN_DIR/$EXEC_FILE.err >>$RUN_DIR/$EXEC_FILE.out"
+               $RUN_DIR/$EXEC_FILE $EXEC_OPTS"
+	IN=""
+	OUT=">>$RUN_DIR/$EXEC_FILE.out 2>&1"
 	;;
     "0 0 0")
-	CMD="$RUN_DIR/$EXEC_FILE $EXEC_OPTS \
-	       2>>$RUN_DIR/$EXEC_FILE.err >>$RUN_DIR/$EXEC_FILE.out"
+	CMD="$RUN_DIR/$EXEC_FILE $EXEC_OPTS"
+	IN=""
+	OUT=">>$RUN_DIR/$EXEC_FILE.out 2>&1"
 	;;
     *) echo "! garbage arguments to run script"; exit ;;
 esac
 
+EXECCMD="( $CMD $IN & echo \$! > $RUN_DIR/$EXEC_FILE.pid ) $OUT"
+dbg "% $EXECCMD"
 
-dbg "% $CMD"
 if [ \( "$XTERM" = 1 \) -a \( "$PAUSE_AFTER" = 1 \) ]; then
-    eval $CMD
+    eval $EXECCMD
     echo
     read -s -n1 -p "== Hit any key to close xterm ==" keypress
 else
-    dbg "% $CMD"
-    eval exec $CMD
+    eval $EXECCMD
 fi
