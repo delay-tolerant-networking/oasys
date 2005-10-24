@@ -249,10 +249,10 @@ proc generate_script {id exec_file exec_opts confname conf exec_env} {
 proc run_cmd {hostname args} {
     if [net::is_localhost $hostname] {
 	dbg "% [join $args]"
-	return [eval exec $args]
+	return [eval exec $args < /dev/null]
     } else {
 	dbg "% ssh $hostname [join $args]"
-	return [eval exec ssh $hostname $args]
+	return [eval exec ssh $hostname $args < /dev/null]
     }
 }
 
