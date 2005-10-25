@@ -152,17 +152,19 @@ public:
     /**
      * Assignment function.
      */
-    void assign(_Type* o)
+    void assign(_Type* new_obj)
     {
-        if (object_ != o)
+        if (object_ != new_obj)
         {
-            if (o)
-                o->add_ref(what1_, what2_);
+            if (new_obj != 0) {
+                new_obj->add_ref(what1_, what2_);
+            }
             
-            if (object_)
+            if (object_ != 0) {
                 object_->del_ref(what1_, what2_);
-        
-            object_ = o;
+            }
+
+            object_ = new_obj;
         }
     }
 
