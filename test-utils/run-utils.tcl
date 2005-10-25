@@ -445,6 +445,23 @@ proc wait_for_programs {{timeout 5000}} {
     error "$num_alive pids still exist after sending all kill signals"
 }
 
+proc get_files {varname hostname dir pattern} {
+    upvar $varname var
+
+    set files ""
+    if {$hostname == "localhost"} {
+	set files [glob -nocomplain $dir/$pattern]
+    } else {
+	catch {
+	    set files [run_cmd $hostname ls -1 $dir/$pattern]
+	}
+    }
+
+    if {$files != ""} {
+	set var [concat $var [split $files]]
+    }
+}
+
 #
 # Collect the logs/cores left by all of the executing processes
 # 
@@ -469,10 +486,10 @@ proc collect_logs {} {
 	
 	set hostname $net::host($i)
 	set dir      $run::dirs($i)
-	
-	catch { set cores [concat $cores [split [run_cmd $hostname sh << "ls -1 $dir/*core*"]]] }
-	catch { set logs  [concat $logs  [split [run_cmd $hostname sh << "ls -1 $dir/*.out" ]]] }
-	catch { set logs  [concat $logs  [split [run_cmd $hostname sh << "ls -1 $dir/*.err" ]]] }
+
+	get_files cores $hostname $dir "*core*"
+	get_files logs  $hostname $dir "*.out"
+	get_files logs  $hostname $dir "*.err"
 	
 	dbg "* $hostname:$i cores = $cores"
 	dbg "* $hostname:$i logs = $logs"
