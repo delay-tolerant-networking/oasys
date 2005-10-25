@@ -50,7 +50,7 @@ namespace oasys {
  */
 class BufferedInput : public Logger {
 public:
-    BufferedInput(IOClient* client, const char* logbase = "/bufferedInput");
+    BufferedInput(IOClient* client, const char* logbase = "/BufferedInput");
     ~BufferedInput();
     
     /** 
@@ -131,7 +131,7 @@ private:
 
 class BufferedOutput : public Logger {
 public:
-    BufferedOutput(IOClient* client, const char* logbase = "/bufferedOutput");
+    BufferedOutput(IOClient* client, const char* logbase = "/BufferedOutput");
 
     /**
      * Write len bytes from bp. Output may be buffered. If len is zero,
