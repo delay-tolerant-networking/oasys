@@ -29,6 +29,7 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC, [
     AC_MSG_CHECKING([for a C++ compiler (trying $ac_try_cxx)])
     AC_MSG_RESULT([])
     AC_PROG_CXX($ac_try_cxx)
+    AC_PROG_CPP
     AC_PROG_GCC_TRADITIONAL
 
     dnl
