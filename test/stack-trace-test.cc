@@ -26,17 +26,16 @@ fork_to_die(const char* how) {
     return (ok == 0);
 }
 
+typedef void (*ill_function_t)();
+
 void
 ill_function()
 {
-    int a = 2;
-    int b = 3;
-    int c = 4;
-    int d = a + b + c;
-    d = d * 2;
+    char* p = (char*)malloc(1024);
+    memset(p, -1, 1024);
+    ill_function_t f = (ill_function_t)p;
+    f();
 }
-
-typedef void (*ill_function_t)();
 
 void
 die(const char* how)
@@ -65,9 +64,7 @@ die(const char* how)
     }
 
     if (!strcmp(how, "SIGILL")) {
-        void* p = malloc(1024);
-        ill_function_t f = (ill_function_t)p;
-        f();
+        ill_function();
     }
     
     if (!strcmp(how, "SIGFPE")) {
