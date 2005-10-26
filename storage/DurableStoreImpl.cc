@@ -57,6 +57,7 @@ DurableStoreImpl::prune_db_dir(const char* dir, int tidy_wait)
         sleep(1);
     }
     sprintf(cmd, "/bin/rm -rf %s", dir);
+    log_notice("tidy option removing directory '%s'", cmd);
     system(cmd);
 }
 
