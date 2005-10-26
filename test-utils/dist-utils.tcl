@@ -141,13 +141,23 @@ namespace eval manifest {
 	global manifest::manifest
 	lappend manifest::manifest [list F "$src" "$dst"] 
     }
+
     proc dir { dir } { 
 	global manifest::manifest
 	lappend manifest::manifest [list D "$dir"] 
     }
-    proc set { manifest } {
+    
+    proc rfile { dst } {
 	global manifest::manifest
-	eval lappend manifest::manifest $manifest
+
+	set src ""
+	foreach m $manifest::manifest {
+	    if {[lindex $m 0] == "F" && [lindex $m 2] == $dst} {
+		set src [lindex $m 1]
+	    }
+	}
+
+	return $src
     }
 }
 

@@ -176,6 +176,7 @@ proc init {argv} {
     uplevel \#0 source $test_script
 
     puts "* Distributing files"
+
     dist::files $manifest::manifest [net::hostlist] [pwd] \
 	$manifest::subst $opt(strip) $opt(verbose)
 }
@@ -497,10 +498,22 @@ proc collect_logs {} {
 	foreach l $logs {
 	    set contents [run_cmd $hostname cat $l]
 	    set contents [string trim $contents]
+	    
 	    if {[string length $contents] != 0} {
 		puts "***"
 		puts "*** $hostname:$i [file tail $l]:"
 		puts "***"
+
+		set exec_name [manifest::rfile [file rootname [file tail $l]]]
+		if {$exec_name == ""} {
+		    puts "warning: no reverse manifest for [file rootname $l]"
+		} else {
+		    set expand [import_find expand-stacktrace.pl]
+		    set contents [run_cmd $hostname cat $l | \
+			    $expand -o $exec_name]
+		}
+
+		
 		puts $contents
 	    }
 	}

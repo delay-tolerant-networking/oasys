@@ -13,8 +13,10 @@ COMPAT_SRCS :=					\
 
 DEBUG_SRCS :=					\
 	debug/DebugUtils.cc			\
+	debug/FatalSignals.cc			\
 	debug/Formatter.cc			\
 	debug/Log.cc				\
+	debug/StackTrace.cc			\
 	debug/gdtoa-dmisc.c			\
 	debug/gdtoa-dtoa.c			\
 	debug/gdtoa-gdtoa.c			\

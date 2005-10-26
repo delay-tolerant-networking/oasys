@@ -5,6 +5,7 @@
 #include <vector>
 #include <stdio.h>
 
+#include "../debug/FatalSignals.h"
 #include "../debug/Log.h"
 
 namespace oasys {
@@ -90,6 +91,8 @@ public:
         if (! Log::initialized()) {
             Log::init(LOG_INFO);
         }
+
+        FatalSignals::init(name_.c_str());
     }
     
     virtual ~UnitTester() {}
@@ -127,7 +130,7 @@ public:
                     fprintf(stderr, "{ %d %s P } ", 
                             test_num, (*i)->name_.c_str());
                 } else {
-                    printf("%s... Passed\n",  (*i)->name_.c_str());
+                    printf("%s... Passed\n\n",  (*i)->name_.c_str());
                 }
                 passed_++;
                 break;
@@ -136,7 +139,7 @@ public:
                     fprintf(stderr, "{ %d %s F } ", 
                             test_num, (*i)->name_.c_str());
                 } else {
-                    printf("%s... Failed\n",  (*i)->name_.c_str());
+                    printf("%s... Failed\n\n",  (*i)->name_.c_str());
                 }
                 failed_++;
                 break;
@@ -145,7 +148,8 @@ public:
                     fprintf(stderr, "{ %d %s I } ", 
                             test_num, (*i)->name_.c_str());
                 } else {
-                    printf("%s... Unknown (UNIT_TEST_INPUT)\n",  (*i)->name_.c_str());
+                    printf("%s... Unknown (UNIT_TEST_INPUT)\n\n",
+                           (*i)->name_.c_str());
                 }
                 input_++;
                 break;                

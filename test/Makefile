@@ -9,6 +9,7 @@ TESTS += \
 	sample-test				\
 	serialize-test				\
 	spin-lock-test				\
+	stack-trace-test			\
 	static-buffer-test			\
 	string-hash-test			\
 	regex-test				\
