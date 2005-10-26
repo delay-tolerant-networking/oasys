@@ -15,8 +15,8 @@ fork_to_die(const char* how) {
     log_always("/test", "flamebox-ignore ign2 STACK TRACE");
     
     snprintf(cmd, sizeof(cmd),
-             "test/stack-trace-test %s 2>&1 | "
-             "test-utils/expand-stacktrace.pl -o test/stack-trace-test",
+             "./stack-trace-test %s 2>&1 | "
+             "../test-utils/expand-stacktrace.pl -o ./stack-trace-test",
              how);
     int ok = system(cmd);
     
@@ -133,6 +133,18 @@ DECLARE_TESTER(Tester) {
 int
 main(int argc, const char** argv)
 {
+    if (access("./stack-trace-test", R_OK | X_OK) != 0) {
+        fprintf(stderr, "error: must run this test in the same directory "
+                "as its executable\n");
+        exit(1);
+    }
+    
+    if (access("../test-utils/expand-stacktrace.pl", R_OK | X_OK) != 0) {
+        fprintf(stderr, "error: ../test-utils/expand-stacktrace.pl "
+                "does not exist\n");
+        exit(1);
+    }
+    
     // the various test cases above simply re-run the test script
     // passing an argument
     if (argc == 2) {
