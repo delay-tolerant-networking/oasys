@@ -38,11 +38,17 @@
 
 #include <errno.h>
 
+#include "config.h"
+
 #include "Thread.h"
 #include "debug/DebugUtils.h"
 #include "debug/Log.h"
 #include "util/InitSequencer.h"
 #include "memory/Memory.h"
+
+#if GOOGLE_PROFILE_ENABLED
+#include <google/profiler.h>
+#endif
 
 namespace oasys {
 
@@ -68,6 +74,10 @@ Thread::pre_thread_run(void* t)
 void
 Thread::thread_run(pthread_t pthread_id)
 {
+#if GOOGLE_PROFILE_ENABLED
+    ProfilerRegisterThread();
+#endif
+    
     /*
      * There's a potential race between the starting of the new thread
      * and the storing of the thread id in the pthread_ member
