@@ -109,8 +109,6 @@ enum DurableStoreFlags_t {
  * Interface for the generic datastore.
  */
 class DurableStore {
-    friend class BerkeleyDBStore;
-
 public:
     /*!
      * Create a DurableStore, which needs to be backed by an
