@@ -142,14 +142,15 @@ public:
     int get(const SerializableObject& key,
             SerializableObject* data);
     
+    int get(const SerializableObject& key,
+            SerializableObject** data,
+            TypeCollection::Allocator_t allocator);
+    
     int put(const SerializableObject& key,
             TypeCollection::TypeCode_t typecode,
             const SerializableObject* data,
             int flags);
     
-    int get_typecode(const SerializableObject& key,
-                     TypeCollection::TypeCode_t* typecode);
-
     int del(const SerializableObject& key);
 
     size_t size();

@@ -85,7 +85,6 @@ MultiTypeDurableTable<_BaseType, _Collection>::get(
     )
 {
     int err;
-    TypeCollection::TypeCode_t typecode;
 
     if (this->cache_ != 0) {
         err = this->cache_->get(key, data);
@@ -94,34 +93,43 @@ MultiTypeDurableTable<_BaseType, _Collection>::get(
             return DS_OK;
         }
     }
-    
-    err = this->impl_->get_typecode(key, &typecode);
-    if (err != DS_OK) {
-        return err;
-    }
-     
-    err = TypeCollectionInstance<_Collection>::instance()->
-          new_object(typecode, data);
-    if (err == TypeCollectionErr::TYPECODE) {
-        return DS_BADTYPE;
-    }
-    ASSERT(err == 0);
-    ASSERT(*data != NULL);
 
-    err = this->impl_->get(key, *data);
+    SerializableObject* generic_data = NULL;
+    err = this->impl_->get(key, &generic_data, &new_object);
     if (err != DS_OK) {
-        delete *data;
         *data = NULL;
         return err;
     }
 
+    *data = dynamic_cast<_BaseType*>(generic_data);
+    ASSERT(*data != NULL);
+    
     if (this->cache_ != 0) {
         err = this->cache_->put(key, *data, DS_CREATE | DS_EXCL);
         ASSERT(err == DS_OK);
     }
-
+    
     return DS_OK;
 }
+
+//----------------------------------------------------------------------------
+template <typename _BaseType, typename _Collection>
+inline int
+MultiTypeDurableTable<_BaseType, _Collection>::new_object(
+    TypeCollection::TypeCode_t typecode,
+    SerializableObject** generic_object)
+{
+    _BaseType* object = NULL;
+    int err = TypeCollectionInstance<_Collection>::instance()->
+              new_object(typecode, &object);
+    if (err != 0) {
+        return err;
+    }
+
+    *generic_object = object; // downcast
+    return 0;
+}
+
 
 //----------------------------------------------------------------------------
 template <typename _BaseType, typename _Collection>

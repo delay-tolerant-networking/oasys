@@ -77,11 +77,16 @@ template<typename _Collection, typename _Type> class TypeCollectionCode;
  */
 class TypeCollection : public Logger {
 public:
+    /// Typedef for type codes
     typedef u_int32_t TypeCode_t;
 
     enum {
         UNKNOWN_TYPE = 0xffffffff
     };
+
+    /// Typedef for an allocator function usable as a callback
+    typedef int (*Allocator_t)(TypeCode_t typecode,
+                               SerializableObject** data);
     
     TypeCollection() : Logger("/type_collection") {}
 

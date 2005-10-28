@@ -122,10 +122,11 @@ public:
      * @return DS_OK, DS_NOTFOUND if key is not found
      */
     virtual int get(const SerializableObject& key, 
-                    SerializableObject* data) = 0;
+                    SerializableObject*       data) = 0;
 
     /** 
-     * In a multi-type table, get the typecode for the given key.
+     * For a multi-type table, get the data for the given key, calling
+     * the provided allocator function to create the object.
      *
      * Note that a default implementation (that panics) is provided
      * such that subclasses need not support multi-type tables.
@@ -134,9 +135,10 @@ public:
      * @param typecode Typecode pointer
      * @return DS_OK, DS_ERR // XXX/bowei
      */
-    virtual int get_typecode(const SerializableObject& key,
-                             TypeCollection::TypeCode_t* typecode);
-
+    virtual int get(const SerializableObject&   key,
+                    SerializableObject**        data,
+                    TypeCollection::Allocator_t allocator);
+                    
     /**
      * Put data for key in the database
      *
@@ -146,9 +148,9 @@ public:
      * @param flags    Bit vector of DurableStoreFlags_t values.
      * @return DS_OK, DS_ERR // XXX/bowei
      */
-    virtual int put(const SerializableObject& key, 
+    virtual int put(const SerializableObject&  key,
                     TypeCollection::TypeCode_t typecode,
-                    const SerializableObject* data,
+                    const SerializableObject*  data,
                     int flags) = 0;
     
     /**

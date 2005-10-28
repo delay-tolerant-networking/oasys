@@ -194,6 +194,14 @@ public:
      */
     int get(const SerializableObject& key, _BaseType** data);
 
+    /**
+     * Object allocation callback that is handed to the implementation
+     * to allow it to properly create an object once it extracts the
+     * type code.
+     */
+    static int new_object(TypeCollection::TypeCode_t typecode,
+                          SerializableObject** generic_object);
+
 private:
     // Not implemented on purpose -- can't copy
     MultiTypeDurableTable(const MultiTypeDurableTable&);

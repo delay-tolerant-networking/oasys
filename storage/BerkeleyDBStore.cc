@@ -446,13 +446,15 @@ int
 BerkeleyDBTable::get(const SerializableObject& key, 
                      SerializableObject*       data)
 {
+    ASSERTF(!multitype_, "single-type get called for multi-type table");
+
     ScratchBuffer<u_char*, 256> key_buf;
     size_t key_buf_len = flatten(key, &key_buf);
     ASSERT(key_buf_len != 0);
 
     DBT k, d;
     bzero(&d, sizeof(d));
-
+    
     MAKE_DBT(k, key_buf.buf(), key_buf_len);
 
     int err = db_->get(db_, NO_TX, &k, &d, 0);
@@ -467,16 +469,8 @@ BerkeleyDBTable::get(const SerializableObject& key,
         return DS_ERR;
     }
 
-    // if this is a multitype table we need to skip over the typecode
-    // in the flattened buffer
-    size_t typecode_sz = 0;
-    if (multitype_) {
-        TypeCollection::TypeCode_t typecode;
-        typecode_sz = MarshalSize::get_size(&typecode);
-    }
-
-    u_char* bp = (u_char*)d.data + typecode_sz;
-    size_t  sz = d.size - typecode_sz;
+    u_char* bp = (u_char*)d.data;
+    size_t  sz = d.size;
     
     Unmarshal unmarshaller(Serialize::CONTEXT_LOCAL, bp, sz);
     
@@ -489,9 +483,12 @@ BerkeleyDBTable::get(const SerializableObject& key,
 }
 
 int
-BerkeleyDBTable::get_typecode(const SerializableObject& key,
-                              TypeCollection::TypeCode_t* typecode)
+BerkeleyDBTable::get(const SerializableObject&   key,
+                     SerializableObject**        data,
+                     TypeCollection::Allocator_t allocator)
 {
+    ASSERTF(multitype_, "multi-type get called for single-type table");
+    
     ScratchBuffer<u_char*, 256> key_buf;
     size_t key_buf_len = flatten(key, &key_buf);
     if (key_buf_len == 0) 
@@ -520,21 +517,42 @@ BerkeleyDBTable::get_typecode(const SerializableObject& key,
     u_char* bp = (u_char*)d.data;
     size_t  sz = d.size;
 
+    TypeCollection::TypeCode_t typecode;
+    size_t typecode_sz = MarshalSize::get_size(&typecode);
+
     Builder b;
     UIntShim type_shim(b);
+    Unmarshal type_unmarshaller(Serialize::CONTEXT_LOCAL, bp, typecode_sz);
 
-    Unmarshal unmarshaller(Serialize::CONTEXT_LOCAL, bp, sz);
-
-    if (unmarshaller.action(&type_shim) != 0) {
+    if (type_unmarshaller.action(&type_shim) != 0) {
         log_err("DB: error unserializing type code");
         return DS_ERR;
     }
+    
+    typecode = type_shim.value();
 
-    *typecode = type_shim.value();
+    bp += typecode_sz;
+    sz -= typecode_sz;
 
+    err = allocator(typecode, data);
+    if (err != 0) {
+        *data = NULL;
+        return DS_ERR;
+    }
+
+    ASSERT(*data != NULL);
+
+    Unmarshal unmarshaller(Serialize::CONTEXT_LOCAL, bp, sz);
+    
+    if (unmarshaller.action(*data) != 0) {
+        log_err("DB: error unserializing data object");
+        delete *data;
+       *data = NULL;
+        return DS_ERR;
+    }
+    
     return DS_OK;
 }
-
 
 int 
 BerkeleyDBTable::put(const SerializableObject& key,

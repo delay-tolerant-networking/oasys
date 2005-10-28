@@ -109,10 +109,11 @@ DurableStoreImpl::create_db_dir(const char* db_dir)
 }
 
 int
-DurableTableImpl::get_typecode(const SerializableObject& key,
-                               TypeCollection::TypeCode_t* typecode)
+DurableTableImpl::get(const SerializableObject&   key,
+                      SerializableObject**        data,
+                      TypeCollection::Allocator_t allocator)
 {
-    PANIC("Generic DurableTableImpl get_type method called for "
+    PANIC("Generic DurableTableImpl get method called for "
           "multi-type tables");
 }
 
