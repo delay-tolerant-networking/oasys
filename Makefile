@@ -52,6 +52,7 @@ STORAGE_SRCS :=					\
 	storage/BerkeleyDBStore.cc		\
 	storage/DurableStore.cc                 \
 	storage/DurableStoreImpl.cc		\
+	storage/MemoryStore.cc                  \
 
 TCLCMD_SRCS :=					\
 	tclcmd/ConsoleCommand.cc		\

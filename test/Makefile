@@ -5,6 +5,7 @@ TESTS += \
 	io-basic-test				\
 	log-test				\
 	marshal-test				\
+	memory-store-test			\
 	optparser-test				\
 	sample-test				\
 	serialize-test				\
