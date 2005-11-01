@@ -90,8 +90,6 @@ public:
     /// @}
 
 private:
-    typedef std::map<std::string, int> RefCountMap;
-
     bool        init_;        //!< Initialized?
     std::string db_name_;     ///< Name of the database file
     DB_ENV*     dbenv_;       ///< database environment for all tables
