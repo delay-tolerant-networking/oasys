@@ -40,7 +40,7 @@
 #ifndef _OASYS_COMPAT_GETOPT_H_
 #define _OASYS_COMPAT_GETOPT_H_
 
-#ifdef HAVE_CDEFS_H
+#ifdef HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
 
