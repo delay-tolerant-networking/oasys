@@ -9,6 +9,7 @@ TESTS += \
 	optparser-test				\
 	sample-test				\
 	serialize-test				\
+	serialize-stream-test			\
 	spin-lock-test				\
 	stack-trace-test			\
 	static-buffer-test			\
