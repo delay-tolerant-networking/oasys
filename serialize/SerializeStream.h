@@ -39,8 +39,7 @@ public:
         if (pos_ + size > size_) {
             return -1;
         }
-        _Copy cp;
-        cp(buf, buf_ + pos_, size);            
+        _Copy::op(buf, buf_ + pos_, size);            
         pos_ += size;
 
         return size;
@@ -59,7 +58,7 @@ public:
     
     //! virtual from SerializeStream
     int process_bits(char* buf, size_t size) {
-        return _IOOp(io_, buf, size);
+        return _IO_Op::op(io_, buf, size);
     }
 
 private:
@@ -69,24 +68,24 @@ private:
 namespace StreamOps {
 
 struct CopyTo {
-    void* operator()(void* dest, void* src, size_t n) {
+    static void* op(void* dest, void* src, size_t n) {
         return memcpy(dest, src, n);
     }
 };
 struct CopyFrom {
-    void* operator()(void* src, void* dest, size_t n) {
+    static void* op(void* src, void* dest, size_t n) {
         return memcpy(dest, src, n);
     }
 };
 
 struct Read {
-    int operator()(IOClient* io, char* buf, size_t size) {
+    static int op(IOClient* io, char* buf, size_t size) {
         return io->readall(buf, size);
     }
 };
 
 struct Write {
-    int operator()(IOClient* io, char* buf, size_t size) {
+    static int op(IOClient* io, char* buf, size_t size) {
         return io->readall(buf, size);
     }
 };
