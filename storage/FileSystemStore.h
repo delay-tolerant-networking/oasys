@@ -50,6 +50,8 @@
 
 namespace oasys {
 
+class ExpandableBuffer;
+
 class StorageConfig;
 
 class FileSystemStore;
@@ -82,6 +84,9 @@ private:
     std::string tables_dir_; //!< directory where the tables are stored
     DIR*        dir_;
 
+    RefCountMap ref_count_; // XXX/bowei -- not used for now
+    int default_perm_; //!< Default permissions on database files
+    
     //! Check for the existance of databases. @return 0 on no error.
     //! @return -2 if the database file doesn't exist. Otherwise -1.
     int check_database();
@@ -91,12 +96,18 @@ private:
     
     //! Wipe the database. @return 0 on no error.
     void tidy_database();
+
+    /// @{ Changes the ref count on the tables
+    int acquire_table(const std::string& table);
+    int release_table(const std::string& table);
+    /// @}
 };
 
-class FileSystemTable : public DurableTableImpl {
+class FileSystemTable : public Logger, 
+                        public DurableTableImpl {
     friend class FileSystemStore;
 public:
-    FileSystemTable();
+    FileSystemTable(const std::string& path);
     ~FileSystemTable();
 
     //! @{ virtual from DurableTableInpl
@@ -118,6 +129,12 @@ public:
     
     DurableIterator* iter();
     //! @}
+
+private:
+    std::string path_;
+
+    int get_common(const SerializableObject& key,
+                   ExpandableBuffer* buf);
 };
 
 class FileSystemIterator : public DurableIterator, 
