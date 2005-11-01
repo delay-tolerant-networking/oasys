@@ -82,6 +82,7 @@ MemoryStore::get_table(DurableTableImpl**  table,
                        int                 flags,
                        PrototypeVector&    prototypes)
 {
+    // XXX/bowei -- || access?
     TableMap::iterator iter = tables_.find(name);
 
     MemoryTable::ItemMap* items;
@@ -109,6 +110,7 @@ MemoryStore::get_table(DurableTableImpl**  table,
 int
 MemoryStore::del_table(const std::string& name)
 {
+    // XXX/bowei -- busy tables?
     log_info("deleting table %s", name.c_str());
     tables_.erase(name);
     return 0;

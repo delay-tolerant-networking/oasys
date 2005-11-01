@@ -108,7 +108,10 @@ private:
 };
 
 /**
- * Fake durable store that just uses RAM.
+ * Fake durable store that just uses RAM. 
+ *
+ * N.B: This is not durable unless you have a bunch of NVRAM.
+ *
  */
 class MemoryStore : public DurableStoreImpl {
     friend class MemoryTable;

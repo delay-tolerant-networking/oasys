@@ -55,11 +55,10 @@ struct StorageConfig {
     bool        tidy_;		///< Prune out the database on init
     int         tidy_wait_;	///< Seconds to wait before tidying
 
+    // DB options (not all will be used for every type of database)
     std::string dbname_;	///< Database name (filename in berkeley db)
-
-    // Berkeley DB specific options
     std::string dbdir_;		///< Path to the database files
-    int         dbflags_;       ///< Berkeley DB specific flags
+    int         dbflags_;       ///< DB specific flags
     bool	dbsharefile_;	///< Share a single DB file (and a lock)
 
     StorageConfig(
