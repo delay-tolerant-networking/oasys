@@ -13,9 +13,6 @@ echo "build-configure: building aclocal.m4..."
 rm -f aclocal.m4
 cat aclocal/*.ac > aclocal.m4
 
-echo "build-configure: running autoscan to find missing checks..."
-autoscan
-
 echo "build-configure: running autoheader to build config.h.in..."
 rm -f config.h config.h.in
 autoheader
