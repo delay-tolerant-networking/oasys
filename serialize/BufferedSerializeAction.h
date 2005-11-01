@@ -26,9 +26,6 @@ public:
         object->serialize(this);
     }
     
-    /** Rewind to the beginning of the buffer */
-    void rewind() { offset_ = 0; }
-
 protected:
     /**  
      * Get the next R/W length of the buffer.
