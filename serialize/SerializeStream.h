@@ -11,6 +11,8 @@ namespace oasys {
  */
 class SerializeStream {
 public:
+    virtual ~SerializeStream() {}
+    
     //! Allow const buffers to be passed in
     int process_bits(const char* buf, size_t size) {
         return process_bits(const_cast<char*>(buf), size);
@@ -34,6 +36,8 @@ public:
         : buf_(const_cast<char*>(buf)), 
           size_(size), pos_(0) {}
 
+    virtual ~MemoryStream() {}
+
     //! virtual from SerializeStream
     int process_bits(char* buf, size_t size) {
         if (pos_ + size > size_) {
@@ -55,6 +59,8 @@ template<typename _IO_Op>
 class IOStream : public SerializeStream {
 public:
     IOStream(IOClient* io) : io_(io) {}
+    
+    virtual ~IOStream() {}
     
     //! virtual from SerializeStream
     int process_bits(char* buf, size_t size) {
