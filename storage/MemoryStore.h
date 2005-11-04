@@ -84,7 +84,7 @@ public:
     
     int del(const SerializableObject& key);
 
-    size_t size();
+    size_t size() const;
     
     DurableIterator* iter();
     /// @}

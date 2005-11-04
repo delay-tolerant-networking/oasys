@@ -166,7 +166,7 @@ public:
     /**
      * Return the number of elements in the table.
      */
-    virtual size_t size() = 0;
+    virtual size_t size() const = 0;
     
     /**
      * Get an iterator to this table. 

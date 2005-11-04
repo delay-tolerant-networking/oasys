@@ -82,7 +82,6 @@ public:
 private:
     bool        init_;
     std::string tables_dir_; //!< directory where the tables are stored
-    DIR*        dir_;
 
     RefCountMap ref_count_; // XXX/bowei -- not used for now
     int default_perm_; //!< Default permissions on database files
@@ -98,6 +97,7 @@ private:
     void tidy_database();
 
     /// @{ Changes the ref count on the tables
+    // XXX/bowei -- implement me
     int acquire_table(const std::string& table);
     int release_table(const std::string& table);
     /// @}
@@ -125,7 +125,7 @@ public:
     
     int del(const SerializableObject& key);
 
-    size_t size();
+    size_t size() const;
     
     DurableIterator* iter();
     //! @}
@@ -145,7 +145,7 @@ private:
      * Create an iterator for table t. These should not be called
      * except by FileSystemTable.
      */
-    FileSystemIterator(FileSystemTable* t);
+    FileSystemIterator(const std::string& directory);
 
 public:
     virtual ~FileSystemIterator();
@@ -156,8 +156,8 @@ public:
     //! @}
 
 protected:
-    FileSystemTable* table_;
-    bool             first_;
+    struct dirent* ent_;
+    DIR*           dir_;
 };
 
 } // namespace oasys

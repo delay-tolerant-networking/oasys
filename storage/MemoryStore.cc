@@ -221,7 +221,7 @@ MemoryTable::put(const SerializableObject& key,
 
     Item* item;
     if (iter == items_->end()) {
-        if ((flags & DS_CREATE) == 0) {
+        if (! (flags & DS_CREATE)) {
             return DS_NOTFOUND;
         }
 
@@ -309,7 +309,7 @@ MemoryTable::del(const SerializableObject& key)
 }
 
 size_t
-MemoryTable::size()
+MemoryTable::size() const
 {
     return items_->size();
 }

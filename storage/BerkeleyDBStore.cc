@@ -674,7 +674,7 @@ BerkeleyDBTable::del(const SerializableObject& key)
 }
 
 size_t
-BerkeleyDBTable::size()
+BerkeleyDBTable::size() const
 {
     int err;
     int flags = 0;

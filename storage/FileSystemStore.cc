@@ -35,13 +35,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-
+
 #include "FileSystemStore.h"
 #include "StorageConfig.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
 #include <fcntl.h>
 #include <errno.h>
 
@@ -55,17 +56,12 @@ namespace oasys {
 FileSystemStore::FileSystemStore()
     : DurableStoreImpl("/FileSystemStore"),
       tables_dir_("INVALID"),
-      dir_(0),
       default_perm_(S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP)
 {}
 
 //----------------------------------------------------------------------------
 FileSystemStore::~FileSystemStore()
-{
-    if (dir_ != 0) {
-        closedir(dir_);
-    }
-}
+{}
 
 //----------------------------------------------------------------------------
 int 
@@ -135,27 +131,28 @@ FileSystemStore::get_table(DurableTableImpl** table,
     dir_path.append("/");
     dir_path.append(name);
 
-    DIR* dir = opendir(dir_path.c_str());
-    if (dir == 0) {
+    struct stat st;
+    int err = stat(dir_path.c_str(), &st);
+    
+    // Already existing directory
+    if (err != 0 && errno == ENOENT) {
         if ( ! (flags & DS_CREATE)) {
             return DS_NOTFOUND;
         }
-
+        
         int err = mkdir(dir_path.c_str(), default_perm_);
         if (err != 0) {
-            int err = errno;
+            err = errno;
             log_err("Couldn't mkdir: %s", strerror(err));
             return DS_ERR;
         }
-    } else if (flags & DS_EXCL) {
+    } else if (err != 0) { 
+        return DS_ERR;
+    } else if (err == 0 && (flags & DS_EXCL)) {
         return DS_EXISTS;
     }
     
-    if (dir != 0) {
-        closedir(dir);
-    }
-
-    FileSystemTable* table_ptr = new FileSystemTable(name);
+    FileSystemTable* table_ptr = new FileSystemTable(dir_path);
     ASSERT(table_ptr);
     
     *table = table_ptr;
@@ -184,10 +181,15 @@ FileSystemStore::del_table(const std::string& name)
         std::string ent_name = dir_path + "/" + ent->d_name;
         err = unlink(ent_name.c_str());
         ASSERT(err != 0);
+
+        ent = readdir(dir);
     }
     
     err = rmdir(dir_path.c_str());
-    ASSERT(err != 0);
+    if (err != 0) {
+        log_warn("couldn't remove directory, %s", strerror(errno));
+        return -1;
+    }
 
     return 0; 
 }
@@ -196,15 +198,15 @@ FileSystemStore::del_table(const std::string& name)
 int 
 FileSystemStore::check_database()
 {
-    dir_ = opendir(tables_dir_.c_str());
-    if (dir_ == 0) {
+    DIR* dir = opendir(tables_dir_.c_str());
+    if (dir == 0) {
         if (errno == ENOENT) {
             return -2;
         } else {
             return -1;
         }
     }
-    closedir(dir_);
+    closedir(dir);
 
     return 0;
 }
@@ -257,8 +259,8 @@ FileSystemTable::get(const SerializableObject& key,
         return err;
     }
     
-    Marshal marshaller(Serialize::CONTEXT_LOCAL, buf.buf(), buf.len());
-    err = marshaller.action(data);
+    Unmarshal um(Serialize::CONTEXT_LOCAL, buf.buf(), buf.len());
+    err = um.action(data);
     if (err != 0) {
         return DS_ERR;
     }
@@ -272,22 +274,24 @@ FileSystemTable::get(const SerializableObject& key,
                      SerializableObject** data,
                      TypeCollection::Allocator_t allocator)
 {
+    ASSERT(multitype_);
+    
     ScratchBuffer<u_char*, 4096> buf;
     int err = get_common(key, &buf);
     if (err != 0) {
         return err;
     }
     
-    Marshal marshaller(Serialize::CONTEXT_LOCAL, buf.buf(), buf.len());
+    Unmarshal um(Serialize::CONTEXT_LOCAL, buf.buf(), buf.len());
 
     TypeCollection::TypeCode_t typecode;
-    marshaller.process("typecode", &typecode);
+    um.process("typecode", &typecode);
     
     err = allocator(typecode, data);
     if (err != 0) {
         return DS_ERR;
     }
-    err = marshaller.action(*data);
+    err = um.action(*data);
     if (err != 0) {
         return DS_ERR;
     }
@@ -302,34 +306,129 @@ FileSystemTable::put(const SerializableObject& key,
                      const SerializableObject* data,
                      int flags)
 {
-    ScratchBuffer<u_char*, 256> key_str;
+    StringSerialize s_key(Serialize::CONTEXT_LOCAL,
+                          Serialize::DOT_SEPARATED);
+    if (s_key.action(&key) != 0) {
+        log_err("Can't get key");
+        return DS_ERR;
+    }
 
-    return 0; // XXX/bowei
+    MarshalSize sizer(Serialize::CONTEXT_LOCAL);
+    if (multitype_) {
+        sizer.process("typecode", &typecode);
+    }
+    sizer.action(data);
+
+    ScratchBuffer<u_char*, 4096> scratch;
+    scratch.reserve(sizer.size());
+
+    Marshal m(Serialize::CONTEXT_LOCAL, scratch.buf(), sizer.size());
+    if (multitype_) {
+        m.process("typecode", &typecode);
+    }
+    if (m.action(data) != 0) {
+        log_warn("can't marshal data");
+        return DS_ERR;
+    }
+
+    std::string filename = path_ + "/" + s_key.buf().c_str();
+    int data_elt_fd      = -1;
+    int open_flags       = O_TRUNC | O_WRONLY;
+
+    if (flags & DS_EXCL)
+        open_flags |= O_EXCL;
+    if (flags & DS_CREATE)
+        open_flags |= O_CREAT;
+    
+    data_elt_fd = open(filename.c_str(), open_flags, 
+                       S_IRUSR | S_IWUSR | S_IRGRP);
+    if (data_elt_fd == -1) {
+        if (errno == ENOENT) {
+            log_debug("file not found and DS_CREATE not specified");
+            return DS_NOTFOUND;
+        } else if (errno == EEXIST) {
+            log_debug("file found and DS_EXCL specified");
+            return DS_EXISTS;
+        } else {
+            log_warn("can't open %s: %s", 
+                     filename.c_str(), strerror(errno));
+            return DS_ERR;
+        }
+    }
+    
+    log_debug("created file %s, fd = %d", 
+              filename.c_str(), data_elt_fd);
+    
+    int cc = IO::writeall(data_elt_fd, 
+                          reinterpret_cast<char*>(scratch.buf()), 
+                          sizer.size());
+    if (cc != static_cast<int>(sizer.size())) {
+        log_warn("put() - errors writing to file %s, %d: %s",
+                 filename.c_str(), cc, strerror(errno));
+        return DS_ERR;
+    }
+    close(data_elt_fd);
+
+    return 0;
 }
     
 //----------------------------------------------------------------------------
 int 
 FileSystemTable::del(const SerializableObject& key)
 {
-    ScratchBuffer<u_char*, 256> key_str;
+    StringSerialize s_key(Serialize::CONTEXT_LOCAL,
+                              Serialize::DOT_SEPARATED);
+    if (s_key.action(&key) != 0) {
+        log_err("Can't get key");
+        return DS_ERR;
+    }
+    
+    std::string filename = path_ + "/" + s_key.buf().c_str();
+    int err = unlink(filename.c_str());
+    if (err == -1) {
+        if (errno == ENOENT) {
+            return DS_NOTFOUND;
+        }
 
-    return 0; // XXX/bowei
+        log_warn("can't unlink file %s - %s", filename.c_str(),
+                 strerror(errno));
+        return DS_ERR;
+    }
+    
+    return 0;
 }
 
 //----------------------------------------------------------------------------
 size_t 
-FileSystemTable::size()
+FileSystemTable::size() const
 {
+    // XXX/bowei -- be inefficient for now
+    DIR* dir = opendir(path_.c_str());
+    ASSERT(dir != 0);
     
+    size_t count;
+    struct dirent* ent;
 
-    return 0; // XXX/bowei
+    for (count = 0, ent = readdir(dir); 
+         ent != 0; ent = readdir(dir))
+    {
+        ASSERT(ent != 0);
+        ++count;
+    }
+
+    closedir(dir);
+
+    // count always includes '.' and '..'
+    log_debug("table size = %u", count - 2);
+
+    return count - 2; 
 }
     
 //----------------------------------------------------------------------------
 DurableIterator* 
 FileSystemTable::iter()
 {
-    return 0; // XXX/bowei
+    return new FileSystemIterator(path_);
 }
 
 //----------------------------------------------------------------------------
@@ -337,7 +436,6 @@ int
 FileSystemTable::get_common(const SerializableObject& key,
                             ExpandableBuffer* buf)
 {
-    ScratchBuffer<u_char*, 256>  key_str;
     StringSerialize serialize(Serialize::CONTEXT_LOCAL,
                               Serialize::DOT_SEPARATED);
     if (serialize.action(&key) != 0) {
@@ -347,7 +445,7 @@ FileSystemTable::get_common(const SerializableObject& key,
     
     std::string file_name(serialize.buf().data(), serialize.buf().length());
     std::string file_path = path_ + "/" + file_name;
-    int fd = open(file_path.c_str(), 0);
+    int fd = open(file_path.c_str(), O_RDONLY);
     if (fd == -1) {
         if (errno == ENOENT) {
             return DS_NOTFOUND;
@@ -360,7 +458,7 @@ FileSystemTable::get_common(const SerializableObject& key,
     int cc;
     do {
         buf->reserve(buf->len() + 4096);
-        cc = IO::readall(fd, buf->end(), 4096);
+        cc = IO::read(fd, buf->end(), 4096);
         ASSERT(cc >= 0);
         buf->set_len(buf->len() + cc);
     } while (cc > 0);
@@ -370,27 +468,50 @@ FileSystemTable::get_common(const SerializableObject& key,
 }
 
 //----------------------------------------------------------------------------
-FileSystemIterator::FileSystemIterator(FileSystemTable* t)
+FileSystemIterator::FileSystemIterator(const std::string& path)
+    : ent_(0)
 {
+    dir_ = opendir(path.c_str());
+    ASSERT(dir_ != 0);
 }
 
 //----------------------------------------------------------------------------
 FileSystemIterator::~FileSystemIterator()
 {
+    closedir(dir_);
 }
     
 //----------------------------------------------------------------------------
 int 
 FileSystemIterator::next()
 {
-    return 0; // XXX/bowei
+    ent_ = readdir(dir_);
+    if (ent_ == 0) {
+        if (errno == ENOENT) {
+            return DS_NOTFOUND;
+        } else {
+            return DS_ERR;
+        }
+    }
+
+    return 0;
 }
 
 //----------------------------------------------------------------------------
 int 
 FileSystemIterator::get(SerializableObject* key)
 {
-    return 0; // XXX/bowei
+    ASSERT(ent_ != 0);
+    
+    Unmarshal um(Serialize::CONTEXT_LOCAL, 
+                 reinterpret_cast<const u_char*>(ent_->d_name), 
+                 strlen(ent_->d_name));
+    int err = um.action(key);
+    if (err != 0) {
+        return DS_ERR;
+    }
+
+    return 0;
 }
 
 } // namespace oasys
