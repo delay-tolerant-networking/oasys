@@ -39,6 +39,8 @@
 #include "../debug/DebugUtils.h"
 #include "Regex.h"
 
+namespace oasys {
+
 Regex::Regex(const char* regex, int cflags)
     : err_(0)
 {
@@ -70,6 +72,72 @@ Regex::match(const char* regex, const char* str, int cflags, int rflags)
 }
 
 int
+Regex::subst(const char* str, const char* sub_str,
+             std::string* result, int flags)
+{
+    match(str, flags);
+    if (err_ != 0) {
+        return err_;
+    }
+
+    size_t len = strlen(sub_str);
+    size_t i = 0;
+    int nmatches = num_matches();
+
+    result->clear();
+    
+    while (i < len) {
+        if (sub_str[i] == '\\') {
+
+            // safe since there's a trailing null in sub_str
+            char c = sub_str[i + 1];
+
+            // handle '\\'
+            if (c == '\\') {
+                result->push_back('\\');
+                result->push_back('\\');
+                i += 2;
+                continue;
+            }
+
+            // handle \0, \1, etc
+            int match_num = c - '0';
+            if ((match_num >= 0) && (match_num < nmatches))
+            {
+                regmatch_t* match = &matches_[match_num];
+                result->append(str + match->rm_so, match->rm_eo - match->rm_so);
+                i += 2;
+                continue;
+            }
+            else
+            {
+                // out of range
+                err_ = REG_ESUBREG;
+                result->clear();
+                return err_;
+            }
+            
+        } else {
+            // just copy the character
+            result->push_back(sub_str[i]);
+            ++i;
+        }
+    }
+
+    return err_;
+}
+
+int
+Regex::subst(const char* regex, const char* str,
+             const char* subst, std::string* result,
+             int cflags, int rflags)
+{
+    Regex r(regex, cflags);
+    return r.subst(str, subst, result, rflags);
+}
+
+
+int
 Regex::num_matches()
 {
     for(size_t i = 0; i<MATCH_LIMIT; ++i) {
@@ -87,3 +155,5 @@ Regex::get_match(size_t i)
     ASSERT(i <= MATCH_LIMIT);
     return matches_[i];
 }
+
+} // namespace oasys

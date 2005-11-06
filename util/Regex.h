@@ -36,11 +36,14 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __REGEX_H__
-#define __REGEX_H__
+#ifndef __OASYS_REGEX_H__
+#define __OASYS_REGEX_H__
 
+#include <string>
 #include <sys/types.h>
 #include <regex.h>
+
+namespace oasys {
 
 class Regex {
 public:
@@ -49,10 +52,16 @@ public:
     static int match(const char* regex, const char* str, 
                      int cflags = 0, int rflags = 0);
 
+    static int subst(const char* regex, const char* str,
+                     const char* sub_str, std::string* result,
+                     int cflags = 0, int rflags = 0);
+    
     Regex(const char* regex, int cflags = 0);
     ~Regex();
 
     int match(const char* str, int flags = 0);
+    int subst(const char* str, const char* sub_str,
+              std::string* result, int flags = 0);
     
     int num_matches();
     const regmatch_t& get_match(size_t i);
@@ -64,4 +73,6 @@ private:
     regmatch_t matches_[MATCH_LIMIT];
 };
 
-#endif /* __REGEX_H__ */
+} // namespace oasys
+
+#endif /* __OASYS_REGEX_H__ */

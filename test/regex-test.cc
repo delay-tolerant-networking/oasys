@@ -59,9 +59,27 @@ DECLARE_TEST(Regex2) {
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(RegSubst) {
+    std::string s;
+    CHECK(Regex::subst("ab*c", "abbbbbbbc", "nothing", &s, REG_EXTENDED) == 0);
+    CHECK_EQUALSTR(s.c_str(), "nothing");
+
+    CHECK(Regex::subst("ab*c", "abbbbbbbc", "\\0", &s, REG_EXTENDED) == 0);
+    CHECK_EQUALSTR(s.c_str(), "abbbbbbbc");
+
+    CHECK(Regex::subst("a(b*)c", "abbbbbbbc", "\\1", &s, REG_EXTENDED) == 0);
+    CHECK_EQUALSTR(s.c_str(), "bbbbbbb");
+
+    CHECK(Regex::subst("(a)(b*)(c)", "abbbbbbbc", "\\0 \\1 \\2 \\3", &s, REG_EXTENDED) == 0);
+    CHECK_EQUALSTR(s.c_str(), "abbbbbbbc a bbbbbbb c");
+
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TESTER(Test) {
     ADD_TEST(Regex1);
     ADD_TEST(Regex2);
+    ADD_TEST(RegSubst);
 }
 
 DECLARE_TEST_FILE(Test, "regex test");
