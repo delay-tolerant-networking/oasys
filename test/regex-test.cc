@@ -44,7 +44,7 @@ using namespace oasys;
 DECLARE_TEST(Regex1) {
     CHECK(Regex::match("ab*c", "abbbbbbbc") == 0);
     CHECK(Regex::match("ab*c", "ac") == 0);
-    CHECK(Regex::match("ab*c", "abbbbbbb1333346c") != 0);
+    CHECK(Regex::match("ab*c", "abbbbbbb1333346c") == REG_NOMATCH);
 
     return UNIT_TEST_PASSED;
 }
@@ -72,6 +72,8 @@ DECLARE_TEST(Regsub) {
 
     CHECK(Regsub::subst("(a)(b*)(c)", "abbbbbbbc", "\\0 \\1 \\2 \\3", &s, REG_EXTENDED) == 0);
     CHECK_EQUALSTR(s.c_str(), "abbbbbbbc a bbbbbbb c");
+
+    CHECK(Regsub::subst("ab*c", "xyz", "", &s, REG_EXTENDED) == REG_NOMATCH);
 
     return UNIT_TEST_PASSED;
 }

@@ -57,13 +57,13 @@ public:
     
     int match(const char* str, int flags = 0);
 
-    bool valid() { return err_ == 0; }
+    bool valid() { return compilation_err_ == 0; }
     
     int num_matches();
     const regmatch_t& get_match(size_t i);
     
 protected:
-    int err_;
+    int compilation_err_;
 
     regex_t    regex_;
     regmatch_t matches_[MATCH_LIMIT];

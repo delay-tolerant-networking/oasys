@@ -42,26 +42,24 @@
 namespace oasys {
 
 Regex::Regex(const char* regex, int cflags)
-    : err_(0)
 {
-    err_ = regcomp(&regex_, regex, cflags);
+    compilation_err_ = regcomp(&regex_, regex, cflags);
 }
 
 Regex::~Regex()
 {
-    if (err_ == 0)
+    if (compilation_err_ == 0)
         regfree(&regex_);
 }
 
 int
 Regex::match(const char* str, int flags)
 {
-    if (err_ == 0) {
-        int err = regexec(&regex_, str, MATCH_LIMIT, matches_, flags);
-        return err;
+    if (compilation_err_ != 0) {
+        return compilation_err_;
     }
-
-    return err_;
+    
+    return regexec(&regex_, str, MATCH_LIMIT, matches_, flags);
 }
 
 int 
@@ -102,9 +100,9 @@ Regsub::~Regsub()
 int
 Regsub::subst(const char* str, std::string* result, int flags)
 {
-    match(str, flags);
-    if (err_ != 0) {
-        return err_;
+    int match_err = match(str, flags);
+    if (match_err != 0) {
+        return match_err;
     }
 
     size_t len = sub_spec_.length();
@@ -139,9 +137,8 @@ Regsub::subst(const char* str, std::string* result, int flags)
             else
             {
                 // out of range
-                err_ = REG_ESUBREG;
                 result->clear();
-                return err_;
+                return REG_ESUBREG;;
             }
             
         } else {
@@ -151,7 +148,7 @@ Regsub::subst(const char* str, std::string* result, int flags)
         }
     }
 
-    return err_;
+    return 0;
 }
 
 int
