@@ -486,6 +486,14 @@ int
 FileSystemIterator::next()
 {
     ent_ = readdir(dir_);
+    
+    while (ent_ != 0 && 
+           (strcmp(ent_->d_name, ".") == 0 ||
+            strcmp(ent_->d_name, "..") == 0))
+    {
+        ent_ = readdir(dir_);
+    }
+
     if (ent_ == 0) {
         if (errno == ENOENT) {
             return DS_NOTFOUND;
