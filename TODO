@@ -1,3 +1,6 @@
-* integrate expandable buffer into StreamBuffer
-* integrate serializestream into the marshallers
-* 
+* Integrate expandable buffer into StreamBuffer
+* Integrate serializestream into the marshallers
+* MemoryStore serialization is wrong -- uses string serialize to
+  marshal keys, then unmarhsals the keys
+* Should really change all the serialization stuff to be char* not
+  u_char*. What the hell was I thinking when I wrote that.
