@@ -7,7 +7,7 @@ run_and_wait() {
     echo "*** $prog"
     echo "***"
 
-    $prog &
+    ./$prog &
     pid=$!
 
     timeout=300
@@ -29,6 +29,10 @@ run_and_wait() {
 found_tests=0
 for i in *; do
     if [ -f $i -a -x $i ]; then
+	if [ \( "$i" = "run" \) -o \( "$i" = "run-unit-tests.sh" \) ]; then
+	    continue;
+	fi
+
         found_tests=1
         run_and_wait $i 0
     fi
