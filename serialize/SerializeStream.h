@@ -5,6 +5,7 @@
 
 namespace oasys {
 
+//----------------------------------------------------------------------------
 /*!
  * Stream is the consumer/producer of bits which the Serialization
  * adaptors use to reconstitute objects.
@@ -26,6 +27,8 @@ public:
     virtual int process_bits(char* buf, size_t size) = 0;
 };
 
+
+//----------------------------------------------------------------------------
 /*!
  * A stream which wraps writing byte array.
  */
@@ -55,6 +58,8 @@ private:
     size_t pos_;                //!< Current position in the stream
 };
 
+
+//----------------------------------------------------------------------------
 template<typename _IO_Op>
 class IOStream : public SerializeStream {
 public:
@@ -71,6 +76,8 @@ private:
     IOClient* io_;
 };
 
+
+//----------------------------------------------------------------------------
 namespace StreamOps {
 
 struct CopyTo {
@@ -102,6 +109,18 @@ typedef MemoryStream<StreamOps::CopyTo>   ReadMemoryStream;
 typedef MemoryStream<StreamOps::CopyFrom> WriteMemoryStream;
 typedef IOStream<StreamOps::Read>         ReadIOStream;
 typedef IOStream<StreamOps::Write>        WriteIOStream;
+
+
+//----------------------------------------------------------------------------
+class WriteBase64Stream : public SerializeStream {
+public:
+    WriteBase64Stream(SerializeStream* stream);
+
+    int process_bits(char* buf, size_t size);
+
+private:
+    SerializeStream* stream_;
+};
 
 } // namespace oasys
 
