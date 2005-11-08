@@ -138,6 +138,7 @@ public:
      */
     _Type* operator->() const
     {
+        ASSERT(object_ != 0);
         return object_;
     }
 
@@ -146,6 +147,7 @@ public:
      */
     _Type& operator*() const
     {
+        ASSERT(object_ != 0);
         return *object_;
     }
 
@@ -180,7 +182,8 @@ public:
     /**
      * Assignment operator.
      */
-    Ref& operator=(const Ref<_Type>& other)
+    template<typename _OtherType>
+    Ref& operator=(const Ref<_OtherType>& other)
     {
         assign(other.object_);
         return *this;
@@ -189,7 +192,8 @@ public:
     /**
      * Assignment operator from a temporary ref.
      */
-    Ref& operator=(const TempRef<_Type>& temp)
+    template<typename _OtherType>
+    Ref& operator=(const TempRef<_OtherType>& temp)
     {
         if (object_ != temp.object()) {
             assign(temp.object());
