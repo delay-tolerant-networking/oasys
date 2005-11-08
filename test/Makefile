@@ -3,6 +3,7 @@ TESTS += \
 	buffer-test				\
 	durable-cache-test			\
 	io-basic-test				\
+	filesys-db-test				\
 	log-test				\
 	marshal-test				\
 	memory-store-test			\
