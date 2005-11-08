@@ -90,8 +90,8 @@ namespace oasys {
  * // example of use
  * Foo* foo;
  * TypeCollection<FoobarC>* factory = TypeCollection<FoobarC>::instance();
- * int err = factory->new_object(TypeCollectionCode<TestC, Foo>::TYPECODE,
- *                               &foo, buf, len, Serialize::CONTEXT_LOCAL)
+ * int err = factory->new_object(
+ *               TypeCollectionCode<TestC, Foo>::TYPECODE, &foo)
  * @endcode
  */
 
