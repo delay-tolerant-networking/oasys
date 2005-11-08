@@ -209,13 +209,6 @@ BufferedInput::internal_read(size_t len, int timeout_ms)
              (u_int)len, timeout_ms);
         return cc;
     }
-    else if (cc == IOERROR)
-    {
-        logf(LOG_ERR, "internal_read %u (timeout %d) error in read: %s",
-             (u_int)len, timeout_ms, strerror(errno));
-        
-        return cc;
-    }
     else if (cc == 0) 
     {
         log_debug("internal_read %u (timeout %d) eof",
@@ -223,14 +216,32 @@ BufferedInput::internal_read(size_t len, int timeout_ms)
         seen_eof_ = true;
         return cc;
     }
+    else if (cc < 0)
+    {
+        logf(LOG_ERR, "internal_read %u (timeout %d) error %d in read: %s",
+             (u_int)len, timeout_ms, cc, strerror(errno));
+        
+        return cc;
+    }
     
     buf_.fill(cc);
 
-
     int ret = std::min(buf_.fullbytes(), len);
-    
+
+#ifndef NDEBUG
+    PrettyPrintBuf pretty(buf_.start(), ret);
+        
+    log_debug("internal_read %u bytes, data =", ret);
+    std::string s;
+    bool done;
+    do {
+        done = pretty.next_str(&s);
+        log_debug(s.c_str());
+    } while(!done);
+#else
     log_debug("internal_read %u (timeout %d): cc=%d ret %d",
               (u_int)len, timeout_ms, cc, ret);
+#endif
 
     return ret;
 }
@@ -365,11 +376,13 @@ BufferedOutput::flush()
         PrettyPrintBuf pretty(buf_.start(), cc);
         
         log_debug("flush %d bytes, data =", cc);
-        std::pair< std::string, bool > p;
+        std::string s;
+        bool done;
         do {
-            p = pretty.next_str();
-            log_debug("%s", p.first.c_str());
-        } while(p.second);
+            done = pretty.next_str(&s);
+            log_debug(s.c_str());
+        } while(!done);
+
 #else
         log_debug("flush wrote \"%s\", %d bytes", 
                   buf_.start(), cc);
