@@ -354,7 +354,7 @@ IPSocket::recv(char* bp, size_t len, int flags)
 
 int
 IPSocket::recvfrom(char* bp, size_t len, int flags,
-             in_addr_t *addr, u_int16_t *port)
+                   in_addr_t *addr, u_int16_t *port)
 {
     struct sockaddr_in sa;
     socklen_t sl = sizeof(sa);
@@ -391,8 +391,8 @@ IPSocket::poll_sockfd(int events, int* revents, int timeout_ms)
     short s_revents;
     
     int cc = IO::poll_single(fd_, s_events, &s_revents, timeout_ms, 
-                      get_notifier(), logpath_);
-
+                             get_notifier(), logpath_);
+    
     if (revents != 0) {
         *revents = s_revents;
     }

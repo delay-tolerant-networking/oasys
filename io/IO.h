@@ -123,7 +123,7 @@ struct IO {
                        Notifier* intr = 0, const char* log = 0);
 
     static int readvall(int fd, const struct iovec* iov, int iovcnt,
-                 Notifier* intr = 0, const char* log = 0);
+                        Notifier* intr = 0, const char* log = 0);
 
     static int timeout_read(int fd, char* bp, size_t len, int timeout_ms,
                             Notifier* intr = 0, const char* log  = 0);
