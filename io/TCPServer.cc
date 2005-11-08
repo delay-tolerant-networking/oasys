@@ -73,7 +73,8 @@ TCPServer::listen()
 int
 TCPServer::accept(int *fd, in_addr_t *addr, u_int16_t *port)
 {
-    ASSERT(state_ == LISTENING);
+    ASSERTF(state_ == LISTENING,
+            "accept() expected state LISTENING, not %s", statetoa(state_));
     
     struct sockaddr_in sa;
     socklen_t sl = sizeof(sa);
@@ -100,8 +101,7 @@ TCPServer::timeout_accept(int *fd, in_addr_t *addr, u_int16_t *port,
 {
     int ret = poll_sockfd(POLLIN, NULL, timeout_ms);
 
-    if (ret < 0)  return IOERROR;
-    if (ret == 0) return IOTIMEOUT;
+    if (ret != 1) return ret;
     ASSERT(ret == 1);
 
     ret = accept(fd, addr, port);
@@ -112,7 +112,7 @@ TCPServer::timeout_accept(int *fd, in_addr_t *addr, u_int16_t *port,
 
     monitor(IO::ACCEPT, 0); // XXX/bowei
 
-    return 1; // accept'd
+    return 0; 
 }
 
 void
@@ -128,16 +128,27 @@ TCPServerThread::run()
         if (should_stop())
             break;
         
-        // block in accept waiting for new connections
-        if (accept(&fd, &addr, &port) != 0) {
+        // check the accept_timeout parameter to see if we should
+        // block or poll when calling accept
+        int ret;
+        if (accept_timeout_ == -1) {
+            ret = accept(&fd, &addr, &port);
+        } else {
+            ret = timeout_accept(&fd, &addr, &port, accept_timeout_);
+            if (ret == IOTIMEOUT)
+                continue;
+        }
+
+        if (ret != 0) {
             if (errno == EINTR)
                 continue;
-
-            logf(LOG_ERR, "error in accept(): %d %s", errno, strerror(errno));
+            
+            logf(LOG_ERR, "error %d in accept(): %d %s",
+                 ret, errno, strerror(errno));
             close();
             break;
         }
-        
+
         logf(LOG_DEBUG, "accepted connection fd %d from %s:%d",
              fd, intoa(addr), port);
 
