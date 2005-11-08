@@ -91,7 +91,7 @@ namespace oasys {
  * Foo* foo;
  * TypeCollection<FoobarC>* factory = TypeCollection<FoobarC>::instance();
  * int err = factory->new_object(
- *               TypeCollectionCode<TestC, Foo>::TYPECODE, &foo)
+ *               TypeCollectionCode<TestC, Foo>::TYPECODE, &foo);
  * @endcode
  */
 
