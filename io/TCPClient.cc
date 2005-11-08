@@ -46,9 +46,13 @@
 
 namespace oasys {
 
-TCPClient::TCPClient(const char* logbase)
+TCPClient::TCPClient(const char* logbase, bool init_socket_immediately)
     : IPClient(SOCK_STREAM, logbase)
 {
+    if (init_socket_immediately) {
+        init_socket();
+        ASSERT(fd_ != -1);
+    }
 }
 
 TCPClient::TCPClient(int fd, in_addr_t remote_addr, u_int16_t remote_port,

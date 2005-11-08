@@ -51,7 +51,8 @@ private:
     TCPClient(const TCPClient&);	///< Prohibited constructor
     
 public:
-    TCPClient(const char* logbase = "/tcpclient");
+    TCPClient(const char* logbase = "/tcpclient",
+              bool init_socket_immediately = false);
     TCPClient(int fd, in_addr_t remote_addr, u_int16_t remote_port,
               const char* logbase = "/tcpclient");
 
