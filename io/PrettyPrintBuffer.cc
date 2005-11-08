@@ -41,7 +41,7 @@
 
 namespace oasys {
 
-const int PrettyPrintBuf::MAX_COL = 40;
+const int PrettyPrintBuf::MAX_COL = 80;
 
 //----------------------------------------------------------------------------
 PrettyPrintBuf::PrettyPrintBuf(const char* buf, int len)
@@ -54,8 +54,8 @@ PrettyPrintBuf::PrettyPrintBuf(const char* buf, int len)
 }
 
 //----------------------------------------------------------------------------
-std::pair<std::string, bool>
-PrettyPrintBuf::next_str()
+bool
+PrettyPrintBuf::next_str(std::string* s)
 {
     StringBuffer buf;
 
@@ -75,7 +75,8 @@ PrettyPrintBuf::next_str()
     }
 
     bool full = (bound == len_) ? true : false;
-    return std::pair<std::string, bool>(buf.c_str(), !full);
+    s->assign(buf.c_str());
+    return full;
 }
 
 } // namespace oasys

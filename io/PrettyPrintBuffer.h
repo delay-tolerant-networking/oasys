@@ -50,7 +50,7 @@ class PrettyPrintBuf {
 public:
     PrettyPrintBuf(const char* buf, int len = -1);
  
-    std::pair< std::string, bool > next_str();
+    bool next_str(std::string* s);
 
 private:
     static const int MAX_COL;
