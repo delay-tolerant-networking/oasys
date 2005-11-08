@@ -89,7 +89,8 @@ namespace oasys {
  * 
  * // example of use
  * Foo* foo;
- * TypeCollection<FoobarC>* factory = TypeCollection<FoobarC>::instance();
+ * TypeCollectionInstance<FoobarC>* factory = 
+ *     TypeCollectionInstance<FoobarC>::instance();
  * int err = factory->new_object(
  *               TypeCollectionCode<TestC, Foo>::TYPECODE, &foo);
  * @endcode
@@ -231,7 +232,9 @@ public:
      * serializable object via a typecollection.
      *
      * @return new_object. Note the use of a static cast to
-     *     SerializableObject to avoid screwing up the pointers.
+     *     SerializableObject to avoid screwing up the pointers. If we had
+     *     used a void* here, the pointer to the class may be off in the case
+     *     of multiple inheritance.
      */
     SerializableObject* new_object() {
         return static_cast<SerializableObject*>
