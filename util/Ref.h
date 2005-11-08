@@ -182,8 +182,7 @@ public:
     /**
      * Assignment operator.
      */
-    template<typename _OtherType>
-    Ref& operator=(const Ref<_OtherType>& other)
+    Ref& operator=(const Ref<_Type>& other)
     {
         assign(other.object_);
         return *this;
@@ -192,8 +191,7 @@ public:
     /**
      * Assignment operator from a temporary ref.
      */
-    template<typename _OtherType>
-    Ref& operator=(const TempRef<_OtherType>& temp)
+    Ref& operator=(const TempRef<_Type>& temp)
     {
         if (object_ != temp.object()) {
             assign(temp.object());
