@@ -7,6 +7,7 @@
 
 #include "../debug/FatalSignals.h"
 #include "../debug/Log.h"
+#include "../io/PrettyPrintBuffer.h"
 
 namespace oasys {
 
@@ -261,29 +262,46 @@ void _name::add_tests()                                         \
                     "CHECK '" #_a "' (%d) == '" #_b "' (%d)", (a), (b));         \
     } } while(0)
 
-#define CHECK_EQUAL_U64(a, b)                                                    \
-    do { if ((a) != (b)) {                                                       \
-        ::oasys::Breaker::break_here();                                          \
-        oasys::logf("/test", oasys::LOG_ERR,                                     \
-                    "CHECK FAILED: '" #a "' (%llu) != '" #b "' (%llu) at %s:%d", \
-                    (u_int64_t)(a), (u_int64_t)(b), __FILE__, __LINE__);         \
-        return oasys::UNIT_TEST_FAILED;                                          \
-    } else {                                                                     \
-        oasys::logf("/test", oasys::LOG_INFO,                                    \
-                    "CHECK '" #a "' (%llu) == '" #b "' (%llu)",                  \
-                    (u_int64_t)(a), (u_int64_t)(b));                             \
+#define CHECK_EQUAL_U64(a, b)                                                           \
+    do { if ((a) != (b)) {                                                              \
+        ::oasys::Breaker::break_here();                                                 \
+        oasys::logf("/test", oasys::LOG_ERR,                                            \
+                    "CHECK FAILED: '" #a "' (%llu) != '" #b "' (%llu) at %s:%d",        \
+                    (u_int64_t)(a), (u_int64_t)(b), __FILE__, __LINE__);                \
+        return oasys::UNIT_TEST_FAILED;                                                 \
+    } else {                                                                            \
+        oasys::logf("/test", oasys::LOG_INFO,                                           \
+                    "CHECK '" #a "' (%llu) == '" #b "' (%llu)",                         \
+                    (u_int64_t)(a), (u_int64_t)(b));                                    \
     } } while(0)
 
-#define CHECK_EQUALSTR(a, b)                                                    \
-    do { if (strcmp((a), (b)) != 0) {                                           \
-        ::oasys::Breaker::break_here();                                         \
-        oasys::logf("/test", oasys::LOG_ERR,                                    \
-                    "CHECK FAILED: '" #a "' (%s) != '" #b "' (%s) at %s:%d",    \
-                    (a), (b), __FILE__, __LINE__);                              \
-        return oasys::UNIT_TEST_FAILED;                                         \
-    } else {                                                                    \
-        oasys::logf("/test", oasys::LOG_INFO,                                   \
-                    "CHECK '" #a "' (%s) == '" #b "' (%s)", (a), (b));          \
+#define CHECK_EQUALSTR(a, b)                                                            \
+    do { if (strcmp((a), (b)) != 0) {                                                   \
+        ::oasys::Breaker::break_here();                                                 \
+        oasys::logf("/test", oasys::LOG_ERR,                                            \
+                    "CHECK FAILED: '" #a "' != '" #b "' at %s:%d.",                     \
+                    __FILE__, __LINE__);                                                \
+        oasys::logf("/test", oasys::LOG_ERR, "Contents of " #a ":");                    \
+        oasys::PrettyPrintBuf buf_a(a, strlen(a));                                      \
+        std::string s;                                                                  \
+        bool done;                                                                      \
+        do {                                                                            \
+            done = buf_a.next_str(&s);                                                  \
+            oasys::logf("/test", oasys::LOG_ERR, s.c_str());                            \
+        } while (!done);                                                                \
+                                                                                        \
+        oasys::logf("/test", oasys::LOG_ERR, "Contents of " #b ":");                    \
+        oasys::PrettyPrintBuf buf_b(b, strlen(b));                                      \
+                                                                                        \
+        do {                                                                            \
+            done = buf_b.next_str(&s);                                                  \
+            oasys::logf("/test", oasys::LOG_ERR, s.c_str());                            \
+        } while (!done);                                                                \
+                                                                                        \
+        return oasys::UNIT_TEST_FAILED;                                                 \
+    } else {                                                                            \
+        oasys::logf("/test", oasys::LOG_INFO,                                           \
+                    "CHECK '" #a "' (%s) == '" #b "' (%s)", (a), (b));                  \
     } } while(0);
 
 #define CHECK_EQUALSTRN(a, b, len)                                              \
