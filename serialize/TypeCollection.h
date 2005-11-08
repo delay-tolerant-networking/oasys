@@ -183,12 +183,13 @@ public:
      * and TYPECODE if the typecode is invalid for the given type.
      */
     template<typename _Type>
-    int new_object(TypeCode_t typecode, _Type** obj)
+    int new_object(TypeCode_t typecode, _Type** obj, bool check_type = true)
     {
         // Check that the given typecode is within the legal bounds
         // for the _Type of the return
-        if(TypeCollectionCode<_Collection, _Type>::TYPECODE_LOW  > typecode ||
-           TypeCollectionCode<_Collection, _Type>::TYPECODE_HIGH < typecode)
+        if(check_type && 
+           (TypeCollectionCode<_Collection, _Type>::TYPECODE_LOW  > typecode ||
+            TypeCollectionCode<_Collection, _Type>::TYPECODE_HIGH < typecode))
         {
             return TypeCollectionErr::TYPECODE;
         }
