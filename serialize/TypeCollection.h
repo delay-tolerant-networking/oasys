@@ -46,6 +46,55 @@
 
 namespace oasys {
 
+/**
+ * @class TypeCollectionInstance
+ *
+ * This templated type collection accomplishes severals things:
+ *
+ * - Enables different collections of type codes which can have the
+ *   same numeric value, e.g. the same type codes can be reused in
+ *   different projects that are then linked together.
+ * - Type checked object creation from raw bits.
+ * - Abstract type groups, e.g. Object* deserialized from concrete
+ *   instantiations A, B, C who inherited from Object.
+ * 
+ * Example of use:
+ * @code
+ * // Type declaration for the Foobar collection of type codes
+ * struct FoobarC {};
+ * 
+ * // Instantiate a typecollection for this collection (this goes in
+ * // the .cc file)
+ * TypeCollection<FoobarC>* TypeCollection<FoobarC>::instance_;
+ * 
+ * // An aggregate class Obj and concrete classes Foo, Bar
+ * struct Obj : public SerializableObject {};
+ * struct Foo : public Obj {
+ *     Foo(TypeCollection<FoobarC>* b) {}
+ *     void serialize(SerializeAction* a) {}
+ * };
+ * struct Bar : public Obj {
+ *     Bar(TypeCollection<FoobarC>* b) {}
+ *     void serialize(SerializeAction* a) {}
+ * };
+ * 
+ * // in the .h file
+ * TYPE_COLLECTION_DECLARE(FoobarC, Foo, 1);
+ * TYPE_COLLECTION_DECLARE(FoobarC, Bar, 2);
+ * TYPE_COLLECTION_GROUP(FoobarC, Obj, 1, 2);
+ * 
+ * // in the .cc file
+ * TYPE_COLLECTION_DEFINE(FoobarC, Foo, 1);
+ * TYPE_COLLECTION_DEFINE(FoobarC, Bar, 2);
+ * 
+ * // example of use
+ * Foo* foo;
+ * TypeCollection<FoobarC>* factory = TypeCollection<FoobarC>::instance();
+ * int err = factory->new_object(TypeCollectionCode<TestC, Foo>::TYPECODE,
+ *                               &foo, buf, len, Serialize::CONTEXT_LOCAL)
+ * @endcode
+ */
+
 class TypeCollectionHelper;
 
 namespace TypeCollectionErr {
@@ -110,52 +159,6 @@ protected:
     std::map<TypeCode_t, TypeCollectionHelper*> dispatch_;
 };
 
-/**
- * This templated type collection accomplishes severals things:
- *
- * - Enables different collections of type codes which can have the
- *   same numeric value, e.g. the same type codes can be reused in
- *   different projects that are then linked together.
- * - Type checked object creation from raw bits.
- * - Abstract type groups, e.g. Object* deserialized from concrete
- *   instantiations A, B, C who inherited from Object.
- * 
- * Example of use:
- * @code
- * // Type declaration for the Foobar collection of type codes
- * struct FoobarC {};
- * 
- * // Instantiate a typecollection for this collection (this goes in
- * // the .cc file)
- * TypeCollection<FoobarC>* TypeCollection<FoobarC>::instance_;
- * 
- * // An aggregate class Obj and concrete classes Foo, Bar
- * struct Obj : public SerializableObject {};
- * struct Foo : public Obj {
- *     Foo(TypeCollection<FoobarC>* b) {}
- *     void serialize(SerializeAction* a) {}
- * };
- * struct Bar : public Obj {
- *     Bar(TypeCollection<FoobarC>* b) {}
- *     void serialize(SerializeAction* a) {}
- * };
- * 
- * // in the .h file
- * TYPE_COLLECTION_DECLARE(FoobarC, Foo, 1);
- * TYPE_COLLECTION_DECLARE(FoobarC, Bar, 2);
- * TYPE_COLLECTION_GROUP(FoobarC, Obj, 1, 2);
- * 
- * // in the .cc file
- * TYPE_COLLECTION_DEFINE(FoobarC, Foo, 1);
- * TYPE_COLLECTION_DEFINE(FoobarC, Bar, 2);
- * 
- * // example of use
- * Foo* foo;
- * TypeCollection<FoobarC>* b = TypeCollection<FoobarC>::instance();
- * int err = b->new_object(TypeCollectionCode<TestC, Foo>::TYPECODE,
- *                         &foo, buf, len, Serialize::CONTEXT_LOCAL)
- * @endcode
- */
 template<typename _Collection>
 class TypeCollectionInstance : public TypeCollection {
 public:    
