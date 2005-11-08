@@ -35,63 +35,54 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "util/UnitTest.h"
+#include "util/StringUtils.h"
 
-#include "debug/Log.h"
-#include "StringUtils.h"
+using namespace oasys;
+using namespace std;
 
-namespace oasys {
+DECLARE_TEST(BasicTokenizeTest) {
+    std::vector<std::string> tokens;
 
-int
-tokenize(const std::string& str,
-         const std::string& sep,
-         std::vector<std::string>* tokens)
-{
-    size_t start, end;
+    CHECK_EQUAL(tokenize("one, two, three", ", ", &tokens), 3);
+    CHECK_EQUAL(tokens.size(), 3);
+    CHECK_EQUALSTR(tokens[0].c_str(), "one");
+    CHECK_EQUALSTR(tokens[1].c_str(), "two");
+    CHECK_EQUALSTR(tokens[2].c_str(), "three");
 
-    tokens->clear();
+    CHECK_EQUAL(tokenize("one, ,, two, ,, three", ", ", &tokens), 3);
+    CHECK_EQUAL(tokens.size(), 3);
+    CHECK_EQUALSTR(tokens[0].c_str(), "one");
+    CHECK_EQUALSTR(tokens[1].c_str(), "two");
+    CHECK_EQUALSTR(tokens[2].c_str(), "three");
 
-    start = str.find_first_not_of(sep);
-    if (start == std::string::npos || start == str.length()) {
-        return 0; // nothing to do
-    }
+    CHECK_EQUAL(tokenize("thequickbrownfox", "ABC", &tokens), 1);
+    CHECK_EQUAL(tokens.size(), 1);
+    CHECK_EQUALSTR(tokens[0].c_str(), "thequickbrownfox");
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(EdgeConditionTest) {
+    std::vector<std::string> tokens;
     
-    while (1) {
-        end = str.find_first_of(sep, start);
-        if (end == std::string::npos) {
-            end = str.length();
-        }
-        
-        tokens->push_back(str.substr(start, end - start));
-        
-        if (end == str.length()) {
-            break; // all done
-        }
-        
-        start = str.find_first_not_of(sep, end);
-        if (start == std::string::npos) {
-            break; // all done
-        }
-    }
+    CHECK_EQUAL(tokenize("", "", &tokens), 0);
+    CHECK_EQUAL(tokens.size(), 0);
 
-    return tokens->size();
+    CHECK_EQUAL(tokenize("ABC", "ABC", &tokens), 0);
+    CHECK_EQUAL(tokens.size(), 0);
+    
+    CHECK_EQUAL(tokenize(" foo bar ", " ", &tokens), 2);
+    CHECK_EQUAL(tokens.size(), 2);
+    CHECK_EQUALSTR(tokens[0].c_str(), "foo");
+    CHECK_EQUALSTR(tokens[1].c_str(), "bar");
+    
+    return UNIT_TEST_PASSED;
 }
 
-void
-StringSet::dump(const char* log) const
-{
-    logf(log, LOG_DEBUG, "dumping string set...");
-    for (iterator i = begin(); i != end(); ++i) {
-        logf(log, LOG_DEBUG, "\t%s", i->c_str());
-    }
+
+DECLARE_TESTER(Test) {    
+    ADD_TEST(BasicTokenizeTest);
+    ADD_TEST(EdgeConditionTest);
 }
 
-void
-StringHashSet::dump(const char* log) const
-{
-    logf(log, LOG_DEBUG, "dumping string set...");
-    for (iterator i = begin(); i != end(); ++i) {
-        logf(log, LOG_DEBUG, "\t%s", i->c_str());
-    }
-}
-
-} // namespace oasys
+DECLARE_TEST_FILE(Test, "string tokenize test");

@@ -15,6 +15,7 @@ TESTS += \
 	stack-trace-test			\
 	static-buffer-test			\
 	string-hash-test			\
+	string-tokenize-test			\
 	regex-test				\
 	text-code-test				\
 	timer-test				\

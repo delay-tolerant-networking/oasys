@@ -138,6 +138,15 @@ class StringVector : public std::vector<std::string> {
 };
 
 /**
+ * Tokenize a single string into a vector.
+ * Return the number of tokens parsed.
+ */
+int
+tokenize(const std::string& str,
+         const std::string& sep,
+         std::vector<std::string>* tokens);
+
+/**
  * Generate a hex string from a binary buffer.
  */
 inline void
