@@ -138,10 +138,24 @@ public:
      *
      * @param key  Key object
      * @param data Data object
+     * @param cache *from_cache == true if the object retrieved from
+     *     the cache
      *
      * @return DS_OK, DS_NOTFOUND if key is not found
      */
-    int get(const SerializableObject& key, _DataType** data);
+    int get(const SerializableObject& key,
+            _DataType**               data,
+            bool*                     from_cache = 0);
+
+    /**
+     * Get variant which can take a blank object down into the get
+     * function. 
+     *
+     * NOTE: This function cannot be used while a object cache is
+     * attached to the table. It wouldn't be legit now would it.
+     */
+    int get(const SerializableObject& key,
+            _DataType*                data);
 
 private:
     // Not implemented on purpose -- can't copy
@@ -189,10 +203,14 @@ public:
      *
      * @param key  Key object
      * @param data Data object
+     * @param cache *from_cache == true if the object retrieved from
+     *     the cache
      *
      * @return DS_OK, DS_NOTFOUND if key is not found
      */
-    int get(const SerializableObject& key, _BaseType** data);
+    int get(const SerializableObject& key,
+            _BaseType**               data,
+            bool*                     from_cache = 0);
 
     /**
      * Object allocation callback that is handed to the implementation

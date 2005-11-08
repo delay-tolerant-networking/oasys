@@ -26,7 +26,8 @@ DurableTable<_Type>::size()
 template <typename _DataType>
 inline int
 SingleTypeDurableTable<_DataType>::get(const SerializableObject& key,
-                                       _DataType** data)
+                                       _DataType**               data,
+                                       bool*                     from_cache)
 {
     int err;
 
@@ -34,6 +35,11 @@ SingleTypeDurableTable<_DataType>::get(const SerializableObject& key,
         err = this->cache_->get(key, data);
         if (err == DS_OK) {
             ASSERT(*data != NULL);
+
+            if (from_cache != 0) {
+                *from_cache = true;
+            }
+
             return DS_OK;
         }
     }
@@ -51,16 +57,32 @@ SingleTypeDurableTable<_DataType>::get(const SerializableObject& key,
         ASSERT(err == DS_OK);
     }
 
-    *data = d;
+    *data   = d;
+    if (from_cache != 0) {
+        *from_cache = false;
+    }
+
     return 0;
 }
 
 //----------------------------------------------------------------------------
 template <typename _DataType>
 inline int
+SingleTypeDurableTable<_DataType>::get(const SerializableObject& key,
+                                       _DataType* data)
+{
+    // Should not use this if the cache is present.
+    ASSERT(this->cache_ == 0);
+    ASSERT(data == 0);
+    return this->impl_->get(key, data);
+}
+
+//----------------------------------------------------------------------------
+template <typename _DataType>
+inline int
 SingleTypeDurableTable<_DataType>::put(const SerializableObject& key,
-                                       const _DataType* data,
-                                       int flags)
+                                       const _DataType*          data,
+                                       int                       flags)
 {
     int ret = this->impl_->put(key, TypeCollection::UNKNOWN_TYPE, data, flags);
 
@@ -81,7 +103,8 @@ template <typename _BaseType, typename _Collection>
 inline int
 MultiTypeDurableTable<_BaseType, _Collection>::get(
     const SerializableObject& key,
-    _BaseType** data
+    _BaseType**               data,
+    bool*                     from_cache
     )
 {
     int err;
@@ -90,6 +113,11 @@ MultiTypeDurableTable<_BaseType, _Collection>::get(
         err = this->cache_->get(key, data);
         if (err == DS_OK) {
             ASSERT(*data != NULL);
+
+            if (from_cache != 0) {
+                *from_cache = true;
+            }
+            
             return DS_OK;
         }
     }
@@ -104,6 +132,10 @@ MultiTypeDurableTable<_BaseType, _Collection>::get(
     *data = dynamic_cast<_BaseType*>(generic_data);
     ASSERT(*data != NULL);
     
+    if (from_cache != 0) {
+        *from_cache = false;
+    }
+
     if (this->cache_ != 0) {
         err = this->cache_->put(key, *data, DS_CREATE | DS_EXCL);
         ASSERT(err == DS_OK);
