@@ -48,6 +48,12 @@ SERIALIZE_SRCS :=				\
 	serialize/StringSerialize.cc		\
 	serialize/TextSerialize.cc		\
 
+SMTP_SRCS :=                                    \
+	smtp/BasicSMTP.cc          		\
+	smtp/SMTP.cc          			\
+	smtp/SMTPClient.cc    			\
+	smtp/SMTPServer.cc     			\
+
 STORAGE_SRCS :=					\
 	storage/BerkeleyDBStore.cc		\
 	storage/DurableStore.cc                 \
@@ -98,6 +104,7 @@ SRCS := \
 	$(IO_SRCS) 				\
 	$(MEMORY_SRCS)                          \
 	$(SERIALIZE_SRCS)			\
+	$(SMTP_SRCS)				\
 	$(STORAGE_SRCS) 			\
 	$(TCLCMD_SRCS)				\
 	$(THREAD_SRCS)				\

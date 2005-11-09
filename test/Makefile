@@ -11,6 +11,7 @@ TESTS += \
 	sample-test				\
 	serialize-test				\
 	serialize-stream-test			\
+	smtp-test				\
 	spin-lock-test				\
 	stack-trace-test			\
 	static-buffer-test			\
