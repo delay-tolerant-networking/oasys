@@ -73,7 +73,7 @@ SingleTypeDurableTable<_DataType>::get(const SerializableObject& key,
 {
     // Should not use this if the cache is present.
     ASSERT(this->cache_ == 0);
-    ASSERT(data == 0);
+    ASSERT(data != NULL);
     return this->impl_->get(key, data);
 }
 
