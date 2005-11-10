@@ -67,12 +67,12 @@ Thread::pre_thread_run(void* t)
 {
     Thread* thr = (Thread*)t;
     pthread_t pthread_id = Thread::current();
-    thr->thread_run(pthread_id);
+    thr->thread_run(thr->name_, pthread_id);
     NOTREACHED;
 }
 
 void
-Thread::thread_run(pthread_t pthread_id)
+Thread::thread_run(const char* thread_name, pthread_t pthread_id)
 {
 #if GOOGLE_PROFILE_ENABLED
     ProfilerRegisterThread();

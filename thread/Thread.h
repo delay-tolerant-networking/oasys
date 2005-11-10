@@ -218,7 +218,7 @@ protected:
     virtual void run() = 0;
 
     static void* pre_thread_run(void* t);
-    void thread_run(pthread_t thread_id);
+    void thread_run(const char* thread_name, pthread_t thread_id);
     static void interrupt_signal(int sig);
 
     pthread_t pthread_;
