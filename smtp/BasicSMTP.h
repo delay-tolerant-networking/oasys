@@ -90,7 +90,7 @@ protected:
     //! @{ virtual from SMTPSender
     void get_HELO_domain(std::string* domain);
     void get_MAIL_from(std::string* from);
-    void get_RCPT_list(std::vector<std::string>*);
+    void get_RCPT_list(std::vector<std::string>* to);
     void get_DATA(std::string** data);
     int smtp_error(int code);
     //! @}
