@@ -45,7 +45,7 @@ SMTPServer::SMTPServer(const SMTP::Config& config,
                        SMTPHandlerFactory* handler_factory,
                        Notifier*           session_done,
                        int                 accept_timeout)
-    : TCPServerThread("TCPServerThread", "/smtp/server", 0, accept_timeout),
+    : TCPServerThread("SMTPServer", "/smtp/server", 0, accept_timeout),
       config_(config),
       handler_factory_(handler_factory),
       session_done_(session_done)
