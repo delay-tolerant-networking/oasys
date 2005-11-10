@@ -74,6 +74,7 @@ private:
  */
 class SMTPHandlerFactory {
 public:
+    virtual ~SMTPHandlerFactory() {}
     virtual SMTPHandler* new_handler() = 0;
 };
 

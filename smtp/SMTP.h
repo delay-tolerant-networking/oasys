@@ -112,6 +112,8 @@ private:
  */
 class SMTPSender {
 public:
+    virtual ~SMTPSender() {}
+    
     //! @{ @return -1 to disconnect, otherwise error code given in
     //!    response code.
     virtual void get_HELO_domain(std::string* domain) = 0;
