@@ -41,6 +41,7 @@
 #include <unistd.h>
 
 #include <debug/DebugUtils.h>
+#include <io/FileUtils.h>
 #include <util/StringBuffer.h>
 #include <util/Pointers.h>
 #include <serialize/MarshalSerialize.h>
@@ -103,6 +104,7 @@ BerkeleyDBStore::~BerkeleyDBStore()
 int 
 BerkeleyDBStore::init(StorageConfig* cfg)
 {
+    FileUtils::abspath(&cfg->dbdir_);
     db_name_ = cfg->dbname_;
     sharefile_ = cfg->dbsharefile_;
 

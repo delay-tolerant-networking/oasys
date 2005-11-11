@@ -48,6 +48,7 @@
 
 #include "../util/ExpandableBuffer.h"
 #include "../serialize/TypeCollection.h"
+#include "../io/FileUtils.h"
 #include "../io/IO.h"
 
 namespace oasys {
@@ -75,6 +76,7 @@ FileSystemStore::init(StorageConfig* cfg)
         return -1;
     }
 
+    FileUtils::abspath(&cfg->dbdir_);
     tables_dir_ = cfg->dbdir_ + "/" + cfg->dbname_;
 
     // Always regenerate the directories if we are going to be
