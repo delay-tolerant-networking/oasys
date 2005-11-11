@@ -49,7 +49,8 @@
 
 namespace oasys {
 
-const char* FatalSignals::appname_ = "(unknown app)";
+const char* FatalSignals::appname_  = "(unknown app)";
+const char* FatalSignals::core_dir_ = NULL;
 bool        FatalSignals::in_abort_handler_ = false;
 
 void
@@ -97,6 +98,14 @@ FatalSignals::handler(int sig)
     
     fprintf(stderr, "ERROR: %s (pid %d) got fatal %s - will dump core\n",
             appname_, (int)getpid(), signame);
+
+    // make sure we're in the right directory
+    if (!in_abort_handler_ && core_dir_ != NULL) {
+        fprintf(stderr, "fatal handler chdir'ing to core dir '%s'\n",
+                core_dir_);
+        chdir(core_dir_);   
+    }
+
     StackTrace::print_current_trace(true);
     fflush(stderr);
 
@@ -116,13 +125,14 @@ FatalSignals::handler(int sig)
             for (size_t i = 0; i < ids.size(); ++i) {
                 if (ids[i] != 0 && ids[i] != Thread::current()) {
                     fprintf(stderr,
-                            "fatal handler sending signal to thread %d\n",
+                            "fatal handler sending signal to thread %u\n",
                             ids[i]);
                     pthread_kill(ids[i], sig);
                     sleep(1);
                 }
             }
-        
+
+            fprintf(stderr, "fatal handler dumping core\n");
             signal(sig, SIG_DFL);
             kill(getpid(), sig);
         }

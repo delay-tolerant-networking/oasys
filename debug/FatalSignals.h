@@ -52,13 +52,25 @@ public:
      */
     static void cancel();
 
+    /**
+     * Set the directory to chdir to before dumping core in the case
+     * of a fatal signal.
+     */
+    static void set_core_dir(const char* dir)
+    {
+        core_dir_ = dir;
+    }
+
 protected:
     /// Fatal signal handler.
     static void handler(int sig);
 
     /// The app name to put in the stack trace printout
     static const char* appname_;
-
+    
+    /// The directory to chdir() into before dumping core.
+    static const char* core_dir_;
+    
     /// Flag set in the abort/quit handler when we deliver the signal
     /// to other threads.
     static bool in_abort_handler_;
