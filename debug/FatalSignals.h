@@ -58,6 +58,10 @@ protected:
 
     /// The app name to put in the stack trace printout
     static const char* appname_;
+
+    /// Flag set in the abort/quit handler when we deliver the signal
+    /// to other threads.
+    static bool in_abort_handler_;
 };
 
 } // namespace oasys

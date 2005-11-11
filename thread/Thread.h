@@ -50,6 +50,7 @@
 
 #include <signal.h>
 #include "../debug/DebugUtils.h"
+#include "SafeArray.h"
 
 namespace oasys {
 
@@ -210,6 +211,13 @@ public:
      */
     static void check_for_SMP();
     
+    /**
+     * Array of all live pthread ids. Used for debugging, see
+     * FatalSignals.cc.
+     */
+    typedef SafeArray<256, 0> IDArray;
+    static IDArray all_thread_ids_;
+    
 protected:
     /**
      * Derived classes should implement this function which will get
@@ -231,6 +239,7 @@ protected:
     static std::vector<Thread*> threads_in_barrier_;
 
     const char* name_;
+
 };
 
 inline pthread_t

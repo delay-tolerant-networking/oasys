@@ -56,6 +56,7 @@ bool                 Thread::signals_inited_ = false;
 sigset_t             Thread::interrupt_sigset_;
 bool                 Thread::start_barrier_enabled_ = false;
 std::vector<Thread*> Thread::threads_in_barrier_;
+Thread::IDArray      Thread::all_thread_ids_;
 
 void
 Thread::interrupt_signal(int sig)
@@ -87,6 +88,8 @@ Thread::thread_run(const char* thread_name, pthread_t pthread_id)
      * assertion.
      */
     pthread_ = pthread_id;
+
+    all_thread_ids_.insert(pthread_id);
     
     set_interruptable((flags_ & INTERRUPTABLE));
 
@@ -105,6 +108,8 @@ Thread::thread_run(const char* thread_name, pthread_t pthread_id)
         delete this;
     }
 
+    all_thread_ids_.remove(pthread_id);
+    
     pthread_exit(0);
 
     NOTREACHED;

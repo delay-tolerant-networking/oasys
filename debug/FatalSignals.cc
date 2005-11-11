@@ -41,13 +41,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "FatalSignals.h"
 #include "StackTrace.h"
+#include "thread/Thread.h"
 
 namespace oasys {
 
 const char* FatalSignals::appname_ = "(unknown app)";
+bool        FatalSignals::in_abort_handler_ = false;
 
 void
 FatalSignals::init(const char* appname)
@@ -92,17 +95,41 @@ FatalSignals::handler(int sig)
         exit(1);
     };
     
-    signal(sig, SIG_DFL);
     fprintf(stderr, "ERROR: %s (pid %d) got fatal %s - will dump core\n",
             appname_, (int)getpid(), signame);
     StackTrace::print_current_trace(true);
     fflush(stderr);
 
-    // trap-generated signals are automatically redelivered by the OS.
-    // SIGABRT and SIGQUIT, however, need to be redelivered
+    // trap-generated signals are automatically redelivered by the OS,
+    // so we restore the default handler below.
+    //
+    // SIGABRT and SIGQUIT, however, need to be redelivered. but, we
+    // really would like to have stack traces from all threads, so we
+    // first set a flag indicating that we've started the process,
+    // then try to deliver the same signal to all the other threads to
+    // try to get more stack traces
     if (sig == SIGABRT || sig == SIGQUIT) {
-        kill(getpid(), sig);
+        if (! in_abort_handler_) {
+            in_abort_handler_ = true;
+
+            Thread::IDArray& ids = Thread::all_thread_ids_;
+            for (size_t i = 0; i < ids.size(); ++i) {
+                if (ids[i] != 0 && ids[i] != Thread::current()) {
+                    fprintf(stderr,
+                            "fatal handler sending signal to thread %d\n",
+                            ids[i]);
+                    pthread_kill(ids[i], sig);
+                    sleep(1);
+                }
+            }
+        
+            signal(sig, SIG_DFL);
+            kill(getpid(), sig);
+        }
+    } else {
+        signal(sig, SIG_DFL);
     }
+
 }
 
 } // namespace oasys
