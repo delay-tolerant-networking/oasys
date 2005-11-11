@@ -90,7 +90,7 @@ public:
         // get a -l <loglevel> argument and we don't always get debug
         // output
         if (! Log::initialized()) {
-            Log::init(LOG_INFO);
+            Log::init(LOG_NOTICE);
         }
 
         FatalSignals::init(name_.c_str());
@@ -246,7 +246,7 @@ void _name::add_tests()                                         \
                     #x, __FILE__, __LINE__);            \
         return oasys::UNIT_TEST_FAILED;                 \
     } else {                                            \
-        ::oasys::__logf(oasys::LOG_INFO, "/test",       \
+        ::oasys::__logf(oasys::LOG_NOTICE, "/test",     \
                     "CHECK (%s) ok", #x);               \
     } } while(0)
 
@@ -258,7 +258,7 @@ void _name::add_tests()                                         \
                     (a), (b), __FILE__, __LINE__);                               \
         return oasys::UNIT_TEST_FAILED;                                          \
     } else {                                                                     \
-        oasys::logf("/test", oasys::LOG_INFO,                                    \
+        oasys::logf("/test", oasys::LOG_NOTICE,                                  \
                     "CHECK '" #_a "' (%d) == '" #_b "' (%d)", (a), (b));         \
     } } while(0)
 
@@ -270,7 +270,7 @@ void _name::add_tests()                                         \
                     (u_int64_t)(a), (u_int64_t)(b), __FILE__, __LINE__);                \
         return oasys::UNIT_TEST_FAILED;                                                 \
     } else {                                                                            \
-        oasys::logf("/test", oasys::LOG_INFO,                                           \
+        oasys::logf("/test", oasys::LOG_NOTICE,                                         \
                     "CHECK '" #a "' (%llu) == '" #b "' (%llu)",                         \
                     (u_int64_t)(a), (u_int64_t)(b));                                    \
     } } while(0)
@@ -300,7 +300,7 @@ void _name::add_tests()                                         \
                                                                                         \
         return oasys::UNIT_TEST_FAILED;                                                 \
     } else {                                                                            \
-        oasys::logf("/test", oasys::LOG_INFO,                                           \
+        oasys::logf("/test", oasys::LOG_NOTICE,                                         \
                     "CHECK '" #a "' (%s) == '" #b "' (%s)", (a), (b));                  \
     } } while(0);
 
@@ -314,7 +314,7 @@ void _name::add_tests()                                         \
                          __FILE__, __LINE__);                                   \
              return oasys::UNIT_TEST_FAILED;                                    \
          } else {                                                               \
-             oasys::logf("/test", oasys::LOG_INFO,                              \
+             oasys::logf("/test", oasys::LOG_NOTICE,                            \
                          "CHECK '" #a "' (%.*s...) == '" #b "' (%.*s...)",      \
                          print_len, (a), print_len, (b));                       \
         }                                                                       \
