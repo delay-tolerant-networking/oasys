@@ -55,6 +55,10 @@ public:
 
     static size_t size(const char* path,
                        const char* log = 0);
+
+    /// Make sure the given path is absolute, prepending the current
+    /// directory if necessary.
+    static void abspath(std::string* path);
 };
 
 }

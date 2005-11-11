@@ -98,5 +98,18 @@ FileUtils::size(const char* path, const char* log)
     return st.st_size;
 }
 
+void
+FileUtils::abspath(std::string* path)
+{
+    if ((*path)[0] != '/') {
+        char cwd[PATH_MAX];
+        ::getcwd(cwd, PATH_MAX);
+
+        std::string temp = *path;
+        *path = cwd;
+        *path += '/' + temp;
+    }
+}
+
 
 } // end namespace
