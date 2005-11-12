@@ -150,13 +150,10 @@ public:
     /**
      * Get variant which can take a blank object down into the get
      * function. 
-     *
-     * NOTE: This function cannot be used while a object cache is
-     * attached to the table. It wouldn't be legit now would it.
      */
-    int get(const SerializableObject& key,
-            _DataType*                data);
-
+    int get_copy(const SerializableObject& key,
+                 _DataType* data);
+    
 private:
     // Not implemented on purpose -- can't copy
     SingleTypeDurableTable(const SingleTypeDurableTable&);

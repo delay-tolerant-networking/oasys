@@ -34,7 +34,7 @@ SingleTypeDurableTable<_DataType>::get(const SerializableObject& key,
     if (this->cache_ != 0) {
         err = this->cache_->get(key, data);
         if (err == DS_OK) {
-            ASSERT(*data != NULL);
+            ASSERT(*data != 0);
 
             if (from_cache != 0) {
                 *from_cache = true;
@@ -68,12 +68,24 @@ SingleTypeDurableTable<_DataType>::get(const SerializableObject& key,
 //----------------------------------------------------------------------------
 template <typename _DataType>
 inline int
-SingleTypeDurableTable<_DataType>::get(const SerializableObject& key,
+SingleTypeDurableTable<_DataType>::get_copy(const SerializableObject& key,
                                        _DataType* data)
 {
-    // Should not use this if the cache is present.
-    ASSERT(this->cache_ == 0);
-    ASSERT(data != NULL);
+    ASSERT(data != 0);
+
+    if (this->cache_ != 0) 
+    {
+        _DataType* cache_data;
+        int err = this->cache_->get(key, &cache_data);
+
+        if (err == DS_OK) {
+            ASSERT(cache_data != 0);
+            
+            *data = *cache_data;
+            return DS_OK;
+        }
+    } 
+
     return this->impl_->get(key, data);
 }
 
