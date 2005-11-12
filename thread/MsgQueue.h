@@ -85,6 +85,15 @@ public:
     }
 
     /**
+     * Atomically add msg to the back of the queue, and signal
+     * waiting threads.
+     */
+    void push_back(_elt_t msg)
+    {
+        push(msg, true);
+    }
+
+    /**
      * Block and pop msg from the queue.
      */
     _elt_t pop_blocking();
