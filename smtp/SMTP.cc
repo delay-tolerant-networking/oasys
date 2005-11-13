@@ -34,6 +34,7 @@ SMTP::client_session(SMTPSender* sender, bool first_session)
     std::string domain;
     std::string from;
     std::vector<std::string> to;
+    std::string received;
     std::string* message;
 
     if (first_session) {
@@ -57,10 +58,15 @@ SMTP::client_session(SMTPSender* sender, bool first_session)
         
     out_->printf("DATA\r\n");
     if ((err = process_response(354)) != 0) return err;
-        
+
+    sender->get_RECEIVED(&received);
     sender->get_DATA(&message);
     size_t start = 0, end = 0;
 
+    if (received.length() != 0) {
+        out_->write(received.data(), received.length());
+    }
+    
     while (1) {
         end = message->find_first_of("\r\n", start);
 

@@ -119,6 +119,7 @@ public:
     virtual void get_HELO_domain(std::string* domain) = 0;
     virtual void get_MAIL_from(std::string* from) = 0;
     virtual void get_RCPT_list(std::vector<std::string>* to) = 0;
+    virtual void get_RECEIVED(std::string* received) {}
     virtual void get_DATA(std::string** data) = 0;
     //! @}
 
