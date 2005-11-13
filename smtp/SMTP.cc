@@ -35,7 +35,7 @@ SMTP::client_session(SMTPSender* sender, bool first_session)
     std::string from;
     std::vector<std::string> to;
     std::string received;
-    std::string* message;
+    const std::string* message;
 
     if (first_session) {
         // handle the initial message

@@ -70,7 +70,7 @@ BasicSMTPSender::get_RCPT_list(std::vector<std::string>* to)
 
 //----------------------------------------------------------------------------
 void
-BasicSMTPSender::get_DATA(std::string** data)
+BasicSMTPSender::get_DATA(const std::string** data)
 {
     *data = &msg_->msg_;
 }

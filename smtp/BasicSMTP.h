@@ -91,7 +91,7 @@ protected:
     void get_HELO_domain(std::string* domain);
     void get_MAIL_from(std::string* from);
     void get_RCPT_list(std::vector<std::string>* to);
-    void get_DATA(std::string** data);
+    void get_DATA(const std::string** data);
     int smtp_error(int code);
     //! @}
 
