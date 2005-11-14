@@ -74,9 +74,18 @@ Notifier::Notifier(const char* logpath)
 
 Notifier::~Notifier()
 {
-    log_debug("Notifier shutting down");
-    close(pipe_[0]);
-    close(pipe_[1]);
+    int err;
+    log_debug("Notifier shutting down (closing fds %d %d)", pipe_[0], pipe_[1]);
+
+    err = close(pipe_[0]);
+    if (err != 0) {
+        log_err("error closing pipe %d: %s", pipe_[0], strerror(errno));
+    }
+
+    err = close(pipe_[1]);
+    if (err != 0) {
+        log_err("error closing pipe %d: %s", pipe_[1], strerror(errno));
+    }
 }
 
 void
