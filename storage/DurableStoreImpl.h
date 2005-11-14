@@ -112,9 +112,9 @@ protected:
  */
 class DurableTableImpl {
 public:
-    //! XXX/bowei -- what does multitype do??
     DurableTableImpl(std::string table_name, bool multitype)
         : table_name_(table_name), multitype_(multitype) {}
+
     virtual ~DurableTableImpl() {}
 
     /**
