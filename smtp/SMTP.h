@@ -42,8 +42,6 @@
 #include "../io/BufferedIO.h"
 #include "../io/NetUtils.h"
 
-class IgnoredClass;
-
 namespace oasys {
 
 class BasicSMTPMsg;
