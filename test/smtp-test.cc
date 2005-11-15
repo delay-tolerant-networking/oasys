@@ -8,7 +8,12 @@
 
 using namespace oasys;
 
-SMTP::Config config(htonl(INADDR_LOOPBACK), 17760, -1, "test.domain.com");
+class MySMTPConfig : public SMTP::Config {
+public:
+    MySMTPConfig() :
+        Config(htonl(INADDR_LOOPBACK), 17760, -1, "test.domain.com") {}
+};
+MySMTPConfig config;
 
 typedef std::vector<BasicSMTPMsg> MailList;
 MailList ml;
