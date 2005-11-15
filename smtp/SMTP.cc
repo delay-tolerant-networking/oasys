@@ -5,8 +5,7 @@
 namespace oasys {
 
 const char* SMTP::nl_ = "\r\n";
-SMTP::Config SMTP::DEFAULT_CONFIG(htonl(INADDR_LOOPBACK), 25,
-                                  -1, "default.domain.com");
+SMTP::Config SMTP::DEFAULT_CONFIG;
 
 //----------------------------------------------------------------------------
 SMTP::SMTP(oasys::BufferedInput*  in,

@@ -42,6 +42,8 @@
 #include "../io/BufferedIO.h"
 #include "../io/NetUtils.h"
 
+class IgnoredClass;
+
 namespace oasys {
 
 class BasicSMTPMsg;
@@ -55,11 +57,14 @@ class SMTPSender;
 class SMTP : public Logger {
 public:
     struct Config {
+        /// Default config constructor
         Config()
-        {
-            *this = DEFAULT_CONFIG;
-        }
-        
+            : addr_(htonl(INADDR_LOOPBACK)),
+              port_(25),
+              timeout_(-1),
+              domain_("default.domain.com") {}
+
+        /// Specific config constructor
         Config(in_addr_t addr, u_int16_t port,
                int timeout, const std::string& domain)
             : addr_(addr), port_(port),
