@@ -60,7 +60,7 @@ class SpinLock;
  */
 class Notifier : public Logger {
 public:
-    Notifier(const char* logpath = NULL);
+    Notifier(const char* fmt, ...) PRINTFLIKE(2,3);
     ~Notifier();
 
     /**

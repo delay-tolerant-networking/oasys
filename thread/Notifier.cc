@@ -45,14 +45,19 @@
 
 namespace oasys {
 
-Notifier::Notifier(const char* logpath)
+Notifier::Notifier(const char* fmt, ...)
     : count_(0)
 {
-    if (logpath) {
-        set_logpath(logpath);
-    } else {
-        logpathf("/notifier/%p", this);
-    }
+    ASSERT(fmt);
+    
+    // assert for consistency
+    ASSERTF(strncmp(fmt, "/notifier", 9) == 0,
+            "Notifier log path must begin with /notifier");
+
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(logpath_, sizeof(logpath_), fmt, ap);
+    va_end(ap);
     
     if (pipe(pipe_) != 0) {
         log_crit("can't create pipe for notifier");
