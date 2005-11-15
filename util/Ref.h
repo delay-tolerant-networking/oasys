@@ -102,8 +102,9 @@ public:
           what2_(other.what2_)
     {
         object_ = other.object();
-        if (object_) 
+        if (object_) {
             object_->add_ref(what1_, what2_);
+        }
     }
 
     /**
