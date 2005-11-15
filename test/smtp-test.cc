@@ -52,7 +52,7 @@ DECLARE_TEST(SmtpPipe) {
     CHECK(pipe(pipe1) == 0);
     CHECK(pipe(pipe2) == 0);
 
-    Notifier done;
+    Notifier done("SmtpPipe::done");
     SMTPHandlerThread* t =
         new SMTPHandlerThread(new TestSMTPHandler(), pipe1[0], pipe2[1],
                               SMTP::DEFAULT_CONFIG, &done);
@@ -81,7 +81,7 @@ DECLARE_TEST(SmtpPipe) {
 
 DECLARE_TEST(SmtpSockets) {
     TestSMTPFactory f;
-    Notifier done;
+    Notifier done("SmtpSockets::done");
     SMTPServer server(config, &f, &done, 500);
     server.start();
     
@@ -110,7 +110,7 @@ DECLARE_TEST(SmtpSockets) {
 
 DECLARE_TEST(SmtpPython) {
     TestSMTPFactory f;
-    Notifier done;
+    Notifier done("SmtpPython::done");
     SMTPServer server(config, &f, &done, 500);
     server.start();
 
@@ -131,7 +131,7 @@ DECLARE_TEST(SmtpPython) {
 
 DECLARE_TEST(SmtpTcl) {
     TestSMTPFactory f;
-    Notifier done;
+    Notifier done("SmtpTcl::done");
     SMTPServer server(config, &f, &done, 500);
     server.start();
 

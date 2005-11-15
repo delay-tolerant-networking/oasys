@@ -290,7 +290,9 @@ DECLARE_TEST(ReadV) {
 struct ReadIntrRunner : public PipeIOTester {
     static const int total = 10000;
 
-    ReadIntrRunner() {
+    ReadIntrRunner()
+        : intr("ReadIntrRunner")
+    {
         int err = pipe(fds_);
         ASSERT(err == 0);
     }
@@ -362,6 +364,9 @@ DECLARE_TEST(ReadTimeout) {
 
 
 struct ReadTimeoutIntrRunner : public PipeIOTester {
+    ReadTimeoutIntrRunner()
+        : intr("ReadTimeoutIntrRunner") {}
+    
     static const int total = 10000;
     
     void run_reader() {
