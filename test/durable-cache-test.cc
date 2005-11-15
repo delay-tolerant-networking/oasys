@@ -8,7 +8,7 @@ using namespace oasys;
 DurableObjectCache<StringShim>* cache_;
 
 DECLARE_TEST(Init) {
-    cache_ = new DurableObjectCache<StringShim>(32);
+    cache_ = new DurableObjectCache<StringShim>("/test/cache", 32);
     return UNIT_TEST_PASSED;
 }
 

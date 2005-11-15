@@ -47,7 +47,7 @@ public:
     /**
      * Constructor.
      */
-    DurableObjectCache(size_t capacity);
+    DurableObjectCache(const char* logpath, size_t capacity);
 
     /**
      * Add a new object to the cache, initially putting it on the live

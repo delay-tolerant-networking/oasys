@@ -7,8 +7,8 @@
  * Constructor.
  */
 template <typename _DataType>
-DurableObjectCache<_DataType>::DurableObjectCache(size_t capacity)
-    : Logger("/storage/cache"),
+DurableObjectCache<_DataType>::DurableObjectCache(const char* logpath, size_t capacity)
+    : Logger(logpath),
       size_(0), capacity_(capacity),
       hits_(0), misses_(0), evictions_(0), lock_(new SpinLock())
 {
@@ -290,9 +290,9 @@ DurableObjectCache<_DataType>::del(const SerializableObject& key)
     CacheElement* cache_elem = cache_iter->second;
     
     if (cache_elem->live_) {
-        log_debug("del(%s): can't remove live object %p size %u from cache",
-                  cache_key.c_str(), cache_elem->object_,
-                  cache_elem->object_size_);
+        log_err("del(%s): can't remove live object %p size %u from cache",
+                cache_key.c_str(), cache_elem->object_,
+                cache_elem->object_size_);
         return DS_ERR;
         
     } else {
@@ -305,6 +305,7 @@ DurableObjectCache<_DataType>::del(const SerializableObject& key)
     cache_.erase(cache_iter);
     size_ -= cache_elem->object_size_;
 
+    delete cache_elem->object_;
     delete cache_elem;
     return DS_OK;
 }

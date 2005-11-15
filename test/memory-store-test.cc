@@ -427,7 +427,7 @@ DECLARE_TEST(SingleTypeCache) {
     g_config->tidy_           = true;
     DurableStoreImpl*   impl  = TheMemoryStore;
     DurableStore*       store = new DurableStore(impl);
-    StringDurableCache* cache = new StringDurableCache(32);
+    StringDurableCache* cache = new StringDurableCache("/test/cache/string", 32);
     impl->init(g_config);
 
     StringDurableTable* table;
@@ -566,7 +566,7 @@ DECLARE_TEST(MultiTypeCache) {
     g_config->tidy_           = true;
     DurableStoreImpl*   impl  = TheMemoryStore;
     DurableStore*       store = new DurableStore(impl);
-    ObjDurableCache*    cache = new ObjDurableCache(36);
+    ObjDurableCache*    cache = new ObjDurableCache("/test/cache/obj", 36);
     impl->init(g_config);
 
     ObjDurableTable* table = 0;
