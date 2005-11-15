@@ -62,7 +62,7 @@ public:
     /*!
      * Constructor.
      */
-    MsgQueue(const char* logpath = NULL, SpinLock* lock = NULL);
+    MsgQueue(const char* logpath, SpinLock* lock = NULL);
         
     /**
      * Destructor.

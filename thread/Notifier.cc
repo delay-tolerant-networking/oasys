@@ -46,17 +46,13 @@
 namespace oasys {
 
 Notifier::Notifier(const char* fmt, ...)
-    : count_(0)
+    : Logger("/notifier"), count_(0)
 {
     ASSERT(fmt);
-    
-    // assert for consistency
-    ASSERTF(strncmp(fmt, "/notifier", 9) == 0,
-            "Notifier log path must begin with /notifier");
 
     va_list ap;
     va_start(ap, fmt);
-    vsnprintf(logpath_, sizeof(logpath_), fmt, ap);
+    vsnprintf(logpath_ + 9, sizeof(logpath_) - 9, fmt, ap);
     va_end(ap);
     
     if (pipe(pipe_) != 0) {
