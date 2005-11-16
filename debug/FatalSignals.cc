@@ -139,7 +139,22 @@ FatalSignals::handler(int sig)
     } else {
         signal(sig, SIG_DFL);
     }
-
 }
+
+void
+FatalSignals::die()
+{
+    Breaker::break_here();
+    StackTrace::print_current_trace(false);
+    if (core_dir_ != NULL) {
+        fprintf(stderr, "fatal handler chdir'ing to core dir '%s'\n",
+                core_dir_);
+        chdir(core_dir_);
+    }
+
+    cancel();
+    ::abort();
+}
+
 
 } // namespace oasys

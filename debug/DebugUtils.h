@@ -43,17 +43,13 @@
 
 #include "Log.h"
 #include "FatalSignals.h"
-#include "StackTrace.h"
 
 #define ASSERT(x)                                               \
     do { if (! (x)) {                                           \
         oasys::logf("/assert", oasys::LOG_CRIT,                 \
                     "ASSERTION FAILED (" #x ") at %s:%d",       \
                     __FILE__, __LINE__);                        \
-        ::oasys::Breaker::break_here();                         \
-	::oasys::StackTrace::print_current_trace(false);        \
-	::oasys::FatalSignals::cancel();                        \
-        abort();                                                \
+        ::oasys::FatalSignals::die();                           \
     } } while(0)
 
 #define ASSERTF(x, fmt, args...)                                \
@@ -61,10 +57,7 @@
         oasys::logf("/assert", oasys::LOG_CRIT,                 \
                     "ASSERTION FAILED (" #x ") at %s:%d: " fmt, \
                     __FILE__, __LINE__, ## args);               \
-        ::oasys::Breaker::break_here();                         \
-	::oasys::StackTrace::print_current_trace(false);        \
-	::oasys::FatalSignals::cancel();                        \
-        abort();                                                \
+        ::oasys::FatalSignals::die();                           \
     } } while(0)
 
 #define PANIC(fmt, args...)                                     \
@@ -72,30 +65,21 @@
         oasys::logf("/panic", oasys::LOG_CRIT,                  \
                    "PANIC at %s:%d: " fmt,                      \
                    __FILE__, __LINE__ , ## args);               \
-        ::oasys::Breaker::break_here();                         \
-	::oasys::StackTrace::print_current_trace(false);        \
-	::oasys::FatalSignals::cancel();                        \
-        abort();                                                \
+        ::oasys::FatalSignals::die();                           \
     } while(0)
 
 #define NOTREACHED                                              \
     do { oasys::logf("/assert", oasys::LOG_CRIT,                \
                      "NOTREACHED REACHED at %s:%d\n",           \
                      __FILE__, __LINE__);                       \
-        ::oasys::Breaker::break_here();                         \
-	::oasys::StackTrace::print_current_trace(false);        \
-	::oasys::FatalSignals::cancel();                        \
-        abort();                                                \
+        ::oasys::FatalSignals::die();                           \
     } while(0);
 
 #define NOTIMPLEMENTED                                          \
     do { oasys::logf("/assert", oasys::LOG_CRIT,                \
                      "%s NOT IMPLEMENTED at %s:%d\n",           \
                      __FUNCTION__, __FILE__, __LINE__);         \
-        ::oasys::Breaker::break_here();                         \
-	::oasys::StackTrace::print_current_trace(false);        \
-	::oasys::FatalSignals::cancel();                        \
-        abort();                                                \
+        ::oasys::FatalSignals::die();                           \
     } while(0);
 
 /** @{ 

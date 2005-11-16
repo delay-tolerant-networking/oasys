@@ -61,6 +61,11 @@ public:
         core_dir_ = dir;
     }
 
+    /**
+     * Print a stack trace and die.
+     */
+    static void die() __attribute__((noreturn));
+
 protected:
     /// Fatal signal handler.
     static void handler(int sig);
