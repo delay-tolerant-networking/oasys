@@ -597,6 +597,10 @@ BerkeleyDBTable::put(const SerializableObject& key,
     if (multitype_) {
         typecode_sz = MarshalSize::get_size(&typecode);
     }
+
+    // XXX/demmer -- one little optimization would be to pass the
+    // calculated size out to the caller (the generic DurableTable),
+    // so we don't have to re-calculate it in the object cache code
     
     log_debug("put: serializing %u byte object (plus %u byte typecode)",
               (u_int)object_sz, typecode_sz);
