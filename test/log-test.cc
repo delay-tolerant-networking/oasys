@@ -33,7 +33,7 @@ const char* debug2_sorted =
 
 DECLARE_TEST(Init) {
     
-    log_info("/test", "flamebox-ignore logs /log-test");
+    log_notice("/test", "flamebox-ignore logs /log-test");
 
     // create two files, one with the test rule enabled, one without
     path1.appendf("/tmp/log-test-%s-1-%d", getenv("USER"), getpid());
@@ -394,7 +394,7 @@ DECLARE_TEST(Fini) {
     CHECK(f1->unlink() == 0);
     CHECK(f2->unlink() == 0);
 
-    log_info("/test", "flamebox-ignore-cancel logs");
+    log_notice("/test", "flamebox-ignore-cancel logs");
 
     return UNIT_TEST_PASSED;
 }

@@ -585,8 +585,10 @@ DECLARE_TEST(SingleTypeCache) {
     CHECK(table->get(IntShim(1), &s) == DS_OK);
     CHECK_EQUAL(cache->count(), 2);
     CHECK_EQUAL(cache->live(), 1);
-    
+
+    log_notice("/test", "flamebox-ignore ign1 .*can't remove live object .* from cache");
     CHECK(table->del(IntShim(1)) == DS_ERR);
+    log_notice("/test", "flamebox-ignore-cancel ign1");
     CHECK(table->get(IntShim(1), &s) == DS_OK);
     CHECK(cache->release(IntShim(1), s) == DS_OK);
     CHECK(table->del(IntShim(1)) == DS_OK);
@@ -724,7 +726,10 @@ DECLARE_TEST(MultiTypeCache) {
     CHECK_EQUAL(cache->count(), 2);
     CHECK_EQUAL(cache->live(), 1);
     
+    log_notice("/test", "flamebox-ignore ign1 .*can't remove live object .* from cache");
     CHECK(table->del(IntShim(1)) == DS_ERR);
+    log_notice("/test", "flamebox-ignore-cancel ign1");
+    
     CHECK(table->get(IntShim(1), &o) == DS_OK);
     CHECK(cache->release(IntShim(1), o) == DS_OK);
     CHECK(table->del(IntShim(1)) == DS_OK);
