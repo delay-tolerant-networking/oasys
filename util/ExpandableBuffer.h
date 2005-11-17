@@ -37,8 +37,6 @@ struct ExpandableBuffer {
      * @return 0 on success.
      */
     virtual void reserve(size_t size) {
-        ASSERT(size != 0);
-
         if (size > buf_len_) {
             buf_ = static_cast<char*>(realloc(buf_, size));
             if (buf_ == 0) {
