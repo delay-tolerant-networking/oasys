@@ -103,11 +103,15 @@ AC_DEFUN(AC_OASYS_FIND_DB, [
             "$ac_dbdir" = yes -o \
             "$ac_dbdir" = "" ; 
     then
-        ac_dbincdirs="/usr/include /usr/local/include/db4"
+        ac_dbincdirs="/usr/include /usr/local/include/db$ac_dbver"
         ac_dbincdirs="$ac_dbincdirs /usr/include/db$ac_dbver"
         ac_dbincdirs="$ac_dbincdirs /usr/local/BerkeleyDB.$ac_dbver/include"
-        ac_dblibdirs="/usr/lib /usr/local/lib"
+	tmp=`echo $ac_dbver | sed 's/\.//'`
+	ac_dbincdirs=/usr/local/include/db$tmp
+
+        ac_dblibdirs="/usr/lib /usr/local/lib /usr/local/include/db$ac_dbver"
         ac_dblibdirs="$ac_dblibdirs /usr/local/BerkeleyDB.$ac_dbver/lib"
+	ac_dblibdirs=/usr/local/lib/db$tmp
     else
         ac_dbincdirs="$ac_dbdir/include"
         ac_dblibdirs="$ac_dbdir/lib"
