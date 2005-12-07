@@ -165,18 +165,18 @@ Log::parse_debug_file(const char* debug_path)
     if ((debug_path[0] == '~') && (debug_path[1] == '/')) {
         char path[256];
         const char* home = getenv("HOME");
-        if (home && *home) {
-            if (home[strlen(home) - 1] == '/') {
-                // avoid // in expanded path
-                snprintf(path, sizeof(path), "%s%s", home, debug_path + 2);
-            } else {
-                snprintf(path, sizeof(path), "%s%s", home, debug_path + 1);
-            }
-        } else {
-            fprintf(stderr, "Can't expand ~ to HOME in debug_path %s\n",
-                    debug_path);
-            return;
+
+        if (home == 0 || *home == 0) {
+            home = "/";
         }
+        
+        if (home[strlen(home) - 1] == '/') {
+            // avoid // in expanded path
+            snprintf(path, sizeof(path), "%s%s", home, debug_path + 2);
+        } else {
+            snprintf(path, sizeof(path), "%s%s", home, debug_path + 1);
+        }
+        
         debug_path_.assign(path);
         debug_path = debug_path_.c_str();
     } else {
