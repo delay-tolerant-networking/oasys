@@ -189,7 +189,7 @@ TclCommandInterp::command_server(const char* prompt,
     StringBuffer cmd("command_server %s %s %d", prompt, intoa(addr), port);
     
     if (Tcl_Eval(interp_, const_cast<char*>(cmd.c_str())) != TCL_OK) {
-        log_err("tcl error in readline loop: \"%s\"",
+        log_err("tcl error starting command_server: \"%s\"",
                 interp_->result);
     }
 }
@@ -200,8 +200,7 @@ TclCommandInterp::command_loop(const char* prompt)
     StringBuffer cmd("command_loop %s", prompt);
     
     if (Tcl_Eval(interp_, const_cast<char*>(cmd.c_str())) != TCL_OK) {
-        log_err("tcl error in readline loop: \"%s\"",
-                interp_->result);
+        log_err("tcl error in command_loop: \"%s\"", interp_->result);
     }
 }
 
@@ -209,8 +208,7 @@ void
 TclCommandInterp::event_loop()
 {
     if (Tcl_Eval(interp_, "event_loop") != TCL_OK) {
-        log_err("tcl error in event_loop: \"%s\"",
-                interp_->result);
+        log_err("tcl error in event_loop: \"%s\"", interp_->result);
     }
 }
 
