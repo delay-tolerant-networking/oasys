@@ -360,11 +360,11 @@ Log::rotate()
 
     output_lock_->lock("Log::rotate");
 
-    logf("/log", LOG_INFO, "closing log file for rotation");
+    logf("/log", LOG_NOTICE, "closing log file for rotation");
     close(logfd_);
     
     logfd_ = newfd;
-    logf("/log", LOG_INFO, "reopened log file after log rotate");
+    logf("/log", LOG_NOTICE, "log rotate successfully reopened file");
 
     output_lock_->unlock();
 }
