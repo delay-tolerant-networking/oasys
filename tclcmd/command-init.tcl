@@ -47,11 +47,20 @@ proc command_process {input output} {
 	    return
 	} else {
 	    command_log debug "closed connection $command_info($input)"
+	    fileevent $input readable ""
 	    catch {close $input}
 	    return
 	}
     }
 
+    # handle exit from a socket connection
+    if {($input != "stdin") && ($line == "exit")} {
+	command_log notice "connection $command_info($input) exiting"
+	fileevent $input readable ""
+	catch {close $input}
+	return
+    }
+    
     # handle tell_encode / no_tell_encode commands
     if {$line == "tell_encode"} {
 	set tell_encode($output) 1
