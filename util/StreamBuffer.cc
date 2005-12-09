@@ -36,7 +36,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <string.h>
 #include "debug/DebugUtils.h"
+#include "debug/Log.h"
 #include "StreamBuffer.h"
 
 namespace oasys {

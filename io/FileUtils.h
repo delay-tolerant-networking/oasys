@@ -39,6 +39,8 @@
 #ifndef _OASYS_FILE_UTILS_H_
 #define _OASYS_FILE_UTILS_H_
 
+#include <string>
+
 namespace oasys {
 
 /**

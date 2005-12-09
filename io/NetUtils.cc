@@ -24,6 +24,7 @@
 #include "NetUtils.h"
 #include "compat/inet_aton.h"
 #include "debug/DebugUtils.h"
+#include "debug/Log.h"
 #include "thread/SpinLock.h"
 #include <stdlib.h>
 #include <string.h>

@@ -275,6 +275,13 @@ public:
     void dump_rules(StringBuffer* buf);
 
     /**
+     * Redirect stdout/stderr to the logging file descriptor by using
+     * dup2. Note that if done once at startup time, this is repeated
+     * whenever the log file is rotated.
+     */
+    void redirect_stdio();
+
+    /**
      * Debugging hook used for the log unit test to test out the
      * overflow guard without actually triggering a panic.
      */
@@ -363,6 +370,7 @@ private:
     static bool inited_;	///< Flag to ensure one-time intialization
     std::string logfile_;	///< Log output file (- for stdout)
     int logfd_;			///< Output file descriptor
+    bool stdio_redirected_;	///< Flag to redirect std{out,err}
     RuleList* rule_list_;	///< Pointer to current list of logging rules
     RuleList  rule_lists_[2];	///< Double-buffered rule lists for reparsing
     SpinLock* output_lock_;	///< Lock for write calls and rotating

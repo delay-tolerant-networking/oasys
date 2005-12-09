@@ -341,6 +341,23 @@ Log::find_rule(const char *path)
 }
 
 void
+Log::redirect_stdio()
+{
+    stdio_redirected_ = true;
+
+    ASSERT(logfd_ > 0);
+
+    int err;
+    if ((err = dup2(logfd_, 1)) != 1) {
+        log_err("/log", "error redirecting stdout: %s", strerror(errno));
+    }
+
+    if ((err = dup2(logfd_, 2)) != 2) {
+        log_err("/log", "error redirecting stderr: %s", strerror(errno));
+    }
+}
+
+void
 Log::rotate()
 {
     if (logfd_ == 1) {
@@ -366,6 +383,11 @@ Log::rotate()
     logfd_ = newfd;
     logf("/log", LOG_NOTICE, "log rotate successfully reopened file");
 
+
+    if (stdio_redirected_) {
+        redirect_stdio();
+    }
+    
     output_lock_->unlock();
 }
 
@@ -533,19 +555,7 @@ Log::vlogf(const char* path, log_level_t level, const void* obj,
     char buf[LOG_MAX_LINELEN + sizeof(guard)];
     memcpy(&buf[LOG_MAX_LINELEN], guard, sizeof(guard));
     char* ptr = buf;
-    
-    // try to catch recursive calls that can result from an
-    // assert/panic from somewhere within the logging code
-    static int threads_in_vlogf = 0;
-    ScopedIncr incr(&threads_in_vlogf);
-    
-    if (threads_in_vlogf > 10) {
-        fprintf(stderr, "fatal error: vlogf called recursively:\n");
-        vfprintf(stderr, fmt, ap);
-        fprintf(stderr, "\n"); // since logf doesn't include newlines
-        abort();
-    }
-    
+
     /* Make sure that paths that don't start with a slash still show up. */
     if (*path != '/') {
 	snprintf(pathbuf, sizeof pathbuf, "/%s", path);
