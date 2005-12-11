@@ -53,6 +53,7 @@ SMTP_SRCS :=                                    \
 	smtp/SMTP.cc          			\
 	smtp/SMTPClient.cc    			\
 	smtp/SMTPServer.cc     			\
+	smtp/SMTPUtils.cc     			\
 
 STORAGE_SRCS :=					\
 	storage/BerkeleyDBStore.cc		\
