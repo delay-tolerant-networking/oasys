@@ -88,6 +88,14 @@ Regex::get_match(size_t i)
     return matches_[i];
 }
 
+std::string
+Regex::regerror_str(int err)
+{
+    char buf[1024];
+    size_t len = regerror(err, &regex_, buf, sizeof(buf));
+    return std::string(buf, len);
+}
+
 Regsub::Regsub(const char* regex, const char* sub_spec, int flags)
     : Regex(regex, flags), sub_spec_(sub_spec)
 {

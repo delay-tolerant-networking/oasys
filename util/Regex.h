@@ -61,6 +61,8 @@ public:
     
     int num_matches();
     const regmatch_t& get_match(size_t i);
+
+    std::string regerror_str(int err);
     
 protected:
     int compilation_err_;
