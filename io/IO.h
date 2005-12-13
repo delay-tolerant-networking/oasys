@@ -91,10 +91,10 @@ struct IO {
     //@{
     /// System call wrappers (for logging)
     static int open(const char* path, int flags,
-                    const char* log = 0);
+                    int* errnop = 0, const char* log = 0);
     
     static int open(const char* path, int flags, mode_t mode,
-                    const char* log = 0);
+                    int* errnop = 0, const char* log = 0);
     
     static int close(int fd,
                      const char* log = 0,

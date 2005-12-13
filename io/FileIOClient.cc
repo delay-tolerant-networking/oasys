@@ -54,18 +54,18 @@ FileIOClient::~FileIOClient()
 }
 
 int
-FileIOClient::open(const char* path, int flags)
+FileIOClient::open(const char* path, int flags, int* errnop)
 {
     path_.assign(path);
-    fd_ = IO::open(path, flags, logpath_);
+    fd_ = IO::open(path, flags, errnop, logpath_);
     return fd_;
 }
 
 int
-FileIOClient::open(const char* path, int flags, mode_t mode)
+FileIOClient::open(const char* path, int flags, mode_t mode, int* errnop)
 {
     path_.assign(path);
-    fd_ = IO::open(path, flags, mode, logpath_);
+    fd_ = IO::open(path, flags, mode, errnop, logpath_);
     return fd_;
 }
 
@@ -81,7 +81,7 @@ int
 FileIOClient::reopen(int flags)
 {
     ASSERT(path_.length() != 0);
-    fd_ = IO::open(path_.c_str(), flags, logpath_);
+    fd_ = IO::open(path_.c_str(), flags, NULL, logpath_);
     return fd_;
 }
 

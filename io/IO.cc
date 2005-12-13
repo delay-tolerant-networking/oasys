@@ -162,9 +162,11 @@ IO::ioerr2str(int err)
 
 //----------------------------------------------------------------------------
 int
-IO::open(const char* path, int flags, const char* log)
+IO::open(const char* path, int flags, int* errnop, const char* log)
 {
     int fd = ::open(path, flags);
+    if (errnop) *errnop = errno;
+    
     if (log) {
         logf(log, LOG_DEBUG, "open %s (flags 0x%x): fd %d", path, flags, fd);
     }
@@ -173,9 +175,12 @@ IO::open(const char* path, int flags, const char* log)
 
 //----------------------------------------------------------------------------
 int
-IO::open(const char* path, int flags, mode_t mode, const char* log)
+IO::open(const char* path, int flags, mode_t mode,
+         int* errnop, const char* log)
 {
     int fd = ::open(path, flags, mode);
+    if (errnop) *errnop = errno;
+    
     if (log) {
         logf(log, LOG_DEBUG, "open %s (flags 0x%x mode 0x%x): fd %d",
              path, flags, (u_int) mode, fd);

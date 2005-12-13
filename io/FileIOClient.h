@@ -59,8 +59,8 @@ public:
 
     ///@{
     /// System call wrappers
-    int open(const char* path, int flags);
-    int open(const char* path, int flags, mode_t mode);
+    int open(const char* path, int flags, int* errnop = 0);
+    int open(const char* path, int flags, mode_t mode, int* errnop = 0);
     int close();
     int unlink();
     int lseek(off_t offset, int whence);
