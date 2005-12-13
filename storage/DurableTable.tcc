@@ -69,7 +69,7 @@ SingleTypeDurableTable<_DataType>::get(const SerializableObject& key,
 template <typename _DataType>
 inline int
 SingleTypeDurableTable<_DataType>::get_copy(const SerializableObject& key,
-                                       _DataType* data)
+                                            _DataType* data)
 {
     ASSERT(data != 0);
 
