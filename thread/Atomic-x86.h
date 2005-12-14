@@ -205,7 +205,7 @@ atomic_incr_ret(volatile void* v)
  * @param i 	integer to add
  */
 static inline unsigned int
-atomic_add32_ret(volatile void* v, unsigned int i)
+atomic_add_ret(volatile void* v, unsigned int i)
 {
     register unsigned int o, n;
     
