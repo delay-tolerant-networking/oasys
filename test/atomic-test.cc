@@ -319,11 +319,11 @@ DECLARE_TESTER(AtomicTester) {
     ADD_TEST(AtomicAddRet10_1);
     ADD_TEST(AtomicAddRet2_10);
     ADD_TEST(AtomicAddRet10_10);
-//     ADD_TEST(AtomicInc2);
-//     ADD_TEST(AtomicInc10);
-//     ADD_TEST(AtomicDecrTest);
-//     ADD_TEST(CompareAndSwapTest2);
-//     ADD_TEST(CompareAndSwapTest10);
+    ADD_TEST(AtomicInc2);
+    ADD_TEST(AtomicInc10);
+    ADD_TEST(AtomicDecrTest);
+    ADD_TEST(CompareAndSwapTest2);
+    ADD_TEST(CompareAndSwapTest10);
 }
 
 #else // __NO_ATOMIC__
