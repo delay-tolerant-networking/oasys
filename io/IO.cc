@@ -395,7 +395,7 @@ IO::write(int fd, const char* bp, size_t len,
           Notifier* intr, const char* log)
 {
     struct iovec iov; 
-    iov.iov_base = const_cast<void*>(static_cast<const void*>(bp));
+    iov.iov_base = const_cast<char*>(bp);
     iov.iov_len  = len;
     return rwdata(WRITEV, fd, &iov, 1, 0, -1, 0, 0, 
 	          intr, false, log);
@@ -436,7 +436,7 @@ IO::timeout_write(int fd, char* bp, size_t len, int timeout_ms,
                   Notifier* intr, const char* log)
 {
     struct iovec iov; 
-    iov.iov_base = const_cast<void*>(static_cast<const void*>(bp));
+    iov.iov_base = const_cast<char*>(bp);
     iov.iov_len  = len;
     return rwdata(WRITEV, fd, &iov, 1, 0, timeout_ms, 0, 0, 
 	          intr, false, log);
@@ -485,7 +485,7 @@ IO::send(int fd, const char* bp, size_t len, int flags,
          Notifier* intr, const char* log)
 {    
     struct iovec iov;
-    iov.iov_base = const_cast<void*>(static_cast<const void*>(bp));
+    iov.iov_base = const_cast<char*>(bp);
     iov.iov_len  = len;
     return rwdata(SEND, fd, &iov, 1, 0, -1, 0, 0, intr, false, log);
 }
@@ -676,11 +676,11 @@ IO::poll_with_notifier(
     {
 #ifdef __APPLE__
         // there's some strange bug in the poll emulation
-        if (cc > nfds) {
+        if (cc > (int)nfds) {
             if (log) {
                 logf(log, LOG_WARN,
                      "poll_with_notifier: returned bogus high value %d, "
-                     "capping to %d", cc, nfds);
+                     "capping to %u", cc, (u_int)nfds);
             }
             cc = nfds;
         }
@@ -818,14 +818,14 @@ IO::rwdata(
         case RECV:
             cc = ::recv(fd, iov[0].iov_base, iov[0].iov_len, flags);
             if (log) logf(log, LOG_DEBUG, "::recv() fd %d %p/%u cc %d", 
-                          fd, iov[0].iov_base, iov[0].iov_len, cc);
+                          fd, iov[0].iov_base, (u_int)iov[0].iov_len, cc);
             break;
         case RECVFROM:
             cc = ::recvfrom(fd, iov[0].iov_base, iov[0].iov_len, flags,
                             args->recvfrom.from, 
                             args->recvfrom.fromlen);
             if (log) logf(log, LOG_DEBUG, "::recvfrom() fd %d %p/%u cc %d", 
-                          fd, iov[0].iov_base, iov[0].iov_len, cc);
+                          fd, iov[0].iov_base, (u_int)iov[0].iov_len, cc);
             break;
         case RECVMSG:
             cc = ::sendmsg(fd, args->msg_hdr, flags);
@@ -839,13 +839,13 @@ IO::rwdata(
         case SEND:
             cc = ::send(fd, iov[0].iov_base, iov[0].iov_len, flags);
             if (log) logf(log, LOG_DEBUG, "::send() fd %d %p/%u cc %d", 
-                          fd, iov[0].iov_base, iov[0].iov_len, cc);
+                          fd, iov[0].iov_base, (u_int)iov[0].iov_len, cc);
             break;
         case SENDTO:
             cc = ::sendto(fd, iov[0].iov_base, iov[0].iov_len, flags,
                           args->sendto.to, args->sendto.tolen);
             if (log) logf(log, LOG_DEBUG, "::sendto() fd %d %p/%u cc %d", 
-                          fd, iov[0].iov_base, iov[0].iov_len, cc);
+                          fd, iov[0].iov_base, (u_int)iov[0].iov_len, cc);
             break;
         case SENDMSG:
             cc = ::sendmsg(fd, args->msg_hdr, flags);
@@ -919,7 +919,7 @@ IO::rwvall(
 	    cow_iov.consume(cc);
             if (log) {
                 logf(log, LOG_DEBUG, "%s %d bytes %u left %d total",
-                     fcn_name, cc, cow_iov.bytes_left(), total_bytes);
+                     fcn_name, cc, (u_int)cow_iov.bytes_left(), total_bytes);
             }
             
             if (timeout > 0) {
