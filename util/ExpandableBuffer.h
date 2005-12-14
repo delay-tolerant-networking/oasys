@@ -1,6 +1,8 @@
 #ifndef __EXPANDABLEBUFFER_H__
 #define __EXPANDABLEBUFFER_H__
 
+#include <cstring>
+
 #include "../debug/DebugUtils.h"
 
 namespace oasys {
@@ -17,6 +19,18 @@ struct ExpandableBuffer {
         if (size != 0) {
             reserve(size);
         }
+    }
+
+    ExpandableBuffer(const ExpandableBuffer& other) 
+        : buf_(0), buf_len_(0), len_(0)
+    {
+        if (other.buf_ == 0) {
+            return;
+        }
+
+        reserve(other.buf_len_);
+        memcpy(other.buf_, buf_, buf_len_);
+        len_ = other.len_;
     }
 
     virtual ~ExpandableBuffer() { 
