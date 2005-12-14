@@ -1,4 +1,5 @@
 TESTS += \
+	atomic-test				\
 	berkeley-db-test			\
 	buffer-test				\
 	durable-cache-test			\
