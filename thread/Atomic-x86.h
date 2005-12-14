@@ -56,7 +56,7 @@ namespace oasys {
  * We have to force gcc to not optimize with an alias.
  */
 struct __noalias {
-    int value;
+    u_int32_t value;
 };
 
 #define __noalias__(x) (*(volatile __noalias *)x)
@@ -69,7 +69,7 @@ struct __noalias {
  * 
  */
 static inline void
-atomic_add(volatile void *v, int i)
+atomic_add(volatile void *v, u_int32_t i)
 {
     __asm__ __volatile__(
         LOCK "addl %1,%0"
@@ -85,7 +85,7 @@ atomic_add(volatile void *v, int i)
  
  */
 static inline void
-atomic_sub(volatile void *v, int i)
+atomic_sub(volatile void *v, u_int32_t i)
 {
     __asm__ __volatile__(
         LOCK "subl %1,%0"
@@ -154,8 +154,8 @@ atomic_decr_test(volatile void *v)
  *
  * @return 	the value of v before the swap
  */
-static inline unsigned int
-atomic_cmpxchg32(volatile void *v, unsigned int o, unsigned int n)
+static inline u_int32_t
+atomic_cmpxchg32(volatile void *v, u_int32_t o, u_int32_t n)
 {
     __asm__ __volatile__(
 	LOCK "cmpxchgl %1, %2"
@@ -174,10 +174,10 @@ atomic_cmpxchg32(volatile void *v, unsigned int o, unsigned int n)
  *
  * @param v 	pointer to current value
  */
-static inline unsigned int
+static inline u_int32_t
 atomic_incr_ret(volatile void* v)
 {
-    register unsigned int o, n;
+    register u_int32_t o, n;
 #if defined(NDEBUG) && NDEBUG == 1
     while (1)
 #else
@@ -185,7 +185,7 @@ atomic_incr_ret(volatile void* v)
     for (j = 0; j < 1000000; ++j)
 #endif
     {
-        o = * (volatile unsigned int*)(v);
+        o = * (volatile u_int32_t*)(v);
         n = o + 1;
         if (atomic_cmpxchg32(v, o, n) == o)
             return n;
@@ -204,10 +204,10 @@ atomic_incr_ret(volatile void* v)
  * @param v 	pointer to current value
  * @param i 	integer to add
  */
-static inline unsigned int
-atomic_add_ret(volatile void* v, unsigned int i)
+static inline u_int32_t
+atomic_add_ret(volatile void* v, u_int32_t i)
 {
-    register unsigned int o, n;
+    register u_int32_t o, n;
     
 #if defined(NDEBUG) && NDEBUG == 1
     while (1)
@@ -216,7 +216,7 @@ atomic_add_ret(volatile void* v, unsigned int i)
     for (j = 0; j < 1000000; ++j)
 #endif
     {
-        o = * (volatile unsigned int*)(v);
+        o = * (volatile u_int32_t*)(v);
         n = o + i;
         if (atomic_cmpxchg32(v, o, n) == o)
             return n;
