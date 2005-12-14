@@ -353,7 +353,7 @@ void _name::add_tests()                                         \
     } } while(0);
 
 #define CHECK_EQUALSTRN(a, b, len)                                              \
-    do { size_t print_len = (len > 32) ? 32 : len;                              \
+    do { u_int print_len = (len > 32) ? 32 : len;                               \
          if (strncmp((const char*)(a), (const char*)(b), (len)) != 0) {         \
              ::oasys::Breaker::break_here();                                    \
              oasys::logf("/test", oasys::LOG_ERR,  "CHECK FAILED: "             \
