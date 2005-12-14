@@ -216,7 +216,7 @@ public:
      * Array of all live pthread ids. Used for debugging, see
      * FatalSignals.cc.
      */
-    typedef SafeArray<256, pthread_t, NULL> IDArray;
+    typedef SafeArray<256, pthread_t, 0> IDArray;
     static IDArray all_thread_ids_;
     
 protected:
