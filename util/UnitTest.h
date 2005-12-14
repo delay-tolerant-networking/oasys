@@ -262,6 +262,54 @@ void _name::add_tests()                                         \
                     "CHECK '" #_a "' (%d) == '" #_b "' (%d)", (a), (b));         \
     } } while(0)
 
+#define CHECK_LT(_a, _b)                                                         \
+    do { int a = _a; int b = _b; if (((a) >= (b)) {                              \
+        ::oasys::Breaker::break_here();                                          \
+        oasys::logf("/test", oasys::LOG_ERR,                                     \
+                    "CHECK FAILED: '" #_a "' (%d) >= '" #_b "' (%d) at %s:%d",   \
+                    (a), (b), __FILE__, __LINE__);                               \
+        return oasys::UNIT_TEST_FAILED;                                          \
+    } else {                                                                     \
+        oasys::logf("/test", oasys::LOG_NOTICE,                                  \
+                    "CHECK '" #_a "' (%d) < '" #_b "' (%d)", (a), (b));          \
+    } } while(0)
+
+#define CHECK_GT(_a, _b)                                                         \
+    do { int a = _a; int b = _b; if ((a) <= (b)) {                               \
+        ::oasys::Breaker::break_here();                                          \
+        oasys::logf("/test", oasys::LOG_ERR,                                     \
+                    "CHECK FAILED: '" #_a "' (%d) <= '" #_b "' (%d) at %s:%d",   \
+                    (a), (b), __FILE__, __LINE__);                               \
+        return oasys::UNIT_TEST_FAILED;                                          \
+    } else {                                                                     \
+        oasys::logf("/test", oasys::LOG_NOTICE,                                  \
+                    "CHECK '" #_a "' (%d) > '" #_b "' (%d)", (a), (b));          \
+    } } while(0)
+
+#define CHECK_LTU(_a, _b)                                                        \
+    do { u_int a = _a; u_int b = _b; if (((a) >= (b)) {                          \
+        ::oasys::Breaker::break_here();                                          \
+        oasys::logf("/test", oasys::LOG_ERR,                                     \
+                    "CHECK FAILED: '" #_a "' (%u) >= '" #_b "' (%u) at %s:%u",   \
+                    (a), (b), __FILE__, __LINE__);                               \
+        return oasys::UNIT_TEST_FAILED;                                          \
+    } else {                                                                     \
+        oasys::logf("/test", oasys::LOG_NOTICE,                                  \
+                    "CHECK '" #_a "' (%u) < '" #_b "' (%u)", (a), (b));          \
+    } } while(0)
+
+#define CHECK_GTU(_a, _b)                                                        \
+    do { u_int a = _a; u_int b = _b; if ((a) <= (b)) {                           \
+        ::oasys::Breaker::break_here();                                          \
+        oasys::logf("/test", oasys::LOG_ERR,                                     \
+                    "CHECK FAILED: '" #_a "' (%u) <= '" #_b "' (%u) at %s:%u",   \
+                    (a), (b), __FILE__, __LINE__);                               \
+        return oasys::UNIT_TEST_FAILED;                                          \
+    } else {                                                                     \
+        oasys::logf("/test", oasys::LOG_NOTICE,                                  \
+                    "CHECK '" #_a "' (%u) > '" #_b "' (%u)", (a), (b));          \
+    } } while(0)
+
 #define CHECK_EQUAL_U64(a, b)                                                           \
     do { if ((a) != (b)) {                                                              \
         ::oasys::Breaker::break_here();                                                 \
