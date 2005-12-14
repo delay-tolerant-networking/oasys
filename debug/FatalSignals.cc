@@ -126,7 +126,7 @@ FatalSignals::handler(int sig)
                 if (ids[i] != 0 && ids[i] != Thread::current()) {
                     fprintf(stderr,
                             "fatal handler sending signal to thread %u\n",
-                            ids[i]);
+                            (u_int)ids[i]);
                     pthread_kill(ids[i], sig);
                     sleep(1);
                 }
