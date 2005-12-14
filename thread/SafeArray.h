@@ -41,20 +41,22 @@
 #include "Atomic.h"
 
 /**
- * Class that provides a simple fixed-size array of 32-bit vales, but
+ * Class that provides a simple fixed-size array of 32-bit values, but
  * with non-locking thread safe semantics. This makes it suitable for
  * things which may need to be set or read from within a signal
  * handler.
  */
 namespace oasys {
 
-template<size_t _sz, unsigned int _emptyval>
+template<size_t _sz, typename _Type, unsigned int _emptyval>
 class SafeArray {
 public:
     /// Constructor that initializes every slot to the empty value
     SafeArray()
     {
-        for (int i = 0; i < (int)_sz; ++i) {
+        STATIC_ASSERT(sizeof(_Type) == 4, Safe_Array_Type_Is_32_Bits);
+        
+        for (size_t i = 0; i < _sz; ++i) {
             array_[i] = _emptyval;
         }
         size_ = _sz;
@@ -68,11 +70,13 @@ public:
      * @returns the index of the insertion or -1 if it failed to find
      * a free slot
      */
-    int insert(unsigned int val)
+    int insert(_Type val)
     {
-        unsigned int oldval;
-        for (int i = 0; i < (int)_sz; ++i) {
-            oldval = atomic_cmpxchg32(&array_[i], _emptyval, val);
+        _Type oldval;
+        for (size_t i = 0; i < _sz; ++i) {
+            oldval = (_Type)atomic_cmpxchg32(&array_[i],
+                                             (unsigned int)_emptyval,
+                                             (unsigned int)val);
             if (oldval == _emptyval) {
                 return i;
             }
@@ -86,11 +90,13 @@ public:
      *
      * @returns the old index of the value or -1 if it wasn't in there
      */
-    int remove(unsigned int val)
+    int remove(_Type val)
     {
-        unsigned int oldval;
-        for (int i = 0; i < (int)_sz; ++i) {
-            oldval = atomic_cmpxchg32(&array_[i], val, _emptyval);
+        _Type oldval;
+        for (size_t i = 0; i < _sz; ++i) {
+            oldval = (_Type)atomic_cmpxchg32(&array_[i],
+                                             (unsigned int)val,
+                                             (unsigned int)_emptyval);
             if (oldval == val) {
                 return i;
             }
@@ -101,7 +107,7 @@ public:
     /**
      * Array operator.
      */
-    unsigned int operator[](size_t i)
+    _Type operator[](size_t i)
     {
         return array_[i];
     }
@@ -109,7 +115,7 @@ public:
     /// @{
     /// Accessors
     size_t              size()  const { return size_; }
-    const unsigned int* array() const { return array_; }
+    const _Type* array() const { return array_; }
     /// @}
 
 protected:
@@ -119,7 +125,7 @@ protected:
     size_t size_;
 
     /// The array of values
-    unsigned int array_[_sz];
+    _Type array_[_sz];
 };
 
 } // namespace oasys

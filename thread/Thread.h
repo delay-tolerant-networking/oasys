@@ -41,6 +41,7 @@
 
 #include "config.h"
 
+#include <sys/types.h>
 #include <pthread.h>
 #include <vector>
 
@@ -215,7 +216,7 @@ public:
      * Array of all live pthread ids. Used for debugging, see
      * FatalSignals.cc.
      */
-    typedef SafeArray<256, 0> IDArray;
+    typedef SafeArray<256, pthread_t, NULL> IDArray;
     static IDArray all_thread_ids_;
     
 protected:
