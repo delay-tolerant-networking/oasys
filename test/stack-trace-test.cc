@@ -1,5 +1,6 @@
 
 #include <signal.h>
+#include <sys/time.h>
 #include <sys/resource.h>
 
 #include "debug/FatalSignals.h"

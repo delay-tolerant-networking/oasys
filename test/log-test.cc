@@ -1,4 +1,6 @@
 
+#include <sys/stat.h>
+
 #include "debug/Formatter.h"
 #include "debug/Log.h"
 #include "io/FileIOClient.h"
