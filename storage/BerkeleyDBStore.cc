@@ -603,7 +603,7 @@ BerkeleyDBTable::put(const SerializableObject& key,
     // so we don't have to re-calculate it in the object cache code
     
     log_debug("put: serializing %u byte object (plus %u byte typecode)",
-              (u_int)object_sz, typecode_sz);
+              (u_int)object_sz, (u_int)typecode_sz);
     
     { // lock
         ScopeLock lock(&scratch_mutex_, "BerkeleyDBStore::put");

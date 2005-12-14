@@ -113,7 +113,7 @@ StringBuffer::append(const char* str, size_t len)
     }
     
     // len is not past the end of str
-    ASSERT(len == strnlen(str, len));
+    ASSERT(len <= strlen(str));
 
     buf_->reserve(buf_->len() + len);
     memcpy(buf_->end(), str, len);

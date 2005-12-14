@@ -59,7 +59,7 @@ DurableObjectCache<_DataType>::evict_last()
 
     log_debug("cache (capacity %u/%u) -- "
               "evicting key '%s' object %p size %u",
-              size_, capacity_, lru_iter->c_str(),
+              (u_int)size_, (u_int)capacity_, lru_iter->c_str(),
               cache_elem->object_, (u_int)cache_elem->object_size_);
     
     cache_.erase(cache_iter);
@@ -292,14 +292,14 @@ DurableObjectCache<_DataType>::del(const SerializableObject& key)
     if (cache_elem->live_) {
         log_err("del(%s): can't remove live object %p size %u from cache",
                 cache_key.c_str(), cache_elem->object_,
-                cache_elem->object_size_);
+                (u_int)cache_elem->object_size_);
         return DS_ERR;
         
     } else {
         lru_.erase(cache_elem->lru_iter_);
         log_debug("del(%s): removing non-live object %p size %u from cache",
                   cache_key.c_str(), cache_elem->object_,
-                  cache_elem->object_size_);
+                  (u_int)cache_elem->object_size_);
     }
     
     cache_.erase(cache_iter);

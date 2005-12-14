@@ -98,14 +98,14 @@ Notifier::drain_pipe(size_t bytes)
 
     while (true)
     {
-        log_debug("drain_pipe: attempting to drain %u bytes", bytes);
+        log_debug("drain_pipe: attempting to drain %u bytes", (u_int)bytes);
         ret = IO::read(read_fd(), buf, 
                        std::min(sizeof(buf), bytes - bytes_drained));
         if (ret <= 0) {
             if (ret == IOAGAIN) {
                 PANIC("drain_pipe: trying to drain with not enough notify "
                       "calls, count = %u and trying to drain %u bytes", 
-                      count_, bytes);
+                      count_, (u_int)bytes);
                 break;
             } else {
                 log_crit("drain_pipe: unexpected error return from read: %s",
@@ -116,7 +116,7 @@ Notifier::drain_pipe(size_t bytes)
         
         bytes_drained += ret;
         log_debug("drain_pipe: drained %u/%u byte(s) from pipe", 
-                  bytes_drained, bytes);
+                  (u_int)bytes_drained, (u_int)bytes);
         count_ -= ret;
 
         if (bytes != 0 && bytes_drained == bytes) {
@@ -128,7 +128,7 @@ Notifier::drain_pipe(size_t bytes)
         // bogus. This probably is the result of a race condition.
         if (ret < static_cast<int>(sizeof(buf))) {
             log_warn("drain_pipe: only possible to drain %u bytes out of %u! "
-                     "race condition?", bytes_drained, bytes);
+                     "race condition?", (u_int)bytes_drained, (u_int)bytes);
             break;
         }
     }

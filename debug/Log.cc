@@ -616,8 +616,8 @@ Log::vlogf(const char* path, log_level_t level, const void* obj,
     output_lock_->unlock();
     
     ASSERTF(ret == (int)buflen,
-            "unexpected return from IO::writeall (got %d, expected %d): %s",
-            ret, buflen, strerror(errno));
+            "unexpected return from IO::writeall (got %d, expected %u): %s",
+            ret, (u_int)buflen, strerror(errno));
     
     return buflen;
 };

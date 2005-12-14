@@ -43,7 +43,7 @@ SerializableVector<_Type>::serialize(SerializeAction* a)
     oasys::Builder builder;
             
     // either marshal or unmarshal the size, which may be zero
-    size_t sz = this->size();
+    u_int sz = this->size();
     a->process("size", &sz);
     
     if (a->action_code() == oasys::Serialize::UNMARSHAL) {
