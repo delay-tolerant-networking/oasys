@@ -59,6 +59,7 @@ struct StorageConfig {
     std::string dbname_;	///< Database name (filename in berkeley db)
     std::string dbdir_;		///< Path to the database files
     int         dbflags_;       ///< DB specific flags
+    int         dbtxmax_;       ///< Max # of active transactions
     bool	dbsharefile_;	///< Share a single DB file (and a lock)
 
     StorageConfig(
@@ -70,6 +71,7 @@ struct StorageConfig {
         const std::string& dbname,
         const std::string& dbdir,
         int                dbflags,
+        int                dbtxmax,
         bool               dbsharefile
     ) : cmd_(cmd),
         type_(type),
@@ -79,6 +81,7 @@ struct StorageConfig {
         dbname_(dbname),
         dbdir_(dbdir),
         dbflags_(dbflags),
+        dbtxmax_(dbtxmax),
         dbsharefile_(dbsharefile)
     {}
 };

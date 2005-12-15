@@ -145,6 +145,14 @@ BerkeleyDBStore::init(StorageConfig* cfg)
              db_name_.c_str(), sharefile_ ? "shared" : "not shared",
              cfg->dbdir_.c_str());
 
+    err = dbenv_->set_tx_max(dbenv_, cfg->dbtxmax_);
+
+    if (err != 0) 
+    {
+        log_crit("DB: %s, cannot set tx_max to %d", db_strerror(err), cfg->dbtxmax_);
+        return DS_ERR;
+    }
+    
     err = dbenv_->open(
         dbenv_, 
         cfg->dbdir_.c_str(),
@@ -180,7 +188,7 @@ BerkeleyDBStore::init(StorageConfig* cfg)
         log_crit("DB: %s, cannot set panic call", db_strerror(err));
         return DS_ERR;
     }
-    
+
     init_ = true;
 
     return 0;
