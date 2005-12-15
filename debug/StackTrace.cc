@@ -36,6 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <config.h>
+
 #include "StackTrace.h"
 #include <dlfcn.h>
 #include <stdio.h>
@@ -71,13 +73,17 @@ StackTrace::print_trace(void *stack[], size_t count)
 
     for (size_t i = 0; i < count; ++i) {
         addr = stack[i];
+
+#if HAVE_DLADDR
         Dl_info info;
         if (dladdr(addr, &info)) {
             int dll_offset = (int)((char*)addr - (char*)info.dli_fbase);
             sprintf(buf, "0x%08x:%s@0x%08x+0x%08x ",
                     (u_int)addr, info.dli_fname,
                     (u_int)info.dli_fbase, dll_offset);
-        } else {
+        } else
+#endif
+        {
             sprintf(buf, "%p ", addr);
         }
         
