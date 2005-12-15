@@ -4,9 +4,12 @@
 #include <sys/resource.h>
 
 #include "debug/FatalSignals.h"
+#include "util/StringBuffer.h"
 #include "util/UnitTest.h"
 
 using namespace oasys;
+
+const char* executable;
 
 bool
 fork_to_die(const char* how) {
@@ -16,9 +19,8 @@ fork_to_die(const char* how) {
     log_always("/test", "flamebox-ignore ign2 STACK TRACE");
     
     snprintf(cmd, sizeof(cmd),
-             "./stack-trace-test %s 2>&1 | "
-             "../test-utils/expand-stacktrace.pl -o ./stack-trace-test",
-             how);
+             "%s %s 2>&1 | ../test-utils/expand-stacktrace.pl -o %s",
+             executable, how, executable);
     int ok = system(cmd);
     
     log_always("/test", "flamebox-ignore-cancel ign1");
@@ -135,6 +137,14 @@ main(int argc, const char** argv)
         fprintf(stderr, "error: must run this test in the same directory "
                 "as its executable\n");
         exit(1);
+    }
+    
+    // Cygwin hack
+    StringBuffer g("./%s.exe", argv[0]);
+    if (access("./stack-trace-test.exe", R_OK | X_OK) == 0) {
+        executable = "./stack-trace-test.exe";
+    } else {
+        executable = "./stack-trace-test";
     }
     
     if (access("../test-utils/expand-stacktrace.pl", R_OK | X_OK) != 0) {
