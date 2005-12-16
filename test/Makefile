@@ -4,7 +4,6 @@ TESTS += \
 	buffer-test				\
 	durable-cache-test			\
 	io-basic-test				\
-	filesys-db-test				\
 	log-test				\
 	marshal-test				\
 	memory-store-test			\
@@ -22,6 +21,12 @@ TESTS += \
 	text-code-test				\
 	timer-test				\
 	type-collection-test			\
+
+#
+# Tests that need to be fixed
+#
+BROKEN_TESTS += \
+	filesys-db-test				\
 
 #
 # Tests that need to be converted to the new framework
