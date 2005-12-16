@@ -76,6 +76,8 @@ DECLARE_TEST(DBTestInit) {
         "",	                // dbname
         "", 		        // dbdir
         0,                      // flags
+        0,			// bdb specific
+        0,			// bdb specific
         false			// sharefile
     );   
 
