@@ -84,12 +84,30 @@ DECLARE_TEST(SmtpPipe) {
     return UNIT_TEST_PASSED;
 }
 
+TestSMTPFactory f;
+SMTPServer* server;
+Notifier* session_done;
+
+DECLARE_TEST(StartServer) {
+    session_done = new Notifier("SessionDone");
+    server = new SMTPServer(config, &f, session_done, 500);
+    server->start();
+
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(StopServer) {
+    server->set_should_stop();
+    while (! server->is_stopped()) {
+        usleep(200);
+    }
+
+    server->close();
+
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TEST(SmtpSockets) {
-    TestSMTPFactory f;
-    Notifier done("SmtpSockets::done");
-    SMTPServer server(config, &f, &done, 500);
-    server.start();
-    
     SMTPClient c;
     CHECK(c.timeout_connect(config.addr_, config.port_, config.timeout_) == 0);
     
@@ -100,58 +118,20 @@ DECLARE_TEST(SmtpSockets) {
     }
 
     c.close();
-    done.wait();
+    session_done->wait();
 
-    server.set_should_stop();
-    while (! server.is_stopped()) {
-        usleep(200);
-    }
-
-    server.close();
-    sleep(2);
-    
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(SmtpPython) {
-    TestSMTPFactory f;
-    Notifier done("SmtpPython::done");
-    SMTPServer server(config, &f, &done, 500);
-    server.start();
-
     CHECK(system("python ./smtp-test-send.py") == 0);
-
-    done.wait();
-
-    server.set_should_stop();
-    while (! server.is_stopped()) {
-        usleep(200);
-    }
-
-    server.close();
-    sleep(2);
-    
+    session_done->wait();
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(SmtpTcl) {
-    TestSMTPFactory f;
-    Notifier done("SmtpTcl::done");
-    SMTPServer server(config, &f, &done, 500);
-    server.start();
-
     CHECK(system("tclsh ./smtp-test-send.tcl") == 0);
-    
-    done.wait();
-
-    server.set_should_stop();
-    while (! server.is_stopped()) {
-        usleep(200);
-    }
-
-    server.close();
-    sleep(2);
-    
+    session_done->wait();
     return UNIT_TEST_PASSED;
 }
 
@@ -179,6 +159,7 @@ DECLARE_TEST(CheckMsgs) {
 }
 
 DECLARE_TESTER(Tester) {
+    ADD_TEST(StartServer);
     ADD_TEST(SmtpPipe);
     ADD_TEST(CheckMsgs);
     ADD_TEST(SmtpSockets);
@@ -187,6 +168,7 @@ DECLARE_TESTER(Tester) {
     ADD_TEST(CheckMsgs);
     ADD_TEST(SmtpTcl);
     ADD_TEST(CheckMsgs);
+    ADD_TEST(StopServer);
 }
 
 DECLARE_TEST_FILE(Tester, "SMTP test");
