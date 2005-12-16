@@ -44,6 +44,7 @@
 #include <io/FileUtils.h>
 #include <util/StringBuffer.h>
 #include <util/Pointers.h>
+#include <util/ScratchBuffer.h>
 #include <serialize/MarshalSerialize.h>
 #include <serialize/TypeShims.h>
 
@@ -52,15 +53,6 @@
 #include "util/InitSequencer.h"
 
 #define NO_TX  0 // for easily going back and changing TX id's later
-
-/// @{ Macros for dealing with Berkeley DB
-#define MAKE_DBT(_x, _data, _len)               \
-  do {                                          \
-    bzero(&_x, sizeof(_x));                     \
-    _x.data = static_cast<void*>(_data);        \
-    _x.size = _len;                             \
-  } while (0)
-/// @}
 
 namespace oasys {
 /******************************************************************************
@@ -96,6 +88,11 @@ BerkeleyDBStore::~BerkeleyDBStore()
     {
         log_err(err_str.c_str());
     }
+
+    if (deadlock_timer_) {
+        deadlock_timer_->cancel();
+    }
+    
     dbenv_->close(dbenv_, 0);
     dbenv_ = 0;
     log_info("db closed");
@@ -152,6 +149,11 @@ BerkeleyDBStore::init(StorageConfig* cfg)
         log_crit("DB: %s, cannot set tx_max to %d", db_strerror(err), cfg->dbtxmax_);
         return DS_ERR;
     }
+
+    int lock_flag = 0;
+    if (cfg->dblockdetect_ != 0) {
+        lock_flag = DB_INIT_LOCK | DB_THREAD;
+    }
     
     err = dbenv_->open(
         dbenv_, 
@@ -159,6 +161,7 @@ BerkeleyDBStore::init(StorageConfig* cfg)
         DB_CREATE     |         // create new files
         DB_INIT_MPOOL |         // initialize memory pool
         DB_INIT_LOG   |         // use logging
+        lock_flag     |         // use locking
         DB_INIT_TXN   |         // use transactions
         DB_RECOVER    |         // recover from previous crash (if any)
         DB_PRIVATE,             // only one process can access the db
@@ -189,6 +192,14 @@ BerkeleyDBStore::init(StorageConfig* cfg)
         return DS_ERR;
     }
 
+    if (cfg->dblockdetect_ != 0) {
+        deadlock_timer_ = new DeadlockTimer(logpath_, dbenv_, cfg->dblockdetect_);
+        deadlock_timer_->logpath_appendf("/deadlock_timer");
+        deadlock_timer_->reschedule();
+    } else {
+        deadlock_timer_ = NULL;
+    }
+    
     init_ = true;
 
     return 0;
@@ -243,6 +254,11 @@ BerkeleyDBStore::get_table(DurableTableImpl**  table,
 
     } else {
         db_type = DB_UNKNOWN;
+    }
+
+    if (deadlock_timer_) {
+        // locking is enabled
+        db_flags |= DB_THREAD;
     }
 
     if (sharefile_) {
@@ -424,6 +440,27 @@ BerkeleyDBStore::db_panic(DB_ENV* dbenv, int errval)
     PANIC("fatal berkeley DB internal error: %s", db_strerror(errval));
 }
 
+void
+BerkeleyDBStore::DeadlockTimer::reschedule()
+{
+    log_debug("rescheduling in %d msecs", frequency_);
+    schedule_in(frequency_);
+}
+
+void
+BerkeleyDBStore::DeadlockTimer::timeout(struct timeval* now)
+{
+    int aborted = 0;
+    log_debug("running deadlock detection");
+    dbenv_->lock_detect(dbenv_, 0, DB_LOCK_YOUNGEST, &aborted);
+
+    if (aborted != 0) {
+        log_warn("deadlock detection found %d aborted transactions", aborted);
+    }
+
+    reschedule();
+}
+
 /******************************************************************************
  *
  * BerkeleyDBTable
@@ -462,12 +499,10 @@ BerkeleyDBTable::get(const SerializableObject& key,
     size_t key_buf_len = flatten(key, &key_buf);
     ASSERT(key_buf_len != 0);
 
-    DBT k, d;
-    bzero(&d, sizeof(d));
-    
-    MAKE_DBT(k, key_buf.buf(), key_buf_len);
+    DBTRef k(key_buf.buf(), key_buf_len);
+    DBTRef d;
 
-    int err = db_->get(db_, NO_TX, &k, &d, 0);
+    int err = db_->get(db_, NO_TX, k.dbt(), d.dbt(), 0);
      
     if (err == DB_NOTFOUND) 
     {
@@ -479,8 +514,8 @@ BerkeleyDBTable::get(const SerializableObject& key,
         return DS_ERR;
     }
 
-    u_char* bp = (u_char*)d.data;
-    size_t  sz = d.size;
+    u_char* bp = (u_char*)d->data;
+    size_t  sz = d->size;
     
     Unmarshal unmarshaller(Serialize::CONTEXT_LOCAL, bp, sz);
     
@@ -507,12 +542,10 @@ BerkeleyDBTable::get(const SerializableObject&   key,
         return DS_ERR;
     }
 
-    DBT k, d;
-    bzero(&d, sizeof(d));
+    DBTRef k(key_buf.buf(), key_buf_len);
+    DBTRef d;
 
-    MAKE_DBT(k, key_buf.buf(), key_buf_len);
-
-    int err = db_->get(db_, NO_TX, &k, &d, 0);
+    int err = db_->get(db_, NO_TX, k.dbt(), d.dbt(), 0);
      
     if (err == DB_NOTFOUND) 
     {
@@ -524,8 +557,8 @@ BerkeleyDBTable::get(const SerializableObject&   key,
         return DS_ERR;
     }
 
-    u_char* bp = (u_char*)d.data;
-    size_t  sz = d.size;
+    u_char* bp = (u_char*)d->data;
+    size_t  sz = d->size;
 
     TypeCollection::TypeCode_t typecode;
     size_t typecode_sz = MarshalSize::get_size(&typecode);
@@ -572,18 +605,16 @@ BerkeleyDBTable::put(const SerializableObject& key,
 {
     ScratchBuffer<u_char*, 256> key_buf;
     size_t key_buf_len = flatten(key, &key_buf);
-    DBT k, d;
     int err;
 
     // flatten and fill in the key
-    MAKE_DBT(k, key_buf.buf(), key_buf_len);
+    DBTRef k(key_buf.buf(), key_buf_len);
 
     // if the caller does not want to create new entries, first do a
     // db get to see if the key already exists
     if ((flags & DS_CREATE) == 0) {
-        bzero(&d, sizeof(d));
-
-        err = db_->get(db_, NO_TX, &k, &d, 0);
+        DBTRef d;
+        err = db_->get(db_, NO_TX, k.dbt(), d.dbt(), 0);
         if (err == DB_NOTFOUND) {
             return DS_NOTFOUND;
         } else if (err != 0) {
@@ -612,46 +643,42 @@ BerkeleyDBTable::put(const SerializableObject& key,
     
     log_debug("put: serializing %u byte object (plus %u byte typecode)",
               (u_int)object_sz, (u_int)typecode_sz);
+
+    ScratchBuffer<u_char*, 1024> scratch;
+    u_char* buf = scratch.buf(typecode_sz + object_sz);
+    DBTRef d(buf, typecode_sz + object_sz);
     
-    { // lock
-        ScopeLock lock(&scratch_mutex_, "BerkeleyDBStore::put");
-    
-        u_char* buf = scratch_.buf(typecode_sz + object_sz);
-        
-        // if we're a multitype table, marshal the type code
-        if (multitype_) 
-        {
-            Marshal typemarshal(Serialize::CONTEXT_LOCAL, buf, typecode_sz);
-            UIntShim type_shim(typecode);
+    // if we're a multitype table, marshal the type code
+    if (multitype_) 
+    {
+        Marshal typemarshal(Serialize::CONTEXT_LOCAL, buf, typecode_sz);
+        UIntShim type_shim(typecode);
             
-            if (typemarshal.action(&type_shim) != 0) {
-                log_err("error serializing type code");
-                return DS_ERR;
-            }
-        }
-        
-        Marshal m(Serialize::CONTEXT_LOCAL, buf + typecode_sz, object_sz);
-	if (m.action(data) != 0) {
-            log_err("error serializing data object");
+        if (typemarshal.action(&type_shim) != 0) {
+            log_err("error serializing type code");
             return DS_ERR;
         }
-
-        MAKE_DBT(d, buf, typecode_sz + object_sz);
-
-        int db_flags = 0;
-        if (flags & DS_EXCL) {
-            db_flags |= DB_NOOVERWRITE;
-        }
+    }
         
-        err = db_->put(db_, NO_TX, &k, &d, db_flags);
+    Marshal m(Serialize::CONTEXT_LOCAL, buf + typecode_sz, object_sz);
+    if (m.action(data) != 0) {
+        log_err("error serializing data object");
+        return DS_ERR;
+    }
+    
+    int db_flags = 0;
+    if (flags & DS_EXCL) {
+        db_flags |= DB_NOOVERWRITE;
+    }
+        
+    err = db_->put(db_, NO_TX, k.dbt(), d.dbt(), db_flags);
 
-        if (err == DB_KEYEXIST) {
-            return DS_EXISTS;
-        } else if (err != 0) {
-            log_err("DB internal error: %s", db_strerror(err));
-            return DS_ERR;
-        }
-    } // unlock
+    if (err == DB_KEYEXIST) {
+        return DS_EXISTS;
+    } else if (err != 0) {
+        log_err("DB internal error: %s", db_strerror(err));
+        return DS_ERR;
+    }
 
     return 0;
 }
@@ -669,10 +696,9 @@ BerkeleyDBTable::del(const SerializableObject& key)
         return DS_ERR;
     }
 
-    DBT k;
-    MAKE_DBT(k, key_buf, key_buf_len);
+    DBTRef k(key_buf, key_buf_len);
     
-    int err = db_->del(db_, NO_TX, &k, 0);
+    int err = db_->del(db_, NO_TX, k.dbt(), 0);
     
     if (err == DB_NOTFOUND) 
     {
@@ -741,12 +767,10 @@ BerkeleyDBTable::iter()
 int 
 BerkeleyDBTable::key_exists(const void* key, size_t key_len)
 {
-    DBT k, d;
-    bzero(&d, sizeof(d));
+    DBTRef k(const_cast<void*>(key), key_len);
+    DBTRef d;
 
-    MAKE_DBT(k, const_cast<void*>(key), key_len);
-
-    int err = db_->get(db_, NO_TX, &k, &d, 0);
+    int err = db_->get(db_, NO_TX, k.dbt(), d.dbt(), 0);
     if (err == DB_NOTFOUND) 
     {
         return DS_NOTFOUND;
@@ -803,7 +827,7 @@ BerkeleyDBIterator::next()
     bzero(&key_,  sizeof(key_));
     bzero(&data_, sizeof(data_));
 
-    int err = cur_->c_get(cur_, &key_, &data_, DB_NEXT);
+    int err = cur_->c_get(cur_, key_.dbt(), data_.dbt(), DB_NEXT);
 
     if (err == DB_NOTFOUND) {
         valid_ = false;
@@ -823,7 +847,7 @@ BerkeleyDBIterator::get(SerializableObject* key)
 {
     ASSERT(key != NULL);
     oasys::Unmarshal un(oasys::Serialize::CONTEXT_LOCAL,
-                        static_cast<u_char*>(key_.data), key_.size);
+                        static_cast<u_char*>(key_->data), key_->size);
 
     if (un.action(key) != 0) {
         log_err("error unmarshalling");
@@ -838,8 +862,8 @@ BerkeleyDBIterator::raw_key(void** key, size_t* len)
 {
     if (!valid_) return DS_ERR;
 
-    *key = key_.data;
-    *len = key_.size;
+    *key = key_->data;
+    *len = key_->size;
 
     return 0;
 }
@@ -849,8 +873,8 @@ BerkeleyDBIterator::raw_data(void** data, size_t* len)
 {
     if (!valid_) return DS_ERR;
 
-    *data = data_.data;
-    *len  = data_.size;
+    *data = data_->data;
+    *len  = data_->size;
 
     return 0;
 }

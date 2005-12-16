@@ -50,7 +50,7 @@
 #include "../debug/Logger.h"
 #include "../thread/Mutex.h"
 #include "../thread/SpinLock.h"
-#include "../util/ScratchBuffer.h"
+#include "../thread/Timer.h"
 
 #include "DurableStore.h"
 
@@ -123,6 +123,24 @@ private:
     
     /// DB internal panic callback
     static void db_panic(DB_ENV* dbenv, int errval);
+
+    /**
+     * Timer class used to periodically check for deadlocks.
+     */
+    class DeadlockTimer : public oasys::Timer, public oasys::Logger {
+    public:
+        DeadlockTimer(const char* logpath, DB_ENV* dbenv, int frequency)
+            : Logger(logpath), dbenv_(dbenv), frequency_(frequency) {}
+
+        void reschedule();
+        virtual void timeout(struct timeval* now);
+
+    protected:
+        DB_ENV* dbenv_;
+        int     frequency_;
+    };
+
+    DeadlockTimer* deadlock_timer_;
 };
 
 /**
@@ -161,10 +179,6 @@ private:
     DBTYPE	     db_type_;
     BerkeleyDBStore* store_;
 
-    //! This may cause thread serialization problems.
-    Mutex scratch_mutex_;
-    oasys::ScratchBuffer<u_char*> scratch_;
-
     //! Only BerkeleyDBStore can create BerkeleyDBTables
     BerkeleyDBTable(BerkeleyDBStore* store, 
                     std::string name, bool multitype,
@@ -172,6 +186,51 @@ private:
 
     /// Whether a specific key exists in the table.
     int key_exists(const void* key, size_t key_len);
+};
+
+/**
+ * Wrapper around a DBT that correctly handles memory management.
+ */
+class DBTRef {
+public:
+    /// Initialize an empty key with the DB_DBT_REALLOC flag
+    DBTRef()
+    {
+        bzero(&dbt_, sizeof(dbt_));
+        dbt_.flags = DB_DBT_REALLOC;
+    }
+
+    /// Initialize a key with the given data/len and the
+    /// DB_DBT_USERMEM flag
+    DBTRef(void* data, size_t size)
+    {
+        bzero(&dbt_, sizeof(dbt_));
+        dbt_.data  = data;
+        dbt_.size  = size;
+        dbt_.flags = DB_DBT_USERMEM;
+    }
+
+    /// If any data was malloc'd in the key, free it
+    ~DBTRef()
+    {
+        if (dbt_.flags == DB_DBT_MALLOC ||
+            dbt_.flags == DB_DBT_REALLOC)
+        {
+            if (dbt_.data != NULL) {
+                free(dbt_.data);
+                dbt_.data = NULL;
+            }
+        }
+    }
+
+    /// Return a pointer to the underlying DBT structure
+    DBT* dbt() { return &dbt_; }
+
+    /// Convenience operator overload
+    DBT* operator->() { return &dbt_; }
+
+protected:
+    DBT dbt_;
 };
 
 /**
@@ -206,8 +265,8 @@ protected:
     DBC* cur_;          ///< Current database cursor
     bool valid_;        ///< Status of the iterator
 
-    DBT key_;		///< Current element key
-    DBT data_;		///< Current element data
+    DBTRef key_;	///< Current element key
+    DBTRef data_;	///< Current element data
 };
 
 }; // namespace oasys

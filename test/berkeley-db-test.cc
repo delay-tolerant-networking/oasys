@@ -79,7 +79,9 @@ DECLARE_TEST(DBTestInit) {
         0,                      // tidy wait
         g_db_name,              // dbname
         g_config_dir,           // dbdir
-        0,                      // flags
+        0,                      // flags,
+        1000,			// num tx
+        5000,			// deadlock check interval
         false			// sharefile
     );   
 
@@ -466,6 +468,11 @@ DECLARE_TEST(NonTypedTable) {
 
     CHECK_EQUALSTR(str->value().c_str(), "01234567890");
     CHECK_EQUAL(i->value(), 42);
+
+    delete_z(str);
+    delete_z(i);
+    delete_z(table);
+    delete_z(store);
 
     return UNIT_TEST_PASSED;
 }

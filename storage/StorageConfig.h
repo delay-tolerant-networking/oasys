@@ -49,6 +49,7 @@ namespace oasys {
  * to Durable storage system to initialize it.
  */
 struct StorageConfig {
+    // General options
     std::string cmd_;		///< tcl command name for this instance
     std::string type_;		///< storage type [berkeleydb/mysql/postgres]
     bool        init_;		///< Create new databases on init
@@ -59,7 +60,11 @@ struct StorageConfig {
     std::string dbname_;	///< Database name (filename in berkeley db)
     std::string dbdir_;		///< Path to the database files
     int         dbflags_;       ///< DB specific flags
+
+    // Berkeley DB Specific options
     int         dbtxmax_;       ///< Max # of active transactions
+    int         dblockdetect_;  ///< Frequency in msecs to check for deadlocks
+                                ///< (locking disabled if zero)
     bool	dbsharefile_;	///< Share a single DB file (and a lock)
 
     StorageConfig(
@@ -72,6 +77,7 @@ struct StorageConfig {
         const std::string& dbdir,
         int                dbflags,
         int                dbtxmax,
+        int                dblockdetect,
         bool               dbsharefile
     ) : cmd_(cmd),
         type_(type),
@@ -82,6 +88,7 @@ struct StorageConfig {
         dbdir_(dbdir),
         dbflags_(dbflags),
         dbtxmax_(dbtxmax),
+        dblockdetect_(dblockdetect),
         dbsharefile_(dbsharefile)
     {}
 };
