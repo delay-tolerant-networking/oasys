@@ -15,6 +15,13 @@ DurableObjectCache<_DataType>::DurableObjectCache(const char* logpath, size_t ca
     log_debug("init capacity=%u", (u_int)capacity);
 }
 
+template <typename _DataType>
+DurableObjectCache<_DataType>::~DurableObjectCache()
+{
+    delete(lock_);
+    lock_ = 0;
+}
+
 /**
  * Build a std::string to index the hash map.
  */

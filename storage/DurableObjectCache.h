@@ -50,6 +50,11 @@ public:
     DurableObjectCache(const char* logpath, size_t capacity);
 
     /**
+     * Destructor.
+     */
+    ~DurableObjectCache();
+
+    /**
      * Add a new object to the cache, initially putting it on the live
      * object list. Note that this may cause some other object(s) to
      * be evicted from the cache.
