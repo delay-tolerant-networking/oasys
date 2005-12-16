@@ -187,7 +187,7 @@ public:
     /**
      * Constructor with an initial format string.
      *
-     * @param init_str Initial string value
+     * @param fmt Initial string value
      */
     StaticStringBuffer(const char* fmt, ...) PRINTFLIKE(2, 3);
 };

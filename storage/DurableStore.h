@@ -137,8 +137,8 @@ public:
      * Get a new handle on a single-type table.
      *
      * @param table      Pointer to the table to be created
-     * @param flags      Options for creating the table
      * @param table_name Name of the table
+     * @param flags      Options for creating the table
      * @param cache      Optional cache for the table
      *
      * @return DS_OK, DS_NOTFOUND, DS_EXISTS, DS_ERR
@@ -153,8 +153,8 @@ public:
      * Get a new handle on a table.
      *
      * @param table      Pointer to the table to be created
-     * @param flags      Options for creating the table
      * @param table_name Name of the table
+     * @param flags      Options for creating the table
      * @param cache      Optional cache for the table
      * @return DS_OK, DS_NOTFOUND, DS_EXISTS, DS_ERR
      */

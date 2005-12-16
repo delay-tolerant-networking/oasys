@@ -147,6 +147,7 @@ public:
     virtual int smtp_QUIT() = 0;
     //! @}
 
+    //! @{
     /*!
      * @{ @return -1 to disconnect, 0 on no error, otherwise error
      * code given in response code. smtp_DATA_end always returns a

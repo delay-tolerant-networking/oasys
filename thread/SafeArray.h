@@ -40,14 +40,14 @@
 
 #include "Atomic.h"
 
+namespace oasys {
+
 /**
  * Class that provides a simple fixed-size array of 32-bit values, but
  * with non-locking thread safe semantics. This makes it suitable for
  * things which may need to be set or read from within a signal
  * handler.
  */
-namespace oasys {
-
 template<size_t _sz, typename _Type, unsigned int _emptyval>
 class SafeArray {
 public:

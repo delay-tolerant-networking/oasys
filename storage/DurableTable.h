@@ -138,7 +138,7 @@ public:
      *
      * @param key  Key object
      * @param data Data object
-     * @param cache *from_cache == true if the object retrieved from
+     * @param from_cache == true if the object retrieved from
      *     the cache
      *
      * @return DS_OK, DS_NOTFOUND if key is not found
@@ -200,7 +200,7 @@ public:
      *
      * @param key  Key object
      * @param data Data object
-     * @param cache *from_cache == true if the object retrieved from
+     * @param from_cache == true if the object retrieved from
      *     the cache
      *
      * @return DS_OK, DS_NOTFOUND if key is not found

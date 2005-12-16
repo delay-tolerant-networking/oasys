@@ -135,9 +135,10 @@ public:
      * Note that a default implementation (that panics) is provided
      * such that subclasses need not support multi-type tables.
      *
-     * @param key Key object
-     * @param typecode Typecode pointer
-     * @return DS_OK, DS_ERR // XXX/bowei
+     * @param key 	Key object
+     * @param data 	Data object 
+     * @param allocator Type allocator class
+     * @return DS_OK, DS_ERR
      */
     virtual int get(const SerializableObject&   key,
                     SerializableObject**        data,
