@@ -17,6 +17,7 @@ fork_to_die(const char* how) {
     log_always("/test", "flamebox-ignore ign1 .*got fatal %s - will dump core",
                how);
     log_always("/test", "flamebox-ignore ign2 STACK TRACE");
+    log_always("/test", "flamebox-ignore ign3 fatal handler dumping core");
     
     snprintf(cmd, sizeof(cmd),
              "%s %s 2>&1 | ../test-utils/expand-stacktrace.pl -o %s",
@@ -25,6 +26,7 @@ fork_to_die(const char* how) {
     
     log_always("/test", "flamebox-ignore-cancel ign1");
     log_always("/test", "flamebox-ignore-cancel ign2");;
+    log_always("/test", "flamebox-ignore-cancel ign3");;
 
     return (ok == 0);
 }
