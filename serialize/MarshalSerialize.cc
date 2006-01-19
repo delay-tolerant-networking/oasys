@@ -229,7 +229,7 @@ Unmarshal::begin_action()
             {
                 logf(log_, LOG_WARN, "crc32 mismatch, 0x%x != 0x%x",
                      crc.value(), crc_val);
-                error_ = true;
+                signal_error();
             }
         }
         else
@@ -311,7 +311,7 @@ Unmarshal::process(const char* name, u_char** bp, size_t* lenp, int flags)
         
         if (cbuf == buf() + length()) {
             // no null character found
-            error_ = true;
+            signal_error();
             return;
         }
         *lenp = new_len + 1; // length of string + '\0'

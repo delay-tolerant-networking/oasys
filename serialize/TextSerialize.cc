@@ -144,7 +144,7 @@ TextUnmarshal::TextUnmarshal(context_t context, u_char* buf,
 void 
 TextUnmarshal::process(const char* name, u_int32_t* i)
 {
-    if (error_) 
+    if (error()) 
         return;
 
     u_int32_t num;
@@ -160,7 +160,7 @@ TextUnmarshal::process(const char* name, u_int32_t* i)
 void 
 TextUnmarshal::process(const char* name, u_int16_t* i)
 {
-    if (error_) 
+    if (error()) 
         return;
 
     u_int32_t num;
@@ -176,7 +176,7 @@ TextUnmarshal::process(const char* name, u_int16_t* i)
 void 
 TextUnmarshal::process(const char* name, u_int8_t* i)
 {
-    if (error_) 
+    if (error()) 
         return;
 
     u_int32_t num;
@@ -192,12 +192,12 @@ TextUnmarshal::process(const char* name, u_int8_t* i)
 void 
 TextUnmarshal::process(const char* name, bool* b)
 {
-    if (error_) 
+    if (error()) 
         return;
 
     char* eol;
     if (get_line(&eol) != 0) {
-        error_ = true;
+        signal_error();
         return;
     }
     ASSERT(*eol == '\n');
@@ -206,7 +206,7 @@ TextUnmarshal::process(const char* name, bool* b)
         return;
     
     if (!is_within_buf(4)) {
-        error_ = true;
+        signal_error();
         return;
     }
     
@@ -217,7 +217,7 @@ TextUnmarshal::process(const char* name, bool* b)
         *b = false;
         cur_ = eol + 1;
     } else {
-        error_ = true;
+        signal_error();
         return;
     }
 }
@@ -226,34 +226,34 @@ TextUnmarshal::process(const char* name, bool* b)
 void 
 TextUnmarshal::process(const char* name, u_char* bp, size_t len)
 {
-    if (error_) 
+    if (error()) 
         return;
     
     char* eol;
     if (get_line(&eol) != 0) {
-        error_ = true;
+        signal_error();
         return;
     }
 
     if (match_fieldname(name, eol) != 0) {
-        error_ = true;
+        signal_error();
         return;        
     }
 
     cur_ = eol + 1;
     if (! is_within_buf(0)) {
-        error_ = true;
+        signal_error();
         return;        
     }
     
     ScratchBuffer<char*, 1024> scratch;
     if (get_textcode(&scratch) != 0) {
-        error_ = true;
+        signal_error();
         return;        
     }
 
     if (len != scratch.len()) {
-        error_ = true;
+        signal_error();
         return;                
     }
     
@@ -265,7 +265,7 @@ void
 TextUnmarshal::process(const char* name, u_char** bp, 
                        size_t* lenp, int flags)
 {
-    if (error_) 
+    if (error()) 
         return;
 }
 
@@ -273,29 +273,29 @@ TextUnmarshal::process(const char* name, u_char** bp,
 void 
 TextUnmarshal::process(const char* name, std::string* s)
 {
-    if (error_) 
+    if (error()) 
         return;
     
     char* eol;
     if (get_line(&eol) != 0) {
-        error_ = true;
+        signal_error();
         return;
     }
 
     if (match_fieldname(name, eol) != 0) {
-        error_ = true;
+        signal_error();
         return;        
     }
 
     cur_ = eol + 1;
     if (! is_within_buf(0)) {
-        error_ = true;
+        signal_error();
         return;        
     }
     
     ScratchBuffer<char*, 1024> scratch;
     if (get_textcode(&scratch) != 0) {
-        error_ = true;
+        signal_error();
         return;        
     }
 
@@ -306,23 +306,23 @@ TextUnmarshal::process(const char* name, std::string* s)
 void 
 TextUnmarshal::process(const char* name, SerializableObject* object)
 {
-    if (error_)
+    if (error())
         return;
     
     char* eol;
     if (get_line(&eol) != 0) {
-        error_ = true;
+        signal_error();
         return;
     }
 
     if (match_fieldname(name, eol) != 0) {
-        error_ = true;
+        signal_error();
         return;
     }
     
     cur_ = eol + 1;
     if (! is_within_buf(0)) {
-        error_ = true;
+        signal_error();
         return;
     }
 
@@ -374,18 +374,18 @@ TextUnmarshal::match_fieldname(const char* field_name, char* eol)
     }
     
     if (*cur_ != ':' || cur_ > eol) {
-        error_ = true;
+        signal_error();
         return -1;
     }
 
     if (memcmp(field_name_ptr, field_name, strlen(field_name)) != 0) {
-        error_ = true;
+        signal_error();
         return -1;
     }
 
     cur_ += 2;
     if (!is_within_buf(0)) {
-        error_ = true;
+        signal_error();
         return -1;
     }
     
@@ -398,7 +398,7 @@ TextUnmarshal::get_num(const char* field_name, u_int32_t* num)
 {
     char* eol;
     if (get_line(&eol) != 0) {
-        error_ = true;
+        signal_error();
         return -1;
     }
 
@@ -421,7 +421,7 @@ TextUnmarshal::get_textcode(ExpandableBuffer* buf)
     size_t end_offset = 0;
     while (true) {
         if (!is_within_buf(end_offset)) {
-            error_ = true;
+            signal_error();
             return -1;
         }
         
@@ -434,7 +434,7 @@ TextUnmarshal::get_textcode(ExpandableBuffer* buf)
 
     ++end_offset;
     if (!is_within_buf(end_offset)) {
-        error_ = true;
+        signal_error();
         return -1;
     }
 
@@ -444,7 +444,7 @@ TextUnmarshal::get_textcode(ExpandableBuffer* buf)
     TextUncode uncoder(cur_, end_offset, buf);
     
     if (uncoder.error()) {
-        error_ = true;
+        signal_error();
         return -1;
     }
 

@@ -35,7 +35,7 @@ protected:
     u_char* next_slice(size_t length);
     
     /** @return buffer */
-    u_char* buf() { return error_ ? 0 : buf_; }
+    u_char* buf() { return error() ? 0 : buf_; }
 
     /** @return buffer length */
     size_t length() { return length_; }

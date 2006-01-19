@@ -51,8 +51,11 @@ SerializeAction::SerializeAction(
     action_t  action, 
     context_t context, 
     int       options
-    ) : action_(action), context_(context), error_(false), 
-        options_(options), log_(0)
+    ) : action_(action), 
+        context_(context), 
+        options_(options), 
+        log_(0), 
+        error_(false)
 {
 }
 

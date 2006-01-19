@@ -183,7 +183,12 @@ public:
      * Accessor for the context.
      */
     context_t context() { return context_; }
-    
+
+    /**
+     * Accessor for error
+     */ 
+    bool error() { return error_; }
+
     /***********************************************************************
      *
      * Processor functions, one for each type.
@@ -289,12 +294,18 @@ public:
 protected:
     action_t  action_;	///< Serialization action code
     context_t context_;	///< Serialization context
-    bool      error_;	///< Indication of whether an error occurred
 
     int       options_; ///< Serialization options
     const char* log_;	///< Optional log for verbose marshalling
-
+    
+    /**
+     * Signal that an error has occurred.
+     */
+    void signal_error() { error_ = true; }
+    
 private:
+    bool      error_;	///< Indication of whether an error occurred
+
     SerializeAction();	/// Never called
 };
 

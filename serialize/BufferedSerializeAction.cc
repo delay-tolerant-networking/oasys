@@ -26,11 +26,11 @@ u_char*
 BufferedSerializeAction::next_slice(size_t length)
 {
     
-    if (error_)
+    if (error())
         return NULL;
     
     if (offset_ + length > length_) {
-        error_ = true;
+        signal_error();
         return NULL;
     }
 

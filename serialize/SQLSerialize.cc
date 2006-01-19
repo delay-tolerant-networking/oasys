@@ -455,7 +455,7 @@ SQLExtract::process(const char* name, bool* b)
         break;
     default:
         logf("/sql", LOG_ERR, "unexpected value '%s' for boolean column", buf);
-        error_ = true;
+        signal_error();
         return;
     }
     
