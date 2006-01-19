@@ -72,10 +72,15 @@ struct ExpandableBuffer {
         return buf_; 
     }
 
-    //! @return char* to offset in the buffer
+    //! @return char* to offset in the buffer, 0 if past the end of
+    //! the buffer.
     char* at(size_t offset) const { 
         ASSERT(buf_ != 0);
-        ASSERT(offset < buf_len_);
+
+        if (offset >=  buf_len_) {
+            return 0;
+        }
+
         return &buf_[offset]; 
     }
    
