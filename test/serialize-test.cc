@@ -42,6 +42,7 @@
 #include "util/UnitTest.h"
 #include "serialize/MarshalSerialize.h"
 #include "serialize/TextSerialize.h"
+#include "serialize/KeySerialize.h"
 #include "serialize/TypeShims.h"
 #include "util/ScratchBuffer.h"
 
@@ -289,6 +290,53 @@ DECLARE_TEST(TextSerializeTest3) {
     return UNIT_TEST_PASSED;
 }
 
+//
+// Key serialization tests
+//
+struct KeyObj_1 : public SerializableObject {
+    int         number_;
+    std::string str_;
+    char*       c_str_;
+
+    KeyObj_1(bool init) {
+        if (init) {
+            number_ = 0xcafe;
+            str_    = "this is a string end";
+            c_str_  = static_cast<char*>(malloc(20));
+            strcpy(c_str_, "12345test");
+        }
+    }
+
+    void serialize(SerializeAction* action) {
+        action->process("number", &number_);
+        action->process("str",    &str_);        
+        action->process("c_str",  &reinterpret_cast<u_char*>(c_str_), 
+                        0, Serialize::NULL_TERMINATED);
+    }
+};
+
+DECLARE_TEST(KeySerializeTest_1) {    
+    ExpandableBuffer buf;
+    KeyObj_1 obj1(true);
+    
+    buf.reserve(256);
+    memset(buf.at(0), 0, 20);
+
+    KeyMarshal ks(Serialize::CONTEXT_LOCAL, &buf);
+    ks.action(&obj1);
+
+    printf("|%s|\n", buf.at(0));
+
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(KeySerializeTest_2) {
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(KeySerializeTest_3) {    
+    return UNIT_TEST_PASSED;
+}
 
 DECLARE_TESTER(MarshalTester) {
     ADD_TEST(SizeTest);
@@ -296,9 +344,18 @@ DECLARE_TESTER(MarshalTester) {
     ADD_TEST(CompareTest_CRC);
     ADD_TEST(NullStringTest1);
     ADD_TEST(NullStringTest2);
+
+    // Text Serialize
+    /*
     ADD_TEST(TextSerializeTest1);
     ADD_TEST(TextSerializeTest2);
     ADD_TEST(TextSerializeTest3);
+    */
+
+    // Key serialization tests
+    ADD_TEST(KeySerializeTest_1);
+    ADD_TEST(KeySerializeTest_2);
+    ADD_TEST(KeySerializeTest_3);
 };
 
 DECLARE_TEST_FILE(MarshalTester, "marshalling test");

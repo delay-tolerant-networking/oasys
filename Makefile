@@ -41,7 +41,8 @@ MEMORY_SRCS :=                                  \
 	memory/Memory.cc          
 
 SERIALIZE_SRCS :=				\
-	serialize/BufferedSerializeAction.cc    \
+	serialize/BufferedSerializeAction.cc	\
+	serialize/KeySerialize.cc		\
 	serialize/MarshalSerialize.cc		\
 	serialize/SQLSerialize.cc		\
 	serialize/Serialize.cc			\
