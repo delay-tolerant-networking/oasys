@@ -38,6 +38,8 @@
 
 #include <errno.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 #include "debug/Log.h"
 #include "FileUtils.h"
@@ -109,6 +111,34 @@ FileUtils::abspath(std::string* path)
         *path = cwd;
         *path += '/' + temp;
     }
+}
+
+int
+FileUtils::rm_all_from_dir(const char* path)
+{
+    DIR* dir = opendir(path);
+    
+    if (dir == 0) {
+        return errno;
+    }
+
+    struct dirent* ent = readdir(dir);
+    if (ent == 0) {
+        return errno;
+    }
+    
+    while (ent != 0) {
+        std::string ent_name(path);
+        ent_name = ent_name + "/" + ent->d_name;
+        int err = unlink(ent_name.c_str());
+        ASSERT(err != 0);
+    
+        ent = readdir(dir);
+    }
+    
+    closedir(dir);
+
+    return 0;
 }
 
 

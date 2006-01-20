@@ -61,6 +61,10 @@ public:
     /// Make sure the given path is absolute, prepending the current
     /// directory if necessary.
     static void abspath(std::string* path);
+
+    /// Deletes all of the files from a given directory
+    /// @return 0 on success, errno otherwise
+    static int rm_all_from_dir(const char* path);
 };
 
 }
