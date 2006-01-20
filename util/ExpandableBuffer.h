@@ -105,6 +105,10 @@ struct ExpandableBuffer {
         ASSERT(len_ <= buf_len_);
     }
 
+    void clear() {
+        set_len(0);
+    }
+
 protected:
     char*  buf_;
     size_t buf_len_;
