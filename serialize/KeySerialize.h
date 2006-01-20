@@ -17,11 +17,12 @@ namespace oasys {
  * - Fixed length strings are stored directly
  * - Variable length strings are stored with the length in hex
  *   followed by the string.
+ * - Each field is terminated by the border str
  */
 class KeyMarshal : public SerializeAction {
 public:
-    KeyMarshal(context_t         context,
-               ExpandableBuffer* buf);
+    KeyMarshal(ExpandableBuffer* buf,
+               const char*       border = 0);
     
     //! @{ Virtual functions inherited from SerializeAction
     void process(const char* name, u_int32_t* i);
@@ -33,11 +34,20 @@ public:
     void process(const char* name, std::string* s);
     void process(const char* name, SerializableObject* object);
     //! @}
+
+    //! Const object handler
+    int action(const SerializableObject* object) {
+        return SerializeAction::action(
+            const_cast<SerializableObject*>(object));
+    }
+
     
 private:
     ExpandableBuffer* buf_;
+    const char*       border_;
 
     void process_int(u_int32_t i, size_t size, const char* format);
+    void border();
 };
 
 /**
@@ -45,8 +55,9 @@ private:
  */
 class KeyUnmarshal : public SerializeAction {
 public:
-    KeyUnmarshal(context_t         context,
-                 ExpandableBuffer* buf);
+    KeyUnmarshal(const char* buf,
+                 size_t      buf_len,
+                 const char* border = 0);
     
     //! @{ Virtual functions inherited from SerializeAction
     void process(const char* name, u_int32_t* i);
@@ -60,10 +71,13 @@ public:
 
     //! @}
 private:
-    ExpandableBuffer* buf_;
-    size_t            cur_;
+    const char* buf_;
+    size_t      buf_len_;
+    size_t      border_len_;
+    size_t      cur_;
 
     u_int32_t process_int(size_t size);
+    void border();
 };
 
 } // namespace oasys

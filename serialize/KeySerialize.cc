@@ -3,10 +3,11 @@
 namespace oasys {
 
 //////////////////////////////////////////////////////////////////////////////
-KeyMarshal::KeyMarshal(context_t         context,
-                       ExpandableBuffer* buf)
-    : SerializeAction(Serialize::MARSHAL, context),
-      buf_(buf)
+KeyMarshal::KeyMarshal(ExpandableBuffer* buf,
+                       const char*       border)
+    : SerializeAction(Serialize::MARSHAL, Serialize::CONTEXT_LOCAL),
+      buf_(buf),
+      border_(border)
 {}
     
 //////////////////////////////////////////////////////////////////////////////
@@ -15,6 +16,7 @@ KeyMarshal::process(const char* name,
                     u_int32_t*  i)
 {
     process_int(*i, 8, "%08x");
+    border();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -23,6 +25,7 @@ KeyMarshal::process(const char* name,
                     u_int16_t*  i)
 {
     process_int(*i, 4, "%04x");
+    border();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -31,6 +34,7 @@ KeyMarshal::process(const char* name,
                     u_int8_t*   i)
 {
     process_int(*i, 2, "%02x");
+    border();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -39,6 +43,7 @@ KeyMarshal::process(const char* name,
                     bool*       b)
 {
     process_int( (*b) ? 1 : 0, 1, "%1u");
+    border();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -53,6 +58,7 @@ KeyMarshal::process(const char* name,
     buf_->reserve(buf_->len() + len);
     memcpy(buf_->end(), bp, len);
     buf_->set_len(buf_->len() + len);
+    border();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -79,6 +85,7 @@ KeyMarshal::process(const char* name,
     buf_->reserve(buf_->len() + len);
     memcpy(buf_->end(), *bp, len);
     buf_->set_len(buf_->len() + len);
+    border();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -93,6 +100,7 @@ KeyMarshal::process(const char*  name,
     buf_->reserve(buf_->len() + s->size());
     memcpy(buf_->end(), s->c_str(), s->size());
     buf_->set_len(buf_->len() + s->size());
+    border();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -107,6 +115,7 @@ KeyMarshal::process(const char*         name,
     if (err != 0) {
         signal_error();
     }
+    border();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -122,11 +131,28 @@ KeyMarshal::process_int(u_int32_t i, size_t size, const char* format)
     buf_->set_len(buf_->len() + size);
 }
 
+void
+KeyMarshal::border()
+{
+    if (error() || border_ == 0) {
+        return;
+    }
+
+    size_t border_len = strlen(border_);
+    buf_->reserve(border_len);
+    memcpy(buf_->end(), border_, border_len);
+    buf_->set_len(buf_->len() + border_len);
+}
+
 //////////////////////////////////////////////////////////////////////////////
-KeyUnmarshal::KeyUnmarshal(context_t         context,
-                           ExpandableBuffer* buf)
-    : SerializeAction(Serialize::UNMARSHAL, context),
-      buf_(buf)
+KeyUnmarshal::KeyUnmarshal(const char* buf,
+                           size_t      buf_len,
+                           const char* border)
+    : SerializeAction(Serialize::UNMARSHAL, Serialize::CONTEXT_LOCAL),
+      buf_(buf),
+      buf_len_(buf_len),
+      border_len_( (border == 0) ? 0 : strlen(border)),
+      cur_(0)
 {}
 
 //////////////////////////////////////////////////////////////////////////////
@@ -137,6 +163,7 @@ KeyUnmarshal::process(const char* name, u_int32_t* i)
     if (! error()) {
         *i = val;
     }
+    border();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -147,6 +174,7 @@ KeyUnmarshal::process(const char* name, u_int16_t* i)
     if (! error()) {
         *i = val;
     }
+    border();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -157,6 +185,7 @@ KeyUnmarshal::process(const char* name, u_int8_t* i)
     if (! error()) {
         *i = val;
     }
+    border();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -167,12 +196,14 @@ KeyUnmarshal::process(const char* name, bool* b)
         return;
     }
 
-    if (cur_ + 1 > buf_->len()) {
+    if (cur_ + 1 > buf_len_) {
         signal_error();
         return;
     }
     
+    *b = (buf_[cur_] == '1') ? true : false;
     cur_ += 1;
+    border();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -183,13 +214,14 @@ KeyUnmarshal::process(const char* name, u_char* bp, size_t len)
         return;
     }
 
-    if (cur_ + len > buf_->len()) {
+    if (cur_ + len > buf_len_) {
         signal_error();
         return;
     }
 
-    memcpy(bp, buf_->at(cur_), len);
+    memcpy(bp, &buf_[cur_], len);
     cur_ += len;
+    border();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -207,15 +239,13 @@ KeyUnmarshal::process(const char* name, u_char** bp,
     }
     
     if (flags & Serialize::ALLOC_MEM) {
-        *bp = static_cast<u_char*>(malloc(len));
+        size_t malloc_len = (flags & Serialize::NULL_TERMINATED) ? 
+                            len + 1 : len;
+        *bp = static_cast<u_char*>(malloc(malloc_len));
         if (*bp == 0) {
             signal_error();
             return;
         }
-    }
-
-    if (flags & Serialize::NULL_TERMINATED) {
-        len++;
     }
 
     ASSERT(*bp);
@@ -223,19 +253,20 @@ KeyUnmarshal::process(const char* name, u_char** bp,
         *lenp = len;
     }
     
-    if (cur_ + len > buf_->len()) {
+    if (cur_ + len > buf_len_) {
         signal_error();
         return;
     }
 
     if (flags & Serialize::NULL_TERMINATED) {
-        memcpy(*bp, buf_->at(cur_), len);
-        *buf_->at(cur_ + len) = '\0';
+        memcpy(*bp, &buf_[cur_], len);
+        (*bp)[len] = '\0';
     } else {
-        memcpy(*bp, buf_->at(cur_), len);
+        memcpy(*bp, &buf_[cur_], len);
     }
     
     cur_ += len;
+    border();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -251,8 +282,9 @@ KeyUnmarshal::process(const char* name, std::string* s)
         return;
     }
 
-    s->assign(buf_->at(cur_), len);
+    s->assign(&buf_[cur_], len);
     cur_ += len;
+    border();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -266,6 +298,7 @@ KeyUnmarshal::process(const char* name, SerializableObject* object)
     if (action(object) != 0) {
         signal_error();
     }
+    border();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -274,18 +307,18 @@ KeyUnmarshal::process_int(size_t size)
 {
     char buf[9];
 
-    if (cur_ + size > buf_->len()) {
+    if (cur_ + size > buf_len_) {
         signal_error();
         return 0;
     }
 
     memset(buf, 0, 9);
-    memcpy(buf, buf_->at(cur_), size);
+    memcpy(buf, &buf_[cur_], size);
     
     char* endptr;
-    u_int32_t val = strtoul(buf_->at(cur_), &endptr, 16);
+    u_int32_t val = strtoul(buf, &endptr, 16);
     
-    if (endptr == buf_->at(cur_)) {
+    if (endptr == &buf_[cur_]) {
         signal_error();
         return 0;
     }
@@ -293,6 +326,13 @@ KeyUnmarshal::process_int(size_t size)
     cur_ += size;
 
     return val;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+void
+KeyUnmarshal::border()
+{
+    cur_ += border_len_;
 }
 
 } // namespace oasys
