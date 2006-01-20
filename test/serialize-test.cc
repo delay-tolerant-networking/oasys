@@ -295,21 +295,33 @@ DECLARE_TEST(TextSerializeTest3) {
 //
 struct KeyObj_1 : public SerializableObject {
     int         number_;
+    short       short_;
+    bool        bool_;
     std::string str_;
     char*       c_str_;
 
     KeyObj_1(bool init) {
         if (init) {
             number_ = 0xcafe;
+            short_  = 0xf00d;
+            bool_   = true;
             str_    = "this is a string end";
             c_str_  = static_cast<char*>(malloc(20));
             strcpy(c_str_, "12345test");
+        } else {
+            number_ = 0;
+            short_  = 0;
+            bool_   = false;
+            str_    = "";
+            c_str_  = static_cast<char*>(malloc(40));
         }
     }
 
     void serialize(SerializeAction* action) {
         action->process("number", &number_);
         action->process("str",    &str_);        
+        action->process("short",  &short_);
+        action->process("bool",   &bool_);
         action->process("c_str",  &reinterpret_cast<u_char*>(c_str_), 
                         0, Serialize::NULL_TERMINATED);
     }
@@ -322,15 +334,41 @@ DECLARE_TEST(KeySerializeTest_1) {
     buf.reserve(256);
     memset(buf.at(0), 0, 20);
 
-    KeyMarshal ks(Serialize::CONTEXT_LOCAL, &buf);
-    ks.action(&obj1);
+    KeyMarshal ks(&buf);
+    int err = ks.action(&obj1);
 
-    printf("|%s|\n", buf.at(0));
+    CHECK(err == 0);
+    CHECK_EQUALSTR(buf.at(0), 
+                   "0000cafe00000014this is a string end"
+                   "f00d10000000912345test");
+    
+    buf.clear();
+    KeyMarshal ks2(&buf, "--");
+    err = ks2.action(&obj1);
+
+    CHECK(err == 0);
+    CHECK_EQUALSTR(buf.at(0), 
+                   "0000cafe--00000014this is a string end--"
+                   "f00d--1--0000000912345test--");
 
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(KeySerializeTest_2) {
+    const char* str = "0000cafe00000014this is a string end"
+                      "f00d10000000912345test";
+    KeyUnmarshal ku(str, strlen(str));
+    KeyObj_1 obj(false);
+    
+    int err = ku.action(&obj);
+    
+    CHECK(obj.number_ == 0xcafe);
+    CHECK(obj.short_ == (short)0xf00d);
+    CHECK(obj.bool_);
+    CHECK_EQUALSTR(obj.str_.c_str(), "this is a string end");
+    CHECK_EQUALSTR(obj.c_str_, "12345test");
+    CHECK(err == 0);    
+
     return UNIT_TEST_PASSED;
 }
 
