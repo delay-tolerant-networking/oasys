@@ -47,9 +47,11 @@
 #include <errno.h>
 
 #include "../util/ExpandableBuffer.h"
+#include "../serialize/KeySerialize.h"
 #include "../serialize/TypeCollection.h"
 #include "../io/FileUtils.h"
 #include "../io/IO.h"
+
 
 namespace oasys {
 
@@ -154,7 +156,7 @@ FileSystemStore::get_table(DurableTableImpl** table,
         return DS_EXISTS;
     }
     
-    FileSystemTable* table_ptr = new FileSystemTable(dir_path);
+    FileSystemTable* table_ptr = new FileSystemTable(dir_path, flags & DS_MULTITYPE);
     ASSERT(table_ptr);
     
     *table = table_ptr;
@@ -166,27 +168,17 @@ FileSystemStore::get_table(DurableTableImpl** table,
 int 
 FileSystemStore::del_table(const std::string& name)
 {
+    // XXX/bowei -- don't handle table sharing for now
     ASSERT(init_);
 
     std::string dir_path = tables_dir_;
     dir_path.append("/");
     dir_path.append(name);
     
-    // XXX/bowei -- don't handle table sharing for now
-
-    int err;
+    FileUtils::rm_all_from_dir(dir_path.c_str());
 
     // clean out the directory
-    DIR* dir = opendir(dir_path.c_str());
-    struct dirent* ent = readdir(dir);
-    while (ent != 0) {
-        std::string ent_name = dir_path + "/" + ent->d_name;
-        err = unlink(ent_name.c_str());
-        ASSERT(err != 0);
-
-        ent = readdir(dir);
-    }
-    
+    int err;
     err = rmdir(dir_path.c_str());
     if (err != 0) {
         log_warn("couldn't remove directory, %s", strerror(errno));
@@ -196,7 +188,7 @@ FileSystemStore::del_table(const std::string& name)
     return 0; 
 }
 
-//----------------------------------------------------------------------------
+  //----------------------------------------------------------------------------
 int 
 FileSystemStore::check_database()
 {
@@ -241,9 +233,10 @@ FileSystemStore::tidy_database()
 }
 
 //----------------------------------------------------------------------------
-FileSystemTable::FileSystemTable(const std::string& path)
+FileSystemTable::FileSystemTable(const std::string& path,
+                                 bool               multitype)
     : Logger("/FileSystemTable"),
-      DurableTableImpl("/FileSystemTable", false),
+      DurableTableImpl("/FileSystemTable", multitype),
       path_(path)
 {}
 
@@ -253,8 +246,10 @@ FileSystemTable::~FileSystemTable()
 //----------------------------------------------------------------------------
 int 
 FileSystemTable::get(const SerializableObject& key,
-                     SerializableObject* data)
+                     SerializableObject*       data)
 {
+    ASSERTF(!multitype_, "single-type get called for multi-type table");
+
     ScratchBuffer<u_char*, 4096> buf;
     int err = get_common(key, &buf);
     if (err != 0) {
@@ -272,12 +267,12 @@ FileSystemTable::get(const SerializableObject& key,
     
 //----------------------------------------------------------------------------
 int 
-FileSystemTable::get(const SerializableObject& key,
-                     SerializableObject** data,
+FileSystemTable::get(const SerializableObject&   key,
+                     SerializableObject**        data,
                      TypeCollection::Allocator_t allocator)
 {
-    ASSERT(multitype_);
-    
+    ASSERTF(multitype_, "multi-type get called for single-type table");
+
     ScratchBuffer<u_char*, 4096> buf;
     int err = get_common(key, &buf);
     if (err != 0) {
@@ -303,18 +298,19 @@ FileSystemTable::get(const SerializableObject& key,
     
 //----------------------------------------------------------------------------
 int 
-FileSystemTable::put(const SerializableObject& key,
+FileSystemTable::put(const SerializableObject&  key,
                      TypeCollection::TypeCode_t typecode,
-                     const SerializableObject* data,
+                     const SerializableObject*  data,
                      int flags)
 {
-    StringSerialize s_key(Serialize::CONTEXT_LOCAL,
-                          Serialize::DOT_SEPARATED);
+    ScratchBuffer<char*, 512> key_str;
+    KeyMarshal s_key(&key_str, "-");
+
     if (s_key.action(&key) != 0) {
         log_err("Can't get key");
         return DS_ERR;
     }
-
+    
     MarshalSize sizer(Serialize::CONTEXT_LOCAL);
     if (multitype_) {
         sizer.process("typecode", &typecode);
@@ -333,7 +329,7 @@ FileSystemTable::put(const SerializableObject& key,
         return DS_ERR;
     }
 
-    std::string filename = path_ + "/" + s_key.buf().c_str();
+    std::string filename = path_ + "/" + key_str.buf();
     int data_elt_fd      = -1;
     int open_flags       = O_TRUNC | O_WRONLY;
 
@@ -378,20 +374,22 @@ FileSystemTable::put(const SerializableObject& key,
 int 
 FileSystemTable::del(const SerializableObject& key)
 {
-    StringSerialize s_key(Serialize::CONTEXT_LOCAL,
-                              Serialize::DOT_SEPARATED);
+    ScratchBuffer<char*, 512> key_str;
+    KeyMarshal s_key(&key_str, "-");
+
     if (s_key.action(&key) != 0) {
         log_err("Can't get key");
         return DS_ERR;
     }
     
-    std::string filename = path_ + "/" + s_key.buf().c_str();
+    std::string filename = path_ + "/" + key_str.buf();
     int err = unlink(filename.c_str());
-    if (err == -1) {
+    if (err == -1) 
+    {
         if (errno == ENOENT) {
             return DS_NOTFOUND;
         }
-
+        
         log_warn("can't unlink file %s - %s", filename.c_str(),
                  strerror(errno));
         return DS_ERR;
@@ -436,16 +434,16 @@ FileSystemTable::iter()
 //----------------------------------------------------------------------------
 int 
 FileSystemTable::get_common(const SerializableObject& key,
-                            ExpandableBuffer* buf)
+                            ExpandableBuffer*         buf)
 {
-    StringSerialize serialize(Serialize::CONTEXT_LOCAL,
-                              Serialize::DOT_SEPARATED);
+    ScratchBuffer<char*, 512> key_str;
+    KeyMarshal serialize(&key_str, "-");
     if (serialize.action(&key) != 0) {
         log_err("Can't get key");
         return DS_ERR;
     }
     
-    std::string file_name(serialize.buf().data(), serialize.buf().length());
+    std::string file_name(key_str.at(0));
     std::string file_path = path_ + "/" + file_name;
     int fd = open(file_path.c_str(), O_RDONLY);
     if (fd == -1) {
@@ -513,9 +511,7 @@ FileSystemIterator::get(SerializableObject* key)
 {
     ASSERT(ent_ != 0);
     
-    Unmarshal um(Serialize::CONTEXT_LOCAL, 
-                 reinterpret_cast<const u_char*>(ent_->d_name), 
-                 strlen(ent_->d_name));
+    KeyUnmarshal um(ent_->d_name, strlen(ent_->d_name), "-");
     int err = um.action(key);
     if (err != 0) {
         return DS_ERR;

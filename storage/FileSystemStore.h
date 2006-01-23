@@ -116,7 +116,6 @@ class FileSystemTable : public Logger,
                         public DurableTableImpl {
     friend class FileSystemStore;
 public:
-    FileSystemTable(const std::string& path);
     ~FileSystemTable();
 
     //! @{ virtual from DurableTableInpl
@@ -141,6 +140,9 @@ public:
 
 private:
     std::string path_;
+
+    FileSystemTable(const std::string& path,
+                    bool               multitype);
 
     int get_common(const SerializableObject& key,
                    ExpandableBuffer* buf);
