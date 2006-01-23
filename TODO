@@ -20,6 +20,9 @@ Legend:
   the key, they can just use it directly in an STL map class via a
   simple Comparison class shim.
 
+  BD: Add a serialized key marshall type which can easily be used for
+      handling the key case.
+
 * Should be consistent throughout about the use of char* and u_char*. 
 
 * Another idea: Implement a serializable 'FileBackedObject' that
