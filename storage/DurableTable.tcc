@@ -104,7 +104,7 @@ SingleTypeDurableTable<_DataType>::put(const SerializableObject& key,
     
     if (this->cache_ != 0) {
         ret = this->cache_->put(key, data, flags);
-        ASSERT(ret == DS_OK);
+        ASSERT(ret == DS_OK || ret == DS_EXISTS);
     }
     
     return ret;
@@ -193,7 +193,7 @@ MultiTypeDurableTable<_BaseType, _Collection>::put(
     
     if (this->cache_ != 0) {
         ret = this->cache_->put(key, data, flags);
-        ASSERT(ret == DS_OK);
+        ASSERT(ret == DS_OK || ret == DS_EXISTS);
     }
 
     return ret;
