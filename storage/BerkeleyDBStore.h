@@ -154,7 +154,7 @@ class BerkeleyDBTable : public DurableTableImpl, public Logger {
 public:
     ~BerkeleyDBTable();
 
-    /// @{ virtual from DurableTableInpl
+    /// @{ virtual from DurableTableImpl
     int get(const SerializableObject& key,
             SerializableObject* data);
     
