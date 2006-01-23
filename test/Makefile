@@ -3,6 +3,7 @@ TESTS += \
 	berkeley-db-test			\
 	buffer-test				\
 	durable-cache-test			\
+	filesys-db-test				\
 	io-basic-test				\
 	log-test				\
 	marshal-test				\
@@ -25,8 +26,7 @@ TESTS += \
 #
 # Tests that need to be fixed
 #
-BROKEN_TESTS += \
-	filesys-db-test				\
+BROKEN_TESTS += 
 
 #
 # Tests that need to be converted to the new framework

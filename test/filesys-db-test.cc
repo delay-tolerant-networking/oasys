@@ -80,7 +80,9 @@ DECLARE_TEST(DBTestInit) {
         g_db_name,              // dbname
         g_config_dir,           // dbdir
         0,                      // flags
-        false			// sharefile
+        1,                      // txmax
+        0,                      // lock detect
+        0                       // share file
     );   
 
     StringBuffer cmd("mkdir -p %s", g_config_dir);
