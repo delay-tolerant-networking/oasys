@@ -33,6 +33,8 @@ public:
     void process(const char* name, u_char** bp, size_t* lenp, int flags);
     void process(const char* name, std::string* s);
     void process(const char* name, SerializableObject* object);
+
+    void end_action();
     //! @}
 
     //! Const object handler
@@ -40,7 +42,6 @@ public:
         return SerializeAction::action(
             const_cast<SerializableObject*>(object));
     }
-
     
 private:
     ExpandableBuffer* buf_;

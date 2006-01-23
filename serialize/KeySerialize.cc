@@ -120,6 +120,14 @@ KeyMarshal::process(const char*         name,
 
 //////////////////////////////////////////////////////////////////////////////
 void
+KeyMarshal::end_action()
+{
+    buf_->reserve(1);
+    *(buf_->end()) = '\0';
+}
+
+//////////////////////////////////////////////////////////////////////////////
+void
 KeyMarshal::process_int(u_int32_t i, size_t size, const char* format)
 {
     if (error()) 
