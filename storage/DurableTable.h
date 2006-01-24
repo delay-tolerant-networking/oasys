@@ -97,6 +97,8 @@ protected:
     std::string         name_;
     DurableObjectCache<_Type>* cache_;
 
+    int cleanup_put_flags(int flags);
+
 private:
     DurableTable();
     DurableTable(const DurableTable&);

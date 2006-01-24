@@ -23,6 +23,21 @@ DurableTable<_Type>::size()
 }
 
 //----------------------------------------------------------------------------
+template <typename _Type>
+int
+DurableTable<_Type>::cleanup_put_flags(int flags)
+{
+    if (flags & DS_EXCL) {
+        if (! (flags & DS_CREATE)) {
+            log_warn("/durabletable", "DS_EXCL without DS_CREATE");
+        }
+        flags |= DS_CREATE;
+    }
+
+    return flags;
+}
+
+//----------------------------------------------------------------------------
 template <typename _DataType>
 inline int
 SingleTypeDurableTable<_DataType>::get(const SerializableObject& key,
@@ -96,6 +111,8 @@ SingleTypeDurableTable<_DataType>::put(const SerializableObject& key,
                                        const _DataType*          data,
                                        int                       flags)
 {
+    flags = cleanup_put_flags(flags);
+
     int ret = this->impl_->put(key, TypeCollection::UNKNOWN_TYPE, data, flags);
 
     if (ret != DS_OK) {
@@ -104,7 +121,7 @@ SingleTypeDurableTable<_DataType>::put(const SerializableObject& key,
     
     if (this->cache_ != 0) {
         ret = this->cache_->put(key, data, flags);
-        ASSERT(ret == DS_OK || ret == DS_EXISTS);
+        ASSERT(ret == DS_OK);
     }
     
     return ret;
@@ -185,6 +202,8 @@ MultiTypeDurableTable<_BaseType, _Collection>::put(
     int flags
     )
 {
+    flags = cleanup_put_flags(flags);
+    
     int ret = this->impl_->put(key, type, data, flags);
 
     if (ret != DS_OK) {
@@ -193,7 +212,7 @@ MultiTypeDurableTable<_BaseType, _Collection>::put(
     
     if (this->cache_ != 0) {
         ret = this->cache_->put(key, data, flags);
-        ASSERT(ret == DS_OK || ret == DS_EXISTS);
+        ASSERT(ret == DS_OK);
     }
 
     return ret;
@@ -208,6 +227,8 @@ StaticTypedDurableTable::put(
     int                       flags
     )
 {
+    flags = cleanup_put_flags(flags);
+
     ASSERT(this->cache_ == 0); // XXX/bowei - don't support caches for now
     int ret = this->impl_->put(key, TypeCollection::UNKNOWN_TYPE, 
                                data, flags);

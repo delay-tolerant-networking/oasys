@@ -333,14 +333,19 @@ FileSystemTable::put(const SerializableObject&  key,
     int data_elt_fd      = -1;
     int open_flags       = O_TRUNC | O_WRONLY;
 
-    if (flags & DS_EXCL)
-        open_flags |= O_EXCL;
-    if (flags & DS_CREATE)
-        open_flags |= O_CREAT;
+    if (flags & DS_EXCL) {
+        open_flags |= O_EXCL;       
+    }
     
+    if (flags & DS_CREATE) {
+        open_flags |= O_CREAT;
+    }
+
     data_elt_fd = open(filename.c_str(), open_flags, 
                        S_IRUSR | S_IWUSR | S_IRGRP);
-    if (data_elt_fd == -1) {
+
+    if (data_elt_fd == -1) 
+    {
         if (errno == ENOENT) {
             log_debug("file not found and DS_CREATE not specified");
             return DS_NOTFOUND;
