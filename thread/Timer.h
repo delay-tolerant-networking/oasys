@@ -177,7 +177,6 @@ public:
     {
         TimerSystem::instance()->schedule_in(milliseconds, this);
     }
-
     void schedule_immediate()
     {
         TimerSystem::instance()->schedule_immediate(this);
@@ -191,6 +190,11 @@ public:
     bool pending()
     {
         return pending_;
+    }
+
+    bool cancelled()
+    {
+        return cancelled_;
     }
 
     struct timeval when()
