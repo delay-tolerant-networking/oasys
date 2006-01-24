@@ -322,7 +322,7 @@ struct KeyObj_1 : public SerializableObject {
         action->process("str",    &str_);        
         action->process("short",  &short_);
         action->process("bool",   &bool_);
-        action->process("c_str",  &reinterpret_cast<u_char*>(c_str_), 
+        action->process("c_str",  reinterpret_cast<u_char**>(&c_str_), 
                         0, Serialize::NULL_TERMINATED);
     }
 };
