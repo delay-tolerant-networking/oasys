@@ -71,7 +71,7 @@ OptParser::parse_opt(const char* opt_str, size_t len)
     } else {
         val_str = opt_str + opt_len + 1;
         val_len = strcspn(val_str, " \t\r\n");
-        if (val_len == 0 || (val_len + opt_len) > len) {
+        if (val_len == 0 || (val_len + opt_len + 1) != len) {
             return false;
         }
     }
