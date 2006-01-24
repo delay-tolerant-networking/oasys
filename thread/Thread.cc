@@ -93,6 +93,7 @@ Thread::thread_run(const char* thread_name, pthread_t pthread_id)
     
     set_interruptable((flags_ & INTERRUPTABLE));
 
+    flags_ |= STARTED;
     flags_ &= ~STOPPED;
     flags_ &= ~SHOULD_STOP;
 

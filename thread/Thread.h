@@ -68,8 +68,9 @@ public:
         CREATE_JOINABLE	= 1 << 0,	///< inverse of PTHREAD_CREATE_DETACHED
         DELETE_ON_EXIT  = 1 << 1,	///< delete thread when run() completes
         INTERRUPTABLE   = 1 << 2,	///< thread can be interrupted
-        SHOULD_STOP   	= 1 << 3,	///< bit to signal the thread to stop
-        STOPPED   	= 1 << 4,	///< bit indicating the thread has stopped
+        STARTED         = 1 << 3,       ///< thread has been started
+        SHOULD_STOP   	= 1 << 4,	///< bit to signal the thread to stop
+        STOPPED   	= 1 << 5,	///< bit indicating the thread has stopped
     };
 
     /**
@@ -185,6 +186,11 @@ public:
      * Return true if the thread has stopped.
      */
     bool is_stopped() { return ((flags_ & STOPPED) != 0); }
+
+    /**
+     * Return true if the thread has been started.
+     */
+    bool started() { return ((flags_ & STARTED) != 0); }
 
     /**
      * Set the given thread flag.
