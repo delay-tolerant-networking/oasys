@@ -88,6 +88,15 @@ public:
         buf_len_ = _static_size;        
     }
 
+    ScratchBuffer(size_t size) {
+        buf_     = static_buf_;
+        buf_len_ = _static_size;
+
+        if (size > buf_len_) {
+            reserve(size);
+        }
+    }
+
     virtual ~ScratchBuffer() {
         if (! using_malloc()) {
             buf_ = 0;
