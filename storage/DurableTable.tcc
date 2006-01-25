@@ -111,7 +111,7 @@ SingleTypeDurableTable<_DataType>::put(const SerializableObject& key,
                                        const _DataType*          data,
                                        int                       flags)
 {
-    flags = cleanup_put_flags(flags);
+    flags = DurableTable<_DataType>::cleanup_put_flags(flags);
 
     int ret = this->impl_->put(key, TypeCollection::UNKNOWN_TYPE, data, flags);
 
@@ -202,7 +202,7 @@ MultiTypeDurableTable<_BaseType, _Collection>::put(
     int flags
     )
 {
-    flags = cleanup_put_flags(flags);
+    flags = DurableTable<_BaseType>::cleanup_put_flags(flags);
     
     int ret = this->impl_->put(key, type, data, flags);
 
@@ -227,7 +227,7 @@ StaticTypedDurableTable::put(
     int                       flags
     )
 {
-    flags = cleanup_put_flags(flags);
+    flags = DurableTable<_Type>::cleanup_put_flags(flags);
 
     ASSERT(this->cache_ == 0); // XXX/bowei - don't support caches for now
     int ret = this->impl_->put(key, TypeCollection::UNKNOWN_TYPE, 
