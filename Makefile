@@ -161,6 +161,11 @@ BUILDDIR := .
 endif
 
 #
+# Include the Makefile for tests
+#
+include $(SRCDIR)/test/Makefile
+
+#
 # Include the common rules
 #
 include Rules.make
@@ -214,13 +219,9 @@ liboasyscompat.a: $(COMPAT_OBJS)
 .PHONY: cpps
 cpps: $(CPPS)
 
-
-#
-# test files
-#
-include $(SRCDIR)/test/Makefile
-TESTS := $(patsubst %,test/%,$(TESTS))
+# build tests
 .PHONY: test tests
+TESTS := $(patsubst %,test/%,$(TESTS))
 test tests: all $(TESTS)
 
 # run tests

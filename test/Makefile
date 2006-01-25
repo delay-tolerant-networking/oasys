@@ -45,6 +45,9 @@ OLD_TESTS :=					\
 	thread-test				\
 	url-test				\
 
+TEST_SRCS := $(patsubst %,test/%.cc,$(TESTS))
+ALLSRCS += $(TEST_SRCS)
+
 #
 # Make sure test executables are included in 'make clean'
 #
@@ -55,8 +58,8 @@ BINFILES += $(TESTS)
 #
 test/%test: test/%test.cc liboasys.a
 	@mkdir -p test
-	$(CXX) $^ -o $@ $(CFLAGS) $(LDFLAGS) $(LIBS) liboasys.a
+	$(CXX) $< -o $@ $(CFLAGS) $(LDFLAGS) $(LIBS) liboasys.a
 
 test/%Test: test/%Test.cc liboasys.a
 	@mkdir -p test
-	$(CXX) $^ -o $@ $(CFLAGS) $(LDFLAGS) $(LIBS) liboasys.a
+	$(CXX) $< -o $@ $(CFLAGS) $(LDFLAGS) $(LIBS) liboasys.a
