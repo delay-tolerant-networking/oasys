@@ -99,14 +99,12 @@ FileSystemStore::init(StorageConfig* cfg)
     }
     else if (cfg->init_ && ! cfg->tidy_) 
     {
-        if (check_database() != -2) {
-            log_warn("Database already exists - not clobbering...");
-            return -1;
+        if (check_database() == -2) {
+            int err = init_database();
+            if (err != 0) {
+                return -1;
+            }
         }
-        int err = init_database();
-        if (err != 0) {
-            return -1;
-        } 
     }
     else 
     {
