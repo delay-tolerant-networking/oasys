@@ -332,6 +332,7 @@ protected:
     enum type_t {
         BINDING_INVALID = -1,
         BINDING_INT = 1,
+        BINDING_INT16,
         BINDING_DOUBLE, 
         BINDING_BOOL, 
         BINDING_STRING, 
@@ -353,6 +354,7 @@ protected:
         union {
             void*	voidval_;
             int*	intval_;
+            int16_t*	int16val_;
             double*	doubleval_;
             bool*	boolval_;
             in_addr_t*	addrval_;
@@ -377,28 +379,41 @@ protected:
     void bind_i(const char* name, int* val, int initval,
                 const char* help = NULL);
 
+    /**
+     * Bind a 16 bit integer to the set command.
+     */
+    void bind_i(const char* name, int16_t* val, const char *help = NULL);
+    void bind_i(const char* name, int16_t* val, int16_t initval,
+                const char* help = NULL);
+    
     ///@{
     /**
-     * Aliases for other integer types.
+     * Unsigned / signed aliases for other integer types.
      */
-#define BIND_I_ALIAS(_type)                                     \
-    void bind_i(const char* name, _type* val,                   \
-                const char* help = NULL)                        \
-    {                                                           \
-        bind_i(name, (int*)val, help);                          \
-    }                                                           \
-                                                                \
-    void bind_i(const char* name, _type* val, _type initval,    \
-                const char* help = NULL)                        \
-    {                                                           \
-        bind_i(name, (int*)val, initval, help);                 \
+    void bind_i(const char* name, unsigned int* val,
+                const char* help = NULL)
+    {
+        bind_i(name, (int*)val, help);
     }
 
-    BIND_I_ALIAS(u_int32_t);
-    BIND_I_ALIAS(int16_t);
-    BIND_I_ALIAS(u_int16_t);
-    BIND_I_ALIAS(int8_t);
-    BIND_I_ALIAS(u_int8_t);
+    void bind_i(const char* name, unsigned int* val, unsigned int initval,
+                const char* help = NULL)
+    {
+        bind_i(name, (int*)val, initval, help);
+    }
+    
+    void bind_i(const char* name, u_int16_t* val,
+                const char* help = NULL)
+    {
+        bind_i(name, (int16_t*)val, help);
+    }
+
+    void bind_i(const char* name, u_int16_t* val, u_int16_t initval,
+                const char* help = NULL)
+    {
+        bind_i(name, (int16_t*)val, initval, help);
+    }
+    
     ///@}
     
     /**
