@@ -227,7 +227,7 @@ StaticTypedDurableTable::put(
     int                       flags
     )
 {
-    flags = DurableTable<_Type>::cleanup_put_flags(flags);
+    flags = cleanup_put_flags(flags);
 
     ASSERT(this->cache_ == 0); // XXX/bowei - don't support caches for now
     int ret = this->impl_->put(key, TypeCollection::UNKNOWN_TYPE, 
