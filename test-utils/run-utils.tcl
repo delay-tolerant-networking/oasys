@@ -343,25 +343,41 @@ proc run {id exec_file exec_opts confname conf exec_env} {
 #
 proc check_pid {hostname pid} {
     global net::host tcl_platform
-    
+
+    set procs ""
+
     if {$tcl_platform(platform) != "windows"} {
-	if {[catch {run_cmd $hostname ps h -p $pid} err]} {
+	if [catch {
+	    set procs [run_cmd $hostname ps -h -p $pid]
+	} err] {
 	    return 0
 	}
 
-	return 1
-    } else {
-	# get the whole list
-	set procs [run_cmd $hostname ps -s]
-	foreach pidline [split $procs "\n"] {
-	    set pid2 [lindex $pidline 0]
-	    if {$pid2 == $pid} {
-		return 1
-	    }
+	# under linux, ps -h suppresses the header line, and returns
+	# an error code (as checked above) if the process can't be
+	# found, so if we got here, the process must exist and we can
+	# return early. otherwise, we fall through and scan for the
+	# pid
+	
+	if {$tcl_platform(os) == "Linux"} {
+	    return 1
 	}
-	    
-	return 0
+
+    } else {
+	# on windows we have to get the whole list
+	set procs [run_cmd $hostname ps -s]
     }
+
+    # now check the list to try to find the pid
+    foreach pidline [split $procs "\n"] {
+	set pid2 [lindex $pidline 0]
+	if {$pid2 == $pid} {
+	    return 1
+	}
+    }
+	
+    return 0
+
 }
 
 #
@@ -378,7 +394,7 @@ proc wait_for_pid_exit {id pid {timeout 30000}} {
 }
 
 #
-# Check if the given pid is alive on the specified hostname
+# Kill the specified pid on the host with the given signal
 #
 proc kill_pid {hostname pid signal} {
     return [catch {run_cmd $hostname kill -s $signal $pid} err]
