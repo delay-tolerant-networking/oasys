@@ -168,7 +168,7 @@ namespace eval tell {
 	set cmd_response [gets $sock]
 
 	if {($cmd_response == "") && [eof $sock]} {
-	    puts "error: eof in tell command to $host:$port"
+	    puts "warning: eof in tell command to $host:$port"
 
 	    tell::close_socket $host $port
 	    set results($host:$port) "1 error: eof while waiting for tell response"
