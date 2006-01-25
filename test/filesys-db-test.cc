@@ -5,7 +5,8 @@
 // globals needed by the generic durable-store-test
 //
 
-#define NEW_DS_IMPL new FileSystemStore()
+#define NEW_DS_IMPL()       new FileSystemStore()
+#define DEL_DS_STORE(store) delete_z(store)
 
 std::string g_db_name    = "test-db";
 std::string g_db_table   = "test-table";

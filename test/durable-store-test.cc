@@ -2,10 +2,10 @@
 // NOTE: This file is not intended to be executed on its own... rather
 // it is intended to be included by a datastore-specific test, such as
 // berkeley-db-test or filesys-db-test, each of which define the
-// macros NEW_DS_IMPL and sets up a handful of global parameters
+// macros NEW_DS_IMPL() and sets up a handful of global parameters
 //
 
-#ifndef NEW_DS_IMPL
+#ifndef NEW_DS_IMPL()
 #error "durable-store-test.cc must only be included from a type-specific test file"
 #endif
 
@@ -76,11 +76,11 @@ typedef MultiTypeDurableTable<Obj, TestC> ObjDurableTable;
 typedef DurableObjectCache<Obj> ObjDurableCache;
 
 DECLARE_TEST(DBInit) {
-    DurableStoreImpl* impl = NEW_DS_IMPL;
+    DurableStoreImpl* impl = NEW_DS_IMPL();
     DurableStore* store    = new DurableStore(impl);
     impl->init(g_config);
 
-    delete_z(store);
+    DEL_DS_STORE(store);
 
     return 0;
 }
@@ -88,7 +88,7 @@ DECLARE_TEST(DBInit) {
 DECLARE_TEST(DBTidy) {
     // do tidy
     g_config->tidy_        = true;
-    DurableStoreImpl* impl = NEW_DS_IMPL;
+    DurableStoreImpl* impl = NEW_DS_IMPL();
     DurableStore* store    = new DurableStore(impl);
     impl->init(g_config);
 
@@ -97,35 +97,35 @@ DECLARE_TEST(DBTidy) {
     CHECK(table1 != 0);
 
     delete_z(table1);
-    delete_z(store);
+    DEL_DS_STORE(store);
 
     // don't do tidy
     g_config->tidy_ = false;
-    impl            = NEW_DS_IMPL;
+    impl            = NEW_DS_IMPL();
     store           = new DurableStore(impl);
     impl->init(g_config);
 
     CHECK(store->get_table(&table1, "test", 0) == 0);
     CHECK(table1 != 0);
     delete_z(table1);
-    delete_z(store);
+    DEL_DS_STORE(store);
 
     // do tidy
     g_config->tidy_ = true;
-    impl            = NEW_DS_IMPL;
+    impl            = NEW_DS_IMPL();
     store           = new DurableStore(impl);
     impl->init(g_config);
 
     CHECK(store->get_table(&table1, "test", 0) == DS_NOTFOUND);
     CHECK(table1 == 0);
-    delete_z(store);
+    DEL_DS_STORE(store);
 
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(TableCreate) {
     g_config->tidy_         = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL;
+    DurableStoreImpl* impl  = NEW_DS_IMPL();
     DurableStore*     store = new DurableStore(impl);
     impl->init(g_config);
     
@@ -155,14 +155,14 @@ DECLARE_TEST(TableCreate) {
     CHECK(store->get_table(&objtable, "objtable", DS_CREATE | DS_EXCL) == 0);
     CHECK(objtable != 0);
     delete_z(objtable);
-    delete_z(store);
+    DEL_DS_STORE(store);
 
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(TableDelete) {
     g_config->tidy_         = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL;
+    DurableStoreImpl* impl  = NEW_DS_IMPL();
     DurableStore*     store = new DurableStore(impl);
     impl->init(g_config);
     
@@ -180,14 +180,14 @@ DECLARE_TEST(TableDelete) {
     CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
     CHECK(table != 0);
     delete_z(table);
-    delete_z(store);
+    DEL_DS_STORE(store);
 
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(SingleTypePut) {
     g_config->tidy_         = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL;
+    DurableStoreImpl* impl  = NEW_DS_IMPL();
     DurableStore*     store = new DurableStore(impl);
     impl->init(g_config);
 
@@ -205,14 +205,14 @@ DECLARE_TEST(SingleTypePut) {
     CHECK(table->put(key, &data, DS_CREATE) == 0);
     CHECK(table->put(key, &data, DS_CREATE | DS_EXCL) == DS_EXISTS);
     delete_z(table);
-    delete_z(store);
+    DEL_DS_STORE(store);
 
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(SingleTypeGet) {
     g_config->tidy_         = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL;
+    DurableStoreImpl* impl  = NEW_DS_IMPL();
     DurableStore*     store = new DurableStore(impl);
     impl->init(g_config);
 
@@ -247,14 +247,14 @@ DECLARE_TEST(SingleTypeGet) {
 
     delete_z(data2);
     delete_z(table);
-    delete_z(store);
+    DEL_DS_STORE(store);
 
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(SingleTypeDelete) {
     g_config->tidy_         = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL;
+    DurableStoreImpl* impl  = NEW_DS_IMPL();
     DurableStore*     store = new DurableStore(impl);
     impl->init(g_config);
 
@@ -285,14 +285,14 @@ DECLARE_TEST(SingleTypeDelete) {
     CHECK(table->size() == 0);
     
     delete_z(table);
-    delete_z(store);
+    DEL_DS_STORE(store);
 
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(SingleTypeMultiObject) {
     g_config->tidy_         = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL;
+    DurableStoreImpl* impl  = NEW_DS_IMPL();
     DurableStore*     store = new DurableStore(impl);
     impl->init(g_config);
 
@@ -311,10 +311,10 @@ DECLARE_TEST(SingleTypeMultiObject) {
     CHECK((int)table->size() == num_objs);
     
     delete_z(table);
-    delete_z(store);
+    DEL_DS_STORE(store);
 
     g_config->tidy_ = false;
-    impl  = NEW_DS_IMPL;
+    impl  = NEW_DS_IMPL();
     store = new DurableStore(impl);
     impl->init(g_config);
     
@@ -335,14 +335,14 @@ DECLARE_TEST(SingleTypeMultiObject) {
     }
     CHECK((int)table->size() == num_objs);
     delete_z(table);
-    delete_z(store);
+    DEL_DS_STORE(store);
 
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(SingleTypeIterator) {
     g_config->tidy_         = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL;
+    DurableStoreImpl* impl  = NEW_DS_IMPL();
     DurableStore*     store = new DurableStore(impl);
     impl->init(g_config);
 
@@ -376,14 +376,14 @@ DECLARE_TEST(SingleTypeIterator) {
 
     delete_z(iter); 
     delete_z(table);
-    delete_z(store);
+    DEL_DS_STORE(store);
 
     return UNIT_TEST_PASSED;    
 }
 
 DECLARE_TEST(MultiType) {
     g_config->tidy_         = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL;
+    DurableStoreImpl* impl  = NEW_DS_IMPL();
     DurableStore*     store = new DurableStore(impl);
     impl->init(g_config);
 
@@ -423,14 +423,14 @@ DECLARE_TEST(MultiType) {
     delete_z(o1);
     
     delete_z(table);
-    delete_z(store);
+    DEL_DS_STORE(store);
 
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(NonTypedTable) {
     g_config->tidy_ = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL;
+    DurableStoreImpl* impl  = NEW_DS_IMPL();
     DurableStore*     store = new DurableStore(impl);
     impl->init(g_config);
 
@@ -456,14 +456,14 @@ DECLARE_TEST(NonTypedTable) {
     delete_z(str);
     delete_z(i);
     delete_z(table);
-    delete_z(store);
+    DEL_DS_STORE(store);
 
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(SingleTypeCache) {
     g_config->tidy_           = true;
-    DurableStoreImpl*   impl  = NEW_DS_IMPL;
+    DurableStoreImpl*   impl  = NEW_DS_IMPL();
     DurableStore*       store = new DurableStore(impl);
     StringDurableCache* cache = new StringDurableCache("/test/cache/string", 32);
     impl->init(g_config);
@@ -596,7 +596,7 @@ DECLARE_TEST(SingleTypeCache) {
     CHECK_EQUAL(cache->size(),  0);
     
     delete_z(table);
-    delete_z(store);
+    DEL_DS_STORE(store);
     delete_z(cache);
     
     return UNIT_TEST_PASSED;
@@ -604,7 +604,7 @@ DECLARE_TEST(SingleTypeCache) {
 
 DECLARE_TEST(MultiTypeCache) {
     g_config->tidy_           = true;
-    DurableStoreImpl*   impl  = NEW_DS_IMPL;
+    DurableStoreImpl*   impl  = NEW_DS_IMPL();
     DurableStore*       store = new DurableStore(impl);
     ObjDurableCache*    cache = new ObjDurableCache("/test/cache/obj", 36);
     impl->init(g_config);
@@ -737,7 +737,7 @@ DECLARE_TEST(MultiTypeCache) {
     CHECK_EQUAL(cache->size(),  0);
     
     delete_z(table);
-    delete_z(store);
+    DEL_DS_STORE(store);
     delete_z(cache);
     
     return UNIT_TEST_PASSED;

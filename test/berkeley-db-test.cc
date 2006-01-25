@@ -5,7 +5,8 @@
 // globals needed by the generic durable-store-test
 //
 
-#define NEW_DS_IMPL new BerkeleyDBStore()
+#define NEW_DS_IMPL()       new BerkeleyDBStore()
+#define DEL_DS_STORE(store) delete_z(store)
 
 std::string g_db_name    = "test";
 std::string g_db_table   = "test-table";
@@ -14,7 +15,6 @@ const char* g_config_dir = "output/berkeley-db-test/berkeley-db-test";
 //
 // pull in the generic test
 //
-
 #include "durable-store-test.cc"
 
 DECLARE_TEST(DBTestInit) {
