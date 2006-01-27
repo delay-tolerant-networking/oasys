@@ -5,7 +5,7 @@
 // macros NEW_DS_IMPL() and sets up a handful of global parameters
 //
 
-#ifndef NEW_DS_IMPL()
+#ifndef NEW_DS_IMPL
 #error "durable-store-test.cc must only be included from a type-specific test file"
 #endif
 
