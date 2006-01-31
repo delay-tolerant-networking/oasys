@@ -20,20 +20,6 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
         ac_try_cxx=`echo $ac_with_cc | sed 's/cc/++/'`
     fi
 
-    
-    dnl
-    dnl Handle --with-target=target
-    dnl
-    TARGET=native
-    AC_ARG_WITH(target,
-		AC_HELP_STRING([--with-target=TARGET],
-                               [use target TARGET (default native)]),
-                [TARGET=$withval])
-
-    AC_MSG_CHECKING([compilation target])
-    AC_MSG_RESULT($TARGET)
-    AC_SUBST(TARGET)
-
     dnl
     dnl Handle --enable-debug[=yes|no]
     dnl 	   --disable-debug
@@ -129,6 +115,11 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
     STATIC=
     test $static = yes && STATIC=yes
     AC_SUBST(STATIC)    
+
+    dnl
+    dnl Handle the gcc option for --target
+    dnl
+    AC_SUBST(TARGET,$target)
 ])
 
 
