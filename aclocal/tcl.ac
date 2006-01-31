@@ -80,7 +80,10 @@ AC_DEFUN(AC_OASYS_FIND_TCL, [
         ac_tcllibdirs="$ac_tcldir/lib"
     fi
 
-    for ac_tclver in $ac_tclvers ; do
+    for ac_tclver in $ac_tclvers ; do	
+        echo ""
+        AC_MSG_NOTICE([checking for tcl installation (version $ac_tclver)])
+
     for ac_tclincdir in $ac_tclincdirs; do
 
         ac_tclver_major=`echo $ac_tclver | cut -d . -f1`
