@@ -36,5 +36,5 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define IEEE_8087
-#define Arith_Kind_ASL 1
+#define IEEE_MC68k
+#define Arith_Kind_ASL 2
