@@ -29,5 +29,5 @@ proc gethostbyname {host} {
     }
 
     # XXX/demmer do something else
-    error "no gethostbyname implementation available"
+    error "no gethostbyname implementation available (install Tclx)"
 }
