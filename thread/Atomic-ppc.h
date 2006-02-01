@@ -43,15 +43,16 @@
 
 namespace oasys {
 
-
-/*
- * We have to force gcc to not optimize with an alias.
+/**
+ * The definition of atomic_t for x86 is just a wrapper around the
+ * value, since we have enough synchronization support in the
+ * architecture.
  */
-struct __noalias {
-    u_int32_t value;
-};
+struct atomic_t {
+    atomic_t(u_int32_t v = 0) : value(v) {}
 
-#define __noalias__(x) (*(volatile __noalias *)x)
+    volatile u_int32_t value;
+};
 
 /**
  * Atomic addition function.
@@ -61,18 +62,17 @@ struct __noalias {
  * 
  */
 static inline u_int32_t
-atomic_add_ret(volatile void *v, u_int32_t i)
+atomic_add_ret(volatile atomic_t* v, u_int32_t i)
 {
     register u_int32_t ret;
-    register u_int32_t* p = (u_int32_t*)v;
 
     __asm__ __volatile__(
         "1:	lwarx %0, 0, %2\n"       /* load old value */
         "	add %0, %3, %0\n"        /* calculate new value */
         "	stwcx. %0, 0, %2\n"      /* attempt to store */
         "	bne- 1b\n"               /* spin if failed */
-        : "=&r" (ret), "=m" (*p)
-        : "r" (p), "r" (i), "m" (*p)
+        : "=&r" (ret), "=m" (v->value)
+        : "r" (v), "r" (i), "m" (v->value)
         : "cc", "memory");
 
     return ret;
@@ -85,18 +85,17 @@ atomic_add_ret(volatile void *v, u_int32_t i)
  * @param v	pointer to current value
  */
 static inline u_int32_t
-atomic_sub_ret(volatile void *v, u_int32_t i)
+atomic_sub_ret(volatile atomic_t* v, u_int32_t i)
 {
     register u_int32_t ret;
-    register u_int32_t* p = (u_int32_t*)v;
 
     __asm__ __volatile__(
         "1:	lwarx %0, 0, %2\n"       /* load old value */
         "	subfc %0, %3, %0\n"      /* calculate new value */
         "	stwcx. %0, 0, %2\n"      /* attempt to store */
         "	bne- 1b\n"               /* spin if failed */
-        : "=&r" (ret), "=m" (*p)
-        : "r" (p), "r" (i), "m" (*p)
+        : "=&r" (ret), "=m" (v->value)
+        : "r" (v), "r" (i), "m" (v->value)
         : "cc", "memory");
 
     return ret;
@@ -106,43 +105,43 @@ atomic_sub_ret(volatile void *v, u_int32_t i)
 /// Wrapper variants around the basic add/sub functions above
 
 static inline void
-atomic_add(volatile void* v, u_int32_t i)
+atomic_add(volatile atomic_t* v, u_int32_t i)
 {
     atomic_add_ret(v, i);
 }
 
 static inline void
-atomic_sub(volatile void* v, u_int32_t i)
+atomic_sub(volatile atomic_t* v, u_int32_t i)
 {
     atomic_sub_ret(v, i);
 }
 
 static inline void
-atomic_incr(volatile void *v)
+atomic_incr(volatile atomic_t* v)
 {
     atomic_add(v, 1);
 }
 
 static inline void
-atomic_decr(volatile void *v)
+atomic_decr(volatile atomic_t* v)
 {
     atomic_sub(v, 1);
 }
 
 static inline u_int32_t
-atomic_incr_ret(volatile void *v)
+atomic_incr_ret(volatile atomic_t* v)
 {
     return atomic_add_ret(v, 1);
 }
 
 static inline u_int32_t
-atomic_decr_ret(volatile void *v)
+atomic_decr_ret(volatile atomic_t* v)
 {
     return atomic_sub_ret(v, 1);
 }
 
 static inline bool
-atomic_decr_test(volatile void *v)
+atomic_decr_test(volatile atomic_t* v)
 {
     return (atomic_sub_ret(v, 1) == 0);
 }
@@ -160,10 +159,9 @@ atomic_decr_test(volatile void *v)
  * @return 	zero if the compare failed, non-zero otherwise
  */
 static inline u_int32_t
-atomic_cmpxchg32(volatile void* v, u_int32_t o, u_int32_t n)
+atomic_cmpxchg32(volatile atomic_t* v, u_int32_t o, u_int32_t n)
 {
     register u_int32_t ret;
-    register u_int32_t* p = (u_int32_t*)v;
 
     __asm __volatile (
         "1:	lwarx %0, 0, %2\n"       /* load old value */
@@ -175,8 +173,8 @@ atomic_cmpxchg32(volatile void* v, u_int32_t o, u_int32_t n)
         "	2:\n"
         "	stwcx. %0, 0, %2\n"      /* clear reservation (74xx) */
         "	3:\n"
-        : "=&r" (ret), "=m" (*p)
-        : "r" (p), "r" (o), "r" (n), "m" (*p)
+        : "=&r" (ret), "=m" (v->value)
+        : "r" (v), "r" (o), "r" (n), "m" (v->value)
         : "cc", "memory");
 
     return (ret);
