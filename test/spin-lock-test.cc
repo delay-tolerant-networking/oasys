@@ -12,7 +12,7 @@ using namespace oasys;
 
 SpinLock lock;
 SpinLock lock2;
-volatile int nspins = 10000000;
+volatile int nspins = 0;
 volatile int total  = 0;
 volatile int count1 = 0;
 volatile int count2 = 0;
@@ -57,8 +57,10 @@ protected:
 };
 
 int
-test(const char* what, SpinLock* lock1, SpinLock* lock2)
+test(const char* what, SpinLock* lock1, SpinLock* lock2, int n)
 {
+    nspins = n;
+             
     Thread* t1 = new Thread1(lock1);
     Thread* t2 = new Thread2(lock2);
 
@@ -66,21 +68,21 @@ test(const char* what, SpinLock* lock1, SpinLock* lock2)
     t2->start();
 
     while (count1 != nspins && count2 != nspins) {
-        log_info("/test", "count1:     %d", count1);
-        log_info("/test", "count2:     %d", count2);
+        log_notice("/test", "count1:     %d", count1);
+        log_notice("/test", "count2:     %d", count2);
         sleep(1);
     }
 
     t1->join();
     t2->join();
 
-    log_info("/log", "total spins: %d",  SpinLock::total_spins_);
-    log_info("/log", "total yields: %d", SpinLock::total_yields_);
+    log_notice("/log", "total spins: %d",  SpinLock::total_spins_.value);
+    log_notice("/log", "total yields: %d", SpinLock::total_yields_.value);
 
-    log_info("/test", "count1:     %d", count1);
-    log_info("/test", "count2:     %d", count2);
-    log_info("/test", "total:      %d", total);
-    log_info("/test", "count sum:  %d", count1 + count2);
+    log_notice("/test", "count1:     %d", count1);
+    log_notice("/test", "count2:     %d", count2);
+    log_notice("/test", "total:      %d", total);
+    log_notice("/test", "count sum:  %d", count1 + count2);
     delete t1;
     delete t2;
 
@@ -93,19 +95,24 @@ test(const char* what, SpinLock* lock1, SpinLock* lock2)
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(SharedLockQuick) {
+    return test("shared", &lock, &lock, 100);
+}
+
 DECLARE_TEST(SharedLock) {
-    return test("shared", &lock, &lock);
+    return test("shared", &lock, &lock, 10000000);
 }
 
 DECLARE_TEST(SeparateLock) {
-    return test("shared", &lock, &lock2);
+    return test("shared", &lock, &lock2, 10000000);
 }
     
 DECLARE_TEST(NoLock) {
-    return test("shared", &lock, &lock2);
+    return test("shared", NULL, NULL, 10000000);
 }
 
 DECLARE_TESTER(SpinLockTester) {
+    ADD_TEST(SharedLockQuick);
     ADD_TEST(SharedLock);
     ADD_TEST(SeparateLock);
     ADD_TEST(NoLock);
