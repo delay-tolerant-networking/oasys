@@ -41,16 +41,23 @@
 
 /**
  * Include the appropriate architecture-specific version of the atomic
- * functions here.
+ * functions here. Each defines an atomic_t structure with (at least)
+ * a single u_int32_t field called value, though architectures might
+ * add additional fields. For example:
+ *
+ * @code
+ * typedef struct {
+ *      volatile u_int32_t value;
+ * } atomic_t;
+ * @endcode
  */
 
 #if defined(__i386__)
 #include "Atomic-x86.h"
 #elif defined(__POWERPC__) || defined(PPC)
 #include "Atomic-ppc.h"
-#elif defined(__arm__) || defined(__sun__)
-#define __NO_ATOMIC__
-#define NO_SMP
+#elif defined(__arm__)
+#include "Atomic-arm.h"
 #else
 #error "Need to define an Atomic.h variant for your architecture"
 #endif

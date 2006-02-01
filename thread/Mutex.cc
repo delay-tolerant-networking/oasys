@@ -52,7 +52,7 @@
 namespace oasys {
 
 Mutex::Mutex(const char* name, lock_type_t type, bool keep_quiet)
-    : Lock(), type_(type), keep_quiet_(keep_quiet), lock_count_(0)
+    : Lock(), type_(type), keep_quiet_(keep_quiet)
 {
     if (name != NULL && name[0] == '/')
         ++name;
@@ -118,9 +118,11 @@ Mutex::lock(const char* lock_user)
         PANIC("error in pthread_mutex_lock: %s", strerror(errno));
     }
 
-    ++lock_count_;
+    ++lock_count_.value;
+    
     if (logpath_[0] != 0)
-        log_debug("locked (count %d)", lock_count_);
+        log_debug("locked (count %u)", lock_count_.value);
+    
     lock_holder_      = Thread::current();
     lock_holder_name_ = lock_user;
     
@@ -132,8 +134,9 @@ Mutex::unlock()
 {
     ASSERT(is_locked_by_me());
 
-    if (--lock_count_ == 0) {
-        lock_holder_ = 0;
+    if (--lock_count_.value == 0) {
+        lock_holder_      = 0;
+        lock_holder_name_ = 0;
     }
     
     int err = pthread_mutex_unlock(&mutex_);
@@ -143,7 +146,7 @@ Mutex::unlock()
     }
 
     if (logpath_[0] != 0)
-        log_debug("unlocked (count %d)", lock_count_);
+        log_debug("unlocked (count %u)", lock_count_.value);
     
     return err;
 }
@@ -162,9 +165,9 @@ Mutex::try_lock(const char* lock_user)
         PANIC("error in pthread_mutex_trylock: %s", strerror(errno));
     }
 
-    ++lock_count_;
+    ++lock_count_.value;
     if (logpath_[0] != 0)
-        log_debug("try_lock locked (count %d)", lock_count_);
+        log_debug("try_lock locked (count %u)", lock_count_.value);
     lock_holder_      = Thread::current();
     lock_holder_name_ = lock_user;
     return err;

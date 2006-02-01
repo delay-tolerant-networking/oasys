@@ -44,6 +44,17 @@
 namespace oasys {
 
 /**
+ * The definition of atomic_t for x86 is just a wrapper around the
+ * value, since we have enough synchronization support in the
+ * architecture.
+ */
+struct atomic_t {
+    atomic_t(u_int32_t v = 0) : value(v) {}
+
+    volatile u_int32_t value;
+};
+
+/**
  * When we're not on a SMP platform, there's no need to lock the bus.
  */
 #ifndef NO_SMP
@@ -51,15 +62,6 @@ namespace oasys {
 #else
 #define LOCK ""
 #endif
-
-/*
- * We have to force gcc to not optimize with an alias.
- */
-struct __noalias {
-    u_int32_t value;
-};
-
-#define __noalias__(x) (*(volatile __noalias *)x)
 
 /**
  * Atomic addition function.
@@ -69,12 +71,12 @@ struct __noalias {
  * 
  */
 static inline void
-atomic_add(volatile void *v, u_int32_t i)
+atomic_add(volatile atomic_t *v, u_int32_t i)
 {
     __asm__ __volatile__(
         LOCK "addl %1,%0"
-        :"=m" (__noalias__(v))
-        :"ir" (i), "m" (__noalias__(v)));
+        :"=m" (v->value)
+        :"ir" (i), "m" (v->value));
 }
 
 /**
@@ -85,12 +87,12 @@ atomic_add(volatile void *v, u_int32_t i)
  
  */
 static inline void
-atomic_sub(volatile void *v, u_int32_t i)
+atomic_sub(volatile atomic_t* v, u_int32_t i)
 {
     __asm__ __volatile__(
         LOCK "subl %1,%0"
-        :"=m" (__noalias__(v))
-        :"ir" (i), "m" (__noalias__(v)));
+        :"=m" (v->value)
+        :"ir" (i), "m" (v->value));
 }
 
 /**
@@ -99,12 +101,12 @@ atomic_sub(volatile void *v, u_int32_t i)
  * @param v	pointer to current value
  */
 static inline void
-atomic_incr(volatile void *v)
+atomic_incr(volatile atomic_t* v)
 {
     __asm__ __volatile__(
         LOCK "incl %0"
-        :"=m" (__noalias__(v))
-        :"m" (__noalias__(v)));
+        :"=m" (v->value)
+        :"m" (v->value));
 }
 
 /**
@@ -114,12 +116,12 @@ atomic_incr(volatile void *v)
  * 
  */ 
 static inline void
-atomic_decr(volatile void *v)
+atomic_decr(volatile atomic_t* v)
 {
     __asm__ __volatile__(
         LOCK "decl %0"
-        :"=m" (__noalias__(v))
-        :"m" (__noalias__(v)));
+        :"=m" (v->value)
+        :"m" (v->value));
 }
 
 /**
@@ -132,14 +134,14 @@ atomic_decr(volatile void *v)
  * 
  */ 
 static inline bool
-atomic_decr_test(volatile void *v)
+atomic_decr_test(volatile atomic_t* v)
 {
     unsigned char c;
     
     __asm__ __volatile__(
         LOCK "decl %0; sete %1"
-        :"=m" (__noalias__(v)), "=qm" (c)
-        :"m" (__noalias__(v)) : "memory");
+        :"=m" (v->value), "=qm" (c)
+        :"m" (v->value) : "memory");
 
     return (c != 0);
 }
@@ -155,12 +157,12 @@ atomic_decr_test(volatile void *v)
  * @return 	the value of v before the swap
  */
 static inline u_int32_t
-atomic_cmpxchg32(volatile void *v, u_int32_t o, u_int32_t n)
+atomic_cmpxchg32(volatile atomic_t* v, u_int32_t o, u_int32_t n)
 {
     __asm__ __volatile__(
 	LOCK "cmpxchgl %1, %2"
 	: "+a" (o)
-	: "r" (n), "m" (__noalias__(v))
+	: "r" (n), "m" (v->value)
 	: "memory");
     
     return o;
@@ -175,9 +177,10 @@ atomic_cmpxchg32(volatile void *v, u_int32_t o, u_int32_t n)
  * @param v 	pointer to current value
  */
 static inline u_int32_t
-atomic_incr_ret(volatile void* v)
+atomic_incr_ret(volatile atomic_t* v)
 {
-    register u_int32_t o, n;
+    volatile register u_int32_t o, n;
+    
 #if defined(NDEBUG) && NDEBUG == 1
     while (1)
 #else
@@ -185,7 +188,7 @@ atomic_incr_ret(volatile void* v)
     for (j = 0; j < 1000000; ++j)
 #endif
     {
-        o = * (volatile u_int32_t*)(v);
+        o = v->value;
         n = o + 1;
         if (atomic_cmpxchg32(v, o, n) == o)
             return n;
@@ -205,7 +208,7 @@ atomic_incr_ret(volatile void* v)
  * @param i 	integer to add
  */
 static inline u_int32_t
-atomic_add_ret(volatile void* v, u_int32_t i)
+atomic_add_ret(volatile atomic_t* v, u_int32_t i)
 {
     register u_int32_t o, n;
     
@@ -216,7 +219,7 @@ atomic_add_ret(volatile void* v, u_int32_t i)
     for (j = 0; j < 1000000; ++j)
 #endif
     {
-        o = * (volatile u_int32_t*)(v);
+        o = v->value;
         n = o + i;
         if (atomic_cmpxchg32(v, o, n) == o)
             return n;

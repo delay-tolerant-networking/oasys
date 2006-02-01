@@ -39,7 +39,7 @@
 #ifndef _OASYS_LOCK_H_
 #define _OASYS_LOCK_H_
 
-#include "../debug/DebugUtils.h"
+#include "Atomic.h"
 #include "Thread.h"
 
 namespace oasys {
@@ -52,10 +52,12 @@ public:
     /**
      * Default Lock constructor.
      */
-    Lock() : lock_holder_(0), 
+    Lock() : lock_count_(0),
+             lock_holder_(0),
              lock_holder_name_(0), 
              scope_lock_count_(0) 
-    {}
+    {
+    }
 
     /**
      * Lock destructor. Asserts that the lock is not locked by another
@@ -97,7 +99,7 @@ public:
      */
     bool is_locked()
     {
-        return (lock_holder_ != 0);
+        return (lock_count_.value != 0);
     }
 
     /**
@@ -108,16 +110,24 @@ public:
      */
     bool is_locked_by_me()
     {
-        return pthread_equal(lock_holder_, Thread::current());
+        return is_locked() &&
+            pthread_equal(lock_holder_, Thread::current());
     }
 
 protected:
     friend class ScopeLock;
+
+    /**
+     * Stores a count of the number of locks currently held, needed
+     * for recursive locking. Note that 0 means the lock is currently
+     * not locked.
+     */
+    atomic_t lock_count_;
     
     /**
-     * Stores the thread id of the current lock holder. It is the
-     * responsibility of the derived class to set this in lock() and
-     * unset it in unlock(), since the accessors is_locked() and
+     * Stores the pthread thread id of the current lock holder. It is
+     * the responsibility of the derived class to set this in lock()
+     * and unset it in unlock(), since the accessors is_locked() and
      * is_locked_by_me() depend on it.
      */
     pthread_t lock_holder_;

@@ -39,7 +39,6 @@
 #ifndef _OASYS_MUTEX_H_
 #define _OASYS_MUTEX_H_
 
-#include <pthread.h>
 #include "Lock.h"
 #include "../debug/Logger.h"
 
@@ -81,8 +80,6 @@ protected:
     pthread_mutex_t mutex_;        ///< the underlying mutex
     lock_type_t     type_;         ///< the mutex type
     bool	    keep_quiet_;   ///< no logging
-    unsigned int    lock_count_;   ///< count for recursive locking, needed
-                                   ///< for proper management of lock_holder_
 };
 
 } // namespace oasys

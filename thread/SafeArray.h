@@ -48,17 +48,14 @@ namespace oasys {
  * things which may need to be set or read from within a signal
  * handler.
  */
-template<size_t _sz, typename _Type, unsigned int _emptyval>
+template<size_t _sz, typename _Type, _Type _emptyval>
 class SafeArray {
 public:
     /// Constructor that initializes every slot to the empty value
     SafeArray()
     {
-        STATIC_ASSERT(sizeof(_Type) == 4, Safe_Array_Type_Is_32_Bits);
-        
-        for (size_t i = 0; i < _sz; ++i) {
-            array_[i] = _emptyval;
-        }
+        memset(full_, 0, sizeof(atomic_t) * _sz);
+        memset(array_, 0, sizeof(_Type) * _sz);
         size_ = _sz;
     }
 
@@ -72,12 +69,12 @@ public:
      */
     int insert(_Type val)
     {
-        _Type oldval;
+        u_int32_t old;
         for (size_t i = 0; i < _sz; ++i) {
-            oldval = (_Type)atomic_cmpxchg32(&array_[i],
-                                             (unsigned int)_emptyval,
-                                             (unsigned int)val);
-            if (oldval == _emptyval) {
+            old = atomic_cmpxchg32(&full_[i], 0, 1);
+
+            if (old == 0) {
+                array_[i] = val;
                 return i;
             }
         }
@@ -92,15 +89,18 @@ public:
      */
     int remove(_Type val)
     {
-        _Type oldval;
+        u_int32_t old;
+
         for (size_t i = 0; i < _sz; ++i) {
-            oldval = (_Type)atomic_cmpxchg32(&array_[i],
-                                             (unsigned int)val,
-                                             (unsigned int)_emptyval);
-            if (oldval == val) {
+            if (array_[i] == val) {
+                old = atomic_cmpxchg32(&full_[i], 1, 0);
+                ASSERT(old == 1);
+                array_[i] = _emptyval;
+
                 return i;
             }
         }
+
         return -1;
     }
 
@@ -114,7 +114,7 @@ public:
 
     /// @{
     /// Accessors
-    size_t              size()  const { return size_; }
+    size_t       size()  const { return size_; }
     const _Type* array() const { return array_; }
     /// @}
 
@@ -124,6 +124,9 @@ protected:
     /// classes that want to iterate over the array can do so
     size_t size_;
 
+    /// Array of full/empty values
+    atomic_t full_[_sz];
+    
     /// The array of values
     _Type array_[_sz];
 };

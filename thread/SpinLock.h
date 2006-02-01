@@ -39,11 +39,7 @@
 #ifndef _OASYS_SPINLOCK_H_
 #define _OASYS_SPINLOCK_H_
 
-#include "Atomic.h"
 #include "Lock.h"
-#include "Thread.h"
-
-#ifndef __NO_ATOMIC__
 
 namespace oasys {
 
@@ -55,7 +51,7 @@ class SpinLock : public Lock {
 public:
 
 public:
-    SpinLock() : Lock(), lock_count_(0), lock_waiters_(0) {}
+    SpinLock() : Lock(), lock_waiters_(0) {}
     virtual ~SpinLock() {}
 
     /// @{
@@ -66,34 +62,15 @@ public:
     /// @}
     
 private:
-    unsigned int lock_count_;   ///< count for recursive locking
-    unsigned int lock_waiters_; ///< count of waiting threads
+    atomic_t lock_waiters_; 	///< count of waiting threads
 
 #ifndef NDEBUG
 public:
-    static unsigned int total_spins_;	///< debugging variable
-    static unsigned int total_yields_;	///< debugging variable
+    static atomic_t total_spins_;	///< debugging variable
+    static atomic_t total_yields_;	///< debugging variable
 #endif
 };
 
 } // namespace oasys
-
-#else
-
-/**
- * If we know there are no atomic instructions for the architecture,
- * just use a Mutex.
- */
-#include "Mutex.h"
-namespace oasys {
-
-class SpinLock : public Mutex {
-public:
-    SpinLock() : Mutex("spinlock", TYPE_RECURSIVE, true) {}
-};
-
-} // namespace oasys
-
-#endif /* __NO_ATOMIC__ */
 
 #endif /* _OASYS_SPINLOCK_H_ */

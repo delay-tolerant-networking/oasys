@@ -12,15 +12,15 @@ using namespace oasys;
 
 class AddRetThread : public Thread {
 public:
-    AddRetThread(volatile u_int32_t* barrier, volatile u_int32_t* val,
-                 volatile u_int32_t* sum, u_int32_t count, u_int32_t amount)
+    AddRetThread(atomic_t* barrier, atomic_t* val,
+                 atomic_t* sum, u_int32_t count, u_int32_t amount)
         : Thread("IncrThread", CREATE_JOINABLE),
           barrier_(barrier), val_(val), sum_(sum), count_(count), amount_(amount) {}
     
 protected:
     virtual void run() {
         atomic_incr(barrier_);
-        while (*barrier_ != 0) {}
+        while (barrier_->value != 0) {}
 
         log_debug("/test", "thread %p starting", this);
         for (u_int i = 0; i < count_; ++i) {
@@ -35,16 +35,16 @@ protected:
         log_debug("/test", "thread %p done", this);
     }
 
-    volatile u_int32_t* barrier_;
-    volatile u_int32_t* val_;
-    volatile u_int32_t* sum_;
+    atomic_t* barrier_;
+    atomic_t* val_;
+    atomic_t* sum_;
     u_int32_t count_;
     u_int32_t amount_;
 };
 
 class IncrThread : public Thread {
 public:
-    IncrThread(volatile u_int32_t* barrier, volatile u_int32_t* val,
+    IncrThread(atomic_t* barrier, atomic_t* val,
                u_int32_t count, u_int32_t limit = 0)
         : Thread("IncrThread", CREATE_JOINABLE),
           barrier_(barrier), val_(val), count_(count), limit_(limit) {}
@@ -52,48 +52,48 @@ public:
 protected:
     virtual void run() {
         atomic_incr(barrier_);
-        while (*barrier_ != 0) {}
+        while (barrier_->value != 0) {}
 
         log_debug("/test", "thread %p starting", this);
         for (u_int i = 0; i < count_; ++i) {
             atomic_incr(val_);
 
-            while ((limit_ != 0) && (*val_ > limit_)) {
+            while ((limit_ != 0) && (val_->value > limit_)) {
                 
             }
         }
         log_debug("/test", "thread %p done", this);
     }
 
-    volatile u_int32_t* barrier_;
-    volatile u_int32_t* val_;
+    atomic_t* barrier_;
+    atomic_t* val_;
     u_int32_t count_;
     u_int32_t limit_;
 };
 
 class DecrTestThread : public Thread {
 public:
-    DecrTestThread(volatile u_int32_t* barrier, volatile u_int32_t* val,
-                   u_int32_t count, u_int32_t* nzero, u_int32_t* maxval)
+    DecrTestThread(atomic_t* barrier, atomic_t* val,
+                   u_int32_t count, atomic_t* nzero, u_int32_t* maxval)
         : Thread("DecrTestThread", CREATE_JOINABLE),
           barrier_(barrier), val_(val), count_(count), nzero_(nzero), maxval_(maxval) {}
     
 protected:
     virtual void run() {
         atomic_incr(barrier_);
-        while (*barrier_ != 0) {}
+        while (barrier_->value != 0) {}
         
         log_debug("/test", "thread %p starting", this);
 
         for (u_int i = 0; i < count_; ++i) {
-            while (! atomic_cmpxchg32(val_, 0, 0)) {} // wait
+            while (! atomic_cmpxchg32(val_, 0, 0)) {} // wait until != 0
             
             bool zero = atomic_decr_test(val_);
             if (zero) {
                 atomic_incr(nzero_);
             }
 
-            u_int32_t cur = *val_;
+            u_int32_t cur = val_->value;
             if (cur > *maxval_) {
                 *maxval_ = cur;
             }
@@ -102,32 +102,32 @@ protected:
         log_debug("/test", "thread %p done", this);
     }
 
-    volatile u_int32_t* barrier_;
-    volatile u_int32_t* val_;
+    atomic_t* barrier_;
+    atomic_t* val_;
     u_int32_t count_;
-    u_int32_t* nzero_;
+    atomic_t* nzero_;
     u_int32_t* maxval_;
 };
 
 class CompareAndSwapThread : public Thread {
 public:
-    CompareAndSwapThread(volatile u_int32_t* barrier, volatile u_int32_t* val,
+    CompareAndSwapThread(atomic_t* barrier, atomic_t* val,
                          u_int32_t count,
-                         volatile u_int32_t* success, volatile u_int32_t* fail)
+                         atomic_t* success, atomic_t* fail)
         : Thread("DecrTestThread", CREATE_JOINABLE),
           barrier_(barrier), val_(val), count_(count), success_(success), fail_(fail) {}
     
 protected:
     virtual void run() {
         atomic_incr(barrier_);
-        while (*barrier_ != 0) {}
+        while (barrier_->value != 0) {}
         
         log_debug("/test", "thread %p starting", this);
 
         for (u_int i = 0; i < count_; ++i) {
             u_int32_t old = atomic_cmpxchg32(val_, 0, (u_int32_t)this);
             if (old == 0) {
-                ASSERT(*val_ == (u_int32_t)this);
+                ASSERT(val_->value == (u_int32_t)this);
                 old = atomic_cmpxchg32(val_, (u_int32_t)this, 0);
                 ASSERT(old == (u_int32_t)this);
                 atomic_incr(success_);
@@ -139,19 +139,51 @@ protected:
         log_debug("/test", "thread %p done", this);
     }
 
-    volatile u_int32_t* barrier_;
-    volatile u_int32_t* val_;
+    atomic_t* barrier_;
+    atomic_t* val_;
     u_int32_t count_;
-    volatile u_int32_t* success_;
-    volatile u_int32_t* fail_;
+    atomic_t* success_;
+    atomic_t* fail_;
 };
+
+DECLARE_TEST(AllOps) {
+    atomic_t a(0);
+
+    CHECK(a.value == 0);
+    CHECK((atomic_incr(&a), a.value == 1));
+    CHECK((atomic_incr(&a), a.value == 2));
+    CHECK((atomic_decr(&a), a.value == 1));
+    CHECK((atomic_decr(&a), a.value == 0));
+
+    CHECK((atomic_add(&a, 15), a.value == 15));
+    CHECK((atomic_sub(&a, 5),  a.value == 10));
+    CHECK((atomic_add(&a, 22), a.value == 32));
+    CHECK((atomic_add(&a, 7),  a.value == 39));
+    CHECK((atomic_sub(&a, 39), a.value == 0));
+
+    CHECK((atomic_incr(&a), a.value == 1));
+    CHECK((atomic_incr(&a), a.value == 2));
+    CHECK(atomic_decr_test(&a) == 0);
+    CHECK(atomic_decr_test(&a) == 1);
+    CHECK(a.value == 0);
+
+    CHECK((a.value = 5) == 5);
+    CHECK(atomic_cmpxchg32(&a, 5, 6) == 5);
+    CHECK(a.value == 6);
+    CHECK(atomic_cmpxchg32(&a, 5, 6) == 6);
+    CHECK(a.value == 6);
+    CHECK(atomic_cmpxchg32(&a, 6, 5) == 6);
+    CHECK(a.value == 5);
+    
+    return UNIT_TEST_PASSED;
+}
 
 int
 atomic_add_ret_test(int nthreads, int count, int amount)
 {
-    u_int32_t barrier = 0;
-    u_int32_t val = 0;
-    u_int32_t sum[nthreads];
+    atomic_t barrier = 0;
+    atomic_t val = 0;
+    atomic_t sum[nthreads];
     u_int64_t expected = 0;
     u_int64_t total_sum = 0;
 
@@ -164,7 +196,7 @@ atomic_add_ret_test(int nthreads, int count, int amount)
         threads[i]->start();
     }
 
-    while (barrier != (u_int)nthreads) {}
+    while (barrier.value != (u_int)nthreads) {}
     barrier = 0;
 
     for (int i = 0; i < nthreads; ++i) {
@@ -177,14 +209,22 @@ atomic_add_ret_test(int nthreads, int count, int amount)
     }
 
     for (int i = 0; i < nthreads; ++i) {
-        CHECK_GTU(sum[i], 0);
-        total_sum += sum[i];
+        CHECK_GTU(sum[i].value, 0);
+        total_sum += sum[i].value;
     }
 
-    CHECK_EQUAL(val, nthreads * count * amount);
+    CHECK_EQUAL(val.value, nthreads * count * amount);
     CHECK_EQUAL_U64(total_sum, expected);
     
     return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(AtomicAddRet1_1) {
+    return atomic_add_ret_test(1, 10000, 1);
+}
+
+DECLARE_TEST(AtomicAddRet1_10) {
+    return atomic_add_ret_test(1, 10000, 10);
 }
 
 DECLARE_TEST(AtomicAddRet2_1) {
@@ -206,8 +246,8 @@ DECLARE_TEST(AtomicAddRet10_10) {
 int
 atomic_incr_test(int nthreads, int count)
 {
-    u_int32_t barrier = 0;
-    u_int32_t val = 0;
+    atomic_t barrier = 0;
+    atomic_t val = 0;
     u_int32_t expected = 0;
 
     Thread* threads[nthreads];
@@ -218,7 +258,7 @@ atomic_incr_test(int nthreads, int count)
         threads[i]->start();
     }
 
-    while (barrier != (u_int)nthreads) {}
+    while (barrier.value != (u_int)nthreads) {}
     barrier = 0;
 
     for (int i = 0; i < nthreads; ++i) {
@@ -226,7 +266,7 @@ atomic_incr_test(int nthreads, int count)
         delete threads[i];
     }
 
-    CHECK_EQUAL(val, expected);
+    CHECK_EQUAL(val.value, expected);
     
     return UNIT_TEST_PASSED;
 }
@@ -240,9 +280,9 @@ DECLARE_TEST(AtomicInc10) {
 }
 
 DECLARE_TEST(AtomicDecrTest) {
-    u_int32_t barrier = 0;
-    u_int32_t val = 0;
-    u_int32_t nzeros = 0;
+    atomic_t barrier = 0;
+    atomic_t val = 0;
+    atomic_t nzeros = 0;
     u_int32_t maxval = 0;
 
     int count = 10000000;
@@ -253,14 +293,14 @@ DECLARE_TEST(AtomicDecrTest) {
     it.start();
     dt.start();
 
-    while (barrier != 2) {}
+    while (barrier.value != 2) {}
     barrier = 0;
 
     it.join();
     dt.join();
 
-    CHECK_EQUAL(val, 0);
-    CHECK_GTU(nzeros, 0);
+    CHECK_EQUAL(val.value, 0);
+    CHECK_GTU(nzeros.value, 0);
     CHECK_GTU(maxval, 0);
 
     return UNIT_TEST_PASSED;
@@ -268,11 +308,11 @@ DECLARE_TEST(AtomicDecrTest) {
 
 int
 compare_and_swap_test(int nthreads, int count) {
-    u_int32_t barrier = 0;
-    u_int32_t val = 0;
+    atomic_t barrier = 0;
+    atomic_t val = 0;
     
-    u_int32_t success[nthreads];
-    u_int32_t fail[nthreads];
+    atomic_t success[nthreads];
+    atomic_t fail[nthreads];
     Thread* threads[nthreads];
 
     for (int i = 0; i < nthreads; ++i) {
@@ -283,7 +323,7 @@ compare_and_swap_test(int nthreads, int count) {
         threads[i]->start();
     }
 
-    while (barrier != (u_int)nthreads) {}
+    while (barrier.value != (u_int)nthreads) {}
     barrier = 0;
 
     for (int i = 0; i < nthreads; ++i) {
@@ -293,15 +333,15 @@ compare_and_swap_test(int nthreads, int count) {
 
     u_int32_t total_success = 0, total_fail = 0;
     for (int i = 0; i < nthreads; ++i) {
-        CHECK_GTU(success[i], 0);
-        CHECK_GTU(fail[i], 0);
+        CHECK_GTU(success[i].value, 0);
+        CHECK_GTU(fail[i].value, 0);
 
-        total_success += success[i];
-        total_fail    += fail[i];
+        total_success += success[i].value;
+        total_fail    += fail[i].value;
     }
 
     CHECK_EQUAL(total_success + total_fail, count * nthreads);
-    CHECK_EQUAL(val, 0);
+    CHECK_EQUAL(val.value, 0);
 
     return UNIT_TEST_PASSED;
 }
@@ -315,6 +355,9 @@ DECLARE_TEST(CompareAndSwapTest10) {
 }
 
 DECLARE_TESTER(AtomicTester) {
+    ADD_TEST(AllOps);
+    ADD_TEST(AtomicAddRet1_1);
+    ADD_TEST(AtomicAddRet1_10);
     ADD_TEST(AtomicAddRet2_1);
     ADD_TEST(AtomicAddRet10_1);
     ADD_TEST(AtomicAddRet2_10);

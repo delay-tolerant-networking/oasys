@@ -37,30 +37,24 @@
  */
 
 #include "SpinLock.h"
-#include "debug/DebugUtils.h"
 
 namespace oasys {
 
-#ifndef __NO_ATOMIC__
-
-unsigned int SpinLock::total_spins_  = 0;
-unsigned int SpinLock::total_yields_ = 0;
+atomic_t SpinLock::total_spins_(0);
+atomic_t SpinLock::total_yields_(0);
 
 int
 SpinLock::lock(const char* lock_user)
 {
-    pthread_t me = Thread::current();
-    int nspins;
-    
-    if (lock_holder_ == me) {
-        lock_count_++;
+    if (is_locked_by_me()) {
+        lock_count_.value++;
         return 0;
     }
 
     atomic_incr(&lock_waiters_);
     
-    nspins = 0;
-    while (atomic_cmpxchg32(&lock_holder_, 0, (unsigned int)me) != 0)
+    int nspins = 0;
+    while (atomic_cmpxchg32(&lock_count_, 0, 1) != 0)
     {
         Thread::spin_yield();
         
@@ -74,55 +68,63 @@ SpinLock::lock(const char* lock_user)
         }
 #endif
     }
+
     atomic_decr(&lock_waiters_);
 
-    ASSERT(lock_holder_ == me);
-    ASSERT(lock_count_ == 0);
+    ASSERT(lock_count_.value == 1);
 
-    lock_count_ = 1;
+    lock_holder_      = Thread::current();
     lock_holder_name_ = lock_user;
 
     return 0;
 };
 
 int
-SpinLock::unlock() {
-    ASSERT(lock_holder_ == Thread::current());
-    ASSERT(lock_count_ > 0);
+SpinLock::unlock()
+{
+    ASSERT(is_locked_by_me());
 
-    lock_holder_name_ = 0;
-    lock_count_--;
-
-    if (lock_count_ == 0) {
-        lock_holder_ = 0;
-        if (__noalias__(&lock_waiters_).value != 0) {
-#ifndef NDEBUG
-            atomic_incr(&total_yields_);
-#endif
-            Thread::spin_yield();
-        }
+    if (lock_count_.value > 1) {
+        lock_count_.value--;
+        return 0;
     }
+
+    lock_holder_      = 0;
+    lock_holder_name_ = 0;
+    lock_count_.value = 0;
     
+    if (lock_waiters_.value != 0) {
+#ifndef NDEBUG
+        atomic_incr(&total_yields_);
+#endif
+        Thread::spin_yield();
+    }
+
+
     return 0;
 };
  
 int
 SpinLock::try_lock(const char* lock_user)
 {
-    pthread_t me = Thread::current();
-    int lock_holder = atomic_cmpxchg32(&lock_holder_, 0, (unsigned int)me);
+    if (is_locked_by_me()) {
+        lock_count_.value++;
+        return 0;
+    }
 
-    if (lock_holder == 0) {
-        ASSERT(lock_count_ == 0);
-        lock_count_++;
+    int got_lock = atomic_cmpxchg32(&lock_count_, 0, 1);
+    
+    if (got_lock) {
+        ASSERT(lock_holder_ == 0);
+
+        lock_holder_      = Thread::current();
         lock_holder_name_ = lock_user;
         
         return 0; // success
+        
     } else {
         return 1; // already locked
     }
 };
-
-#endif // __NO_ATOMIC__
 
 } // namespace oasys
