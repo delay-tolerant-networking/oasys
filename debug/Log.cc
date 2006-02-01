@@ -417,32 +417,6 @@ Log::add_reparse_handler(int sig)
     TimerSystem::instance()->add_sighandler(sig, reparse_handler);
 }
 
-/**
- * Simple class to incremement a counter in the constructor and then
- * decrement when the class goes out of scope.
- */
-class ScopedIncr {
-public:
-    ScopedIncr(int* v) : val_(v)
-    {
-#ifdef __NO_ATOMIC__
-        (*val_)++;
-#else
-        atomic_incr(val_);
-#endif
-    }
-    ~ScopedIncr()
-    {
-#ifdef __NO_ATOMIC__
-        (*val_)--;
-#else
-        atomic_decr(val_);
-#endif
-    }
-protected:
-    int* val_;
-};
-
 log_level_t
 Log::log_level(const char *path)
 {
