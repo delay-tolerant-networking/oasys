@@ -140,8 +140,8 @@ debug/arith-native.h: debug/gdtoa-arithchk.c
 	rm -f debug/arithchk
 
 debug/arith.h:
-	$(MAKE) debug/arith-$(TARGET).h
-	cp debug/arith-$(TARGET).h $@
+	$(MAKE) $(SRCDIR)/debug/arith-$(TARGET).h
+	cp $(SRCDIR)/debug/arith-$(TARGET).h $@
 
 debug/Formatter.o:  debug/Formatter.cc debug/arith.h
 	@rm -f $@; mkdir -p $(@D)
