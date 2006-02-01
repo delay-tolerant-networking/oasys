@@ -48,7 +48,7 @@ namespace oasys {
  * things which may need to be set or read from within a signal
  * handler.
  */
-template<size_t _sz, typename _Type, _Type _emptyval>
+template<size_t _sz, typename _Type>
 class SafeArray {
 public:
     /// Constructor that initializes every slot to the empty value
@@ -95,7 +95,7 @@ public:
             if (array_[i] == val) {
                 old = atomic_cmpxchg32(&full_[i], 1, 0);
                 ASSERT(old == 1);
-                array_[i] = _emptyval;
+                memset(&array_[i], 0, sizeof(_Type));
 
                 return i;
             }
