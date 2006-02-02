@@ -31,3 +31,34 @@ proc gethostbyname {host} {
     # XXX/demmer do something else
     error "no gethostbyname implementation available (install Tclx)"
 }
+
+# Cute implementation of structs. Convert to a list to pass between
+# procs
+proc struct { name structlist } {
+    set $name._meta_ {}
+
+    foreach { key value } $structlist {
+	uplevel set $name.$key $value
+	uplevel lappend $name._meta_ $key
+    }
+}
+
+proc struct2list { name } {
+    set l {}
+    foreach { key } [uplevel set "$name._meta_"] {
+	lappend l $key [uplevel set "$name.$key"]
+    }
+    
+    return $l
+}
+
+# unit test for struct
+if 0 {
+    struct s {
+	a 1 
+	b 2
+    }
+    
+    puts ${s._meta_}
+    puts [struct2list s]
+}
