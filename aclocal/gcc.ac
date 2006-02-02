@@ -119,7 +119,11 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
     dnl
     dnl Handle the gcc option for --target
     dnl
-    AC_SUBST(TARGET,$target)
+    TARGET=$target
+    if test -z "$TARGET" ; then
+       TARGET=native
+    fi
+    AC_SUBST(TARGET)
 ])
 
 
