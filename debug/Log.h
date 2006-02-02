@@ -324,14 +324,11 @@ private:
     /**
      * Sorting function for log rules. The rules are stored in
      * descending length order, so a linear scan through the list will
-     * always return the most specific match.
+     * always return the most specific match. For equal-length rules,
+     * the lower-level (i.e. more permissive) rule should be first so
+     * for equal paths, the more permissive rule wins.
      */
-    struct RuleCompare {
-            bool operator()(const Rule& rule1, const Rule& rule2)
-        {
-            return (rule1.path_.length() > rule2.path_.length());
-        }
-    };
+    static bool rule_compare(const Rule& rule1, const Rule& rule2);
 
     /**
      * Use a vector for the list of rules.

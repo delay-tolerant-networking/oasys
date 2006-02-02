@@ -54,6 +54,7 @@ LogCommand::help_string()
     return("log <path> <level> <string>\n"
            "log prefix <prefix>\n"
            "log rotate\n"
+           "log dump_rules\n"
            "log reparse_debug_file\n");
 }
 
@@ -70,6 +71,14 @@ LogCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
     // log rotate
     if (argc == 2 && !strcmp(argv[1], "rotate")) {
         Log::instance()->rotate();
+        return TCL_OK;
+    }
+    
+    // dump rules
+    if (argc == 2 && !strcmp(argv[1], "dump_rules")) {
+        StringBuffer buf;
+        Log::instance()->dump_rules(&buf);
+        set_result(buf.c_str());
         return TCL_OK;
     }
     

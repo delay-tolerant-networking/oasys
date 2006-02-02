@@ -273,11 +273,25 @@ Log::parse_debug_file(const char* debug_path)
     rule_list_ = new_rule_list;
 }
 
+bool
+Log::rule_compare(const Rule& rule1, const Rule& rule2)
+{
+    if (rule1.path_.length() > rule2.path_.length())
+        return true;
+
+    if ((rule1.path_.length() == rule2.path_.length()) &&
+        (rule1.level_ < rule2.level_))
+        return true;
+
+    return false;
+}
+
 void
 Log::sort_rules(RuleList* rule_list)
 {
     // Now that it's been parsed, sort the list based on the length
-    std::sort(rule_list->begin(), rule_list->end(), RuleCompare());
+    // and the level (if the lengths are equal)
+    std::sort(rule_list->begin(), rule_list->end(), Log::rule_compare);
 
 #ifndef NDEBUG
     // Sanity assertion
