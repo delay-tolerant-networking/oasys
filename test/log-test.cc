@@ -16,8 +16,6 @@ FileIOClient *f1, *f2;
 const char* debug1 =
 "/log-test          debug\n"
 "/log-test          info\n"
-"/		    error\n"
-"/		    notice\n"
 "/log-test/disabled crit\n"
 "/log-test/thread   info\n";
     
@@ -25,9 +23,7 @@ const char* debug1_sorted =
 "/log-test/disabled critical\n"
 "/log-test/thread info\n"
 "/log-test debug\n"
-"/log-test info\n"
-"/ notice\n"
-"/ error\n";
+"/log-test info\n";
     
 const char* debug2 =
 "/log-test          debug\n"
