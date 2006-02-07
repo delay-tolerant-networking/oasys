@@ -346,26 +346,31 @@ proc check_pid {hostname pid} {
 
     set procs ""
 
-    if {$tcl_platform(platform) != "windows"} {
+    if {$tcl_platform(os) == "Linux"} {
+	# under linux, ps -h suppresses the header line, and returns
+	# an error code (as checked in the catch block) if the process
+	# can't be found, but if the command succeeds, we can immediately
+	# return since there must be only one line of output
 	if [catch {
-	    set procs [run_cmd $hostname ps -h -p $pid]
+	    set procs [run_cmd $hostname ps h -p $pid]
 	} err] {
 	    return 0
 	}
 
-	# under linux, ps -h suppresses the header line, and returns
-	# an error code (as checked above) if the process can't be
-	# found, so if we got here, the process must exist and we can
-	# return early. otherwise, we fall through and scan for the
-	# pid
-	
-	if {$tcl_platform(os) == "Linux"} {
-	    return 1
-	}
+	return 1
+
+    } elseif {$tcl_platform(platform) == "windows"} {
+	# on windows we have to get the whole list and scan it below
+	set procs [run_cmd $hostname ps -s]
 
     } else {
-	# on windows we have to get the whole list
-	set procs [run_cmd $hostname ps -s]
+	# on other unix systems, we can run BSD style ps and parse its
+	# output below to skip the header line
+	if [catch {
+	    set procs [run_cmd $hostname ps -p $pid]
+	} err] {
+	    return 0
+	}
     }
 
     # now check the list to try to find the pid
