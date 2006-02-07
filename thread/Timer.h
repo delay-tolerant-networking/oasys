@@ -214,12 +214,12 @@ protected:
         DELETE_ON_CANCEL = 1
     } cancel_flags_t;
     
-    struct timeval when_;	///< When the timer should fire
-    bool           pending_;	///< Is the timer currently pending
-    bool           cancelled_;	///< Is this timer cancelled
+    struct timeval when_;	  ///< When the timer should fire
+    bool           pending_;	  ///< Is the timer currently pending
+    bool           cancelled_;	  ///< Is this timer cancelled
     cancel_flags_t cancel_flags_; ///< Should we keep the timer around
-                                  ///  or delete it when the cancelled
-                                  ///  timer bubbles to the top
+                                  ///< or delete it when the cancelled
+                                  ///< timer bubbles to the top
 };
 
 /**
