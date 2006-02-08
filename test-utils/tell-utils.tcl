@@ -116,11 +116,17 @@ namespace eval tell {
 	if {$tell_verbose} {
 	    puts "tell::tell: got result '$tell::results($host:$port)' from $host:$port"
 	}
-	
 	set cmd_error [string index $tell::results($host:$port) 0]
 	set result    [string range $tell::results($host:$port) 2 end]
 	regsub -all -- {\\n} $result "\n" result
-	
+
+	# special case a command of "shutdown" by closing the tell
+	# socket proactively since we expect the other side to shut
+	# down as well
+	if {[lindex $cmd 0] == "shutdown"} {
+	    close_socket $host $port
+	}
+
 	if {$cmd_error == 0 || $result == ""} {
 	    if {$tell_verbose} {
 		puts "tell::tell: result \"$result\""
