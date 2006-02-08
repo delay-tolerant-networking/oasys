@@ -401,8 +401,9 @@ proc wait_for_pid_exit {id pid {timeout 30000}} {
 #
 # Kill the specified pid on the host with the given signal
 #
-proc kill_pid {hostname pid signal} {
-    return [catch {run_cmd $hostname kill -s $signal $pid} err]
+proc kill_pid {id pid signal} {
+    global net::host
+    return [catch {run_cmd $net::host($id) kill -s $signal $pid} err]
 }
 
 #
@@ -437,7 +438,7 @@ proc wait_for_programs {{timeout 5000}} {
 			    puts "* ERROR: pid $pid on host $hostname:$i\
 				    still alive"
 			    puts "* ERROR: sending $signal signal"
-			    kill_pid $hostname $pid $signal
+			    kill_pid $i $pid $signal
 			}
 			lappend livepids $pid
 		    } else {
