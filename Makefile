@@ -37,6 +37,13 @@ IO_SRCS :=					\
 	io/TCPServer.cc				\
 	io/UDPClient.cc				\
 
+BLUEZ_SRCS :=								\
+	bluez/Bluetooth.cc				\
+	bluez/BluetoothSocket.cc				\
+	bluez/BluetoothInquiry.cc				\
+	bluez/BluetoothClient.cc				\
+	bluez/BluetoothServer.cc				\
+
 MEMORY_SRCS :=                                  \
 	memory/Memory.cc          
 
@@ -104,6 +111,7 @@ SRCS := \
 	$(COMPAT_SRCS) 				\
 	$(DEBUG_SRCS) 				\
 	$(IO_SRCS) 				\
+	$(BLUEZ_SRCS) 				\
 	$(MEMORY_SRCS)                          \
 	$(SERIALIZE_SRCS)			\
 	$(SMTP_SRCS)				\

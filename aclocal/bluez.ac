@@ -1,0 +1,50 @@
+dnl $Id$
+dnl Autoconf support for configuring whether BlueZ bluetooth is available
+dnl on the system
+dnl
+
+AC_DEFUN(AC_OASYS_CONFIG_BLUEZ, [
+
+    AC_ARG_WITH(bluez,
+      [AC_HELP_STRING([--with-bluez],
+                      [compile in bluetooth support (default no)])],
+      [ac_use_bluez=$withval],
+      [ac_use_bluez=no])
+    
+    ac_has_libbluetooth="no"
+    ac_has_bluetooth_h="no"
+
+    AC_MSG_CHECKING([whether bluetooth support is enabled])
+
+    if test "$ac_use_bluez" = "no"; then
+        AC_MSG_RESULT(no)
+    else
+        AC_MSG_RESULT(yes)
+
+        dnl
+        dnl Look for the baswap() function in libbluetooth
+        dnl
+        AC_SEARCH_LIBS(baswap, bluetooth,
+          ac_has_libbluetooth="yes") 
+
+        dnl
+        dnl Locate standard Bluetooth header file
+        dnl
+        AC_CHECK_HEADERS([bluetooth/bluetooth.h],
+          ac_has_bluetooth_h="yes")
+
+        dnl
+        dnl Check which defines, if any, are set
+        dnl
+        if test "$ac_has_libbluetooth" = yes -a "$ac_has_bluetooth_h" = yes; then
+
+          dnl
+          dnl Enable Bluetooth-dependent code
+          dnl
+          AC_DEFINE(OASYS_BLUETOOTH_ENABLED, 1,
+              [whether bluetooth support is enabled])
+	else
+          AC_MSG_ERROR([can't find bluez headers or library])
+        fi
+    fi
+])
