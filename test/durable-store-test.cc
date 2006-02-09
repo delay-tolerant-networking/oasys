@@ -4,11 +4,6 @@
 // berkeley-db-test or filesys-db-test, each of which define the
 // macros NEW_DS_IMPL() and sets up a handful of global parameters
 //
-
-#ifndef NEW_DS_IMPL
-#error "durable-store-test.cc must only be included from a type-specific test file"
-#endif
-
 #include <bitset>
 
 #include "util/UnitTest.h"
@@ -76,9 +71,8 @@ typedef MultiTypeDurableTable<Obj, TestC> ObjDurableTable;
 typedef DurableObjectCache<Obj> ObjDurableCache;
 
 DECLARE_TEST(DBInit) {
-    DurableStoreImpl* impl = NEW_DS_IMPL();
-    DurableStore* store    = new DurableStore(impl);
-    impl->init(*g_config);
+    DurableStore* store;
+    CHECK(DurableStore::create_store(*g_config, &store) == 0);
 
     DEL_DS_STORE(store);
 
@@ -88,9 +82,8 @@ DECLARE_TEST(DBInit) {
 DECLARE_TEST(DBTidy) {
     // do tidy
     g_config->tidy_        = true;
-    DurableStoreImpl* impl = NEW_DS_IMPL();
-    DurableStore* store    = new DurableStore(impl);
-    impl->init(*g_config);
+    DurableStore* store;
+    CHECK(DurableStore::create_store(*g_config, &store) == 0);
 
     StringDurableTable* table1 = 0;    
     CHECK(store->get_table(&table1, "test", DS_CREATE | DS_EXCL) == 0);
@@ -101,9 +94,7 @@ DECLARE_TEST(DBTidy) {
 
     // don't do tidy
     g_config->tidy_ = false;
-    impl            = NEW_DS_IMPL();
-    store           = new DurableStore(impl);
-    impl->init(*g_config);
+    CHECK(DurableStore::create_store(*g_config, &store) == 0);
 
     CHECK(store->get_table(&table1, "test", 0) == 0);
     CHECK(table1 != 0);
@@ -112,9 +103,7 @@ DECLARE_TEST(DBTidy) {
 
     // do tidy
     g_config->tidy_ = true;
-    impl            = NEW_DS_IMPL();
-    store           = new DurableStore(impl);
-    impl->init(*g_config);
+    CHECK(DurableStore::create_store(*g_config, &store) == 0);
 
     CHECK(store->get_table(&table1, "test", 0) == DS_NOTFOUND);
     CHECK(table1 == 0);
@@ -125,9 +114,8 @@ DECLARE_TEST(DBTidy) {
 
 DECLARE_TEST(TableCreate) {
     g_config->tidy_         = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL();
-    DurableStore*     store = new DurableStore(impl);
-    impl->init(*g_config);
+    DurableStore* store;
+    CHECK(DurableStore::create_store(*g_config, &store) == 0);
     
     StringDurableTable* table1 = 0;
     StringDurableTable* table2 = 0;
@@ -162,9 +150,8 @@ DECLARE_TEST(TableCreate) {
 
 DECLARE_TEST(TableDelete) {
     g_config->tidy_         = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL();
-    DurableStore*     store = new DurableStore(impl);
-    impl->init(*g_config);
+    DurableStore* store;
+    CHECK(DurableStore::create_store(*g_config, &store) == 0);
     
     StringDurableTable* table = 0;
 
@@ -187,9 +174,8 @@ DECLARE_TEST(TableDelete) {
 
 DECLARE_TEST(SingleTypePut) {
     g_config->tidy_         = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL();
-    DurableStore*     store = new DurableStore(impl);
-    impl->init(*g_config);
+    DurableStore* store;
+    CHECK(DurableStore::create_store(*g_config, &store) == 0);
 
     StringDurableTable* table;
     CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
@@ -212,9 +198,8 @@ DECLARE_TEST(SingleTypePut) {
 
 DECLARE_TEST(SingleTypeGet) {
     g_config->tidy_         = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL();
-    DurableStore*     store = new DurableStore(impl);
-    impl->init(*g_config);
+    DurableStore* store;
+    CHECK(DurableStore::create_store(*g_config, &store) == 0);
 
     StringDurableTable* table;
     CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
@@ -254,9 +239,8 @@ DECLARE_TEST(SingleTypeGet) {
 
 DECLARE_TEST(SingleTypeDelete) {
     g_config->tidy_         = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL();
-    DurableStore*     store = new DurableStore(impl);
-    impl->init(*g_config);
+    DurableStore* store;
+    CHECK(DurableStore::create_store(*g_config, &store) == 0);
 
     StringDurableTable* table;
     CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
@@ -292,9 +276,8 @@ DECLARE_TEST(SingleTypeDelete) {
 
 DECLARE_TEST(SingleTypeMultiObject) {
     g_config->tidy_         = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL();
-    DurableStore*     store = new DurableStore(impl);
-    impl->init(*g_config);
+    DurableStore* store;
+    CHECK(DurableStore::create_store(*g_config, &store) == 0);
 
     StringDurableTable* table;
     CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
@@ -311,13 +294,14 @@ DECLARE_TEST(SingleTypeMultiObject) {
     CHECK((int)table->size() == num_objs);
     
     delete_z(table);
-    DEL_DS_STORE(store);
 
+#ifndef __MEMORY_STORE_H__
+    // special case for memory store
+    DEL_DS_STORE(store);
     g_config->tidy_ = false;
-    impl  = NEW_DS_IMPL();
-    store = new DurableStore(impl);
-    impl->init(*g_config);
-    
+    CHECK(DurableStore::create_store(*g_config, &store) == 0);
+#endif
+
     CHECK(store->get_table(&table, "test", 0) == 0);
 
     PermutationArray pa(num_objs);
@@ -342,9 +326,8 @@ DECLARE_TEST(SingleTypeMultiObject) {
 
 DECLARE_TEST(SingleTypeIterator) {
     g_config->tidy_         = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL();
-    DurableStore*     store = new DurableStore(impl);
-    impl->init(*g_config);
+    DurableStore* store;
+    CHECK(DurableStore::create_store(*g_config, &store) == 0);
 
     StringDurableTable* table;
     static const int num_objs = 100;
@@ -383,9 +366,8 @@ DECLARE_TEST(SingleTypeIterator) {
 
 DECLARE_TEST(MultiType) {
     g_config->tidy_         = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL();
-    DurableStore*     store = new DurableStore(impl);
-    impl->init(*g_config);
+    DurableStore* store;
+    CHECK(DurableStore::create_store(*g_config, &store) == 0);
 
     ObjDurableTable* table = 0;
     CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
@@ -429,10 +411,9 @@ DECLARE_TEST(MultiType) {
 }
 
 DECLARE_TEST(NonTypedTable) {
-    g_config->tidy_ = true;
-    DurableStoreImpl* impl  = NEW_DS_IMPL();
-    DurableStore*     store = new DurableStore(impl);
-    impl->init(*g_config);
+    g_config->tidy_         = true;
+    DurableStore* store;
+    CHECK(DurableStore::create_store(*g_config, &store) == 0);
 
     StaticTypedDurableTable* table = 0;
     CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
@@ -462,15 +443,12 @@ DECLARE_TEST(NonTypedTable) {
 }
 
 DECLARE_TEST(SingleTypeCache) {
-    g_config->tidy_           = true;
-    DurableStoreImpl*   impl  = NEW_DS_IMPL();
-    DurableStore*       store = new DurableStore(impl);
+    g_config->tidy_         = true;
+    DurableStore* store;
+    CHECK(DurableStore::create_store(*g_config, &store) == 0);
     StringDurableCache* cache = new StringDurableCache("/test/cache/string", 32);
-    impl->init(*g_config);
 
     StringDurableTable* table;
-
-    impl->init(*g_config);
 
     CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, cache) == 0);
 
@@ -603,11 +581,10 @@ DECLARE_TEST(SingleTypeCache) {
 }
 
 DECLARE_TEST(MultiTypeCache) {
-    g_config->tidy_           = true;
-    DurableStoreImpl*   impl  = NEW_DS_IMPL();
-    DurableStore*       store = new DurableStore(impl);
+    g_config->tidy_         = true;
+    DurableStore* store;
+    CHECK(DurableStore::create_store(*g_config, &store) == 0);
     ObjDurableCache*    cache = new ObjDurableCache("/test/cache/obj", 36);
-    impl->init(*g_config);
 
     ObjDurableTable* table = 0;
     CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL, cache) == 0);

@@ -5,12 +5,9 @@
 // globals needed by the generic durable-store-test
 //
 
-#define NEW_DS_IMPL()       TheMemoryStore
-#define DEL_DS_STORE(store) store = NULL
+#define DEL_DS_STORE(store) delete_z(store) 
 
 using namespace oasys;
-
-MemoryStore* TheMemoryStore = NULL;
 
 //
 // pull in the generic test
@@ -20,7 +17,7 @@ MemoryStore* TheMemoryStore = NULL;
 DECLARE_TEST(DBTestInit) {
     g_config = new StorageConfig(
         "storage",              // command name
-        "memory",               // type
+        "memorydb",             // type
         true,                   // init
         true,                   // tidy
         0,                      // tidy wait
@@ -32,8 +29,6 @@ DECLARE_TEST(DBTestInit) {
         false			// sharefile
     );   
 
-    TheMemoryStore = new MemoryStore();
-    
     return 0;
 }
 

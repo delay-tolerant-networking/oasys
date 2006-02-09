@@ -4,8 +4,6 @@
 //
 // globals needed by the generic durable-store-test
 //
-
-#define NEW_DS_IMPL()       new FileSystemStore()
 #define DEL_DS_STORE(store) delete_z(store)
 
 std::string g_db_name    = "test-db";
@@ -21,7 +19,7 @@ const char* g_config_dir = "output/filesys-db-test/filesys-db-test";
 DECLARE_TEST(DBTestInit) {
     g_config = new StorageConfig(
         "storage",              // command name
-        "filesys",              // type
+        "filesysdb",            // type
         true,                   // init
         true,                   // tidy
         0,                      // tidy wait

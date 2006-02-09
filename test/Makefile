@@ -1,32 +1,32 @@
 TESTS += \
 	atomic-test				\
+	berkeley-db-test			\
 	buffer-test				\
 	durable-cache-test			\
+	filesys-db-test				\
 	io-basic-test				\
 	log-test				\
 	marshal-test				\
+	memory-store-test			\
 	optparser-test				\
+	regex-test				\
 	sample-test				\
-	serialize-test				\
 	serialize-stream-test			\
+	serialize-test				\
 	smtp-test				\
 	spin-lock-test				\
 	stack-trace-test			\
 	static-buffer-test			\
 	string-hash-test			\
 	string-tokenize-test			\
-	regex-test				\
 	text-code-test				\
 	timer-test				\
-	type-collection-test			\
+	type-collection-test		
 
 #
 # Tests that need to be fixed
 #
-BROKEN_TESTS += \
-	berkeley-db-test			\
-	filesys-db-test				\
-	memory-store-test			\
+BROKEN_TESTS += 
 
 #
 # Tests that need to be converted to the new framework

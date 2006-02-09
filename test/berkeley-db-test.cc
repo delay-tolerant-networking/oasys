@@ -4,8 +4,6 @@
 //
 // globals needed by the generic durable-store-test
 //
-
-#define NEW_DS_IMPL()       new BerkeleyDBStore()
 #define DEL_DS_STORE(store) delete_z(store)
 
 std::string g_db_name    = "test";
