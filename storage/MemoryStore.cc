@@ -67,12 +67,14 @@ MemoryStore::~MemoryStore()
 }
 
 int 
-MemoryStore::init(StorageConfig* cfg)
+MemoryStore::init(const StorageConfig& cfg)
 {
-    init_ = true;
-    if (cfg->tidy_) {
+    if (cfg.tidy_) {
         tables_.clear();
     }
+ 
+    init_ = true;
+
     return 0;
 }
 

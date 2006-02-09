@@ -99,32 +99,34 @@ BerkeleyDBStore::~BerkeleyDBStore()
 }
 
 int 
-BerkeleyDBStore::init(StorageConfig* cfg)
+BerkeleyDBStore::init(const StorageConfig& cfg)
 {
-    FileUtils::abspath(&cfg->dbdir_);
-    db_name_ = cfg->dbname_;
-    sharefile_ = cfg->dbsharefile_;
+    std::string dbdir = cfg.dbdir_;
+    FileUtils::abspath(&dbdir);
+
+    db_name_ = cfg.dbname_;
+    sharefile_ = cfg.dbsharefile_;
 
     // XXX/bowei need to expose options if needed later
-    if (cfg->tidy_) {
-        prune_db_dir(cfg->dbdir_.c_str(), cfg->tidy_wait_);
+    if (cfg.tidy_) {
+        prune_db_dir(dbdir.c_str(), cfg.tidy_wait_);
     }
 
     bool db_dir_exists;
-    int  err = check_db_dir(cfg->dbdir_.c_str(), &db_dir_exists);
+    int  err = check_db_dir(dbdir.c_str(), &db_dir_exists);
     if (err != 0)
     {
         return DS_ERR;
     }
     if (!db_dir_exists) 
     {
-        if (cfg->init_) {
-            if (create_db_dir(cfg->dbdir_.c_str()) != 0) {
+        if (cfg.init_) {
+            if (create_db_dir(dbdir.c_str()) != 0) {
                 return DS_ERR;
             }
         } else {
             log_crit("DB dir %s does not exist and not told to create!",
-                     cfg->dbdir_.c_str());
+                     dbdir.c_str());
             return DS_ERR;
         }
     }
@@ -140,24 +142,24 @@ BerkeleyDBStore::init(StorageConfig* cfg)
 
     log_info("initializing db name=%s (%s), dir=%s",
              db_name_.c_str(), sharefile_ ? "shared" : "not shared",
-             cfg->dbdir_.c_str());
+             dbdir.c_str());
 
-    err = dbenv_->set_tx_max(dbenv_, cfg->dbtxmax_);
+    err = dbenv_->set_tx_max(dbenv_, cfg.dbtxmax_);
 
     if (err != 0) 
     {
-        log_crit("DB: %s, cannot set tx_max to %d", db_strerror(err), cfg->dbtxmax_);
+        log_crit("DB: %s, cannot set tx_max to %d", db_strerror(err), cfg.dbtxmax_);
         return DS_ERR;
     }
 
     int lock_flag = 0;
-    if (cfg->dblockdetect_ != 0) {
+    if (cfg.dblockdetect_ != 0) {
         lock_flag = DB_INIT_LOCK | DB_THREAD;
     }
     
     err = dbenv_->open(
         dbenv_, 
-        cfg->dbdir_.c_str(),
+        dbdir.c_str(),
         DB_CREATE     |         // create new files
         DB_INIT_MPOOL |         // initialize memory pool
         DB_INIT_LOG   |         // use logging
@@ -192,8 +194,8 @@ BerkeleyDBStore::init(StorageConfig* cfg)
         return DS_ERR;
     }
 
-    if (cfg->dblockdetect_ != 0) {
-        deadlock_timer_ = new DeadlockTimer(logpath_, dbenv_, cfg->dblockdetect_);
+    if (cfg.dblockdetect_ != 0) {
+        deadlock_timer_ = new DeadlockTimer(logpath_, dbenv_, cfg.dblockdetect_);
         deadlock_timer_->logpath_appendf("/deadlock_timer");
         deadlock_timer_->reschedule();
     } else {

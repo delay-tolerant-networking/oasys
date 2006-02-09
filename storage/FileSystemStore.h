@@ -61,12 +61,6 @@ class FileSystemIterator;
 /*!
  * The most obvious layering of backing store -- use the file system
  * directly. 
- *
- * XXX/bowei -- Need text unserialization to implement the iterator
- * and the get functions! This will be broken until then.
- *
- * XXX/bowei -- Should reimplement the marshal stuff to use the fd's
- * directly using the SerializeStream stuff.
  */
 class FileSystemStore : public DurableStoreImpl {
     friend class FileSystemTable;
@@ -80,7 +74,7 @@ public:
     ~FileSystemStore();
 
     //! @{ virtual from DurableStoreImpl
-    int init(StorageConfig* cfg);
+    int init(const StorageConfig& cfg);
     int get_table(DurableTableImpl** table,
                   const std::string& name,
                   int                flags,

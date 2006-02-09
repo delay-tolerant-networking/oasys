@@ -68,26 +68,31 @@ FileSystemStore::~FileSystemStore()
 
 //----------------------------------------------------------------------------
 int 
-FileSystemStore::init(StorageConfig* cfg)
+FileSystemStore::init(const StorageConfig& cfg)
 {
-    if (cfg->dbdir_ == "") {
+    if (cfg.dbdir_ == "") {
         return -1;
     }
 
-    if (cfg->dbname_ == "") {
+    if (cfg.dbname_ == "") {
         return -1;
     }
+    
+    std::string dbdir = cfg.dbdir_;
+    FileUtils::abspath(&dbdir);
 
-    FileUtils::abspath(&cfg->dbdir_);
-    tables_dir_ = cfg->dbdir_ + "/" + cfg->dbname_;
+    tables_dir_ = dbdir + "/" + cfg.dbname_;
+
+    bool tidy = cfg.tidy_;
+    bool init = cfg.init_;
 
     // Always regenerate the directories if we are going to be
     // deleting them anyways
-    if (cfg->tidy_) {
-        cfg->init_ = true;
+    if (tidy) {
+        init = true;
     }
 
-    if (cfg->init_ && cfg->tidy_) 
+    if (init && tidy) 
     {
         if (check_database() == 0) {
             tidy_database();
@@ -97,7 +102,7 @@ FileSystemStore::init(StorageConfig* cfg)
             return -1;
         }
     }
-    else if (cfg->init_ && ! cfg->tidy_) 
+    else if (init && ! tidy) 
     {
         if (check_database() == -2) {
             int err = init_database();

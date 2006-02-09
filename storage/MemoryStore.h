@@ -127,7 +127,7 @@ public:
 
     //! @{ Virtual from DurableStoreImpl
     //! Initialize MemoryStore
-    int init(StorageConfig* cfg);
+    int init(const StorageConfig& cfg);
 
     int get_table(DurableTableImpl** table,
                   const std::string& name,

@@ -41,6 +41,7 @@
 
 #include <list>
 #include <string>
+
 #include "../debug/Log.h"
 #include "../debug/DebugUtils.h"
 
@@ -129,6 +130,15 @@ public:
         delete impl_; 
         impl_ = 0; 
     }
+
+    /*!
+     * Static creation function for creating the right kind of
+     * database backend implementation for a given StorageConfig.
+     *
+     * Also initializes the store.
+     */
+    static int create_store(const StorageConfig& config, 
+                            DurableStore** store);
 
     //! Return the implementation pointer.
     DurableStoreImpl* impl() { return impl_; }

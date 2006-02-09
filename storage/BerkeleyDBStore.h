@@ -67,7 +67,7 @@ class StorageConfig;
  */
 class BerkeleyDBStore : public DurableStoreImpl {
     friend class BerkeleyDBTable;
-
+    
 public:
     BerkeleyDBStore();
 
@@ -79,7 +79,7 @@ public:
 
     //! @{ Virtual from DurableStoreImpl
     //! Initialize BerkeleyDBStore
-    int init(StorageConfig* cfg);
+    int init(const StorageConfig& cfg);
 
     int get_table(DurableTableImpl** table,
                   const std::string& name,
