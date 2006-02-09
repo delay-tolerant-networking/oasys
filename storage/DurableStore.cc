@@ -3,6 +3,7 @@
 #include "DurableStore.h"
 #include "BerkeleyDBStore.h"
 #include "FileSystemStore.h"
+#include "MemoryStore.h"
 #include "StorageConfig.h"
 
 namespace oasys {
@@ -17,6 +18,19 @@ DurableStore::create_store(const StorageConfig& config,
     else if (config.type_.compare("filesysdb") == 0)
     {
         FileSystemStore* db = new FileSystemStore();
+        int err = db->init(config);
+        if (err != 0)
+        {
+            log_err("/durablestore", "Can't initialize filesysdb %d", err);
+            return -1;
+        }
+        *store = new DurableStore(db);
+    }
+
+    // memory backed store
+    else if (config.type_.compare("memorydb") == 0)
+    {
+        MemoryStore* db = new MemoryStore();
         int err = db->init(config);
         if (err != 0)
         {
