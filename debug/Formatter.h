@@ -79,8 +79,9 @@ public:
      *
      * @return The number of bytes written, or the number of bytes
      * that would have been written if the output is
-     * truncated. XXX/bowei -- actually this contract is pretty
-     * annoying
+     * truncated. 
+     *
+     * XXX/bowei -- this contract is fairly annoying to implement.
      */
     virtual int format(char* buf, size_t sz) const = 0;
 
