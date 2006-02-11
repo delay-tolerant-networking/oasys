@@ -44,6 +44,7 @@
 
 namespace oasys {
 
+//----------------------------------------------------------------------------
 class IntShim : public SerializableObject {
 public:
     IntShim(int32_t value = 0, const char* name = "int")
@@ -64,6 +65,7 @@ private:
     int32_t     value_;
 };
 
+//----------------------------------------------------------------------------
 class UIntShim : public SerializableObject {
 public:
     UIntShim(u_int32_t value = 0, const char* name = "u_int")
@@ -84,9 +86,10 @@ private:
     u_int32_t     value_;
 };
 
+//----------------------------------------------------------------------------
 class StringShim : public SerializableObject {
 public:
-    StringShim(const std::string& str, const char* name = "string")
+    StringShim(const std::string& str = "", const char* name = "string")
         : name_(name), str_(str) {}
     StringShim(const Builder& b) {}
     
@@ -105,6 +108,7 @@ private:
     std::string str_;
 };
 
+//----------------------------------------------------------------------------
 class NullStringShim : public SerializableObject {
 public:
     NullStringShim(const char* str, const char* name = "string") 
@@ -137,6 +141,7 @@ private:
     bool free_mem_;
 };
 
+//----------------------------------------------------------------------------
 class ByteBufShim: public SerializableObject {
 public:
     ByteBufShim(char* buf, size_t size)
