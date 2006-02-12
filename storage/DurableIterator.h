@@ -99,7 +99,7 @@ public:
                 return ret;
             }
             
-            if (_filter::accept(itr)) {
+            if (_filter::accept(itr_)) {
                 return DS_OK;
             }
         }
