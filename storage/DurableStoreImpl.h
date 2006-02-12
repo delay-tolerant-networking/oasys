@@ -80,6 +80,11 @@ public:
      */
     virtual int del_table(const std::string& db_name) = 0;
 
+    /**
+     * Hook to get all of the names of the tables in the store.
+     */
+    virtual int get_table_names(StringVector* names) = 0;
+    
 protected:
 
     /**
@@ -87,7 +92,8 @@ protected:
      * @param db_dir     Directory to check
      * @param dir_exists To be set if directory exists.
      */
-    int check_db_dir(const char* db_dir, bool* dir_exists);
+    int check_db_dir(const char* db_dir,
+                     bool*       dir_exists);
 
     /**
      * Create database directory.
@@ -98,7 +104,8 @@ protected:
      * Remove the given directory, after waiting the specified
      * amount of time.
      */
-    void prune_db_dir(const char* db_dir, int tidy_wait);
+    void prune_db_dir(const char* db_dir,
+                      int         tidy_wait);
 
     /*!
      * Initialize the storage impl.
@@ -106,7 +113,7 @@ protected:
     virtual int init(const StorageConfig& config) = 0;
 };
 
-
+//----------------------------------------------------------------------------
 /**
  * Storage implementation specific piece of a table.
  */
@@ -196,6 +203,7 @@ protected:
     bool multitype_;		///< Whether single or multi-type table
 };
 
+//----------------------------------------------------------------------------
 // Implementation of the templated method must be in the header
 template<size_t _size>
 size_t

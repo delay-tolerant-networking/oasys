@@ -48,6 +48,9 @@
  */
 class DurableIterator {
 public:
+    // virtual destructor
+    virtual ~DurableIterator() {}
+
     /**
      * Advance the pointer. An initialized iterator will be pointing
      * right before the first element in the list, so iteration code
@@ -71,6 +74,42 @@ public:
      * Unserialize the current element into the given key object.
      */
     virtual int get(SerializableObject* key) = 0;
+};
 
-    virtual ~DurableIterator() {}
+//----------------------------------------------------------------------------
+/*!
+ * Template class for a "filtered" iterator which only iterates over
+ * desired patterns.
+ *
+ * _filter: struct { accept: DurableIterator -> bool }
+ */
+template<typename _filter>
+class DurableFilterIterator : public DurableIterator {
+public:
+    DurableFilterIterator(DurableIterator* itr)
+        : itr_(itr) {}
+
+    // virtual from DurableIterator
+    int next() 
+    {
+        for (;;) 
+        {
+            int ret = itr_->next();
+            if (ret != DS_OK) {
+                return ret;
+            }
+            
+            if (_filter::accept(itr)) {
+                return DS_OK;
+            }
+        }
+    }
+
+    int get(SerializableObject* key) 
+    {
+        return itr_->get(key);
+    }
+    
+private:
+    DurableIterator* itr_;
 };

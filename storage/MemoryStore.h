@@ -57,7 +57,6 @@ class MemoryTable;
 class MemoryIterator;
 class StorageConfig;
 
- 
 /**
  * Object that encapsulates a single table. Multiple instances of
  * this object represent multiple uses of the same table.
@@ -135,6 +134,7 @@ public:
                   PrototypeVector&   prototypes);
 
     int del_table(const std::string& name);
+    int get_table_names(StringVector* names);
     /// @}
 
 private:
@@ -143,7 +143,7 @@ private:
     typedef StringMap<MemoryTable::ItemMap> TableMap;
     TableMap tables_;
 };
-
+ 
 /**
  * Iterator class for Memory tables.
  */

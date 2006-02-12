@@ -42,9 +42,11 @@
 
 #include <debug/DebugUtils.h>
 #include <io/FileUtils.h>
+
 #include <util/StringBuffer.h>
 #include <util/Pointers.h>
 #include <util/ScratchBuffer.h>
+
 #include <serialize/MarshalSerialize.h>
 #include <serialize/TypeShims.h>
 
@@ -62,11 +64,13 @@ namespace oasys {
  *****************************************************************************/
 const std::string BerkeleyDBStore::META_TABLE_NAME("___META_TABLE___");
 
+//----------------------------------------------------------------------------
 BerkeleyDBStore::BerkeleyDBStore() 
     : DurableStoreImpl("/storage/berkeleydb"),
       init_(false)
 {}
 
+//----------------------------------------------------------------------------
 BerkeleyDBStore::~BerkeleyDBStore()
 {
     StringBuffer err_str;
@@ -98,6 +102,7 @@ BerkeleyDBStore::~BerkeleyDBStore()
     log_info("db closed");
 }
 
+//----------------------------------------------------------------------------
 int 
 BerkeleyDBStore::init(const StorageConfig& cfg)
 {
@@ -148,7 +153,8 @@ BerkeleyDBStore::init(const StorageConfig& cfg)
 
     if (err != 0) 
     {
-        log_crit("DB: %s, cannot set tx_max to %d", db_strerror(err), cfg.dbtxmax_);
+        log_crit("DB: %s, cannot set tx_max to %d", 
+                 db_strerror(err), cfg.dbtxmax_);
         return DS_ERR;
     }
 
@@ -207,11 +213,12 @@ BerkeleyDBStore::init(const StorageConfig& cfg)
     return 0;
 }
 
+//----------------------------------------------------------------------------
 int
-BerkeleyDBStore::get_table(DurableTableImpl**  table,
-                           const std::string&  name,
-                           int                 flags,
-                           PrototypeVector&    prototypes)
+BerkeleyDBStore::get_table(DurableTableImpl** table,
+                           const std::string& name,
+                           int                flags,
+                           PrototypeVector&   prototypes)
 {
     DB* db;
     int err;
@@ -304,12 +311,13 @@ BerkeleyDBStore::get_table(DurableTableImpl**  table,
     
     log_debug("get_table -- opened table %s type %d", name.c_str(), db_type);
 
-    *table = new BerkeleyDBTable(this, name, (flags & DS_MULTITYPE), db, db_type);
+    *table = new BerkeleyDBTable(this, name, (flags & DS_MULTITYPE), 
+                                 db, db_type);
 
     return 0;
 }
 
-
+//----------------------------------------------------------------------------
 int
 BerkeleyDBStore::del_table(const std::string& name)
 {
@@ -337,7 +345,7 @@ BerkeleyDBStore::del_table(const std::string& name)
     }
 
     if (err != 0) {
-        log_err("DB: del_table %s", db_strerror(err));
+        log_err("del_table %s", db_strerror(err));
 
         if (err == ENOENT) 
         {
@@ -354,10 +362,69 @@ BerkeleyDBStore::del_table(const std::string& name)
     return 0;
 }
 
-/**
- * Get a handle on the internal metatable by passing NULL for the
- * table name to db->open.
- */
+//----------------------------------------------------------------------------
+int 
+BerkeleyDBStore::get_table_names(StringVector* names)
+{
+    names->clear();
+    
+    if (sharefile_) 
+    {
+        BerkeleyDBTable* metatable;
+        int err = get_meta_table(&metatable);
+        
+        if (err != DS_OK) {
+            return err;
+        }
+        
+        // unfortunately, we can't use the standard serialization stuff
+        // for the metatable, because the string stored in the metatable are
+        // not null-terminated
+        DBC* cursor = 0;
+        err = metatable->db_->cursor(metatable->db_, NO_TX, &cursor, 0);
+        if (err != 0) 
+        {
+            log_err("cannot create iterator for metatable, err=%s", db_strerror(err));
+            return DS_ERR;
+        }
+
+        for (;;) 
+        {
+            DBTRef key, data;
+            err = cursor->c_get(cursor, key.dbt(), data.dbt(), DB_NEXT);
+            if (err == DB_NOTFOUND) 
+            {
+                break;
+            }
+            else if (err != 0)
+            {
+                log_err("error getting next item with iterator, err=%s", db_strerror(err));
+                return DS_ERR;
+            }
+            names->push_back(std::string(static_cast<char*>(key->data), key->size));
+        }
+
+        if (cursor) 
+        {
+            err = cursor->c_close(cursor);
+            if (err != 0) 
+            {
+                log_err("DB: cannot close cursor, %s", db_strerror(err));
+                return DS_ERR;
+            }
+        }
+        delete_z(metatable);
+    } 
+    else 
+    {
+        // XXX/bowei -- TODO
+        NOTIMPLEMENTED;
+    }
+
+    return 0;
+}
+
+//----------------------------------------------------------------------------
 int  
 BerkeleyDBStore::get_meta_table(BerkeleyDBTable** table)
 {
@@ -366,13 +433,19 @@ BerkeleyDBStore::get_meta_table(BerkeleyDBTable** table)
     
     ASSERT(init_);
 
+    if (! sharefile_) {
+        log_err("unable to open metatable for an unshared berkeley db");
+        return DS_ERR;
+    }
+
     err = db_create(&db, dbenv_, 0);
     if (err != 0) {
         log_err("Can't create db pointer");
         return DS_ERR;
     }
     
-    err = db->open(db, NO_TX, db_name_.c_str(), 
+    oasys::StaticStringBuffer<128> dbfile("%s.db", db_name_.c_str());    
+    err = db->open(db, NO_TX, dbfile.c_str(), 
                    NULL, DB_UNKNOWN, DB_RDONLY, 0);
     if (err != 0) {
         log_err("unable to open metatable - DB: %s", db_strerror(err));
@@ -391,6 +464,7 @@ BerkeleyDBStore::get_meta_table(BerkeleyDBTable** table)
     return 0;
 }
 
+//----------------------------------------------------------------------------
 int
 BerkeleyDBStore::acquire_table(const std::string& table)
 {
@@ -404,6 +478,7 @@ BerkeleyDBStore::acquire_table(const std::string& table)
     return ref_count_[table];
 }
 
+//----------------------------------------------------------------------------
 int
 BerkeleyDBStore::release_table(const std::string& table)
 {
@@ -417,6 +492,7 @@ BerkeleyDBStore::release_table(const std::string& table)
     return ref_count_[table];
 }
 
+//----------------------------------------------------------------------------
 #if DB_VERSION_MINOR >= 3
 void
 BerkeleyDBStore::db_errcall(const DB_ENV* dbenv,
@@ -428,6 +504,7 @@ BerkeleyDBStore::db_errcall(const DB_ENV* dbenv,
 
 #else
 
+//----------------------------------------------------------------------------
 void
 BerkeleyDBStore::db_errcall(const char* errpfx, char* msg)
 {
@@ -436,12 +513,14 @@ BerkeleyDBStore::db_errcall(const char* errpfx, char* msg)
 
 #endif
 
+//----------------------------------------------------------------------------
 void
 BerkeleyDBStore::db_panic(DB_ENV* dbenv, int errval)
 {
     PANIC("fatal berkeley DB internal error: %s", db_strerror(errval));
 }
 
+//----------------------------------------------------------------------------
 void
 BerkeleyDBStore::DeadlockTimer::reschedule()
 {
@@ -449,6 +528,7 @@ BerkeleyDBStore::DeadlockTimer::reschedule()
     schedule_in(frequency_);
 }
 
+//----------------------------------------------------------------------------
 void
 BerkeleyDBStore::DeadlockTimer::timeout(struct timeval* now)
 {
@@ -478,7 +558,7 @@ BerkeleyDBTable::BerkeleyDBTable(BerkeleyDBStore* store,
     store_->acquire_table(name);
 }
 
-
+//----------------------------------------------------------------------------
 BerkeleyDBTable::~BerkeleyDBTable() 
 {
     // Note: If we are to multithread access to the same table, this
@@ -491,6 +571,7 @@ BerkeleyDBTable::~BerkeleyDBTable()
     db_ = NULL;
 }
 
+//----------------------------------------------------------------------------
 int 
 BerkeleyDBTable::get(const SerializableObject& key, 
                      SerializableObject*       data)
@@ -529,6 +610,7 @@ BerkeleyDBTable::get(const SerializableObject& key,
     return 0;
 }
 
+//----------------------------------------------------------------------------
 int
 BerkeleyDBTable::get(const SerializableObject&   key,
                      SerializableObject**        data,
@@ -599,11 +681,12 @@ BerkeleyDBTable::get(const SerializableObject&   key,
     return DS_OK;
 }
 
+//----------------------------------------------------------------------------
 int 
-BerkeleyDBTable::put(const SerializableObject& key,
+BerkeleyDBTable::put(const SerializableObject&  key,
                      TypeCollection::TypeCode_t typecode,
-                     const SerializableObject* data,
-                     int                       flags)
+                     const SerializableObject*  data,
+                     int                        flags)
 {
     ScratchBuffer<u_char*, 256> key_buf;
     size_t key_buf_len = flatten(key, &key_buf);
@@ -685,6 +768,7 @@ BerkeleyDBTable::put(const SerializableObject& key,
     return 0;
 }
 
+//----------------------------------------------------------------------------
 int 
 BerkeleyDBTable::del(const SerializableObject& key)
 {
@@ -715,6 +799,7 @@ BerkeleyDBTable::del(const SerializableObject& key)
     return 0;
 }
 
+//----------------------------------------------------------------------------
 size_t
 BerkeleyDBTable::size() const
 {
@@ -760,12 +845,14 @@ BerkeleyDBTable::size() const
     return ret;
 }
 
+//----------------------------------------------------------------------------
 DurableIterator*
 BerkeleyDBTable::iter()
 {
     return new BerkeleyDBIterator(this);
 }
 
+//----------------------------------------------------------------------------
 int 
 BerkeleyDBTable::key_exists(const void* key, size_t key_len)
 {
@@ -808,6 +895,7 @@ BerkeleyDBIterator::BerkeleyDBIterator(BerkeleyDBTable* t)
     }
 }
 
+//----------------------------------------------------------------------------
 BerkeleyDBIterator::~BerkeleyDBIterator()
 {
     valid_ = false;
@@ -821,6 +909,7 @@ BerkeleyDBIterator::~BerkeleyDBIterator()
     }
 }
 
+//----------------------------------------------------------------------------
 int
 BerkeleyDBIterator::next()
 {
@@ -844,6 +933,7 @@ BerkeleyDBIterator::next()
     return 0;
 }
 
+//----------------------------------------------------------------------------
 int
 BerkeleyDBIterator::get(SerializableObject* key)
 {
@@ -859,6 +949,7 @@ BerkeleyDBIterator::get(SerializableObject* key)
     return 0;
 }
 
+//----------------------------------------------------------------------------
 int 
 BerkeleyDBIterator::raw_key(void** key, size_t* len)
 {
@@ -870,6 +961,7 @@ BerkeleyDBIterator::raw_key(void** key, size_t* len)
     return 0;
 }
 
+//----------------------------------------------------------------------------
 int 
 BerkeleyDBIterator::raw_data(void** data, size_t* len)
 {
@@ -882,4 +974,3 @@ BerkeleyDBIterator::raw_data(void** data, size_t* len)
 }
 
 } // namespace oasys
-

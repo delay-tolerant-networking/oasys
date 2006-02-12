@@ -191,7 +191,30 @@ FileSystemStore::del_table(const std::string& name)
     return 0; 
 }
 
-  //----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
+int 
+FileSystemStore::get_table_names(StringVector* names)
+{
+    names->clear();
+    
+    DIR* dir = opendir(tables_dir_.c_str());
+    if (dir == 0) {
+        log_err("Can't get table names from directory");
+        return DS_ERR;
+    }
+
+    struct dirent* ent = readdir(dir);
+    while (ent != 0) {
+        names->push_back(ent->d_name);
+        ent = readdir(dir);
+    }
+
+    closedir(dir);
+
+    return 0;
+}
+
+//----------------------------------------------------------------------------
 int 
 FileSystemStore::check_database()
 {

@@ -80,6 +80,7 @@ public:
                   int                flags,
                   PrototypeVector&   prototypes);
     int del_table(const std::string& name);
+    int get_table_names(StringVector* names);
     //! @}
 
 private:

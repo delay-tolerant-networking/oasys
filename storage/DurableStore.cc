@@ -73,6 +73,7 @@ DurableStore::create_store(const StorageConfig& config,
     return 0;
 }
 
+//----------------------------------------------------------------------------
 int 
 DurableStore::get_table(StaticTypedDurableTable** table, 
                         std::string               table_name,
@@ -93,6 +94,14 @@ DurableStore::get_table(StaticTypedDurableTable** table,
 
     *table = new StaticTypedDurableTable(table_impl, table_name);
     return 0;
+}
+
+//----------------------------------------------------------------------------
+int
+DurableStore::get_table_names(StringVector* table_names)
+{
+    int err = impl_->get_table_names(table_names);
+    return err;
 }
 
 } // namespace oasys

@@ -48,6 +48,7 @@ DECLARE_TESTER(BerkleyDBTester) {
     ADD_TEST(DBTidy);
     ADD_TEST(TableCreate);
     ADD_TEST(TableDelete);
+//    ADD_TEST(TableGetNames); XXX/bowei -- this is not implemented yet
 
     ADD_TEST(SingleTypePut);
     ADD_TEST(SingleTypeGet);
@@ -66,6 +67,7 @@ DECLARE_TESTER(BerkleyDBTester) {
     ADD_TEST(DBTidy);
     ADD_TEST(TableCreate);
     ADD_TEST(TableDelete);
+    ADD_TEST(TableGetNames);
 
     ADD_TEST(SingleTypePut);
     ADD_TEST(SingleTypeGet);

@@ -193,6 +193,15 @@ public:
      */
     int del_table(std::string table_name);
 
+    /*!
+     * Retrieve a list of all of the tables in the database. 
+     *
+     * @param table_list Vector will be filled with list of all of the
+     *     table names.
+     * @return DS_OK, DS_ERR
+     */
+    int get_table_names(StringVector* table_names);
+
 private:
     /**
      * Typedef for the list of objects passed to the implementation to

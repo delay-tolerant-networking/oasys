@@ -148,6 +148,41 @@ DECLARE_TEST(TableCreate) {
     return UNIT_TEST_PASSED;
 }
 
+
+DECLARE_TEST(TableGetNames) {
+    g_config->tidy_ = true;
+
+    DurableStore* store;
+    CHECK(DurableStore::create_store(*g_config, &store) == 0);
+    
+    StringDurableTable* table1 = 0;
+    StringDurableTable* table2 = 0;
+    StringDurableTable* table3 = 0;
+    StringDurableTable* table4 = 0;
+
+    CHECK(store->get_table(&table1, "test1", DS_CREATE) == 0);
+    CHECK(store->get_table(&table2, "test2", DS_CREATE) == 0);
+    CHECK(store->get_table(&table3, "test3", DS_CREATE) == 0);
+    CHECK(store->get_table(&table4, "test4", DS_CREATE) == 0);
+
+    StringVector names;
+    CHECK(store->get_table_names(&names) == 0);
+    
+    CHECK(std::find(names.begin(), names.end(), "test1") != names.end());
+    CHECK(std::find(names.begin(), names.end(), "test2") != names.end());
+    CHECK(std::find(names.begin(), names.end(), "test3") != names.end());
+    CHECK(std::find(names.begin(), names.end(), "test4") != names.end());
+
+    delete_z(table1);
+    delete_z(table2);
+    delete_z(table3);
+    delete_z(table4);
+
+    DEL_DS_STORE(store);
+
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TEST(TableDelete) {
     g_config->tidy_         = true;
     DurableStore* store;
@@ -377,8 +412,10 @@ DECLARE_TEST(MultiType) {
     Foo foo;
     Bar bar;
 
-    CHECK(table->put(StringShim("foo"), Foo::ID, &foo, DS_CREATE | DS_EXCL) == 0);
-    CHECK(table->put(StringShim("bar"), Bar::ID, &bar, DS_CREATE | DS_EXCL) == 0);
+    CHECK(table->put(StringShim("foo"), Foo::ID, &foo, 
+                     DS_CREATE | DS_EXCL) == 0);
+    CHECK(table->put(StringShim("bar"), Bar::ID, &bar, 
+                     DS_CREATE | DS_EXCL) == 0);
 
     CHECK(table->get(StringShim("foo"), &o1) == 0);
     CHECK_EQUAL(o1->id_, Foo::ID);
@@ -395,7 +432,8 @@ DECLARE_TEST(MultiType) {
     delete_z(o2);
 
     // Check mixed-up typecode and object
-    CHECK(table->put(StringShim("foobar"), Bar::ID, &foo, DS_CREATE | DS_EXCL) == 0);
+    CHECK(table->put(StringShim("foobar"), Bar::ID, &foo, 
+                     DS_CREATE | DS_EXCL) == 0);
     CHECK(table->get(StringShim("foobar"), &o1) == 0);
     CHECK_EQUAL(o1->id_, Foo::ID);
     CHECK_EQUALSTR(o1->name(), "bar");
@@ -446,7 +484,8 @@ DECLARE_TEST(SingleTypeCache) {
     g_config->tidy_         = true;
     DurableStore* store;
     CHECK(DurableStore::create_store(*g_config, &store) == 0);
-    StringDurableCache* cache = new StringDurableCache("/test/cache/string", 32);
+    StringDurableCache* cache = 
+        new StringDurableCache("/test/cache/string", 32);
 
     StringDurableTable* table;
 
@@ -555,7 +594,8 @@ DECLARE_TEST(SingleTypeCache) {
     CHECK_EQUAL(cache->count(), 2);
     CHECK_EQUAL(cache->live(), 1);
 
-    log_notice("/test", "flamebox-ignore ign1 .*can't remove live object .* from cache");
+    log_notice("/test", "flamebox-ignore ign1 .*can't remove "
+               "live object .* from cache");
     CHECK(table->del(IntShim(1)) == DS_ERR);
     log_notice("/test", "flamebox-ignore-cancel ign1");
     CHECK(table->get(IntShim(1), &s) == DS_OK);
@@ -604,7 +644,8 @@ DECLARE_TEST(MultiTypeCache) {
     CHECK(table->put(IntShim(1), Foo::ID, f1, 0) == DS_OK);
     CHECK_EQUAL(cache->size(), 12);
     
-    CHECK(table->put(IntShim(1), Foo::ID, f1, DS_CREATE | DS_EXCL) == DS_EXISTS);
+    CHECK(table->put(IntShim(1), Foo::ID, f1, 
+                     DS_CREATE | DS_EXCL) == DS_EXISTS);
     CHECK_EQUAL(cache->size(), 12);
     CHECK_EQUAL(cache->count(), 1);
     
@@ -694,7 +735,8 @@ DECLARE_TEST(MultiTypeCache) {
     CHECK_EQUAL(cache->count(), 2);
     CHECK_EQUAL(cache->live(), 1);
     
-    log_notice("/test", "flamebox-ignore ign1 .*can't remove live object .* from cache");
+    log_notice("/test", "flamebox-ignore ign1 .*can't "
+               "remove live object .* from cache");
     CHECK(table->del(IntShim(1)) == DS_ERR);
     log_notice("/test", "flamebox-ignore-cancel ign1");
     

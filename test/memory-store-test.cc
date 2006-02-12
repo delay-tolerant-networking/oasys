@@ -38,6 +38,7 @@ DECLARE_TESTER(MemoryStoreTester) {
     ADD_TEST(DBInit);
     ADD_TEST(TableCreate);
     ADD_TEST(TableDelete);
+    ADD_TEST(TableGetNames);
 
     ADD_TEST(SingleTypePut);
     ADD_TEST(SingleTypeGet);

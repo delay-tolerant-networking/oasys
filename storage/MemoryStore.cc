@@ -118,6 +118,18 @@ MemoryStore::del_table(const std::string& name)
     return 0;
 }
 
+int 
+MemoryStore::get_table_names(StringVector* names)
+{
+    names->clear();
+    for (TableMap::const_iterator itr = tables_.begin();
+         itr != tables_.end(); ++itr)
+    {
+        names->push_back(itr->first);
+    }
+
+    return 0;
+}
 
 /******************************************************************************
  *
