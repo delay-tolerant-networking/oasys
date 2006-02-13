@@ -108,7 +108,7 @@ public:
              (strcmp(argv[1], "-help") == 0) ||
              (strcmp(argv[1], "--help") == 0)))
         {
-            printf("%s [-h] [test name]\n", argv[0]);
+            printf("%s [-h] {[test name]}*\n", argv[0]);
             printf("test names:\n");
             for (UnitTestList::const_iterator i = tests_.begin();
                  i != tests_.end(); ++i)
