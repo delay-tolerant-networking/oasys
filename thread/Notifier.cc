@@ -46,27 +46,31 @@
 namespace oasys {
 
 Notifier::Notifier(const char* fmt, ...)
-    : Logger("/notifier"), count_(0)
+    : Logger("/notifier"), 
+      count_(0)
 {
-    ASSERT(fmt);
-
-    va_list ap;
-    va_start(ap, fmt);
-    vsnprintf(logpath_ + 9, sizeof(logpath_) - 9, fmt, ap);
-    va_end(ap);
+    bool quiet = (fmt == 0);
+    if (!quiet)
+    {
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(logpath_ + 9, sizeof(logpath_) - 9, fmt, ap);
+	va_end(ap);
+    }
     
     if (pipe(pipe_) != 0) {
-        log_crit("can't create pipe for notifier");
-        exit(1);
+        PANIC("can't create pipe for notifier");
     }
 
-    log_debug("created pipe, fds: %d %d", pipe_[0], pipe_[1]);
+    if (!quiet) {
+	log_debug("created pipe, fds: %d %d", pipe_[0], pipe_[1]);
+    }
     
     for (int n = 0; n < 2; ++n) {
-        if (IO::set_nonblocking(pipe_[n], true, logpath_) != 0) {
-            log_crit("error setting fd %d to nonblocking: %s",
+        if (IO::set_nonblocking(pipe_[n], true, quiet ? 0 : logpath_) != 0) 
+	{
+            PANIC("error setting fd %d to nonblocking: %s",
                      pipe_[n], strerror(errno));
-            exit(1);
         }
     }
 

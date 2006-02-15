@@ -45,7 +45,8 @@
 namespace oasys {
 
 /// Mutex wrapper class for pthread_mutex_t.
-class Mutex : public Lock, public Logger {
+class Mutex : public Lock, 
+              public Logger {
     friend class Monitor; // Monitor needs access to mutex_.
     
 public:
