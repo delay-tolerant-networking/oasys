@@ -60,6 +60,11 @@ class SpinLock;
  */
 class Notifier : public Logger {
 public:
+    /*!
+     * @param fmt If format is null, then the notifier constructor
+     * will be silent and not output any log messages. However, please
+     * set the notifier logpath sometime afterwards with logpathf!
+     */
     Notifier(const char* fmt, ...) PRINTFLIKE(2,3);
 
     ~Notifier();
