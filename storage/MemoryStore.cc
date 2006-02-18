@@ -369,7 +369,7 @@ MemoryIterator::next()
 }
 
 int
-MemoryIterator::get(SerializableObject* key)
+MemoryIterator::get_key(SerializableObject* key)
 {
     ASSERT(key != NULL);
 

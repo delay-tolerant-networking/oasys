@@ -384,7 +384,7 @@ DECLARE_TEST(SingleTypeIterator) {
         Builder b; // XXX/demmer can't use temporary ??
         IntShim key(b);
         
-        iter->get(&key);
+        iter->get_key(&key);
         CHECK(found[key.value()] == false);
         found.set(key.value());
     }

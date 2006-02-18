@@ -935,7 +935,7 @@ BerkeleyDBIterator::next()
 
 //----------------------------------------------------------------------------
 int
-BerkeleyDBIterator::get(SerializableObject* key)
+BerkeleyDBIterator::get_key(SerializableObject* key)
 {
     ASSERT(key != NULL);
     oasys::Unmarshal un(oasys::Serialize::CONTEXT_LOCAL,

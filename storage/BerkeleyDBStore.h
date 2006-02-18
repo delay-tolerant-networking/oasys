@@ -260,7 +260,7 @@ public:
     
     /// @{ virtual from DurableIteratorImpl
     int next();
-    int get(SerializableObject* key);
+    int get_key(SerializableObject* key);
     /// @}
 
 protected:

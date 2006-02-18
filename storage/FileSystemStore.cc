@@ -538,7 +538,7 @@ FileSystemIterator::next()
 
 //----------------------------------------------------------------------------
 int 
-FileSystemIterator::get(SerializableObject* key)
+FileSystemIterator::get_key(SerializableObject* key)
 {
     ASSERT(ent_ != 0);
     

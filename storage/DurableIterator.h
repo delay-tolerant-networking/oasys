@@ -73,7 +73,7 @@ public:
     /**
      * Unserialize the current element into the given key object.
      */
-    virtual int get(SerializableObject* key) = 0;
+    virtual int get_key(SerializableObject* key) = 0;
 };
 
 //----------------------------------------------------------------------------
@@ -105,9 +105,9 @@ public:
         }
     }
 
-    int get(SerializableObject* key) 
+    int get_key(SerializableObject* key) 
     {
-        return itr_->get(key);
+        return itr_->get_key(key);
     }
     
 private:
