@@ -65,6 +65,11 @@ public:
      */
     virtual ~DurableStoreImpl() {}
 
+    /*!
+     * Real initialization function.
+     */
+    virtual int init(const StorageConfig& config) = 0;
+
     /**
      * Hook to get or create the implementation-specific components of
      * a durable table.
@@ -106,11 +111,6 @@ protected:
      */
     void prune_db_dir(const char* db_dir,
                       int         tidy_wait);
-
-    /*!
-     * Initialize the storage impl.
-     */
-    virtual int init(const StorageConfig& config) = 0;
 };
 
 //----------------------------------------------------------------------------

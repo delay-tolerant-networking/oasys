@@ -125,20 +125,21 @@ public:
         ASSERT(impl_ != 0); 
     }
 
-    ~DurableStore() 
-    { 
-        delete impl_; 
-        impl_ = 0; 
-    }
+    /*!
+     * Shut down the durable store.
+     */
+    ~DurableStore();
 
     /*!
      * Static creation function for creating the right kind of
      * database backend implementation for a given StorageConfig.
      *
-     * Also initializes the store.
+     * Also initializes the store and returns whether or not the store
+     * was cleanly shut down in the previous run.
      */
     static int create_store(const StorageConfig& config, 
-                            DurableStore** store);
+                            DurableStore** store,
+                            bool* clean_shutdown = NULL);
 
     //! Return the implementation pointer.
     DurableStoreImpl* impl() { return impl_; }
@@ -213,6 +214,8 @@ private:
     DurableStore(const DurableStore& other);
 
     DurableStoreImpl*    impl_;		///< the storage implementation
+
+    std::string clean_shutdown_file_;	///< path to the special shutdown file
 };
 
 #include "DurableStore.tcc"

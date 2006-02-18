@@ -1,3 +1,7 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include "config.h"
 
 #include "DurableStore.h"
@@ -8,50 +12,49 @@
 
 namespace oasys {
 
+DurableStore::~DurableStore()
+{ 
+    delete impl_; 
+    impl_ = 0;
+
+    int fd = creat(clean_shutdown_file_.c_str(), S_IRUSR);
+    if (fd < 0) {
+        log_err("/storage",
+                "error creating shutdown file '%s': %s",
+                clean_shutdown_file_.c_str(), strerror(errno));
+    } else {
+        log_debug("/storage", "successfully created clean shutdown file '%s'",
+                  clean_shutdown_file_.c_str());
+        close(fd);
+    }
+}
+
 int
 DurableStore::create_store(const StorageConfig& config,
-                           DurableStore**       store)
+                           DurableStore**       store,
+                           bool*                clean_shutdown)
 {
+    DurableStoreImpl* impl = NULL;
+        
     if (0) {} // symmetry
 
     // filesystem store
-    else if (config.type_.compare("filesysdb") == 0)
+    else if (config.type_ == "filesysdb")
     {
-        FileSystemStore* db = new FileSystemStore();
-        int err = db->init(config);
-        if (err != 0)
-        {
-            log_err("/durablestore", "Can't initialize filesysdb %d", err);
-            return -1;
-        }
-        *store = new DurableStore(db);
+        impl = new FileSystemStore();
     }
 
     // memory backed store
-    else if (config.type_.compare("memorydb") == 0)
+    else if (config.type_ == "memorydb")
     {
-        MemoryStore* db = new MemoryStore();
-        int err = db->init(config);
-        if (err != 0)
-        {
-            log_err("/durablestore", "Can't initialize filesysdb %d", err);
-            return -1;
-        }
-        *store = new DurableStore(db);
+        impl = new MemoryStore();
     }
 
 #if LIBDB_ENABLED
     // berkeley db
-    else if (config.type_.compare("berkeleydb") == 0)
+    else if (config.type_ == "berkeleydb")
     {
-        BerkeleyDBStore* db = new BerkeleyDBStore();
-        int err = db->init(config);
-        if (err != 0)
-        {
-            log_err("/durablestore", "Can't initialize berkeleydb %d", err);
-            return -1;
-        }
-        *store = new DurableStore(db);
+        impl = new BerkeleyDBStore();
     }
 #endif
 
@@ -65,11 +68,42 @@ DurableStore::create_store(const StorageConfig& config,
         
     else
     {
-        log_crit("storage type %s not implemented, exiting...",
+        log_crit("/storage", "storage type %s not implemented, exiting...",
                  config.type_.c_str());
         exit(1);
     }
+    
+    int err = impl->init(config);
+    if (err != 0)
+    {
+        log_err("/storage", "can't initialize %s %d",
+                config.type_.c_str(), err);
+        return DS_ERR;
+    }
 
+    *store = new DurableStore(impl);
+
+    (*store)->clean_shutdown_file_ = config.dbdir_;
+    (*store)->clean_shutdown_file_ += "/.ds_clean";
+    
+    // try to remove the clean shutdown file
+    err = unlink((*store)->clean_shutdown_file_.c_str());
+    if ((err == 0) ||
+        (errno == ENOENT && config.init_ == true))
+    {
+        log_info("/storage", "datastore %s was cleanly shut down",
+                 config.dbdir_.c_str());
+        if (clean_shutdown) {
+            *clean_shutdown = true;
+        }
+    } else {
+        log_info("/storage", "datastore %s was not cleanly shut down",
+                 config.dbdir_.c_str());
+        if (clean_shutdown) {
+            *clean_shutdown = false;
+        }
+    }
+    
     return 0;
 }
 
