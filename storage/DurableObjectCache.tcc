@@ -141,9 +141,11 @@ DurableObjectCache<_DataType>::put(const SerializableObject& key,
     // the cache capacity
     while ((size_ + object_size) > capacity_) {
         if (lru_.empty()) {
-            log_warn("cache already at capacity (size %u, capacity %u) "
+            log_warn("cache already at capacity "
+                     "(size %u, object_size %u, capacity %u) "
                      "but all %d elements are live",
-                     (u_int)size_, (u_int)capacity_, (u_int)cache_.size());
+                     (u_int)size_, (u_int)object_size, (u_int)capacity_,
+                     (u_int)cache_.size());
             break;
         }
 

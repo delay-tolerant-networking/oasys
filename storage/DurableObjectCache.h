@@ -157,4 +157,53 @@ protected:
     CacheLRUList lru_;	///< The LRU List of objects
     CacheTable cache_;	///< The object cache table
     SpinLock* lock_;	///< Lock to protect the in-memory cache
+
+public:
+    /**
+     * Class to represent a cache iterator and still hide the
+     * implementation details of the cache table structure.
+     */
+    class iterator {
+    public:
+        iterator() {}
+        iterator(const typename CacheTable::iterator& i) : iter_(i) {}
+        
+        const std::string& key()         { return iter_->first; }
+        bool               live()        { return iter_->second->live_; }
+        const _DataType*   object()      { return iter_->second->object_; }
+        size_t             object_size() { return iter_->second->object_size_; }
+        
+        const iterator& operator++()
+        {
+            iter_++;
+            return *this;
+        }
+
+        bool operator==(const iterator& other)
+        {
+            return iter_ == other.iter_;
+        }
+        
+        bool operator!=(const iterator& other)
+        {
+            return iter_ != other.iter_;
+        }
+        
+    protected:
+        friend class DurableObjectCache;
+        typename CacheTable::iterator iter_;
+    };
+
+    /// Return an iterator at the beginning of the cache.
+    iterator begin()
+    {
+        return iterator(cache_.begin());
+    }
+    
+    /// Return an iterator at the end of the cache.
+    iterator end()
+    {
+        return iterator(cache_.end());
+    }
+
 };
