@@ -13,6 +13,7 @@ COMPAT_SRCS :=					\
 
 DEBUG_SRCS :=					\
 	debug/DebugUtils.cc			\
+	debug/DebugDumpBuf.cc			\
 	debug/FatalSignals.cc			\
 	debug/Formatter.cc			\
 	debug/Log.cc				\

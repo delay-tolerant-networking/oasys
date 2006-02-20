@@ -43,6 +43,18 @@ using oasys::Formatter;
 #include "config.h"
 #include "compat/fpclassify.h"
 
+namespace oasys {
+
+int
+Formatter::debug_dump()
+{
+    memset(DebugDumpBuf::buf_, 0, DebugDumpBuf::size_);
+    
+    return format(DebugDumpBuf::buf_, DebugDumpBuf::size_);
+}
+
+} // namespace oasys
+
 /**
  * @file
  *

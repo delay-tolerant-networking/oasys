@@ -42,6 +42,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "DebugDumpBuf.h"
+
 namespace oasys {
 
 /**
@@ -92,6 +94,13 @@ public:
      * Formatter _must_ be the first class in the inheritance chain.
      */
     static inline void assert_valid(const Formatter* obj);
+
+    /**
+     * Print out to a statically allocated buffer which can be called
+     * from gdb. Note: must not be inlined in order for gdb to be able
+     * to exectute this function.
+     */
+    int debug_dump();
 
     virtual ~Formatter() {}
 
