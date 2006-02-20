@@ -40,6 +40,8 @@
 using oasys::Formatter;
 
 #include <stdarg.h>
+#include <memory.h>
+
 #include "config.h"
 #include "compat/fpclassify.h"
 
