@@ -55,6 +55,7 @@ struct StorageConfig {
     bool        init_;		///< Create new databases on init
     bool        tidy_;		///< Prune out the database on init
     int         tidy_wait_;	///< Seconds to wait before tidying
+    bool        leave_clean_file_;///< Leave a .ds_clean file on clean shutdown
 
     // DB options (not all will be used for every type of database)
     std::string dbname_;	///< Database name (filename in berkeley db)
@@ -73,6 +74,7 @@ struct StorageConfig {
         bool               init,
         bool               tidy,
         int                tidy_wait,    
+        bool               leave_clean_file,
         const std::string& dbname,
         const std::string& dbdir,
         int                dbflags,
@@ -84,6 +86,7 @@ struct StorageConfig {
         init_(init),
         tidy_(tidy),
         tidy_wait_(tidy_wait),
+        leave_clean_file_(leave_clean_file),
         dbname_(dbname),
         dbdir_(dbdir),
         dbflags_(dbflags),

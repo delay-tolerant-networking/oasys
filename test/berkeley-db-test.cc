@@ -22,6 +22,7 @@ DECLARE_TEST(DBTestInit) {
         true,                   // init
         true,                   // tidy
         0,                      // tidy wait
+        true,			// .ds_clean file on shutdown
         g_db_name,              // dbname
         g_config_dir,           // dbdir
         0,                      // flags,

@@ -17,15 +17,17 @@ DurableStore::~DurableStore()
     delete impl_; 
     impl_ = 0;
 
-    int fd = creat(clean_shutdown_file_.c_str(), S_IRUSR);
-    if (fd < 0) {
-        log_err("/storage",
-                "error creating shutdown file '%s': %s",
-                clean_shutdown_file_.c_str(), strerror(errno));
-    } else {
-        log_debug("/storage", "successfully created clean shutdown file '%s'",
-                  clean_shutdown_file_.c_str());
-        close(fd);
+    if (clean_shutdown_file_ != "") {
+        int fd = creat(clean_shutdown_file_.c_str(), S_IRUSR);
+        if (fd < 0) {
+            log_err("/storage",
+                    "error creating shutdown file '%s': %s",
+                    clean_shutdown_file_.c_str(), strerror(errno));
+        } else {
+            log_debug("/storage", "successfully created clean shutdown file '%s'",
+                      clean_shutdown_file_.c_str());
+            close(fd);
+        }
     }
 }
 
@@ -83,24 +85,26 @@ DurableStore::create_store(const StorageConfig& config,
 
     *store = new DurableStore(impl);
 
-    (*store)->clean_shutdown_file_ = config.dbdir_;
-    (*store)->clean_shutdown_file_ += "/.ds_clean";
-    
-    // try to remove the clean shutdown file
-    err = unlink((*store)->clean_shutdown_file_.c_str());
-    if ((err == 0) ||
-        (errno == ENOENT && config.init_ == true))
-    {
-        log_info("/storage", "datastore %s was cleanly shut down",
-                 config.dbdir_.c_str());
-        if (clean_shutdown) {
-            *clean_shutdown = true;
-        }
-    } else {
-        log_info("/storage", "datastore %s was not cleanly shut down",
-                 config.dbdir_.c_str());
-        if (clean_shutdown) {
-            *clean_shutdown = false;
+    if (config.leave_clean_file_) {
+        (*store)->clean_shutdown_file_ = config.dbdir_;
+        (*store)->clean_shutdown_file_ += "/.ds_clean";
+        
+        // try to remove the clean shutdown file
+        err = unlink((*store)->clean_shutdown_file_.c_str());
+        if ((err == 0) ||
+            (errno == ENOENT && config.init_ == true))
+        {
+            log_info("/storage", "datastore %s was cleanly shut down",
+                     config.dbdir_.c_str());
+            if (clean_shutdown) {
+                *clean_shutdown = true;
+            }
+        } else {
+            log_info("/storage", "datastore %s was not cleanly shut down",
+                     config.dbdir_.c_str());
+            if (clean_shutdown) {
+                *clean_shutdown = false;
+            }
         }
     }
     
