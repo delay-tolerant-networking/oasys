@@ -205,13 +205,18 @@ IPSocket::configure()
 	    logf(LOG_WARN, "error setting SO_REUSEADDR: %s",
 		 strerror(errno));
 	}
+    }
 
+    if (params_.reuseaddr_) {
 #ifdef SO_REUSEPORT
+	int y = 1;
         logf(LOG_DEBUG, "setting SO_REUSEPORT");
 	if (::setsockopt(fd_, SOL_SOCKET, SO_REUSEPORT, &y, sizeof y) != 0) {
 	    logf(LOG_WARN, "error setting SO_REUSEPORT: %s",
 		 strerror(errno));
 	}
+#else
+	logf(LOG_WARN, "error setting SO_REUSEPORT: not implemented");
 #endif
     }
     

@@ -140,19 +140,20 @@ public:
      */
     struct ip_socket_params {
         ip_socket_params() :
-            reuseaddr_    (1),
-            tcp_nodelay_  (0),
+            reuseaddr_    (true),
+            reuseport_    (false),
+            tcp_nodelay_  (false),
             recv_bufsize_ (0),
             send_bufsize_ (0)
         {
         }
         
-        u_int32_t reuseaddr_:1;		// default: on
-        u_int32_t tcp_nodelay_:1;	// default: off
-        u_int32_t _unused:29;
+        bool reuseaddr_;	// default: on
+        bool reuseport_;	// default: off
+        bool tcp_nodelay_;	// default: off
         
-        int recv_bufsize_;		// default: system setting
-        int send_bufsize_;		// default: system setting
+        int recv_bufsize_;	// default: system setting
+        int send_bufsize_;	// default: system setting
     } params_;
     
     /// The socket file descriptor
