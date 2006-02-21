@@ -2,6 +2,10 @@
 # Various status for the running test processes
 #
 
+proc help {} {
+    puts "commands: help status"
+}
+
 proc status {} {
     for {set i 0} {$i < $::net::nodes} {incr i} {
 	set dir $::dist::distdirs($i)
