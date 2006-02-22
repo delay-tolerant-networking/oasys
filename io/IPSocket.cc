@@ -207,7 +207,7 @@ IPSocket::configure()
 	}
     }
 
-    if (params_.reuseaddr_) {
+    if (params_.reuseport_) {
 #ifdef SO_REUSEPORT
 	int y = 1;
         logf(LOG_DEBUG, "setting SO_REUSEPORT");
