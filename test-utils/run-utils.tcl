@@ -426,7 +426,8 @@ proc wait_for_programs {{timeout 5000}} {
 		set livepids {}
 
 		# check if all pids have died
-		if {[llength run::pids($i)] == 0} {
+		if {![info exists run::pids($i)] || \
+			[llength run::pids($i)] == 0} {
 		    continue
 		}
 
@@ -506,6 +507,10 @@ proc collect_logs {} {
     for {set i 0} {$i < [net::num_nodes]} {incr i} {
 	set cores {}
 	set logs  {}
+
+	if {![info exists run::dirs($i)]} {
+	    continue
+	}
 	
 	set hostname $net::host($i)
 	set dir      $run::dirs($i)
