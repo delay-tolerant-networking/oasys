@@ -11,7 +11,7 @@ $print_stacktrace = "$dir/print-stacktrace.pl";
 while (<STDIN>) {
     if (m/STACK TRACE: /) {
 	s/STACK TRACE: //;
-	print "STACK TRACE:\n";
+	print "** STACK TRACE **\n\n";
 	open(PRINTER, "| $print_stacktrace " . join(' ', @ARGV));
  	print PRINTER $_;
  	close(PRINTER);
