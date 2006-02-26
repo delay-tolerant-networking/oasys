@@ -7,10 +7,11 @@ namespace oasys {
 
 /**
  * NOTE: Used only for things that are created which need to be
- * deleted when exiting a scope. This is mainly used to clean up call
- * site regions where the functions allocate memory and take a double
- * pointer as an argument, which makes it impossible to use a
- * std::auto_ptr.
+ * deleted when exiting a scope. Note how the * operator returns a
+ * _reference_ to the stored pointer. This template is mainly used to
+ * clean up call site regions where the functions allocate memory and
+ * take a double pointer as an argument, which makes it impossible to
+ * use a std::auto_ptr.
  */
 template <typename _Class>
 class ScopePtr {
