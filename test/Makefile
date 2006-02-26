@@ -9,6 +9,7 @@ TESTS += \
 	marshal-test				\
 	memory-store-test			\
 	optparser-test				\
+	ptr-cache-test				\
 	regex-test				\
 	sample-test				\
 	serialize-stream-test			\
