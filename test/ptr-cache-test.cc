@@ -38,6 +38,7 @@
 
 #include "util/UnitTest.h"
 #include "util/PointerCache.h"
+#include "util/LRUList.h"
 
 using namespace oasys;
 
@@ -45,47 +46,73 @@ struct Name {};
 
 class PtrCacheTest : public PointerCache<Name, int> {
 public:
-    PtrCacheTest(int* i) : PointerCache<Name, int>(i) {
+    PtrCacheTest(int* i) : 
+        PointerCache<Name, int>(),
+        orig_ptr_(i)
+    {
         set_ptr(i);
     }
-
-    PtrSet& ptr_set() { return pointers_; }
+    ~PtrCacheTest() { 
+        set_ptr(0);
+    }
 
 protected:
     void register_ptr(int* ptr) {
-        PointerCache<Name, int>::register_ptr(ptr);
-        printf("register()");
-        num_++;
+        printf("register %p\n", ptr);
+        
+        ASSERT(all_ptrs_.find(ptr) == all_ptrs_.end());
+        all_ptrs_[ptr] = this;
+
+        lru_.push_back(ptr);
     }
 
     void unregister_ptr(int* ptr) {
-        PointerCache<Name, int>::unregister_ptr(ptr);
-        printf("unregister()");
-        num_--;
+        printf("unregister %p\n", ptr);
+        lru_.erase(std::find(lru_.begin(), lru_.end(), ptr));
+
+        PtrMap::iterator i = all_ptrs_.find(ptr);
+        i->second->ptr_ = 0;
+        all_ptrs_.erase(ptr);
     }
     
-    void resurrect() {
-        printf("resurrect()\n");
+    void restore_and_update_ptr() {
+        printf("restore and update %p\n", orig_ptr_);
+        
+        if (ptr_ == 0) {
+            set_ptr(orig_ptr_);
+        } else {
+            lru_.move_to_back(std::find(lru_.begin(), lru_.end(), ptr_));
+        }
     }
 
     bool at_limit(int* i) {
-        printf("num_ = %u\n", num_);
-        return num_ >= 4;
+        printf("size = %u\n", lru_.size());
+        return lru_.size() >= 4;
     }
 
     void evict() {
         printf("evict()\n");
+        unregister_ptr(lru_.front());
     }
 
-private:
-    static size_t num_;
+public:
+    typedef std::map<int*, PtrCacheTest*> PtrMap;
+
+    static PtrMap        all_ptrs_;
+    static LRUList<int*> lru_;
+
+    int* orig_ptr_;
+
 };
 
-size_t PtrCacheTest::num_ = 0;
+LRUList<int*>        PtrCacheTest::lru_;
+PtrCacheTest::PtrMap PtrCacheTest::all_ptrs_;
 
 DECLARE_TEST(Test1) {
-    int a, b, c;
-    PtrCacheTest pa(&a), pb(&b), pc(&c);
+    int a, b, c, d, e;
+    PtrCacheTest pa(&a), pb(&b), pc(&c), pd(&d), pe(&e);
+
+    
 
     return UNIT_TEST_PASSED;
 }

@@ -1,7 +1,7 @@
 #ifndef __POINTERCACHE_H__
 #define __POINTERCACHE_H__
 
-#include <set>
+#include <map>
 
 #include "../debug/DebugUtils.h"
 
@@ -21,12 +21,11 @@ public:
     /*!
      * Adds the pointer to the cache.
      */
-    PointerCache(_PtrType* ptr) : ptr_(0) {
-        ASSERT(ptr != 0);
+    PointerCache() : ptr_(0) {
         // NOTE! because of the fact that virtual functions cannot be
         // called from the constructor, this line of code:
         //
-        // this->set_ptr(ptr);
+        // set_ptr(ptr);
         // 
         // which really should be here needs to be put in the
         // constructor of the derived class.
@@ -36,30 +35,32 @@ public:
      * Unregisters the contained pointer from the cache.
      */
     virtual ~PointerCache() {
-        this->set_ptr(0);
+        // NOTE! because of the fact that virtual functions cannot be
+        // called from the destructor, this line of code:
+        //
+        // set_ptr(0);
+        // 
+        // which really should be here needs to be put in the
+        // destructor of the derived class.
     }
 
     //! @{ referencing operations will resurrect pointers if need be
     _PtrType& operator*() const {
-        if (ptr_ == 0) {
-            this->resurrect();
-        }
+        restore_and_update_ptr();       
         return *ptr_;
     }    
     _PtrType* operator->() const {
-        if (ptr_ == 0) {
-            this->resurrect();
-        }
+        restore_and_update_ptr();       
         return ptr_;
     }
     //! @}
 
     /*! 
-     * Set the contained point to something else. Replaces the
+     * Set the contained pointer to something else. Replaces the
      * contained pointer in the cache with the new pointer.
      */
     PointerCache& operator=(_PtrType* ptr) {
-        this->set_ptr(ptr);
+        set_ptr(ptr);
         return *this;
     }
 
@@ -67,19 +68,20 @@ public:
     PointerCache& operator=(const PointerCache&); 
     
     //! @return Original pointer
-    _PtrType* ptr() { return ptr_; }
+    _PtrType* ptr() { 
+        restore_and_update_ptr();       
+        return ptr_; 
+    }
     
 protected:
-    typedef std::set<_PtrType*> PtrSet;
+    _PtrType*     ptr_;
+    
+    virtual void restore_and_update_ptr() = 0;
+    virtual bool at_limit(_PtrType* ptr)  = 0;
+    virtual void evict()                  = 0;
 
-    PtrSet pointers_;
-
-    virtual void resurrect()             = 0;
-    virtual bool at_limit(_PtrType* ptr) = 0;
-    virtual void evict()                 = 0;
-
-    virtual void register_ptr(_PtrType* ptr);
-    virtual void unregister_ptr(_PtrType* ptr);
+    virtual void register_ptr(_PtrType* ptr)   = 0;
+    virtual void unregister_ptr(_PtrType* ptr) = 0;
 
     void set_ptr(_PtrType* ptr) {
         if (ptr == ptr_) {
@@ -87,47 +89,20 @@ protected:
         }
 
         if (ptr_ != 0) {
-            this->unregister_ptr(ptr_);
-            ptr_ = 0;
+            unregister_ptr(ptr_);
+            ASSERT(ptr_ == 0);
         }
 
         if (ptr != 0) {
             while (at_limit(ptr)) {
-                this->evict();
+                evict();
             }
-            this->register_ptr(ptr);
+            register_ptr(ptr);
         }
 
         ptr_ = ptr;
-    }    
-
-private:
-    _PtrType* ptr_;
+    }
 };
-
-//----------------------------------------------------------------------------
-template <typename _Name, typename _PtrType>
-void 
-PointerCache<_Name, _PtrType>::register_ptr(_PtrType* ptr)
-{
-    typename PtrSet::const_iterator i;
-    i = std::find(pointers_.begin(), pointers_.end(), ptr);
-
-    ASSERT(i == pointers_.end());
-    pointers_.insert(ptr);
-}
-
-//----------------------------------------------------------------------------
-template <typename _Name, typename _PtrType>
-void 
-PointerCache<_Name, _PtrType>::unregister_ptr(_PtrType* ptr) 
-{
-    typename PtrSet::const_iterator i;
-    i = std::find(pointers_.begin(), pointers_.end(), ptr);
-    ASSERT(i != pointers_.end());
-
-    pointers_.erase(i);
-}
 
 } // namespace oasys
 
