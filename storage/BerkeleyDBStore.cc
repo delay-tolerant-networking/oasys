@@ -554,7 +554,7 @@ BerkeleyDBTable::BerkeleyDBTable(BerkeleyDBStore* store,
     : DurableTableImpl(name, multitype),
       db_(db), db_type_(db_type), store_(store)
 {
-    logpathf("/berkeleydb/table(%s)", name.c_str());
+    logpathf("/berkeleydb/table/%s", name.c_str());
     store_->acquire_table(name);
 }
 
@@ -881,7 +881,7 @@ BerkeleyDBTable::key_exists(const void* key, size_t key_len)
 BerkeleyDBIterator::BerkeleyDBIterator(BerkeleyDBTable* t)
     : cur_(0), valid_(false)
 {
-    logpathf("/berkeleydb/iter(%s)", t->name());
+    logpathf("/storage/berkeleydb/iter/%s", t->name());
 
     int err = t->db_->cursor(t->db_, NO_TX, &cur_, 0);
     if (err != 0) {
