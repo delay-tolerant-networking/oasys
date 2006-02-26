@@ -37,81 +37,96 @@
  */
 
 #include "util/UnitTest.h"
-#include "util/PointerCache.h"
+#include "util/PointerHandle.h"
 #include "util/LRUList.h"
 
 using namespace oasys;
 
 struct Name {};
 
-class PtrCacheTest : public PointerCache<Name, int> {
+class PtrCacheTest : public PointerHandle<int> {
 public:
-    PtrCacheTest(int* i) : 
-        PointerCache<Name, int>(),
-        orig_ptr_(i)
+    PtrCacheTest(int* i)
+        : orig_ptr_(i)
     {
-        set_ptr(i);
+        restore();
     }
+
     ~PtrCacheTest() { 
-        set_ptr(0);
-    }
-
-protected:
-    void register_ptr(int* ptr) {
-        printf("register %p\n", ptr);
-        
-        ASSERT(all_ptrs_.find(ptr) == all_ptrs_.end());
-        all_ptrs_[ptr] = this;
-
-        lru_.push_back(ptr);
-    }
-
-    void unregister_ptr(int* ptr) {
-        printf("unregister %p\n", ptr);
-        lru_.erase(std::find(lru_.begin(), lru_.end(), ptr));
-
-        PtrMap::iterator i = all_ptrs_.find(ptr);
-        i->second->ptr_ = 0;
-        all_ptrs_.erase(ptr);
+        invalidate();
     }
     
-    void restore_and_update_ptr() {
-        printf("restore and update %p\n", orig_ptr_);
-        
-        if (ptr_ == 0) {
-            set_ptr(orig_ptr_);
-        } else {
-            lru_.move_to_back(std::find(lru_.begin(), lru_.end(), ptr_));
-        }
-    }
+    int* orig_ptr() { return ptr_; }
 
-    bool at_limit(int* i) {
-        printf("size = %u\n", lru_.size());
-        return lru_.size() >= 4;
-    }
-
-    void evict() {
-        printf("evict()\n");
-        unregister_ptr(lru_.front());
-    }
-
-public:
-    typedef std::map<int*, PtrCacheTest*> PtrMap;
-
-    static PtrMap        all_ptrs_;
-    static LRUList<int*> lru_;
+protected:
+    typedef LRUList<PtrCacheTest*> CacheList;
+    static CacheList lru_;
 
     int* orig_ptr_;
 
+    void invalidate() {
+        printf("invalidate %p, %p\n", this, ptr_);
+        
+        if (ptr_ == 0)
+            return;
+
+        CacheList::iterator i = std::find(lru_.begin(), lru_.end(), this);
+        ASSERT(i != lru_.end());
+
+        lru_.erase(i);
+        ptr_ = 0;
+    }
+
+    void restore() {
+        printf("restore %p\n", this);
+
+        ASSERT(std::find(lru_.begin(), lru_.end(), this) == lru_.end());
+
+        ptr_ = orig_ptr_;
+        lru_.push_back(this);
+
+        while (lru_.size() > 3) {
+            PtrCacheTest* evict = lru_.front();
+            evict->invalidate();
+        }
+    }
+
+    void update() {
+        printf("update %p\n", this);
+
+        CacheList::iterator i = std::find(lru_.begin(), lru_.end(), this);
+        ASSERT(i != lru_.end());
+        lru_.move_to_back(i);
+    }
 };
 
-LRUList<int*>        PtrCacheTest::lru_;
-PtrCacheTest::PtrMap PtrCacheTest::all_ptrs_;
+PtrCacheTest::CacheList PtrCacheTest::lru_;
 
 DECLARE_TEST(Test1) {
-    int a, b, c, d, e;
+    int a, b, c, d, e, f, g;
     PtrCacheTest pa(&a), pb(&b), pc(&c), pd(&d), pe(&e);
+    PtrCacheTest pf(&f), pg(&g);
+    
+    CHECK(pa.orig_ptr() == 0);
+    CHECK(pb.orig_ptr() == 0);
+    CHECK(pc.orig_ptr() == 0);
+    CHECK(pd.orig_ptr() == 0);
+    CHECK(pe.orig_ptr() == &e);
+    CHECK(pf.orig_ptr() == &f);
+    CHECK(pg.orig_ptr() == &g);
 
+    CHECK(pa.ptr() == &a);
+    CHECK(pa.ptr() == &a);
+    CHECK(pc.ptr() == &c);
+    CHECK(pd.ptr() == &d);
+    CHECK(pb.ptr() == &b);
+    CHECK(pb.ptr() == &b);
+    CHECK(pd.ptr() == &d);
+    CHECK(pe.ptr() == &e);
+    CHECK(pf.ptr() == &f);
+    CHECK(pg.ptr() == &g);
+    CHECK(pc.ptr() == &c);
+    CHECK(pe.ptr() == &e);
     
 
     return UNIT_TEST_PASSED;
