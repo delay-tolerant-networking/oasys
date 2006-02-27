@@ -55,6 +55,9 @@ namespace oasys {
  * void del_ref(const char* what1, const char* what2);
  * </code>
  *
+ * Typically what1 is the function name and what2 is whatever whatsit
+ * additional what info you prefer what2 to be.
+ *
  * The strings what1 and what2 can be used for debugging and are
  * stored in the reference. Note that what1 is mandatory while what2
  * is optional.
