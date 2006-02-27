@@ -39,32 +39,32 @@ public:
     //! @}
 
     //! @return Original pointer
-    _PtrType* ptr() { 
+    _PtrType* ptr() const { 
         restore_and_update();
         return ptr_; 
     }
     
 protected:
-    _PtrType* ptr_;
+    mutable _PtrType* ptr_;
 
     /*!
      * Invalidate and free the resources associated with this pointer.
      * Invalid pointers are null pointers.
      */ 
-    virtual void invalidate() = 0;
+    virtual void invalidate() const = 0;
     
     /*!
      * Restore the resources associated with this pointer. Assumes the
      * pointer is invalid.
      */
-    virtual void restore() = 0;
+    virtual void restore() const = 0;
 
     /*!
      * Update usage information (e.g. for LRU)
      */
-    virtual void update() = 0;
+    virtual void update() const = 0;
 
-    void restore_and_update() {
+    void restore_and_update() const {
         if (ptr_ == 0) {
             restore();
             ASSERT(ptr_ != 0);
