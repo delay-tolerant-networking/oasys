@@ -9,7 +9,6 @@ TESTS += \
 	marshal-test				\
 	memory-store-test			\
 	optparser-test				\
-	ptr-cache-test				\
 	regex-test				\
 	sample-test				\
 	serialize-stream-test			\
@@ -27,7 +26,8 @@ TESTS += \
 #
 # Tests that need to be fixed
 #
-BROKEN_TESTS += 
+BROKEN_TESTS +=  \
+	ptr-cache-test				\
 
 #
 # Tests that need to be converted to the new framework
