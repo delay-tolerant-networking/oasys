@@ -44,10 +44,17 @@
 template <typename _DataType>
 class DurableObjectCache : public Logger {
 public:
+    enum CachePolicy_t {
+        CAP_BY_SIZE,
+        CAP_BY_COUNT
+    };
+
     /**
      * Constructor.
      */
-    DurableObjectCache(const char* logpath, size_t capacity);
+    DurableObjectCache(const char*  logpath,
+                       size_t        capacity,
+                       CachePolicy_t policy = CAP_BY_SIZE);
 
     /**
      * Destructor.
@@ -103,8 +110,8 @@ public:
      */
     void reset_stats()
     {
-        hits_ = 0;
-        misses_ = 0;
+        hits_      = 0;
+        misses_    = 0;
         evictions_ = 0;
     }
 
@@ -113,6 +120,12 @@ protected:
      * Build a std::string to index the hash map.
      */
     void get_cache_key(std::string* cache_key, const SerializableObject& key);
+    
+    /**
+     * @return Whether or not the added item of size puts the cache
+     * over the capacity.
+     */
+    bool is_over_capacity(size_t size);
     
     /**
      * Kick the least recently used element out of the cache.
@@ -157,6 +170,7 @@ protected:
     CacheLRUList lru_;	///< The LRU List of objects
     CacheTable cache_;	///< The object cache table
     SpinLock* lock_;	///< Lock to protect the in-memory cache
+    CachePolicy_t policy_; ///< Cache policy (see enum above)
 
 public:
     /**

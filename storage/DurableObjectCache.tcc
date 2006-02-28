@@ -3,18 +3,24 @@
 #error DurableObjectCache.h must only be included from within DurableStore.h
 #endif
 
-/**
- * Constructor.
- */
+//----------------------------------------------------------------------------
 template <typename _DataType>
-DurableObjectCache<_DataType>::DurableObjectCache(const char* logpath, size_t capacity)
+DurableObjectCache<_DataType>::DurableObjectCache(const char*   logpath,
+                                                  size_t        capacity,
+                                                  CachePolicy_t policy)
     : Logger(logpath),
-      size_(0), capacity_(capacity),
-      hits_(0), misses_(0), evictions_(0), lock_(new SpinLock())
+      size_(0), 
+      capacity_(capacity),
+      hits_(0), 
+      misses_(0), 
+      evictions_(0), 
+      lock_(new SpinLock()),
+      policy_(policy)
 {
     log_debug("init capacity=%u", (u_int)capacity);
 }
 
+//----------------------------------------------------------------------------
 template <typename _DataType>
 DurableObjectCache<_DataType>::~DurableObjectCache()
 {
@@ -22,9 +28,7 @@ DurableObjectCache<_DataType>::~DurableObjectCache()
     lock_ = 0;
 }
 
-/**
- * Build a std::string to index the hash map.
- */
+//----------------------------------------------------------------------------
 template <typename _DataType>
 void
 DurableObjectCache<_DataType>::get_cache_key(std::string* cache_key,
@@ -38,10 +42,24 @@ DurableObjectCache<_DataType>::get_cache_key(std::string* cache_key,
 
     cache_key->assign(serialize.buf().data(), serialize.buf().length());
 }
+
+//----------------------------------------------------------------------------
+template <typename _DataType>
+bool 
+DurableObjectCache<_DataType>::is_over_capacity(size_t size)
+{
+    switch (policy_) 
+    {
+    case CAP_BY_SIZE:
+        return (size_ + size) > capacity_;
+    case CAP_BY_COUNT:
+        return (count() + 1) > capacity_;
+    }
     
-/**
- * Kick the least recently used element out of the cache.
- */
+    NOTREACHED;
+}
+
+//----------------------------------------------------------------------------
 template <typename _DataType>
 void
 DurableObjectCache<_DataType>::evict_last()
@@ -80,11 +98,7 @@ DurableObjectCache<_DataType>::evict_last()
     delete cache_elem;
 }
 
-/**
- * Add a new object to the cache, backed by the given table. Note
- * that this may cause some other object to be evicted from the
- * cache, which may result in a flush() call to another table.
- */
+//----------------------------------------------------------------------------
 template <typename _DataType>
 int
 DurableObjectCache<_DataType>::put(const SerializableObject& key,
@@ -139,8 +153,10 @@ DurableObjectCache<_DataType>::put(const SerializableObject& key,
 
     // now try to evict elements if the new object will put us over
     // the cache capacity
-    while ((size_ + object_size) > capacity_) {
-        if (lru_.empty()) {
+    while (is_over_capacity(object_size)) 
+    {
+        if (lru_.empty()) 
+        {
             log_warn("cache already at capacity "
                      "(size %u, object_size %u, capacity %u) "
                      "but all %d elements are live",
@@ -167,9 +183,7 @@ DurableObjectCache<_DataType>::put(const SerializableObject& key,
     return DS_OK;
 }
 
-/**
- * Look up a given object in the cache.
- */
+//----------------------------------------------------------------------------
 template <typename _DataType>
 int
 DurableObjectCache<_DataType>::get(const SerializableObject& key,
@@ -206,9 +220,7 @@ DurableObjectCache<_DataType>::get(const SerializableObject& key,
     return DS_OK;
 }
 
-/**
- * Return whether or not the key is currently live in in the cache.
- */
+//----------------------------------------------------------------------------
 template <typename _DataType>
 bool
 DurableObjectCache<_DataType>::is_live(const SerializableObject& key)
@@ -235,6 +247,7 @@ DurableObjectCache<_DataType>::is_live(const SerializableObject& key)
     }
 }
 
+//----------------------------------------------------------------------------
 template <typename _DataType>
 int
 DurableObjectCache<_DataType>::release(const SerializableObject& key,
@@ -268,18 +281,17 @@ DurableObjectCache<_DataType>::release(const SerializableObject& key,
         ASSERT(*cache_elem->lru_iter_ == cache_key);
     }
 
-    if (size_ > capacity_) {
+    if (is_over_capacity(0)) 
+    {
         log_debug("release while over capacity, evicting stale object");
-        ASSERT(lru_.size() == 1);
+        // ASSERT(lru_.size() == 1);
         evict_last();
     }
-
+    
     return DS_OK;
 }
 
-/**
- * Forcibly try to remove an object from the cache.
- */
+//----------------------------------------------------------------------------
 template <typename _DataType>
 int
 DurableObjectCache<_DataType>::del(const SerializableObject& key)
@@ -319,6 +331,7 @@ DurableObjectCache<_DataType>::del(const SerializableObject& key)
     return DS_OK;
 }
 
+//----------------------------------------------------------------------------
 template <typename _DataType>
 size_t
 DurableObjectCache<_DataType>::flush()
