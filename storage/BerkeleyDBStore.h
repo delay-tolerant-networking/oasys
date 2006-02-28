@@ -135,7 +135,7 @@ private:
             : Logger(logpath), dbenv_(dbenv), frequency_(frequency) {}
 
         void reschedule();
-        virtual void timeout(struct timeval* now);
+        virtual void timeout(const struct timeval& now);
 
     protected:
         DB_ENV* dbenv_;

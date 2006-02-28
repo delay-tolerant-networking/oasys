@@ -142,7 +142,7 @@ private:
 
     TimerSystem();
 
-    void pop_timer(struct timeval *now);
+    void pop_timer(const struct timeval& now);
     void handle_signals();
     int  run_expired_timers();
 };
@@ -202,7 +202,7 @@ public:
         return when_;
     }
     
-    virtual void timeout(struct timeval* now) = 0;
+    virtual void timeout(const struct timeval& now) = 0;
 
 protected:
     friend class TimerSystem;

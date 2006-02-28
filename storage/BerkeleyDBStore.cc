@@ -530,7 +530,7 @@ BerkeleyDBStore::DeadlockTimer::reschedule()
 
 //----------------------------------------------------------------------------
 void
-BerkeleyDBStore::DeadlockTimer::timeout(struct timeval* now)
+BerkeleyDBStore::DeadlockTimer::timeout(const struct timeval& now)
 {
     int aborted = 0;
     log_debug("running deadlock detection");

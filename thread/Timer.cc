@@ -183,7 +183,7 @@ TimerSystem::run()
 
 //////////////////////////////////////////////////////////////////////////////
 void
-TimerSystem::pop_timer(struct timeval* now)
+TimerSystem::pop_timer(const struct timeval& now)
 {
     ASSERT(system_lock_->is_locked_by_me());
     
@@ -196,16 +196,16 @@ TimerSystem::pop_timer(struct timeval* now)
     
     if (! next_timer->cancelled_) {
         log_debug("popping timer %p at %u.%u", next_timer,
-                  (u_int)now->tv_sec, (u_int)now->tv_usec);
+                  (u_int)now.tv_sec, (u_int)now.tv_usec);
         next_timer->timeout(now);
     } else {
         log_debug("popping cancelled timer %p at %u.%u", next_timer,
-                  (u_int)now->tv_sec, (u_int)now->tv_usec);
+                  (u_int)now.tv_sec, (u_int)now.tv_usec);
         next_timer->cancelled_ = 0;
         
         if (next_timer->cancel_flags_ == Timer::DELETE_ON_CANCEL) {
             log_debug("deleting cancelled timer %p at %u.%u", next_timer,
-                      (u_int)now->tv_sec, (u_int)now->tv_usec);
+                      (u_int)now.tv_sec, (u_int)now.tv_usec);
             delete next_timer;
         }
     }
@@ -253,7 +253,7 @@ TimerSystem::run_expired_timers()
             log_debug("new timeout %d", diff_ms);
             return diff_ms;
         }
-        pop_timer(&now);
+        pop_timer(now);
     }
 
     return -1;

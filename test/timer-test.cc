@@ -52,11 +52,11 @@ class PeriodicTimer : public Timer {
         logf(log_, LOG_DEBUG, "PeriodicTimer 0x%x", (u_int)this);
     }
     
-    void timeout(struct timeval* now) {
-        int late = TIMEVAL_DIFF_USEC(*now, when());
-        logf(log_, LOG_INFO, "timer at %ld.%ld (%d usec late)",
-             (long unsigned int)now->tv_sec, (long unsigned int)now->tv_usec,
-             late);
+    void timeout(const struct timeval& now) {
+        int late = TIMEVAL_DIFF_USEC(now, when());
+        log_notice(log_, "timer at %ld.%ld (%d usec late)",
+                   (long unsigned int)now.tv_sec, (long unsigned int)now.tv_usec,
+                   late);
         
         reschedule();
     }
