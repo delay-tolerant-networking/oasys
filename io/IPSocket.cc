@@ -168,6 +168,9 @@ IPSocket::connect()
 {
     struct sockaddr_in sa;
 
+    if (ESTABLISHED == state_)
+	return 0;
+
     if (fd_ == -1) init_socket();
 
     log_debug("connecting to %s:%d", intoa(remote_addr_), remote_port_);
@@ -180,11 +183,16 @@ IPSocket::connect()
     set_state(CONNECTING);
 
     if (::connect(fd_, (struct sockaddr*)&sa, sizeof(sa)) < 0) {
-        if (errno != EINPROGRESS) {
-            logf(LOG_ERR, "error connecting to %s:%d: %s",
-                 intoa(remote_addr_), remote_port_, strerror(errno));
-        }
-        return -1;
+	if (EISCONN == errno)
+            logf(LOG_ERR, "already connected to %s:%d:",
+                 intoa(remote_addr_), remote_port_);
+        else {
+	    if (errno != EINPROGRESS) {
+		logf(LOG_ERR, "error connecting to %s:%d: %s",
+		     intoa(remote_addr_), remote_port_, strerror(errno));
+	    }
+	    return -1;
+	}
     }
 
     set_state(ESTABLISHED);
