@@ -91,7 +91,8 @@ public:
     //@{
     /// System call wrappers
     virtual int bind(in_addr_t local_addr, u_int16_t local_port);
-    virtual int connect(in_addr_t local_addr, u_int16_t local_port);
+    virtual int connect();
+    virtual int connect(in_addr_t remote_addr, u_int16_t remote_port);
     virtual int close();
     virtual int shutdown(int how);
     
