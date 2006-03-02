@@ -195,8 +195,6 @@ IPSocket::connect()
 int
 IPSocket::connect(in_addr_t remote_addr, u_int16_t remote_port)
 {
-    if (fd_ == -1) init_socket();
-    
     remote_addr_ = remote_addr;
     remote_port_ = remote_port;
 
