@@ -37,6 +37,7 @@
  */
 
 #include "SpinLock.h"
+#include "../debug/StackTrace.h"
 
 namespace oasys {
 
@@ -64,6 +65,7 @@ SpinLock::lock(const char* lock_user)
             fprintf(stderr,
                     "warning: spin lock held by %s reached spin limit\n",
                     lock_holder_name_);
+            StackTrace::print_current_trace(false);
             nspins = 0;
         }
 #endif
