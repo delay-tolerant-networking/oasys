@@ -88,7 +88,7 @@ _elt_t MsgQueue<_elt_t>::pop_blocking()
 template<typename _elt_t> 
 bool MsgQueue<_elt_t>::try_pop(_elt_t* eltp)
 {
-    ScopeLock lock(lock_);
+    ScopeLock lock(lock_, "MsgQueue::try_pop");
 
     // nothing in the queue, nothing we can do...
     if (queue_.size() == 0) {
@@ -98,7 +98,7 @@ bool MsgQueue<_elt_t>::try_pop(_elt_t* eltp)
     // but if there is something in the queue, then return it
     *eltp = queue_.front();
     queue_.pop_front();
-    drain_pipe();
+    drain_pipe(1);
         
     return true;
 }

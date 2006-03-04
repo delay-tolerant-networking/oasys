@@ -18,17 +18,14 @@ DECLARE_TEST(DBTestInit) {
     g_config = new StorageConfig(
         "storage",              // command name
         "memorydb",             // type
-        true,                   // init
-        true,                   // tidy
-        0,                      // tidy wait
-        false,			// .ds_clean file on shutdown
         "",	                // dbname
-        "", 		        // dbdir
-        0,                      // flags
-        0,			// bdb specific
-        0,			// bdb specific
-        false			// sharefile
+        "" 		        // dbdir
     );   
+
+    g_config->init_             = true;
+    g_config->init_             = true;
+    g_config->leave_clean_file_ = false;
+    g_config->tidy_wait_        = 0;
 
     return 0;
 }

@@ -49,50 +49,50 @@ namespace oasys {
  * to Durable storage system to initialize it.
  */
 struct StorageConfig {
-    // General options
+    // General options that must be set (in the constructor)
     std::string cmd_;		///< tcl command name for this instance
     std::string type_;		///< storage type [berkeleydb/mysql/postgres]
+    std::string dbname_;	///< Database name (filename in berkeley db)
+    std::string dbdir_;		///< Path to the database files
+
+    // Other general options
     bool        init_;		///< Create new databases on init
     bool        tidy_;		///< Prune out the database on init
     int         tidy_wait_;	///< Seconds to wait before tidying
     bool        leave_clean_file_;///< Leave a .ds_clean file on clean shutdown
 
-    // DB options (not all will be used for every type of database)
-    std::string dbname_;	///< Database name (filename in berkeley db)
-    std::string dbdir_;		///< Path to the database files
-    int         dbflags_;       ///< DB specific flags
-
     // Berkeley DB Specific options
-    int         dbtxmax_;       ///< Max # of active transactions
-    int         dblockdetect_;  ///< Frequency in msecs to check for deadlocks
+    int         db_flags_;      ///< DB specific flags
+    int         db_max_tx_;     ///< Max # of active transactions (0 for default)
+    int		db_max_locks_;	///< Max # of active locks (0 for default)
+    int		db_max_lockers_;///< Max # of active locking threads (0 for default)
+    int		db_max_lockedobjs_;///< Max # of active locked objects (0 for default)
+    int         db_lockdetect_; ///< Frequency in msecs to check for deadlocks
                                 ///< (locking disabled if zero)
-    bool	dbsharefile_;	///< Share a single DB file (and a lock)
+    bool	db_sharefile_;	///< Share a single DB file (and a lock)
 
     StorageConfig(
         const std::string& cmd,
         const std::string& type,
-        bool               init,
-        bool               tidy,
-        int                tidy_wait,    
-        bool               leave_clean_file,
         const std::string& dbname,
-        const std::string& dbdir,
-        int                dbflags,
-        int                dbtxmax,
-        int                dblockdetect,
-        bool               dbsharefile
-    ) : cmd_(cmd),
+        const std::string& dbdir)
+        
+      : cmd_(cmd),
         type_(type),
-        init_(init),
-        tidy_(tidy),
-        tidy_wait_(tidy_wait),
-        leave_clean_file_(leave_clean_file),
         dbname_(dbname),
         dbdir_(dbdir),
-        dbflags_(dbflags),
-        dbtxmax_(dbtxmax),
-        dblockdetect_(dblockdetect),
-        dbsharefile_(dbsharefile)
+        
+        init_(false),
+        tidy_(false),
+        tidy_wait_(3),
+        leave_clean_file_(true),
+        db_flags_(0),
+        db_max_tx_(0),
+        db_max_locks_(0),
+        db_max_lockers_(0),
+        db_max_lockedobjs_(0),
+        db_lockdetect_(5000),
+        db_sharefile_(false)
     {}
 };
 

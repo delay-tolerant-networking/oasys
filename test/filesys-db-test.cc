@@ -20,17 +20,13 @@ DECLARE_TEST(DBTestInit) {
     g_config = new StorageConfig(
         "storage",              // command name
         "filesysdb",            // type
-        true,                   // init
-        true,                   // tidy
-        0,                      // tidy wait
-        true,			// .ds_clean file on shutdown
         g_db_name,              // dbname
-        g_config_dir,           // dbdir
-        0,                      // flags
-        1,                      // txmax
-        0,                      // lock detect
-        0                       // share file
+        g_config_dir            // dbdir
     );   
+
+    g_config->init_             = true;
+    g_config->init_             = true;
+    g_config->tidy_wait_        = 0;
 
     StringBuffer cmd("mkdir -p %s", g_config_dir);
     system(cmd.c_str());

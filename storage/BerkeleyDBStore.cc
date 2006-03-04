@@ -110,7 +110,7 @@ BerkeleyDBStore::init(const StorageConfig& cfg)
     FileUtils::abspath(&dbdir);
 
     db_name_ = cfg.dbname_;
-    sharefile_ = cfg.dbsharefile_;
+    sharefile_ = cfg.db_sharefile_;
 
     // XXX/bowei need to expose options if needed later
     if (cfg.tidy_) {
@@ -149,17 +149,27 @@ BerkeleyDBStore::init(const StorageConfig& cfg)
              db_name_.c_str(), sharefile_ ? "shared" : "not shared",
              dbdir.c_str());
 
-    err = dbenv_->set_tx_max(dbenv_, cfg.dbtxmax_);
+#define SET_DBENV_OPTION(_opt, _fn)                     \
+    if (cfg._opt != 0) {                                \
+        err = dbenv_->_fn(dbenv_, cfg._opt);            \
+                                                        \
+        if (err != 0)                                   \
+        {                                               \
+            log_crit("DB: %s, cannot %s to %d",         \
+                     db_strerror(err), #_fn, cfg._opt); \
+            return DS_ERR;                              \
+        }                                               \
+    } 
 
-    if (err != 0) 
-    {
-        log_crit("DB: %s, cannot set tx_max to %d", 
-                 db_strerror(err), cfg.dbtxmax_);
-        return DS_ERR;
-    }
+    SET_DBENV_OPTION(db_max_tx_, set_tx_max);
+    SET_DBENV_OPTION(db_max_locks_, set_lk_max_locks);
+    SET_DBENV_OPTION(db_max_lockers_, set_lk_max_lockers);
+    SET_DBENV_OPTION(db_max_lockedobjs_, set_lk_max_objects);
+
+#undef SET_DBENV_OPTION
 
     int lock_flag = 0;
-    if (cfg.dblockdetect_ != 0) {
+    if (cfg.db_lockdetect_ != 0) {
         lock_flag = DB_INIT_LOCK | DB_THREAD;
     }
     
@@ -200,8 +210,8 @@ BerkeleyDBStore::init(const StorageConfig& cfg)
         return DS_ERR;
     }
 
-    if (cfg.dblockdetect_ != 0) {
-        deadlock_timer_ = new DeadlockTimer(logpath_, dbenv_, cfg.dblockdetect_);
+    if (cfg.db_lockdetect_ != 0) {
+        deadlock_timer_ = new DeadlockTimer(logpath_, dbenv_, cfg.db_lockdetect_);
         deadlock_timer_->logpath_appendf("/deadlock_timer");
         deadlock_timer_->reschedule();
     } else {
@@ -270,6 +280,7 @@ BerkeleyDBStore::get_table(DurableTableImpl** table,
         db_flags |= DB_THREAD;
     }
 
+ retry:
     if (sharefile_) {
         oasys::StaticStringBuffer<128> dbfile("%s.db", db_name_.c_str());
         err = db->open(db, NO_TX, dbfile.c_str(), name.c_str(),
@@ -292,6 +303,11 @@ BerkeleyDBStore::get_table(DurableTableImpl** table,
         log_debug("get_table -- already existing database %s", name.c_str());
         db->close(db, 0);
         return DS_EXISTS;
+    }
+    else if (err == DB_LOCK_DEADLOCK)
+    {
+        log_warn("deadlock in get_table, retrying operation");
+        goto retry;
     }
     else if (err != 0)
     {

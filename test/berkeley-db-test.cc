@@ -19,17 +19,13 @@ DECLARE_TEST(DBTestInit) {
     g_config = new StorageConfig(
         "storage",              // command name
         "berkeleydb",           // type
-        true,                   // init
-        true,                   // tidy
-        0,                      // tidy wait
-        true,			// .ds_clean file on shutdown
         g_db_name,              // dbname
-        g_config_dir,           // dbdir
-        0,                      // flags,
-        1000,			// num tx
-        5000,			// deadlock check interval
-        false			// sharefile
-    );   
+        g_config_dir            // dbdir
+    );
+    
+    g_config->init_             = true;
+    g_config->init_             = true;
+    g_config->tidy_wait_        = 0;
 
     StringBuffer cmd("mkdir -p %s", g_config_dir);
     system(cmd.c_str());
@@ -38,7 +34,7 @@ DECLARE_TEST(DBTestInit) {
 }
 
 DECLARE_TEST(DBSwitchToSharedFile) {
-    g_config->dbsharefile_ = true;
+    g_config->db_sharefile_ = true;
     return UNIT_TEST_PASSED;
 }
 
@@ -63,7 +59,7 @@ DECLARE_TESTER(BerkleyDBTester) {
     ADD_TEST(MultiTypeCache);
 
     ADD_TEST(DBSwitchToSharedFile);
-    
+
     ADD_TEST(DBInit);
     ADD_TEST(DBTidy);
     ADD_TEST(TableCreate);
