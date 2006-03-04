@@ -165,6 +165,7 @@ BerkeleyDBStore::init(const StorageConfig& cfg)
     SET_DBENV_OPTION(db_max_locks_, set_lk_max_locks);
     SET_DBENV_OPTION(db_max_lockers_, set_lk_max_lockers);
     SET_DBENV_OPTION(db_max_lockedobjs_, set_lk_max_objects);
+    SET_DBENV_OPTION(db_max_logregion_, set_lg_regionmax);
 
 #undef SET_DBENV_OPTION
 

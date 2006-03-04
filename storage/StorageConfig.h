@@ -67,6 +67,7 @@ struct StorageConfig {
     int		db_max_locks_;	///< Max # of active locks (0 for default)
     int		db_max_lockers_;///< Max # of active locking threads (0 for default)
     int		db_max_lockedobjs_;///< Max # of active locked objects (0 for default)
+    int		db_max_logregion_; ///< Logging region max (0 for default)
     int         db_lockdetect_; ///< Frequency in msecs to check for deadlocks
                                 ///< (locking disabled if zero)
     bool	db_sharefile_;	///< Share a single DB file (and a lock)
@@ -91,6 +92,7 @@ struct StorageConfig {
         db_max_locks_(0),
         db_max_lockers_(0),
         db_max_lockedobjs_(0),
+        db_max_logregion_(0),
         db_lockdetect_(5000),
         db_sharefile_(false)
     {}
