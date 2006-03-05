@@ -13,7 +13,7 @@
 
 template<typename _elt_t>
 MsgQueue<_elt_t>::MsgQueue(const char* logpath, SpinLock* lock)
-    : Notifier(logpath)
+    : Notifier(logpath), disable_notify_(false)
 {
     if (lock != NULL) {
         lock_ = lock;
@@ -45,7 +45,9 @@ void MsgQueue<_elt_t>::push(_elt_t msg, bool at_back)
     else
         queue_.push_front(msg);
 
-    notify();
+    if (!disable_notify_) {
+        notify();
+    }
 }
 
 template<typename _elt_t> 
@@ -63,6 +65,10 @@ _elt_t MsgQueue<_elt_t>::pop_blocking()
     bool used_wait = false;
 
     if (queue_.empty()) {
+        if (disable_notify_) {
+            disable_notify_ = false;
+        }
+        
         wait(lock_);
         ASSERT(lock_->is_locked_by_me());
         used_wait = true;
@@ -73,7 +79,7 @@ _elt_t MsgQueue<_elt_t>::pop_blocking()
      */
     ASSERT(!queue_.empty());
 
-    if (!used_wait) {
+    if (!used_wait && !disable_notify_) {
         drain_pipe(1);
     }
     
@@ -98,7 +104,21 @@ bool MsgQueue<_elt_t>::try_pop(_elt_t* eltp)
     // but if there is something in the queue, then return it
     *eltp = queue_.front();
     queue_.pop_front();
-    drain_pipe(1);
+
+    if (!disable_notify_) {
+        drain_pipe(1);
+    }
         
     return true;
 }
+
+template <typename _elt_t>
+void MsgQueue<_elt_t>::disable_notify()
+{
+    ScopeLock lock(lock_, "MsgQueue::disable_notify");
+
+    // the queue must be empty or assertions won't hold
+    ASSERT(queue_.size() == 0);
+    disable_notify_ = true;
+}
+
