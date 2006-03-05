@@ -526,10 +526,10 @@ FileSystemIterator::next()
     }
 
     if (ent_ == 0) {
-        if (errno == ENOENT) {
-            return DS_NOTFOUND;
-        } else {
+        if (errno == EBADF) {
             return DS_ERR;
+        } else {
+            return DS_NOTFOUND;
         }
     }
 
