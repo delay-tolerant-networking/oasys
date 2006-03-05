@@ -516,19 +516,23 @@ FileSystemIterator::~FileSystemIterator()
 int 
 FileSystemIterator::next()
 {
+  skip_dots:
     ent_ = readdir(dir_);
-    
-    while (ent_ != 0 && 
-           (strcmp(ent_->d_name, ".") == 0 ||
-            strcmp(ent_->d_name, "..") == 0))
+
+    if (ent_ != 0 && (strcmp(ent_->d_name, ".") == 0 ||
+                      strcmp(ent_->d_name, "..") == 0))
     {
-        ent_ = readdir(dir_);
+        goto skip_dots;
     }
 
-    if (ent_ == 0) {
-        if (errno == EBADF) {
+    if (ent_ == 0) 
+    {
+        if (errno == EBADF) 
+        {
             return DS_ERR;
-        } else {
+        } 
+        else 
+        {
             return DS_NOTFOUND;
         }
     }
