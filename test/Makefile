@@ -8,6 +8,7 @@ TESTS += \
 	log-test				\
 	marshal-test				\
 	memory-store-test			\
+	msg-queue-test				\
 	optparser-test				\
 	regex-test				\
 	sample-test				\
@@ -37,7 +38,6 @@ OLD_TESTS :=					\
 	hexdump-test				\
 	md5-test				\
 	memory-test				\
-	msg-queue-test				\
 	mutex-test				\
 	options-test				\
 	tcp-socket-test				\

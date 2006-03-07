@@ -1,64 +1,130 @@
-#include <iostream>
-#include <cstdlib>
-
-#include <thread/Thread.h>
-#include <thread/MsgQueue.h>
+#include "thread/Thread.h"
+#include "thread/MsgQueue.h"
+#include "util/UnitTest.h"
 
 using namespace std;
-
 using namespace oasys;
 
 class Consumer : public Thread {
 public:
-    Consumer(MsgQueue<int>* q) : Thread("Consumer"), q_(q) {}
+    Consumer(MsgQueue<int>* q, int count)
+        : Thread("Consumer", CREATE_JOINABLE),
+          total_(0), q_(q), count_(count) {}
+
+    int total_;
+
 protected:
     virtual void run() {
+        test();
+    }
+
+    int test() {
         int prev = -1;
 
-        while(true) {
-            //logf("/test", LOG_INFO, "consumer dequeue");
+        for (int i = 0; i < count_; ++i) {
             int curr = q_->pop_blocking();
-
-            ASSERT(curr - 1 == prev);
-            
-            logf("/test", LOG_INFO, "consumer dequeue %d", curr);
+            CHECK_EQUAL(curr, prev + 1);
             prev = curr;
-            // yield();
+            total_++;
+            yield();
         }
+
+        return UNIT_TEST_PASSED;
     }
     
     MsgQueue<int>* q_;
+    int count_;
 };
 
 class Producer : public Thread {
 public:
-    Producer(MsgQueue<int>* q) : Thread("Producer"), q_(q) {}
+    Producer(MsgQueue<int>* q, int count)
+        : Thread("Producer", CREATE_JOINABLE),
+          total_(0), q_(q), count_(count) {}
+
+    int total_;
+    
 protected:
     virtual void run() {
-        int curr = 0;
-
-        while(true) {
-            logf("/test", LOG_INFO, "producer enqueue %d", curr);
-            q_->push(curr);
-            curr++;
+        for (int i = 0; i < count_; ++i) {
+            if (should_stop()) {
+                return;
+            }
+            
+            q_->push(total_++);
+            yield();
         }
     }
     
     MsgQueue<int>* q_;
+    int count_;
 };
 
 int
-main(int argc, char* argv[])
-{
-    Log::init(LOG_INFO);
-    MsgQueue<int> q;
+push_pop_test(int count) {
+    MsgQueue<int> q("/test/queue");
 
-    Consumer c(&q);
-    Producer p(&q);
+    Consumer c(&q, count);
+    Producer p(&q, count);
 
     c.start();
     p.start();
-    
-    while(true)
-        Thread::yield();
+
+    p.join();
+    c.join();
+
+    CHECK_EQUAL(p.total_, count);
+    CHECK_EQUAL(c.total_, count);
+
+    return UNIT_TEST_PASSED;
 }
+
+DECLARE_TEST(PushPop1) {
+    return push_pop_test(1);
+}
+
+DECLARE_TEST(PushPop10000) {
+    return push_pop_test(10000);
+}
+
+DECLARE_TEST(DelayedPop) {
+    MsgQueue<int> q("/test/queue");
+
+    // fill up the pipe
+    Producer p(&q, INT_MAX);
+    p.start();
+
+    int prev;
+    while (1) {
+        prev = p.total_;
+        sleep(1);
+        
+        // nothing more pushed in the last second, so p is likely be blocked
+        if (prev == p.total_) {
+            break;
+        }
+    }
+
+    int total = p.total_;
+
+    p.set_should_stop();
+
+    Consumer c(&q, total);
+    c.start();
+
+    p.join();
+    c.join();
+
+    CHECK_EQUAL(c.total_, total);
+    CHECK_EQUAL(p.total_, total);
+
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TESTER(MsgQueueTester) {
+    ADD_TEST(PushPop1);
+    ADD_TEST(PushPop10000);
+    ADD_TEST(DelayedPop);
+}
+
+DECLARE_TEST_FILE(MsgQueueTester, "msg queue test");

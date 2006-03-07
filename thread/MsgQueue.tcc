@@ -46,7 +46,7 @@ void MsgQueue<_elt_t>::push(_elt_t msg, bool at_back)
         queue_.push_front(msg);
 
     if (!disable_notify_) {
-        notify();
+        notify(lock_);
     }
 }
 

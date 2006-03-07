@@ -82,8 +82,13 @@ public:
 
     /**
      * Notify a waiter.
+     *
+     * In general, this function should not block, but there's a
+     * chance that it might if the pipe ends up full. In that case, it
+     * will unlock the given lock (if any) and will block until the
+     * notification ends up in the pipe.
      */
-    void notify();
+    void notify(SpinLock* lock = NULL);
 
     /**
      * @param bytes Drain this many bytes from the pipe. 0 means to

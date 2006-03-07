@@ -177,10 +177,13 @@ Notifier::wait(SpinLock* lock, int timeout)
 }
 
 void
-Notifier::notify()
+Notifier::notify(SpinLock* lock)
 {
     char b = 0;
+    int num_retries = 0;
 
+    bool need_to_relock = false;
+    
   retry:
     log_debug("notifier notify");
     int ret = ::write(write_fd(), &b, 1);
@@ -188,9 +191,24 @@ Notifier::notify()
     if (ret == -1) {
         if (errno == EAGAIN) {
             // If the pipe is full, that probably means the consumer
-            // is just slow, but keep trying because otherwise we will
-            // break the semantics of the notifier.
-            log_warn("pipe appears to be full");
+            // is just slow, but keep trying for up to 30 seconds
+            // because otherwise we will break the semantics of the
+            // notifier.
+            if (num_retries == 0) {
+                log_warn("pipe appears to be full -- retrying write until success");
+                if (lock) {
+                    lock->unlock();
+                    need_to_relock = true;
+                }
+            }
+            
+            if (++num_retries == 600) {
+                // bail after 1 minute of spinning
+                PANIC("slow reader on pipe: can't notify within 1 minute!");
+            }
+            
+            // give it some time
+            usleep(100000);
             goto retry;
         } else {
             log_err("unexpected error writing to pipe fd %d: %s",
@@ -199,6 +217,9 @@ Notifier::notify()
     } else if (ret == 0) {
         log_err("unexpected eof writing to pipe");
     } else {
+        if (need_to_relock) {
+            lock->lock("Notifier::notify");
+        }
         ASSERT(ret == 1);
         ++count_;
         log_debug("notify count = %d", count_);
