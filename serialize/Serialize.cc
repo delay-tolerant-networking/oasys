@@ -101,4 +101,6 @@ SerializeAction::end_action()
 {
 }
 
+Builder Builder::static_builder_;
+
 } // namespace oasys

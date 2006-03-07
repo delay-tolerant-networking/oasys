@@ -113,6 +113,13 @@ class Builder {
 public:
     Builder() {}
     Builder(const Builder& b) {}
+
+    static Builder& builder() {
+        return static_builder_;
+    }
+
+protected:
+    static Builder static_builder_;
 };
 
 /**
