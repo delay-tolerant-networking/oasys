@@ -372,11 +372,11 @@ DECLARE_TESTER(AtomicTester) {
 #else // __NO_ATOMIC__
 
 DECLARE_TEST(Bogus) {
-    log_warn("spin lock test is meaningless without atomic.h");
+    log_warn("atomic test is meaningless without atomic.h");
     return UNIT_TEST_PASSED;
 }
 
-DECLARE_TESTER(SpinLockTester) {
+DECLARE_TESTER(AtomicTester) {
     ADD_TEST(Bogus);
 }
 
