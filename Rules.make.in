@@ -95,8 +95,9 @@ objclean:
 
 .PHONY: depclean
 depclean:
-	@echo "removing dependency files..."
-	@find . \( -name '*.d' \) -print | xargs rm -f
+	@test -z "$(DEPFILES)" || \
+		echo "removing dependency files..." && \
+		rm -f $(DEPFILES)
 
 .PHONY: genclean
 genclean:
