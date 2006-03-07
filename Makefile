@@ -80,6 +80,7 @@ TCLCMD_SRCS :=					\
 
 THREAD_SRCS :=					\
 	thread/Mutex.cc				\
+	thread/NoLock.cc			\
 	thread/Notifier.cc			\
 	thread/SpinLock.cc			\
 	thread/Thread.cc			\
