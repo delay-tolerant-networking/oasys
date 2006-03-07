@@ -185,7 +185,9 @@ FormatterTest::format(char* buf, size_t sz) const
 
 class BoundsTest : public Formatter {
 public:
+    BoundsTest(int overflow = 0) : overflow_(0) {}
     virtual int format(char* buf, size_t sz) const;
+    int overflow_;
 };
 
 int
@@ -195,7 +197,34 @@ BoundsTest::format(char* buf, size_t sz) const
     for (int i = 0; i < n; ++i) {
         buf[i] = (i % 10) + '0';
     }
-    return n;
+    return n + overflow_;
+}
+
+class RecursiveTest : public Formatter {
+public:
+    RecursiveTest(int level) : level_(level) {}
+    virtual int format(char* buf, size_t sz) const;
+
+    int level_;
+};
+
+int
+RecursiveTest::format(char* buf, size_t sz) const
+{
+    RecursiveTest r(level_ + 1);
+    return snprintf(buf, sz, "%d *%p", level_, &r);
+}
+
+class RecursiveBoundsTest : public Formatter {
+public:
+    virtual int format(char* buf, size_t sz) const;
+};
+
+int
+RecursiveBoundsTest::format(char* buf, size_t sz) const
+{
+    BoundsTest b(10);
+    return snprintf(buf, sz, "recurse: *%p", &b);
 }
 
 class TruncateTest : public Formatter {
@@ -269,6 +298,18 @@ DECLARE_TEST(FormatterTest) {
     BoundsTest bft;
     CHECK(logf("/log-test/bounds", LOG_DEBUG,
                "bounds test: *%p *%p", &fmt, &bft) != 0);
+
+    BoundsTest bft2(10);
+    CHECK(logf("/log-test/bounds2", LOG_DEBUG,
+               "bounds test: *%p *%p", &fmt, &bft2) != 0);
+
+    RecursiveTest rft(0);
+    CHECK(logf("/log-test/recursive", LOG_DEBUG,
+               "recursive test: *%p", &rft) != 0);
+
+    RecursiveBoundsTest rbt;
+    CHECK(logf("/log-test/recursive_bounds", LOG_DEBUG,
+               "recursive bounds test: *%p", &rbt) != 0);
 
     TruncateTest tft;
     CHECK(logf("/log-test/truncate", LOG_DEBUG,
