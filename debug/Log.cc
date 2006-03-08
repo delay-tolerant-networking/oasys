@@ -588,6 +588,7 @@ Log::vlogf(const char* path, log_level_t level, const void* obj,
         buflen = ptr - buf;
     }
 
+#ifndef NDEBUG
     if (memcmp(&buf[LOG_MAX_LINELEN], guard, sizeof(guard)) != 0) {
         if (__debug_no_panic_on_overflow) {
             return -1;
@@ -595,6 +596,7 @@ Log::vlogf(const char* path, log_level_t level, const void* obj,
         
         PANIC("logf buffer overflow");
     }
+#endif
 
     // do the write, making sure to drain the buffer. since stdout was
     // set to nonblocking, the spin lock prevents other threads from
