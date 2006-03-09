@@ -333,6 +333,45 @@ DurableObjectCache<_DataType>::del(const SerializableObject& key)
 
 //----------------------------------------------------------------------------
 template <typename _DataType>
+int
+DurableObjectCache<_DataType>::remove(const SerializableObject& key,
+                                      const _DataType* data)
+{
+    ScopeLock l(lock_, "DurableObjectCache::remove");
+
+    std::string cache_key;
+    get_cache_key(&cache_key, key);
+    
+    typename CacheTable::iterator cache_iter = cache_.find(cache_key);
+
+    if (cache_iter == cache_.end()) {
+        log_debug("remove(%s): no match for key", cache_key.c_str());
+        return DS_NOTFOUND;
+    }
+    
+    CacheElement* cache_elem = cache_iter->second;
+    
+    if (cache_elem->live_) {
+        log_debug("del(%s): removing live object %p size %u from cache",
+                  cache_key.c_str(), cache_elem->object_,
+                  (u_int)cache_elem->object_size_);
+        
+    } else {
+        lru_.erase(cache_elem->lru_iter_);
+        log_debug("del(%s): removing non-live object %p size %u from cache",
+                  cache_key.c_str(), cache_elem->object_,
+                  (u_int)cache_elem->object_size_);
+    }
+    
+    cache_.erase(cache_iter);
+    size_ -= cache_elem->object_size_;
+
+    delete cache_elem;
+    return DS_OK;
+}
+
+//----------------------------------------------------------------------------
+template <typename _DataType>
 size_t
 DurableObjectCache<_DataType>::flush()
 {

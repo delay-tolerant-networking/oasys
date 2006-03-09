@@ -84,9 +84,14 @@ public:
     int release(const SerializableObject& key, const _DataType* data);
     
     /**
-     * Forcibly remove an object from the cache.
+     * Forcibly remove an object from the cache and delete it.
      */
     int del(const SerializableObject& key);
+
+    /**
+     * Remove the given entry from the cache but don't delete it.
+     */
+    int remove(const SerializableObject& key, const _DataType* data);
 
     /**
      * Flush all evictable (i.e. not live) objects from the cache.
