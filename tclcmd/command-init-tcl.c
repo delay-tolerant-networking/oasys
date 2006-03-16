@@ -28,7 +28,7 @@ static const char* INIT_COMMAND =
 "# procedure defined\n"
 "#\n"
 "proc command_log {level string} {\n"
-"    if {[info procs log] != \"\"} {\n"
+"    if {[info commands log] != \"\"} {\n"
 "        log /command $level $string\n"
 "    } else {\n"
 "        puts $string\n"

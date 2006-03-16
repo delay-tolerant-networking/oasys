@@ -27,7 +27,7 @@ proc event_loop {} {
 # procedure defined
 #
 proc command_log {level string} {
-    if {[info procs log] != ""} {
+    if {[info commands log] != ""} {
         log /command $level $string
     } else {
         puts $string
