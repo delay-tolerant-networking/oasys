@@ -44,7 +44,7 @@ namespace oasys {
 ConsoleCommand::ConsoleCommand()
     : TclCommand("console")
 {
-    bind_b("daemon", &daemon_, false, "daemon mode");
+    bind_b("stdio", &stdio_, true, "spawn interpreter on stdin/stdout");
     bind_addr("addr", &addr_,  htonl(INADDR_LOOPBACK),
               "console listening address");
     bind_i("port", &port_, 0, "console listening port (default 0)");

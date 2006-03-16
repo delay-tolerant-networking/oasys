@@ -50,7 +50,7 @@ class ConsoleCommand : public TclCommand {
 public:
     ConsoleCommand();
 
-    bool      daemon_;	///< If true, don't spawn a stdin/stdout interpreter
+    bool      stdio_;	///< If true, spawn a stdin/stdout interpreter
     in_addr_t addr_;	///< Address to listen for the console
     u_int16_t port_;	///< Port to listen for the console
 };
