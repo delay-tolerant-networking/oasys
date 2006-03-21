@@ -15,7 +15,7 @@ serialize_basic_vector(oasys::SerializeAction* action,
 {
     name += ".size";
 
-    size_t size;
+    u_int32_t size;
     size = v->size();
     action->process(name.c_str(), &size);
     
@@ -24,7 +24,7 @@ serialize_basic_vector(oasys::SerializeAction* action,
 
     v->resize(size);
     
-    for (size_t i=0; i<size; ++i)
+    for (u_int32_t i=0; i<size; ++i)
     {
         action->process(name.c_str(), &((*v)[i]));
         if (action->error())
