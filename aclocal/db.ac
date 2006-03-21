@@ -29,7 +29,7 @@ dnl
 dnl Main macro for finding a usable db installation 
 dnl
 AC_DEFUN(AC_OASYS_CONFIG_DB, [
-    ac_dbvers='4.3 4.2'
+    ac_dbvers='4.4 4.3 4.2'
     ac_dbdir='yes'
 
     AC_ARG_WITH(db,
@@ -39,7 +39,7 @@ AC_DEFUN(AC_OASYS_CONFIG_DB, [
 
     AC_ARG_WITH(dbver,
         AC_HELP_STRING([--with-dbver=VERSION],
-    		   Berkeley DB versions to try (default 4.3 or 4.2)),
+    		   Berkeley DB versions to try (default 4.4, 4.3 or 4.2)),
         ac_dbvers=$withval)
 
     dnl
