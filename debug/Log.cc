@@ -359,7 +359,7 @@ Log::redirect_stdio()
 {
     stdio_redirected_ = true;
 
-    ASSERT(logfd_ > 0);
+    ASSERT(logfd_ >= 0);
 
     int err;
     if ((err = dup2(logfd_, 1)) != 1) {
