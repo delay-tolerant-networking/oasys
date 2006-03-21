@@ -80,6 +80,9 @@ public:
     u_int32_t value() const { return value_; }
     void assign(u_int32_t value) { value_ = value; }
 
+    bool operator==(const UIntShim& other) const {
+        return value_ == other.value_;
+    }
     
 private:
     std::string name_;
