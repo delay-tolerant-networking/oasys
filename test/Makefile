@@ -22,7 +22,8 @@ TESTS += \
 	string-tokenize-test			\
 	text-code-test				\
 	timer-test				\
-	type-collection-test		
+	type-collection-test		        \
+	util-test				\
 
 #
 # Tests that need to be fixed
