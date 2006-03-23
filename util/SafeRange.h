@@ -23,7 +23,7 @@ public:
     SafeRange(_Type* a, size_t size)
         : array_(a), size_(size) {}
     
-    _Type operator[](size_t offset) {
+    _Type& operator[](size_t offset) {
         if (offset >= size_) {
             throw Error(offset);
         }
@@ -33,7 +33,7 @@ public:
 
 private:
     _Type* array_;
-    size_t  size_;
+    size_t size_;
 };
 
 } // namespace oasys
