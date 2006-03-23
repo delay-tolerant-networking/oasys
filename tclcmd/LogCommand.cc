@@ -46,16 +46,13 @@ LogCommand::LogCommand()
 {
     bind_s("logfile", &Log::instance()->logfile_,
            "The pathname to the logfile.");
-}
 
-const char*
-LogCommand::help_string()
-{
-    return("log <path> <level> <string>\n"
-           "log prefix <prefix>\n"
-           "log rotate\n"
-           "log dump_rules\n"
-           "log reparse_debug_file\n");
+    add_to_help("<path> <level> <string>", 
+                "Log message string with path, level");
+    add_to_help("prefix <prefix>", "Set logging prefix");
+    add_to_help("rotate", "Rotate the log file");
+    add_to_help("dump_rules", "Show log filter rules");
+    add_to_help("reparse", "Reparse the rules file");
 }
 
 int
@@ -83,7 +80,10 @@ LogCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
     }
     
     // log reparse_debug_file
-    if (argc == 2 && !strcmp(argv[1], "reparse_debug_file")) {
+    if (argc == 2 && 
+        (strcmp(argv[1], "reparse_debug_file") == 0 ||
+         strcmp(argv[1], "reparse") == 0))
+    {
         Log::instance()->parse_debug_file();
         return TCL_OK;
     }

@@ -46,6 +46,7 @@ namespace oasys {
 HelpCommand::HelpCommand()
     : TclCommand("help")
 {
+    add_to_help("help <cmd>", "Print the help documentation for cmd");
 }
 
 int
@@ -105,12 +106,6 @@ HelpCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
         wrong_num_args(argc, argv, 2, 3, 3);
         return TCL_ERROR;
     }
-}
-
-const char*
-HelpCommand::help_string()
-{
-    return("help <cmd?>");
 }
 
 } // namespace oasys

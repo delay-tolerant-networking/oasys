@@ -44,17 +44,10 @@ namespace oasys {
 DebugCommand::DebugCommand()
     : TclCommand("debug")
 {
-}
-
-const char*
-DebugCommand::help_string()
-{
 #ifdef OASYS_DEBUG_MEMORY_ENABLED
-    return("debug dump_memory\n"
-           "debug dump_memory_diffs\n");
-#else
-    return("No subcommands are currently implemented for debug.\n");
-#endif
+    add_to_help("dump_memory", "Dump memory usage");
+    add_to_help("dump_memory_diffs", "Dump memory diff of usage");
+#endif    
 }
 
 int
