@@ -68,7 +68,7 @@ public:
     /**
      * Virtual from SerializableObject.
      */
-    inline void serialize(oasys::SerializeAction* a);
+    void serialize(oasys::SerializeAction* a);
 };
 
 #include "SerializableVector.tcc"

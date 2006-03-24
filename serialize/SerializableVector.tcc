@@ -37,7 +37,7 @@
  */
 
 template <typename _Type>
-inline void
+void
 SerializableVector<_Type>::serialize(SerializeAction* a)
 {
     oasys::Builder builder;
