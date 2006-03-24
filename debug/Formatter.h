@@ -98,7 +98,7 @@ public:
     /**
      * Print out to a statically allocated buffer which can be called
      * from gdb. Note: must not be inlined in order for gdb to be able
-     * to exectute this function.
+     * to execute this function.
      */
     int debug_dump();
 
