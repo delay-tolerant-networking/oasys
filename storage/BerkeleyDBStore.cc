@@ -864,7 +864,7 @@ BerkeleyDBTable::size() const
 
 //----------------------------------------------------------------------------
 DurableIterator*
-BerkeleyDBTable::iter()
+BerkeleyDBTable::itr()
 {
     return new BerkeleyDBIterator(this);
 }

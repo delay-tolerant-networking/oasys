@@ -377,7 +377,7 @@ DECLARE_TEST(SingleTypeIterator) {
 	CHECK(table->put(IntShim(i), &data, DS_CREATE | DS_EXCL) == 0);
     }
 
-    DurableIterator* iter = table->iter();
+    DurableIterator* iter = table->itr();
 
     std::bitset<num_objs> found;
     while(iter->next() == 0) {

@@ -85,7 +85,7 @@ public:
 
     size_t size() const;
     
-    DurableIterator* iter();
+    DurableIterator* itr();
     /// @}
 
 private:

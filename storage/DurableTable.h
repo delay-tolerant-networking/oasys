@@ -75,7 +75,7 @@ public:
      * Return a newly allocated iterator for the table. Caller has the
      * responsibility to delete it once finished.
      */
-    DurableIterator* iter() { return impl_->iter(); }
+    DurableIterator* itr() { return impl_->itr(); }
 
     /**
      * Return the underlying table implementation.

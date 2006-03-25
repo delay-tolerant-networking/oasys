@@ -58,11 +58,16 @@ public:
      *
      * @code
      * MyKeyType key;
-     * DurableIterator* i = table->iter();
-     * while(i->next() == 0) {
+     * DurableIterator* i = table->itr();
+     * while (i->next() == 0) 
+     * {
      *    i->get(&key);
      *    // ... do stuff
      * }
+     * 
+     * // Remember to delete the Iterator! Bad things happen if the
+     * table disappears when the iterator is still open.
+     * delete_z(i);
      * @endcode
      *
      * @return DS_OK, DS_NOTFOUND if no more elements, DS_ERR if an

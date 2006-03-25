@@ -181,7 +181,7 @@ public:
      *
      * @return The new iterator. Caller deletes this pointer.
      */
-    virtual DurableIterator* iter() = 0;
+    virtual DurableIterator* itr() = 0;
 
     /**
      * Return the name of this table.

@@ -329,7 +329,7 @@ MemoryTable::size() const
 }
 
 DurableIterator*
-MemoryTable::iter()
+MemoryTable::itr()
 {
     return new MemoryIterator(this);
 }

@@ -457,7 +457,7 @@ FileSystemTable::size() const
     
 //----------------------------------------------------------------------------
 DurableIterator* 
-FileSystemTable::iter()
+FileSystemTable::itr()
 {
     return new FileSystemIterator(path_);
 }
