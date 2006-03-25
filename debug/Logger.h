@@ -93,6 +93,14 @@ public:
     }
 
     /**
+     * Same thing with a std::string
+     */
+    Logger(const std::string& logpath)
+    {
+        set_logpath(logpath.c_str());
+    }
+
+    /**
      * Format function for logpath_.
      */
     inline void logpathf(const char* fmt, ...) PRINTFLIKE(2, 3);
