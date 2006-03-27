@@ -63,10 +63,9 @@ namespace oasys {
  *
  *****************************************************************************/
 const std::string BerkeleyDBStore::META_TABLE_NAME("___META_TABLE___");
-
 //----------------------------------------------------------------------------
-BerkeleyDBStore::BerkeleyDBStore() 
-    : DurableStoreImpl("/storage/berkeleydb"),
+BerkeleyDBStore::BerkeleyDBStore(const char* logpath)
+    : DurableStoreImpl("BerkeleyDBStore", logpath),
       init_(false)
 {}
 
@@ -213,7 +212,6 @@ BerkeleyDBStore::init(const StorageConfig& cfg)
 
     if (cfg.db_lockdetect_ != 0) {
         deadlock_timer_ = new DeadlockTimer(logpath_, dbenv_, cfg.db_lockdetect_);
-        deadlock_timer_->logpath_appendf("/deadlock_timer");
         deadlock_timer_->reschedule();
     } else {
         deadlock_timer_ = NULL;
@@ -328,7 +326,7 @@ BerkeleyDBStore::get_table(DurableTableImpl** table,
     
     log_debug("get_table -- opened table %s type %d", name.c_str(), db_type);
 
-    *table = new BerkeleyDBTable(this, name, (flags & DS_MULTITYPE), 
+    *table = new BerkeleyDBTable(logpath_, this, name, (flags & DS_MULTITYPE), 
                                  db, db_type);
 
     return 0;
@@ -401,7 +399,8 @@ BerkeleyDBStore::get_table_names(StringVector* names)
         err = metatable->db_->cursor(metatable->db_, NO_TX, &cursor, 0);
         if (err != 0) 
         {
-            log_err("cannot create iterator for metatable, err=%s", db_strerror(err));
+            log_err("cannot create iterator for metatable, err=%s",
+                    db_strerror(err));
             return DS_ERR;
         }
 
@@ -415,10 +414,12 @@ BerkeleyDBStore::get_table_names(StringVector* names)
             }
             else if (err != 0)
             {
-                log_err("error getting next item with iterator, err=%s", db_strerror(err));
+                log_err("error getting next item with iterator, err=%s",
+                        db_strerror(err));
                 return DS_ERR;
             }
-            names->push_back(std::string(static_cast<char*>(key->data), key->size));
+            names->push_back(std::string(static_cast<char*>(key->data),
+                                         key->size));
         }
 
         if (cursor) 
@@ -476,7 +477,7 @@ BerkeleyDBStore::get_meta_table(BerkeleyDBTable** table)
         return DS_ERR;
     }
     
-    *table = new BerkeleyDBTable(this, META_TABLE_NAME, false, db, type);
+    *table = new BerkeleyDBTable(logpath_, this, META_TABLE_NAME, false, db, type);
     
     return 0;
 }
@@ -565,14 +566,16 @@ BerkeleyDBStore::DeadlockTimer::timeout(const struct timeval& now)
  * BerkeleyDBTable
  *
  *****************************************************************************/
-BerkeleyDBTable::BerkeleyDBTable(BerkeleyDBStore* store,
-                                 std::string name, bool multitype,
+BerkeleyDBTable::BerkeleyDBTable(const char* logpath,
+                                 BerkeleyDBStore* store,
+                                 const std::string& table_name,
+                                 bool multitype,
                                  DB* db, DBTYPE db_type)
-    : DurableTableImpl(name, multitype),
+    : DurableTableImpl(table_name, multitype),
+      Logger("BerkeleyDBTable", "%s/%s", logpath, table_name.c_str()),
       db_(db), db_type_(db_type), store_(store)
 {
-    logpathf("/berkeleydb/table/%s", name.c_str());
-    store_->acquire_table(name);
+    store_->acquire_table(table_name);
 }
 
 //----------------------------------------------------------------------------
@@ -896,10 +899,9 @@ BerkeleyDBTable::key_exists(const void* key, size_t key_len)
  *
  *****************************************************************************/
 BerkeleyDBIterator::BerkeleyDBIterator(BerkeleyDBTable* t)
-    : cur_(0), valid_(false)
+    : Logger("BerkeleyDBIterator", "%s/iter", t->logpath()),
+      cur_(0), valid_(false)
 {
-    logpathf("/storage/berkeleydb/iter/%s", t->name());
-
     int err = t->db_->cursor(t->db_, NO_TX, &cur_, 0);
     if (err != 0) {
         log_err("DB: cannot create a DB iterator, err=%s", db_strerror(err));

@@ -54,12 +54,11 @@ template <> TimerSystem* Singleton<TimerSystem>::instance_ = 0;
 //////////////////////////////////////////////////////////////////////////////
 TimerSystem::TimerSystem()
     : Thread("TimerSystem"),
-      Logger("/timer"),
+      Logger("TimerSystem", "/timer"),
       system_lock_(new SpinLock()),
-      signal_("/timer/signal"),
+      signal_(logpath_),
       timers_()
 {
-
     memset(handlers_, 0, sizeof(handlers_));
     memset(signals_, 0, sizeof(signals_));
     sigfired_ = false;

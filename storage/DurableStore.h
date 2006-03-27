@@ -114,15 +114,15 @@ enum DurableStoreFlags_t {
 /**
  * Interface for the generic datastore.
  */
-class DurableStore {
+class DurableStore : public Logger {
 public:
     /*!
-     * Create a DurableStore, which needs to be backed by an
-     * impl. DurableStore will assume ownership of the impl.
+     * Initialize the DurableStore object. Note that create_store()
+     * must be called before it can be used.
      */
-    DurableStore(DurableStoreImpl* impl) : impl_(impl) 
+    DurableStore(const char* logpath)
+        : Logger("DurableStore", logpath), impl_(0)
     { 
-        ASSERT(impl_ != 0); 
     }
 
     /*!
@@ -131,15 +131,14 @@ public:
     ~DurableStore();
 
     /*!
-     * Static creation function for creating the right kind of
-     * database backend implementation for a given StorageConfig.
+     * Creation function for creating the right kind of database
+     * backend implementation for a given StorageConfig.
      *
      * Also initializes the store and returns whether or not the store
      * was cleanly shut down in the previous run.
      */
-    static int create_store(const StorageConfig& config, 
-                            DurableStore** store,
-                            bool* clean_shutdown = NULL);
+    int create_store(const StorageConfig& config, 
+                     bool* clean_shutdown = NULL);
 
     //! Return the implementation pointer.
     DurableStoreImpl* impl() { return impl_; }

@@ -20,7 +20,7 @@
 namespace oasys {
 
 BluetoothInquiry::BluetoothInquiry(const char * logbase)
-    : Logger(logbase),
+    : Logger("BluetoothInquiry", logbase),
       hci_dev_(0),
       num_responses_(10),
       num_responses_i_(-1),

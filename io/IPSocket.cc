@@ -57,7 +57,7 @@
 namespace oasys {
 
 IPSocket::IPSocket(int socktype, const char* logbase)
-    : Logger(logbase)
+    : Logger("IPSocket", logbase)
 {
     state_       = INIT;
     local_addr_  = INADDR_ANY;
@@ -72,10 +72,10 @@ IPSocket::IPSocket(int socktype, const char* logbase)
 IPSocket::IPSocket(int socktype, int sock,
                    in_addr_t remote_addr, u_int16_t remote_port,
                    const char* logbase)
+    : Logger("IPSocket", "%s/%d", logbase, sock)
 {
     fd_       = sock;
     socktype_ = socktype;
-    logpathf("%s/%d", logbase, sock);
     
     state_       = ESTABLISHED;
     local_addr_  = INADDR_NONE;

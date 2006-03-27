@@ -60,13 +60,15 @@ class SpinLock;
  */
 class Notifier : public Logger {
 public:
-    /*!
-     * @param fmt If format is null, then the notifier constructor
-     * will be silent and not output any log messages. However, please
-     * set the notifier logpath sometime afterwards with logpathf!
+    /**
+     * Constructor that takes the logging path and an optional boolean
+     * to suppress all logging.
      */
-    Notifier(const char* fmt, ...) PRINTFLIKE(2,3);
+    Notifier(const char* logpath, bool keep_quiet = false);
 
+    /**
+     * Destructor
+     */
     ~Notifier();
 
     /**
@@ -113,6 +115,7 @@ protected:
     bool waiter_; // for debugging only
     int  count_;  // for debugging as well
     int  pipe_[2];
+    bool quiet_;  // no logging
 };
 
 } // namespace oasys

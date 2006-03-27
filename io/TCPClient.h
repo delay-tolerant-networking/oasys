@@ -51,10 +51,10 @@ private:
     TCPClient(const TCPClient&);	///< Prohibited constructor
     
 public:
-    TCPClient(const char* logbase = "/tcpclient",
+    TCPClient(const char* logbase = "/oasys/tcpclient",
               bool init_socket_immediately = false);
     TCPClient(int fd, in_addr_t remote_addr, u_int16_t remote_port,
-              const char* logbase = "/tcpclient");
+              const char* logbase = "/oasys/tcpclient");
 
     /**
      * Try to connect to the remote host, but don't block for more

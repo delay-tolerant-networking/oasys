@@ -51,7 +51,7 @@ namespace oasys {
  */
 class TCPServer : public IPSocket {
 public:
-    TCPServer(char* logbase = "/tcpserver");
+    TCPServer(char* logbase = "/oasys/tcpserver");
 
     //@{
     /// System call wrapper
@@ -78,7 +78,7 @@ public:
  */
 class TCPServerThread : public TCPServer, public Thread {
 public:
-    TCPServerThread(const char* name, char* logbase = "/tcpserver",
+    TCPServerThread(const char* name, char* logbase = "/oasys/tcpserver",
                     int flags = 0, int accept_timeout = -1)
         : TCPServer(logbase), Thread(name, flags),
           accept_timeout_(accept_timeout)

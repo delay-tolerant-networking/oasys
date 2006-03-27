@@ -45,25 +45,19 @@
 
 namespace oasys {
 
-Notifier::Notifier(const char* fmt, ...)
-    : Logger("/notifier"), 
-      count_(0)
+Notifier::Notifier(const char* logpath, bool quiet)
+    : Logger("Notifier", logpath), 
+      count_(0),
+      quiet_(quiet)
 {
-    bool quiet = (fmt == 0);
-    if (!quiet)
-    {
-	va_list ap;
-	va_start(ap, fmt);
-	vsnprintf(logpath_ + 9, sizeof(logpath_) - 9, fmt, ap);
-	va_end(ap);
-    }
+    logpath_appendf("/notifier");
     
     if (pipe(pipe_) != 0) {
         PANIC("can't create pipe for notifier");
     }
 
-    if (!quiet) {
-	log_debug("created pipe, fds: %d %d", pipe_[0], pipe_[1]);
+    if (!quiet_) {
+        log_debug("created pipe, fds: %d %d", pipe_[0], pipe_[1]);
     }
     
     for (int n = 0; n < 2; ++n) {
@@ -80,7 +74,10 @@ Notifier::Notifier(const char* fmt, ...)
 Notifier::~Notifier()
 {
     int err;
-    log_debug("Notifier shutting down (closing fds %d %d)", pipe_[0], pipe_[1]);
+    if (!quiet_) {
+        log_debug("Notifier shutting down (closing fds %d %d)",
+                  pipe_[0], pipe_[1]);
+    }
 
     err = close(pipe_[0]);
     if (err != 0) {
@@ -102,7 +99,9 @@ Notifier::drain_pipe(size_t bytes)
 
     while (true)
     {
-        log_debug("drain_pipe: attempting to drain %u bytes", (u_int)bytes);
+        if (!quiet_) {
+            log_debug("drain_pipe: attempting to drain %u bytes", (u_int)bytes);
+        }
         ret = IO::read(read_fd(), buf, 
                        std::min(sizeof(buf), bytes - bytes_drained));
         if (ret <= 0) {
@@ -119,8 +118,10 @@ Notifier::drain_pipe(size_t bytes)
         }
         
         bytes_drained += ret;
-        log_debug("drain_pipe: drained %u/%u byte(s) from pipe", 
-                  (u_int)bytes_drained, (u_int)bytes);
+        if (!quiet_) {
+            log_debug("drain_pipe: drained %u/%u byte(s) from pipe", 
+                      (u_int)bytes_drained, (u_int)bytes);
+        }
         count_ -= ret;
 
         if (bytes != 0 && bytes_drained == bytes) {
@@ -137,7 +138,9 @@ Notifier::drain_pipe(size_t bytes)
         }
     }
 
-    log_debug("drain pipe count = %d", count_);
+    if (!quiet_) {
+        log_debug("drain pipe count = %d", count_);
+    }
 }
 
 bool
@@ -148,8 +151,10 @@ Notifier::wait(SpinLock* lock, int timeout)
     }
     waiter_ = true;
 
-    log_debug("attempting to wait on %p, count = %d", 
-              this, count_);
+    if (!quiet_) {
+        log_debug("attempting to wait on %p, count = %d", 
+                  this, count_);
+    }
     
     if (lock)
         lock->unlock();
@@ -167,11 +172,15 @@ Notifier::wait(SpinLock* lock, int timeout)
     waiter_ = false;
     
     if (ret == IOTIMEOUT) {
-        log_debug("notifier wait timeout");
+        if (!quiet_) {
+            log_debug("notifier wait timeout");
+        }
         return false; // timeout
     } else {
         drain_pipe(1);
-        log_debug("notifier wait successfully notified");
+        if (!quiet_) {
+            log_debug("notifier wait successfully notified");
+        }
         return true;
     }
 }
@@ -185,7 +194,10 @@ Notifier::notify(SpinLock* lock)
     bool need_to_relock = false;
     
   retry:
-    log_debug("notifier notify");
+    if (!quiet_) {
+        log_debug("notifier notify");
+    }
+    
     int ret = ::write(write_fd(), &b, 1);
     
     if (ret == -1) {
@@ -222,7 +234,9 @@ Notifier::notify(SpinLock* lock)
         }
         ASSERT(ret == 1);
         ++count_;
-        log_debug("notify count = %d", count_);
+        if (!quiet_) {
+            log_debug("notify count = %d", count_);
+        }
     }
 }
 

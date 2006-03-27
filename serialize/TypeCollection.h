@@ -125,7 +125,7 @@ template<typename _Collection, typename _Type> class TypeCollectionCode;
 /**
  * Generic base class for templated type collections.
  */
-class TypeCollection : public Logger {
+class TypeCollection {
 public:
     /// Typedef for type codes
     typedef u_int32_t TypeCode_t;
@@ -138,7 +138,7 @@ public:
     typedef int (*Allocator_t)(TypeCode_t typecode,
                                SerializableObject** data);
     
-    TypeCollection() : Logger("/type_collection") {}
+    TypeCollection() {}
 
     void reg(TypeCode_t typecode, TypeCollectionHelper* helper) {
         ASSERT(dispatch_.find(typecode) == dispatch_.end());
@@ -200,7 +200,7 @@ public:
         ASSERT(dispatch_.find(typecode) != dispatch_.end());
         *obj = dynamic_cast<_Type*>(dispatch_[typecode]->new_object());
         if (*obj == NULL) {
-            log_crit("out of memory");
+            log_crit("/oasys/type_collection", "out of memory");
             return TypeCollectionErr::MEMORY;
         }
         

@@ -20,11 +20,10 @@ DurableStore::~DurableStore()
     if (clean_shutdown_file_ != "") {
         int fd = creat(clean_shutdown_file_.c_str(), S_IRUSR);
         if (fd < 0) {
-            log_err("/storage",
-                    "error creating shutdown file '%s': %s",
+            log_err("error creating shutdown file '%s': %s",
                     clean_shutdown_file_.c_str(), strerror(errno));
         } else {
-            log_debug("/storage", "successfully created clean shutdown file '%s'",
+            log_debug("successfully created clean shutdown file '%s'",
                       clean_shutdown_file_.c_str());
             close(fd);
         }
@@ -33,30 +32,29 @@ DurableStore::~DurableStore()
 
 int
 DurableStore::create_store(const StorageConfig& config,
-                           DurableStore**       store,
                            bool*                clean_shutdown)
 {
-    DurableStoreImpl* impl = NULL;
-        
+    ASSERT(impl_ == NULL);
+    
     if (0) {} // symmetry
 
     // filesystem store
     else if (config.type_ == "filesysdb")
     {
-        impl = new FileSystemStore();
+        impl_ = new FileSystemStore(logpath_);
     }
 
     // memory backed store
     else if (config.type_ == "memorydb")
     {
-        impl = new MemoryStore();
+        impl_ = new MemoryStore(logpath_);
     }
 
 #if LIBDB_ENABLED
     // berkeley db
     else if (config.type_ == "berkeleydb")
     {
-        impl = new BerkeleyDBStore();
+        impl_ = new BerkeleyDBStore(logpath_);
     }
 #endif
 
@@ -70,37 +68,35 @@ DurableStore::create_store(const StorageConfig& config,
         
     else
     {
-        log_crit("/storage", "storage type %s not implemented, exiting...",
+        log_crit("storage type %s not implemented, exiting...",
                  config.type_.c_str());
         exit(1);
     }
     
-    int err = impl->init(config);
+    int err = impl_->init(config);
     if (err != 0)
     {
-        log_err("/storage", "can't initialize %s %d",
+        log_err("can't initialize %s %d",
                 config.type_.c_str(), err);
         return DS_ERR;
     }
 
-    *store = new DurableStore(impl);
-
     if (config.leave_clean_file_) {
-        (*store)->clean_shutdown_file_ = config.dbdir_;
-        (*store)->clean_shutdown_file_ += "/.ds_clean";
+        clean_shutdown_file_ = config.dbdir_;
+        clean_shutdown_file_ += "/.ds_clean";
         
         // try to remove the clean shutdown file
-        err = unlink((*store)->clean_shutdown_file_.c_str());
+        err = unlink(clean_shutdown_file_.c_str());
         if ((err == 0) ||
             (errno == ENOENT && config.init_ == true))
         {
-            log_info("/storage", "datastore %s was cleanly shut down",
+            log_info("datastore %s was cleanly shut down",
                      config.dbdir_.c_str());
             if (clean_shutdown) {
                 *clean_shutdown = true;
             }
         } else {
-            log_info("/storage", "datastore %s was not cleanly shut down",
+            log_info("datastore %s was not cleanly shut down",
                      config.dbdir_.c_str());
             if (clean_shutdown) {
                 *clean_shutdown = false;

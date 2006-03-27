@@ -15,6 +15,8 @@ template<typename _elt_t>
 MsgQueue<_elt_t>::MsgQueue(const char* logpath, SpinLock* lock)
     : Notifier(logpath), disable_notify_(false)
 {
+    logpath_appendf("/msgqueue");
+    
     if (lock != NULL) {
         lock_ = lock;
     } else {

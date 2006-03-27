@@ -23,7 +23,7 @@ int BluetoothSocket::abort_on_error_ = 0;
 BluetoothSocket::BluetoothSocket(int socktype,
                                  proto_t proto,
                                  const char* logbase)
-    : Logger(logbase)
+    : Logger("BluetoothSocket", logbase)
 {
     state_ = INIT;
     memset(&local_addr_,0,sizeof(bdaddr_t));
@@ -41,7 +41,7 @@ BluetoothSocket::BluetoothSocket(int socktype,
 BluetoothSocket::BluetoothSocket(int socktype, proto_t proto, int sock,
                    bdaddr_t remote_addr, u_int8_t remote_channel,
                    const char* logbase)
-    : Logger(logbase)
+    : Logger("BluetoothSocket", logbase)
 {
     sa_ = NULL;
     fd_ = sock;

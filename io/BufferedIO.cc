@@ -52,7 +52,9 @@ namespace oasys {
 #define DEFAULT_BUFSIZE 1024
 
 BufferedInput::BufferedInput(IOClient* client, const char* logbase)
-    : Logger(logbase), client_(client), buf_(DEFAULT_BUFSIZE), 
+    : Logger("BufferedInput", logbase),
+      client_(client),
+      buf_(DEFAULT_BUFSIZE),
       seen_eof_(false)
  {}
 
@@ -281,7 +283,9 @@ BufferedInput::find_nl(const char* nl)
  **************************************************************************/
 BufferedOutput::BufferedOutput(IOClient* client, 
                                const char* logbase)
-    : Logger(logbase), client_(client), buf_(DEFAULT_BUFSIZE), 
+    : Logger("BufferedOutput", logbase),
+      client_(client),
+      buf_(DEFAULT_BUFSIZE), 
       flush_limit_(DEFAULT_FLUSH_LIMIT)
 {}
 

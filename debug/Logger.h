@@ -52,18 +52,24 @@ namespace oasys {
  * It therefore exports a set of functions (set_logpath, logpathf,
  * logpath_appendf) to manipulate the logging path post-construction.
  *
+ * To support logging on a class basis instead of on a hierarchical
+ * basis, the Logger also takes the name of the class in the
+ * constructor. Since, by convention, paths start with '/' and classes
+ * cannot, this allows independent logging control by class name or by
+ * logging path.
+ *
  * For example:
  *
  * @code
  * class LoggerTest : public Logger {
  * public:
- *   LoggerTest() : Logger("/loggertest")
+ *   LoggerTest() : Logger("LoggerTest", "/logger/test")
  *   {
  *       logf(LOG_DEBUG, "initializing"); 		 // no path needed
- *       logf("/loggertest" LOG_DEBUG, "intiializing");  // but can be given
+ *       logf("/logger/test" LOG_DEBUG, "intiializing"); // but can be given
  *
  *       log_debug("loggertest initializing");           // macros work
- *       __log_debug("/loggertest", "initializing");     // but this case needs
+ *       __log_debug("/logger/test", "initializing");    // but this case needs
  *                                                       // to be __log_debug
  *       set_logpath("/path");
  *       logpath_appendf("/a"); // logpath is "/path/a"
@@ -76,26 +82,16 @@ namespace oasys {
 class Logger {
 public:
     /**
-     * Default constructor, initializes the logpath to the address of
-     * the object.
+     * Constructor that initializes the logpath with a printf style
+     * format string.
      */
-    Logger()
-    {
-        set_logpath(NULL);
-    }
+    inline Logger(const char* classname, const char* fmt, ...) PRINTFLIKE(3, 4);
 
     /**
-     * Constructor that initializes the logpath to a constant string.
+     * Constructor that initializes to a constant std::string.
      */
-    Logger(const char* logpath)
-    {
-        set_logpath(logpath);
-    }
-
-    /**
-     * Same thing with a std::string
-     */
-    Logger(const std::string& logpath)
+    Logger(const char* classname, const std::string& logpath)
+        : classname_(classname)
     {
         set_logpath(logpath.c_str());
     }
@@ -136,18 +132,43 @@ public:
     /**
      * Wrapper around the base __log_enabled function that uses the
      * logpath_ instance.
+     *
+     * Also, all Logger instances store the class name of the
+     * implementation, and logging can be enabled/disabled on that
+     * target as well, so we check the class name as well.
      */
     inline bool log_enabled(log_level_t level) const
     {
-        return oasys::__log_enabled(level, logpath_);
+        return oasys::__log_enabled(level, logpath_) ||
+            oasys::__log_enabled(level, classname_);
     }
 
+    /**
+     * As described in Log.h, the log_debug style macros call
+     * log_enabled(level, path) before calling __logf. In the case of
+     * the Logger, the path parameter isn't really the path, but is
+     * actually the format string, so we actually call log_enabled on
+     * the logpath_ instance.
+     *
+     * Also, all Logger instances store the class name of the
+     * implementation, and logging can be enabled/disabled on that
+     * target as well, so we check it.
+     */
+    inline bool __log_enabled(log_level_t level, const char* path) const
+    {
+        return oasys::__log_enabled(level, logpath_) ||
+            oasys::__log_enabled(level, classname_);
+            
+    }
+
+    
     /**
      * Wrapper around vlogf that uses the logpath_ instance.
      */
     inline int vlogf(log_level_t level, const char *fmt, va_list args) const
     {
-        return Log::instance()->vlogf(logpath_, level, this, fmt, args);
+        return Log::instance()->vlogf(logpath_, level, classname_, this,
+                                      fmt, args);
     }
 
     /**
@@ -173,27 +194,13 @@ public:
     inline int __logf(log_level_t level, const char *fmt, ...) const
         PRINTFLIKE(3, 4);
 
-
-    /**
-     * As described in Log.h, the log_debug style macros call
-     * log_enabled(level, path) before calling __logf. In the case of
-     * the Logger, the path parameter isn't really the path, but is
-     * actually the format string, so we actually call log_enabled on
-     * the logpath_ instance.
-     */
-    inline bool __log_enabled(log_level_t level, const char* path) const
-    {
-        return oasys::__log_enabled(level, logpath_);
-    }
-
-    
     /**
      * And finally, one for log_multiline..
      */
     inline int log_multiline(log_level_t level, const char* msg) const
     {
         return Log::instance()->log_multiline(logpath_, level, 
-                                              msg, this);
+                                              classname_, this, msg);
     }
 
     /**
@@ -202,10 +209,23 @@ public:
     const char* logpath() { return logpath_; }
 
 protected:
+    const char* classname_;
     char logpath_[LOG_MAX_PATHLEN];
     size_t baselen_;
 };
 
+//----------------------------------------------------------------------
+Logger::Logger(const char* classname, const char* fmt, ...)
+    : classname_(classname)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(logpath_, sizeof(logpath_), fmt, ap);
+    va_end(ap);
+    baselen_ = strlen(logpath_);
+}
+
+//----------------------------------------------------------------------
 void
 Logger::logpathf(const char* fmt, ...)
 {
@@ -215,6 +235,7 @@ Logger::logpathf(const char* fmt, ...)
     va_end(ap);
 }
 
+//----------------------------------------------------------------------
 void
 Logger::logpath_appendf(const char* fmt, ...)
 {
@@ -224,6 +245,7 @@ Logger::logpath_appendf(const char* fmt, ...)
     va_end(ap);
 }
 
+//----------------------------------------------------------------------
 int
 Logger::logf(log_level_t level, const char *fmt, ...) const
 {
@@ -234,6 +256,7 @@ Logger::logf(log_level_t level, const char *fmt, ...) const
     return ret;
 }
 
+//----------------------------------------------------------------------
 int
 Logger::__logf(log_level_t level, const char *fmt, ...) const
 {
@@ -244,13 +267,15 @@ Logger::__logf(log_level_t level, const char *fmt, ...) const
     return ret;
 }
 
+//----------------------------------------------------------------------
 int
 Logger::logf(const char* logpath, log_level_t level,
              const char *fmt, ...) const
 {
     va_list ap;
     va_start(ap, fmt);
-    int ret = Log::instance()->vlogf(logpath, level, this, fmt, ap);
+    int ret = Log::instance()->vlogf(logpath, level, classname_, this,
+                                     fmt, ap);
     va_end(ap);
     return ret;
 }

@@ -103,7 +103,8 @@ private:
     oasys::ScratchBuffer<u_char*> scratch_;
 
     //! Only MemoryStore can create MemoryTables
-    MemoryTable(ItemMap* items, const std::string& name, bool multitype);
+    MemoryTable(const char* logpath, ItemMap* items,
+                const std::string& name, bool multitype);
 };
 
 /**
@@ -116,7 +117,7 @@ class MemoryStore : public DurableStoreImpl {
     friend class MemoryTable;
 
 public:
-    MemoryStore();
+    MemoryStore(const char* logpath);
 
     // Can't copy or =, don't implement these
     MemoryStore& operator=(const MemoryStore&);
@@ -155,7 +156,7 @@ private:
      * Create an iterator for table t. These should not be called
      * except by MemoryTable.
      */
-    MemoryIterator(MemoryTable* t);
+    MemoryIterator(const char* logpath, MemoryTable* t);
 
 public:
     virtual ~MemoryIterator();

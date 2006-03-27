@@ -40,10 +40,10 @@
 
 namespace oasys {
 
-SMTPClient::SMTPClient()
-    : TCPClient("/smtp/client", true /* init_socket_immediately */ ),
+SMTPClient::SMTPClient(const char* logpath)
+    : TCPClient(logpath, true /* init_socket_immediately */ ),
       in_(this), out_(this),
-      smtp_(&in_, &out_, SMTP::DEFAULT_CONFIG, "/smtp/client"),
+      smtp_(&in_, &out_, SMTP::DEFAULT_CONFIG, logpath),
       first_session_(true)
 {
 }
@@ -56,11 +56,10 @@ SMTPClient::send_message(SMTPSender* sender)
     return ret;
 }
 
-SMTPFdClient::SMTPFdClient(int fd_in, int fd_out)
-    : Logger("/smtp/client"),
-      fdio_in_(fd_in), fdio_out_(fd_out),
+SMTPFdClient::SMTPFdClient(int fd_in, int fd_out, const char* logpath)
+    : fdio_in_(fd_in), fdio_out_(fd_out),
       in_(&fdio_in_), out_(&fdio_out_),
-      smtp_(&in_, &out_, SMTP::DEFAULT_CONFIG, "/smtp/client"),
+      smtp_(&in_, &out_, SMTP::DEFAULT_CONFIG, logpath),
       first_session_(true)
 {
 }

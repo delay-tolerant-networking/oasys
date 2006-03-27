@@ -51,7 +51,7 @@ SMTPUtils::extract_address(const std::string& str, std::string* address)
 
     int err = pat.match(str.c_str(), 0);
     if (err != 0) {
-        log_debug("/smtp/utils", "extract_address %s failed: %s",
+        log_debug("/oasys/smtp/utils", "extract_address %s failed: %s",
                   str.c_str(), pat.regerror_str(err).c_str());
         return false;
     }
@@ -61,7 +61,7 @@ SMTPUtils::extract_address(const std::string& str, std::string* address)
     address->assign(str.substr(pat.get_match(0).rm_so,
                                pat.get_match(0).rm_eo - pat.get_match(0).rm_so));
 
-    log_debug("/smtp/utils", "extract_address %s -> %s", str.c_str(), address->c_str());
+    log_debug("/oasys/smtp/utils", "extract_address %s -> %s", str.c_str(), address->c_str());
     return true;
 }
 

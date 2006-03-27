@@ -63,7 +63,7 @@ public:
     };
 
     /// Creates a mutex. By default, we create a TYPE_RECURSIVE.
-    Mutex(const char* name = "lock", 
+    Mutex(const char* logbase,
           lock_type_t type = TYPE_RECURSIVE,
           bool keep_quiet = false);
     ~Mutex();

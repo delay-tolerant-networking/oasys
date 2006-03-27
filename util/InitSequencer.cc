@@ -21,7 +21,7 @@ struct InitStepSort {
 
 
 InitSequencer::InitSequencer()
-    : Logger("/oasys/init_sequencer")
+    : Logger("InitSequencer", "/oasys/init_sequencer")
 {
 }
 

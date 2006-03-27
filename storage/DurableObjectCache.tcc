@@ -8,7 +8,7 @@ template <typename _DataType>
 DurableObjectCache<_DataType>::DurableObjectCache(const char*   logpath,
                                                   size_t        capacity,
                                                   CachePolicy_t policy)
-    : Logger(logpath),
+    : Logger("DurableObjectCache", logpath),
       size_(0), 
       capacity_(capacity),
       hits_(0), 

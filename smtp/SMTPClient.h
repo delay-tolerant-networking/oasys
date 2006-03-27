@@ -50,7 +50,7 @@ namespace oasys {
 class SMTPClient : public TCPClient {
 public:
     /// Default constructor
-    SMTPClient();
+    SMTPClient(const char* logpath = "/oasys/smtp/client");
 
     /// Send a message using the SMTPSender interface. Returns 0 on
     /// success, an SMTP error code on failure.
@@ -67,10 +67,11 @@ protected:
  * Debugging class to provide basically the same functionality only
  * using a pair of file descriptors, not a socket
  */
-class SMTPFdClient : public Logger {
+class SMTPFdClient {
 public:
     /// Default constructor
-    SMTPFdClient(int fd_in, int fd_out);
+    SMTPFdClient(int fd_in, int fd_out,
+                 const char* logpath = "/oasys/smtp/client");
      
     /// Send a message using the SMTPSender interface. Returns 0 on
     /// success, an SMTP error code on failure.

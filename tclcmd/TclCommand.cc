@@ -60,7 +60,7 @@ TclCommandList*   TclCommandInterp::auto_reg_ = NULL;
 #include "command-init-tcl.c"
 
 TclCommandInterp::TclCommandInterp()
-    : Logger("/command")
+    : Logger("TclCommandInterp", "/command")
 {}
 
 int
@@ -403,9 +403,9 @@ TclCommandInterp::get_result()
  *
  *****************************************************************************/
 TclCommand::TclCommand(const char* name, const char* theNamespace)
-    : do_builtins_(true)
+    : Logger("TclCommand", "/command/%s", name),
+      do_builtins_(true)
 {
-    logpathf("/command/%s", name);
 
     if (theNamespace != 0) {
         name_ += theNamespace;

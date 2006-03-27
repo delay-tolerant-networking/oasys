@@ -12,7 +12,7 @@ SMTP::SMTP(oasys::BufferedInput*  in,
            oasys::BufferedOutput* out,
            const Config&          config,
            const char*            logpath)
-    : Logger(logpath),
+    : Logger("SMTP", logpath),
       in_(in), 
       out_(out),
       config_(config)

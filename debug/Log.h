@@ -221,7 +221,8 @@ public:
      * other variants. Returns the number of bytes written, i.e. zero
      * if the log line was suppressed.
      */
-    int vlogf(const char *path, log_level_t level, const void* obj,
+    int vlogf(const char *path, log_level_t level,
+              const char* classname, const void* obj,
               const char *fmt, va_list ap);
 
     /**
@@ -230,10 +231,11 @@ public:
      * repeated for each line of output.
      */
     int log_multiline(const char* path, log_level_t level, 
-                      const char* msg, const void* obj);
+                      const char* classname, const void* obj,
+                      const char* msg);
 
     /**
-     * Return the log level currently enabled for the path.
+     * Return the log level currently enabled for the path / class.
      */
     log_level_t log_level(const char *path);
 
@@ -339,11 +341,18 @@ private:
      * Output format types
      */
     enum {
-        OUTPUT_TIME   = 1<<0,   // output time in logs
-        OUTPUT_SHORT  = 1<<1,   // shorten names
-        OUTPUT_COLOR  = 1<<2,   // colorific
-        OUTPUT_OBJ    = 1<<3,   // output the obj generating the log
+        OUTPUT_PATH      = 1<<0,   // output the log path 
+        OUTPUT_TIME      = 1<<1,   // output time in logs
+        OUTPUT_LEVEL     = 1<<2,   // output level in logs
+        OUTPUT_CLASSNAME = 1<<3,   // output the class name generating the log
+        OUTPUT_OBJ       = 1<<4,   // output the obj generating the log
+        OUTPUT_SHORT     = 1<<10,  // shorten prefix
+        OUTPUT_COLOR     = 1<<11,  // colorific
     };
+
+    /**
+     * Output control flags
+     */
     int output_flags_;
 
     /**
@@ -352,7 +361,8 @@ private:
      * @return The length of the prefix string.
      */
     size_t gen_prefix(char* buf, size_t buflen,
-                      const char* path, log_level_t level, const void* obj);
+                      const char* path, log_level_t level,
+                      const char* classname, const void* obj);
 
     /**
      * Find a rule given a path.
@@ -384,7 +394,7 @@ vlogf(const char *path, log_level_t level,
       const char *fmt, va_list ap)
 {
     if (path == 0) { return -1; } // XXX/bowei arghh..
-    return Log::instance()->vlogf(path, level, 0, fmt, ap);
+    return Log::instance()->vlogf(path, level, NULL, NULL, fmt, ap);
 }
 
 /**
@@ -400,7 +410,7 @@ logf(const char *path, log_level_t level, const char *fmt, ...)
     if (!path) return -1;
     va_list ap;
     va_start(ap, fmt);
-    int ret = Log::instance()->vlogf(path, level, 0, fmt, ap);
+    int ret = Log::instance()->vlogf(path, level, NULL, NULL, fmt, ap);
     va_end(ap);
     return ret;
 }
@@ -411,7 +421,7 @@ logf(const char *path, log_level_t level, const char *fmt, ...)
 inline int
 log_multiline(const char* path, log_level_t level, const char* msg)
 {
-    return Log::instance()->log_multiline(path, level, msg, 0);
+    return Log::instance()->log_multiline(path, level, NULL, msg, 0);
 }
 
 /**

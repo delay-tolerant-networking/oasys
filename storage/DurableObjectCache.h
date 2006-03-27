@@ -52,7 +52,7 @@ public:
     /**
      * Constructor.
      */
-    DurableObjectCache(const char*  logpath,
+    DurableObjectCache(const char*   logpath,
                        size_t        capacity,
                        CachePolicy_t policy = CAP_BY_SIZE);
 

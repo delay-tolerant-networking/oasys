@@ -91,13 +91,13 @@ gethostbyname(const char* name, in_addr_t* addr)
     
 #if defined(__sun__) // solaris has different args
     if (::gethostbyname_r(name, &h, buf, sizeof(buf), &h_err) < 0) {
-        log_err("/net", "error return from gethostbyname_r(%s): %s",
+        log_err("/oasys/net", "error return from gethostbyname_r(%s): %s",
                   name, strerror(h_err));
         return -1;
     }
 #else
     if (::gethostbyname_r(name, &h, buf, sizeof(buf), &ret, &h_err) < 0) {
-        log_err("/net", "error return from gethostbyname_r(%s): %s",
+        log_err("/oasys/net", "error return from gethostbyname_r(%s): %s",
                 name, strerror(h_err));
         return -1;
     }
@@ -109,7 +109,7 @@ gethostbyname(const char* name, in_addr_t* addr)
     *addr = ((struct in_addr**)h.h_addr_list)[0]->s_addr;
 
     if (*addr == INADDR_NONE) {
-        log_err("/net", "gethostbyname_r(%s) returned INADDR_NONE", name);
+        log_err("/oasys/net", "gethostbyname_r(%s) returned INADDR_NONE", name);
         return -1;
     }
     return 0;
@@ -134,7 +134,7 @@ gethostbyname(const char* name, in_addr_t* addr)
     freeaddrinfo(res);
 
     if (*addr == INADDR_NONE) {
-        log_err("/net", "getaddrinfo(%s) returned INADDR_NONE", name);
+        log_err("/oasys/net", "getaddrinfo(%s) returned INADDR_NONE", name);
         return -1;
     }
     return 0;
@@ -155,7 +155,7 @@ gethostbyname(const char* name, in_addr_t* addr)
     *addr = ((struct in_addr**)hent->h_addr_list)[0]->s_addr;
     
     if (*addr == INADDR_NONE) {
-        log_err("/net", "gethostbyname(%s) returned INADDR_NONE", name);
+        log_err("/oasys/net", "gethostbyname(%s) returned INADDR_NONE", name);
         return -1;
     }
 

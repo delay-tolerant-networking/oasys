@@ -29,6 +29,7 @@ DurableTable<_Type>::cleanup_put_flags(int flags)
 {
     if (flags & DS_EXCL) {
         if (! (flags & DS_CREATE)) {
+            // XXX/demmer find a better log target
             log_warn("/durabletable", "DS_EXCL without DS_CREATE");
         }
         flags |= DS_CREATE;

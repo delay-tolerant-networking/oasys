@@ -69,7 +69,7 @@ class BerkeleyDBStore : public DurableStoreImpl {
     friend class BerkeleyDBTable;
     
 public:
-    BerkeleyDBStore();
+    BerkeleyDBStore(const char* logpath);
 
     // Can't copy or =, don't implement these
     BerkeleyDBStore& operator=(const BerkeleyDBStore&);
@@ -131,8 +131,10 @@ private:
      */
     class DeadlockTimer : public oasys::Timer, public oasys::Logger {
     public:
-        DeadlockTimer(const char* logpath, DB_ENV* dbenv, int frequency)
-            : Logger(logpath), dbenv_(dbenv), frequency_(frequency) {}
+        DeadlockTimer(const char* logbase, DB_ENV* dbenv, int frequency)
+            : Logger("BerkeleyDBStore::DeadlockTimer",
+                     "%s/%s", logbase, "deadlock_timer"),
+              dbenv_(dbenv), frequency_(frequency) {}
 
         void reschedule();
         virtual void timeout(const struct timeval& now);
@@ -182,8 +184,10 @@ private:
     BerkeleyDBStore* store_;
 
     //! Only BerkeleyDBStore can create BerkeleyDBTables
-    BerkeleyDBTable(BerkeleyDBStore* store, 
-                    std::string name, bool multitype,
+    BerkeleyDBTable(const char* logpath,
+                    BerkeleyDBStore* store, 
+                    const std::string& table_name,
+                    bool multitype,
                     DB* db, DBTYPE type);
 
     /// Whether a specific key exists in the table.

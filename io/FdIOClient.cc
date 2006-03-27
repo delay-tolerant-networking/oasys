@@ -44,7 +44,7 @@ namespace oasys {
 
 FdIOClient::FdIOClient(int fd, Notifier* intr)
     : IOHandlerBase(intr), 
-      Logger("/fdio"), 
+      Logger("FdIOClient", "/oasys/io/FdIOClient"), 
       fd_(fd)
 {}
 

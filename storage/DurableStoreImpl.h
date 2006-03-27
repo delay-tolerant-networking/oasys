@@ -58,7 +58,8 @@ public:
     /**
      * Constructor (initializes the log path).
      */
-    DurableStoreImpl(const char* logpath) : Logger(logpath) {}
+    DurableStoreImpl(const char* classname, const char* logpath)
+        : Logger(classname, logpath) {}
     
     /**
      * Destructor

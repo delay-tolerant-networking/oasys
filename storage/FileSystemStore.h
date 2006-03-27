@@ -65,7 +65,7 @@ class FileSystemIterator;
 class FileSystemStore : public DurableStoreImpl {
     friend class FileSystemTable;
 public:
-    FileSystemStore();
+    FileSystemStore(const char* logpath);
 
     // Can't copy or =, don't implement these
     FileSystemStore& operator=(const FileSystemStore&);
@@ -107,8 +107,7 @@ private:
     /// @}
 };
 
-class FileSystemTable : public Logger, 
-                        public DurableTableImpl {
+class FileSystemTable : public DurableTableImpl, public Logger {
     friend class FileSystemStore;
 public:
     ~FileSystemTable();
@@ -136,15 +135,16 @@ public:
 private:
     std::string path_;
 
-    FileSystemTable(const std::string& path,
+    FileSystemTable(const char*        logpath,
+                    const std::string& table_name,
+                    const std::string& path,
                     bool               multitype);
 
     int get_common(const SerializableObject& key,
                    ExpandableBuffer* buf);
 };
 
-class FileSystemIterator : public DurableIterator, 
-                           public Logger {
+class FileSystemIterator : public DurableIterator {
     friend class FileSystemTable;
 private:
     /**

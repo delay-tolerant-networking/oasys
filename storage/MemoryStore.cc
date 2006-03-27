@@ -56,8 +56,8 @@ namespace oasys {
  *
  *****************************************************************************/
 
-MemoryStore::MemoryStore() 
-    : DurableStoreImpl("/storage/memory"),
+MemoryStore::MemoryStore(const char* logpath) 
+    : DurableStoreImpl("MemoryStore", logpath),
       init_(false)
 {}
 
@@ -104,7 +104,7 @@ MemoryStore::get_table(DurableTableImpl**  table,
         items = &iter->second;
     }
 
-    *table = new MemoryTable(items, name, (flags & DS_MULTITYPE) != 0);
+    *table = new MemoryTable(logpath_, items, name, (flags & DS_MULTITYPE) != 0);
 
     return DS_OK;
 }
@@ -136,13 +136,13 @@ MemoryStore::get_table_names(StringVector* names)
  * MemoryTable
  *
  *****************************************************************************/
-MemoryTable::MemoryTable(ItemMap* items,
+MemoryTable::MemoryTable(const char* logpath, ItemMap* items,
                          const std::string& name, bool multitype)
-    : DurableTableImpl(name, multitype), items_(items)
+    : DurableTableImpl(name, multitype),
+      Logger("MemoryTable", "%s/%s", logpath, name.c_str()),
+      items_(items)
 {
-    logpathf("/memory/table(%s)", name.c_str());
 }
-
 
 MemoryTable::~MemoryTable() 
 {
@@ -331,7 +331,7 @@ MemoryTable::size() const
 DurableIterator*
 MemoryTable::itr()
 {
-    return new MemoryIterator(this);
+    return new MemoryIterator(logpath_, this);
 }
 
 
@@ -340,9 +340,9 @@ MemoryTable::itr()
  * MemoryIterator
  *
  *****************************************************************************/
-MemoryIterator::MemoryIterator(MemoryTable* t)
+MemoryIterator::MemoryIterator(const char* logpath, MemoryTable* t)
+    : Logger("MemoryIterator", "%s/iter", logpath)
 {
-    logpathf("/berkeleydb/iter(%s)", t->name());
     table_ = t;
     first_ = true;
 }

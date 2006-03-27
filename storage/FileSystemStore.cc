@@ -56,8 +56,8 @@
 namespace oasys {
 
 //----------------------------------------------------------------------------
-FileSystemStore::FileSystemStore()
-    : DurableStoreImpl("/FileSystemStore"),
+FileSystemStore::FileSystemStore(const char* logpath)
+    : DurableStoreImpl("FileSystemStore", logpath),
       tables_dir_("INVALID"),
       default_perm_(S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP)
 {}
@@ -159,7 +159,8 @@ FileSystemStore::get_table(DurableTableImpl** table,
         return DS_EXISTS;
     }
     
-    FileSystemTable* table_ptr = new FileSystemTable(dir_path, flags & DS_MULTITYPE);
+    FileSystemTable* table_ptr =
+        new FileSystemTable(logpath_, name, dir_path, flags & DS_MULTITYPE);
     ASSERT(table_ptr);
     
     *table = table_ptr;
@@ -259,13 +260,16 @@ FileSystemStore::tidy_database()
 }
 
 //----------------------------------------------------------------------------
-FileSystemTable::FileSystemTable(const std::string& path,
+FileSystemTable::FileSystemTable(const char* logpath,
+                                 const std::string& table_name,
+                                 const std::string& path,
                                  bool               multitype)
-    : Logger("/FileSystemTable"),
-      DurableTableImpl("/FileSystemTable", multitype),
+    : DurableTableImpl(table_name, multitype),
+      Logger("FileSystemTable", "%s/%s", logpath, table_name.c_str()),
       path_(path)
 {}
 
+//----------------------------------------------------------------------
 FileSystemTable::~FileSystemTable()
 {}
 
