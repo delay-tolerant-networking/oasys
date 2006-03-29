@@ -98,11 +98,14 @@
  * of debug output, and these options are specified on a line in the
  * .debug file prefixed with '%' (see example above):
  *
+ * no_path   - Don't display log path
  * no_time - Don't display time stamp
- * brief   - Truncate log name to a fixed length
+ * no_level  - Don't display log level
+ * brief     - Truncate log name to a fixed length and use brief error codes
  * color   - Use terminal escape code to colorize output
  * object  - When possible, display the address of the object that 
  *           generated the log.
+ * classname - When possible, display the class that generated the log message.
  */
 
 #include <stdarg.h>
@@ -322,6 +325,8 @@ private:
         std::string path_;
         log_level_t level_;
     };
+
+    
 
     /**
      * Sorting function for log rules. The rules are stored in
