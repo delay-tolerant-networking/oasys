@@ -39,25 +39,30 @@
 #ifndef _OASYS_LOCK_H_
 #define _OASYS_LOCK_H_
 
+#include <memory>
+
 #include "Atomic.h"
 #include "Thread.h"
+
+#include "../debug/Logger.h"
+#include "../util/Pointers.h"
 
 namespace oasys {
 
 /**
  * Abstract Lock base class.
  */
-class Lock {
+class Lock : public Logger {
 public:
     /**
      * Default Lock constructor.
      */
-    Lock() : lock_count_(0),
+    Lock() : Logger("Lock", "/lock"),
+             lock_count_(0),
              lock_holder_(0),
              lock_holder_name_(0), 
              scope_lock_count_(0) 
-    {
-    }
+    {}
 
     /**
      * Lock destructor. Asserts that the lock is not locked by another
@@ -162,11 +167,30 @@ protected:
  */
 class ScopeLock {
 public:
-    ScopeLock(Lock* l, const char* lock_user) 
+    ScopeLock(Lock*       l,
+              const char* lock_user)
         : lock_(l)
     {
-        int ret = lock_->lock(lock_user);
-        ASSERT(ret == 0);
+        do_lock(lock_user);
+    }
+
+    ScopeLock(oasys::ScopePtr<Lock> l,
+              const char*           lock_user)
+        : lock_(l.ptr())
+    {
+        do_lock(lock_user);
+    }
+
+    ScopeLock(std::auto_ptr<Lock> l,
+              const char*         lock_user)
+        : lock_(l.get())
+    {
+        do_lock(lock_user);
+    }
+
+    void do_lock(const char* lock_user) {
+        int ret = lock_->lock(lock_user);       
+        ASSERT(ret == 0);                       
         lock_->scope_lock_count_++;
     }
     

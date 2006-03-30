@@ -52,9 +52,11 @@
 namespace oasys {
 
 Mutex::Mutex(const char* logbase, lock_type_t type, bool keep_quiet)
-    : Lock(), Logger("Mutex", "%s/lock", logbase),
-      type_(type), keep_quiet_(keep_quiet)
+    : type_(type), 
+      keep_quiet_(keep_quiet)
 {
+    logpathf("%s/lock", logbase);
+
     // Set up the type attribute
     pthread_mutexattr_t attrs;
     if (pthread_mutexattr_init(&attrs) != 0) {
