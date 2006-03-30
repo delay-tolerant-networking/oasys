@@ -114,7 +114,7 @@ DECLARE_TEST(RulesTest) {
 
 class LoggerTest : public Logger {
 public:
-    LoggerTest() : Logger("/log-test/loggertest") {}
+    LoggerTest() : Logger("LoggerTest", "/log-test/loggertest") {}
     int foo();
 };
 
@@ -271,6 +271,8 @@ class MultiFormatter : public SomethingVirtual,
                        public Logger
 {
 public:
+    MultiFormatter() : Logger("MultiFormatter", "/test/multiformatter") {}
+    
     int format(char* buf, size_t sz) const {
         return snprintf(buf, sz, "i'm a multiformatter %p logpath %p",
                         this, &logpath_);
@@ -325,7 +327,8 @@ DECLARE_TEST(FormatterTest) {
 class LoggerThread : public Thread, public Logger {
 public:
     LoggerThread(int threadid)
-        : Thread("LoggerThread", CREATE_JOINABLE)
+        : Thread("LoggerThread", CREATE_JOINABLE),
+          Logger("LoggerThread", "/test/logger-thread")
     {
         logpathf("/log-test/thread/%d", threadid);
     }
