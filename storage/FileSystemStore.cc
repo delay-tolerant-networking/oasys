@@ -251,7 +251,7 @@ FileSystemStore::init_database()
 void
 FileSystemStore::tidy_database()
 {
-    log_notice("Tidy() database");
+    log_notice("Tidy() database, rm -rf %s", tables_dir_.c_str());
     
     char cmd[256];
     int cc = snprintf(cmd, 256, "rm -rf %s", tables_dir_.c_str());
@@ -260,7 +260,7 @@ FileSystemStore::tidy_database()
 }
 
 //----------------------------------------------------------------------------
-FileSystemTable::FileSystemTable(const char* logpath,
+FileSystemTable::FileSystemTable(const char*        logpath,
                                  const std::string& table_name,
                                  const std::string& path,
                                  bool               multitype)
