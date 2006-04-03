@@ -74,12 +74,22 @@ struct StringHash {
 };
 
 /**
- * Equality function class for std::strings.
+ * Less than function.
  */
 struct StringLessThan {
     bool operator()(const std::string& str1, const std::string& str2) const
     {
         return (str1.compare(str2) < 0);
+    }
+};
+
+/**
+ * Greater than function.
+ */
+struct StringGreaterThan {
+    bool operator()(const std::string& str1, const std::string& str2) const
+    {
+        return (str1.compare(str2) > 0);
     }
 };
 
