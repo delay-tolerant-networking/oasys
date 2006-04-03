@@ -170,7 +170,7 @@ StringBuffer::vappendf(const char* fmt, va_list ap)
         ASSERT(ret < buf_->nfree()); // ret doesn't include null char
     }
     
-    ASSERT(ret > 0);
+    ASSERT(ret >= 0);
     buf_->set_len(buf_->len() + ret);
     ASSERT(*buf_->end() == '\0');
         
