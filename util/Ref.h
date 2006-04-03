@@ -119,6 +119,14 @@ public:
     }
 
     /**
+     * Conversion wrapper from a ptr to a ref.
+     */
+    static Ref as_ref(_Type* ptr, const char* what1 = "", const char* what2 = "")
+    {
+        return Ref(ptr, what1, what2);
+    }
+
+    /**
      * Release the reference on the object.
      */
     void release()
