@@ -40,6 +40,7 @@
 
 #include "memory/Memory.h"
 #include "util/StringBuffer.h"
+#include "util/StringUtils.h"
 
 namespace oasys {
 
@@ -57,26 +58,35 @@ HelpCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
     
     cmdlist = TclCommandInterp::instance()->commands();
 
-    if (argc == 1) {
+    if (argc == 1) 
+    {
         StringBuffer buf;
         int len = 0;
 
         buf.append("For help on a particular command, type \"help <cmd>\".\n");
         buf.append("The registered commands are: \n\t");
                    
-        for (iter = cmdlist->begin(); iter != cmdlist->end(); iter++) {
+        std::vector<std::string> cmd_names;
+        for (iter = cmdlist->begin(); iter != cmdlist->end(); ++iter) {
+            cmd_names.push_back((*iter)->name());
+        }
+        std::sort(cmd_names.begin(), cmd_names.end(), StringLessThan());
+
+        for (std::vector<std::string>::iterator j =  cmd_names.begin();
+             j != cmd_names.end(); ++j)
+        {
             if (len > 60) {
                 buf.appendf("\n\t");
                 len = 0;
             }
 
-            len += buf.appendf("%s ", (*iter)->name());
+            len += buf.appendf("%s ", j->c_str());
         }
-
         set_result(buf.c_str());
-
         return TCL_OK;
-    } else if (argc == 2) {
+    } 
+    else if (argc == 2) 
+    {
         for (iter = cmdlist->begin(); iter != cmdlist->end(); iter++) {
             if (!strcmp((*iter)->name(), argv[1])) {
                 const char *help = (*iter)->help_string();
