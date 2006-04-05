@@ -98,6 +98,7 @@ UTIL_SRCS :=					\
 	util/ProgressPrinter.cc			\
 	util/Random.cc				\
 	util/RateEstimator.cc			\
+	util/RefCountedObject.cc		\
 	util/Regex.cc				\
 	util/StreamBuffer.cc			\
 	util/StringBuffer.cc			\
