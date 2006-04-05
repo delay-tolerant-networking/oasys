@@ -41,6 +41,7 @@
 
 namespace oasys {
 
+bool     SpinLock::warn_on_contention_(true);
 atomic_t SpinLock::total_spins_(0);
 atomic_t SpinLock::total_yields_(0);
 
@@ -61,7 +62,7 @@ SpinLock::lock(const char* lock_user)
         
 #ifndef NDEBUG
         atomic_incr(&total_spins_);
-        if (++nspins > 1000000) {
+        if (warn_on_contention_ && ++nspins > 1000000) {
             fprintf(stderr,
                     "warning: spin lock held by %s reached spin limit\n",
                     lock_holder_name_);

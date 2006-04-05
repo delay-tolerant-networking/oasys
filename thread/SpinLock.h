@@ -60,6 +60,10 @@ public:
     int unlock();
     int try_lock(const char* lock_user);
     /// @}
+
+    /// Control whether or not to log warnings if the spin lock is
+    /// under contention
+    static bool warn_on_contention_;
     
 private:
     atomic_t lock_waiters_; 	///< count of waiting threads
