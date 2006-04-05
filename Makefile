@@ -55,6 +55,7 @@ SERIALIZE_SRCS :=				\
 	serialize/SQLSerialize.cc		\
 	serialize/Serialize.cc			\
 	serialize/StringSerialize.cc		\
+	serialize/TclListSerialize.cc		\
 	serialize/TextSerialize.cc		\
 
 SMTP_SRCS :=                                    \
