@@ -62,7 +62,8 @@ public:
     /**
      * Constructor
      */
-    TclListSerialize(Tcl_Interp* interp, context_t context, int options);
+    TclListSerialize(Tcl_Interp* interp, Tcl_Obj* list_obj,
+                     context_t context, int options);
 
     /**
      * Destructor.
@@ -78,11 +79,6 @@ public:
         return SerializeAction::action(object);
     }
     
-    /**
-     * Accessor for the generated list object
-     */
-    Tcl_Obj* tcl_list() { return list_obj_; }
-
     /// @{
     /// Virtual functions inherited from SerializeAction
     void process(const char* name, u_int32_t* i);

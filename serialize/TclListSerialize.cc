@@ -42,20 +42,16 @@
 namespace oasys {
 
 TclListSerialize::TclListSerialize(Tcl_Interp* interp,
-                                   context_t context,
-                                   int options)
+                                   Tcl_Obj*    list_obj,
+                                   context_t   context,
+                                   int         options)
     : SerializeAction(Serialize::MARSHAL, context, options),
-      interp_(interp)
+      interp_(interp), list_obj_(list_obj)
 {
-    list_obj_ = Tcl_NewListObj(0, NULL);
-    Tcl_IncrRefCount(list_obj_);
 }
 
 TclListSerialize::~TclListSerialize()
 {
-    // caller should take ownership of the list object by adding a tcl
-    // reference somewhere before destroying this class
-    Tcl_DecrRefCount(list_obj_);
 }
 
 void
