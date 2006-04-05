@@ -90,6 +90,9 @@ DECLARE_TEST(PushPop10000) {
 DECLARE_TEST(DelayedPop) {
     MsgQueue<int> q("/test/queue");
 
+    // Quiet down the spin lock
+    SpinLock::warn_on_contention_ = false;
+
     // fill up the pipe
     Producer p(&q, INT_MAX);
     p.start();
