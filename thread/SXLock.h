@@ -11,6 +11,8 @@ namespace oasys {
 
 /*!
  * Lock with shared and exclusive semantics.
+ *
+ * XXX/bowei -- convert this to use atomic instructions directly
  */
 class SXLock {
 public:
