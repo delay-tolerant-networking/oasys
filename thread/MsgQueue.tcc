@@ -41,25 +41,29 @@ template<typename _elt_t>
 void MsgQueue<_elt_t>::push(_elt_t msg, bool at_back)
 {
     ScopeLock l(lock_, "MsgQueue::push");
+
+    /*
+     * It's important that we first call notify() and then put the
+     * message on the queue. This is because notify might need to
+     * release the lock and sleep in the rare case where the pipe is
+     * full. Therefore, we wait until the notification is safely in
+     * the pipe before putting the message on the queue, with the lock
+     * held for both calls to ensure atomicity.
+     */
+    if (!disable_notify_) {
+        notify(lock_);
+    }
     
     if (at_back)
         queue_.push_back(msg);
     else
         queue_.push_front(msg);
-
-    if (!disable_notify_) {
-        notify(lock_);
-    }
 }
 
 template<typename _elt_t> 
 _elt_t MsgQueue<_elt_t>::pop_blocking()
 {
-    /*
-     * We can't use a scoped lock since we need to release the lock
-     * before we block in wait().
-     */
-    lock_->lock("MsgQueue::pop_blocking");
+    ScopeLock l(lock_, "MsgQueue::pop_blocking");
 
     /*
      * If the queue is empty, wait for new input.
@@ -88,8 +92,6 @@ _elt_t MsgQueue<_elt_t>::pop_blocking()
     _elt_t elt  = queue_.front();
     queue_.pop_front();
     
-    lock_->unlock();
-
     return elt;
 }
 

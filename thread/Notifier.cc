@@ -197,7 +197,12 @@ Notifier::notify(SpinLock* lock)
     if (!quiet_) {
         log_debug("notifier notify");
     }
-    
+
+    // see the comment below
+    if (need_to_relock && (lock != NULL)) {
+        lock->lock("Notifier::notify");
+    }
+
     int ret = ::write(write_fd(), &b, 1);
     
     if (ret == -1) {
@@ -206,20 +211,26 @@ Notifier::notify(SpinLock* lock)
             // is just slow, but keep trying for up to 30 seconds
             // because otherwise we will break the semantics of the
             // notifier.
+            //
+            // We need to release the lock before sleeping to give
+            // another thread a chance to come in and drain, however
+            // it is important that we re-take the lock before writing
+            // to maintain the atomicity required by MsgQueue
             if (num_retries == 0) {
                 log_warn("pipe appears to be full -- retrying write until success");
-                if (lock) {
-                    lock->unlock();
-                    need_to_relock = true;
-                }
             }
-            
+
             if (++num_retries == 600) {
                 // bail after 1 minute of spinning
                 PANIC("slow reader on pipe: can't notify within 1 minute!");
             }
             
             // give it some time
+            if (lock) {
+                lock->unlock();
+                need_to_relock = true;
+            }
+            
             usleep(100000);
             goto retry;
         } else {
@@ -229,9 +240,6 @@ Notifier::notify(SpinLock* lock)
     } else if (ret == 0) {
         log_err("unexpected eof writing to pipe");
     } else {
-        if (need_to_relock) {
-            lock->lock("Notifier::notify");
-        }
         ASSERT(ret == 1);
         ++count_;
         if (!quiet_) {
