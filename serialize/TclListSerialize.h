@@ -98,7 +98,6 @@ public:
 private:
     Tcl_Interp* interp_;
     Tcl_Obj*    list_obj_;
-    int         options_;
 };
 
 } // namespace oasys
