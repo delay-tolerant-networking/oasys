@@ -426,7 +426,7 @@ logf(const char *path, log_level_t level, const char *fmt, ...)
 inline int
 log_multiline(const char* path, log_level_t level, const char* msg)
 {
-    return Log::instance()->log_multiline(path, level, NULL, msg, 0);
+    return Log::instance()->log_multiline(path, level, NULL, NULL, msg);
 }
 
 /**
