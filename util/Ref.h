@@ -55,12 +55,13 @@ namespace oasys {
  * void del_ref(const char* what1, const char* what2);
  * </code>
  *
- * Typically what1 is the function name and what2 is whatever whatsit
- * additional what info you prefer what2 to be.
+ * For example, see the RefCountedObject class.
  *
  * The strings what1 and what2 can be used for debugging and are
- * stored in the reference. Note that what1 is mandatory while what2
- * is optional.
+ * stored in the reference. Note that what1 is mandatory and is
+ * typically the function name or object class that is holding the
+ * reference. What2 is any other additional information used to
+ * distinguish the instance.
  */
 template <typename _Type>
 class Ref {
@@ -82,6 +83,15 @@ public:
         if (object_)
             object->add_ref(what1_, what2_);
     }
+
+    /**
+     * Constructor (deliberately not implemented) that takes a _Type*
+     * pointer and no debugging string. This causes the compilor to
+     * complain about ambiguity (with the first constructor) when
+     * called with a single argument of NULL, hence forcing the caller
+     * to pass a char* debug string.
+     */
+    Ref(_Type* object);
 
     /**
      * Constructor that takes a temporary ref.
