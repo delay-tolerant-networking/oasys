@@ -1,5 +1,18 @@
 #!/bin/sh
 
+expand_stacktrace=
+
+for path in ../test-utils/expand-stacktrace.pl \
+            ../../test-utils/expand-stacktrace.pl \
+            ../../../test-utils/expand-stacktrace.pl \
+            ../../../../test-utils/expand-stacktrace.pl ; do
+
+   if [ -x $path ] ; then
+       expand_stacktrace=$path
+       break
+   fi
+done
+
 run_and_wait() {
     prog=$1
 
@@ -7,10 +20,14 @@ run_and_wait() {
     echo "*** $prog"
     echo "***"
 
-    ./$prog &
+    if [ x$expand_stacktrace = x ] ; then
+        ./$prog &
+    else
+        ./$prog 2>&1 | $expand_stacktrace -o $prog &
+    fi
     pid=$!
 
-    timeout=300
+    timeout=600
     while [ 1 ]; do
        ps -h $pid > /dev/null 2>&1
        [ $? = 1 ] && break
@@ -18,9 +35,10 @@ run_and_wait() {
 
        timeout=$((timeout - 1))
        if [ $timeout == 0 ]; then
-	   echo "error: unit test took too long!!!"
+	   echo "error: unit test took too long -- killing it"
 	   kill -ABRT $pid
-	   break
+	   sleep 5
+	   continue
        fi
     done
 }
