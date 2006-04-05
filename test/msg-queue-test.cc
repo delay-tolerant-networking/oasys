@@ -23,7 +23,10 @@ protected:
 
         for (int i = 0; i < count_; ++i) {
             int curr = q_->pop_blocking();
-            CHECK_EQUAL(curr, prev + 1);
+            if (curr != prev + 1) {
+                // check silently, then generate the error
+                CHECK_EQUAL(curr, prev + 1);
+            }
             prev = curr;
             total_++;
             yield();
@@ -60,6 +63,19 @@ protected:
     int count_;
 };
 
+DECLARE_TEST(Init) {
+    // Quiet down the spin lock
+    SpinLock::warn_on_contention_ = false;
+
+    log_always("/test", "flamebox-ignore ign pipe appears to be full");;
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(Fini) {
+    log_always("/test", "flamebox-ignore-cancel ign");;
+    return UNIT_TEST_PASSED;
+}
+
 int
 push_pop_test(int count) {
     MsgQueue<int> q("/test/queue");
@@ -89,9 +105,6 @@ DECLARE_TEST(PushPop10000) {
 
 DECLARE_TEST(DelayedPop) {
     MsgQueue<int> q("/test/queue");
-
-    // Quiet down the spin lock
-    SpinLock::warn_on_contention_ = false;
 
     // fill up the pipe
     Producer p(&q, INT_MAX);
@@ -125,9 +138,11 @@ DECLARE_TEST(DelayedPop) {
 }
 
 DECLARE_TESTER(MsgQueueTester) {
+    ADD_TEST(Init);
     ADD_TEST(PushPop1);
     ADD_TEST(PushPop10000);
     ADD_TEST(DelayedPop);
+    ADD_TEST(Fini);
 }
 
 DECLARE_TEST_FILE(MsgQueueTester, "msg queue test");
