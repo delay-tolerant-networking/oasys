@@ -12,9 +12,9 @@ namespace oasys {
 /*!
  * Lock with shared and exclusive semantics.
  */
-class RWLock {
+class SXLock {
 public:
-    RWLock(Lock* lock)
+    SXLock(Lock* lock)
         : lock_(lock),
           rcount_(0),
           wcount_(0)
@@ -88,21 +88,21 @@ private:
 
 #define SCOPE_LOCK_DEFUN(_name, _fcn)                   \
 class ScopeLock_ ## _name {                             \
-    ScopeLock_ ## _name (RWLock*     rw_lock,           \
+    ScopeLock_ ## _name (SXLock*     rw_lock,           \
                          const char* lock_user)         \
         : rw_lock_(rw_lock)                             \
     {                                                   \
         do_lock(lock_user);                             \
     }                                                   \
                                                         \
-    ScopeLock_ ## _name (ScopePtr<RWLock> rw_lock,      \
+    ScopeLock_ ## _name (ScopePtr<SXLock> rw_lock,      \
                          const char*      lock_user)    \
         : rw_lock_(rw_lock.ptr())                       \
     {                                                   \
         do_lock(lock_user);                             \
     }                                                   \
                                                         \
-    ScopeLock_ ## _name (auto_ptr<RWLock> rw_lock,      \
+    ScopeLock_ ## _name (auto_ptr<SXLock> rw_lock,      \
                          const char*      lock_user)    \
         : rw_lock_(rw_lock.get())                       \
     {                                                   \
@@ -117,7 +117,7 @@ class ScopeLock_ ## _name {                             \
     }                                                   \
                                                         \
 private:                                                \
-    RWLock* rw_lock_;                                   \
+    SXLock* rw_lock_;                                   \
                                                         \
     void do_lock(const char* lock_user) {               \
         rw_lock_->_fcn ## _lock();                      \
