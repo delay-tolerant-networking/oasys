@@ -182,9 +182,8 @@ namespace eval tell {
 	}
 	
 	if {$cmd_response == ""} {
-	    # short read, means there's not a full line but we should
-	    # get another callback when more data arrives
-	    puts " XXX ERROR: short read in tell_response"
+	    # short read -- this means there's not a full line but we
+	    # should get another callback when more data arrives
 	    return;
 	}
 
