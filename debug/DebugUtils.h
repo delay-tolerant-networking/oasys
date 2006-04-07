@@ -48,6 +48,7 @@
     do { if (! (x)) {                                                   \
         fprintf(stderr, "ASSERTION FAILED (" #x ") at %s:%d\n",         \
                 __FILE__, __LINE__);                                    \
+        ::oasys::Breaker::break_here();                                 \
         ::oasys::FatalSignals::die();                                   \
     } } while(0);
 
@@ -56,6 +57,7 @@
         fprintf(stderr,                                                 \
                 "ASSERTION FAILED (" #x ") at %s:%d: " fmt "\n",        \
                 __FILE__, __LINE__, ## args);                           \
+        ::oasys::Breaker::break_here();                                 \
         ::oasys::FatalSignals::die();                                   \
     } } while(0);
 
@@ -63,6 +65,7 @@
     do {                                                                \
         fprintf(stderr, "PANIC at %s:%d: " fmt "\n",                    \
                 __FILE__, __LINE__ , ## args);                          \
+        ::oasys::Breaker::break_here();                                 \
         ::oasys::FatalSignals::die();                                   \
     } while(0);
 
@@ -70,6 +73,7 @@
     do {                                                                \
         fprintf(stderr, "NOTREACHED REACHED at %s:%d\n",                \
                 __FILE__, __LINE__);                                    \
+        ::oasys::Breaker::break_here();                                 \
         ::oasys::FatalSignals::die();                                   \
     } while(0);
 
@@ -77,6 +81,7 @@
     do {                                                                \
         fprintf(stderr, "%s NOT IMPLEMENTED at %s:%d\n",                \
                 __FUNCTION__, __FILE__, __LINE__);                      \
+        ::oasys::Breaker::break_here();                                 \
         ::oasys::FatalSignals::die();                                   \
     } while(0);
 
