@@ -18,8 +18,8 @@ class SXLock {
 public:
     SXLock(Lock* lock)
         : lock_(lock),
-          rcount_(0),
-          wcount_(0)
+          scount_(0),
+          xcount_(0)
     {}
 
     /*! 
@@ -28,19 +28,19 @@ public:
      */
     void shared_lock() {
         lock_->lock();
-        while (wcount_ > 0) {
+        while (xcount_ > 0) {
             lock_->unlock();
             Thread::spin_yield();
             lock_->lock();
         }
-        ++rcount_;
+        ++scount_;
         lock_->unlock();
     }
 
     //! Drop the shared lock.
     void shared_unlock() {
         lock_->lock();
-        --rcount_;
+        --scount_;
         lock_->unlock();
     }
 
@@ -51,16 +51,16 @@ public:
      */
     void exclusive_lock() {
         lock_->lock();
-        while (wcount_ > 0 && rcount_ > 0) {
+        while (xcount_ > 0 && scount_ > 0) {
             lock_->unlock();
             Thread::spin_yield();
             lock_->lock();
         }
-        ++wcount_;
+        ++xcount_;
 
-        if (wcount_ != 1) {
+        if (xcount_ != 1) {
             fprintf(stderr, "more than 1 writer (%d writers) entered lock!!", 
-                    wcount_);
+                    xcount_);
             exit(-1);
         }
 
@@ -71,10 +71,10 @@ public:
     void exclusive_unlock() {
         lock_->lock();
 
-        --wcount_;
-        if (wcount_ != 0) {
+        --xcount_;
+        if (xcount_ != 0) {
             fprintf(stderr, "more than 1 writer (%d writers) entered lock!!", 
-                    wcount_);
+                    xcount_);
             exit(-1);
         }
 
@@ -84,8 +84,8 @@ public:
 private:
     Lock* lock_;
 
-    int rcount_;
-    int wcount_;
+    int scount_;
+    int xcount_;
 };
 
 #define SCOPE_LOCK_DEFUN(_name, _fcn)                   \
