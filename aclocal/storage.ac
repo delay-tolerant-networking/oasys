@@ -1,12 +1,9 @@
 dnl
 dnl Autoconf support for configuring the various storage options
-dnl that really just dispatches to the other macros and then
-dnl does some simple verification
+dnl that really just dispatches to the other macros
 dnl
 
 AC_DEFUN(AC_OASYS_CONFIG_STORAGE, [
-    ac_storage_required="$1"
-
     AC_OASYS_CONFIG_DB
     AC_OASYS_CONFIG_MYSQL
     AC_OASYS_CONFIG_POSTGRES
@@ -17,18 +14,5 @@ AC_DEFUN(AC_OASYS_CONFIG_STORAGE, [
     if test "$MYSQL_ENABLED" = "1" -o "$POSTGRES_ENABLED" = "1" ; then
         AC_DEFINE_UNQUOTED(SQL_ENABLED, 1,
              [whether some sql storage system is enabled])
-    fi
-
-
-    dnl
-    dnl Make sure there's at least one valid storage option if the
-    dnl caller specified that it's required
-    dnl
-    if test "$ac_storage_required" = "required" -a \
-            ! "$LIBDB_ENABLED" = 1 -a \
-            ! "$MYSQL_ENABLED" = 1 -a \
-            ! "$POSTGRES_ENABLED" = 1  ;
-    then
-        AC_MSG_ERROR([Must enable at least one storage option (libdb, postgres, mysql)])
     fi
 ])
