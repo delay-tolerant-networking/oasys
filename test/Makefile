@@ -60,8 +60,8 @@ BINFILES += $(TESTS)
 #
 test/%test: test/%test.cc liboasys.a
 	@mkdir -p test
-	$(CXX) $< -o $@ $(CFLAGS) $(LDFLAGS) $(LIBS) liboasys.a
+	$(CXX) $< -o $@ $(CFLAGS) $(LDFLAGS) $(LIBS) liboasys.a $(OASYS_LIBS)
 
 test/%Test: test/%Test.cc liboasys.a
 	@mkdir -p test
-	$(CXX) $< -o $@ $(CFLAGS) $(LDFLAGS) $(LIBS) liboasys.a
+	$(CXX) $< -o $@ $(CFLAGS) $(LDFLAGS) $(LIBS) liboasys.a $(OASYS_LIBS)

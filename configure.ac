@@ -64,7 +64,7 @@ dnl Output
 dnl -------------------------------------------------------------------------
 CPPFLAGS="$CPPFLAGS $OASYS_CPPFLAGS"
 LDFLAGS="$LDFLAGS $OASYS_LDFLAGS"
-LIBS="$LIBS $OASYS_LIBS"
+AC_SUBST(OASYS_LIBS)
 
 AC_CONFIG_FILES([Rules.make])
 
