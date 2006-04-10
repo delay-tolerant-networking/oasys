@@ -161,8 +161,8 @@ struct IO {
     static int writevall(int fd, const struct iovec* iov, int iovcnt,
                          Notifier* intr = 0, const char* log = 0);
 
-    static int timeout_write(int fd, char* bp, size_t len, int timeout_ms,
-                             Notifier* intr = 0, const char* log  = 0);
+    static int timeout_write(int fd, const char* bp, size_t len, int timeout_ms,
+                             Notifier* intr = 0, const char* log = 0);
 
     static int timeout_writev(int fd, const struct iovec* iov, int iovcnt, 
                               int timeout_ms, Notifier* intr = 0, 

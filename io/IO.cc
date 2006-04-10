@@ -432,7 +432,7 @@ IO::writevall(int fd, const struct iovec* iov, int iovcnt,
 
 //----------------------------------------------------------------------------
 int 
-IO::timeout_write(int fd, char* bp, size_t len, int timeout_ms,
+IO::timeout_write(int fd, const char* bp, size_t len, int timeout_ms,
                   Notifier* intr, const char* log)
 {
     struct iovec iov; 
