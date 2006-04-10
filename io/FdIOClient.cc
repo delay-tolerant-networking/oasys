@@ -99,27 +99,61 @@ FdIOClient::writevall(const struct iovec* iov, int iovcnt)
 int 
 FdIOClient::timeout_read(char* bp, size_t len, int timeout_ms)
 {
-    return IO::timeout_read(fd_, bp, len, timeout_ms, get_notifier(), logpath_);
+    return IO::timeout_read(fd_, bp, len, timeout_ms,
+                            get_notifier(), logpath_);
 }
 
 int 
 FdIOClient::timeout_readv(const struct iovec* iov, int iovcnt,
 	          int timeout_ms)
 {
-    return IO::timeout_readv(fd_, iov, iovcnt, timeout_ms, get_notifier(), logpath_);
+    return IO::timeout_readv(fd_, iov, iovcnt, timeout_ms,
+                             get_notifier(), logpath_);
 }
 
 int
 FdIOClient::timeout_readall(char* bp, size_t len, int timeout_ms)
 {
-    return IO::timeout_readall(fd_, bp, len, timeout_ms, get_notifier(), logpath_);
+    return IO::timeout_readall(fd_, bp, len, timeout_ms,
+                               get_notifier(), logpath_);
 }
 
 int
 FdIOClient::timeout_readvall(const struct iovec* iov, int iovcnt,
                              int timeout_ms)
 {
-    return IO::timeout_readvall(fd_, iov, iovcnt, timeout_ms, get_notifier(), logpath_);
+    return IO::timeout_readvall(fd_, iov, iovcnt, timeout_ms,
+                                get_notifier(), logpath_);
+}
+
+int 
+FdIOClient::timeout_write(const char* bp, size_t len, int timeout_ms)
+{
+    return IO::timeout_write(fd_, bp, len, timeout_ms,
+                             get_notifier(), logpath_);
+}
+
+int 
+FdIOClient::timeout_writev(const struct iovec* iov, int iovcnt,
+                           int timeout_ms)
+{
+    return IO::timeout_writev(fd_, iov, iovcnt, timeout_ms,
+                              get_notifier(), logpath_);
+}
+
+int
+FdIOClient::timeout_writeall(const char* bp, size_t len, int timeout_ms)
+{
+    return IO::timeout_writeall(fd_, bp, len, timeout_ms,
+                                get_notifier(), logpath_);
+}
+
+int
+FdIOClient::timeout_writevall(const struct iovec* iov, int iovcnt,
+                             int timeout_ms)
+{
+    return IO::timeout_writevall(fd_, iov, iovcnt, timeout_ms,
+                                 get_notifier(), logpath_);
 }
 
 int

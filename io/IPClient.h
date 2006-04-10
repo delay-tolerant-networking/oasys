@@ -77,6 +77,13 @@ public:
     virtual int timeout_readvall(const struct iovec* iov, int iovcnt,
                                  int timeout_ms);
 
+    virtual int timeout_write(const char* bp, size_t len, int timeout_ms);
+    virtual int timeout_writev(const struct iovec* iov, int iovcnt,
+                               int timeout_ms);
+    virtual int timeout_writeall(const char* bp, size_t len, int timeout_ms);
+    virtual int timeout_writevall(const struct iovec* iov, int iovcnt,
+                                  int timeout_ms);
+
     virtual int get_nonblocking(bool *nonblockingp);
     virtual int set_nonblocking(bool nonblocking);
 };

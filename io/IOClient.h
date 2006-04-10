@@ -78,10 +78,10 @@ public:
 
     //@{
     /**
-     * @brief Try to read the specified number of bytes, but don't
+     * @brief Try to read/write the specified number of bytes, but don't
      * block for more than timeout milliseconds.
      *
-     * @return the number of bytes read or the appropriate
+     * @return the number of bytes read/written or the appropriate
      * IOTimeoutReturn_t code
      */
     virtual int timeout_read(char* bp, size_t len, int timeout_ms) = 0;
@@ -90,6 +90,12 @@ public:
     virtual int timeout_readall(char* bp, size_t len, int timeout_ms) = 0;
     virtual int timeout_readvall(const struct iovec* iov, int iovcnt,
                                  int timeout_ms) = 0;
+    virtual int timeout_write(const char* bp, size_t len, int timeout_ms) = 0;
+    virtual int timeout_writev(const struct iovec* iov, int iovcnt,
+                               int timeout_ms) = 0;
+    virtual int timeout_writeall(const char* bp, size_t len, int timeout_ms) = 0;
+    virtual int timeout_writevall(const struct iovec* iov, int iovcnt,
+                                  int timeout_ms) = 0;
     //@}
 
     //! Set the file descriptor's nonblocking status

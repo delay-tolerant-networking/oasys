@@ -180,6 +180,46 @@ IPClient::timeout_readvall(const struct iovec* iov, int iovcnt, int timeout_ms)
 }
 
 int
+IPClient::timeout_write(const char* bp, size_t len, int timeout_ms)
+{
+    int cc = IO::timeout_write(fd_, bp, len, timeout_ms, 
+                               get_notifier(), logpath_);
+    monitor(IO::WRITEV, 0); // XXX/bowei
+
+    return cc;
+}
+
+int
+IPClient::timeout_writev(const struct iovec* iov, int iovcnt, int timeout_ms)
+{
+    int cc = IO::timeout_writev(fd_, iov, iovcnt, timeout_ms, 
+                                get_notifier(), logpath_);
+    monitor(IO::WRITEV, 0); // XXX/bowei
+
+    return cc;
+}
+
+int
+IPClient::timeout_writeall(const char* bp, size_t len, int timeout_ms)
+{
+    int cc = IO::timeout_writeall(fd_, bp, len, timeout_ms, 
+                                  get_notifier(), logpath_);
+    monitor(IO::WRITEV, 0); // XXX/bowei
+
+    return cc;
+}
+
+int
+IPClient::timeout_writevall(const struct iovec* iov, int iovcnt, int timeout_ms)
+{
+    int cc = IO::timeout_writevall(fd_, iov, iovcnt, timeout_ms, 
+                                   get_notifier(), logpath_);
+    monitor(IO::WRITEV, 0); // XXX/bowei
+
+    return cc;
+}
+
+int
 IPClient::get_nonblocking(bool *nonblockingp)
 {
     int cc = IO::get_nonblocking(fd_, nonblockingp, logpath_);
