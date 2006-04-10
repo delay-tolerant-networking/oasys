@@ -58,6 +58,7 @@ namespace oasys {
 //----------------------------------------------------------------------------
 FileSystemStore::FileSystemStore(const char* logpath)
     : DurableStoreImpl("FileSystemStore", logpath),
+      db_dir_("INVALID"),
       tables_dir_("INVALID"),
       default_perm_(S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP)
 {}
@@ -78,10 +79,10 @@ FileSystemStore::init(const StorageConfig& cfg)
         return -1;
     }
     
-    std::string dbdir = cfg.dbdir_;
-    FileUtils::abspath(&dbdir);
+    db_dir_ = cfg.dbdir_;
+    FileUtils::abspath(&db_dir_);
 
-    tables_dir_ = dbdir + "/" + cfg.dbname_;
+    tables_dir_ = db_dir_ + "/" + cfg.dbname_;
 
     bool tidy = cfg.tidy_;
     bool init = cfg.init_;
@@ -236,9 +237,15 @@ FileSystemStore::check_database()
 int 
 FileSystemStore::init_database()
 {
-    log_notice("init() database");
+    log_notice("init database (tables dir '%s'", tables_dir_.c_str());
 
-    int err = mkdir(tables_dir_.c_str(), default_perm_);
+    int err = mkdir(db_dir_.c_str(), default_perm_);
+    if (err != 0) {
+        log_warn("init() failed: %s", strerror(errno));
+        return -1;
+    }
+
+    err = mkdir(tables_dir_.c_str(), default_perm_);
     if (err != 0) {
         log_warn("init() failed: %s", strerror(errno));
         return -1;
@@ -251,10 +258,10 @@ FileSystemStore::init_database()
 void
 FileSystemStore::tidy_database()
 {
-    log_notice("Tidy() database, rm -rf %s", tables_dir_.c_str());
+    log_notice("Tidy() database, rm -rf %s", db_dir_.c_str());
     
     char cmd[256];
-    int cc = snprintf(cmd, 256, "rm -rf %s", tables_dir_.c_str());
+    int cc = snprintf(cmd, 256, "rm -rf %s", db_dir_.c_str());
     ASSERT(cc < 256);
     system(cmd);
 }

@@ -85,6 +85,7 @@ public:
 
 private:
     bool        init_;
+    std::string db_dir_;     //!< parent directory for the db
     std::string tables_dir_; //!< directory where the tables are stored
 
     RefCountMap ref_count_; // XXX/bowei -- not used for now
