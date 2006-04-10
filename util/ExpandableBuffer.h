@@ -44,6 +44,20 @@ struct ExpandableBuffer {
     }
 
     /*!
+     * Return a pointer into the expanded buffer, past data up to
+     * len_, and with enough space for the given size.
+     */
+    char* tail_buf(size_t size) {
+        if (size < (buf_len_ - len_)) {
+            return buf_ + len_;
+        }
+
+        reserve(len_ + size);
+        ASSERT(size <= (buf_len_ - len_));
+        return buf_ + len_;
+    }
+
+    /*!
      * Reserve buffer space.
      *
      * @param size The size of the buffer desired
@@ -104,6 +118,12 @@ struct ExpandableBuffer {
         len_ = len; 
         ASSERT(len_ <= buf_len_);
     }
+
+    //! Increase len by this amount
+    void incr_len(size_t amt) {
+        len_ += amt;
+        ASSERT(len_ <= buf_len_);
+    }        
 
     void clear() {
         set_len(0);
