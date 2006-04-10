@@ -211,13 +211,7 @@ size_t
 DurableTableImpl::flatten(const SerializableObject&      key,
                           ScratchBuffer<u_char*, _size>* scratch)
 {
-    MarshalSize sizer(Serialize::CONTEXT_LOCAL);
-    sizer.action(&key);
-
-    Marshal marshaller(Serialize::CONTEXT_LOCAL, 
-                       scratch->buf(sizer.size()), 
-                       sizer.size());
-    const_cast<SerializableObject&>(key).serialize(&marshaller);
-    
-    return sizer.size();
+    Marshal marshaller(Serialize::CONTEXT_LOCAL, scratch);
+    marshaller.action(&key);
+    return scratch->len();
 }

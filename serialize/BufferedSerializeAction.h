@@ -5,6 +5,8 @@
 
 namespace oasys {
 
+class ExpandableBuffer;
+
 //////////////////////////////////////////////////////////////////////////////
 /**
  * Common base class for Marshal and Unmarshal that manages the flat
@@ -12,8 +14,18 @@ namespace oasys {
  */
 class BufferedSerializeAction : public SerializeAction {
 public:
+    /**
+     * Constructor with a fixed-length buffer.
+     */
     BufferedSerializeAction(action_t action, context_t context,
                             u_char* buf, size_t length, 
+                            int options = 0);
+
+    /**
+     * Constructor with an expandable buffer.
+     */
+    BufferedSerializeAction(action_t action, context_t context,
+                            ExpandableBuffer* buf,
                             int options = 0);
 
     /** 
@@ -35,18 +47,23 @@ protected:
     u_char* next_slice(size_t length);
     
     /** @return buffer */
-    u_char* buf() { return error() ? 0 : buf_; }
+    u_char* buf();
 
     /** @return buffer length */
-    size_t length() { return length_; }
+    size_t length();
     
-    /** @return Current offset into buf */
-    size_t offset() { return offset_; }
-
+    /** @return offset into the buffer */
+    size_t offset();
+    
  private:
-    u_char* buf_;		///< Buffer that is un/marshalled
-    size_t  length_;		///< Length of the buffer.
-    size_t  offset_;
+    /// Expandable buffer
+    ExpandableBuffer* expandable_buf_;
+
+    // Fields used for fixed length buffer
+    
+    u_char* buf_;	///< Buffer that is un/marshalled
+    size_t  length_;	///< Length of the buffer.
+    size_t  offset_;	///< Offset into the buffer
 };
 
 } // namespace oasys

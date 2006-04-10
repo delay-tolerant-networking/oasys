@@ -40,6 +40,7 @@
 
 #include "Serialize.h"
 #include "BufferedSerializeAction.h"
+#include "../util/ExpandableBuffer.h"
 #include "../util/CRC32.h"
 
 namespace oasys {
@@ -52,14 +53,14 @@ namespace oasys {
 class Marshal : public BufferedSerializeAction {
 public:
     /**
-     * Constructor
+     * Constructor with a fixed-size buffer.
      */
     Marshal(context_t context, u_char* buf, size_t length, int options = 0);
 
     /**
-     * Constructor - Defaults with unknown context and no options
+     * Constructor with an expandable buffer.
      */
-    Marshal(u_char* buf, size_t length);
+    Marshal(context_t context, ExpandableBuffer* buf, int options = 0);
 
     /**
      * Since the Marshal operation doesn't actually modify the
@@ -110,11 +111,6 @@ public:
     Unmarshal(context_t context, const u_char* buf, size_t length,
               int options = 0);
 
-    /**
-     * Constructor
-     */
-    Unmarshal(const u_char* buf, size_t length);
-
     // Virtual functions inherited from SerializeAction
     void begin_action();
 
@@ -140,7 +136,7 @@ public:
     /**
      * Constructor
      */
-    MarshalSize(context_t context = CONTEXT_UNKNOWN, int options = 0)
+    MarshalSize(context_t context, int options = 0)
         : SerializeAction(Serialize::INFO, context, options), size_(0)
     {
     }
@@ -225,6 +221,19 @@ public:
 
 private:
     CRC32 crc_;
+};
+
+
+//////////////////////////////////////////////////////////////////////////////
+/**
+ * MarshalCopy: Copy one object to another using Marshal/Unmarshal.
+ */
+class MarshalCopy {
+public:
+    /// Copy method, returns the serialized size
+    static size_t copy(ExpandableBuffer* buf,
+                       const SerializableObject* src,
+                       SerializableObject* dst);
 };
 
 } // namespace oasys

@@ -348,16 +348,9 @@ FileSystemTable::put(const SerializableObject&  key,
         return DS_ERR;
     }
     
-    MarshalSize sizer(Serialize::CONTEXT_LOCAL);
-    if (multitype_) {
-        sizer.process("typecode", &typecode);
-    }
-    sizer.action(data);
-
     ScratchBuffer<u_char*, 4096> scratch;
-    scratch.reserve(sizer.size());
-
-    Marshal m(Serialize::CONTEXT_LOCAL, scratch.buf(), sizer.size());
+    Marshal m(Serialize::CONTEXT_LOCAL, &scratch);
+    
     if (multitype_) {
         m.process("typecode", &typecode);
     }
@@ -401,8 +394,8 @@ FileSystemTable::put(const SerializableObject&  key,
     
     int cc = IO::writeall(data_elt_fd, 
                           reinterpret_cast<char*>(scratch.buf()), 
-                          sizer.size());
-    if (cc != static_cast<int>(sizer.size())) {
+                          scratch.len());
+    if (cc != static_cast<int>(scratch.len())) {
         log_warn("put() - errors writing to file %s, %d: %s",
                  filename.c_str(), cc, strerror(errno));
         return DS_ERR;

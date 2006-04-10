@@ -54,8 +54,8 @@ Marshal::Marshal(context_t context, u_char* buf, size_t length, int options)
 {
 }
 
-Marshal::Marshal(u_char* buf, size_t length)
-    : BufferedSerializeAction(MARSHAL, CONTEXT_UNKNOWN, buf, length, 0)
+Marshal::Marshal(context_t context, ExpandableBuffer* buf, int options)
+    : BufferedSerializeAction(MARSHAL, CONTEXT_UNKNOWN, buf, options)
 {
 }
 
@@ -202,12 +202,6 @@ Unmarshal::Unmarshal(context_t context, const u_char* buf, size_t length,
                      int options)
     : BufferedSerializeAction(UNMARSHAL, context, 
                               (u_char*)(buf), length, options)
-{
-}
-
-Unmarshal::Unmarshal(const u_char* buf, size_t length)
-    : BufferedSerializeAction(UNMARSHAL, CONTEXT_UNKNOWN,
-                              (u_char*)(buf), length, 0)
 {
 }
 
@@ -468,5 +462,31 @@ MarshalCRC::process(const char* name, std::string* s)
 {
     crc_.update((u_char*)s->c_str(), s->size());
 }
+
+
+/******************************************************************************
+ *
+ * MarshalCopy
+ *
+ *****************************************************************************/
+size_t
+MarshalCopy::copy(ExpandableBuffer* buf,
+                  const SerializableObject* src,
+                  SerializableObject* dst)
+{
+    Marshal m(Serialize::CONTEXT_LOCAL, buf);
+    if (m.action(src) != 0) {
+        PANIC("error marshalling object");
+    }
+    
+    Unmarshal um(Serialize::CONTEXT_LOCAL,
+                 (const u_char*)buf->raw_buf(), buf->len());
+    if (um.action(dst) != 0) {
+        PANIC("error marshalling object");
+    }
+
+    return buf->len();
+}
+
 
 } // namespace oasys

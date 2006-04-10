@@ -86,7 +86,7 @@ u_char buf[LEN];
 
 DECLARE_TEST(Marshal) {
     memset(buf, 0, sizeof(char) * LEN);
-    Marshal v(buf, LEN);
+    Marshal v(Serialize::CONTEXT_LOCAL, buf, LEN);
     v.logpath("/marshal-test");
     CHECK(v.action(&o1) == 0);
 
@@ -94,7 +94,7 @@ DECLARE_TEST(Marshal) {
 }
 
 DECLARE_TEST(Unmarshal) {
-    Unmarshal uv(buf, LEN);
+    Unmarshal uv(Serialize::CONTEXT_LOCAL, buf, LEN);
     uv.logpath("/marshal-test");
     CHECK(uv.action(&o2) == 0);
 
@@ -103,10 +103,10 @@ DECLARE_TEST(Unmarshal) {
 
 DECLARE_TEST(MarshalSize) {
 
-    MarshalSize sz1;
+    MarshalSize sz1(Serialize::CONTEXT_LOCAL);
     sz1.action(&o1);
 
-    MarshalSize sz2;
+    MarshalSize sz2(Serialize::CONTEXT_LOCAL);
     sz2.action(&o2);
 
     CHECK_EQUAL(sz1.size(), sz2.size());

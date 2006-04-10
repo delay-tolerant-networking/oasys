@@ -253,45 +253,23 @@ MemoryTable::put(const SerializableObject& key,
     item->typecode_ = typecode;
 
     { // first the key
-        MarshalSize sizer(Serialize::CONTEXT_LOCAL);
-        if (sizer.action(&key) != 0) {
-            log_err("error sizing key object");
-            return DS_ERR;
-        }
-        size_t sz = sizer.size();
+        log_debug("put: serializing key");
     
-        log_debug("put: serializing %u byte key object", (u_int)sz);
-    
-        u_char* buf = item->key_.buf(sz);
-    
-        Marshal m(Serialize::CONTEXT_LOCAL, buf, sz);
+        Marshal m(Serialize::CONTEXT_LOCAL, &item->key_);
         if (m.action(&key) != 0) {
             log_err("error serializing key object");
             return DS_ERR;
         }
-
-        item->key_.set_len(sz);
     }
 
     { // then the data
-        MarshalSize sizer(Serialize::CONTEXT_LOCAL);
-        if (sizer.action(data) != 0) {
-            log_err("error sizing data object");
-            return DS_ERR;
-        }
-        size_t sz = sizer.size();
+        log_debug("put: serializing object");
     
-        log_debug("put: serializing %u byte object", (u_int)sz);
-    
-        u_char* buf = item->data_.buf(sz);
-    
-        Marshal m(Serialize::CONTEXT_LOCAL, buf, sz);
+        Marshal m(Serialize::CONTEXT_LOCAL, &item->data_);
         if (m.action(data) != 0) {
             log_err("error serializing data object");
             return DS_ERR;
         }
-
-        item->data_.set_len(sz);
     }
 
     item->typecode_ = typecode;
