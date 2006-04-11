@@ -39,6 +39,7 @@
 #ifndef _OASYS_NET_UTILS_H_
 #define _OASYS_NET_UTILS_H_
 
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -86,6 +87,43 @@ protected:
  * Utility wrapper around the ::gethostbyname() system call
  */
 extern int gethostbyname(const char* name, in_addr_t* addrp);
+
+/*
+ * Various overrides of {ntoh,hton}{l,s} that take a char buffer,
+ * which can be used on systems that require alignment for integer
+ * operations.
+ */
+
+inline u_int32_t
+safe_ntohl(const char* bp)
+{
+    u_int32_t netval;
+    memcpy(&netval, bp, sizeof(netval));
+    return ntohl(netval);
+}
+
+inline u_int16_t
+safe_ntohs(const char* bp)
+{
+    u_int16_t netval;
+    memcpy(&netval, bp, sizeof(netval));
+    return ntohl(netval);
+}
+
+inline void
+safe_htonl(u_int32_t val, char* bp)
+{
+    val = htonl(val);
+    memcpy(bp, &val, sizeof(val));
+}
+    
+inline void
+safe_htons(u_int16_t val, char* bp)
+{
+    val = htons(val);
+    memcpy(bp, &val, sizeof(val));
+}
+
 
 } // namespace oasys
 
