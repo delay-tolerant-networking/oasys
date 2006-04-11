@@ -107,7 +107,7 @@ safe_ntohs(const char* bp)
 {
     u_int16_t netval;
     memcpy(&netval, bp, sizeof(netval));
-    return ntohl(netval);
+    return ntohs(netval);
 }
 
 inline void
