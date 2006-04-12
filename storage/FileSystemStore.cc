@@ -240,13 +240,13 @@ FileSystemStore::init_database()
     log_notice("init database (tables dir '%s'", tables_dir_.c_str());
 
     int err = mkdir(db_dir_.c_str(), default_perm_);
-    if (err != 0) {
+    if (err != 0 && errno != EEXIST) {
         log_warn("init() failed: %s", strerror(errno));
         return -1;
     }
 
     err = mkdir(tables_dir_.c_str(), default_perm_);
-    if (err != 0) {
+    if (err != 0 && errno != EEXIST) {
         log_warn("init() failed: %s", strerror(errno));
         return -1;
     }
