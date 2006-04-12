@@ -42,8 +42,10 @@
 namespace oasys {
 
 bool     SpinLock::warn_on_contention_(true);
+#ifndef NDEBUG
 atomic_t SpinLock::total_spins_(0);
 atomic_t SpinLock::total_yields_(0);
+#endif
 
 int
 SpinLock::lock(const char* lock_user)
@@ -56,6 +58,7 @@ SpinLock::lock(const char* lock_user)
     atomic_incr(&lock_waiters_);
     
     int nspins = 0;
+    (void)nspins;
     while (atomic_cmpxchg32(&lock_count_, 0, 1) != 0)
     {
         Thread::spin_yield();
