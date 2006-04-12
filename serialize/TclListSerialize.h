@@ -44,8 +44,8 @@
 namespace oasys {
 
 /**
- * StringSerialize is a SerializeAction that marshals an object into a
- * tcl list of alternating name/object pairs.
+ * TclListSerialize is a SerializeAction that marshals an object into
+ * a tcl list of alternating name/object pairs.
  *
  * For contained serializable objects, a new list is created for the
  * sub object.
