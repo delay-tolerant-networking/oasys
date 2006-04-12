@@ -62,7 +62,9 @@ struct StorageConfig {
     bool        leave_clean_file_;///< Leave a .ds_clean file on clean shutdown
 
     // Berkeley DB Specific options
-    int         db_flags_;      ///< DB specific flags
+    bool        db_mpool_;      ///< Use DB mpool (default true)
+    bool        db_log_;        ///< Use DB log subsystem
+    bool        db_txn_;        ///< Use DB transaction
     int         db_max_tx_;     ///< Max # of active transactions (0 for default)
     int		db_max_locks_;	///< Max # of active locks (0 for default)
     int		db_max_lockers_;///< Max # of active locking threads (0 for default)
@@ -87,7 +89,9 @@ struct StorageConfig {
         tidy_(false),
         tidy_wait_(3),
         leave_clean_file_(true),
-        db_flags_(0),
+        db_mpool_(true),
+        db_log_(true),
+        db_txn_(true),
         db_max_tx_(0),
         db_max_locks_(0),
         db_max_lockers_(0),

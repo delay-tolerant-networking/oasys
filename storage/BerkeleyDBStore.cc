@@ -168,38 +168,45 @@ BerkeleyDBStore::init(const StorageConfig& cfg)
 
 #undef SET_DBENV_OPTION
 
-    int lock_flag = 0;
-    if (cfg.db_lockdetect_ != 0) {
-        lock_flag = DB_INIT_LOCK | DB_THREAD;
+    int dbenv_opts =
+        DB_CREATE  | 	// create new files
+        DB_PRIVATE	// only one process can access the db
+        ;
+
+    if (cfg.db_lockdetect_ != 0) { // locking
+        dbenv_opts |= DB_INIT_LOCK | DB_THREAD;
+    }
+
+    if (cfg.db_mpool_) { // memory pool
+        dbenv_opts |= DB_INIT_MPOOL;
+    }
+
+    if (cfg.db_log_) { // logging
+        dbenv_opts |= DB_INIT_LOG;
+    }
+
+    if (cfg.db_txn_) { // transactions / recovery
+        dbenv_opts |= DB_INIT_TXN | DB_RECOVER;
     }
     
-    err = dbenv_->open(
-        dbenv_, 
-        dbdir.c_str(),
-        DB_CREATE     |         // create new files
-        DB_INIT_MPOOL |         // initialize memory pool
-        DB_INIT_LOG   |         // use logging
-        lock_flag     |         // use locking
-        DB_INIT_TXN   |         // use transactions
-        DB_RECOVER    |         // recover from previous crash (if any)
-        DB_PRIVATE,             // only one process can access the db
-        0                       // no flags
-    );                     
-
+    err = dbenv_->open(dbenv_, dbdir.c_str(), dbenv_opts, 0 /* default mode */);
+    
     if (err != 0) 
     {
         log_crit("DB: %s, cannot open database", db_strerror(err));
         return DS_ERR;
     }
 
-    err = dbenv_->set_flags(dbenv_,
-                            DB_AUTO_COMMIT |
-                            DB_LOG_AUTOREMOVE, // every operation is a tx
-                            1);
-    if (err != 0) 
-    {
-        log_crit("DB: %s, cannot set flags", db_strerror(err));
-        return DS_ERR;
+    if (cfg.db_txn_) {
+        err = dbenv_->set_flags(dbenv_,
+                                DB_AUTO_COMMIT |
+                                DB_LOG_AUTOREMOVE, // every operation is a tx
+                                1);
+        if (err != 0) 
+        {
+            log_crit("DB: %s, cannot set flags", db_strerror(err));
+            return DS_ERR;
+        }
     }
 
     err = dbenv_->set_paniccall(dbenv_, BerkeleyDBStore::db_panic);
