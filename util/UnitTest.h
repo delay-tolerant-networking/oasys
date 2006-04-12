@@ -366,7 +366,8 @@ void _name::add_tests()                                         \
         oasys::logf("/test", oasys::LOG_ERR,                            \
                     "CHECK FAILED: '" #a "' != '" #b "' at %s:%d.",     \
                     __FILE__, __LINE__);                                \
-        oasys::logf("/test", oasys::LOG_ERR, "Contents of " #a ":");    \
+        oasys::logf("/test", oasys::LOG_ERR, "Contents of " #a          \
+                    " (length %u): ", strlen(a));                       \
         oasys::PrettyPrintBuf buf_a(a, strlen(a));                      \
         std::string s;                                                  \
         bool done;                                                      \
@@ -375,7 +376,8 @@ void _name::add_tests()                                         \
             oasys::logf("/test", oasys::LOG_ERR, s.c_str());            \
         } while (!done);                                                \
                                                                         \
-        oasys::logf("/test", oasys::LOG_ERR, "Contents of " #b ":");    \
+        oasys::logf("/test", oasys::LOG_ERR, "Contents of " #b          \
+                    " (length %u): ", strlen(b));                       \
         oasys::PrettyPrintBuf buf_b(b, strlen(b));                      \
                                                                         \
         do {                                                            \
