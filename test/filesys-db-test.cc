@@ -25,7 +25,7 @@ DECLARE_TEST(DBTestInit) {
     );   
 
     g_config->init_             = true;
-    g_config->init_             = true;
+    g_config->tidy_             = false;
     g_config->tidy_wait_        = 0;
 
     StringBuffer cmd("mkdir -p %s", g_config_dir);

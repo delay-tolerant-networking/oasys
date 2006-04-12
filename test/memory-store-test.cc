@@ -23,7 +23,7 @@ DECLARE_TEST(DBTestInit) {
     );   
 
     g_config->init_             = true;
-    g_config->init_             = true;
+    g_config->tidy_             = false;
     g_config->leave_clean_file_ = false;
     g_config->tidy_wait_        = 0;
 
