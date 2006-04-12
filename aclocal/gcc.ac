@@ -36,6 +36,8 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
     DEBUG=
     if test $debug = yes ; then 
         DEBUG="-g -fno-inline"
+    else
+        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -DNDEBUG"
     fi
     AC_SUBST(DEBUG)
 	
