@@ -53,68 +53,95 @@ StringSerialize::StringSerialize(context_t context, int options)
 void
 StringSerialize::process(const char* name, u_int32_t* i)
 {
-    if (options_ & INCLUDE_NAME)
-        buf_.appendf("%s%c", name, sep_);
-    
-    buf_.appendf("%d%c", *i, sep_);
+    if (options_ & INCLUDE_NAME) {
+        buf_.append(name);
+        buf_.append(sep_);
+    }
+
+    buf_.append_int(*i, 10);
+    buf_.append(sep_);
 }
 
 void
 StringSerialize::process(const char* name, u_int16_t* i)
 {
-    if (options_ & INCLUDE_NAME)
-        buf_.appendf("%s%c", name, sep_);
+    if (options_ & INCLUDE_NAME) {
+        buf_.append(name);
+        buf_.append(sep_);
+    }
     
-    buf_.appendf("%d%c", *i, sep_);
+    buf_.append_int(*i, 10);
+    buf_.append(sep_);
 }
 
 void
 StringSerialize::process(const char* name, u_int8_t* i)
 {
-    if (options_ & INCLUDE_NAME)
-        buf_.appendf("%s%c", name, sep_);
+    if (options_ & INCLUDE_NAME) {
+        buf_.append(name);
+        buf_.append(sep_);
+    }
     
-    buf_.appendf("%d%c", *i, sep_);
+    buf_.append_int(*i, 10);
+    buf_.append(sep_);
 }
 
 void
 StringSerialize::process(const char* name, bool* b)
 {
-    if (options_ & INCLUDE_NAME)
-        buf_.appendf("%s%c", name, sep_);
-    
-    buf_.appendf("%s%c", *b ? "true" : "false", sep_);
+    if (options_ & INCLUDE_NAME) {
+        buf_.append(name);
+        buf_.append(sep_);
+    }
+
+    if (*b) {
+        buf_.append("true", 4);
+    } else {
+        buf_.append("false", 5);
+    }
+        
+    buf_.append(sep_);
 }
 
 void
 StringSerialize::process(const char* name, u_char* bp, size_t len)
 {
-    if (options_ & INCLUDE_NAME)
-        buf_.appendf("%s%c", name, sep_);
-    
-    buf_.appendf("%.*s%c", (u_int)len, bp, sep_);
+    if (options_ & INCLUDE_NAME) {
+        buf_.append(name);
+        buf_.append(sep_);
+    }
+
+    buf_.append((const char*)bp, len);
+    buf_.append(sep_);
 }
 
 void
 StringSerialize::process(const char* name, std::string* s)
 {
-    if (options_ & INCLUDE_NAME)
-        buf_.appendf("%s%c", name, sep_);
-    
-    buf_.appendf("%.*s%c", (u_int)s->size(), s->data(), sep_);
+    if (options_ & INCLUDE_NAME) {
+        buf_.append(name);
+        buf_.append(sep_);
+    }
+
+    buf_.append(s->data(), s->length());
+    buf_.append(sep_);
 }
 
 void
 StringSerialize::process(const char* name, u_char** bp,
                          size_t* lenp, int flags)
 {
-    if (options_ & INCLUDE_NAME)
-        buf_.appendf("%s%c", name, sep_);
+    if (options_ & INCLUDE_NAME) {
+        buf_.append(name);
+        buf_.append(sep_);
+    }
     
     if (flags & Serialize::NULL_TERMINATED) {
-        buf_.appendf("%s%c", *bp, sep_);
+        buf_.append((const char*)*bp);
+        buf_.append(sep_);
     } else {
-        buf_.appendf("%.*s%c", (u_int)*lenp, *bp, sep_);
+        buf_.append((const char*)*bp, *lenp);
+        buf_.append(sep_);
     }
 }
 

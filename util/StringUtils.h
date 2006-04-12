@@ -200,6 +200,64 @@ str_isascii(const u_char* bp, size_t len)
     return true;
 }
 
+/**
+ * Convert an unsigned long to ascii in the given base. The pointer to
+ * the tail end of an adequately sized buffer is supplied, and the
+ * number of characters written is returned.
+ *
+ * Implementation largely copied from the FreeBSD 5.0 distribution.
+ *
+ * @return the number of bytes used or the number that would be used
+ * if there isn't enough space in the buffer
+ */
+inline size_t
+fast_ultoa(unsigned long val, int base, char* endp)
+{
+#define	to_char(n)	((n) + '0')
+    char* cp = endp;
+    long sval;
+    
+    static const char xdigs[] = "0123456789abcdef";
+    
+    switch(base) {
+    case 10:
+        // optimize one-digit numbers
+        if (val < 10) {
+            *cp = to_char(val);
+            return 1;
+        }
+
+        // according to the FreeBSD folks, signed arithmetic may be
+        // faster than unsigned, so do at most one unsigned mod/divide
+        if (val > LONG_MAX) {
+            *cp-- = to_char(val % 10);
+            sval = val / 10;
+        } else {
+            sval = val;
+        }
+        
+        do {
+            *cp-- = to_char(sval % 10);
+            sval /= 10;
+        } while (sval != 0);
+
+        break;
+    case 16:
+        do {
+            *cp-- = xdigs[val & 15];
+            val >>= 4;
+        } while (val != 0);
+        break;
+
+    default:
+        return 0; // maybe should do NOTREACHED??
+    }
+
+    return endp - cp;
+
+#undef to_char
+}
+
 } // namespace oasys
 
 #endif /* _OASYS_STRING_UTILS_H_ */

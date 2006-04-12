@@ -39,6 +39,7 @@
 #include <stdlib.h>
 
 #include "StringBuffer.h"
+#include "StringUtils.h"
 
 #include "ExpandableBuffer.h"
 #include "io/IOClient.h"
@@ -130,6 +131,21 @@ StringBuffer::append(char c)
     buf_->set_len(buf_->len() + 1);
 
     return 1;
+}
+
+size_t
+StringBuffer::append_int(u_int32_t val, int base)
+{
+    char tmp[16];
+    size_t len = fast_ultoa(val, base, &tmp[15]);
+
+    ASSERT(len < 16);
+    
+    buf_->reserve(buf_->len() + len);
+    memcpy(buf_->end(), &tmp[16 - len], len);
+    buf_->set_len(buf_->len() + len);
+
+    return len;
 }
 
 size_t

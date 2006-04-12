@@ -145,6 +145,13 @@ public:
     size_t vappendf(const char* fmt, va_list ap);
 
     /**
+     * Append an ascii representation of the given integer.
+     *
+     * This is the same as calling appendf("%d", val), only faster.
+     */
+    size_t append_int(u_int32_t val, int base);
+
+    /**
      * Trim cnt characters from the tail of the string.
      */
     void trim(size_t cnt)
