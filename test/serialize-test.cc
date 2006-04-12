@@ -43,6 +43,7 @@
 #include "serialize/MarshalSerialize.h"
 #include "serialize/TextSerialize.h"
 #include "serialize/KeySerialize.h"
+#include "serialize/StringSerialize.h"
 #include "serialize/TypeShims.h"
 #include "util/ScratchBuffer.h"
 
@@ -327,6 +328,43 @@ struct KeyObj_1 : public SerializableObject {
     }
 };
 
+class LimitObj : public SerializableObject {
+public:
+    u_int       uzero_;
+    u_int       szero_;
+    int         one_;
+    int         negone_;
+    u_int       umax_;
+    int         smax_;
+
+    LimitObj(bool init) {
+        if (init) {
+            uzero_  = 0;
+            szero_  = 0;
+            one_    = 1;
+            negone_ = -1;
+            umax_   = 0xffffffff;
+            smax_   = INT_MAX;
+        } else {
+            uzero_  = 0;
+            szero_  = 0;
+            one_    = 0;
+            negone_ = 0;
+            umax_   = 0;
+            smax_   = 0;
+        }
+    }
+
+    void serialize(SerializeAction* a) {
+        a->process("uzero",  &uzero_);
+        a->process("szero",  &szero_);
+        a->process("one",    &one_);
+        a->process("negone", &negone_);
+        a->process("umax",   &umax_);
+        a->process("smax",   &smax_);
+    }
+};
+
 DECLARE_TEST(KeySerializeTest_1) {    
     ExpandableBuffer buf;
     KeyObj_1 obj1(true);
@@ -376,6 +414,24 @@ DECLARE_TEST(KeySerializeTest_3) {
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(StringSerializeTest) {
+    KeyObj_1 key(true);
+    StringSerialize s(Serialize::CONTEXT_LOCAL, 0);
+    s.action(&key);
+    CHECK_EQUALSTR(s.buf().c_str(),
+                   "51966 this is a string end 61453 true 12345test");
+
+    LimitObj obj(true);
+    StringSerialize s2(Serialize::CONTEXT_LOCAL, Serialize::INCLUDE_NAME);
+    s2.action(&obj);
+    CHECK_EQUALSTR(s2.buf().c_str(),
+                   "uzero 0 szero 0 one 1 "
+                   "negone 4294967295 umax 4294967295 smax 2147483647")
+                   
+    return UNIT_TEST_PASSED;
+}
+    
+
 DECLARE_TESTER(MarshalTester) {
     ADD_TEST(SizeTest);
     ADD_TEST(CompareTest_NOCRC);
@@ -394,6 +450,7 @@ DECLARE_TESTER(MarshalTester) {
     ADD_TEST(KeySerializeTest_1);
     ADD_TEST(KeySerializeTest_2);
     ADD_TEST(KeySerializeTest_3);
+    ADD_TEST(StringSerializeTest);
 };
 
 DECLARE_TEST_FILE(MarshalTester, "marshalling test");
