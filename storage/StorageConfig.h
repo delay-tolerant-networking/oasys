@@ -61,6 +61,10 @@ struct StorageConfig {
     int         tidy_wait_;	///< Seconds to wait before tidying
     bool        leave_clean_file_;///< Leave a .ds_clean file on clean shutdown
 
+    // Filesystem DB Specific options
+    int         fs_fd_cache_size_; ///< If > 0, then this # of open
+                                   /// fds will be cached
+
     // Berkeley DB Specific options
     bool        db_mpool_;      ///< Use DB mpool (default true)
     bool        db_log_;        ///< Use DB log subsystem
@@ -89,6 +93,9 @@ struct StorageConfig {
         tidy_(false),
         tidy_wait_(3),
         leave_clean_file_(true),
+
+        fs_fd_cache_size_(0),
+
         db_mpool_(true),
         db_log_(true),
         db_txn_(true),

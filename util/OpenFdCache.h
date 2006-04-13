@@ -24,6 +24,9 @@ struct OpenFdCacheClose {
 template<typename _Key, typename _CloseFcn = OpenFdCacheClose>
 class OpenFdCache : Logger {
 public:
+    /*!
+     * File descriptor LRU list entry.
+     */
     struct FdListEnt {
         FdListEnt(const _Key& key,
                   int fd        = -1,
@@ -36,10 +39,11 @@ public:
         int  pin_count_;
     };
 
-    typedef LRUList<FdListEnt> FdList;
+    typedef LRUList<FdListEnt>                        FdList;
     typedef std::map<_Key, typename FdList::iterator> FdMap;
 
-    OpenFdCache(const char* logpath, size_t max)
+    OpenFdCache(const char* logpath,
+                size_t      max)
         : Logger("OpenFdCache", "%s/%s", logpath, "cache"),
           max_(max)
     {}
@@ -53,16 +57,20 @@ public:
         ScopeLock l(&lock_, "OpenFdCache::get_and_pin");
 
         typename FdMap::iterator i = open_fds_map_.find(key);
-        if (i == open_fds_map_.end()) {
+        if (i == open_fds_map_.end()) 
+        {
             return -1;
         }
         
         open_fds_.move_to_back(i->second);
         ++(i->second->pin_count_);
 
-        log_debug("Got entry fd=%d pin_count=%d", 
+        log_debug("Got entry fd=%d pin_count=%d size=%u", 
                   i->second->fd_, 
-                  i->second->pin_count_);
+                  i->second->pin_count_,
+                  open_fds_map_.size());
+
+        ASSERT(i->second->fd_ != -1);
 
         return i->second->fd_;
     }
@@ -79,37 +87,60 @@ public:
         
         --(i->second->pin_count_);
 
-        log_debug("Unpin entry fd=%d pin_count=%d", 
-                  i->second->fd_, i->second->pin_count_);
+        log_debug("Unpin entry fd=%d pin_count=%d size=%u", 
+                  i->second->fd_, 
+                  i->second->pin_count_,
+                  open_fds_map_.size());
     }
 
     /*!
      * Put an fd in the file cache which may evict unpinned fds. Also
      * pin the fd that was just put into the cache.
+     * 
+     * N.B. There could be race when you are putting a newly opened
+     * file (and someone else is trying to do the same) into the
+     * cache. You need to check the return from put_and_pin as to
+     * whether you will need to close the file or not.
+     *
+     * @return Fd 
      */
-    void put_and_pin(const _Key& key, int fd) 
+    int put_and_pin(const _Key& key, int fd) 
     {
         ScopeLock l(&lock_, "OpenFdCache::put_and_pin");
 
+        ASSERT(fd != -1);
+
         typename FdMap::iterator i = open_fds_map_.find(key);
-        if (i != open_fds_map_.end()) {
+        if (i != open_fds_map_.end()) 
+        {
             ++(i->second->pin_count_);
-            return;
+            log_debug("Added entry but already there fd=%d pin_count=%d size=%u", 
+                      i->second->fd_, 
+                      i->second->pin_count_,
+                      open_fds_map_.size());
+
+            return i->second->fd_;
         }
 
-        while (open_fds_map_.size() + 1> max_) {
-            if (evict() == -1)
+        while (open_fds_map_.size() + 1> max_) 
+        {
+            if (evict() == -1) 
+            {
                 break;
+            }
         }
         
         // start off with pin count 1
         typename FdList::iterator new_ent = open_fds_.insert(open_fds_.end(),
                                                              FdListEnt(key, fd, 1));
-        log_debug("Added entry fd=%d pin_count=%d", 
+        log_debug("Added entry fd=%d pin_count=%d size=%u", 
                   new_ent->fd_, 
-                  new_ent->pin_count_);
+                  new_ent->pin_count_,
+                  open_fds_map_.size());
 
         open_fds_map_[key] = new_ent;
+
+        return fd;
     }
 
     /*!
@@ -119,11 +150,13 @@ public:
     {
         typename FdMap::iterator i = open_fds_map_.find(key);
 
-        if (i == open_fds_map_.end())
+        if (i == open_fds_map_.end()) 
+        {
             return;
+        }
 
         _CloseFcn::close(i->second->fd_);
-        log_debug("Closed %d", i->second->fd_);
+        log_debug("Closed %d size=%u", i->second->fd_, open_fds_map_.size());
 
         open_fds_.erase(i->second);
         open_fds_map_.erase(i);       
@@ -179,14 +212,16 @@ private:
         
         if (found) 
         {
-            log_debug("Evicting fd=%d", i->fd_);
+            ASSERT(i->fd_ < 8*1024);
+            
+            log_debug("Evicting fd=%d size=%u", i->fd_, open_fds_map_.size());
             _CloseFcn::close(i->fd_);
             open_fds_map_.erase(i->key_);
             open_fds_.erase(i);
         }
         else
         {
-            log_warn("All of the fds are busy!");
+            log_warn("All of the fds are busy! size=%u", open_fds_map_.size());
             return -1;
         }
 

@@ -60,7 +60,8 @@ FileSystemStore::FileSystemStore(const char* logpath)
     : DurableStoreImpl("FileSystemStore", logpath),
       db_dir_("INVALID"),
       tables_dir_("INVALID"),
-      default_perm_(S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP)
+      default_perm_(S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP),
+      fd_cache_(0)
 {}
 
 //----------------------------------------------------------------------------
@@ -120,6 +121,10 @@ FileSystemStore::init(const StorageConfig& cfg)
         }
     }
 
+    if (cfg.fs_fd_cache_size_ > 0) {
+        fd_cache_ = new FdCache(logpath_, cfg.fs_fd_cache_size_);
+    }
+
     log_info("init() done");
     init_ = true;
 
@@ -161,7 +166,11 @@ FileSystemStore::get_table(DurableTableImpl** table,
     }
     
     FileSystemTable* table_ptr =
-        new FileSystemTable(logpath_, name, dir_path, flags & DS_MULTITYPE);
+        new FileSystemTable(logpath_, 
+                            name, 
+                            dir_path, 
+                            flags & DS_MULTITYPE, 
+                            fd_cache_);
     ASSERT(table_ptr);
     
     *table = table_ptr;
@@ -267,21 +276,20 @@ FileSystemStore::tidy_database()
 }
 
 //----------------------------------------------------------------------------
-FileSystemTable::FileSystemTable(const char*        logpath,
-                                 const std::string& table_name,
-                                 const std::string& path,
-                                 bool               multitype)
+FileSystemTable::FileSystemTable(const char*               logpath,
+                                 const std::string&        table_name,
+                                 const std::string&        path,
+                                 bool                      multitype,
+                                 FileSystemStore::FdCache* cache)
     : DurableTableImpl(table_name, multitype),
       Logger("FileSystemTable", "%s/%s", logpath, table_name.c_str()),
       path_(path),
-      cache_(logpath_, 10)
+      cache_(cache)
 {}
 
 //----------------------------------------------------------------------
 FileSystemTable::~FileSystemTable()
-{
-    cache_.close_all();
-}
+{}
 
 //----------------------------------------------------------------------------
 int 
@@ -376,12 +384,16 @@ FileSystemTable::put(const SerializableObject&  key,
     
     log_debug("opening file %s", filename.c_str());
     
-    data_elt_fd = cache_.get_and_pin(filename);
+    if (cache_) 
+    {
+        data_elt_fd = cache_->get_and_pin(filename);
+    }
+
     if (data_elt_fd == -1) 
     {
         data_elt_fd = open(filename.c_str(), open_flags, 
                            S_IRUSR | S_IWUSR | S_IRGRP);
-        if (data_elt_fd == -1) 
+        if (data_elt_fd == -1)
         {
             if (errno == ENOENT) {
                 log_debug("file not found and DS_CREATE not specified");
@@ -395,30 +407,55 @@ FileSystemTable::put(const SerializableObject&  key,
                 return DS_ERR;
             }
         }
-        cache_.put_and_pin(filename, data_elt_fd);
+
+        if (cache_) 
+        {
+            int old_fd = data_elt_fd;
+            data_elt_fd = cache_->put_and_pin(filename, data_elt_fd);
+            if (old_fd != data_elt_fd) 
+            {
+                IO::close(old_fd);
+            }
+        }
     } 
-    else if (flags & DS_EXCL) 
+    else if (cache_ && (flags & DS_EXCL))
     {
-        cache_.unpin(filename);
+        cache_->unpin(filename);
         return DS_EXISTS;
     }
 
     log_debug("created file %s, fd = %d", 
               filename.c_str(), data_elt_fd);
     
-    int cc = IO::lseek(data_elt_fd, 0, SEEK_SET);
-    ASSERT(cc == 0);
-    cc = IO::writeall(data_elt_fd, 
-                      reinterpret_cast<char*>(scratch.buf()), 
-                      scratch.len());
-    if (cc != static_cast<int>(scratch.len())) {
+    if (cache_) 
+    {
+        int cc = IO::lseek(data_elt_fd, 0, SEEK_SET);
+        ASSERT(cc == 0);
+    }
+
+    int cc = IO::writeall(data_elt_fd, 
+                          reinterpret_cast<char*>(scratch.buf()), 
+                          scratch.len());
+    if (cc != static_cast<int>(scratch.len())) 
+    {
         log_warn("put() - errors writing to file %s, %d: %s",
                  filename.c_str(), cc, strerror(errno));
+        if (cache_) 
+        {
+            cache_->unpin(filename);
+        }
         return DS_ERR;
     }
     
-    // close(data_elt_fd); XXX/bowei -- fsync?
-    cache_.unpin(filename);
+    if (cache_)
+    {
+        // close(data_elt_fd); XXX/bowei -- fsync?
+        cache_->unpin(filename);
+    }
+    else
+    {
+        IO::close(data_elt_fd);
+    }
 
     return 0;
 }
@@ -437,7 +474,11 @@ FileSystemTable::del(const SerializableObject& key)
     
     std::string filename = path_ + "/" + key_str.buf();
 
-    cache_.close(filename);
+    if (cache_)
+    {
+        cache_->close(filename);
+    }
+
     int err = unlink(filename.c_str());
     if (err == -1) 
     {
@@ -503,23 +544,42 @@ FileSystemTable::get_common(const SerializableObject& key,
     log_debug("opening file %s", file_path.c_str());
 
     
-    int fd = cache_.get_and_pin(file_path);
+    int fd = -1;
+    if (cache_) 
+    {
+        fd = cache_->get_and_pin(file_path);
+    }
+
     if (fd == -1) {
         fd = open(file_path.c_str(), O_RDWR);
-        if (fd == -1) {
-            if (errno == ENOENT) {
+        if (fd == -1) 
+        {
+            if (errno == ENOENT) 
+            {
                 return DS_NOTFOUND;
             }
             
             return DS_ERR;
         }
-        cache_.put_and_pin(file_path, fd);
+
+        if (cache_) 
+        {
+            int old_fd = fd;
+            fd = cache_->put_and_pin(file_path, fd);
+            if (old_fd != fd) 
+            {
+                IO::close(old_fd);
+            }
+        }
     }
     
-    // Snarf all of the bytes
-    int cc = IO::lseek(fd, 0, SEEK_SET);
-    ASSERT(cc == 0);
-
+    if (cache_) 
+    {
+        int cc = IO::lseek(fd, 0, SEEK_SET);
+        ASSERT(cc == 0);
+    }
+    
+    int cc;
     do {
         buf->reserve(buf->len() + 4096);
         cc = IO::read(fd, buf->end(), 4096, 0);
@@ -527,9 +587,15 @@ FileSystemTable::get_common(const SerializableObject& key,
         buf->set_len(buf->len() + cc);
     } while (cc > 0);
 
-    cache_.unpin(file_path);
-    // XXX/bowei fsync?
-    
+    if (cache_) 
+    {
+        cache_->unpin(file_path);
+    }
+    else
+    {
+        IO::close(fd);
+    }
+
     return 0;
 }
 

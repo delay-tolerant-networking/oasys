@@ -67,6 +67,9 @@ class FileSystemIterator;
  */
 class FileSystemStore : public DurableStoreImpl {
     friend class FileSystemTable;
+
+    typedef oasys::OpenFdCache<std::string> FdCache;
+
 public:
     FileSystemStore(const char* logpath);
 
@@ -91,9 +94,11 @@ private:
     std::string db_dir_;     //!< parent directory for the db
     std::string tables_dir_; //!< directory where the tables are stored
 
-    RefCountMap ref_count_; // XXX/bowei -- not used for now
-    int default_perm_; //!< Default permissions on database files
+    RefCountMap ref_count_;     // XXX/bowei -- not used for now
+    int         default_perm_;  //!< Default permissions on database files
     
+    FdCache*    fd_cache_;
+
     //! Check for the existance of databases. @return 0 on no error.
     //! @return -2 if the database file doesn't exist. Otherwise -1.
     int check_database();
@@ -113,8 +118,6 @@ private:
 
 class FileSystemTable : public DurableTableImpl, public Logger {
     friend class FileSystemStore;
-    
-    typedef oasys::OpenFdCache<std::string> FdCache;
 public:
     ~FileSystemTable();
 
@@ -141,13 +144,16 @@ public:
 private:
     std::string path_;
 
-    //! Open file descriptor cache
-    FdCache     cache_;
+    /*!
+     * Shared Fd cache.
+     */
+    FileSystemStore::FdCache* cache_;
 
-    FileSystemTable(const char*        logpath,
-                    const std::string& table_name,
-                    const std::string& path,
-                    bool               multitype);
+    FileSystemTable(const char*               logpath,
+                    const std::string&        table_name,
+                    const std::string&        path,
+                    bool                      multitype,
+                    FileSystemStore::FdCache* cache);
 
     int get_common(const SerializableObject& key,
                    ExpandableBuffer* buf);
