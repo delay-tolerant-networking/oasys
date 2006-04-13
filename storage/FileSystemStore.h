@@ -45,6 +45,7 @@
 #include "../debug/Logger.h"
 #include "../thread/SpinLock.h"
 #include "../util/ScratchBuffer.h"
+#include "../util/OpenFdCache.h"
 
 #include "DurableStore.h"
 
@@ -60,7 +61,9 @@ class FileSystemIterator;
 
 /*!
  * The most obvious layering of backing store -- use the file system
- * directly. 
+ * directly.
+ *
+ * NEW: Now with a level of indirection!
  */
 class FileSystemStore : public DurableStoreImpl {
     friend class FileSystemTable;
@@ -110,6 +113,8 @@ private:
 
 class FileSystemTable : public DurableTableImpl, public Logger {
     friend class FileSystemStore;
+    
+    typedef oasys::OpenFdCache<std::string> FdCache;
 public:
     ~FileSystemTable();
 
@@ -135,6 +140,9 @@ public:
 
 private:
     std::string path_;
+
+    //! Open file descriptor cache
+    FdCache     cache_;
 
     FileSystemTable(const char*        logpath,
                     const std::string& table_name,
