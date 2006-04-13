@@ -32,6 +32,38 @@ public:
     void set_accept_timeout(int ms) {
         accept_timeout_ = ms;
     }
+
+
+    int rc_bind() {
+        int res = -1;
+        char buff[18];
+
+        // start at 1 and work up to 30
+        channel_ = 1;
+        while (channel_ <= 30) {
+            if ((res = bind()) != 0) {
+
+                // something is borked
+                if (errno != EADDRINUSE) {
+                    log_err("error binding to %s:%d: %s",
+                            Bluetooth::batostr(&local_addr_,buff),
+                            channel_,
+                            strerror(errno));
+                    return res;
+                }
+            } else {
+
+                // bind succeeded
+                return res;
+            }
+
+            ++channel_;
+        }
+
+        log_err("Scanned all local RFCOMM channels but unable to bind to %s",
+                Bluetooth::batostr(&local_addr_,buff));
+        return -1;
+    }
 };
 
 } // namespace oasys

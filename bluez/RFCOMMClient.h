@@ -22,6 +22,12 @@ public:
 
     {
     }
+    /**
+     * Since RFCOMM channels only range from [1 .. 30], scan the whole
+     * space for an available channel on the remote Bluetooth host
+     */
+    int rc_connect(bdaddr_t remote_addr);
+    int rc_connect();
 };
 
 }  // namespace oasys
