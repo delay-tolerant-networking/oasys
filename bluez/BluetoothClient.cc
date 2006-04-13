@@ -1,5 +1,3 @@
-/* $Id$ */
-
 #include <config.h>
 #ifdef OASYS_BLUETOOTH_ENABLED
 
@@ -110,6 +108,38 @@ BluetoothClient::timeout_readvall(const struct iovec* iov, int iovcnt,
 {
     return IO::timeout_readvall(fd_, iov, iovcnt, timeout_ms, get_notifier(),
                                 logpath_);
+}
+
+int
+BluetoothClient::timeout_write(const char* bp, size_t len, int timeout_ms)
+{
+    int cc = IO::timeout_write(fd_, bp, len, timeout_ms,
+                               get_notifier(), logpath_);
+    return cc;
+}
+
+int
+BluetoothClient::timeout_writev(const struct iovec* iov, int iovcnt, int timeout_ms)
+{
+    int cc = IO::timeout_writev(fd_, iov, iovcnt, timeout_ms,
+                                get_notifier(), logpath_);
+    return cc;
+}
+
+int
+BluetoothClient::timeout_writeall(const char* bp, size_t len, int timeout_ms)
+{
+    int cc = IO::timeout_writeall(fd_, bp, len, timeout_ms,
+                                  get_notifier(), logpath_);
+    return cc;
+}
+
+int
+BluetoothClient::timeout_writevall(const struct iovec* iov, int iovcnt, int timeout_ms)
+{
+    int cc = IO::timeout_writevall(fd_, iov, iovcnt, timeout_ms,
+                                   get_notifier(), logpath_);
+    return cc;
 }
 
 int
