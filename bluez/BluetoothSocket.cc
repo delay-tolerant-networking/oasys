@@ -130,6 +130,12 @@ BluetoothSocket::bind(bdaddr_t local_addr, u_int8_t local_channel)
 }
 
 int
+BluetoothSocket::bind()
+{
+    return bind(local_addr_,channel_);
+}
+
+int
 BluetoothSocket::connect(bdaddr_t remote_addr, u_int8_t remote_channel)
 {
     // In Bluetooth, piconets are formed by one Master
@@ -164,6 +170,12 @@ BluetoothSocket::connect(bdaddr_t remote_addr, u_int8_t remote_channel)
     set_state(ESTABLISHED);
 
     return 0;
+}
+
+int
+BluetoothSocket::connect()
+{
+    return connect(remote_addr_,channel_);
 }
 
 int

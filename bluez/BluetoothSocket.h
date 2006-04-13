@@ -54,7 +54,7 @@ public:
 
     BluetoothSocket(int socktype, proto_t proto, const char* logbase);
     BluetoothSocket(int socktype, proto_t proto, int fd, bdaddr_t remote_addr,
-             u_int8_t remote_channel, const char* logbase);
+                    u_int8_t channel, const char* logbase);
     virtual ~BluetoothSocket();
 
     /// Set the socket parameters
@@ -62,8 +62,10 @@ public:
 
     //@{
     /// System call wrappers
-    virtual int bind(bdaddr_t local_addr, u_int8_t local_channel);
-    virtual int connect(bdaddr_t local_addr, u_int8_t local_channel);
+    virtual int bind(bdaddr_t local_addr, u_int8_t channel);
+    virtual int bind();
+    virtual int connect(bdaddr_t remote_addr, u_int8_t channel);
+    virtual int connect();
     virtual int close();
     virtual int shutdown(int how);
 
