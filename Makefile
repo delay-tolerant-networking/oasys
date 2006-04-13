@@ -38,12 +38,14 @@ IO_SRCS :=					\
 	io/TCPServer.cc				\
 	io/UDPClient.cc				\
 
-BLUEZ_SRCS :=								\
-	bluez/Bluetooth.cc				\
-	bluez/BluetoothSocket.cc				\
-	bluez/BluetoothInquiry.cc				\
-	bluez/BluetoothClient.cc				\
-	bluez/BluetoothServer.cc				\
+BLUEZ_SRCS :=					\
+	bluez/Bluetooth.cc			\
+	bluez/BluetoothSDP.cc			\
+	bluez/BluetoothSocket.cc		\
+	bluez/BluetoothInquiry.cc		\
+	bluez/BluetoothClient.cc		\
+	bluez/BluetoothServer.cc		\
+	bluez/RFCOMMClient.cc			\
 
 MEMORY_SRCS :=                                  \
 	memory/Memory.cc          
