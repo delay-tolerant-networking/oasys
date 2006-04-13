@@ -9,6 +9,7 @@ TESTS += \
 	marshal-test				\
 	memory-store-test			\
 	msg-queue-test				\
+	open-fd-cache-test                      \
 	optparser-test				\
 	regex-test				\
 	sample-test				\
