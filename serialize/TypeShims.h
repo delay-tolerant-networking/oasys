@@ -189,14 +189,15 @@ private:
  * prefix_adapter:
  *
  * SerializableObject* real_key;
- * table->get(oasys::prefix_adapter("my_prefix", real_key));
+ * table->get(oasys::prefix_adapter(1000, real_key));
  *
- * Which will automatically append "my_prefix" to the key entry.
+ * Which will automatically append 1000 to the key entry.
  *
  */
-template<typename _SerializableObject>
+template<typename _SerializablePrefix, typename _SerializableObject>
 struct PrefixAdapter : public SerializableObject {
-    PrefixAdapter(const char* prefix, _SerializableObject* obj)
+    PrefixAdapter(_SerializablePrefix* prefix,
+                  _SerializableObject* obj)
         : prefix_(prefix),
           obj_(obj)
     {}
@@ -204,25 +205,21 @@ struct PrefixAdapter : public SerializableObject {
     void serialize(SerializeAction* a) 
     {
         ASSERT(a->action_code() != Serialize::UNMARSHAL);
-
-        size_t len;
-        a->process("prefix", 
-                   reinterpret_cast<u_char**>(const_cast<char**>(&prefix_)), 
-                   &len,
-                   Serialize::NULL_TERMINATED);
-        
-        a->process("serializable", obj_);
+        a->process("prefix", prefix_);
+        a->process("obj",    obj_);
     }
 
-    const char*          prefix_;
+    _SerializablePrefix* prefix_;
     _SerializableObject* obj_;
 };
 
-template<typename _SerializableObject>
-PrefixAdapter<_SerializableObject>
-prefix_adapter(const char* prefix, _SerializableObject* obj)
+template<typename _SerializablePrefix, typename _SerializableObject>
+PrefixAdapter<_SerializablePrefix, _SerializableObject>
+prefix_adapter(_SerializablePrefix* prefix,
+               _SerializableObject* obj)
 {
-    return PrefixAdapter<_SerializableObject>(prefix, obj);
+    return PrefixAdapter<_SerializablePrefix,
+                         _SerializableObject>(prefix, obj);
 }
 
 }; // namespace oasys

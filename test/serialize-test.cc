@@ -442,13 +442,16 @@ key_maker(const SerializableObject& key, int opts = 0)
     
 DECLARE_TEST(PrefixAdapterTest) {
     KeyObj_1 key(true);
-    CHECK_EQUALSTR(key_maker(prefix_adapter("my-prefix", &key)).c_str(),
-                   "my-prefix 51966 this is a string end 61453 true 12345test");
-
+    int prefix = 1000;
+    
+    CHECK_EQUALSTR(key_maker(prefix_adapter(&prefix, &key)).c_str(),
+                   "1000 51966 this is a string end 61453 true 12345test");
+    
+    prefix = 2001;
     LimitObj obj(true);
-    CHECK_EQUALSTR(key_maker(prefix_adapter("my-prefix", &obj), 
+    CHECK_EQUALSTR(key_maker(prefix_adapter(&prefix, &obj), 
                              Serialize::INCLUDE_NAME).c_str(),
-                   "prefix my-prefix uzero 0 szero 0 one 1 "
+                   "prefix 2001 uzero 0 szero 0 one 1 "
                    "negone 4294967295 umax 4294967295 smax 2147483647")    
     
     return UNIT_TEST_PASSED;
