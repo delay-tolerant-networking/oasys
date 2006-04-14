@@ -204,7 +204,6 @@ struct PrefixAdapter : public SerializableObject {
     
     void serialize(SerializeAction* a) 
     {
-        ASSERT(a->action_code() != Serialize::UNMARSHAL);
         a->process("prefix", prefix_);
         a->process("obj",    obj_);
     }
