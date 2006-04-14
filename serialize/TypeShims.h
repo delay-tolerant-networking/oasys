@@ -180,6 +180,51 @@ private:
     bool   own_buf_;
 };
 
+//----------------------------------------------------------------------------
+/*!
+ * This is used for generating prefixes for the SerializableObject
+ * strings used as keys for tables. Instead of creating by hand
+ * another kind of SerializableObject that introduces some kind of
+ * prefixing system in the serialize call of the key, you can use
+ * prefix_adapter:
+ *
+ * SerializableObject* real_key;
+ * table->get(oasys::prefix_adapter("my_prefix", real_key));
+ *
+ * Which will automatically append "my_prefix" to the key entry.
+ *
+ */
+template<typename _SerializableObject>
+struct PrefixAdapter : SerializableObject {
+    PrefixAdapter(const char* prefix, _SerializableObject* obj)
+        : prefix_(prefix),
+          obj_(obj)
+    {}
+    
+    void serialize(SerializeAction* a) 
+    {
+        ASSERT(a->action_code() != Serialize::UNMARSHAL);
+
+        size_t len;
+        a->process("prefix", 
+                   reinterpret_cast<u_char**>(const_cast<char**>(&prefix_)), 
+                   &len,
+                   Serialize::NULL_TERMINATED);
+        
+        a->process("serializable", obj_);
+    }
+
+    const char*          prefix_;
+    _SerializableObject* obj_;
+};
+
+template<typename _SerializableObject>
+PrefixAdapter<_SerializableObject>
+prefix_adapter(const char* prefix, _SerializableObject* obj)
+{
+    return PrefixAdapter<_SerializableObject>(prefix, obj);
+}
+
 }; // namespace oasys
 
 #endif //__TYPE_SHIMS_H__

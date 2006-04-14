@@ -430,7 +430,29 @@ DECLARE_TEST(StringSerializeTest) {
                    
     return UNIT_TEST_PASSED;
 }
+
+std::string
+key_maker(const SerializableObject& key, int opts = 0)
+{
+    StringSerialize s(Serialize::CONTEXT_LOCAL, opts);
+    s.action(&key);
+
+    return s.buf().c_str();
+}
     
+DECLARE_TEST(PrefixAdapterTest) {
+    KeyObj_1 key(true);
+    CHECK_EQUALSTR(key_maker(prefix_adapter("my-prefix", &key)).c_str(),
+                   "my-prefix 51966 this is a string end 61453 true 12345test");
+
+    LimitObj obj(true);
+    CHECK_EQUALSTR(key_maker(prefix_adapter("my-prefix", &obj), 
+                             Serialize::INCLUDE_NAME).c_str(),
+                   "prefix my-prefix uzero 0 szero 0 one 1 "
+                   "negone 4294967295 umax 4294967295 smax 2147483647")    
+    
+    return UNIT_TEST_PASSED;
+}
 
 DECLARE_TESTER(MarshalTester) {
     ADD_TEST(SizeTest);
@@ -451,6 +473,7 @@ DECLARE_TESTER(MarshalTester) {
     ADD_TEST(KeySerializeTest_2);
     ADD_TEST(KeySerializeTest_3);
     ADD_TEST(StringSerializeTest);
+    ADD_TEST(PrefixAdapterTest);
 };
 
 DECLARE_TEST_FILE(MarshalTester, "marshalling test");
