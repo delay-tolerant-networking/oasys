@@ -195,7 +195,7 @@ private:
  *
  */
 template<typename _SerializableObject>
-struct PrefixAdapter : SerializableObject {
+struct PrefixAdapter : public SerializableObject {
     PrefixAdapter(const char* prefix, _SerializableObject* obj)
         : prefix_(prefix),
           obj_(obj)
