@@ -1197,6 +1197,9 @@ fp_begin:
 			 * call ptr->format().
 			 *      -- NOT ANSI
 			 */
+
+                    // XXX/bowei - FIXME: this could cause a buffer
+                    // underflow if someone does vsnprintf("%p").
 			if (ret > 0 && str[-1] == '*') {
 				str--;
 				strsz++;
