@@ -119,6 +119,17 @@ public:
 #define delete_z(_obj) \
     do { delete _obj; _obj = 0; } while (0)
 
+/*! @{ Macros to define but not declare copy and assignment operator
+ * to avoid accidently usage of such constructs. Put this at the top
+ * of the class declaration.
+ */
+#define NO_COPY(_Classname)   \
+    private: _Classname(const _Classname& other)
+#define NO_ASSIGN(_Classname) \
+    private: _Classname& operator=(const _Classname& other)
+#define NO_ASSIGN_COPY(_Classname) NO_COPY(_Classname); NO_ASSIGN(_Classname)
+//! @}
+
 } // namespace oasys
 
 #include "../memory/Memory.h"
