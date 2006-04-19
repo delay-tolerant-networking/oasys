@@ -174,6 +174,13 @@ public:
         do_lock(lock_user);
     }
 
+    ScopeLock(const Lock* l,
+              const char* lock_user)
+        : lock_(const_cast<Lock*>(l))
+    {
+        do_lock(lock_user);
+    }
+
     ScopeLock(oasys::ScopePtr<Lock> l,
               const char*           lock_user)
         : lock_(l.ptr())
