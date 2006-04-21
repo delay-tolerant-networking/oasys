@@ -55,7 +55,7 @@ Marshal::Marshal(context_t context, u_char* buf, size_t length, int options)
 }
 
 Marshal::Marshal(context_t context, ExpandableBuffer* buf, int options)
-    : BufferedSerializeAction(MARSHAL, CONTEXT_UNKNOWN, buf, options)
+    : BufferedSerializeAction(MARSHAL, context, buf, options)
 {
 }
 
