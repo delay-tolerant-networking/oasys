@@ -61,6 +61,7 @@ proc usage {} {
     puts "Extended options:"
     puts "    --extra-gdbrc <script>     Add an extra gdbrc to be run"
     puts "    --gdb-opts    <options...> Extra options to gdb"
+    puts "    --alt-gdb     <alt gdb>    Use an alternative debugger"
     puts "    --opts        <options...> Extra options to the program"
     puts "    --gdbrc       <tmpl>       Change remote gdbrc template"
     puts "    --script      <tmpl>       Change remote run script template"
@@ -88,6 +89,7 @@ proc init {argv} {
     set opt(xterm)         0
 
     set opt(gdb_extra)     ""
+    set opt(gdb_exec)      "gdb"
     set opt(gdbopts)       ""
     set opt(opts)          ""
     set opt(geometry)      ""
@@ -127,7 +129,7 @@ proc init {argv} {
 	    --daemon      { set opt(daemon) 1 }
 	    -geom         -
 	    -geometry     -
-	    --geometry    { shift argv; set opt(geometry) [arg0 $argv] }
+	    --geometry    { shift argv; set opt(geometry) [arg0 $argv]; set opt(xterm) 1 }
 	    -l            { shift argv; set opt(logdir) [arg0 $argv] }
 	    -p            { set opt(pause) 1}
 	    -r            { shift argv; set opt(rundir_prefix) [arg0 $argv] }
@@ -140,6 +142,7 @@ proc init {argv} {
 	    --id          { shift argv; set opt(conf_id)     [arg0 $argv] }
 	    --extra-gdbrc { shift argv; set opt(gdb_extra)   [arg0 $argv] }
 	    --gdb-opts    { shift argv; set opt(gdbopts)     [arg0 $argv] }
+	    --alt-gdb     { shift argv; set opt(gdb_exec)    [arg0 $argv] }
 	    --opts        { shift argv; set opt(opts)        [arg0 $argv] }
 	    --gdb-tmpl    { shift argv; set opt(gdb_tmpl)    [arg0 $argv] }
 	    --script-tmpl { shift argv; set opt(script_tmpl) [arg0 $argv] }
@@ -232,6 +235,7 @@ proc generate_script {id exec_file exec_opts confname conf exec_env} {
     # debug script
     set gdb(exec_opts)      $exec_opts
     set gdb(gdb_extra)      $opt(gdb_extra)
+    set gdb(gdb_exec)       $opt(gdb_exec)
     set gdb(gdb_test_extra) [conf::get gdb $id]
 
     set gdbscript [process_template $opt(gdb_tmpl) gdb]    
