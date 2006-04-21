@@ -213,6 +213,7 @@ proc generate_script {id exec_file exec_opts confname conf exec_env} {
     set script(gdb_opts)    $opt(gdbopts)
     set script(run_dir)     $rundir
     set script(run_id)      $exec_file-$hostname-$id
+    set script(gdb_exec)    $opt(gdb_exec)
     set script(gdb)         $opt(gdb)
     set script(valgrind)    $opt(valgrind)
     set script(local)       [net::is_localhost $hostname]
@@ -235,7 +236,6 @@ proc generate_script {id exec_file exec_opts confname conf exec_env} {
     # debug script
     set gdb(exec_opts)      $exec_opts
     set gdb(gdb_extra)      $opt(gdb_extra)
-    set gdb(gdb_exec)       $opt(gdb_exec)
     set gdb(gdb_test_extra) [conf::get gdb $id]
 
     set gdbscript [process_template $opt(gdb_tmpl) gdb]    
