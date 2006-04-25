@@ -57,13 +57,23 @@ public:
     /**
      * Parse argv, processing all registered getopt. Returns the
      * index of the first non-option argument in argv
+     * 
+     * @param progname   	the name of the executable
+     * @param argc	   	count of command line args
+     * @param argv   		command line arg values
+     * @param extra_opts 	additional usage string
      */
-    static int getopt(const char* progname, int argc, char* const argv[]);
+    static int getopt(const char* progname, int argc, char* const argv[],
+                      const char* extra_usage = "");
 
     /**
      * Prints a nicely formatted usage string to stderr.
+     *
+     * @param progname   	the name of the executable
+     * @param extra_opts 	additional usage string
      */
-    static void usage(const char* progname);
+    static void usage(const char* progname,
+                      const char* extra_usage = "");
     
 protected:
     typedef std::vector<Opt*> OptList;

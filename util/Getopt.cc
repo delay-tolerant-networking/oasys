@@ -70,7 +70,8 @@ Getopt::addopt(Opt* opt)
 }
 
 int
-Getopt::getopt(const char* progname, int argc, char* const argv[])
+Getopt::getopt(const char* progname, int argc, char* const argv[],
+               const char* extra_usage)
 {
     Opt* opt;
     char short_opts[256];
@@ -115,7 +116,7 @@ Getopt::getopt(const char* progname, int argc, char* const argv[])
         case 0:
             if (!strcmp(long_opts[i].name, "help"))
             {
-                usage(progname);
+                usage(progname, extra_usage);
                 exit(0);
             }
 
@@ -131,13 +132,13 @@ Getopt::getopt(const char* progname, int argc, char* const argv[])
         case ':':
             // missing value to option
             fprintf(stderr, "option %s requires a value\n", long_opts[i].name);
-            usage(progname);
+            usage(progname, extra_usage);
             exit(0);
             
         case '?':
         case 'h':
         case 'H':
-            usage(progname);
+            usage(progname, extra_usage);
             exit(0);
             
         case -1:
@@ -174,11 +175,17 @@ Getopt::getopt(const char* progname, int argc, char* const argv[])
 }
 
 void
-Getopt::usage(const char* progname)
+Getopt::usage(const char* progname, const char* extra_usage)
 {
     OptList::iterator iter;
     char opts[128];
-    fprintf(stderr, "%s usage:\n", progname);
+
+    const char* s = strrchr(progname, '/');
+    if (s != NULL) {
+        progname = s + 1;
+    }
+    fprintf(stderr, "usage: %s [opts] %s\n\nopts:\n",
+            progname, extra_usage);
 
     snprintf(opts, sizeof(opts), "-h, --help");
     fprintf(stderr, "  %-24s%s\n", opts, "show usage");
