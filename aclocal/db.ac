@@ -73,11 +73,7 @@ AC_DEFUN(AC_OASYS_CONFIG_DB, [
         OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_db_lib"
     fi
 
-    if test x"$STATIC" = x"yes" ; then
-        OASYS_LIBS="$OASYS_LIBS -Wl,-Bstatic -l$oasys_cv_lib_db -Wl,-Bdynamic"
-    else
-    	OASYS_LIBS="$OASYS_LIBS -l$oasys_cv_lib_db"
-    fi
+    OASYS_LIBS="$OASYS_LIBS -l$oasys_cv_lib_db"
 
     fi # LIBDB_ENABLED
 ])
@@ -156,10 +152,10 @@ AC_DEFUN(AC_OASYS_FIND_DB, [
       for ac_dblib    in db-$ac_dbver; do
 
 	LDFLAGS="$ac_save_LDFLAGS -L$ac_dblibdir"
-	if test x"$STATIC" = x"yes" ; then
-		LIBS="$ac_save_LIBS -Wl,-Bstatic -l$ac_dblib -Wl,-Bdynamic"
+	if test x"$STATIC" = x"libs" ; then
+		LIBS="-Wl,-Bstatic -l$ac_dblib -Wl,-Bdynamic $ac_save_LIBS"
 	else
-		LIBS="$ac_save_LIBS -l$ac_dblib"
+		LIBS="-l$ac_dblib $ac_save_LIBS"
 	fi
 
         AC_MSG_CHECKING([for Berkeley DB library in $ac_dblibdir, -l$ac_dblib])

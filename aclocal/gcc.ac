@@ -103,20 +103,34 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
 
     dnl
     dnl Handle --enable-static[=yes|no]
-    dnl 	   --disable-static
+    dnl        --enable-static-libs[=yes|no]
     dnl
     AC_ARG_ENABLE(static,
                   AC_HELP_STRING([--enable-static],
-                                 [use static libraries for tcl and berkeley db]),
+                                 [statically link all binaries]),
                   [static=$enableval],
                   [static=no])
 
-    AC_MSG_CHECKING([whether to build and link using static tcl and db libraries])
+    AC_MSG_CHECKING([whether to link statically])
     AC_MSG_RESULT($static)
 
-    STATIC=
-    test $static = yes && STATIC=yes
-    AC_SUBST(STATIC)    
+    AC_ARG_ENABLE(static-libs,
+                  AC_HELP_STRING([--enable-static-libs],
+                                 [use static supporting libraries]),
+                  [staticlibs=$enableval],
+                  [staticlibs=no])
+
+    AC_MSG_CHECKING([whether to link using static supporting libraries])
+    AC_MSG_RESULT($staticlibs)
+
+    STATIC=no
+    if [[ $static = yes ]] ; then
+       STATIC=yes
+       LDFLAGS="$LDFLAGS -static"
+    elif [[ $staticlibs = yes ]] ; then
+        STATIC=libs
+    fi
+    AC_SUBST(STATIC)
 
     dnl
     dnl Handle the gcc option for --target
