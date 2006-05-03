@@ -204,10 +204,16 @@ Getopt::usage(const char* progname, const char* extra_usage)
             snprintf(opts, sizeof(opts), "-%c %s",
                      opt->shortopt_, opt->valdesc_);
         } else {
-            snprintf(opts, sizeof(opts), "    --%s %s",
+            snprintf(opts, sizeof(opts), "--%s %s    ",
                      opt->longopt_, opt->valdesc_);
         }
-        fprintf(stderr, "  %-24s%s\n", opts, opt->desc_);
+
+        if (strlen(opts) <= 24) {
+            fprintf(stderr, "  %-24s%s\n", opts, opt->desc_);
+        } else {
+            fprintf(stderr, "  %s\n", opts);
+            fprintf(stderr, "                          %s\n", opt->desc_);
+        }
     }
 }
 
