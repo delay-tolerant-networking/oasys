@@ -22,6 +22,7 @@ generate_lengths(size_t* length_array, int array_size,
                  size_t total_bytes, int seed = 0) 
 {
     srand(seed);
+    srandom(seed);
     int* sizes = static_cast<int*>(calloc(array_size, sizeof(int)));
     
     size_t total = 0;
@@ -186,6 +187,7 @@ protected:
 
 DECLARE_TEST(Init) {
     srand(0);
+    srandom(0);
 
     g_testbuf    = static_cast<char*>(malloc(TESTBUF_SIZE));
     g_scratchbuf = static_cast<char*>(malloc(TESTBUF_SIZE));
