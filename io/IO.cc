@@ -699,6 +699,14 @@ IO::poll_with_notifier(
         }
         
         // Always prioritize getting data before interrupt via notifier
+
+        // XXX/demmer actually, to deal with the (rather unlikely)
+        // case in which external IO events are generated faster than
+        // the thread can service them, this can result in starving
+        // the interrupt, which should instead take precedence, so the
+        // order of the checks should be reversed. given the rarity of
+        // this chance, it's a low priority item to fix
+        
         bool got_event = false;
         for (size_t i=0; i<((intr != 0) ? (nfds - 1) : nfds); ++i) 
         {
