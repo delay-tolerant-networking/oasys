@@ -301,19 +301,18 @@ InAddrOpt::set(const char* val, size_t len)
 }
 
 //----------------------------------------------------------------------
-EnumOpt::EnumOpt(const char* opt, int ncases, Case* cases, int* valp,
+EnumOpt::EnumOpt(const char* opt, Case* cases, int* valp,
                  const char* valdesc, const char* desc, bool* setp)
-    : Opt(0, opt, valp, setp, true, valdesc, desc),
-      ncases_(ncases), cases_(cases)
+    : Opt(0, opt, valp, setp, true, valdesc, desc), cases_(cases)
 {
 }
 
 //----------------------------------------------------------------------
 EnumOpt::EnumOpt(char shortopt, const char* longopt,
-                 int ncases, Case* cases, int* valp,
+                 Case* cases, int* valp,
                  const char* valdesc, const char* desc, bool* setp)
-    : Opt(shortopt, longopt, valp, setp, true, valdesc, desc),
-      ncases_(ncases), cases_(cases)
+    : Opt(shortopt, longopt, valp, setp, true, valdesc, desc), 
+      cases_(cases)
 {
 }
 
@@ -321,7 +320,9 @@ EnumOpt::EnumOpt(char shortopt, const char* longopt,
 int
 EnumOpt::set(const char* val, size_t len)
 {
-    for (int i = 0; i < ncases_; ++i)
+    size_t i = 0;
+
+    while (cases_[i].key != 0)
     {
         if (!strcasecmp(cases_[i].key, val)) {
 
@@ -332,6 +333,7 @@ EnumOpt::set(const char* val, size_t len)
             
             return 0;
         }
+	++i;
     }
     
     return -1;
