@@ -139,7 +139,7 @@ namespace eval tell {
 	    if {$result == ""} {
 		set result "(no additional information)"
 	    }
-	    puts "tell error '$result' '$info'"
+	    set result "tell error: '$result'"
 	    error $result $info
 	}
     }
