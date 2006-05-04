@@ -348,6 +348,58 @@ protected:
     int set(const char* val, size_t len);
 };
 
+/**
+ * Option class to select one of a set of potential values based on
+ * string keys.
+ */
+class EnumOpt : public Opt {
+public:
+    struct Case {
+        const char* key;
+        int         val;
+    };
+    
+    /**
+     * Basic constructor.
+     *
+     * @param opt     option string
+     * @param ncases  count of the number of cases
+     * @param cases   pointer to the array of cases
+     * @param valp    pointer to the value
+     * @param valdesc short description for the value 
+     * @param desc    descriptive string
+     * @param setp    optional pointer to indicate whether or not
+                      the option was set
+     */
+    EnumOpt(const char* opt, int ncases, Case* cases, int* valp,
+            const char* valdesc = "", const char* desc = "",
+            bool* setp = NULL);
+    
+    /**
+     * Alternative constructor with both short and long options,
+     * suitable for getopt calls.
+     *
+     * @param shortopt  short option character
+     * @param longopt   long option string
+     * @param ncases    count of the number of cases
+     * @param cases     pointer to the array of cases
+     * @param valp      pointer to the value
+     * @param valdesc 	short description for the value 
+     * @param desc      descriptive string
+     * @param setp      optional pointer to indicate whether or not
+                        the option was set
+     */
+    EnumOpt(char shortopt, const char* longopt,
+            int ncases, Case* cases, int* valp,
+            const char* valdesc = "", const char* desc = "",
+            bool* setp = NULL);
+
+protected:
+    int set(const char* val, size_t len);
+    int   ncases_;
+    Case* cases_;
+};
+
 } // namespace oasys
 
 #endif /* _OASYS_OPTIONS_H_ */

@@ -43,6 +43,7 @@
 
 namespace oasys {
 
+//----------------------------------------------------------------------
 Opt::Opt(char shortopt, const char* longopt,
          void* valp, bool* setp, bool needval,
          const char* valdesc, const char* desc)
@@ -59,22 +60,26 @@ Opt::Opt(char shortopt, const char* longopt,
     if (setp) *setp = false;
 }
 
+//----------------------------------------------------------------------
 Opt::~Opt()
 {
 }
 
+//----------------------------------------------------------------------
 BoolOpt::BoolOpt(const char* opt, bool* valp,
                  const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, false, "", desc)
 {
 }
 
+//----------------------------------------------------------------------
 BoolOpt::BoolOpt(char shortopt, const char* longopt, bool* valp,
                  const char* desc, bool* setp)
     : Opt(shortopt, longopt, valp, setp, false, "", desc)
 {
 }
 
+//----------------------------------------------------------------------
 int
 BoolOpt::set(const char* val, size_t len)
 {
@@ -102,18 +107,21 @@ BoolOpt::set(const char* val, size_t len)
     return 0;
 }
 
+//----------------------------------------------------------------------
 IntOpt::IntOpt(const char* opt, int* valp,
                const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)
 {
 }
 
+//----------------------------------------------------------------------
 IntOpt::IntOpt(char shortopt, const char* longopt, int* valp,
                const char* valdesc, const char* desc, bool* setp)
     : Opt(shortopt, longopt, valp, setp, true, valdesc, desc)
 {
 }
 
+//----------------------------------------------------------------------
 int
 IntOpt::set(const char* val, size_t len)
 {
@@ -132,18 +140,21 @@ IntOpt::set(const char* val, size_t len)
     return 0;
 }
 
+//----------------------------------------------------------------------
 UIntOpt::UIntOpt(const char* opt, u_int* valp,
                  const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)
 {
 }
 
+//----------------------------------------------------------------------
 UIntOpt::UIntOpt(char shortopt, const char* longopt, u_int* valp,
                  const char* valdesc, const char* desc, bool* setp)
     : Opt(shortopt, longopt, valp, setp, true, valdesc, desc)
 {
 }
 
+//----------------------------------------------------------------------
 int
 UIntOpt::set(const char* val, size_t len)
 {
@@ -162,18 +173,21 @@ UIntOpt::set(const char* val, size_t len)
     return 0;
 }
 
+//----------------------------------------------------------------------
 UInt16Opt::UInt16Opt(const char* opt, u_int16_t* valp,
                      const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)
 {
 }
 
+//----------------------------------------------------------------------
 UInt16Opt::UInt16Opt(char shortopt, const char* longopt, u_int16_t* valp,
                      const char* valdesc, const char* desc, bool* setp)
     : Opt(shortopt, longopt, valp, setp, true, valdesc, desc)
 {
 }
 
+//----------------------------------------------------------------------
 int
 UInt16Opt::set(const char* val, size_t len)
 {
@@ -195,18 +209,21 @@ UInt16Opt::set(const char* val, size_t len)
     return 0;
 }
 
+//----------------------------------------------------------------------
 DoubleOpt::DoubleOpt(const char* opt, double* valp,
                      const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)
 {
 }
 
+//----------------------------------------------------------------------
 DoubleOpt::DoubleOpt(char shortopt, const char* longopt, double* valp,
                      const char* valdesc, const char* desc, bool* setp)
     : Opt(shortopt, longopt, valp, setp, true, valdesc, desc)
 {
 }
 
+//----------------------------------------------------------------------
 int
 DoubleOpt::set(const char* val, size_t len)
 {
@@ -225,18 +242,21 @@ DoubleOpt::set(const char* val, size_t len)
     return 0;
 }
 
+//----------------------------------------------------------------------
 StringOpt::StringOpt(const char* opt, std::string* valp,
                      const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)
 {
 }
 
+//----------------------------------------------------------------------
 StringOpt::StringOpt(char shortopt, const char* longopt, std::string* valp,
                      const char* valdesc, const char* desc, bool* setp)
     : Opt(shortopt, longopt, valp, setp, true, valdesc, desc)
 {
 }
 
+//----------------------------------------------------------------------
 int
 StringOpt::set(const char* val, size_t len)
 {
@@ -248,18 +268,21 @@ StringOpt::set(const char* val, size_t len)
     return 0;
 }
 
+//----------------------------------------------------------------------
 InAddrOpt::InAddrOpt(const char* opt, in_addr_t* valp,
                      const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)
 {
 }
 
+//----------------------------------------------------------------------
 InAddrOpt::InAddrOpt(char shortopt, const char* longopt, in_addr_t* valp,
                      const char* valdesc, const char* desc, bool* setp)
     : Opt(shortopt, longopt, valp, setp, true, valdesc, desc)
 {
 }
 
+//----------------------------------------------------------------------
 int
 InAddrOpt::set(const char* val, size_t len)
 {
@@ -275,6 +298,43 @@ InAddrOpt::set(const char* val, size_t len)
         *setp_ = true;
     
     return 0;
+}
+
+//----------------------------------------------------------------------
+EnumOpt::EnumOpt(const char* opt, int ncases, Case* cases, int* valp,
+                 const char* valdesc, const char* desc, bool* setp)
+    : Opt(0, opt, valp, setp, true, valdesc, desc),
+      ncases_(ncases), cases_(cases)
+{
+}
+
+//----------------------------------------------------------------------
+EnumOpt::EnumOpt(char shortopt, const char* longopt,
+                 int ncases, Case* cases, int* valp,
+                 const char* valdesc, const char* desc, bool* setp)
+    : Opt(shortopt, longopt, valp, setp, true, valdesc, desc),
+      ncases_(ncases), cases_(cases)
+{
+}
+
+//----------------------------------------------------------------------
+int
+EnumOpt::set(const char* val, size_t len)
+{
+    for (int i = 0; i < ncases_; ++i)
+    {
+        if (!strcasecmp(cases_[i].key, val)) {
+
+            (*(int*)valp_) = cases_[i].val;
+            
+            if (setp_)
+                *setp_ = true;
+            
+            return 0;
+        }
+    }
+    
+    return -1;
 }
 
 } // namespace oasys
