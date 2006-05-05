@@ -68,7 +68,7 @@ public:
         log_debug("Got entry fd=%d pin_count=%d size=%u", 
                   i->second->fd_, 
                   i->second->pin_count_,
-                  open_fds_map_.size());
+                  (u_int)open_fds_map_.size());
 
         ASSERT(i->second->fd_ != -1);
 
@@ -90,7 +90,7 @@ public:
         log_debug("Unpin entry fd=%d pin_count=%d size=%u", 
                   i->second->fd_, 
                   i->second->pin_count_,
-                  open_fds_map_.size());
+                  (u_int)open_fds_map_.size());
     }
 
     /*!
@@ -117,7 +117,7 @@ public:
             log_debug("Added entry but already there fd=%d pin_count=%d size=%u", 
                       i->second->fd_, 
                       i->second->pin_count_,
-                      open_fds_map_.size());
+                      (u_int)open_fds_map_.size());
 
             return i->second->fd_;
         }
@@ -136,7 +136,7 @@ public:
         log_debug("Added entry fd=%d pin_count=%d size=%u", 
                   new_ent->fd_, 
                   new_ent->pin_count_,
-                  open_fds_map_.size());
+                  (u_int)open_fds_map_.size());
 
         open_fds_map_[key] = new_ent;
 
@@ -156,7 +156,7 @@ public:
         }
 
         _CloseFcn::close(i->second->fd_);
-        log_debug("Closed %d size=%u", i->second->fd_, open_fds_map_.size());
+        log_debug("Closed %d size=%u", i->second->fd_, (u_int)open_fds_map_.size());
 
         open_fds_.erase(i->second);
         open_fds_map_.erase(i);       
@@ -214,14 +214,14 @@ private:
         {
             ASSERT(i->fd_ < 8*1024);
             
-            log_debug("Evicting fd=%d size=%u", i->fd_, open_fds_map_.size());
+            log_debug("Evicting fd=%d size=%u", i->fd_, (u_int)open_fds_map_.size());
             _CloseFcn::close(i->fd_);
             open_fds_map_.erase(i->key_);
             open_fds_.erase(i);
         }
         else
         {
-            log_warn("All of the fds are busy! size=%u", open_fds_map_.size());
+            log_warn("All of the fds are busy! size=%u", (u_int)open_fds_map_.size());
             return -1;
         }
 

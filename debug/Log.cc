@@ -632,8 +632,8 @@ Log::vlogf(const char* path, log_level_t level,
     output_lock_->unlock();
     
     ASSERTF(ret == (int)buflen,
-            "unexpected return from IO::writeall (got %d, expected %u): %s",
-            ret, (u_int)buflen, strerror(errno));
+            "unexpected return from IO::writeall (got %d, expected %zu): %s",
+            ret, buflen, strerror(errno));
     
     return buflen;
 };
@@ -703,8 +703,8 @@ Log::log_multiline(const char* path, log_level_t level,
     output_lock_->unlock();
     
     ASSERTF(ret == (int)total_len,
-            "unexpected return from IO::writevall (got %d, expected %d): %s",
-            ret, (u_int)total_len, strerror(errno));
+            "unexpected return from IO::writevall (got %d, expected %zu): %s",
+            ret, total_len, strerror(errno));
     
     return ret;
 }

@@ -17,7 +17,7 @@ DurableObjectCache<_DataType>::DurableObjectCache(const char*   logpath,
       lock_(new SpinLock()),
       policy_(policy)
 {
-    log_debug("init capacity=%u", (u_int)capacity);
+    log_debug("init capacity=%zu", capacity);
 }
 
 //----------------------------------------------------------------------------
@@ -82,10 +82,10 @@ DurableObjectCache<_DataType>::evict_last()
     ASSERT(cache_elem->lru_iter_ == lru_iter);
     ASSERT(!cache_elem->live_);
 
-    log_debug("cache (capacity %u/%u) -- "
-              "evicting key '%s' object %p size %u",
-              (u_int)size_, (u_int)capacity_, lru_iter->c_str(),
-              cache_elem->object_, (u_int)cache_elem->object_size_);
+    log_debug("cache (capacity %zu/%zu) -- "
+              "evicting key '%s' object %p size %zu",
+              size_, capacity_, lru_iter->c_str(),
+              cache_elem->object_, cache_elem->object_size_);
     
     cache_.erase(cache_iter);
     lru_.pop_front();
@@ -148,8 +148,8 @@ DurableObjectCache<_DataType>::put(const SerializableObject& key,
     }
     size_t object_size = sizer.size();
 
-    log_debug("put(%s): object %p size %u",
-              cache_key.c_str(), object, (u_int)object_size);
+    log_debug("put(%s): object %p size %zu",
+              cache_key.c_str(), object, object_size);
 
     // now try to evict elements if the new object will put us over
     // the cache capacity
@@ -160,17 +160,15 @@ DurableObjectCache<_DataType>::put(const SerializableObject& key,
             switch (policy_) {
             case CAP_BY_SIZE:
                 log_warn("cache already at capacity "
-                         "(size %u, object_size %u, capacity %u) "
-                         "but all %d elements are live",
-                         (u_int)size_, (u_int)object_size, (u_int)capacity_,
-                         (u_int)cache_.size());
+                         "(size %zu, object_size %zu, capacity %zu) "
+                         "but all %zu elements are live",
+                         size_, object_size, capacity_, cache_.size());
                 break;
             case CAP_BY_COUNT:
                 log_warn("cache already at capacity "
-                         "(count %u, capacity %u) "
-                         "but all %d elements are live",
-                         (u_int)count(), (u_int)capacity_,
-                         (u_int)cache_.size());
+                         "(count %zu, capacity %zu) "
+                         "but all %zu elements are live",
+                         count(), capacity_, cache_.size());
                 break;
             default:
                 NOTREACHED;
@@ -324,16 +322,16 @@ DurableObjectCache<_DataType>::del(const SerializableObject& key)
     CacheElement* cache_elem = cache_iter->second;
     
     if (cache_elem->live_) {
-        log_err("del(%s): can't remove live object %p size %u from cache",
+        log_err("del(%s): can't remove live object %p size %zu from cache",
                 cache_key.c_str(), cache_elem->object_,
-                (u_int)cache_elem->object_size_);
+                cache_elem->object_size_);
         return DS_ERR;
         
     } else {
         lru_.erase(cache_elem->lru_iter_);
-        log_debug("del(%s): removing non-live object %p size %u from cache",
+        log_debug("del(%s): removing non-live object %p size %zu from cache",
                   cache_key.c_str(), cache_elem->object_,
-                  (u_int)cache_elem->object_size_);
+                  cache_elem->object_size_);
     }
     
     cache_.erase(cache_iter);
@@ -365,15 +363,15 @@ DurableObjectCache<_DataType>::remove(const SerializableObject& key,
     CacheElement* cache_elem = cache_iter->second;
     
     if (cache_elem->live_) {
-        log_debug("del(%s): removing live object %p size %u from cache",
+        log_debug("del(%s): removing live object %p size %zu from cache",
                   cache_key.c_str(), cache_elem->object_,
-                  (u_int)cache_elem->object_size_);
+                  cache_elem->object_size_);
         
     } else {
         lru_.erase(cache_elem->lru_iter_);
-        log_debug("del(%s): removing non-live object %p size %u from cache",
+        log_debug("del(%s): removing non-live object %p size %zu from cache",
                   cache_key.c_str(), cache_elem->object_,
-                  (u_int)cache_elem->object_size_);
+                  cache_elem->object_size_);
     }
     
     cache_.erase(cache_iter);

@@ -201,8 +201,8 @@ public:
         fprintf(stderr, "set result { \"%s\" { ", name_.c_str());
     }
     void print_tcl_tail() {
-        fprintf(stderr, "} { %u %d %d %d } }\n", 
-                (u_int)tests_.size(), passed_, failed_, input_);
+        fprintf(stderr, "} { %zu %d %d %d } }\n", 
+                tests_.size(), passed_, failed_, input_);
     }
     void print_header() {
         printf("\n\nRunning Test: %s\n\n", name_.c_str());

@@ -515,7 +515,7 @@ FileSystemTable::size() const
     closedir(dir);
 
     // count always includes '.' and '..'
-    log_debug("table size = %u", (u_int)count - 2);
+    log_debug("table size = %zu", count - 2);
 
     return count - 2; 
 }

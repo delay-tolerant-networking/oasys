@@ -137,8 +137,8 @@ Marshal::process(const char* name, u_char* bp, size_t len)
     if (log_) {
         std::string s;
         hex2str(&s, bp, len < 16 ? len : 16);
-        logf(log_, LOG_DEBUG, "bufc   %s=>(%u: '%.*s')",
-             name, (u_int)len, (int)s.length(), s.data());
+        logf(log_, LOG_DEBUG, "bufc   %s=>(%zu: '%.*s')",
+             name, len, (int)s.length(), s.data());
     }
 }
     
@@ -185,11 +185,11 @@ Marshal::process(const char* name, std::string* s)
     
     if (log_) {
         if (len < 32)
-            logf(log_, LOG_DEBUG, "string %s=>(%u: '%.*s')",
-                 name, (u_int)len, (int)len, s->data());
+            logf(log_, LOG_DEBUG, "string %s=>(%zu: '%.*s')",
+                 name, len, (int)len, s->data());
         else 
-            logf(log_, LOG_DEBUG, "string %s=>(%u: '%.*s'...)",
-                 name, (u_int)len, 32, s->data());
+            logf(log_, LOG_DEBUG, "string %s=>(%zu: '%.*s'...)",
+                 name, len, 32, s->data());
     }
 }
 
@@ -284,8 +284,8 @@ Unmarshal::process(const char* name, u_char* bp, size_t len)
     if (log_) {
         std::string s;
         hex2str(&s, bp, len < 16 ? len : 16);
-        logf(log_, LOG_DEBUG, "bufc   %s<=(%u: '%.*s')",
-             name, (u_int)len, (int)s.length(), s.data());
+        logf(log_, LOG_DEBUG, "bufc   %s<=(%zu: '%.*s')",
+             name, len, (int)s.length(), s.data());
     }
 }
 
@@ -334,8 +334,8 @@ Unmarshal::process(const char* name, u_char** bp, size_t* lenp, int flags)
     if (log_) {
         std::string s;
         hex2str(&s, *bp, *lenp < 16 ? *lenp : 16);
-        logf(log_, LOG_DEBUG, "bufc   %s<=(%u: '%.*s')",
-             name, (u_int)*lenp, (int)s.length(), s.data());
+        logf(log_, LOG_DEBUG, "bufc   %s<=(%zu: '%.*s')",
+             name, *lenp, (int)s.length(), s.data());
     }
 }
 
@@ -353,11 +353,11 @@ Unmarshal::process(const char* name, std::string* s)
     s->assign((char*)buf, len);
     if (log_) {
         if (len < 32)
-            logf(log_, LOG_DEBUG, "string %s<=(%u: '%.*s')",
-                 name, (u_int)len, (int)len, s->data());
+            logf(log_, LOG_DEBUG, "string %s<=(%zu: '%.*s')",
+                 name, len, (int)len, s->data());
         else 
-            logf(log_, LOG_DEBUG, "string %s<=(%u: '%.*s'...)",
-                 name, (u_int)len, 32, s->data());
+            logf(log_, LOG_DEBUG, "string %s<=(%zu: '%.*s'...)",
+                 name, len, 32, s->data());
     }
 }
 

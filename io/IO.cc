@@ -183,7 +183,7 @@ IO::open(const char* path, int flags, mode_t mode,
     
     if (log) {
         logf(log, LOG_DEBUG, "open %s (flags 0x%x mode 0x%x): fd %d",
-             path, flags, (u_int) mode, fd);
+             path, flags, (u_int)mode, fd);
     }
     return fd;
 }
@@ -217,8 +217,8 @@ IO::lseek(int fd, off_t offset, int whence, const char* log)
 {
     int cc = ::lseek(fd, offset, whence);
     if (log) {
-        logf(log, LOG_DEBUG, "lseek %u %s -> %d",
-             (u_int)offset,
+        logf(log, LOG_DEBUG, "lseek %lu %s -> %d",
+             (long unsigned int)offset,
              (whence == SEEK_SET) ? "SEEK_SET" :
              (whence == SEEK_CUR) ? "SEEK_CUR" :
              (whence == SEEK_END) ? "SEEK_END" :
@@ -235,7 +235,7 @@ IO::truncate(int fd, off_t length, const char* log)
 {
     int ret = ftruncate(fd, length);
     if (log) {
-        logf(log, LOG_DEBUG, "truncate %u: %d", (u_int)length, ret);
+        logf(log, LOG_DEBUG, "truncate %lu: %d", (long unsigned int)length, ret);
     }
 
     return ret;
@@ -680,7 +680,7 @@ IO::poll_with_notifier(
             if (log) {
                 logf(log, LOG_WARN,
                      "poll_with_notifier: returned bogus high value %d, "
-                     "capping to %u", cc, (u_int)nfds);
+                     "capping to %zu", cc, nfds);
             }
             cc = nfds;
         }
@@ -825,15 +825,15 @@ IO::rwdata(
             break;
         case RECV:
             cc = ::recv(fd, iov[0].iov_base, iov[0].iov_len, flags);
-            if (log) logf(log, LOG_DEBUG, "::recv() fd %d %p/%u cc %d", 
-                          fd, iov[0].iov_base, (u_int)iov[0].iov_len, cc);
+            if (log) logf(log, LOG_DEBUG, "::recv() fd %d %p/%zu cc %d", 
+                          fd, iov[0].iov_base, iov[0].iov_len, cc);
             break;
         case RECVFROM:
             cc = ::recvfrom(fd, iov[0].iov_base, iov[0].iov_len, flags,
                             args->recvfrom.from, 
                             args->recvfrom.fromlen);
-            if (log) logf(log, LOG_DEBUG, "::recvfrom() fd %d %p/%u cc %d", 
-                          fd, iov[0].iov_base, (u_int)iov[0].iov_len, cc);
+            if (log) logf(log, LOG_DEBUG, "::recvfrom() fd %d %p/%zu cc %d", 
+                          fd, iov[0].iov_base, iov[0].iov_len, cc);
             break;
         case RECVMSG:
             cc = ::sendmsg(fd, args->msg_hdr, flags);
@@ -846,14 +846,14 @@ IO::rwdata(
             break;
         case SEND:
             cc = ::send(fd, iov[0].iov_base, iov[0].iov_len, flags);
-            if (log) logf(log, LOG_DEBUG, "::send() fd %d %p/%u cc %d", 
-                          fd, iov[0].iov_base, (u_int)iov[0].iov_len, cc);
+            if (log) logf(log, LOG_DEBUG, "::send() fd %d %p/%zu cc %d", 
+                          fd, iov[0].iov_base, iov[0].iov_len, cc);
             break;
         case SENDTO:
             cc = ::sendto(fd, iov[0].iov_base, iov[0].iov_len, flags,
                           args->sendto.to, args->sendto.tolen);
-            if (log) logf(log, LOG_DEBUG, "::sendto() fd %d %p/%u cc %d", 
-                          fd, iov[0].iov_base, (u_int)iov[0].iov_len, cc);
+            if (log) logf(log, LOG_DEBUG, "::sendto() fd %d %p/%zu cc %d", 
+                          fd, iov[0].iov_base, iov[0].iov_len, cc);
             break;
         case SENDMSG:
             cc = ::sendmsg(fd, args->msg_hdr, flags);
@@ -926,8 +926,8 @@ IO::rwvall(
 	} else {
 	    cow_iov.consume(cc);
             if (log) {
-                logf(log, LOG_DEBUG, "%s %d bytes %u left %d total",
-                     fcn_name, cc, (u_int)cow_iov.bytes_left(), total_bytes);
+                logf(log, LOG_DEBUG, "%s %d bytes %zu left %d total",
+                     fcn_name, cc, cow_iov.bytes_left(), total_bytes);
             }
             
             if (timeout > 0) {

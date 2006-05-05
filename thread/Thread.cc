@@ -140,8 +140,8 @@ Thread::release_start_barrier()
     start_barrier_enabled_ = false;
 
     log_debug("/thread",
-              "releasing thread creation barrier -- %u queued threads",
-              (u_int)threads_in_barrier_.size());
+              "releasing thread creation barrier -- %zu queued threads",
+              threads_in_barrier_.size());
     
     for (size_t i = 0; i < threads_in_barrier_.size(); ++i) {
         Thread* thr = threads_in_barrier_[i];

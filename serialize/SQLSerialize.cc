@@ -472,8 +472,8 @@ SQLExtract::process(const char* name, std::string* s)
     
     size_t len = s->length();
     
-    if (log_) logf(log_, LOG_DEBUG, "<=string(%u: '%.*s')",
-                   (u_int)len, (int)(len < 32 ? len : 32), s->data());
+    if (log_) logf(log_, LOG_DEBUG, "<=string(%zu: '%.*s')",
+                   len, (int)(len < 32 ? len : 32), s->data());
 }
 
 void 
@@ -488,8 +488,8 @@ SQLExtract::process(const char* name, u_char* bp, size_t len)
     if (log_) {
         std::string s;
         hex2str(&s, bp, len < 16 ? len : 16);
-        logf(log_, LOG_DEBUG, "<=bufc(%u: '%.*s')",
-             (u_int)len, (int)s.length(), s.data());
+        logf(log_, LOG_DEBUG, "<=bufc(%zu: '%.*s')",
+             len, (int)s.length(), s.data());
     }
 
 }

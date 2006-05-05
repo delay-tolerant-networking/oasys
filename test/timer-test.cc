@@ -49,7 +49,7 @@ class PeriodicTimer : public Timer {
   public:
     PeriodicTimer(const char* name) {
         snprintf(log_, sizeof(log_), "/timer/%s", name);
-        logf(log_, LOG_DEBUG, "PeriodicTimer 0x%x", (u_int)this);
+        logf(log_, LOG_DEBUG, "PeriodicTimer $p", this);
     }
     
     void timeout(const struct timeval& now) {

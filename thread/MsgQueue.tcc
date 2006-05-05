@@ -29,8 +29,8 @@ MsgQueue<_elt_t>::~MsgQueue()
 {
     if (size() != 0)
     {
-        log_err("not empty at time of destruction, size=%d",
-                (u_int)queue_.size());
+        log_err("not empty at time of destruction, size=%zu",
+                queue_.size());
     }
     
     delete lock_;
