@@ -9,6 +9,8 @@
 #include <bluetooth/sdp.h>
 #include <bluetooth/sdp_lib.h>
 
+#include "../debug/Log.h"
+
 // generated using uuidgen on Mac OS X ... a completely arbitrary number :)
 // maybe eventually register something with Bluetooth SIG?
 // the joke here: why UUID?  why not call it GUID?  Cuz the SIG knows best
@@ -94,9 +96,10 @@ protected:
  * Connect to remote Bluetooth device and query its SDP server
  * for DTN service
  */
-class BluetoothServiceDiscoveryClient {
+class BluetoothServiceDiscoveryClient : public Logger
+{
 public:
-    BluetoothServiceDiscoveryClient();
+    BluetoothServiceDiscoveryClient(const char* logpath = "/dtn/bt/sdp/client");
     ~BluetoothServiceDiscoveryClient();
 
     bool is_dtn_router(bdaddr_t addr);
@@ -117,16 +120,18 @@ protected:
     sdp_session_t *session_handle_; /* handle to open search request */
 };
 
-class BluetoothServiceRegistration {
+class BluetoothServiceRegistration : public Logger 
+{
 public:
-    BluetoothServiceRegistration();
+    BluetoothServiceRegistration(const char* logpath = "/dtn/bt/sdp/reg");
     ~BluetoothServiceRegistration();
 
-    bool register_service();
-    void unregister_service();
-
+    bool success() {return status_;};
 protected:
+    bool register_service();
+
     sdp_session_t* session_handle_;
+    bool status_;
 };
 
 } // namespace oasys

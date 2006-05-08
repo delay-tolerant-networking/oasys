@@ -15,11 +15,13 @@ extern int errno;
 #include <bluetooth/rfcomm.h>
 
 #include "BluetoothSDP.h"
+//#include <debug/Logger.h>
 
 namespace oasys {
 
 BluetoothServiceDiscoveryClient::
-BluetoothServiceDiscoveryClient() :
+BluetoothServiceDiscoveryClient(const char* logpath) :
+    Logger("BluetoothServiceDiscoveryClient",logpath),
     response_list_(NULL),
     session_handle_(NULL)
 {
@@ -51,7 +53,7 @@ connect()
                         SDP_RETRY_IF_BUSY);
 
     if ( ! session_handle_ ) {
-        printf("error connecting to SDP server: %s (%d)\n",
+        log_err("error connecting to SDP server: %s (%d)\n",
                 strerror(errno), errno);
         return false;
     }
@@ -109,14 +111,14 @@ do_search() {
                     &response_list);     /* linked list of responses   */
 
         // that's all that we do with this connection
-        close();
+        //close();
 
         // manage the malloc()'s flying around like crazy in BlueZ
         sdp_list_free(attrid,0);
         sdp_list_free(search,0);
 
-        if (err != 0 || response_list == NULL) {
-            printf("problems with sdp search: %s (%d)\n",
+        if (err != 0) {
+            log_err("problems with sdp search: %s (%d)\n",
                     strerror(errno),errno);
             return NULL;
         }
@@ -198,11 +200,7 @@ is_dtn_router(bdaddr_t addr)
                             case SDP_UUID128:
                                 proto = sdp_uuid_to_proto(
                                             &attr_list_iter->val.uuid);
-                                break;
-                            case SDP_UINT8:
                                 if (proto == RFCOMM_UUID) {
-                                    printf("rfcomm channel: %d\n",
-                                           attr_list_iter->val.int8);
                                     is_dtn_host++;
                                 }
                                 break; 
@@ -232,8 +230,8 @@ is_dtn_router(bdaddr_t addr)
 
             } // proto_seq_iter 
         } else {
-            printf("Failed to retrieve list of protocol sequences: "
-                   "%s (%d)\n", strerror(errno),errno);
+            log_debug("Failed to retrieve list of protocol sequences: "
+                      "%s (%d)\n", strerror(errno),errno);
             return false;
         } // sdp_get_access_protos
 
@@ -243,15 +241,18 @@ is_dtn_router(bdaddr_t addr)
 }
 
 BluetoothServiceRegistration::
-BluetoothServiceRegistration()
-    : session_handle_(NULL)
+BluetoothServiceRegistration(const char* logpath) :
+    Logger("BluetoothServiceRegistration",logpath),
+    session_handle_(NULL)
 {
+    status_ = register_service();
 }
 
 BluetoothServiceRegistration::
 ~BluetoothServiceRegistration()
 {
-    unregister_service();
+    if (session_handle_) 
+        sdp_close(session_handle_);
 }
 
 bool
@@ -259,7 +260,6 @@ BluetoothServiceRegistration::
 register_service()
 {
     uint32_t service_uuid_int[] = OASYS_BLUETOOTH_SDP_UUID;
-    uint8_t rfcomm_channel = 11;
     const char *service_name = "dtnd";
     const char *service_dsc  = "Delay Tolerant Networking daemon";
     const char *service_prov = "DTNRG";
@@ -272,16 +272,9 @@ register_service()
                *root_list = 0,
                *proto_list = 0,
                *access_proto_list = 0;
-    sdp_data_t *channel = 0,
-               *psm = 0;
     int err = 0;
-    sdp_session_t *session = 0;
 
     sdp_record_t *record = sdp_record_alloc();
-
-    // XXX/demmer annoying
-    (void)psm;
-    (void)session;
 
     // set the general service ID
     sdp_uuid128_create(&svc_uuid,&service_uuid_int);
@@ -299,9 +292,7 @@ register_service()
 
     // set rfcomm information
     sdp_uuid16_create(&rfcomm_uuid,RFCOMM_UUID);
-    channel = sdp_data_alloc(SDP_UINT8,&rfcomm_channel);
     rfcomm_list = sdp_list_append(0,&rfcomm_uuid);
-    sdp_list_append(rfcomm_list,channel);
     sdp_list_append(proto_list,rfcomm_list);
 
     // attach protocol information to service record
@@ -320,7 +311,6 @@ register_service()
     err = sdp_record_register(session_handle_,record,0);
 
     // cleanup
-    sdp_data_free(channel);
     sdp_list_free(l2cap_list,0);
     sdp_list_free(rfcomm_list,0);
     sdp_list_free(root_list,0);
@@ -329,14 +319,6 @@ register_service()
     sdp_record_free(record);
 
     return (err == 0);
-}
-
-void
-BluetoothServiceRegistration::
-unregister_service()
-{
-    if (session_handle_) 
-        sdp_close(session_handle_);
 }
 
 } // namespace oasys
