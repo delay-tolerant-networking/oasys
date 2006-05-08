@@ -129,7 +129,7 @@ proc init {argv} {
 	    --daemon      { set opt(daemon) 1 }
 	    -geom         -
 	    -geometry     -
-	    --geometry    { shift argv; set opt(geometry) [arg0 $argv]; set opt(xterm) 1 }
+	    --geometry    { shift argv; set opt(geometry) [arg0 $argv] }
 	    -l            { shift argv; set opt(logdir) [arg0 $argv] }
 	    -p            { set opt(pause) 1}
 	    -r            { shift argv; set opt(rundir_prefix) [arg0 $argv] }
