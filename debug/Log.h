@@ -512,8 +512,8 @@ __log_enabled(log_level_t level, const char* path)
 
 // compile out all log_debug calls when not debugging
 #ifdef NDEBUG
-#define log_debug(args...)
-#define __log_debug(args...)
+#define log_debug(args...)   0
+#define __log_debug(args...) 0
 #else
 #define log_debug(p, args...)                                   \
     ((__log_enabled(oasys::LOG_DEBUG, (p))) ?                   \
