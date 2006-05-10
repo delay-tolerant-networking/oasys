@@ -76,8 +76,10 @@ test(const char* what, SpinLock* lock1, SpinLock* lock2, int n)
     t1->join();
     t2->join();
 
+#ifndef NDEBUG
     log_notice("/log", "total spins: %d",  SpinLock::total_spins_.value);
     log_notice("/log", "total yields: %d", SpinLock::total_yields_.value);
+#endif
 
     log_notice("/test", "count1:     %d", count1);
     log_notice("/test", "count2:     %d", count2);
@@ -89,8 +91,11 @@ test(const char* what, SpinLock* lock1, SpinLock* lock2, int n)
     count1 = 0;
     count2 = 0;
     total = 0;
+
+#ifndef NDEBUG
     SpinLock::total_spins_ = 0;
     SpinLock::total_yields_ = 0;
+#endif
 
     return UNIT_TEST_PASSED;
 }
