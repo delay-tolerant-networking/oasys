@@ -43,6 +43,7 @@
 #include <stdarg.h>
 
 #include "DebugDumpBuf.h"
+#include "DebugUtils.h"
 
 namespace oasys {
 
@@ -107,8 +108,13 @@ public:
 #ifndef NDEBUG
 #define FORMAT_MAGIC 0xffeeeedd
     Formatter() : format_magic_(FORMAT_MAGIC) {}
+    Formatter(const Formatter&) : format_magic_(FORMAT_MAGIC) {}
     unsigned int format_magic_;
+#else
+    Formatter() {}
+    Formatter(const Formatter&) {}
 #endif // NDEBUG
+
     
 };
 
