@@ -58,6 +58,8 @@ LogCommand::LogCommand()
 int
 LogCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
 {
+    (void)interp;
+        
     // log prefix <string>
     if (argc == 3 && !strcmp(argv[1], "prefix")) {
         Log::instance()->set_prefix(argv[2]);

@@ -96,6 +96,7 @@ TextMarshal::process(const char* name, u_char* bp, size_t len)
 void 
 TextMarshal::process(const char* name, u_char** bp, size_t* lenp, int flags)
 {
+    (void)flags;
     buf_.appendf("%s: TextCode\n", name);
     TextCode coder(reinterpret_cast<char*>(*bp), *lenp,
                    buf_.expandable_buf(), 40, indent_ + 1);
@@ -265,8 +266,15 @@ void
 TextUnmarshal::process(const char* name, u_char** bp, 
                        size_t* lenp, int flags)
 {
+    (void)name;
+    (void)bp;
+    (void)lenp;
+    (void)flags;
+    
     if (error()) 
         return;
+
+    NOTIMPLEMENTED;
 }
 
 //----------------------------------------------------------------------------

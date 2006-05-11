@@ -162,12 +162,12 @@ public:
     /// @{
     /// Static functions to simply return the serialized sizes. Called
     /// from the various process() variants.
-    static size_t get_size(u_int32_t* i)           { return 4; }
-    static size_t get_size(u_int16_t* i)           { return 2; }
-    static size_t get_size(u_int8_t* i)            { return 1; }
-    static size_t get_size(bool* b)                { return 1; }
-    static size_t get_size(u_char* bp, size_t len) { return len; }
-    static size_t get_size(std::string* s)         { return s->length() + 4; }
+    static size_t get_size(u_int32_t*)           { return 4; }
+    static size_t get_size(u_int16_t*)           { return 2; }
+    static size_t get_size(u_int8_t*)            { return 1; }
+    static size_t get_size(bool*)                { return 1; }
+    static size_t get_size(u_char*, size_t len)  { return len; }
+    static size_t get_size(std::string* s)       { return s->length() + 4; }
     /// @}
     
     /// @{

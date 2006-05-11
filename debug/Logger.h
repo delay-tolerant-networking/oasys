@@ -156,9 +156,9 @@ public:
      */
     inline bool __log_enabled(log_level_t level, const char* path) const
     {
+        (void)path;
         return oasys::__log_enabled(level, logpath_) ||
             oasys::__log_enabled(level, classname_);
-            
     }
 
     

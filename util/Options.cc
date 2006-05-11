@@ -286,6 +286,8 @@ InAddrOpt::InAddrOpt(char shortopt, const char* longopt, in_addr_t* valp,
 int
 InAddrOpt::set(const char* val, size_t len)
 {
+    (void)len;
+    
     in_addr_t newval;
 
     if (oasys::gethostbyname(val, &newval) != 0) {
@@ -320,6 +322,8 @@ EnumOpt::EnumOpt(char shortopt, const char* longopt,
 int
 EnumOpt::set(const char* val, size_t len)
 {
+    (void)len;
+    
     size_t i = 0;
 
     while (cases_[i].key != 0)

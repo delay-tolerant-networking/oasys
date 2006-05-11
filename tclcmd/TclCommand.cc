@@ -436,6 +436,9 @@ TclCommand::exec(int objc, Tcl_Obj** objv, Tcl_Interp* interp)
 int
 TclCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
 {
+    (void)argc;
+    (void)interp;
+    
     resultf("command %s unknown argument", argv[0]);
     return TCL_ERROR;
 }
@@ -462,6 +465,8 @@ TclCommand::append_resultf(const char* fmt, ...)
 int
 TclCommand::cmd_info(Tcl_Interp* interp)
 {
+    (void)interp;
+    
     StringBuffer buf;
 
     for (BindingTable::iterator itr = bindings_.begin();

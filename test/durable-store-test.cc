@@ -28,7 +28,7 @@ class Obj : public oasys::SerializableObject {
 public:
     Obj(int32_t id, const char* static_name)
         : id_(id), static_name_(static_name) {}
-    Obj(const Builder& b) : id_(0), static_name_("no name") {}
+    Obj(const Builder&) : id_(0), static_name_("no name") {}
     
     virtual const char* name() = 0;
 

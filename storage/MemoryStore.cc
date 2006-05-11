@@ -84,6 +84,8 @@ MemoryStore::get_table(DurableTableImpl**  table,
                        int                 flags,
                        PrototypeVector&    prototypes)
 {
+    (void)prototypes;
+    
     // XXX/bowei -- || access?
     TableMap::iterator iter = tables_.find(name);
 

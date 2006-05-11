@@ -114,6 +114,9 @@ DurableTableImpl::get(const SerializableObject&   key,
                       SerializableObject**        data,
                       TypeCollection::Allocator_t allocator)
 {
+    (void)key;
+    (void)data;
+    (void)allocator;
     PANIC("Generic DurableTableImpl get method called for "
           "multi-type tables");
 }

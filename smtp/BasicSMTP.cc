@@ -92,6 +92,7 @@ BasicSMTPHandler::BasicSMTPHandler()
 int
 BasicSMTPHandler::smtp_HELO(const char* domain)
 {
+    (void)domain;
     return 250;
 }
 

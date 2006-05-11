@@ -105,24 +105,28 @@ SQLInsert::end_action()
 void 
 SQLInsert::process(const char* name, u_int32_t* i)
 {
+    (void)name;
     query_.appendf("%u,", *i);
 }
 
 void 
 SQLInsert::process(const char* name, u_int16_t* i)
 {
+    (void)name;
     query_.appendf("%u,", *i);
 }
 
 void 
 SQLInsert::process(const char* name, u_int8_t* i)
 {
+    (void)name;
     query_.appendf("%u,", *i);
 }
 
 void 
 SQLInsert::process(const char* name, int32_t* i)
 {
+    (void)name;
 #ifdef __CYGWIN__
     query_.appendf("%ld,", *i);
 #else
@@ -133,19 +137,21 @@ SQLInsert::process(const char* name, int32_t* i)
 void 
 SQLInsert::process(const char* name, int16_t* i)
 {
+    (void)name;
     query_.appendf("%d,", *i);
 }
 
 void 
 SQLInsert::process(const char* name, int8_t* i)
 {
+    (void)name;
     query_.appendf("%d,", *i);
 }
 
 void 
 SQLInsert::process(const char* name, bool* b)
 {
-
+    (void)name;
     if (*b) {
         query_.append("'TRUE',");
     } else {
@@ -157,18 +163,24 @@ SQLInsert::process(const char* name, bool* b)
 void 
 SQLInsert::process(const char* name, std::string* s) 
 {
+    (void)name;
     query_.appendf("'%s',", sql_impl_->escape_string(s->c_str()));
 }
 
 void 
 SQLInsert::process(const char* name, u_char* bp, size_t len)
 {
+    (void)name;
     query_.appendf("'%s',", sql_impl_->escape_binary(bp, len));
 }
 
 void 
 SQLInsert::process(const char* name, u_char** bp, size_t* lenp, int flags)
 {
+    (void)name;
+    (void)bp;
+    (void)lenp;
+    (void)flags;
     NOTIMPLEMENTED;
 }
 
@@ -205,24 +217,28 @@ SQLUpdate::end_action()
 void 
 SQLUpdate::process(const char* name, u_int32_t* i)
 {
+    (void)name;
     query_.appendf("%s = %u, ", name, *i);
 }
 
 void 
 SQLUpdate::process(const char* name, u_int16_t* i)
 {
+    (void)name;
     query_.appendf("%s = %u, ", name, *i);
 }
 
 void 
 SQLUpdate::process(const char* name, u_int8_t* i)
 {
+    (void)name;
     query_.appendf("%s = %u, ", name, *i);
 }
 
 void 
 SQLUpdate::process(const char* name, int32_t* i)
 {
+    (void)name;
 #ifdef __CYGWIN__
     query_.appendf("%s = %ld, ", name, *i);
 #else
@@ -233,18 +249,21 @@ SQLUpdate::process(const char* name, int32_t* i)
 void 
 SQLUpdate::process(const char* name, int16_t* i)
 {
+    (void)name;
     query_.appendf("%s = %d, ", name, *i);
 }
 
 void 
 SQLUpdate::process(const char* name, int8_t* i)
 {
+    (void)name;
     query_.appendf("%s = %d, ", name, *i);
 }
 
 void 
-SQLUpdate::process(const char* name, bool* b) {
-
+SQLUpdate::process(const char* name, bool* b)
+{
+    (void)name;
     if (*b) {
         query_.appendf("%s = 'TRUE', ", name);
     } else {
@@ -256,18 +275,24 @@ SQLUpdate::process(const char* name, bool* b) {
 void 
 SQLUpdate::process(const char* name, std::string* s) 
 {
+    (void)name;
     query_.appendf("%s = '%s', ", name, sql_impl_->escape_string(s->c_str()));
 }
 
 void 
 SQLUpdate::process(const char* name, u_char* bp, size_t len)
 {
+    (void)name;
     query_.appendf("%s = '%s', ", name, sql_impl_->escape_binary(bp, len));
 }
 
 void 
 SQLUpdate::process(const char* name, u_char** bp, size_t* lenp, int flags)
 {
+    (void)name;
+    (void)bp;
+    (void)lenp;
+    (void)flags;
     NOTIMPLEMENTED;
 }
 
@@ -327,18 +352,21 @@ SQLTableFormat::append(const char* name, const char* type)
 void 
 SQLTableFormat::process(const char* name, u_int32_t* i)
 {
+    (void)i;
     append(name, "BIGINT");
 }
 
 void 
 SQLTableFormat::process(const char* name, u_int16_t* i)
 {
+    (void)i;
     append(name, "INTEGER");
 }
 
 void
 SQLTableFormat::process(const char* name, u_int8_t* i) {
 
+    (void)i;
     append(name, "SMALLINT");
 }
  
@@ -348,6 +376,7 @@ SQLTableFormat::process(const char* name, u_int8_t* i) {
 void 
 SQLTableFormat::process(const char* name, bool* b)
 {
+    (void)b;
 //    append(name, "BOOLEAN");
     append(name, "TEXT");
 }
@@ -355,19 +384,26 @@ SQLTableFormat::process(const char* name, bool* b)
 void 
 SQLTableFormat::process(const char* name, std::string* s) 
 {
+    (void)s;
     append(name, "TEXT");
 }
 
 void 
 SQLTableFormat::process(const char* name, u_char* bp, size_t len)
 {
+    (void)bp;
+    (void)len;
     append(name,sql_impl_->binary_datatype());
 }
     
 void 
 SQLTableFormat::process(const char* name, u_char** bp, size_t* lenp, int flags)
 {
-    if(flags & Serialize::NULL_TERMINATED) {
+    (void)bp;
+    (void)lenp;
+    (void)flags;
+
+    if (flags & Serialize::NULL_TERMINATED) {
         NOTIMPLEMENTED;
     }
 
@@ -401,6 +437,7 @@ SQLExtract::next_field()
 void
 SQLExtract::process(const char* name, u_int32_t* i)
 {
+    (void)name;
     const char* buf = next_field();
     if (buf == NULL) return;
     
@@ -412,6 +449,7 @@ SQLExtract::process(const char* name, u_int32_t* i)
 void 
 SQLExtract::process(const char* name, u_int16_t* i)
 {
+    (void)name;
     const char* buf = next_field();
     if (buf == NULL) return;
 
@@ -420,11 +458,10 @@ SQLExtract::process(const char* name, u_int16_t* i)
     if (log_) logf(log_, LOG_DEBUG, "<=int16(%d)", *i);
 }
 
-
-
 void 
 SQLExtract::process(const char* name, u_int8_t* i)
 {
+    (void)name;
     const char* buf = next_field();
     if (buf == NULL) return;
     
@@ -436,6 +473,7 @@ SQLExtract::process(const char* name, u_int8_t* i)
 void 
 SQLExtract::process(const char* name, bool* b)
 {
+    (void)name;
     const char* buf = next_field();
 
     if (buf == NULL) return;
@@ -465,6 +503,7 @@ SQLExtract::process(const char* name, bool* b)
 void 
 SQLExtract::process(const char* name, std::string* s)
 {
+    (void)name;
     const char* buf = next_field();
     if (buf == NULL) return;
     
@@ -479,6 +518,7 @@ SQLExtract::process(const char* name, std::string* s)
 void 
 SQLExtract::process(const char* name, u_char* bp, size_t len)
 {
+    (void)name;
     const char* buf = next_field();
     if (buf == NULL) return;
  
@@ -498,6 +538,10 @@ SQLExtract::process(const char* name, u_char* bp, size_t len)
 void 
 SQLExtract::process(const char* name, u_char** bp, size_t* lenp, int flags)
 {
+    (void)name;
+    (void)bp;
+    (void)lenp;
+    (void)flags;
     NOTIMPLEMENTED;
 }
 

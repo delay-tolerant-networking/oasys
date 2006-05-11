@@ -59,6 +59,8 @@ protected:
 int
 test(const char* what, SpinLock* lock1, SpinLock* lock2, int n)
 {
+    (void)what;
+    
     nspins = n;
              
     Thread* t1 = new Thread1(lock1);

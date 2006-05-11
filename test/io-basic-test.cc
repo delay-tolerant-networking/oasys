@@ -596,7 +596,6 @@ struct WriteTestRunner : public PipeIOTester {
 
         for (int i=0; i<OPS; ++i) {
             offset = verify_readall(fds_[0], lengths[i], offset);
-            if (offset < 0) { fail(); break; }
         }
     }
     

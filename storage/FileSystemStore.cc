@@ -138,6 +138,8 @@ FileSystemStore::get_table(DurableTableImpl** table,
                            int                flags,
                            PrototypeVector&   prototypes)
 {
+    (void)prototypes;
+    
     ASSERT(init_);
 
     std::string dir_path =  tables_dir_;

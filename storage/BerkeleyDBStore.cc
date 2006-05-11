@@ -236,6 +236,8 @@ BerkeleyDBStore::get_table(DurableTableImpl** table,
                            int                flags,
                            PrototypeVector&   prototypes)
 {
+    (void)prototypes;
+    
     DB* db;
     int err;
     DBTYPE db_type = DB_BTREE;
@@ -524,6 +526,8 @@ BerkeleyDBStore::db_errcall(const DB_ENV* dbenv,
                             const char* errpfx,
                             const char* msg)
 {
+    (void)dbenv;
+    (void)errpfx;
     __log_err("/storage/berkeleydb", "DB internal error: %s", msg);
 }
 
@@ -533,6 +537,7 @@ BerkeleyDBStore::db_errcall(const DB_ENV* dbenv,
 void
 BerkeleyDBStore::db_errcall(const char* errpfx, char* msg)
 {
+    (void)errpfx;
     __log_err("/storage/berkeleydb", "DB internal error: %s", msg);
 }
 
@@ -542,6 +547,7 @@ BerkeleyDBStore::db_errcall(const char* errpfx, char* msg)
 void
 BerkeleyDBStore::db_panic(DB_ENV* dbenv, int errval)
 {
+    (void)dbenv;
     PANIC("fatal berkeley DB internal error: %s", db_strerror(errval));
 }
 
@@ -557,6 +563,7 @@ BerkeleyDBStore::DeadlockTimer::reschedule()
 void
 BerkeleyDBStore::DeadlockTimer::timeout(const struct timeval& now)
 {
+    (void)now;
     int aborted = 0;
     log_debug("running deadlock detection");
     dbenv_->lock_detect(dbenv_, 0, DB_LOCK_YOUNGEST, &aborted);

@@ -63,7 +63,7 @@ public:
     /**
      * Unserialization constructor.
      */
-    SerializableVector(const Builder& builder) {}
+    SerializableVector(const Builder&) {}
     
     /**
      * Virtual from SerializableObject.

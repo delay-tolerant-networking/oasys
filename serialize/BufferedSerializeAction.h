@@ -35,6 +35,7 @@ public:
      */
     virtual void process(const char* name, SerializableObject* object)
     {
+        (void)name;
         object->serialize(this);
     }
     

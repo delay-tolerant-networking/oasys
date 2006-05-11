@@ -417,6 +417,7 @@ Log::rotate()
 static void
 rotate_handler(int sig)
 {
+    (void)sig;
     Log::instance()->rotate();
 }
 
@@ -430,6 +431,7 @@ Log::add_rotate_handler(int sig)
 static RETSIGTYPE
 reparse_handler(int sig)
 {
+    (void)sig;
     Log::instance()->parse_debug_file();
 }
 

@@ -15,6 +15,7 @@ void
 KeyMarshal::process(const char* name,
                     u_int32_t*  i)
 {
+    (void)name;
     process_int(*i, 8, "%08x");
     border();
 }
@@ -24,6 +25,7 @@ void
 KeyMarshal::process(const char* name,
                     u_int16_t*  i)
 {
+    (void)name;
     process_int(*i, 4, "%04x");
     border();
 }
@@ -33,6 +35,7 @@ void
 KeyMarshal::process(const char* name,
                     u_int8_t*   i)
 {
+    (void)name;
     process_int(*i, 2, "%02x");
     border();
 }
@@ -42,6 +45,7 @@ void
 KeyMarshal::process(const char* name,
                     bool*       b)
 {
+    (void)name;
     process_int( (*b) ? 1 : 0, 1, "%1u");
     border();
 }
@@ -52,6 +56,7 @@ KeyMarshal::process(const char* name,
                     u_char*     bp,
                     size_t      len)
 {
+    (void)name;
     if (error()) 
         return;
 
@@ -68,6 +73,7 @@ KeyMarshal::process(const char* name,
                     size_t*     lenp,
                     int         flags)
 {
+    (void)name;
     if (error()) 
         return;
 
@@ -93,6 +99,7 @@ void
 KeyMarshal::process(const char*  name,
                     std::string* s)
 {
+    (void)name;
     if (error()) 
         return;
 
@@ -108,6 +115,7 @@ void
 KeyMarshal::process(const char*         name,
                     SerializableObject* object)
 {
+    (void)name;
     if (error()) 
         return;
 
@@ -167,6 +175,7 @@ KeyUnmarshal::KeyUnmarshal(const char* buf,
 void 
 KeyUnmarshal::process(const char* name, u_int32_t* i)
 {
+    (void)name;
     u_int32_t val = process_int(8);
     if (! error()) {
         *i = val;
@@ -178,6 +187,7 @@ KeyUnmarshal::process(const char* name, u_int32_t* i)
 void 
 KeyUnmarshal::process(const char* name, u_int16_t* i)
 {
+    (void)name;
     u_int16_t val = static_cast<u_int16_t>(process_int(4));
     if (! error()) {
         *i = val;
@@ -189,6 +199,7 @@ KeyUnmarshal::process(const char* name, u_int16_t* i)
 void 
 KeyUnmarshal::process(const char* name, u_int8_t* i)
 {
+    (void)name;
     u_int8_t val = static_cast<u_int8_t>(process_int(2));
     if (! error()) {
         *i = val;
@@ -200,6 +211,7 @@ KeyUnmarshal::process(const char* name, u_int8_t* i)
 void 
 KeyUnmarshal::process(const char* name, bool* b)
 {
+    (void)name;
     if (error()) {
         return;
     }
@@ -218,6 +230,7 @@ KeyUnmarshal::process(const char* name, bool* b)
 void 
 KeyUnmarshal::process(const char* name, u_char* bp, size_t len)
 {
+    (void)name;
     if (error()) {
         return;
     }
@@ -237,6 +250,7 @@ void
 KeyUnmarshal::process(const char* name, u_char** bp, 
                       size_t* lenp, int flags)
 {
+    (void)name;
     if (error()) {
         return;
     }
@@ -281,6 +295,7 @@ KeyUnmarshal::process(const char* name, u_char** bp,
 void 
 KeyUnmarshal::process(const char* name, std::string* s) 
 {
+    (void)name;
     if (error()) {
         return;
     }
@@ -299,6 +314,7 @@ KeyUnmarshal::process(const char* name, std::string* s)
 void 
 KeyUnmarshal::process(const char* name, SerializableObject* object)
 {
+    (void)name;
     if (error()) {
         return;
     }

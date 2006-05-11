@@ -58,6 +58,8 @@ SMTPServer::SMTPServer(const SMTP::Config& config,
 void
 SMTPServer::accepted(int fd, in_addr_t addr, u_int16_t port)
 {
+    (void)addr;
+    (void)port;
     SMTPHandler* handler = handler_factory_->new_handler();
     SMTPHandlerThread* thread =
         new SMTPHandlerThread(handler, fd, fd, config_, session_done_);

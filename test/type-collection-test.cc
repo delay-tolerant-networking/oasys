@@ -53,7 +53,7 @@ public:
     virtual ~Obj();
     virtual const char* name() = 0;
 
-    void serialize(SerializeAction* action) {}
+    void serialize(SerializeAction*) {}
     
     int id_;
 };

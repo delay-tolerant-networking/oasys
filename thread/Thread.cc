@@ -61,6 +61,7 @@ Thread::IDArray      Thread::all_thread_ids_;
 void
 Thread::interrupt_signal(int sig)
 {
+    (void)sig;
 }
 
 void*
@@ -75,6 +76,8 @@ Thread::pre_thread_run(void* t)
 void
 Thread::thread_run(const char* thread_name, pthread_t pthread_id)
 {
+    (void)thread_name;
+    
 #if GOOGLE_PROFILE_ENABLED
     ProfilerRegisterThread();
 #endif

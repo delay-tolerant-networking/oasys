@@ -315,8 +315,6 @@ Unmarshal::process(const char* name, u_char** bp, size_t* lenp, int flags)
         process(len_name.c_str(), (u_int32_t*)lenp);
     }
 
-    ASSERT(*lenp >= 0);
-
     if (*lenp != 0) {
         u_char* buf = next_slice(*lenp);
         if (buf == NULL) return;
@@ -378,36 +376,42 @@ MarshalSize::begin_action()
 void
 MarshalSize::process(const char* name, u_int32_t* i)
 {
+    (void)name;
     size_ += get_size(i);
 }
 
 void
 MarshalSize::process(const char* name, u_int16_t* i)
 {
+    (void)name;
     size_ += get_size(i);
 }
 
 void
 MarshalSize::process(const char* name, u_int8_t* i)
 {
+    (void)name;
     size_ += get_size(i);
 }
 
 void
 MarshalSize::process(const char* name, bool* b)
 {
+    (void)name;
     size_ += get_size(b);
 }
 
 void
 MarshalSize::process(const char* name, u_char* bp, size_t len)
 {
+    (void)name;
     size_ += get_size(bp, len);
 }
 
 void
 MarshalSize::process(const char* name, std::string* s)
 {
+    (void)name;
     size_ += get_size(s);
 }
 
@@ -415,6 +419,7 @@ void
 MarshalSize::process(const char* name, u_char** bp,
                      size_t* lenp, int flags)
 {
+    (void)name;
     if(flags & Serialize::NULL_TERMINATED) {
         size_ += strlen(reinterpret_cast<char*>(*bp)) + sizeof('\0');
     } else {
@@ -432,6 +437,7 @@ MarshalSize::process(const char* name, u_char** bp,
 void                                            \
 MarshalCRC::process(const char* name, _type* i) \
 {                                               \
+    (void)name;                                 \
     crc_.update((u_char*)i, sizeof(_type));     \
 }
 
@@ -443,6 +449,7 @@ DECL_CRC(bool)
 void
 MarshalCRC::process(const char* name, u_char* bp, size_t len)
 {
+    (void)name;
     crc_.update(bp, len);
 }
 
@@ -450,6 +457,7 @@ void
 MarshalCRC::process(const char* name, u_char** bp,
                      size_t* lenp, int flags)
 {
+    (void)name;
     if(flags & Serialize::NULL_TERMINATED) {
         crc_.update(*bp, strlen(reinterpret_cast<char*>(*bp)));
     } else {
@@ -460,6 +468,7 @@ MarshalCRC::process(const char* name, u_char** bp,
 void
 MarshalCRC::process(const char* name, std::string* s)
 {
+    (void)name;
     crc_.update((u_char*)s->c_str(), s->size());
 }
 

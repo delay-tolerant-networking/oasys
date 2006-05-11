@@ -348,6 +348,8 @@ int
 DurableObjectCache<_DataType>::remove(const SerializableObject& key,
                                       const _DataType* data)
 {
+    (void)data;
+    
     ScopeLock l(lock_, "DurableObjectCache::remove");
 
     std::string cache_key;

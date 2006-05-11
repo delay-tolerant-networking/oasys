@@ -179,7 +179,7 @@ atomic_cmpxchg32(volatile atomic_t* v, u_int32_t o, u_int32_t n)
 static inline u_int32_t
 atomic_incr_ret(volatile atomic_t* v)
 {
-    volatile register u_int32_t o, n;
+    register volatile u_int32_t o, n;
     
 #if defined(NDEBUG) && NDEBUG == 1
     while (1)

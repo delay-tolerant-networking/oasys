@@ -28,6 +28,8 @@ InitSequencer::InitSequencer()
 int 
 InitSequencer::start(std::string step, Plan* plan)
 {
+    (void)plan;
+    
     int err;
     
     add_extra_deps(); 

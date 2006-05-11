@@ -43,6 +43,8 @@ namespace oasys {
 int
 NoLock::lock(const char* lock_holder)
 {
+    (void)lock_holder;
+    
     return 0;
 }
 
@@ -55,6 +57,7 @@ NoLock::unlock()
 int
 NoLock::try_lock(const char* lock_holder)
 {
+    (void)lock_holder;
     return 0;
 }
 

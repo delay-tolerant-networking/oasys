@@ -53,6 +53,8 @@ HelpCommand::HelpCommand()
 int
 HelpCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
 {
+    (void)interp;
+    
     const TclCommandList *cmdlist = NULL;
     TclCommandList::const_iterator iter;
     
