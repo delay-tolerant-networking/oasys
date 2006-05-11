@@ -357,7 +357,7 @@ IO::recv(int fd, char* bp, size_t len, int flags,
     struct iovec iov;
     iov.iov_base = bp;
     iov.iov_len  = len;
-    return rwdata(RECV, fd, &iov, 1, 0, -1, 0, 0, intr, false, log);
+    return rwdata(RECV, fd, &iov, 1, flags, -1, 0, 0, intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -487,7 +487,7 @@ IO::send(int fd, const char* bp, size_t len, int flags,
     struct iovec iov;
     iov.iov_base = const_cast<char*>(bp);
     iov.iov_len  = len;
-    return rwdata(SEND, fd, &iov, 1, 0, -1, 0, 0, intr, false, log);
+    return rwdata(SEND, fd, &iov, 1, flags, -1, 0, 0, intr, false, log);
 }
 
 //----------------------------------------------------------------------------
