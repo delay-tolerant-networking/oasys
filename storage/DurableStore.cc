@@ -18,6 +18,9 @@ DurableStore::~DurableStore()
     impl_ = 0;
 
     if (clean_shutdown_file_ != "") {
+        // try to remove it if it exists
+        unlink(clean_shutdown_file_.c_str());
+        
         int fd = creat(clean_shutdown_file_.c_str(), S_IRUSR);
         if (fd < 0) {
             log_err("error creating shutdown file '%s': %s",
