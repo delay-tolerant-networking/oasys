@@ -49,7 +49,7 @@ class IntShim : public SerializableObject {
 public:
     IntShim(int32_t value = 0, const char* name = "int")
         : name_(name), value_(value) {}
-    IntShim(const Builder& b) {}
+    IntShim(const Builder&) {}
     
     // virtual from SerializableObject
     void serialize(SerializeAction* a) {
@@ -70,7 +70,7 @@ class UIntShim : public SerializableObject {
 public:
     UIntShim(u_int32_t value = 0, const char* name = "u_int")
         : name_(name), value_(value) {}
-    UIntShim(const Builder& b) {}
+    UIntShim(const Builder&) {}
     
     // virtual from SerializableObject
     void serialize(SerializeAction* a) {
@@ -94,7 +94,7 @@ class StringShim : public SerializableObject {
 public:
     StringShim(const std::string& str = "", const char* name = "string")
         : name_(name), str_(str) {}
-    StringShim(const Builder& b) {}
+    StringShim(const Builder&) {}
     
     virtual ~StringShim() {}
     
@@ -120,7 +120,7 @@ public:
 	free_mem_ = (str == 0);
     }
 
-    NullStringShim(const Builder& b)
+    NullStringShim(const Builder&)
         : name_("string"), str_(NULL), free_mem_(false)
     {}
 
@@ -150,7 +150,7 @@ public:
     ByteBufShim(char* buf, size_t size)
 	: buf_(buf), size_(size), own_buf_(false) {}
 
-    ByteBufShim(const Builder& b) 
+    ByteBufShim(const Builder&) 
 	: buf_(0), size_(0), own_buf_(false) {}
 
     ~ByteBufShim() {
