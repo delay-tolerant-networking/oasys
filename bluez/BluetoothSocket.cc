@@ -1,4 +1,3 @@
-/* $Id$ */
 #include <config.h>
 #ifdef OASYS_BLUETOOTH_ENABLED
 
@@ -47,7 +46,7 @@ BluetoothSocket::BluetoothSocket(int socktype, proto_t proto, int sock,
     fd_ = sock;
     proto_ = (proto_t) proto;
     logpathf("%s/%s/%d",logbase,prototoa((proto_t)proto_),sock);
-
+    socktype_ = socktype;
     state_ = ESTABLISHED;
     bacpy(&local_addr_,BDADDR_ANY);
     channel_ = remote_channel;
@@ -76,6 +75,7 @@ BluetoothSocket::init_socket()
     fd_ = socket(PF_BLUETOOTH, socktype_, (int) proto_);
     if (fd_ == -1) {
         logf(LOG_ERR, "error creating socket: %s", strerror(errno));
+        if(errno==EBADFD) close();
         return;
     }
 
@@ -119,10 +119,12 @@ BluetoothSocket::bind(bdaddr_t local_addr, u_int8_t local_channel)
     init_sa((int)LOCAL);
 
     if(::bind(fd_,sa_,slen_) != 0) {
-        int err = errno;
-        logf(LOG_ERR, "error binding to %s(%d): %s",
+        log_level_t level = LOG_ERR;
+        if(errno == EADDRINUSE) level = LOG_DEBUG;
+        logf(level, "failed to bind to %s(%d): %s",
              Bluetooth::batostr(&local_addr_,buff), channel_,
-             strerror(err));
+             strerror(errno));
+        if(errno==EBADFD) close();
         return -1;
     }
 
@@ -164,6 +166,7 @@ BluetoothSocket::connect(bdaddr_t remote_addr, u_int8_t remote_channel)
                  Bluetooth::batostr(&remote_addr_,buff), channel_,
                  strerror(errno));
         }
+        if(errno==EBADFD) close();
         return -1;
     }
 
