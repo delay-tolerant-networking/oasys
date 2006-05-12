@@ -49,6 +49,7 @@ public:
                             Bluetooth::batostr(&local_addr_,buff),
                             channel_,
                             strerror(errno));
+                    if (errno == EBADFD) close();
                     return res;
                 }
             } else {

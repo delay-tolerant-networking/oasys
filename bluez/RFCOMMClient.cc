@@ -24,12 +24,19 @@ RFCOMMClient::rc_connect(bdaddr_t remote_addr)
 
         if ((res = bind()) != 0) {
 
+
             // something is borked
             if (errno != EADDRINUSE) {
                 log_err("error binding to %s:%d: %s",
                         Bluetooth::batostr(&local_addr_,buff),
                         channel_,
                         strerror(errno));
+
+                // unrecoverable
+                if (errno == EBADFD) {
+                    close();
+                    return -1;
+                }
                 break;
             }
 
@@ -58,6 +65,12 @@ RFCOMMClient::rc_connect(bdaddr_t remote_addr)
                           Bluetooth::batostr(&remote_addr_,buff),
                           channel_,
                           strerror(errno)); 
+
+                // unrecoverable
+                if (errno == EBADFD) {
+                    close();
+                    return -1;
+                }
 
             }
         }
