@@ -185,7 +185,7 @@ FormatterTest::format(char* buf, size_t sz) const
 
 class BoundsTest : public Formatter {
 public:
-    BoundsTest(int overflow = 0) : overflow_(0) {}
+    BoundsTest(int overflow = 0) : overflow_(overflow) {}
     virtual int format(char* buf, size_t sz) const;
     int overflow_;
 };

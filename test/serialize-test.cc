@@ -67,7 +67,7 @@ public:
         memset(s2, 0, sizeof(s2));
         strcpy(s2, "Zanzibar");
     }
-    OneOfEach(bool fool) : a(0), b(0), c(0), d(0), e(0), u(0), s1("") {
+    OneOfEach(bool) : a(0), b(0), c(0), d(0), e(0), u(0), s1("") {
         memset(s2, 0, sizeof(s2));
     }
     

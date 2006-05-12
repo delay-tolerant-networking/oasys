@@ -62,7 +62,7 @@ Obj::~Obj() {}
 class Foo : public Obj {
 public:
     static const int ID = 1;
-    Foo(const Builder& b) : Obj(ID) {}
+    Foo(const Builder&) : Obj(ID) {}
     virtual const char* name() { return "foo"; }
 
 private:
@@ -73,7 +73,7 @@ private:
 class Bar : public Obj {
 public:
     static const int ID = 2;
-    Bar(const Builder& b) : Obj(ID) {}
+    Bar(const Builder&) : Obj(ID) {}
     virtual const char* name() { return "bar"; }
 
 private:
@@ -84,7 +84,7 @@ private:
 class Baz : public Obj {
 public:
     static const int ID = 3;
-    Baz(const Builder& b) : Obj(ID) {}
+    Baz(const Builder&) : Obj(ID) {}
     virtual const char* name() { return "baz"; }
 
 private:
@@ -102,7 +102,7 @@ class MultiLeaf : public MultipleInherit,
 		  public Obj {
 public:
     static const int ID = 3;
-    MultiLeaf(const Builder& b) : Obj(ID) {}
+    MultiLeaf(const Builder&) : Obj(ID) {}
     virtual const char* name() { return "MultiLeaf"; }
 
 private:
