@@ -1,5 +1,3 @@
-/* $Id$ */
-
 #include <config.h>
 #ifdef OASYS_BLUETOOTH_ENABLED
 
@@ -25,6 +23,7 @@ BluetoothServiceDiscoveryClient(const char* logpath) :
     response_list_(NULL),
     session_handle_(NULL)
 {
+    bacpy(&local_addr_,BDADDR_ANY);
 }
 
 BluetoothServiceDiscoveryClient::
@@ -48,13 +47,14 @@ connect()
 
     // connect to the SDP server running on the remote machine
     session_handle_ = sdp_connect(
-                        BDADDR_ANY, /* bind to any local adapter  */
+                        &local_addr_, /* bind to specified local adapter */
                         &remote_addr_,
                         SDP_RETRY_IF_BUSY);
 
     if ( ! session_handle_ ) {
-        log_err("error connecting to SDP server: %s (%d)\n",
-                strerror(errno), errno);
+        // could be a device that does not implement SDP
+        log_debug("failed to connect to SDP server: %s (%d)\n",
+                  strerror(errno), errno);
         return false;
     }
 
@@ -118,8 +118,8 @@ do_search() {
         sdp_list_free(search,0);
 
         if (err != 0) {
-            log_err("problems with sdp search: %s (%d)\n",
-                    strerror(errno),errno);
+            log_debug("problems with sdp search: %s (%d)\n",
+                      strerror(errno),errno);
             return NULL;
         }
 
@@ -141,7 +141,7 @@ get_next_service_record()
         sdp_list_t* search = do_search();
         if (search == NULL) return NULL;
         response_list_ = new SDPListHead(search);
-        response_list_->set_free_func((sdp_free_func_t)sdp_record_free);
+        //response_list_->set_free_func((sdp_free_func_t)sdp_record_free);
     }
 
     // Pull off the next record from the linked list
@@ -241,10 +241,11 @@ is_dtn_router(bdaddr_t addr)
 }
 
 BluetoothServiceRegistration::
-BluetoothServiceRegistration(const char* logpath) :
+BluetoothServiceRegistration(bdaddr_t* local, const char* logpath) :
     Logger("BluetoothServiceRegistration",logpath),
     session_handle_(NULL)
 {
+    bacpy(&local_addr_,local);
     status_ = register_service();
 }
 
@@ -260,9 +261,10 @@ BluetoothServiceRegistration::
 register_service()
 {
     uint32_t service_uuid_int[] = OASYS_BLUETOOTH_SDP_UUID;
-    const char *service_name = "dtnd";
-    const char *service_dsc  = "Delay Tolerant Networking daemon";
-    const char *service_prov = "DTNRG";
+    const char *service_name    = OASYS_BLUETOOTH_SDP_NAME;
+    const char *service_dsc     = OASYS_BLUETOOTH_SDP_DESC;
+    const char *service_prov    = OASYS_BLUETOOTH_SDP_PROV;
+
     uuid_t root_uuid,
            l2cap_uuid,
            rfcomm_uuid,
