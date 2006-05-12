@@ -27,7 +27,7 @@ Bluetooth::hci_devid(const char* hcidev, const char* log)
     int dd = ::hci_devid(hcidev);
     if(log)
     {
-        logf(log, LOG_INFO, "hci_devid %s: dd %d", hcidev, dd);
+        logf(log, LOG_DEBUG, "hci_devid %s: dd %d", hcidev, dd);
     }
     return dd;
 }
@@ -39,7 +39,7 @@ Bluetooth::hci_inquiry(int dev_id, int len, int nrsp, const uint8_t *lap,
     int err = ::hci_inquiry(dev_id,len,nrsp,lap,ii,flags);
     if(log)
     {
-        logf(log, LOG_INFO, 
+        logf(log, LOG_DEBUG, 
              "hci_inquiry(hci%d): len %d, nrsp %d, lap %p, info %p, flags 0x%lx",
              dev_id,len,nrsp,lap,ii,flags);
     }
@@ -52,7 +52,7 @@ Bluetooth::hci_open_dev(int dev_id, const char* log)
     int fd = ::hci_open_dev(dev_id);
     if(log)
     {
-        logf(log, LOG_INFO, "hci_open_dev(hci%d): fd %d",dev_id,fd);
+        logf(log, LOG_DEBUG, "hci_open_dev(hci%d): fd %d",dev_id,fd);
     }
     return fd;
 }
@@ -63,7 +63,7 @@ Bluetooth::hci_close_dev(int dd, const char* log)
     int err = ::hci_close_dev(dd);
     if(log)
     {
-        logf(log, LOG_INFO, "hci_close_dev(%d): err %d",dd,err);
+        logf(log, LOG_DEBUG, "hci_close_dev(%d): err %d",dd,err);
     }
     return err;
 }
@@ -78,7 +78,7 @@ Bluetooth::hci_read_remote_name(int dd, const bdaddr_t *bdaddr, int len,
         bdaddr_t ba;
         baswap(&ba,bdaddr);
         char buff[18];
-        logf(log, LOG_INFO, 
+        logf(log, LOG_DEBUG, 
              "hci_read_remote_name(%d): [%s] %s len %d to %d",
              dd,batostr(&ba,buff),name,len,to);
     }
@@ -102,7 +102,7 @@ Bluetooth::hci_get_bdaddr(const char * hcidev, bdaddr_t* bdaddr,
     if (dev_id < 0)
     {
         if (log)
-            logf(log, LOG_INFO,
+            logf(log, LOG_DEBUG,
                  "bad device id -- attempting to up the interface");
         if (hci_dev_up(fd,hcidev,log) < 0)
         {
