@@ -1,4 +1,3 @@
-/* $Id$ */
 #ifndef _OASYS_BTSDP_H_
 #define _OASYS_BTSDP_H_
 
@@ -103,6 +102,15 @@ public:
     ~BluetoothServiceDiscoveryClient();
 
     bool is_dtn_router(bdaddr_t addr);
+
+    void set_local_addr(bdaddr_t& addr) {
+        bacpy(&local_addr_,&addr);
+    }
+
+    void get_local_addr(bdaddr_t& addr) {
+        bacpy(&addr,&local_addr_);
+    }
+
 protected:
     /* iterator over query results */
     sdp_record_t* get_next_service_record();
@@ -116,6 +124,7 @@ protected:
 
     /* member data */
     bdaddr_t      remote_addr_;     /* physical address of device to query */
+    bdaddr_t      local_addr_;      /* physical address of local adapter */
     SDPListHead   *response_list_;  /* linked list of SDP responses */
     sdp_session_t *session_handle_; /* handle to open search request */
 };
@@ -123,15 +132,29 @@ protected:
 class BluetoothServiceRegistration : public Logger 
 {
 public:
-    BluetoothServiceRegistration(const char* logpath = "/dtn/bt/sdp/reg");
+
+// generated using uuidgen on Mac OS X ... a completely arbitrary number :)
+// maybe eventually register something with Bluetooth SIG?
+// the joke here: why UUID?  why not call it GUID?  Cuz the SIG knows best
+#define OASYS_BLUETOOTH_SDP_UUID { 0xDCA3, 0x8352, 0xBF60, 0x11DA, \
+                                   0xA23B, 0x0003, 0x931B, 0x7960 }
+
+#define OASYS_BLUETOOTH_SDP_NAME "dtnd"
+#define OASYS_BLUETOOTH_SDP_DESC "Delay Tolerant Networking daemon"
+#define OASYS_BLUETOOTH_SDP_PROV "DTNRG"
+
+    BluetoothServiceRegistration(bdaddr_t*   local   = BDADDR_ANY,
+                                 const char* logpath = "/dtn/bt/sdp/reg");
     ~BluetoothServiceRegistration();
 
     bool success() {return status_;};
+
 protected:
     bool register_service();
 
     sdp_session_t* session_handle_;
     bool status_;
+    bdaddr_t local_addr_;
 };
 
 } // namespace oasys
