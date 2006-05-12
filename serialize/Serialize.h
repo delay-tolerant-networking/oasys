@@ -112,7 +112,7 @@ public:
 class Builder {
 public:
     Builder() {}
-    Builder(const Builder& b) {}
+    Builder(const Builder&) {}
 
     static Builder& builder() {
         return static_builder_;
