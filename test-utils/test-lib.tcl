@@ -40,6 +40,7 @@ namespace eval conf {
 namespace eval test {
     set run_actions  ""
     set exit_actions ""
+    set cleanup_actions ""
     set testname     ""
 
     # Script actions to be performed after launching everything
