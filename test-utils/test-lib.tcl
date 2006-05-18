@@ -48,10 +48,16 @@ namespace eval test {
 	set test::run_actions $actions
     }
 
-    # Script to run after everything has shut down
+    # Script to run after the test is done
     proc exit_script { actions } {
 	global test::exit_actions
 	set test::exit_actions $actions
+    }
+
+    # Script to run after everything has shut down
+    proc cleanup_script { actions } {
+	global test::cleanup_actions
+	set test::cleanup_actions $actions
     }
 
     # Run the script actions
@@ -65,6 +71,14 @@ namespace eval test {
 	global test::exit_actions
 	if {$test::exit_actions != ""} {
 	    uplevel \#0 $test::exit_actions
+	}
+    }
+
+    # Run the cleanup script actions
+    proc run_cleanup_script {} {
+	global test::cleanup_actions
+	if {$test::cleanup_actions != ""} {
+	    uplevel \#0 $test::cleanup_actions
 	}
     }
 
