@@ -53,7 +53,7 @@ proc usage {} {
     puts "    -id   | --id  <id>   Id which is used to select a port slice"
     puts "    -l <log dir>         Set a different directory for logs"
     puts "    -n <# nodes>         Number of nodes, unless overridden by test"
-    puts "    -p                   Pause after apps dies, applies only to"
+    puts "    -p                   Pause after apps die, applies only to"
     puts "                         xterm option"
     puts "    -r <rundir>          /tmp/<rundir> will be the test directory"
     puts "    -v                   Verbose mode"
@@ -66,7 +66,8 @@ proc usage {} {
     puts "    --gdbrc       <tmpl>       Change remote gdbrc template"
     puts "    --script      <tmpl>       Change remote run script template"
     puts "    --no-logs                  Don't collect logs/cores"
-    puts "    --leave-crap               Leave all crap /tmp dir"
+    puts "    --local-rundir		 Use ./run-0 ./run-1 etc instead of /tmp"
+    puts "    --leave-crap               Leave all crap in /tmp dir"
     puts "    --strip                    Strip execs before copying"
 }
 
