@@ -134,6 +134,14 @@ Log::do_init(const char* logfile, log_level_t defaultlvl,
     if (prefix)
         prefix_.assign(prefix);
 
+#ifdef NDEBUG
+    if (defaultlvl == LOG_DEBUG) {
+        fprintf(stderr, "WARNING: default log level debug invalid for "
+                "non-debugging build\n");
+        defaultlvl = LOG_INFO;
+    }
+#endif
+    
     default_threshold_ = defaultlvl;
     parse_debug_file(debug_path);
 
@@ -266,6 +274,15 @@ Log::parse_debug_file(const char* debug_path)
                 goto parse_err;
             }
 
+#ifdef NDEBUG
+            if (threshold == LOG_DEBUG) {
+                fprintf(stderr, "WARNING: debug level log rule for path %s "
+                        "ignored in non-debugging build\n",
+                        logpath);
+                continue;
+            }
+#endif
+            
             new_rule_list->push_back(Rule(logpath, threshold));
         }
     }
