@@ -69,6 +69,7 @@ proc usage {} {
     puts "    --local-rundir		 Use ./run-0 ./run-1 etc instead of /tmp"
     puts "    --leave-crap               Leave all crap in /tmp dir"
     puts "    --strip                    Strip execs before copying"
+    puts "    --base-test-dir <dir>      Base Directory for test scripts"
 }
 
 proc init {argv} {
@@ -96,6 +97,7 @@ proc init {argv} {
     set opt(geometry)      ""
     set opt(gdb_tmpl)      [import_find gdbrc.template]
     set opt(script_tmpl)   [import_find script.template]
+    set opt(base_test_dir) ""
 
     set num_nodes_override 0
     set test_script ""
@@ -147,10 +149,11 @@ proc init {argv} {
 	    --opts        { shift argv; set opt(opts)        [arg0 $argv] }
 	    --gdb-tmpl    { shift argv; set opt(gdb_tmpl)    [arg0 $argv] }
 	    --script-tmpl { shift argv; set opt(script_tmpl) [arg0 $argv] }
+	    --base-test-dir { shift argv; set opt(base_test_dir) [arg0 $argv] }
 	    --no-logs     { set opt(no_logs) 1 }
 	    --leave-crap  { set opt(leave_crap) 1}
 	    --strip       { set opt(strip) 1 }
-
+	    
 	    default  {
 		if {([string index [arg0 $argv] 0] != "-") && \
 			($test_script == "") } {
@@ -174,6 +177,18 @@ proc init {argv} {
     if {$num_nodes_override != 0} {
 	puts "* Setting num_nodes to $num_nodes_override"
 	net::num_nodes $num_nodes_override
+    }
+
+    #
+    # Check if the test script is really in the base_test_dir
+    # 
+    if {! [file readable $test_script]} {
+	set script2 [file join $opt(base_test_dir) $test_script]
+	if {[file readable $script2]} {
+	    set test_script $script2
+	} else {
+	    error "can't read test script file $test_script"
+	}
     }
     
     puts "* Reading test script $test_script"
