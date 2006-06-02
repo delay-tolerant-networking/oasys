@@ -71,7 +71,7 @@ DurableStore::create_store(const StorageConfig& config,
         
     else
     {
-        log_crit("storage type %s not implemented, exiting...",
+        log_crit("configured storage type '%s' not implemented, exiting...",
                  config.type_.c_str());
         exit(1);
     }
