@@ -134,8 +134,12 @@ protected:
      * the responsibility of the derived class to set this in lock()
      * and unset it in unlock(), since the accessors is_locked() and
      * is_locked_by_me() depend on it.
+     *
+     * Note that this field must be declared volatile to ensure that
+     * readers of the field make sure to go to memory (which might
+     * have been updated by another thread).
      */
-    pthread_t lock_holder_;
+    volatile pthread_t lock_holder_;
 
     /**
      * Lock holder name for debugging purposes. Identifies call site
