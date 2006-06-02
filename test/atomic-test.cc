@@ -14,7 +14,7 @@ class AddRetThread : public Thread {
 public:
     AddRetThread(atomic_t* barrier, atomic_t* val,
                  atomic_t* sum, u_int32_t count, u_int32_t amount)
-        : Thread("IncrThread", CREATE_JOINABLE),
+        : Thread("AddRetThread", CREATE_JOINABLE),
           barrier_(barrier), val_(val), sum_(sum), count_(count), amount_(amount) {}
     
 protected:
@@ -22,7 +22,7 @@ protected:
         atomic_incr(barrier_);
         while (barrier_->value != 0) {}
 
-        log_debug("/test", "thread %p starting", this);
+        log_notice("/test", "thread %p starting", this);
         for (u_int i = 0; i < count_; ++i) {
             u_int32_t newval;
             if (amount_ == 1) {
@@ -32,14 +32,14 @@ protected:
             }
             atomic_add(sum_, newval);
         }
-        log_debug("/test", "thread %p done", this);
+        log_notice("/test", "thread %p done", this);
     }
 
     atomic_t* barrier_;
     atomic_t* val_;
     atomic_t* sum_;
-    u_int32_t count_;
-    u_int32_t amount_;
+    volatile u_int32_t count_;
+    volatile u_int32_t amount_;
 };
 
 class IncrThread : public Thread {
@@ -54,21 +54,17 @@ protected:
         atomic_incr(barrier_);
         while (barrier_->value != 0) {}
 
-        log_debug("/test", "thread %p starting", this);
+        log_notice("/test", "thread %p starting", this);
         for (u_int i = 0; i < count_; ++i) {
             atomic_incr(val_);
-
-            while ((limit_ != 0) && (val_->value > limit_)) {
-                
-            }
         }
-        log_debug("/test", "thread %p done", this);
+        log_notice("/test", "thread %p done", this);
     }
 
     atomic_t* barrier_;
     atomic_t* val_;
-    u_int32_t count_;
-    u_int32_t limit_;
+    volatile u_int32_t count_;
+    volatile u_int32_t limit_;
 };
 
 class DecrTestThread : public Thread {
@@ -83,7 +79,7 @@ protected:
         atomic_incr(barrier_);
         while (barrier_->value != 0) {}
         
-        log_debug("/test", "thread %p starting", this);
+        log_notice("/test", "thread %p starting", this);
 
         for (u_int i = 0; i < count_; ++i) {
             while (! atomic_cmpxchg32(val_, 0, 0)) {} // wait until != 0
@@ -99,14 +95,14 @@ protected:
             }
         }
         
-        log_debug("/test", "thread %p done", this);
+        log_notice("/test", "thread %p done", this);
     }
 
     atomic_t* barrier_;
     atomic_t* val_;
-    u_int32_t count_;
+    volatile u_int32_t count_;
     atomic_t* nzero_;
-    u_int32_t* maxval_;
+    volatile u_int32_t* maxval_;
 };
 
 class CompareAndSwapThread : public Thread {
@@ -122,7 +118,7 @@ protected:
         atomic_incr(barrier_);
         while (barrier_->value != 0) {}
         
-        log_debug("/test", "thread %p starting", this);
+        log_notice("/test", "thread %p starting", this);
 
         for (u_int i = 0; i < count_; ++i) {
             u_int32_t old = atomic_cmpxchg32(val_, 0, (u_int32_t)this);
@@ -136,12 +132,12 @@ protected:
             }
         }
         
-        log_debug("/test", "thread %p done", this);
+        log_notice("/test", "thread %p done", this);
     }
 
     atomic_t* barrier_;
     atomic_t* val_;
-    u_int32_t count_;
+    volatile u_int32_t count_;
     atomic_t* success_;
     atomic_t* fail_;
 };
