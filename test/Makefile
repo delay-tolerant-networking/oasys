@@ -66,3 +66,16 @@ test/%test: test/%test.cc liboasys.a
 test/%Test: test/%Test.cc liboasys.a
 	@mkdir -p test
 	$(CXX) $< -o $@ $(CFLAGS) $(LDFLAGS) $(LIBS) liboasys.a $(OASYS_LIBS)
+
+#
+# special rules for the smtp support scripts used in cases where
+# the build directory is not the source directory
+#
+TESTS += \
+	smtp-test-send.py \
+	smtp-test-send.tcl
+
+test/smtp-test-send.py:
+test/smtp-test-send.tcl:
+	rm -f $@
+	ln -s $(SRCDIR)/$@ $@
