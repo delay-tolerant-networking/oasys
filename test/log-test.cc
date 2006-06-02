@@ -448,12 +448,16 @@ DECLARE_TEST(Fini) {
 }
 
 DECLARE_TESTER(LogTest) {
+#ifdef NDEBUG
+    printf("\n\nNOTICE: logging test disabled under non-debugging build\n");
+#else
     ADD_TEST(Init);
     ADD_TEST(RulesTest);
     ADD_TEST(LoggerTest);
     ADD_TEST(FormatterTest);
     ADD_TEST(ReparseTest);
     ADD_TEST(Fini);
+#endif
 }
 
 DECLARE_TEST_FILE(LogTest, "LogTest");
