@@ -221,7 +221,7 @@ TclCommandInterp::command_server(const char* prompt,
 void
 TclCommandInterp::command_loop(const char* prompt)
 {
-    StringBuffer cmd("command_loop %s", prompt);
+    StringBuffer cmd("command_loop \"%s\"", prompt);
     
     if (Tcl_Eval(interp_, const_cast<char*>(cmd.c_str())) != TCL_OK) {
         log_err("tcl error in command_loop: \"%s\"", interp_->result);

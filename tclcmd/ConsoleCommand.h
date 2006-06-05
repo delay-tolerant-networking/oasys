@@ -48,11 +48,12 @@ namespace oasys {
  */
 class ConsoleCommand : public TclCommand {
 public:
-    ConsoleCommand();
+    ConsoleCommand(const char* default_prompt);
 
-    bool      stdio_;	///< If true, spawn a stdin/stdout interpreter
-    in_addr_t addr_;	///< Address to listen for the console
-    u_int16_t port_;	///< Port to listen for the console
+    bool      stdio_; 	 ///< If true, spawn a stdin/stdout interpreter
+    in_addr_t addr_;	 ///< Address to listen for the console
+    u_int16_t port_;	 ///< Port to listen for the console
+    std::string prompt_; ///< Prompt string
 };
 
 

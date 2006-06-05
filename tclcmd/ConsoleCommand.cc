@@ -41,13 +41,14 @@
 
 namespace oasys {
 
-ConsoleCommand::ConsoleCommand()
-    : TclCommand("console")
+ConsoleCommand::ConsoleCommand(const char* default_prompt)
+    : TclCommand("console"), prompt_(default_prompt)
 {
     bind_b("stdio", &stdio_, true, "spawn interpreter on stdin/stdout");
     bind_addr("addr", &addr_,  htonl(INADDR_LOOPBACK),
               "console listening address");
     bind_i("port", &port_, 0, "console listening port (default 0)");
+    bind_s("prompt", &prompt_, 0, "console prompt string");
 }
 
 } // namespace oasys

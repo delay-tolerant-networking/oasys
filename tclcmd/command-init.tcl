@@ -138,7 +138,7 @@ proc command_process {input output} {
 #
 proc simple_command_loop {prompt} {
     global command command_prompt forever tell_encode
-    set command_prompt "${prompt}% "
+    set command_prompt "$prompt"
     
     puts -nonewline $command_prompt
     flush stdout
@@ -158,8 +158,8 @@ proc simple_command_loop {prompt} {
 #
 proc command_loop {prompt} {
     global command_prompt
-
-    set command_prompt "${prompt}% "
+    
+    set command_prompt "$prompt"
 
     # Handle the behavior that we want for the 'exit' proc -- when running
     # as the console loop (either tclreadline or not), we just want it to
@@ -271,7 +271,7 @@ proc command_connection {chan host port} {
 #
 proc command_server {prompt addr port} {
     global command_prompt
-    set command_prompt "${prompt}% "
+    set command_prompt "$prompt"
     socket -server command_connection -myaddr $addr $port 
 }
 
