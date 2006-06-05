@@ -55,7 +55,7 @@ die(const char* how)
     if (!strcmp(how, "SIGSEGV")) {
         int *ptr = 0;
         int a = *ptr;
-        (void)a;
+        printf("a: %d\n", a);
     }
 
     if (!strcmp(how, "SIGBUS")) {
@@ -78,7 +78,7 @@ die(const char* how)
         int a = 3;
         int b = 0;
         int x = a / b;
-        (void)x;
+        printf("x: %d\n", x);
     }
 
     if (!strcmp(how, "SIGABRT")) {
