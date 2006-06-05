@@ -11,6 +11,8 @@ using namespace oasys;
 
 const char* executable;
 
+char expand_stacktrace[1024];
+
 bool
 fork_to_die(const char* how) {
     char cmd[1024];
@@ -20,8 +22,8 @@ fork_to_die(const char* how) {
     log_always("/test", "flamebox-ignore ign3 fatal handler dumping core");
     
     snprintf(cmd, sizeof(cmd),
-             "%s %s 2>&1 | ../test-utils/expand-stacktrace.pl -o %s",
-             executable, how, executable);
+             "%s %s 2>&1 | %s -o %s",
+             executable, how, expand_stacktrace, executable);
     int ok = system(cmd);
     
     log_always("/test", "flamebox-ignore-cancel ign1");
@@ -148,10 +150,15 @@ main(int argc, const char** argv)
     } else {
         executable = "./stack-trace-test";
     }
-    
-    if (access("../test-utils/expand-stacktrace.pl", R_OK | X_OK) != 0) {
-        fprintf(stderr, "error: ../test-utils/expand-stacktrace.pl "
-                "does not exist\n");
+
+    char* test_utils_dir = getenv("OASYS_TEST_UTILS_DIR");
+    if (!test_utils_dir) {
+        test_utils_dir = "../test-utils";
+    }
+
+    sprintf(expand_stacktrace, "%s/expand-stacktrace.pl", test_utils_dir);
+    if (access(expand_stacktrace, R_OK | X_OK) != 0) {
+        fprintf(stderr, "error: %s does not exist\n", expand_stacktrace);
         exit(1);
     }
     

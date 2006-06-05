@@ -1,17 +1,13 @@
 #!/bin/sh
 
-expand_stacktrace=
+OASYS_TEST_UTILS_DIR=`echo $0 | sed 's|[^/]*$||'`
+export OASYS_TEST_UTILS_DIR
 
-for path in ../test-utils/expand-stacktrace.pl \
-            ../../test-utils/expand-stacktrace.pl \
-            ../../../test-utils/expand-stacktrace.pl \
-            ../../../../test-utils/expand-stacktrace.pl ; do
-
-   if [ -x $path ] ; then
-       expand_stacktrace=$path
-       break
-   fi
-done
+expand_stacktrace=$OASYS_TEST_UTILS_DIR/expand-stacktrace.pl
+if [ ! -x $expand_stacktrace ]; then
+    echo "* WARNING: $expand_stacktrace not executable"
+    expand_stacktrace=
+fi
 
 run_and_wait() {
     prog=$1
@@ -60,4 +56,3 @@ if [ $found_tests = 0 ]; then
     echo "warning: no tests found"
 fi
 ) 2>&1
-
