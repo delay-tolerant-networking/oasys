@@ -75,7 +75,6 @@ TESTS += \
 	smtp-test-send.py \
 	smtp-test-send.tcl
 
-test/smtp-test-send.py:
-test/smtp-test-send.tcl:
+test/smtp-test-send.py test/smtp-test-send.tcl:
 	rm -f $@
 	ln -s $(SRCDIR)/$@ $@
