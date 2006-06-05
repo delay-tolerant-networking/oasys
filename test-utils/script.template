@@ -15,6 +15,7 @@ XTERM=%xterm%
 
 %exec_env%
 
+
 function dbg {
     if [ $VERBOSE = 1 ]; then
 	echo $*
@@ -24,6 +25,123 @@ function dbg {
 ulimit -c unlimited
 cd $RUN_DIR
 
+#
+# Generate the valgrind suppressions
+#
+cat > oasys_valgrind.supp <<EOF
+{
+   TclReadline Leak
+   Memcheck:Leak
+   fun:realloc
+   fun:_nc_doalloc
+   obj:/lib/libncurses.so.5.4
+   fun:tparm
+   obj:/lib/libncurses.so.5.4
+   fun:tgetent
+   fun:_rl_init_terminal_io
+   obj:/lib/libreadline.so.4.3
+   fun:rl_initialize
+   obj:/lib/libreadline.so.4.3
+   obj:/usr/lib/tclreadline1.2/libtclreadline1.2.so.1
+   fun:TclInvokeStringCommand
+}
+{
+   TclReadline Leak 2
+   Memcheck:Leak
+   fun:malloc
+   fun:_nc_home_terminfo
+   fun:_nc_read_entry
+   obj:/lib/libncurses.so.5.4
+   fun:setupterm
+   fun:tgetent
+   fun:_rl_init_terminal_io
+   obj:/lib/libreadline.so.4.3
+   fun:rl_initialize
+   obj:/lib/libreadline.so.4.3
+   obj:/usr/lib/tclreadline1.2/libtclreadline1.2.so.1
+   fun:TclInvokeStringCommand
+}
+{
+   Tcl dlopen leak
+   Memcheck:Leak
+   fun:calloc
+   obj:/lib/tls/libdl-2.3.2.so
+   fun:dlopen
+   fun:TclpDlopen
+   fun:Tcl_FSLoadFile
+   fun:Tcl_LoadObjCmd
+   fun:TclEvalObjvInternal
+   obj:/usr/lib/libtcl8.4.so.0
+   fun:TclCompEvalObj
+   fun:Tcl_EvalObjEx
+   fun:Tcl_CatchObjCmd
+   fun:TclEvalObjvInternal
+}
+{
+   Tcl Init Leak 1
+   Memcheck:Leak
+   fun:calloc
+   obj:/lib/ld-2.3.2.so
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.1
+   fun:TclpThreadCreate
+   fun:Tcl_InitNotifier
+   fun:TclInitNotifier
+   fun:TclInitSubsystems
+   fun:Tcl_CreateInterp
+   fun:_ZN5oasys16TclCommandInterp7do_initEPcb
+   fun:_ZN5oasys16TclCommandInterp4initEPcb
+}
+{
+   Tcl Init Leak 2
+   Memcheck:Leak
+   fun:calloc
+   obj:/usr/lib/libtcl8.4.so.0
+   fun:TclpAlloc
+   fun:Tcl_Alloc
+   fun:Tcl_MutexLock
+   fun:TclInitObjSubsystem
+   fun:TclInitSubsystems
+   fun:Tcl_CreateInterp
+   fun:_ZN5oasys16TclCommandInterp7do_initEPcb
+   fun:_ZN5oasys16TclCommandInterp4initEPcb
+}
+{
+   Tcl Init Leak 3
+   Memcheck:Leak
+   fun:malloc
+   fun:TclpNewAllocMutex
+   obj:/usr/lib/libtcl8.4.so.0
+   fun:TclpAlloc
+   fun:Tcl_Alloc
+   fun:Tcl_MutexLock
+   fun:TclInitObjSubsystem
+   fun:TclInitSubsystems
+   fun:Tcl_CreateInterp
+   fun:_ZN5oasys16TclCommandInterp7do_initEPcb
+   fun:_ZN5oasys16TclCommandInterp4initEPcb
+}
+{
+   Tcl Init Leak 4
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libtcl8.4.so.0
+   fun:TclpAlloc
+   fun:Tcl_Alloc
+   fun:Tcl_MutexLock
+   fun:TclInitObjSubsystem
+   fun:TclInitSubsystems
+   fun:Tcl_CreateInterp
+   fun:_ZN5oasys16TclCommandInterp7do_initEPcb
+   fun:_ZN5oasys16TclCommandInterp4initEPcb
+}
+
+EOF
+
+VALGRIND_OPTS="--tool=memcheck -v --leak-check=yes --num-callers=16 \
+               --suppressions=oasys_valgrind.supp --show-reachable=no"
+
 CHOICE="${XTERM} ${GDB} ${VALGRIND}"
 case $CHOICE in
     "1 1 0")
@@ -32,8 +150,7 @@ case $CHOICE in
 	OUT="2>&1 | tee -a $EXEC_FILE.out"
 	;;
     "1 0 1")
-	CMD="valgrind --tool=memcheck --leak-check=yes -v --num-callers=8 \
-               $RUN_DIR/$EXEC_FILE $EXEC_OPTS"
+	CMD="valgrind $VALGRIND_OPTS $RUN_DIR/$EXEC_FILE $EXEC_OPTS"
 	IN="</dev/stdin"
 	OUT="2>&1 | tee -a $EXEC_FILE.out"
 	;;
@@ -48,8 +165,7 @@ case $CHOICE in
 	OUT=">>$RUN_DIR/$EXEC_FILE.out 2>&1"
 	;;
     "0 0 1")
-	CMD="valgrind --tool=memcheck --leak-check=yes -v --num-callers=8 \
-               $RUN_DIR/$EXEC_FILE $EXEC_OPTS"
+	CMD="valgrind $VALGRIND_OPTS $RUN_DIR/$EXEC_FILE $EXEC_OPTS"
 	IN=""
 	OUT=">>$RUN_DIR/$EXEC_FILE.out 2>&1"
 	;;

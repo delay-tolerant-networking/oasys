@@ -68,6 +68,7 @@ TclCommandInterp::do_init(char* argv0, bool no_default_cmds)
 {
     interp_ = Tcl_CreateInterp();
     lock_   = new SpinLock();
+    Tcl_Preserve(interp_);
 
     // for some reason, this needs to be called to set up the various
     // locale strings and get things like the "ascii" encoding defined
@@ -120,8 +121,31 @@ TclCommandInterp::do_init(char* argv0, bool no_default_cmds)
 
 TclCommandInterp::~TclCommandInterp()
 {
-    // the destructor isn't ever called
-    NOTREACHED;
+    log_notice("shutting down interpreter");
+    TclCommandList::iterator iter;
+    for (iter = commands_.begin();
+         iter != commands_.end();
+         ++iter)
+    {
+        log_debug("deleting %s command", (*iter)->name_.c_str());
+        delete *iter;
+    }
+
+    log_debug("all commands deleted");
+
+    commands_.clear();
+
+    Tcl_DeleteInterp(interp_);
+    Tcl_Release(interp_);
+
+    delete lock_;
+}
+
+void
+TclCommandInterp::shutdown()
+{
+    delete instance_;
+    instance_ = NULL;
 }
 
 int
@@ -208,6 +232,14 @@ void
 TclCommandInterp::event_loop()
 {
     if (Tcl_Eval(interp_, "event_loop") != TCL_OK) {
+        log_err("tcl error in event_loop: \"%s\"", interp_->result);
+    }
+}
+
+void
+TclCommandInterp::exit_event_loop()
+{
+    if (Tcl_Eval(interp_, "exit_event_loop") != TCL_OK) {
         log_err("tcl error in event_loop: \"%s\"", interp_->result);
     }
 }
@@ -417,6 +449,11 @@ TclCommand::TclCommand(const char* name, const char* theNamespace)
 
 TclCommand::~TclCommand()
 {
+    BindingTable::iterator iter;
+    for (iter = bindings_.begin(); iter != bindings_.end(); ++iter) {
+        delete iter->second;
+    }
+    bindings_.clear();
 }
 
 int

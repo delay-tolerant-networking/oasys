@@ -45,6 +45,7 @@ OptParser::~OptParser()
     {
         delete allopts_[i];
     }
+    allopts_.clear();
 }
 
 void

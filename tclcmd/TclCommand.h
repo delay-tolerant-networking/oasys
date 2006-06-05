@@ -88,6 +88,11 @@ public:
     static int init(char* objv0, bool no_default_cmds = false);
 
     /**
+     * Shut down the interpreter.
+     */
+    static void shutdown();
+
+    /**
      * Read in a configuration file and execute its contents
      * \return 0 if no error, -1 otherwise.
      */ 
@@ -114,6 +119,12 @@ public:
      * Just run the event loop. Also doesn't return.
      */
     void event_loop();
+
+    /**
+     * Bail out of the event loop or the command loop, whichever one
+     * happens to be running.
+     */
+    void exit_event_loop();
 
     /**
      * Static callback function from Tcl to execute the commands.
@@ -229,10 +240,10 @@ protected:
     int do_init(char* objv0, bool no_default_cmds);
     
     /**
-     * Destructor is never called (and issues an assertion).
+     * Destructor to clean up and finalize.
      */
     ~TclCommandInterp();
-
+    
     Lock* lock_;			///< Lock for command execution
     Tcl_Interp* interp_;		///< Tcl interpreter
 

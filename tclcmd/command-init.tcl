@@ -10,16 +10,27 @@
 # doesn't work
 #
 proc after_forever {} {
-    after 1000000 after_forever
+    global forever_timer
+    set forever_timer [after 1000000 after_forever]
 }
 
 #
 # Run the event loop and no command line interpreter
 #
 proc event_loop {} {
-    global forever
+    global event_loop_wait
     after_forever
-    vwait forever
+    vwait event_loop_wait
+    command_log notice "exiting event loop"
+}
+
+#
+# Kill the event loop
+#
+proc exit_event_loop {} {
+    global forever_timer event_loop_wait
+    command_log notice "kicking event loop to exit"
+    set event_loop_wait 1
 }
 
 #
@@ -38,12 +49,12 @@ proc command_log {level string} {
 # Callback when there's data ready to be processed.
 #
 proc command_process {input output} {
-    global command command_prompt command_info tell_encode stdin_exited
+    global command command_prompt command_info tell_encode event_loop_wait
 
     # Grab the line, and check for eof
     if {[gets $input line] == -1} {
 	if {"$input" == "stdin"} {
-	    set stdin_exited 1
+	    set event_loop_wait 1
 	    return
 	} else {
 	    command_log debug "closed connection $command_info($input)"
@@ -97,7 +108,7 @@ proc command_process {input output} {
     if {[catch {uplevel \#0 $command($input)} result]} {
 	if {$result == "exit_command"} {
 	    if {$input == "stdin"} {
-		set stdin_exited 1
+		set event_loop_wait 1
 		return
 	    } else {
 		real_exit
@@ -134,10 +145,12 @@ proc simple_command_loop {prompt} {
 
     set command(stdin)      ""
     set tell_encode(stdout) 0
-    set stdin_exited        0
+    set event_loop_wait        0
     fileevent stdin readable "command_process stdin stdout"
 
-    vwait stdin_exited
+    vwait event_loop_wait
+
+    command_log notice "exiting simple command loop"
 }
 
 #
@@ -232,6 +245,8 @@ proc tclreadline_loop {} {
 	    }
 	}
     }
+
+    command_log notice "exiting tclreadline_loop"
 }
 
 

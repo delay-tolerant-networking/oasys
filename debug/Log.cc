@@ -149,6 +149,22 @@ Log::do_init(const char* logfile, log_level_t defaultlvl,
     instance_ = this;
 }
 
+Log::~Log()
+{
+    close(logfd_);
+    logfd_ = -1;
+
+    delete output_lock_;
+}
+
+void
+Log::shutdown()
+{
+    delete instance_;
+    instance_ = NULL;
+    inited_ = false;
+}
+
 void
 Log::parse_debug_file(const char* debug_path)
 {

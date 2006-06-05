@@ -213,6 +213,11 @@ public:
     {
         return inited_;
     }
+
+    /**
+     * Shut down the logging system.
+     */
+    static void shutdown();
     
     /**
      *  Sets the time to print for the logging 
@@ -296,7 +301,7 @@ protected:
     friend class LogCommand;
     
     Log();
-    virtual ~Log() {} // never called
+    virtual ~Log();
 
     /**
      * Initialize logging, should be called exactly once from the
