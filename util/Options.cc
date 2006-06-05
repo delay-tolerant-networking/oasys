@@ -268,6 +268,41 @@ StringOpt::set(const char* val, size_t len)
     return 0;
 }
 
+
+//----------------------------------------------------------------------
+CharBufOpt::CharBufOpt(const char* opt, char* valp, size_t* lenp, size_t buflen,
+                       const char* valdesc, const char* desc, bool* setp)
+    : Opt(0, opt, valp, setp, true, valdesc, desc), buflen_(buflen), lenp_(lenp)
+{
+}
+
+//----------------------------------------------------------------------
+CharBufOpt::CharBufOpt(char shortopt, const char* longopt,
+                       char* valp, size_t* lenp, size_t buflen,
+                       const char* valdesc, const char* desc, bool* setp)
+    : Opt(shortopt, longopt, valp, setp, true, valdesc, desc),
+      buflen_(buflen), lenp_(lenp)
+{
+}
+
+//----------------------------------------------------------------------
+int
+CharBufOpt::set(const char* val, size_t len)
+{
+    if (len > buflen_) {
+        return -1;
+    }
+
+    memcpy(valp_, val, len);
+
+    *lenp_ = len;
+    
+    if (setp_)
+        *setp_ = true;
+    
+    return 0;
+}
+
 //----------------------------------------------------------------------
 InAddrOpt::InAddrOpt(const char* opt, in_addr_t* valp,
                      const char* valdesc, const char* desc, bool* setp)

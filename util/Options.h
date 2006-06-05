@@ -310,6 +310,53 @@ protected:
 };
 
 /**
+ * Char buffer option class.
+ */
+class CharBufOpt : public Opt {
+public:
+    /**
+     * Basic constructor.
+     *
+     * @param opt     the option string
+     * @param valp    pointer to the value
+     * @param lenp    pointer to the length
+     * @param buflen  length of the buffer
+     * @param valdesc short description for the value 
+     * @param desc    descriptive string
+     * @param setp    optional pointer to indicate whether or not
+                      the option was set
+     */
+    CharBufOpt(const char* opt, char* valp, size_t* lenp, size_t buflen,
+               const char* valdesc = "", const char* desc = "",
+               bool* setp = NULL);
+    
+    /**
+     * Alternative constructor with both short and long options,
+     * suitable for getopt calls.
+     *
+     * @param shortopt  short option character
+     * @param longopt   long option string
+     * @param valp      pointer to the value
+     * @param lenp    pointer to the length
+     * @param buflen  length of the buffer
+     * @param valdesc	short description for the value 
+     * @param desc      descriptive string
+     * @param setp      optional pointer to indicate whether or not
+                        the option was set
+     */
+    CharBufOpt(char shortopt, const char* longopt,
+               char* valp, size_t* lenp, size_t buflen,
+               const char* valdesc = "", const char* desc = "",
+               bool* setp = NULL);
+    
+protected:
+    size_t buflen_;
+    size_t* lenp_;
+    
+    int set(const char* val, size_t len);
+};
+
+/**
  * Internet address (dotted-quad or DNS name) option class.
  */
 class InAddrOpt : public Opt {
