@@ -20,6 +20,7 @@ proc after_forever {} {
 proc event_loop {} {
     global event_loop_wait
     after_forever
+    set event_loop_wait 0
     vwait event_loop_wait
     command_log notice "exiting event loop"
 }
@@ -28,7 +29,7 @@ proc event_loop {} {
 # Kill the event loop
 #
 proc exit_event_loop {} {
-    global forever_timer event_loop_wait
+    global forever_timer event_loop_wait stdin
     command_log notice "kicking event loop to exit"
     set event_loop_wait 1
 }
@@ -157,9 +158,10 @@ proc simple_command_loop {prompt} {
 # Run the command loop with the given prompt
 #
 proc command_loop {prompt} {
-    global command_prompt
+    global command_prompt event_loop_wait
     
     set command_prompt "$prompt"
+    set event_loop_wait 0
 
     # Handle the behavior that we want for the 'exit' proc -- when running
     # as the console loop (either tclreadline or not), we just want it to
@@ -193,10 +195,11 @@ proc command_loop {prompt} {
 # Copied from tclreadline's internal Loop method
 #
 proc tclreadline_loop {} {
+    global event_loop_wait
+    
     eval tclreadline::Setup
     uplevel \#0 {
 	while {1} {
-
 	    if [info exists tcl_prompt2] {
 		set prompt2 $tcl_prompt2
 	    } else {
@@ -242,6 +245,14 @@ proc tclreadline_loop {} {
 		}
 		puts stderr $::tclreadline::errorMsg
 		puts stderr [list while evaluating $LINE]
+	    }
+
+	    # Hack to get out of the event loop by hard-coding the
+	    # various exit command aliases. Note that without this
+	    # check, it takes an extra event to cause the
+	    # event_loop_wait bit to be set.
+	    if {$event_loop_wait == 1 || $LINE == "quit" || $LINE == "shutdown"} {
+		break
 	    }
 	}
     }
