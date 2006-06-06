@@ -256,8 +256,6 @@ proc tclreadline_loop {} {
 	    }
 	}
     }
-
-    command_log notice "exiting tclreadline_loop"
 }
 
 

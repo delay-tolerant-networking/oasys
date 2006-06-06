@@ -257,8 +257,6 @@ static const char* INIT_COMMAND =
 "	    }\n"
 "	}\n"
 "    }\n"
-"\n"
-"    command_log notice \"exiting tclreadline_loop\"\n"
 "}\n"
 "\n"
 "\n"
