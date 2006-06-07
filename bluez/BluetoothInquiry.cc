@@ -143,7 +143,7 @@ BluetoothInquiry::inquire()
                            lap_,&info_,flags_,logpath_);
     if( num_responses_i_ < 0 )
     {
-        log_err("hci_inquiry failed");
+        log_info("hci_inquiry found no devices in range");
     }
     return num_responses_i_;
 }
