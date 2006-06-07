@@ -55,11 +55,15 @@ OptParser::addopt(Opt* opt)
 }
 
 bool
-OptParser::parse_opt(const char* opt_str, size_t len)
+OptParser::parse_opt(const char* opt_str, size_t len, bool* invalid_value)
 {
     Opt* opt;
     const char* val_str;
     size_t opt_len, val_len;
+
+    if (invalid_value) {
+        *invalid_value = false;
+    }
 
     opt_len = strcspn(opt_str, "= \t\r\n");
     if (opt_len == 0 || opt_len > len) {
@@ -85,10 +89,16 @@ OptParser::parse_opt(const char* opt_str, size_t len)
         if (strncmp(opt_str, opt->longopt_, opt_len) == 0)
         {
             if (opt->needval_ && (val_str == NULL)) {
+                if (invalid_value) {
+                    *invalid_value = true;
+                }
                 return false; // missing value
             }
 
             if (opt->set(val_str, val_len) != 0) {
+                if (invalid_value) {
+                    *invalid_value = true;
+                }
                 return false; // error in set
             }
             
@@ -138,14 +148,23 @@ OptParser::parse(int argc, const char* const argv[], const char** invalidp)
 
 
 int
-OptParser::parse_and_shift(int argc, const char* argv[])
+OptParser::parse_and_shift(int argc, const char* argv[], const char** invalidp)
 {
     int last_slot = 0;
     int valid_count = 0;
+    bool invalid_value;
 
     for (int i = 0; i < argc; ++i) {
-        if (parse_opt(argv[i], strlen(argv[i])) == true) {
+        
+        if (parse_opt(argv[i], strlen(argv[i]), &invalid_value) == true) {
             ++valid_count;
+            
+        } else if (invalid_value) {
+            if (invalidp)
+                *invalidp = argv[0];
+            
+            return -1;
+            
         } else {
             argv[last_slot] = argv[i];
             last_slot++;

@@ -85,11 +85,13 @@ public:
     /**
      * Parse any matching options from the given argument vector,
      * shifting any non-matching ones to be contiguous at the start of
-     * the argv.
+     * the argv. If there is a matching option with an invalid value,
+     * return -1 and set invalidp to point to the bogus argument.
      *
      * @return the number of parsed options
      */
-    int parse_and_shift(int argc, const char* argv[]);
+    int parse_and_shift(int argc, const char* argv[],
+                        const char** invalidp = NULL);
 
     /**
      * Parse the given argument vector, processing all registered
@@ -106,7 +108,8 @@ public:
      * Parse a single option (or option=value) string.
      * @return true if valid, false otherwise
      */
-    bool parse_opt(const char* opt, size_t len);
+    bool parse_opt(const char* opt, size_t len,
+                   bool* invalid_value = NULL);
                   
 protected:
     typedef std::vector<Opt*> OptList;
