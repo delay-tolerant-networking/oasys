@@ -307,7 +307,7 @@ register_service()
     // connect to the local SDP server, register the service record, and
     // disconnect
     session_handle_ = sdp_connect(
-                        BDADDR_ANY,   /* bind to any adapter */
+                        &local_addr_, /* bind to specified adapter */
                         BDADDR_LOCAL, /* connect to local server */
                         SDP_RETRY_IF_BUSY);
     err = sdp_record_register(session_handle_,record,0);
