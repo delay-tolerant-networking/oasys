@@ -6,7 +6,7 @@
  * 
  * Intel Open Source License 
  * 
- * Copyright (c) 2004 Intel Corporation. All rights reserved. 
+ * Copyright (c) 2005 Intel Corporation. All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -36,32 +36,15 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _OASYS_ATOMIC_H_
-#define _OASYS_ATOMIC_H_
+#if defined(__mips__) 
 
-/**
- * Include the appropriate architecture-specific version of the atomic
- * functions here. Each defines an atomic_t structure with (at least)
- * a single u_int32_t field called value, though architectures might
- * add additional fields. For example:
- *
- * @code
- * typedef struct {
- *      volatile u_int32_t value;
- * } atomic_t;
- * @endcode
- */
+#include "FatalSignals.h"
 
-#if defined(__i386__)
-#include "Atomic-x86.h"
-#elif defined(__POWERPC__) || defined(PPC)
-#include "Atomic-ppc.h"
-#elif defined(__arm__)
-#include "Atomic-arm.h"
-#elif defined(__mips__)
-#include "Atomic-mips.h"
-#else
-#error "Need to define an Atomic.h variant for your architecture"
-#endif
+size_t
+StackTrace::get_trace(void* stack[], size_t size, u_int sighandler_frame)
+{
+    memset(&stack, 0, size * sizeof(void*));
+    return 0;
+}
 
-#endif /* _OASYS_ATOMIC_H_ */
+#endif /* defined(__mips__) */

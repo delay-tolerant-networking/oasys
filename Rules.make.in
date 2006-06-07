@@ -3,7 +3,7 @@
 #
 
 #
-# Targets are "native" and "arm"
+# Targets are "native", "arm" and "mips"
 # 
 TARGET 		= @TARGET@
 

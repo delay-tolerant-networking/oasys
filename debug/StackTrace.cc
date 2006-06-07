@@ -98,6 +98,9 @@ StackTrace::print_trace(void *stack[], size_t count)
 #elif defined(__POWERPC__) || defined(PPC)
 #include "StackTrace-ppc.cc"
 
+#elif defined(__mips__)
+#include "StackTrace-mips.cc"
+
 #else
 #include <execinfo.h>
 
