@@ -57,22 +57,6 @@ struct Bluetooth {
 
     static void baswap(bdaddr_t *dst, const bdaddr_t *src);
     
-    /*
-       Helper class for Bluetooth addresses
-     */
-    class btaddr {
-    public:
-       btaddr ()
-       {
-           memset(&addr_,0,sizeof(bdaddr_t));
-           channel_=0;
-           memset(hcidev_,0,HCIDEVNAMSIZ);
-       }
-       bdaddr_t addr_;
-       u_int8_t channel_;
-       char hcidev_[HCIDEVNAMSIZ];
-    };
-
 }; // struct Bluetooth
 
 } // namespace oasys
