@@ -161,7 +161,7 @@ DECLARE_TEST(ArgvParseAndShift) {
 
     argv[0] = "port=foobar";
     const char* invalid;
-    CHECK_EQUAL(p.parse_and_shift(a, argv, &invalid), -1);
+    CHECK_EQUAL(p.parse_and_shift(1, argv, &invalid), -1);
     CHECK_EQUALSTR(invalid, argv[0]);
     
     return UNIT_TEST_PASSED;
