@@ -169,7 +169,7 @@ atomic_cmpxchg32(volatile atomic_t* v, u_int32_t o, u_int32_t n)
 }
 
 /**
- * Atomic increment function that returns the old value. Note that the
+ * Atomic increment function that returns the new value. Note that the
  * implementation loops until it can successfully do the operation and
  * store the value, so there is an extremely low chance that this will
  * never return.
@@ -199,7 +199,7 @@ atomic_incr_ret(volatile atomic_t* v)
 }
 
 /**
- * Atomic addition function that returns the old value. Note that the
+ * Atomic addition function that returns the new value. Note that the
  * implementation loops until it can successfully do the operation and
  * store the value, so there is an extremely low chance that this will
  * never return.
