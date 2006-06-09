@@ -25,6 +25,9 @@ proc event_loop {} {
     command_log notice "exiting event loop"
 }
 
+proc do_nothing {} {
+}
+
 #
 # Kill the event loop
 #
@@ -32,6 +35,7 @@ proc exit_event_loop {} {
     global forever_timer event_loop_wait stdin
     command_log notice "kicking event loop to exit"
     set event_loop_wait 1
+    after 0 do_nothing
 }
 
 #
@@ -191,6 +195,17 @@ proc command_loop {prompt} {
 }
 
 #
+#
+proc tclreadline_completer {text start end line} {
+    global event_loop_wait
+    if {$event_loop_wait == 1} {
+	error "exit_command"
+    }
+    puts "called completer"
+    return ""
+}
+
+#
 # Custom main loop for tclreadline (allows us to exit on eof)
 # Copied from tclreadline's internal Loop method
 #
@@ -198,6 +213,8 @@ proc tclreadline_loop {} {
     global event_loop_wait
     
     eval tclreadline::Setup
+    tclreadline::readline customcompleter tclreadline_completer
+    
     uplevel \#0 {
 	while {1} {
 	    if [info exists tcl_prompt2] {
@@ -245,14 +262,6 @@ proc tclreadline_loop {} {
 		}
 		puts stderr $::tclreadline::errorMsg
 		puts stderr [list while evaluating $LINE]
-	    }
-
-	    # Hack to get out of the event loop by hard-coding the
-	    # various exit command aliases. Note that without this
-	    # check, it takes an extra event to cause the
-	    # event_loop_wait bit to be set.
-	    if {$event_loop_wait == 1 || $LINE == "quit" || $LINE == "shutdown"} {
-		break
 	    }
 	}
     }
