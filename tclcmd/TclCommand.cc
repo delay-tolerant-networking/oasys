@@ -79,7 +79,10 @@ TclCommandInterp::do_init(char* argv0, bool no_default_cmds)
     // depend on it succeeding in case there's a strange tcl
     // installation
     if (Tcl_Init(interp_) != TCL_OK) {
-        log_warn("error in Tcl_Init: \"%s\", continuing...", interp_->result);
+	StringBuffer err("initialization problem calling Tcl_Init: %s\n"
+			 "(this is not a fatal error, continuing initialization...)\n\n",
+			 interp_->result);
+	log_multiline(LOG_WARN, err.c_str());
     }
 
     // do auto registration of commands (if any)
