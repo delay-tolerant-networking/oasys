@@ -29,7 +29,7 @@ dnl Checks for header files.
 dnl -------------------------------------------------------------------------
 AC_DEFUN(AC_OASYS_SYSTEM_HEADERS, [
     AC_HEADER_STDC
-    AC_CHECK_HEADERS([err.h stdint.h string.h synch.h sys/cdefs.h sys/types.h])
+    AC_CHECK_HEADERS([err.h execinfo.h stdint.h string.h synch.h sys/cdefs.h sys/types.h])
 ])
 
 dnl -------------------------------------------------------------------------

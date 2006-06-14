@@ -98,18 +98,25 @@ StackTrace::print_trace(void *stack[], size_t count)
 #elif defined(__POWERPC__) || defined(PPC)
 #include "StackTrace-ppc.cc"
 
-#elif defined(__mips__)
-#include "StackTrace-mips.cc"
+#elif HAVE_EXECINFO_H
 
-#else
+// Stack trace function using the glibc builtin
 #include <execinfo.h>
-
-// Generic stack trace function uses the glibc builtin
 size_t
 StackTrace::get_trace(void* stack[], size_t size, u_int sighandler_frame)
 {
-    (void)sighandler_frame;
     return backtrace(stack, size);
+}
+
+#else 
+
+// Last resort -- just an no-op
+size_t
+StackTrace::get_trace(void* stack[], size_t size, u_int sighandler_frame)
+{
+    memset(stack, 0, size);
+    (void)sighandler_frame;
+    return 0;
 }
 
 #endif

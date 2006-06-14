@@ -68,6 +68,14 @@ test/%Test: test/%Test.cc liboasys.a
 	$(CXX) $< -o $@ $(CFLAGS) $(LDFLAGS) $(LIBS) liboasys.a $(OASYS_LIBS)
 
 #
+# Override rules for stack-trace-test to disable the cast-align warnings
+#
+test/stack-trace-test: test/stack-trace-test.cc liboasys.a
+	@mkdir -p test
+	$(CXX) $< -o $@ $(CFLAGS) -Wno-cast-align \
+	   $(LDFLAGS) $(LIBS) liboasys.a $(OASYS_LIBS)
+
+#
 # special rules for the smtp support scripts used in cases where
 # the build directory is not the source directory
 #

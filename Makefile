@@ -153,9 +153,38 @@ debug/arith-native.h: debug/gdtoa-arithchk.c
 	debug/arithchk > $@
 	rm -f debug/arithchk
 
+#
+# If this is a native build (the default), then we build
+# arith-native.h by running arithchk and copy it into arith.h
+#
+ifeq ($(TARGET),native)
+debug/arith.h: $(SRCDIR)/debug/arith-native.h
+	cp $< $@
+
+#
+# For a cross-compile build, look for debug/arith-$(TARGET).h. If
+# that's not there, then try chopping everything after a '-' from
+# $(TARGET) and trying again. This way, a target of 'arm-linux' will
+# still find debug/arith-arm.h.
+#
+else
 debug/arith.h:
-	$(MAKE) $(SRCDIR)/debug/arith-$(TARGET).h
-	cp $(SRCDIR)/debug/arith-$(TARGET).h $@
+	@t=$(TARGET); t2=`echo $(TARGET) | sed 's/-.*//'`;  \
+        if test -f $(SRCDIR)/debug/arith-$$t.h ; then \
+	    echo "copying $(SRCDIR)/debug/arith-$$t.h -> debug/arith.h" ; \
+            cp $(SRCDIR)/debug/arith-$$t.h debug/arith.h; \
+        elif test -f $(SRCDIR)/debug/arith-$$t2.h ; then \
+	    echo "copying $(SRCDIR)/debug/arith-$$t2.h -> debug/arith.h" ; \
+            cp $(SRCDIR)/debug/arith-$$t2.h debug/arith.h; \
+	else \
+	    echo "ERROR: can't find appropriate arith.h for cross-compiled target" ; \
+	    echo "(tried debug/arith-$$t.h and debug/arith-$$t2.h)" ; \
+	    echo "" ; \
+	    echo "Try compiling and running debug/arithchk on the target machine" ; \
+	    echo "and put the result in debug/arith-$$t.h". ; \
+	    exit 1 ; \
+	fi
+endif
 
 debug/Formatter.o:  debug/Formatter.cc debug/arith.h
 	@rm -f $@; mkdir -p $(@D)
@@ -222,13 +251,13 @@ $(SRCDIR)/Rules.make.in:
 # XXX/demmer handle .so as well
 liboasys.a: $(OBJS)
 	rm -f $@
-	ar ruc $@ $^
-	ranlib $@ || true
+	$(AR) ruc $@ $^
+	$(RANLIB) $@ || true
 
 liboasyscompat.a: $(COMPAT_OBJS)
 	rm -f $@
-	ar ruc $@ $^
-	ranlib $@ || true
+	$(AR) ruc $@ $^
+	$(RANLIB) $@ || true
 
 .PHONY: cpps
 cpps: $(CPPS)

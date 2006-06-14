@@ -15,9 +15,21 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
         ac_try_cc="gcc gcc-4.0 gcc-3.4 gcc-3.3 gcc-3.2 gcc-2.96 gcc296 gcc-2.95 gcc295"
         ac_try_cxx="g++ g++-4.0 g++-3.4 g++-3.3 g++-3.2 g++-2.96 g++296 g++-2.95 g++295"
     else
-        CC=$ac_with_cc
         ac_try_cc=$ac_with_cc
-        ac_try_cxx=`echo $ac_with_cc | sed 's/cc/++/'`
+        ac_try_cxx=`echo $ac_with_cc | sed 's/cc$/++/'`
+
+	CC=$ac_try_cc
+	CXX=$ac_try_cxx
+    fi
+
+    dnl
+    dnl Look for the appropriate ar and ranlib tools for this build
+    dnl
+    AC_CHECK_TOOL(AR, ar)
+    AC_CHECK_TOOL(RANLIB, ranlib)
+
+    if test -z "$AR" ; then
+       AC_MSG_ERROR([can't find a working ar tool])
     fi
 
     dnl
@@ -133,11 +145,17 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
     AC_SUBST(STATIC)
 
     dnl
-    dnl Handle the gcc option for --target
+    dnl Handle the various autoconf options for cross compilation that 
+    dnl set either --target or (better?) both --build and --host.
     dnl
-    TARGET=$target
-    if test -z "$TARGET" ; then
-       TARGET=native
+    if test ! -z "$host_alias" ; then
+        TARGET=$host_alias
+    elif test ! -z "$target_alias" ; then
+        TARGET=$target_alias
+    elif test ! -z "$target" ; then
+        TARGET=$target
+    else
+        TARGET=native
     fi
     AC_SUBST(TARGET)
 ])
