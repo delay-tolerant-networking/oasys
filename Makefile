@@ -143,6 +143,28 @@ LIBFILES := liboasys.a liboasyscompat.a
 all: checkconfigure $(LIBFILES)
 
 #
+# If srcdir/builddir aren't set by some other makefile, 
+# then default to .
+#
+ifeq ($(SRCDIR),)
+SRCDIR	 := .
+BUILDDIR := .
+endif
+
+debug/gdtoa-%.o: debug/gdtoa-%.c debug/arith.h
+	$(CC) -I./debug -g -DINFNAN_CHECK -c $< -o $@
+
+#
+# Include the Makefile for tests
+#
+include $(SRCDIR)/test/Makefile
+
+#
+# Include the common rules
+#
+include Rules.make
+
+#
 # Need special rules for the gdtoa sources adapted from the source
 # distribution. These must be defined before the common rules
 # are pulled in from Rules.make.
@@ -157,9 +179,11 @@ debug/arith-native.h: debug/gdtoa-arithchk.c
 # If this is a native build (the default), then we build
 # arith-native.h by running arithchk and copy it into arith.h
 #
+debug/arith.h: 
 ifeq ($(TARGET),native)
-debug/arith.h: $(SRCDIR)/debug/arith-native.h
-	cp $< $@
+	$(MAKE) debug/arith-native.h
+	@echo "copying debug/arith-native.h -> debug/arith.h"
+	cp debug/arith-native.h debug/arith.h
 
 #
 # For a cross-compile build, look for debug/arith-$(TARGET).h. If
@@ -168,7 +192,6 @@ debug/arith.h: $(SRCDIR)/debug/arith-native.h
 # still find debug/arith-arm.h.
 #
 else
-debug/arith.h:
 	@t=$(TARGET); t2=`echo $(TARGET) | sed 's/-.*//'`;  \
         if test -f $(SRCDIR)/debug/arith-$$t.h ; then \
 	    echo "copying $(SRCDIR)/debug/arith-$$t.h -> debug/arith.h" ; \
@@ -190,28 +213,7 @@ debug/Formatter.o:  debug/Formatter.cc debug/arith.h
 	@rm -f $@; mkdir -p $(@D)
 	$(CXX) $(CFLAGS) -I./debug -c $< -o $@
 
-debug/gdtoa-%.o: debug/gdtoa-%.c debug/arith.h
-	$(CC) -I./debug -g -DINFNAN_CHECK -c $< -o $@
-
 GENFILES += debug/arith.h debug/arith-native.h debug/arithchk
-
-#
-# If srcdir isn't set by some other makefile, then it must be .
-#
-ifeq ($(SRCDIR),)
-SRCDIR   := .
-BUILDDIR := .
-endif
-
-#
-# Include the Makefile for tests
-#
-include $(SRCDIR)/test/Makefile
-
-#
-# Include the common rules
-#
-include Rules.make
 
 #
 # And a special rule to build the command-init-tcl.c file from command.tcl
