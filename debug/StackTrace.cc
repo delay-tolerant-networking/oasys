@@ -57,7 +57,8 @@ StackTrace::print_current_trace(bool in_sighandler)
         print_trace(stack + 2, count - 2); // skip this fn
     } else {
         char buf[1024];
-        strncpy(buf, "NO STACK TRACE AVAILABLE ON THIS ARCHITECTURE\n", sizeof(buf));
+        strncpy(buf, "NO STACK TRACE AVAILABLE ON THIS ARCHITECTURE\n",
+                sizeof(buf));
         write(2, buf, strlen(buf));
     }
 }
