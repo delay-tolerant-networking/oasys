@@ -80,7 +80,7 @@ AC_DEFUN(AC_OASYS_FIND_TCL, [
         done
         ac_tcllibdirs="/usr/lib /usr/local/lib"
     else
-        ac_tclincdirs=$ac_tcldir/include/
+        ac_tclincdirs=$ac_tcldir/include
         ac_tcllibdirs="$ac_tcldir/lib"
     fi
 
