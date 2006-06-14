@@ -106,6 +106,7 @@ StackTrace::print_trace(void *stack[], size_t count)
 size_t
 StackTrace::get_trace(void* stack[], size_t size, u_int sighandler_frame)
 {
+    (void)sighandler_frame;
     return backtrace(stack, size);
 }
 
@@ -115,8 +116,8 @@ StackTrace::get_trace(void* stack[], size_t size, u_int sighandler_frame)
 size_t
 StackTrace::get_trace(void* stack[], size_t size, u_int sighandler_frame)
 {
-    memset(stack, 0, size);
     (void)sighandler_frame;
+    memset(stack, 0, size);
     return 0;
 }
 
