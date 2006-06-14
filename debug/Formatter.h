@@ -123,6 +123,7 @@ void __log_assert(bool x, const char* what, const char* file, int line);
 inline void
 Formatter::assert_valid(const Formatter* obj)
 {
+    (void)obj; // avoid unused variable warning
 #ifndef NDEBUG
     __log_assert(obj->format_magic_ == FORMAT_MAGIC,
                  "Formatter object invalid -- maybe need a cast to Formatter*",
