@@ -170,7 +170,7 @@ include Rules.make
 # are pulled in from Rules.make.
 #
 debug/arith-native.h: debug/gdtoa-arithchk.c
-	mkdir -p debug
+	@mkdir -p debug
 	$(CC) $(DEBUG) $(OPTIMIZE) $< -o debug/arithchk
 	debug/arithchk > $@
 	rm -f debug/arithchk
@@ -181,6 +181,7 @@ debug/arith-native.h: debug/gdtoa-arithchk.c
 #
 debug/arith.h: 
 ifeq ($(TARGET),native)
+	@mkdir -p debug
 	$(MAKE) debug/arith-native.h
 	@echo "copying debug/arith-native.h -> debug/arith.h"
 	cp debug/arith-native.h debug/arith.h
@@ -192,6 +193,7 @@ ifeq ($(TARGET),native)
 # still find debug/arith-arm.h.
 #
 else
+	@mkdir -p debug
 	@t=$(TARGET); t2=`echo $(TARGET) | sed 's/-.*//'`;  \
         if test -f $(SRCDIR)/debug/arith-$$t.h ; then \
 	    echo "copying $(SRCDIR)/debug/arith-$$t.h -> debug/arith.h" ; \
