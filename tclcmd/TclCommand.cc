@@ -213,7 +213,7 @@ TclCommandInterp::command_server(const char* prompt,
                                  in_addr_t addr, u_int16_t port)
 {
     log_debug("starting command server on %s:%d", intoa(addr), port);
-    StringBuffer cmd("command_server %s %s %d", prompt, intoa(addr), port);
+    StringBuffer cmd("command_server \"%s\" %s %d", prompt, intoa(addr), port);
     
     if (Tcl_Eval(interp_, const_cast<char*>(cmd.c_str())) != TCL_OK) {
         log_err("tcl error starting command_server: \"%s\"",
