@@ -159,15 +159,16 @@ OptParser::parse_and_shift(int argc, const char* argv[], const char** invalidp)
         if (parse_opt(argv[i], strlen(argv[i]), &invalid_value) == true) {
             ++valid_count;
             
-        } else if (invalid_value) {
-            if (invalidp)
-                *invalidp = argv[0];
-            
-            return -1;
-            
         } else {
             argv[last_slot] = argv[i];
             last_slot++;
+            
+            if (invalid_value) {
+                if (invalidp)
+                    *invalidp = argv[i];
+                
+                return -1; // stop parsing
+            }
         }
     }
     
