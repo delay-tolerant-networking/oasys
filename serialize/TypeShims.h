@@ -40,16 +40,22 @@
 #define __TYPE_SHIMS_H__
 
 #include <string>
+#include "../debug/Formatter.h"
 #include "Serialize.h"
 
 namespace oasys {
 
 //----------------------------------------------------------------------------
-class IntShim : public SerializableObject {
+class IntShim : public Formatter, public SerializableObject {
 public:
     IntShim(int32_t value = 0, const char* name = "int")
         : name_(name), value_(value) {}
     IntShim(const Builder&) {}
+
+    // virtual from Formatter
+    int format(char* buf, size_t sz) const {
+        return snprintf(buf, sz, "%d", value_);
+    }
     
     // virtual from SerializableObject
     void serialize(SerializeAction* a) {
@@ -66,11 +72,16 @@ private:
 };
 
 //----------------------------------------------------------------------------
-class UIntShim : public SerializableObject {
+class UIntShim : public Formatter, public SerializableObject {
 public:
     UIntShim(u_int32_t value = 0, const char* name = "u_int")
         : name_(name), value_(value) {}
     UIntShim(const Builder&) {}
+    
+    // virtual from Formatter
+    int format(char* buf, size_t sz) const {
+        return snprintf(buf, sz, "%u", value_);
+    }
     
     // virtual from SerializableObject
     void serialize(SerializeAction* a) {
@@ -86,17 +97,22 @@ public:
     
 private:
     std::string name_;
-    u_int32_t     value_;
+    u_int32_t   value_;
 };
 
 //----------------------------------------------------------------------------
-class StringShim : public SerializableObject {
+class StringShim : public Formatter, public SerializableObject {
 public:
     StringShim(const std::string& str = "", const char* name = "string")
         : name_(name), str_(str) {}
     StringShim(const Builder&) {}
     
     virtual ~StringShim() {}
+    
+    // virtual from Formatter
+    int format(char* buf, size_t sz) const {
+        return snprintf(buf, sz, "%s", str_.c_str());
+    }
     
     // virtual from SerializableObject
     void serialize(SerializeAction* a) {
@@ -112,7 +128,7 @@ private:
 };
 
 //----------------------------------------------------------------------------
-class NullStringShim : public SerializableObject {
+class NullStringShim : public Formatter, public SerializableObject {
 public:
     NullStringShim(const char* str, const char* name = "string") 
 	: name_(name), str_(const_cast<char*>(str)) 
@@ -126,6 +142,11 @@ public:
 
     ~NullStringShim() { if(free_mem_) { free(str_); } }
 
+    // virtual from Formatter
+    int format(char* buf, size_t sz) const {
+        return snprintf(buf, sz, "%s", str_);
+    }
+    
     // virtual from SerializableObject
     void serialize(SerializeAction* a)
     {
@@ -145,7 +166,7 @@ private:
 };
 
 //----------------------------------------------------------------------------
-class ByteBufShim: public SerializableObject {
+class ByteBufShim : public Formatter, public SerializableObject {
 public:
     ByteBufShim(char* buf, size_t size)
 	: buf_(buf), size_(size), own_buf_(false) {}
@@ -157,6 +178,11 @@ public:
 	if (buf_ != 0 && own_buf_) {
 	    free(buf_);
 	}
+    }
+
+    // virtual from Formatter
+    int format(char* buf, size_t sz) const {
+        return snprintf(buf, sz, "NEED TO IMPLEMENT ByteBufShim::format");
     }
 
     // virtual from SerializableObject
