@@ -132,7 +132,9 @@ public:
         _KeyType cur_val() { return cur_val_.value(); }
 
     private:
-        friend class table_t;
+        friend class InternalKeyDurableTable<_ShimType,
+                                             _KeyType,
+                                             _DataType>;
 
         iterator(table_t* table, DurableIterator* iter);
 
