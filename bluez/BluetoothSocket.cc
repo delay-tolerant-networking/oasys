@@ -35,6 +35,7 @@ BluetoothSocket::BluetoothSocket(int socktype,
     sa_ = NULL;
     slen_ = -1;
     reuse_addr_ = false;
+    silent_connect_ = false;
 }
 
 BluetoothSocket::BluetoothSocket(int socktype, proto_t proto, int sock,
@@ -52,6 +53,7 @@ BluetoothSocket::BluetoothSocket(int socktype, proto_t proto, int sock,
     channel_ = remote_channel;
     set_remote_addr(remote_addr);
 
+    silent_connect_ = false;
     configure();
 }
 
@@ -70,8 +72,8 @@ BluetoothSocket::init_socket()
     ASSERT(fd_ == -1);
     state_ = INIT;
 
-    logf(LOG_DEBUG, "socket(PF_BLUETOOTH, %d, %d) proto %s",socktype_,
-         (int)proto_,prototoa((proto_t)proto_));
+    logf(LOG_DEBUG, "socket(PF_BLUETOOTH, %s, %s)",
+         socktypetoa(socktype_),prototoa((proto_t)proto_));
     fd_ = socket(PF_BLUETOOTH, socktype_, (int) proto_);
     if (fd_ == -1) {
         logf(LOG_ERR, "error creating socket: %s", strerror(errno));
@@ -162,9 +164,10 @@ BluetoothSocket::connect(bdaddr_t remote_addr, u_int8_t remote_channel)
               socktype_,SOCK_STREAM);
     if (::connect(fd_,sa_,slen_) < 0) {
         if (errno != EINPROGRESS) {
-            logf(LOG_ERR, "error connecting to %s(%d): %s",
-                 Bluetooth::batostr(&remote_addr_,buff), channel_,
-                 strerror(errno));
+            if (silent_connect_ == false )
+                logf(LOG_ERR, "error connecting to %s(%d): %s",
+                     Bluetooth::batostr(&remote_addr_,buff), channel_,
+                     strerror(errno));
         }
         if(errno==EBADFD) close();
         return -1;
@@ -530,6 +533,17 @@ BluetoothSocket::poll_sockfd(int events, int* revents, int timeout_ms)
     return cc;
 }
 
+int RFCOMMChannel::rc_channel_ = -1;
+SpinLock RFCOMMChannel::lock_ = SpinLock();
+
+int
+RFCOMMChannel::next() {
+    ScopeLock l(&lock_,"RFCOMMChannel::next");
+    ++rc_channel_; // starts off at zero;
+    rc_channel_ %= 30; // never exceeds 29
+    int next = rc_channel_ + 1;
+    return next;
+}
 
 } // namespace oasys
 #endif /* OASYS_BLUETOOTH_ENABLED */

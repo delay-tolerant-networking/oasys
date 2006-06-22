@@ -17,6 +17,8 @@
 #include "Bluetooth.h"
 #include "../debug/Log.h"
 
+#include "../thread/SpinLock.h"
+
 namespace oasys {
 
 #ifndef BDADDR_ANY
@@ -95,6 +97,19 @@ public:
         REMOTE
     };
 
+    // cf <bits/socket.h>
+    static const char* socktypetoa(int socktype) {
+        switch(socktype) {
+            case SOCK_STREAM:    return "SOCK_STREAM";
+            case SOCK_DGRAM:     return "SOCK_DGRAM";
+            case SOCK_RAW:       return "SOCK_RAW";
+            case SOCK_RDM:       return "SOCK_RDM";
+            case SOCK_SEQPACKET: return "SOCK_SEQPACKET";
+            case SOCK_PACKET:    return "SOCK_PACKET";
+            default:             return "UNKNOWN SOCKET TYPE";
+        };
+    }
+
     /**
       * Return the current state.
       */
@@ -154,7 +169,16 @@ protected:
     int slen_;
     struct sockaddr_rc* rc_;  /* BTPROTO_RFCOMM */
     bool reuse_addr_;
+    bool silent_connect_;
 };
+
+class RFCOMMChannel {
+public:
+    static int next();
+private:
+    static int rc_channel_;
+    static SpinLock lock_;
+}; // RFCOMMChannel
 
 } // namespace oasys
 
