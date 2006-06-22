@@ -44,6 +44,7 @@ using namespace oasys;
 
 struct DummyClose {
     static void close(int fd) {
+        (void)fd;
         log_debug("/test", "Syscall close(%d)", fd);
     }
 };
