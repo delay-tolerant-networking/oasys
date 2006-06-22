@@ -32,7 +32,6 @@ THIS SOFTWARE.
 #ifndef GDTOA_H_INCLUDED
 #define GDTOA_H_INCLUDED
 
-#include "config.h"
 #include "arith.h"
 
 #ifndef Long
