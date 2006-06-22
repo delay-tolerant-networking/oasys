@@ -4,6 +4,7 @@
 #include "thread/Notifier.h"
 #include "thread/Thread.h"
 
+#include "util/Random.h"
 #include "util/UnitTest.h"
 
 #include <unistd.h>
@@ -21,13 +22,13 @@ void
 generate_lengths(size_t* length_array, int array_size,
                  size_t total_bytes, int seed = 0) 
 {
-    srand(seed);
-    srandom(seed);
+    Random::seed(seed);
+
     int* sizes = static_cast<int*>(calloc(array_size, sizeof(int)));
     
     size_t total = 0;
     for (int i=0; i<array_size; ++i) {
-        sizes[i] = rand()%99 + 1;
+        sizes[i] = Random::rand(99 + 1);
         total += sizes[i];
     }
     
@@ -38,7 +39,7 @@ generate_lengths(size_t* length_array, int array_size,
     }
     
     ASSERT(length_total <= total_bytes);
-    length_array[rand()%array_size] += total_bytes - length_total;
+    length_array[Random::rand(array_size)] += total_bytes - length_total;
 
     free(sizes);
 
@@ -52,7 +53,7 @@ generate_lengths(size_t* length_array, int array_size,
 void
 reset_data() {
     for (size_t i=0; i<TESTBUF_SIZE; ++i) {
-        g_testbuf[i] = rand();
+        g_testbuf[i] = Random::rand();
     }
     
     memset(g_scratchbuf, 0, TESTBUF_SIZE);
@@ -186,8 +187,7 @@ protected:
 };
 
 DECLARE_TEST(Init) {
-    srand(0);
-    srandom(0);
+    Random::seed(0);
 
     g_testbuf    = static_cast<char*>(malloc(TESTBUF_SIZE));
     g_scratchbuf = static_cast<char*>(malloc(TESTBUF_SIZE));

@@ -41,6 +41,7 @@
 #include <sys/poll.h>
 
 #include "IPClient.h"
+#include "util/Random.h"
 
 namespace oasys {
 
@@ -64,7 +65,7 @@ IPClient::read(char* bp, size_t len)
     // #define TEST_SHORT_READ
 #ifdef TEST_SHORT_READ
     if (len > 64) {
-        int rnd = rand() % len;
+        int rnd = Random::rand(len);
         ::logf("/test/shortread", LOG_DEBUG, "read(%d) -> read(%d)", len, rnd);
         len = rnd;
     }

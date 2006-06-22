@@ -122,7 +122,7 @@ DECLARE_TEST(StringBuffer1) {
     
     // append up to the preallocated amount
     for (int i=0; i<256; ++i) {
-        char c = rand()%26 + 'a';
+        char c = Random::rand(26 + 'a');
         buf.append(c);
         scratch[i] = c;
     }

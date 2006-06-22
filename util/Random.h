@@ -1,9 +1,37 @@
 #ifndef __RANDOM_H__
 #define __RANDOM_H__
 
+#include <stdlib.h>
 #include <vector>
 
 namespace oasys {
+
+/**
+ * Given a seed, generate some number n such that 1 <= n <= seed
+ */
+class Random {
+public:
+    /**
+     * Seed the random number generator(s).
+     */
+    static void seed(unsigned int seed) {
+        srandom(seed);
+        srand(seed);
+    }
+
+    /**
+     * Returns a random integer in the range [0..max) -- this could
+     * probably be enhanced at some future time with a better random
+     * number generator
+     */
+    static int rand(unsigned int max = RAND_MAX) {
+        int ret = ::rand();
+        if (max == RAND_MAX) {
+            return ret;
+        }
+        return (ret % max);
+    }
+};
 
 /**
  * Generates a some what random stream of bytes given a seed. Useful

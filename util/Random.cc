@@ -38,7 +38,7 @@ PermutationArray::PermutationArray(size_t size)
 
     for(unsigned int i=0; i<size_ - 1; ++i) {
         size_t temp;
-        unsigned int pos = rand()%(size_-i-1)+i+1;
+        unsigned int pos = Random::rand(size_-i-1)+i+1;
         
         temp = array_[i];
         array_[i]   = array_[pos];
