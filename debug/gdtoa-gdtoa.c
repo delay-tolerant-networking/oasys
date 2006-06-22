@@ -31,6 +31,17 @@ THIS SOFTWARE.
 
 #include "gdtoaimp.h"
 
+#ifdef __win32__ 
+/* Disable conversion, unused labels, operator precedence warnings */
+#pragma warning(disable: 4244)
+#pragma warning(disable: 4554)
+#pragma warning(disable: 4365)
+#pragma warning(disable: 4706)
+#pragma warning(disable: 4242)
+#pragma warning(disable: 4102)
+#pragma warning(disable: 4701)
+#endif /* __win32__ */
+
  static Bigint *
 #ifdef KR_headers
 bitstob(bits, nbits, bbits) ULong *bits; int nbits; int *bbits;
