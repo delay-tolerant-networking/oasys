@@ -17,13 +17,16 @@ RFCOMMClient::rc_connect(bdaddr_t remote_addr)
     char buff[18];
 
     set_remote_addr(remote_addr);
+    silent_connect_ = true; // don't log failed connect()
 
-    // start at 1 work up to 30
-    channel_ = 1;
-    while (channel_ <= 30) {
+    // query RFCOMMChannel for next available
+    channel_ = RFCOMMChannel::next();
 
-        if ((res = bind()) != 0) {
+    for (int k = 0; k < 30; k++) {
 
+        if ((res = bind()) != 0) { 
+
+            close();
 
             // something is borked
             if (errno != EADDRINUSE) {
@@ -34,7 +37,6 @@ RFCOMMClient::rc_connect(bdaddr_t remote_addr)
 
                 // unrecoverable
                 if (errno == EBADFD) {
-                    close();
                     return -1;
                 }
                 break;
@@ -60,6 +62,8 @@ RFCOMMClient::rc_connect(bdaddr_t remote_addr)
 
             } else {
 
+                close();
+
                 // failed to connect; report it and move on
                 log_debug("can't connect to %s:%d: %s",
                           Bluetooth::batostr(&remote_addr_,buff),
@@ -68,7 +72,6 @@ RFCOMMClient::rc_connect(bdaddr_t remote_addr)
 
                 // unrecoverable
                 if (errno == EBADFD) {
-                    close();
                     return -1;
                 }
 
@@ -76,7 +79,7 @@ RFCOMMClient::rc_connect(bdaddr_t remote_addr)
         }
 
         // this channel's busy, try the next
-        ++channel_;
+        channel_ = RFCOMMChannel::next();
     }
 
     log_err("Scanned all RFCOMM channels but unable to connect to %s",
@@ -87,6 +90,7 @@ RFCOMMClient::rc_connect(bdaddr_t remote_addr)
 int
 RFCOMMClient::rc_connect()
 {
+    ASSERT(bacmp(&remote_addr_,BDADDR_ANY)!=0);
     return rc_connect(remote_addr_);
 }
 

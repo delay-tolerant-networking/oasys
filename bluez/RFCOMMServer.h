@@ -38,9 +38,9 @@ public:
         int res = -1;
         char buff[18];
 
-        // start at 1 and work up to 30
-        channel_ = 1;
-        while (channel_ <= 30) {
+        // Query RFCOMMChannel for next available channel
+        channel_ = RFCOMMChannel::next();
+        for (int k = 0; k < 30; k++) {
             if ((res = bind()) != 0) {
 
                 // something is borked
@@ -58,7 +58,7 @@ public:
                 return res;
             }
 
-            ++channel_;
+            channel_ = RFCOMMChannel::next();
         }
 
         log_err("Scanned all local RFCOMM channels but unable to bind to %s",

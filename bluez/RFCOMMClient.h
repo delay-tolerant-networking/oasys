@@ -28,6 +28,8 @@ public:
      */
     int rc_connect(bdaddr_t remote_addr);
     int rc_connect();
+private:
+    static int rc_channel_;
 };
 
 }  // namespace oasys
