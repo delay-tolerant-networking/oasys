@@ -22,7 +22,15 @@ public:
     /**
      * Returns a random integer in the range [0..max) -- this could
      * probably be enhanced at some future time with a better random
-     * number generator
+     * number generator.
+     *
+     * Also, this only works well if the low order bits of rand() are
+     * just as random as the high order bits, which may or may not be
+     * the case on all systems. If that is an issue, then the
+     * implementation could be changed to use floating point
+     * arithmetic. We've biased for simplicity here until and unless
+     * we need really good random numbers (in which case rand() will
+     * be insufficient anyway).
      */
     static int rand(unsigned int max = RAND_MAX) {
         int ret = ::rand();
