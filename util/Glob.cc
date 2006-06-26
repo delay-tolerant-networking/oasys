@@ -105,6 +105,7 @@ main()
     g("hel*", "world"); 
     g("hel*", "helicopter"); 
     g("hel*lo*world", "hello there world");
+    g("hel*lo*world", "hello there world!");
     g("hel*", "hello, world!");
     g("hel*o", "hellow");
     g("*world", "hello cruel world");
