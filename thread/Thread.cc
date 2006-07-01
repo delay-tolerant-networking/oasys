@@ -145,7 +145,7 @@ Thread::thread_run(ThreadId_t thread_id)
 
 #else
 
-    thread_id_exit(0);
+    pthread_exit(0);
     NOTREACHED;
 
 #endif
@@ -253,7 +253,7 @@ Thread::start()
     // explicitly request for them to be joinable
     if (! (flags_ & CREATE_JOINABLE)) 
     {
-	thread_id_detach(thread_id_);
+	pthread_detach(thread_id_);
     }
 #endif // __win32__
 }
@@ -270,7 +270,7 @@ Thread::join()
     }
     
     void* ignored;
-    if (thread_id_join(thread_id_, &ignored) != 0) 
+    if (pthread_join(thread_id_, &ignored) != 0) 
     {
         PANIC("error in thread_id_join");
     }
@@ -285,7 +285,7 @@ Thread::kill(int sig)
     (void)sig;
     NOTIMPLEMENTED;
 #else
-    if (thread_id_kill(thread_id_, sig) != 0) {
+    if (pthread_kill(thread_id_, sig) != 0) {
         PANIC("error in thread_id_kill: %s", strerror(errno));
     }
 #endif
@@ -314,7 +314,7 @@ Thread::set_interruptable(bool interruptable)
     ASSERT(Thread::current() == thread_id_);
     
     int block = (interruptable ? SIG_UNBLOCK : SIG_BLOCK);
-    if (thread_id_sigmask(block, &interrupt_sigset_, NULL) != 0) {
+    if (pthread_sigmask(block, &interrupt_sigset_, NULL) != 0) {
         PANIC("error in thread_id_sigmask");
     }
 #endif

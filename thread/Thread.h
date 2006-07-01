@@ -62,7 +62,7 @@
 
 // XXX/bowei - #include "../debug/DebugUtils.h"
 
-#include "../debug/DummyDebugUtils.h"
+#include "../debug/DebugUtils.h"
 #include "SafeArray.h"
 
 namespace oasys {
@@ -287,7 +287,7 @@ Thread::current()
 #ifdef __win32__
     return current_thread_->thread_id_;
 #else
-    return thread_id_self();
+    return pthread_self();
 #endif
 }
 
