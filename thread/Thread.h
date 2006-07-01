@@ -42,18 +42,36 @@
 #include "config.h"
 
 #include <sys/types.h>
+
+#ifdef __win32__
+
+#include <Windows.h>
+
+#else
+
 #include <pthread.h>
-#include <vector>
+#include <signal.h>
 
 #ifdef HAVE_SCHED_YIELD
 #include <sched.h>
 #endif
 
-#include <signal.h>
-#include "../debug/DebugUtils.h"
+#endif
+
+#include <vector>
+
+// XXX/bowei - #include "../debug/DebugUtils.h"
+
+#include "../debug/DummyDebugUtils.h"
 #include "SafeArray.h"
 
 namespace oasys {
+
+#ifdef __win32__
+typedef HANDLE    ThreadId_t;
+#else
+typedef pthread_t ThreadId_t;
+#endif
 
 /**
  * Class to wrap a thread of execution using pthreads. Similar to the
@@ -73,6 +91,7 @@ public:
         STOPPED   	= 1 << 5,	///< bit indicating the thread has stopped
     };
 
+#ifndef __win32__
     /**
      * Enum to define signals used internally in the thread system
      * (currently just the interrupt signal).
@@ -80,6 +99,7 @@ public:
     enum thread_signal_t {
         INTERRUPT_SIG = SIGURG
     };
+#endif
 
     /**
      * Constructor / Destructor
@@ -144,7 +164,7 @@ public:
      * XXX/demmer this could keep a map to return a Thread* if it's
      * actually useful
      */
-    static pthread_t current();
+    static ThreadId_t current();
 
     /**
      * Send a signal to the thread.
@@ -154,6 +174,9 @@ public:
     /**
      * Send an interrupt signal to the thread to unblock it if it's
      * stuck in a system call. Implemented with SIGUSR1.
+     *
+     * XXX/bowei - There's no good way to implement this on many
+     * platforms. We should get rid of this.
      */
     void interrupt();
 
@@ -203,14 +226,11 @@ public:
     void clear_flag(thread_flags_t flag) { flags_ &= ~flag; }
     
     /**
-     * Return a pointer to the Thread object's id. Note that this may
-     * or may not be the currently executing thread.
+     * Return a pointer to the Thread object's id. The static function
+     * current() is the currently executing thread id.
      */
-    pthread_t thread_id()
-    {
-        return pthread_;
-    }
-    
+    ThreadId_t thread_id() { return thread_id_; }
+
     /**
      * Probe the CPU for the number of CPU's to make the
      * implementation behavior more efficient depending on whether the
@@ -222,51 +242,71 @@ public:
      * Array of all live pthread ids. Used for debugging, see
      * FatalSignals.cc.
      */
-    typedef SafeArray<256, pthread_t> IDArray;
+    typedef SafeArray<256, ThreadId_t> IDArray;
     static IDArray all_thread_ids_;
     
 protected:
+#ifdef __win32__
+    //! Declare a current Thread* in thread local storage
+    static __declspec(thread) Thread* current_thread_;
+#endif // __win32__
+
+#ifndef __win32__
+    static bool     signals_inited_;
+    static sigset_t interrupt_sigset_;
+#endif    
+
+    static bool                 start_barrier_enabled_;
+    static std::vector<Thread*> threads_in_barrier_;
+
+    ThreadId_t  thread_id_;
+    int         flags_;
+    char        name_[64];
+
     /**
      * Derived classes should implement this function which will get
      * called in the new Thread context.
      */
     virtual void run() = 0;
 
+#ifdef __win32__
+    static DWORD WINAPI pre_thread_run(void* t);
+#else
     static void* pre_thread_run(void* t);
-    void thread_run(const char* thread_name, pthread_t thread_id);
-    static void interrupt_signal(int sig);
+#endif
 
-    pthread_t pthread_;
-    int       flags_;
+    static void  interrupt_signal(int sig);
 
-    static bool     signals_inited_;
-    static sigset_t interrupt_sigset_;
-    
-    static bool                 start_barrier_enabled_;
-    static std::vector<Thread*> threads_in_barrier_;
-
-    const char* name_;
-
+    void thread_run(ThreadId_t thread_id);
 };
 
-inline pthread_t
+//---------------------------------------------------------------------------
+inline ThreadId_t
 Thread::current()
 {
-    return pthread_self();
-}
-
-inline void
-Thread::yield()
-{
-#ifdef HAVE_PTHREAD_YIELD
-    pthread_yield();
-#elif  HAVE_SCHED_YIELD
-    sched_yield();
+#ifdef __win32__
+    return current_thread_->thread_id_;
 #else
-#error MUST EITHER HAVE PTHREAD_YIELD OR SCHED_YIELD
+    return thread_id_self();
 #endif
 }
 
+//---------------------------------------------------------------------------
+inline void
+Thread::yield()
+{
+#ifndef __win32__
+#ifdef HAVE_THREAD_ID_YIELD
+    thread_id_yield();
+#elif  HAVE_SCHED_YIELD
+    sched_yield();
+#else
+#error MUST EITHER HAVE THREAD_ID_YIELD OR SCHED_YIELD
+#endif
+#endif // __win32__
+}
+
+//---------------------------------------------------------------------------
 inline void
 Thread::spin_yield()
 {
