@@ -181,7 +181,7 @@ Thread::~Thread()
     if (join_event_ != 0) {
         CloseHandle(join_event_);
     }
-#endif __win32__    
+#endif //__win32__    
 }
 
 //----------------------------------------------------------------------------
@@ -260,6 +260,8 @@ Thread::start()
 
 #else 
 
+    // XXX/bowei - Why do we retry so many times? Shouldn't we just
+    // give up?
     int ntries = 0;
     while (pthread_create(&thread_id_, 0, Thread::pre_thread_run, this) != 0) 
     {
