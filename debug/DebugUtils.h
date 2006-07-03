@@ -39,8 +39,8 @@
 #ifndef _OASYS_DEBUG_UTILS_H_
 #define _OASYS_DEBUG_UTILS_H_
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 #include "FatalSignals.h"
 
@@ -51,6 +51,8 @@
         ::oasys::Breaker::break_here();                                 \
         ::oasys::FatalSignals::die();                                   \
     } } while(0);
+
+#ifdef __GNUC__
 
 #define ASSERTF(x, fmt, args...)                                        \
     do { if (! (x)) {                                                   \
@@ -68,6 +70,29 @@
         ::oasys::Breaker::break_here();                                 \
         ::oasys::FatalSignals::die();                                   \
     } while(0);
+
+#endif // __GNUC__
+
+#ifdef __win32__
+
+#define ASSERTF(x, fmt, ...)                                            \
+    do { if (! (x)) {                                                   \
+        fprintf(stderr,                                                 \
+                "ASSERTION FAILED (" #x ") at %s:%d: " fmt "\n",        \
+                __FILE__, __LINE__, __VA_ARGS__ );                      \
+        ::oasys::Breaker::break_here();                                 \
+        ::oasys::FatalSignals::die();                                   \
+    } } while(0);
+
+#define PANIC(fmt, ...)                                                 \
+    do {                                                                \
+        fprintf(stderr, "PANIC at %s:%d: " fmt "\n",                    \
+                __FILE__, __LINE__ , __VA_ARGS__);                      \
+        ::oasys::Breaker::break_here();                                 \
+        ::oasys::FatalSignals::die();                                   \
+    } while(0);
+
+#endif __win32__
 
 #define NOTREACHED                                                      \
     do {                                                                \
@@ -115,19 +140,26 @@ public:
     static void break_here();
 };
 
-//! Make sure to null out after deleting an object (sigh....)
-#define delete_z(_obj) \
+/*!
+ * Make sure to null out after deleting an object. USE THIS.
+ */
+#define delete_z(_obj)                          \
     do { delete _obj; _obj = 0; } while (0)
 
-/*! @{ Macros to define but not declare copy and assignment operator
- * to avoid accidently usage of such constructs. Put this at the top
- * of the class declaration.
+/*!
+ * @{ Macros to define but not declare copy and assignment operator to
+ * avoid accidently usage of such constructs. Put this at the top of
+ * the class declaration.
  */
-#define NO_COPY(_Classname)   \
+#define NO_COPY(_Classname)                                     \
     private: _Classname(const _Classname& other)
-#define NO_ASSIGN(_Classname) \
+
+#define NO_ASSIGN(_Classname)                                   \
     private: _Classname& operator=(const _Classname& other)
-#define NO_ASSIGN_COPY(_Classname) NO_COPY(_Classname); NO_ASSIGN(_Classname)
+
+#define NO_ASSIGN_COPY(_Classname)              \
+   NO_COPY(_Classname);                         \
+   NO_ASSIGN(_Classname)
 //! @}
 
 } // namespace oasys
