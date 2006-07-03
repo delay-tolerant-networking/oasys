@@ -131,7 +131,7 @@ Thread::thread_run(ThreadId_t thread_id)
     if (join_event_) {
         SetEvent(join_event_);
     }
-#endif __win32__
+#endif //__win32__
 
     if (flags_ & DELETE_ON_EXIT) 
     {
