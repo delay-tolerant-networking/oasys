@@ -52,7 +52,7 @@
  * @endcode
  */
 
-#if defined(__i386__)
+#if defined(__i386__) && defined(__GNUC__)
 #include "Atomic-x86.h"
 #elif defined(__POWERPC__) || defined(PPC)
 #include "Atomic-ppc.h"
@@ -60,6 +60,8 @@
 #include "Atomic-arm.h"
 #elif defined(__mips__)
 #include "Atomic-mips.h"
+#elif defined(__win32__)
+#include "Atomic-win32.h"
 #else
 #error "Need to define an Atomic.h variant for your architecture"
 #endif
