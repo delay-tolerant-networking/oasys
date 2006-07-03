@@ -8,38 +8,57 @@
 #
 # Locations
 #
-VISUAL_C_ROOT=C:/Program Files/Microsoft Visual Studio 8/VC
-PLATFORM_SDK_ROOT=C:/Program Files/Microsoft Visual Studio 8/VC/PlatformSDK
+VISUAL_C_ROOT="c:/Program Files/Microsoft Visual Studio 8/VC"
+PLATFORM_SDK_ROOT="c:/Program Files/Microsoft Visual Studio 8/VC/PlatformSDK"
 
 #
 # Compilers
 #
-CC=$(VISUAL_C_ROOT)/bin/cl.exe
-CXX=$(VISUAL_C_ROOT)/bin/cl.exe
+CC=cl
+CXX=cl.exe
 
 #
 # Compiler paths
 #
 INCLUDE=  /I. 
-INCLUDE+= /I$(PLATFORM_SDK_ROOT)/include 
 INCLUDE+= /I$(VISUAL_C_ROOT)/include
+INCLUDE+= /I$(PLATFORM_SDK_ROOT)/include
 
-LIB=
+LIB=  /L$(VISUAL_C_ROOT)/lib
+LIB+= /L$(PLATFORM_SDK_ROOT)/lib
+# Link statically with the debugging library
+LIB+= /MTd
 
 #
 # Options
 #
-OPT=  /Od           			# no optimizations
-OPT+= /Zi 				# generate debugging information
-WARN=  /Wall         			# enable all warnings
-WARN+= /WX				# warnings are errors
-EXTRA_FLAGS=  /nologo  			# don't display copyright
-EXTRA_FLAGS+= /D__win32__   		# compile as win32
 
-CFLAGS=$(OPT) $(WARN) $(EXTRA_FLAGS)
+# no optimizations
+OPT=  /Od
+# generate debugging information
+OPT+= /Zi
 
-CPPFLAGS=  $(CFLAGS) 
-CPPFLAGS+= /TP 				# compile as C++
+# enable all warnings
+WARN=  /Wall
+# warnings are errors
+WARN+= /WX
+
+# don't display copyright
+EXTRA_FLAGS=  /nologo
+# compile as win32
+EXTRA_FLAGS+= /D__win32__
+# allow unsafe functions for now
+EXTRA_FLAGS+= /D_CRT_SECURE_NO_DEPRECATE
+# Use C++ style exception handling (not other ones included with VC++)
+EXTRA_FLAGS+= /EHsc
+# enable RTTI
+EXTRA_FLAGS+= /GR
+
+CFLAGS=$(OPT) $(WARN) $(EXTRA_FLAGS) $(INCLUDE)
+
+CPPFLAGS=$(CFLAGS)
+# compile as C++
+CPPFLAGS+= /TP
 
 #
 # Build Rules
@@ -50,6 +69,8 @@ include Sources.mk
 OBJS := $(SRCS:.cc=.obj)
 OBJS := $(OBJS:.c=.obj)
 OBJS := $(OBJS):version.obj
+
+all2:   thread/Thread.obj
 
 all: 	gdtoa-arithchk.exe    \
 	debug/gdtoa-dtoa.obj  \
