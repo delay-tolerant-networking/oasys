@@ -97,6 +97,9 @@ Thread::thread_run(ThreadId_t thread_id)
     ProfilerRegisterThread();
 #endif
     
+    all_thread_ids_.insert(thread_id);
+
+#ifndef __win32__    
     /*
      * There's a potential race between the starting of the new thread
      * and the storing of the thread id in the thread_id_ member
@@ -104,14 +107,8 @@ Thread::thread_run(ThreadId_t thread_id)
      * spawner. So we re-write it here to make sure that it's valid
      * for the new thread (specifically for set_interruptable's
      * assertion.
-     *
-     * bd: UGHHH
      */
     thread_id_ = thread_id;
-
-    all_thread_ids_.insert(thread_id);
-
-#ifndef __win32__    
     set_interruptable((flags_ & INTERRUPTABLE));
 #endif
 
@@ -129,7 +126,13 @@ Thread::thread_run(ThreadId_t thread_id)
     }
     
     flags_ |= STOPPED;
-    
+
+#ifdef __win32__
+    if (join_event_) {
+        SetEvent(join_event_);
+    }
+#endif __win32__
+
     if (flags_ & DELETE_ON_EXIT) 
     {
         delete this;
@@ -140,7 +143,7 @@ Thread::thread_run(ThreadId_t thread_id)
 #ifdef __win32__
 
     // Make sure C++ cleanup is called, which does not occur if we
-    // call ExitThread.
+    // call ExitThread().
     return;
 
 #else
@@ -155,13 +158,31 @@ Thread::thread_run(ThreadId_t thread_id)
 Thread::Thread(const char* name, int flags)
     : flags_(flags)
 {
+    if ((flags & CREATE_JOINABLE) && (flags & DELETE_ON_EXIT)) {
+        flags &= ~DELETE_ON_EXIT;
+    }
+
+#ifdef __win32__
+    if (flags & CREATE_JOINABLE) {
+        join_event_ = CreateEvent(0, TRUE, FALSE, 0);
+        ASSERT(join_event_ != 0);
+    } else {
+        join_event_ = 0;
+    }
+#endif //__win32__
     cstring_copy(name_, 64, name);
     thread_id_ = 0;
 }
 
 //----------------------------------------------------------------------------
 Thread::~Thread()
-{}
+{
+#ifdef __win32__
+    if (join_event_ != 0) {
+        CloseHandle(join_event_);
+    }
+#endif __win32__    
+}
 
 //----------------------------------------------------------------------------
 void
@@ -195,6 +216,7 @@ void
 Thread::start()
 {
 #ifndef __win32__
+
     // if this is the first thread, set up signals
     if (!signals_inited_) 
     {
@@ -204,6 +226,7 @@ Thread::start()
         siginterrupt(INTERRUPT_SIG, 1);
         signals_inited_ = true;
     }
+
 #endif
 
     // check if the creation barrier is enabled
@@ -228,6 +251,8 @@ Thread::start()
                                    // the Thread* class before it starts running
                                    CREATE_SUSPENDED,       
                                    &thread_dword_id);
+    
+    // Fix the handle on the thread
     ASSERT(h_thread != 0);
     thread_id_ = h_thread;
 
@@ -255,6 +280,7 @@ Thread::start()
     {
 	pthread_detach(thread_id_);
     }
+
 #endif // __win32__
 }
 
@@ -262,13 +288,18 @@ Thread::start()
 void
 Thread::join()
 {
-#ifndef __win32__
     if (! (flags_ & CREATE_JOINABLE)) 
     {
         PANIC("tried to join a thread that isn't joinable -- "
               "need CREATE_JOINABLE flag");
     }
     
+#ifdef __win32__
+    ASSERT(join_event_ != 0);
+    DWORD ret = WaitForSingleObject(join_event_, INFINITE);
+    (void)ret; // XXX/bowei - get rid of me
+    ASSERT(ret != WAIT_FAILED);
+#else
     void* ignored;
     if (pthread_join(thread_id_, &ignored) != 0) 
     {

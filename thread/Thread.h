@@ -62,7 +62,7 @@
 
 // XXX/bowei - #include "../debug/DebugUtils.h"
 
-#include "../debug/DebugUtils.h"
+#include "../debug/DummyDebugUtils.h"
 #include "SafeArray.h"
 
 namespace oasys {
@@ -82,13 +82,20 @@ public:
     /**
      * Bit values for thread flags.
      */
-    enum thread_flags_t {
-        CREATE_JOINABLE	= 1 << 0,	///< inverse of PTHREAD_CREATE_DETACHED
-        DELETE_ON_EXIT  = 1 << 1,	///< delete thread when run() completes
-        INTERRUPTABLE   = 1 << 2,	///< thread can be interrupted
-        STARTED         = 1 << 3,       ///< thread has been started
-        SHOULD_STOP   	= 1 << 4,	///< bit to signal the thread to stop
-        STOPPED   	= 1 << 5,	///< bit indicating the thread has stopped
+    enum thread_flags_t { 
+        //! inverse of PTHREAD_CREATE_DETACHED. Implies
+        //! not DELETE_ON_EXIT.
+        CREATE_JOINABLE	= 1 << 0,
+        //! delete thread when run() completes. 
+        DELETE_ON_EXIT  = 1 << 1,
+        //! thread can be interrupted
+        INTERRUPTABLE   = 1 << 2,
+        //! thread has been started
+        STARTED         = 1 << 3,
+        //! bit to signal the thread to stop
+        SHOULD_STOP   	= 1 << 4,
+        //! bit indicating the thread has stopped
+        STOPPED   	= 1 << 5,
     };
 
 #ifndef __win32__
@@ -249,6 +256,7 @@ protected:
 #ifdef __win32__
     //! Declare a current Thread* in thread local storage
     static __declspec(thread) Thread* current_thread_;
+    HANDLE join_event_;
 #endif // __win32__
 
 #ifndef __win32__
