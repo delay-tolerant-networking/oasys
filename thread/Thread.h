@@ -56,7 +56,7 @@
 #include <sched.h>
 #endif
 
-#endif
+#endif // __win32__
 
 #include <vector>
 
