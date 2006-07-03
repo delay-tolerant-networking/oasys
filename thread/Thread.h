@@ -60,9 +60,7 @@
 
 #include <vector>
 
-// XXX/bowei - #include "../debug/DebugUtils.h"
-
-#include "../debug/DummyDebugUtils.h"
+#include "../debug/DebugUtils.h"
 #include "SafeArray.h"
 
 namespace oasys {
