@@ -69,13 +69,13 @@ public:
      */
     int insert(_Type val)
     {
-        u_int32_t old;
+        int32_t old;
         for (size_t i = 0; i < _sz; ++i) {
             old = atomic_cmpxchg32(&full_[i], 0, 1);
 
             if (old == 0) {
                 array_[i] = val;
-                return i;
+                return static_cast<int>(i);
             }
         }
         return -1;
@@ -89,7 +89,7 @@ public:
      */
     int remove(_Type val)
     {
-        u_int32_t old;
+        int32_t old;
 
         for (size_t i = 0; i < _sz; ++i) {
             if (array_[i] == val) {
@@ -97,7 +97,7 @@ public:
                 ASSERT(old == 1);
                 memset(&array_[i], 0, sizeof(_Type));
 
-                return i;
+                return static_cast<int>(i);
             }
         }
 
