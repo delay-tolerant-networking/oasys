@@ -64,93 +64,40 @@ Thread::IDArray      Thread::all_thread_ids_;
 
 //----------------------------------------------------------------------------
 void
-Thread::interrupt_signal(int sig)
+Thread::activate_start_barrier()
 {
-    (void)sig;
-}
-
-//----------------------------------------------------------------------------
-#ifdef __win32__
-DWORD WINAPI 
-#else
-void*
-#endif
-Thread::pre_thread_run(void* t)
-{
-    Thread* thr = (Thread*)t;
-
-#ifdef __win32__
-    current_thread_ = thr;
-#endif
-
-    ThreadId_t thread_id = Thread::current();
-    thr->thread_run(thread_id);
-
-    return 0;
+    start_barrier_enabled_ = true;
+    log_debug("/thread", "activating thread creation barrier");
 }
 
 //----------------------------------------------------------------------------
 void
-Thread::thread_run(ThreadId_t thread_id)
+Thread::release_start_barrier()
 {
-#if GOOGLE_PROFILE_ENABLED
-    ProfilerRegisterThread();
-#endif
+    start_barrier_enabled_ = false;
+
+    log_debug("/thread",
+              "releasing thread creation barrier -- %zu queued threads",
+              threads_in_barrier_.size());
     
-    all_thread_ids_.insert(thread_id);
-
-#ifndef __win32__    
-    /*
-     * There's a potential race between the starting of the new thread
-     * and the storing of the thread id in the thread_id_ member
-     * variable, so we can't trust that it's been written by our
-     * spawner. So we re-write it here to make sure that it's valid
-     * for the new thread (specifically for set_interruptable's
-     * assertion.
-     */
-    thread_id_ = thread_id;
-    set_interruptable((flags_ & INTERRUPTABLE));
-#endif
-
-    flags_ |= STARTED;
-    flags_ &= ~STOPPED;
-    flags_ &= ~SHOULD_STOP;
-
-    try 
+    for (size_t i = 0; i < threads_in_barrier_.size(); ++i) 
     {
-        run();
-    } 
-    catch (...) 
-    {
-        PANIC("unexpected exception caught from Thread::run");
+        Thread* thr = threads_in_barrier_[i];
+        thr->start();
     }
-    
-    flags_ |= STOPPED;
 
+    threads_in_barrier_.clear();
+}
+
+//----------------------------------------------------------------------------
+bool
+Thread::id_equal(ThreadId_t a, ThreadId_t b)
+{
 #ifdef __win32__
-    if (join_event_) {
-        SetEvent(join_event_);
-    }
-#endif //__win32__
-
-    if (flags_ & DELETE_ON_EXIT) 
-    {
-        delete this;
-    }
-
-    all_thread_ids_.remove(thread_id_);
-    
-#ifdef __win32__
-
-    // Make sure C++ cleanup is called, which does not occur if we
-    // call ExitThread().
-    return;
-
+    // XXX/bowei - check if comparing handles for equality is ok
+    return a == b;
 #else
-
-    pthread_exit(0);
-    NOTREACHED;
-
+    return pthread_equal(a, b);
 #endif
 }
 
@@ -182,33 +129,6 @@ Thread::~Thread()
         CloseHandle(join_event_);
     }
 #endif //__win32__    
-}
-
-//----------------------------------------------------------------------------
-void
-Thread::activate_start_barrier()
-{
-    start_barrier_enabled_ = true;
-    log_debug("/thread", "activating thread creation barrier");
-}
-
-//----------------------------------------------------------------------------
-void
-Thread::release_start_barrier()
-{
-    start_barrier_enabled_ = false;
-
-    log_debug("/thread",
-              "releasing thread creation barrier -- %zu queued threads",
-              threads_in_barrier_.size());
-    
-    for (size_t i = 0; i < threads_in_barrier_.size(); ++i) 
-    {
-        Thread* thr = threads_in_barrier_[i];
-        thr->start();
-    }
-
-    threads_in_barrier_.clear();
 }
 
 //----------------------------------------------------------------------------
@@ -252,12 +172,11 @@ Thread::start()
                                    CREATE_SUSPENDED,       
                                    &thread_dword_id);
     
-    // Fix the handle on the thread
     ASSERT(h_thread != 0);
-    thread_id_ = h_thread;
+    thread_id_ = thread_dword_id;
 
-    ResumeThread(thread_id_);
-
+    // Fix the handle on the thread
+    ResumeThread(h_thread);
 #else 
 
     // XXX/bowei - Why do we retry so many times? Shouldn't we just
@@ -353,11 +272,97 @@ Thread::set_interruptable(bool interruptable)
 #endif
 }
 
+
+//----------------------------------------------------------------------------
+#ifdef __win32__
+DWORD WINAPI 
+#else
+void*
+#endif
+Thread::pre_thread_run(void* t)
+{
+    Thread* thr = static_cast<Thread*>(t);
+
+#ifdef __win32__
+    current_thread_ = thr;
+#endif
+
+    ThreadId_t thread_id = Thread::current();
+    thr->thread_run(thread_id);
+
+    return 0;
+}
+
 //----------------------------------------------------------------------------
 void
-Thread::check_for_SMP()
+Thread::interrupt_signal(int sig)
 {
-    // XXX/bowei - check /proc/cpuinfo for SMP
+    (void)sig;
+}
+
+//----------------------------------------------------------------------------
+void
+Thread::thread_run(ThreadId_t thread_id)
+{
+#if GOOGLE_PROFILE_ENABLED
+    ProfilerRegisterThread();
+#endif
+    
+    all_thread_ids_.insert(thread_id);
+
+#ifndef __win32__    
+    /*
+     * There's a potential race between the starting of the new thread
+     * and the storing of the thread id in the thread_id_ member
+     * variable, so we can't trust that it's been written by our
+     * spawner. So we re-write it here to make sure that it's valid
+     * for the new thread (specifically for set_interruptable's
+     * assertion.
+     */
+    thread_id_ = thread_id;
+    set_interruptable((flags_ & INTERRUPTABLE));
+#endif
+
+    flags_ |= STARTED;
+    flags_ &= ~STOPPED;
+    flags_ &= ~SHOULD_STOP;
+
+    try 
+    {
+        run();
+    } 
+    catch (...) 
+    {
+        PANIC("unexpected exception caught from Thread::run");
+    }
+    
+    flags_ |= STOPPED;
+
+#ifdef __win32__
+    if (join_event_) {
+        SetEvent(join_event_);
+    }
+#endif //__win32__
+
+    if (flags_ & DELETE_ON_EXIT) 
+    {
+        delete this;
+    }
+
+    all_thread_ids_.remove(thread_id_);
+    
+#ifdef __win32__
+
+    // Make sure C++ cleanup is called, which does not occur if we
+    // call ExitThread().
+    return;
+
+#else
+
+    pthread_exit(0);
+    NOTREACHED;
+
+#endif
 }
 
 } // namespace oasys

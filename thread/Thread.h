@@ -60,13 +60,13 @@
 
 #include <vector>
 
-#include "../debug/DebugUtils.h"
+#include "../debug/DummyDebugUtils.h"
 #include "SafeArray.h"
 
 namespace oasys {
 
 #ifdef __win32__
-typedef HANDLE    ThreadId_t;
+typedef DWORD     ThreadId_t;
 #else
 typedef pthread_t ThreadId_t;
 #endif
@@ -107,21 +107,11 @@ public:
 #endif
 
     /**
-     * Constructor / Destructor
+     * Array of all live pthread ids. Used for debugging, see
+     * FatalSignals.cc.
      */
-    Thread(const char* name, int flags = 0);
-    virtual ~Thread();
-    
-    /**
-     * Starts a new thread and calls the virtual run() method with the
-     * new thread.
-     */
-    void start();
-
-    /**
-     * Join with this thread, blocking the caller until we quit.
-     */
-    void join();
+    typedef SafeArray<256, ThreadId_t> IDArray;
+    static IDArray all_thread_ids_;
 
     /**
      * Activate the thread creation barrier. No new threads will be
@@ -170,6 +160,32 @@ public:
      * actually useful
      */
     static ThreadId_t current();
+
+    /**
+     * @return True if ThreadId_t's are equal
+     */
+    static bool id_equal(ThreadId_t a, ThreadId_t b);
+
+    /**
+     * Constructor
+     */ 
+    Thread(const char* name, int flags = 0);
+
+    /**
+     * Destructor
+     */
+    virtual ~Thread();
+    
+    /**
+     * Starts a new thread and calls the virtual run() method with the
+     * new thread.
+     */
+    void start();
+
+    /**
+     * Join with this thread, blocking the caller until we quit.
+     */
+    void join();
 
     /**
      * Send a signal to the thread.
@@ -235,20 +251,6 @@ public:
      * current() is the currently executing thread id.
      */
     ThreadId_t thread_id() { return thread_id_; }
-
-    /**
-     * Probe the CPU for the number of CPU's to make the
-     * implementation behavior more efficient depending on whether the
-     * system is running a SMP or single CPU
-     */
-    static void check_for_SMP();
-    
-    /**
-     * Array of all live pthread ids. Used for debugging, see
-     * FatalSignals.cc.
-     */
-    typedef SafeArray<256, ThreadId_t> IDArray;
-    static IDArray all_thread_ids_;
     
 protected:
 #ifdef __win32__
@@ -265,25 +267,35 @@ protected:
     static bool                 start_barrier_enabled_;
     static std::vector<Thread*> threads_in_barrier_;
 
-    ThreadId_t  thread_id_;
-    int         flags_;
-    char        name_[64];
+    ThreadId_t thread_id_;
+    int        flags_;
+    char       name_[64];
 
     /**
-     * Derived classes should implement this function which will get
-     * called in the new Thread context.
+     * Static function which is given to the native threading library.
      */
-    virtual void run() = 0;
-
 #ifdef __win32__
     static DWORD WINAPI pre_thread_run(void* t);
 #else
     static void* pre_thread_run(void* t);
 #endif
 
-    static void  interrupt_signal(int sig);
+    /**
+     * Noop thread signal handler.
+     */
+    static void interrupt_signal(int sig);
 
+    /**
+     * Wrapper function to handle initialization and cleanup of the
+     * thread. Runs in the context of the newly created thread.
+     */
     void thread_run(ThreadId_t thread_id);
+
+    /**
+     * Derived classes should implement this function which will get
+     * called in the new Thread context.
+     */
+    virtual void run() = 0;
 };
 
 //---------------------------------------------------------------------------
