@@ -92,7 +92,7 @@
         ::oasys::FatalSignals::die();                                   \
     } while(0);
 
-#endif __win32__
+#endif /* __win32__ */
 
 #define NOTREACHED                                                      \
     do {                                                                \
