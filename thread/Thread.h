@@ -60,7 +60,7 @@
 
 #include <vector>
 
-#include "../debug/DummyDebugUtils.h"
+#include "../debug/DebugUtils.h"
 #include "SafeArray.h"
 
 namespace oasys {
