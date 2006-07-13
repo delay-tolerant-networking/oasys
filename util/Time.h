@@ -25,6 +25,8 @@ struct Time {
     Time operator-(const Time& t);
     //! @}
 
+    // Use default operator=
+
 private:
     //! Cleanup the usec field wrt. sec
     void cleanup();
