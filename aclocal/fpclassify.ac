@@ -14,7 +14,7 @@ AC_DEFUN(AC_OASYS_FUNC_FPCLASSIFY, [
         #error no fpclassify
         #endif
         ], 
-        [int main() {}], 
+        [], 
         [oasys_cv_func_fpclassify=1])])
     
     if test $oasys_cv_func_fpclassify = 1 ; then
