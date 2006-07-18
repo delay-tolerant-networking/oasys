@@ -122,14 +122,14 @@ DECLARE_TEST(StringBuffer1) {
     
     // append up to the preallocated amount
     for (int i=0; i<256; ++i) {
-        char c = Random::rand(26 + 'a');
+        char c = Random::rand(26) + 'a';
         buf.append(c);
         scratch[i] = c;
     }
 
     // this should cause a realloc
     CHECK_EQUALSTR(buf.c_str(), scratch);
-    CHECK(strlen(buf.c_str()) == 256);    
+    CHECK_EQUAL(strlen(buf.c_str()), 256);    
 
     return UNIT_TEST_PASSED;
 }
