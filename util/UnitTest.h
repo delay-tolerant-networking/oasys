@@ -269,6 +269,13 @@ protected:                                                      \
 };                                                              \
 void _name::add_tests()                                         \
 
+#define DO(x)                                                           \
+    do {                                                                \
+        ::oasys::__logf(oasys::LOG_NOTICE, "/test",                     \
+                    "DO (%s) at %s:%d", #x, __FILE__, __LINE__);        \
+        x;                                                              \
+    } while (0)
+
 #define CHECK(x)                                                        \
     do { if (! (x)) {                                                   \
         ::oasys::Breaker::break_here();                                 \
