@@ -50,6 +50,7 @@ class PeriodicTimer : public Timer {
     PeriodicTimer(const char* name) {
         snprintf(log_, sizeof(log_), "/timer/%s", name);
         logf(log_, LOG_DEBUG, "PeriodicTimer %p", this);
+        count_ = 0;
     }
     
     void timeout(const struct timeval& now) {
@@ -57,11 +58,13 @@ class PeriodicTimer : public Timer {
         log_notice(log_, "timer at %ld.%ld (%d usec late)",
                    (long unsigned int)now.tv_sec, (long unsigned int)now.tv_usec,
                    late);
-        
+        ++count_;
         reschedule();
     }
     
     virtual void reschedule() = 0;
+    
+    int count_;
     
   protected:
     char log_[64];
@@ -92,48 +95,106 @@ public:
         count_ = 0;
         reschedule();
     }
+    
     void reschedule() {
-        if (count_ == 0) {
-            count_ = 10;
-            schedule_in(1000);
-        } else {
-            count_--;
+        if (count_ == 0 || (count_ % 10 != 0)) {
             schedule_in(1);
+        } else {
+            schedule_in(1000);
         }
     }
-protected:
-    int count_;
 };
 
-DECLARE_TEST(TimerTest1) {
-    TimerSystem::instance()->start();
+DECLARE_TEST(Init) {
+    TimerThread::init();
+    return UNIT_TEST_PASSED;
+}
 
-    new OneSecondTimer();
+DECLARE_TEST(TenSec) {
+    PeriodicTimer* t = new TenSecondTimer();
+    sleep(35);
+    t->cancel();
+    CHECK_EQUAL(t->count_, 3);
+    return UNIT_TEST_PASSED;
+}
 
-    new TenSecondTimer();
-    new OneSecondTimer();
-    new HalfSecondTimer();
+DECLARE_TEST(OneSec) {
+    PeriodicTimer* t = new OneSecondTimer();
+    usleep(5500000);
+    t->cancel();
+    sleep(1);
+    CHECK_EQUAL(t->count_, 5);
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(HalfSec) {
+    PeriodicTimer* t = new HalfSecondTimer();
+    usleep(5250000);
+    t->cancel();
+    sleep(1);
+    CHECK_EQUAL(t->count_, 10);
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(Simultaneous) {
+    std::vector<Timer*> timers;
+
+    timers.push_back(new OneSecondTimer());
+
+    timers.push_back(new TenSecondTimer());
+    timers.push_back(new OneSecondTimer());
+    timers.push_back(new HalfSecondTimer());
 
     usleep(500000);
-    new OneSecondTimer();
+    timers.push_back(new OneSecondTimer());
 
-    new HalfSecondTimer();
+    timers.push_back(new HalfSecondTimer());
     usleep(100000);
-    new HalfSecondTimer();
+    timers.push_back(new HalfSecondTimer());
     usleep(100000);
-    new HalfSecondTimer();
+    timers.push_back(new HalfSecondTimer());
     usleep(100000);
-    new HalfSecondTimer();
+    timers.push_back(new HalfSecondTimer());
 
-    new TenImmediateTimer();
+    timers.push_back(new TenImmediateTimer());
 
-    sleep(10);    
+    sleep(10);
+
+    for (u_int i = 0; i < timers.size(); ++i) {
+        timers[i]->cancel();
+    }
+
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(Many) {
+    std::vector<PeriodicTimer*> timers;
+    int n = 10000;
+    for (int i = 0; i < n; ++i) {
+        timers.push_back(new TenSecondTimer());
+    }
+
+    sleep(15);
+
+    for (int i = 0; i < n; ++i) {
+        timers[i]->cancel();
+
+        if (timers[i]->count_ != 1) {
+            log_err("/test", "timer %d fired %d times (expected 1)",
+                    i, timers[i]->count_);
+        }
+    }
 
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TESTER(TimerTest) {
-    ADD_TEST(TimerTest1);
+    ADD_TEST(Init);
+    ADD_TEST(OneSec);
+    ADD_TEST(TenSec);
+    ADD_TEST(HalfSec);
+    ADD_TEST(Simultaneous);
+    ADD_TEST(Many);
 }
 
 DECLARE_TEST_FILE(TimerTest, "timer test");

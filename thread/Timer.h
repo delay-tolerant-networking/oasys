@@ -99,10 +99,10 @@ public:
 };    
 
 /**
- * The main Timer system implementation.
+ * The main Timer system implementation that needs to be driven by a
+ * thread, such as the TimerThread class defined below.
  */
-class TimerSystem : public Singleton<TimerSystem>, 
-                    public Thread, 
+class TimerSystem : public Singleton<TimerSystem>,
                     public Logger {
 public:
     void schedule_at(struct timeval *when, Timer* timer);
@@ -117,11 +117,21 @@ public:
 
     /**
      * Hook called from an the actual signal handler that notifies the
-     * timer sysetem thread to call the signal handler function.
+     * timer system thread to call the signal handler function.
      */
     static void post_signal(int sig);
-                             
-    void run();
+
+    /**
+     * Run any timers that have expired. Returns the interval in
+     * milliseconds until the next timer that needs to fire.
+     */
+    int run_expired_timers();
+
+    /**
+     * Accessor for the notifier that indicates if another thread put
+     * a timer on the queue.
+     */
+    Notifier* notifier() { return &notifier_; }
 
 private:
     friend class Singleton<TimerSystem>;
@@ -137,14 +147,28 @@ private:
     bool	   sigfired_;		///< boolean to check if any fired
 
     SpinLock*  system_lock_;
-    Notifier   signal_;
+    Notifier   notifier_;
     TimerQueue timers_;
 
     TimerSystem();
-
+    
     void pop_timer(const struct timeval& now);
     void handle_signals();
-    int  run_expired_timers();
+
+};
+
+/**
+ * A simple thread class that drives the TimerSystem implementation.
+ */
+class TimerThread : public Thread {
+public:
+    static void init();
+
+private:
+    TimerThread() : Thread("TimerThread") {}
+    void run();
+    
+    static TimerThread* instance_;
 };
 
 /**

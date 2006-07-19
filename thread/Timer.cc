@@ -51,12 +51,11 @@ namespace oasys {
 
 template <> TimerSystem* Singleton<TimerSystem>::instance_ = 0;
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------
 TimerSystem::TimerSystem()
-    : Thread("TimerSystem"),
-      Logger("TimerSystem", "/timer"),
+    : Logger("TimerSystem", "/timer"),
       system_lock_(new SpinLock()),
-      signal_(logpath_),
+      notifier_(logpath_),
       timers_()
 {
     memset(handlers_, 0, sizeof(handlers_));
@@ -64,7 +63,7 @@ TimerSystem::TimerSystem()
     sigfired_ = false;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------
 void
 TimerSystem::schedule_at(struct timeval *when, Timer* timer)
 {
@@ -99,10 +98,10 @@ TimerSystem::schedule_at(struct timeval *when, Timer* timer)
     timer->cancelled_ = 0;
     timers_.push(timer);
 
-    signal_.notify();
+    notifier_.notify();
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------
 void
 TimerSystem::schedule_in(int milliseconds, Timer* timer)
 {
@@ -118,14 +117,14 @@ TimerSystem::schedule_in(int milliseconds, Timer* timer)
     return schedule_at(&when, timer);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------
 void
 TimerSystem::schedule_immediate(Timer* timer)
 {
     return schedule_at(0, timer);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------
 bool
 TimerSystem::cancel(Timer* timer)
 {
@@ -143,7 +142,7 @@ TimerSystem::cancel(Timer* timer)
     return false;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------
 void
 TimerSystem::post_signal(int sig)
 {
@@ -152,10 +151,10 @@ TimerSystem::post_signal(int sig)
     _this->sigfired_ = true;
     _this->signals_[sig] = true;
     
-    _this->signal_.notify();
+    _this->notifier_.notify();
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------
 void
 TimerSystem::add_sighandler(int sig, __sighandler_t handler)
 {
@@ -165,22 +164,7 @@ TimerSystem::add_sighandler(int sig, __sighandler_t handler)
     signal(sig, post_signal);
 }
 
-//////////////////////////////////////////////////////////////////////////////
-void
-TimerSystem::run()
-{
-    system_lock_->lock("TimerSystem::run");
-    while (true) 
-    {
-        handle_signals();
-        int timeout = run_expired_timers();
-        signal_.wait(system_lock_, timeout);
-    }
-
-    NOTREACHED;
-}
-
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------
 void
 TimerSystem::pop_timer(const struct timeval& now)
 {
@@ -192,7 +176,12 @@ TimerSystem::pop_timer(const struct timeval& now)
     // clear the pending bit since it could get rescheduled 
     ASSERT(next_timer->pending_);
     next_timer->pending_ = 0;
-    
+
+    int late = TIMEVAL_DIFF_MSEC(now, next_timer->when());
+    if (late > 2000) {
+        log_warn("timer thread running slow -- timer is %d msecs late", late);
+    }
+        
     if (! next_timer->cancelled_) {
         log_debug("popping timer %p at %u.%u", next_timer,
                   (u_int)now.tv_sec, (u_int)now.tv_usec);
@@ -210,7 +199,7 @@ TimerSystem::pop_timer(const struct timeval& now)
     }
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------
 void
 TimerSystem::handle_signals()
 {        
@@ -230,10 +219,14 @@ TimerSystem::handle_signals()
     }
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------
 int
 TimerSystem::run_expired_timers()
 {
+    ScopeLock l(system_lock_, "TimerSystem::run_expired_timers");
+    
+    handle_signals();
+    
     struct timeval now;    
     while (! timers_.empty()) 
     {
@@ -243,19 +236,49 @@ TimerSystem::run_expired_timers()
 
         Timer* next_timer = timers_.top();
         if (TIMEVAL_LT(now, next_timer->when_)) {
-            // make sure timers not too far behind
-            struct timeval absolute_diff;
-            TIMEVAL_DIFF(now, next_timer->when_, absolute_diff);
-            ASSERT(absolute_diff.tv_sec <= 2);
-
             int diff_ms = TIMEVAL_DIFF_MSEC(next_timer->when_, now);
-            log_debug("new timeout %d", diff_ms);
-            return diff_ms;
+            ASSERT(diff_ms >= 0);
+            
+            // there's a chance that we're within a millisecond of the
+            // time to pop, but still not at the right time. in this
+            // case case we don't return 0, but fall through to pop
+            // the timer
+            if (diff_ms != 0) {
+                log_debug("new timeout %d", diff_ms);
+                return diff_ms;
+            } else {
+                log_debug("sub-millisecond difference found, falling through");
+            }
         }
         pop_timer(now);
     }
 
     return -1;
 }
+
+//----------------------------------------------------------------------
+void
+TimerThread::run()
+{
+    TimerSystem* sys = TimerSystem::instance();
+    while (true) 
+    {
+        int timeout = sys->run_expired_timers();
+        sys->notifier()->wait(NULL, timeout);
+    }
+
+    NOTREACHED;
+}
+
+//----------------------------------------------------------------------
+void
+TimerThread::init()
+{
+    ASSERT(instance_ == NULL);
+    instance_ = new TimerThread();
+    instance_->start();
+}
+
+TimerThread* TimerThread::instance_ = NULL;
 
 } // namespace oasys
