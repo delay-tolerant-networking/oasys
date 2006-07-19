@@ -103,7 +103,7 @@ DECLARE_TEST(PushPop10000) {
     return push_pop_test(10000);
 }
 
-DECLARE_TEST(DelayedPop) {
+DECLARE_TEST(FullPipe) {
     MsgQueue<int> q("/test/queue");
 
     // fill up the pipe
@@ -137,11 +137,30 @@ DECLARE_TEST(DelayedPop) {
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(NotifyWhenEmpty) {
+    MsgQueue<int> q("/test/queue");
+
+    q.notify_when_empty();
+    Producer p(&q, 1000000);
+    p.start();
+    p.join();
+    
+    Consumer c(&q, 1000000);
+    c.start();
+    c.join();
+
+    CHECK_EQUAL(c.total_, 1000000);
+    CHECK_EQUAL(p.total_, 1000000);
+
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TESTER(MsgQueueTester) {
     ADD_TEST(Init);
     ADD_TEST(PushPop1);
     ADD_TEST(PushPop10000);
-    ADD_TEST(DelayedPop);
+    ADD_TEST(FullPipe);
+    ADD_TEST(NotifyWhenEmpty);
     ADD_TEST(Fini);
 }
 

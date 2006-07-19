@@ -114,22 +114,23 @@ public:
     }
 
     /**
-     * Temporarily disable calls to notify(), so push() will simply
-     * stick messages on the queue but won't write any data to the
-     * pipe.
+     * Change the semantics of the queue such that notify() is only
+     * called if the queue is empty.
+     *
+     * This assumes that the user of the queue will completely drain
+     * it before blocking on the notifier, unlike the simple model of
+     * calling pop_blocking() each time.
      *
      * This can be used in situations where a large number of messages
      * may potentially be queued, such that calling notify() on each
-     * one might fill up the pipe. If pop_blocking() finds an empty
-     * queue, the disable_notify_ bit will be cleared before blocking
-     * in wait(), thus preserving the semantics of the notifier.
+     * one might fill up the pipe.
      */
-    void disable_notify();
+    void notify_when_empty();
 
 protected:
     SpinLock*          lock_;
     std::deque<_elt_t> queue_;
-    bool               disable_notify_;
+    bool               notify_when_empty_;
 };
 
 #include "MsgQueue.tcc"
