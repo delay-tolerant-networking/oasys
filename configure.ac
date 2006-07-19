@@ -45,6 +45,7 @@ AC_OASYS_SYSTEM_LIBRARIES
 AC_OASYS_SYSTEM_HEADERS
 AC_OASYS_SYSTEM_TYPES
 AC_OASYS_SYSTEM_FUNCTIONS
+AC_OASYS_CONFIG_ATOMIC
 
 dnl -------------------------------------------------------------------------
 dnl Dump the autoconf cache now to try to avoid redundant checks

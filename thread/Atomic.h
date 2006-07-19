@@ -50,7 +50,19 @@
  *      volatile u_int32_t value;
  * } atomic_t;
  * @endcode
+ *
+ * It is possible, however, to define atomic functions to only use a
+ * pthread mutex, in which case a single global mutex is used for
+ * atomicity guarantees.
  */
+
+#include "config.h"
+
+#ifdef OASYS_ATOMIC_NONATOMIC
+#include "Atomic-fake.h"
+#elif defined(OASYS_ATOMIC_MUTEX)
+#include "Atomic-mutex.h"
+#else
 
 #if defined(__i386__) && defined(__GNUC__)
 #include "Atomic-x86.h"
@@ -63,7 +75,9 @@
 #elif defined(__win32__)
 #include "Atomic-win32.h"
 #else
-#error "Need to define an Atomic.h variant for your architecture"
+#error "No Atomic.h variant found for this architecture... \
+        implement one or configure with --disable-atomic-asm"
 #endif
+#endif /* !OASYS_ATOMIC_NONATOMIC && !OASYS_ATOMIC_MUTEX */
 
 #endif /* _OASYS_ATOMIC_H_ */

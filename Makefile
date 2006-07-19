@@ -82,6 +82,7 @@ TCLCMD_SRCS :=					\
 	tclcmd/TclCommand.cc			\
 
 THREAD_SRCS :=					\
+	thread/Atomic-mutex.cc			\
 	thread/Mutex.cc				\
 	thread/NoLock.cc			\
 	thread/Notifier.cc			\
