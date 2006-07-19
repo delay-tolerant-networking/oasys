@@ -107,13 +107,11 @@ public:
     virtual int recvmsg(struct msghdr* msg, int flags);
 
     //@}
-    
-    /**
-     * @brief Try to receive messages on binded port, but don't 
-     * block for more than the timeout milliseconds.
-     *
-     * @return 0 on timeout, 1 on success, -1 on error
-     */
+
+    /// In case connect() was called on a nonblocking socket and
+    /// returned EINPROGRESS, this fn returns the errno result of the
+    /// connect attempt. It also sets the socket state appropriately
+    int async_connect_result();
     
     /// Wrapper around poll() for this socket's fd
     virtual int poll_sockfd(int events, int* revents, int timeout_ms);

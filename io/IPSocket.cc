@@ -201,6 +201,26 @@ IPSocket::connect()
 }
 
 int
+IPSocket::async_connect_result()
+{
+    ASSERT(state_ == CONNECTING);
+
+    int result;
+    socklen_t len = sizeof(result);
+    logf(LOG_DEBUG, "getting connect result");
+    if (::getsockopt(fd_, SOL_SOCKET, SO_ERROR, &result, &len) != 0) {
+        logf(LOG_ERR, "error getting connect result: %s", strerror(errno));
+        return errno;
+    }
+
+    if (result == 0) {
+        state_ = ESTABLISHED;
+    }
+
+    return result;
+}
+
+int
 IPSocket::connect(in_addr_t remote_addr, u_int16_t remote_port)
 {
     remote_addr_ = remote_addr;
