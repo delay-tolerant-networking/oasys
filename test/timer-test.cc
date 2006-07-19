@@ -45,6 +45,18 @@
 
 using namespace oasys;
 
+class OneShotTimer : public Timer {
+public:
+    OneShotTimer() : fired_(false) {}
+    void timeout(const struct timeval& now) {
+        log_notice("/timer/oneshot", "fired at %ld.%ld",
+                   (long unsigned int)now.tv_sec,
+                   (long unsigned int)now.tv_usec);
+        fired_ = true;
+    }
+    bool fired_;
+};
+
 class PeriodicTimer : public Timer {
   public:
     PeriodicTimer(const char* name) {
@@ -106,7 +118,13 @@ public:
 };
 
 DECLARE_TEST(Init) {
+    OneShotTimer startup;
     TimerThread::init();
+    startup.schedule_in(10);
+    while (! startup.fired_) {
+        usleep(100);
+    }
+    
     return UNIT_TEST_PASSED;
 }
 
@@ -169,7 +187,7 @@ DECLARE_TEST(Simultaneous) {
 
 DECLARE_TEST(Many) {
     std::vector<PeriodicTimer*> timers;
-    int n = 10000;
+    int n = 1000;
     for (int i = 0; i < n; ++i) {
         timers.push_back(new TenSecondTimer());
     }
