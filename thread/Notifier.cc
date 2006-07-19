@@ -102,7 +102,9 @@ Notifier::drain_pipe(size_t bytes)
         if (!quiet_) {
             log_debug("drain_pipe: attempting to drain %zu bytes", bytes);
         }
-        ret = IO::read(read_fd(), buf, 
+
+        ret = IO::read(read_fd(), buf,
+                       (bytes == 0) ? sizeof(buf) :
                        std::min(sizeof(buf), bytes - bytes_drained));
         if (ret <= 0) {
             if (ret == IOAGAIN) {
@@ -123,8 +125,8 @@ Notifier::drain_pipe(size_t bytes)
                       bytes_drained, bytes);
         }
         count_ -= ret;
-
-        if (bytes != 0 && bytes_drained == bytes) {
+        
+        if (bytes == 0 || bytes_drained == bytes) {
             break;
         }
         
