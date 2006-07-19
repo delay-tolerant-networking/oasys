@@ -222,9 +222,10 @@ Thread::join()
     ASSERT(ret != WAIT_FAILED);
 #else
     void* ignored;
-    if (pthread_join(thread_id_, &ignored) != 0) 
+    int err;
+    if ((err = pthread_join(thread_id_, &ignored)) != 0) 
     {
-        PANIC("error in thread_id_join");
+        PANIC("error in pthread_join: %s", strerror(err));
     }
 #endif
 }
@@ -238,7 +239,7 @@ Thread::kill(int sig)
     NOTIMPLEMENTED;
 #else
     if (pthread_kill(thread_id_, sig) != 0) {
-        PANIC("error in thread_id_kill: %s", strerror(errno));
+        PANIC("error in pthread_kill: %s", strerror(errno));
     }
 #endif
 }
