@@ -271,7 +271,7 @@ cpps: $(CPPS)
 # build tests
 .PHONY: test tests
 TESTS := $(patsubst %,test/%,$(TESTS))
-test tests: all $(TESTS)
+test tests: all testfiles $(TESTS)
 
 # run tests
 .PHONY: check
