@@ -25,8 +25,8 @@ run_and_wait() {
 
     timeout=600
     while [ 1 ]; do
-       ps -h $pid > /dev/null 2>&1
-       [ $? = 1 ] && break
+       JOBS=`jobs | grep -v Done`
+       [ -z "$JOBS" ] && break
        sleep 1
 
        timeout=$((timeout - 1))
