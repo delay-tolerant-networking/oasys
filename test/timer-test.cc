@@ -54,7 +54,7 @@ public:
                    (long unsigned int)now.tv_usec);
         fired_ = true;
     }
-    bool fired_;
+    volatile bool fired_;
 };
 
 class PeriodicTimer : public Timer {
@@ -119,6 +119,7 @@ public:
 
 DECLARE_TEST(Init) {
     OneShotTimer startup;
+    TimerSystem::create();
     TimerThread::init();
     startup.schedule_in(10);
     while (! startup.fired_) {
