@@ -42,16 +42,8 @@ using namespace oasys;
 using namespace std;
 using namespace _std;
 
-struct BogusStringHash {
-    size_t operator()(const std::string& str) const
-    {
-        return _std::__stl_hash_string(str.data());
-    }
-};
-
 typedef StringHashSet TestHashSet;
 typedef StringHashMap<int> TestHashMap;
-typedef hash_map<string, int, BogusStringHash, StringEquals> BadHashMap;
 
 DECLARE_TEST(HashSetSmokeTest) {
     TestHashSet s;
@@ -112,51 +104,9 @@ DECLARE_TEST(HashMapSmokeTest) {
     return UNIT_TEST_PASSED;
 }
 
-DECLARE_TEST(NullTerminationTest) {
-    TestHashMap m;
-
-    char buf[256];
-    strcpy(buf, "abcdef");
-    std::string str(buf);
-    size_t end = str.find('e');
-    std::string key(str, 0, end);
-
-    m["abcd"] = 1;
-    key[4] = 'x';
-    CHECK(m.find(key) != m.end());
-    return UNIT_TEST_PASSED;
-}
-
-// This test case uses the BadHashMap which has an old bug in the
-// implementation of StringHash that uses string::data() instead of
-// string::c_str()
-DECLARE_TEST(NullTerminationTestBug) {
-    BadHashMap bm;
-
-    char buf[256];
-    strcpy(buf, "abcdef");
-    std::string str(buf);
-    size_t end = str.find('e');
-    std::string key(str, 0, end);
-    
-    // this elucidates the bug by scribbling on the null character and
-    // some others that follow the actual string data
-    bm["abcd"] = 1;
-    for (int i = 4; i < 10; ++i) {
-        ((char*)key.data())[i] = 'x';
-    }
-    CHECK(bm.find("abcd") != bm.end());
-    CHECK(bm.find(key) == bm.end());
-    CHECK(bm.find(key.c_str()) != bm.end());
-
-    return UNIT_TEST_PASSED;
-}
-
 DECLARE_TESTER(Test) {    
     ADD_TEST(HashSetSmokeTest);
     ADD_TEST(HashMapSmokeTest);
-    ADD_TEST(NullTerminationTest);
-    ADD_TEST(NullTerminationTestBug);
 }
 
 DECLARE_TEST_FILE(Test, "string hash set/map test");
