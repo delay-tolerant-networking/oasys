@@ -80,8 +80,7 @@ test/stack-trace-test: test/stack-trace-test.cc liboasys.a
 # special rules for the smtp support scripts used in cases where
 # the build directory is not the source directory
 #
-testfiles: $(TESTFILES)
-TESTFILES := \
+TESTFILES += \
 	smtp-test-send.py \
 	smtp-test-send.tcl
 

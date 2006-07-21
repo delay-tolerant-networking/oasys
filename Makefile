@@ -269,9 +269,10 @@ liboasyscompat.a: $(COMPAT_OBJS)
 cpps: $(CPPS)
 
 # build tests
-.PHONY: test tests
+.PHONY: test tests testfiles
 TESTS := $(patsubst %,test/%,$(TESTS))
-test tests: all testfiles $(TESTS)
+TESTFILES := $(patsubst %,test/%,$(TESTFILES))
+test tests: all $(TESTS) $(TESTFILES)
 
 # run tests
 .PHONY: check
