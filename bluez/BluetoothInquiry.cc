@@ -182,6 +182,8 @@ int
 BluetoothInquiry::next(BluetoothInquiryInfo& bii)
 {
     char buff[18];
+    (void)buff;
+
     ASSERT( info_ != NULL );
     if(pos_ >= num_responses_i_)
     {
