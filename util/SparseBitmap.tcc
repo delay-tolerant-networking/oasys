@@ -223,6 +223,41 @@ SparseBitmap<_inttype_t>::num_set()
 
 //----------------------------------------------------------------------
 template <typename _inttype_t>
+int
+SparseBitmap<_inttype_t>::format(char* bp, size_t buflen) const
+{
+    size_t len = 0;
+    size_t ret;
+
+    ret = snprintf(bp, buflen, "[ ");
+    buflen = (ret < buflen) ? (buflen - ret) : 0;
+    bp     += ret;
+    len    += ret;
+
+    typename RangeVector::const_iterator i;
+    for (i = this->bitmap_.begin(); i != this->bitmap_.end(); ++i) {
+        if (i->start_ == i->end_) {
+            ret = snprintf(bp, buflen, "%ld ", (long int)i->start_);
+        } else {
+            ret = snprintf(bp, buflen, "%ld..%ld ",
+                           (long int)i->start_, (long int)i->end_);
+        }
+        
+        buflen = (ret < buflen) ? (buflen - ret) : 0;
+        bp     += ret;
+        len    += ret;
+    }
+    
+    ret = snprintf(bp, buflen, "]");
+    buflen = (ret < buflen) ? (buflen - ret) : 0;
+    bp     += ret;
+    len    += ret;
+
+    return len;
+}
+
+//----------------------------------------------------------------------
+template <typename _inttype_t>
 void
 SparseBitmap<_inttype_t>::validate()
 {

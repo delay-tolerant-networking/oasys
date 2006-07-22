@@ -41,6 +41,7 @@
 #include <vector>
 #include "config.h"
 #include "../debug/DebugUtils.h"
+#include "../debug/Formatter.h"
 
 namespace oasys {
 
@@ -54,7 +55,7 @@ namespace oasys {
  * must always be greater than start.
  */
 template <typename _inttype_t>
-class SparseBitmap {
+class SparseBitmap : public Formatter {
 public:
     /**
      * Constructor.
@@ -109,6 +110,11 @@ public:
      * range.
      */
     _inttype_t num_contiguous();
+
+    /**
+     * Virtual from Formatter.
+     */
+    int format(char* bp, size_t len) const;
 
 protected:
     struct Range {

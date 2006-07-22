@@ -40,6 +40,7 @@
 #include "util/UnitTest.h"
 
 using namespace oasys;
+char buf[1024];
 
 DECLARE_TEST(Extend) {
     SparseBitmap<int> b;
@@ -52,6 +53,8 @@ DECLARE_TEST(Extend) {
     CHECK(!b.is_set(-1));
     CHECK(!b.is_set(0));
     CHECK(!b.is_set(1));
+    DO(b.format(buf, sizeof(buf)));
+    CHECK_EQUALSTR(buf, "[ ]");
 
     DO(b.set(0));
     CHECK(!b.is_set(-1));
@@ -60,6 +63,8 @@ DECLARE_TEST(Extend) {
     CHECK_EQUAL(b.num_contiguous(), 1);
     CHECK_EQUAL(b.num_entries(), 1);
     CHECK_EQUAL(b.num_set(), 1);
+    DO(b.format(buf, sizeof(buf)));
+    CHECK_EQUALSTR(buf, "[ 0 ]");
 
     DO(b.set(0, 3));
     CHECK(!b.is_set(-1));
@@ -71,6 +76,8 @@ DECLARE_TEST(Extend) {
     CHECK_EQUAL(b.num_entries(), 1);
     CHECK_EQUAL(b.num_contiguous(), 3);
     CHECK_EQUAL(b.num_set(), 3);
+    DO(b.format(buf, sizeof(buf)));
+    CHECK_EQUALSTR(buf, "[ 0..2 ]");
 
     DO(b.set(-10, 21));
     CHECK(b.is_set(-10, 21));
@@ -81,17 +88,23 @@ DECLARE_TEST(Extend) {
     CHECK_EQUAL(b.num_entries(), 1);
     CHECK_EQUAL(b.num_contiguous(), 21);
     CHECK_EQUAL(b.num_set(), 21);
+    DO(b.format(buf, sizeof(buf)));
+    CHECK_EQUALSTR(buf, "[ -10..10 ]");
 
     DO(b.set(0));
     CHECK(b.is_set(-10, 21));
     CHECK_EQUAL(b.num_entries(), 1);
     CHECK_EQUAL(b.num_contiguous(), 21);
     CHECK_EQUAL(b.num_set(), 21);
+    DO(b.format(buf, sizeof(buf)));
+    CHECK_EQUALSTR(buf, "[ -10..10 ]");
 
     DO(b.set(-10, 21));
     CHECK(b.is_set(-10, 21));
     CHECK_EQUAL(b.num_entries(), 1);
     CHECK_EQUAL(b.num_contiguous(), 21);
+    DO(b.format(buf, sizeof(buf)));
+    CHECK_EQUALSTR(buf, "[ -10..10 ]");
     CHECK_EQUAL(b.num_set(), 21);
 
     DO(b.clear());
@@ -99,16 +112,27 @@ DECLARE_TEST(Extend) {
     DO(b.set(2));
     CHECK_EQUAL(b.num_entries(), 1);
     CHECK_EQUAL(b.num_contiguous(), 2);
+    DO(b.format(buf, sizeof(buf)));
+    CHECK_EQUALSTR(buf, "[ 1..2 ]");
+    
     DO(b.set(0));
     CHECK_EQUAL(b.num_entries(), 1);
     CHECK_EQUAL(b.num_contiguous(), 3);
+    DO(b.format(buf, sizeof(buf)));
+    CHECK_EQUALSTR(buf, "[ 0..2 ]");
+    
     DO(b.set(3, 3));
     CHECK_EQUAL(b.num_entries(), 1);
     CHECK_EQUAL(b.num_contiguous(), 6);
+    DO(b.format(buf, sizeof(buf)));
+    CHECK_EQUALSTR(buf, "[ 0..5 ]");
+    
     DO(b.set(-3, 3));
     CHECK_EQUAL(b.num_entries(), 1);
     CHECK_EQUAL(b.num_contiguous(), 9);
     CHECK(b.is_set(-3, 9));
+    DO(b.format(buf, sizeof(buf)));
+    CHECK_EQUALSTR(buf, "[ -3..5 ]");
     
     return UNIT_TEST_PASSED;
 }
@@ -124,6 +148,8 @@ DECLARE_TEST(Sparse) {
     CHECK_EQUAL(b.num_entries(), 2);
     CHECK_EQUAL(b.num_contiguous(), 1);
     CHECK_EQUAL(b.num_set(), 2);
+    DO(b.format(buf, sizeof(buf)));
+    CHECK_EQUALSTR(buf, "[ 0 2 ]");
 
     DO(b.set(-2));
     DO(b.set(4));
@@ -137,11 +163,15 @@ DECLARE_TEST(Sparse) {
     CHECK_EQUAL(b.num_entries(), 4);
     CHECK_EQUAL(b.num_contiguous(), 1);
     CHECK_EQUAL(b.num_set(), 4);
+    DO(b.format(buf, sizeof(buf)));
+    CHECK_EQUALSTR(buf, "[ -2 0 2 4 ]");
 
     DO(b.set(-10, 4));
     CHECK_EQUAL(b.num_entries(), 5);
     CHECK_EQUAL(b.num_contiguous(), 4);
     CHECK_EQUAL(b.num_set(), 8);
+    DO(b.format(buf, sizeof(buf)));
+    CHECK_EQUALSTR(buf, "[ -10..-7 -2 0 2 4 ]");
     
     return UNIT_TEST_PASSED;
 }
