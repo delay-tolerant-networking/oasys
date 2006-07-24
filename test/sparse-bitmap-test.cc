@@ -261,6 +261,23 @@ DECLARE_TEST(Compact) {
     CHECK_EQUAL(b.num_contiguous(), 9);
     CHECK_EQUAL(b.num_entries(), 1);
     CHECK_EQUAL(b.num_set(), 9);
+
+    DO(b.clear());
+    DO(b.set(0));
+    DO(b.set(10));
+    DO(b.set(0, 10));
+    CHECK_EQUAL(b.num_entries(), 1);
+    CHECK_EQUAL(b.num_contiguous(), 11);
+    DO(b.format(buf, sizeof(buf)));
+    CHECK_EQUALSTR(buf, "[ 0..10 ]");
+    
+    DO(b.clear());
+    DO(b.set(10));
+    DO(b.set(5, 5));
+    CHECK_EQUAL(b.num_entries(), 1);
+    CHECK_EQUAL(b.num_contiguous(), 6);
+    DO(b.format(buf, sizeof(buf)));
+    CHECK_EQUALSTR(buf, "[ 5..10 ]");
     
     return UNIT_TEST_PASSED;
 }

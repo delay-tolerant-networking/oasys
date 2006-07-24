@@ -103,7 +103,7 @@ SparseBitmap<_inttype_t>::set(_inttype_t start, _inttype_t len)
     
     j = i + 1;
     while (j != this->bitmap_.end()) {
-        if (i->end_ >= j->start_) {            
+        if (i->end_ >= (j->start_ - 1)) {
             if (i->end_ < j->end_)
                 i->end_ = j->end_;
             
@@ -118,7 +118,7 @@ SparseBitmap<_inttype_t>::set(_inttype_t start, _inttype_t len)
     while (i != this->bitmap_.begin()) {
         j = i - 1;
         
-        if (j->end_ >= i->start_) {
+        if (j->end_ >= (i->start_ - 1)) {
             if (i->start_ > j->start_) {
                 i->start_ = j->start_;
             }
