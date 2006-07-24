@@ -43,6 +43,7 @@
 size_t
 StackTrace::get_trace(void* stack[], size_t size, u_int sighandler_frame)
 {
+    (void)sighandler_frame;
     memset(&stack, 0, size * sizeof(void*));
     return 0;
 }
