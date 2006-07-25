@@ -39,6 +39,7 @@
 
 namespace oasys {
 
+//----------------------------------------------------------------------
 OptParser::~OptParser()
 {
     for (u_int i = 0; i < allopts_.size(); ++i)
@@ -48,12 +49,14 @@ OptParser::~OptParser()
     allopts_.clear();
 }
 
+//----------------------------------------------------------------------
 void
 OptParser::addopt(Opt* opt)
 {
     allopts_.push_back(opt);
 }
 
+//----------------------------------------------------------------------
 bool
 OptParser::parse_opt(const char* opt_str, size_t len, bool* invalid_value)
 {
@@ -109,6 +112,7 @@ OptParser::parse_opt(const char* opt_str, size_t len, bool* invalid_value)
     return false; // no matching option
 }
 
+//----------------------------------------------------------------------
 bool
 OptParser::parse(const char* args, const char** invalidp)
 {
@@ -133,6 +137,7 @@ OptParser::parse(const char* args, const char** invalidp)
     }
 }
 
+//----------------------------------------------------------------------
 bool
 OptParser::parse(int argc, const char* const argv[], const char** invalidp)
 {
@@ -146,7 +151,7 @@ OptParser::parse(int argc, const char* const argv[], const char** invalidp)
     return true;
 }
 
-
+//----------------------------------------------------------------------
 int
 OptParser::parse_and_shift(int argc, const char* argv[], const char** invalidp)
 {
@@ -175,6 +180,7 @@ OptParser::parse_and_shift(int argc, const char* argv[], const char** invalidp)
     return valid_count;
 }
 
+//----------------------------------------------------------------------
 bool
 OptParser::parse(const std::vector<std::string>& args,
                  const char** invalidp)
