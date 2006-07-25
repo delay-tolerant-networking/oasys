@@ -61,6 +61,9 @@ template<typename _Class, bool _auto_create = true>
 class Singleton {
 public:
     static _Class* instance() {
+        // XXX/demmer this has potential race conditions if multiple
+        // threads try to access the singleton for the first time
+        
         if(_auto_create && instance_ == 0) {
             instance_ = new _Class();
         }
