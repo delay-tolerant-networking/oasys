@@ -35,6 +35,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <config.h>
+#ifdef OASYS_BLUETOOTH_ENABLED
+#include <bluetooth/bluetooth.h>
+#include "bluez/Bluetooth.h"
+#endif // OASYS_BLUETOOTH_ENABLED
+
 #include <stdio.h>
 #include <unistd.h>
 
@@ -210,6 +217,42 @@ UInt16Opt::set(const char* val, size_t len)
 }
 
 //----------------------------------------------------------------------
+UInt8Opt::UInt8Opt(const char* opt, u_int8_t* valp,
+                   const char* valdesc, const char* desc, bool* setp)
+    : Opt(0, opt, valp, setp, true, valdesc, desc)
+{
+}
+
+//----------------------------------------------------------------------
+UInt8Opt::UInt8Opt(char shortopt, const char* longopt, u_int8_t* valp,
+                   const char* valdesc, const char* desc, bool* setp)
+    : Opt(shortopt, longopt, valp, setp, true, valdesc, desc)
+{
+}
+
+//----------------------------------------------------------------------
+int
+UInt8Opt::set(const char* val, size_t len)
+{
+    u_int newval;
+    char* endptr = 0;
+
+    newval = strtoul(val, &endptr, 0);
+    if (endptr != (val + len))
+        return -1;
+
+    if (newval > 65535)
+        return -1;
+
+    *((u_int8_t*)valp_) = (u_int8_t)newval;
+
+    if (setp_)
+        *setp_ = true;
+
+    return 0;
+}
+
+//----------------------------------------------------------------------
 DoubleOpt::DoubleOpt(const char* opt, double* valp,
                      const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)
@@ -377,5 +420,41 @@ EnumOpt::set(const char* val, size_t len)
     
     return -1;
 }
+
+#ifdef OASYS_BLUETOOTH_ENABLED
+//----------------------------------------------------------------------
+BdAddrOpt::BdAddrOpt(const char* opt, bdaddr_t* valp,
+                     const char* valdesc, const char* desc, bool* setp)
+    : Opt(0, opt, valp, setp, true, valdesc, desc)
+{
+}
+
+//----------------------------------------------------------------------
+BdAddrOpt::BdAddrOpt(char shortopt, const char* longopt, bdaddr_t* valp,
+                     const char* valdesc, const char* desc, bool* setp)
+    : Opt(shortopt, longopt, valp, setp, true, valdesc, desc)
+{
+}
+
+//----------------------------------------------------------------------
+int
+BdAddrOpt::set(const char* val, size_t len)
+{
+    bdaddr_t newval;
+    (void)len;
+
+    /* returns NULL on failure */
+    if (Bluetooth::strtoba(val, &newval) == 0) {
+        return -1;
+    }
+
+    *((bdaddr_t*)valp_) = newval;
+
+    if (setp_)
+        *setp_ = true;
+
+    return 0;
+}
+#endif // OASYS_BLUETOOTH_ENABLED
 
 } // namespace oasys

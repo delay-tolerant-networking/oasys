@@ -38,6 +38,7 @@
 #ifndef _OASYS_OPTIONS_H_
 #define _OASYS_OPTIONS_H_
 
+#include <config.h>
 #include <string>
 #include <vector>
 #include "../compat/inet_aton.h"
@@ -229,6 +230,45 @@ public:
     
 protected:
     int set(const char* val, size_t len);
+};
+
+/**
+ * Unsigned byte option class.
+ */
+class UInt8Opt : public Opt {
+public:
+   /**
+    * Basic constructor.
+    *
+    * @param opt     the option string
+    * @param valp    pointer to the value
+    * @param valdesc short description for the value
+    * @param desc    descriptive string
+    * @param setp    optional pointer to indicate whether or not
+                     the option was set
+    */
+    UInt8Opt(const char* opt, u_int8_t* valp,
+             const char* valdesc = "", const char* desc = "",
+             bool* setp = NULL);
+
+    /**
+     * Alternative constructor with both short and long options,
+     * suitable for getopt calls.
+     *
+     * @param shortopt  short option character
+     * @param longopt   long option string
+     * @param valp      pointer to the value
+     * @param valdesc   short description for the value
+     * @param desc      descriptive string
+     * @param setp      optional pointer to indicate whether or not
+                        the option was set
+     */
+    UInt8Opt(char shortopt, const char* longopt, u_int8_t* valp,
+             const char* valdesc = "", const char* desc = "",
+             bool* setp = NULL);
+
+    protected:
+        int set(const char* val, size_t len);
 };
 
 /**
@@ -443,6 +483,48 @@ protected:
     int set(const char* val, size_t len);
     Case* cases_;
 };
+
+#ifdef OASYS_BLUETOOTH_ENABLED
+#include <bluetooth/bluetooth.h>
+/**
+ * Bluetooth address (colon-separated hex) option class.
+ */
+class BdAddrOpt : public Opt {
+public:
+   /**
+    * Basic constructor.
+    *
+    * @param opt     the option string
+    * @param valp    pointer to the value
+    * @param valdesc short description for the value
+    * @param desc    descriptive string
+    * @param setp    optional pointer to indicate whether or not
+                     the option was set
+    */
+    BdAddrOpt(const char* opt, bdaddr_t* valp,
+              const char* valdesc = "", const char* desc = "",
+              bool* setp = NULL);
+
+   /**
+    * Alternative constructor with both short and long options,
+    * suitable for getopt calls.
+    *
+    * @param shortopt  short option character
+    * @param longopt   long option string
+    * @param valp      pointer to the value
+    * @param valdesc   short description for the value
+    * @param desc      descriptive string
+    * @param setp      optional pointer to indicate whether or not 
+                       the option was set
+    */
+    BdAddrOpt(char shortopt, const char* longopt, bdaddr_t* valp,
+              const char* valdesc = "", const char* desc = "",
+              bool* setp = NULL);
+
+protected:
+    int set(const char* val, size_t len);
+};
+#endif // OASYS_BLUETOOTH_ENABLED
 
 } // namespace oasys
 
