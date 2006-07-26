@@ -187,10 +187,16 @@ DECLARE_TEST(Simultaneous) {
 }
 
 DECLARE_TEST(Many) {
-    std::vector<PeriodicTimer*> timers;
+    std::vector<OneShotTimer*> timers;
     int n = 1000;
-    for (int i = 0; i < n; ++i) {
-        timers.push_back(new TenSecondTimer());
+    for (int i = 0; i < (n / 100); ++i) {
+        // do 100 at a time, waiting 1 second between batches
+        for (int j = 0; j < 100; ++j) {
+            OneShotTimer* t = new OneShotTimer();
+            t->schedule_in(10000);
+            timers.push_back(t);
+        }
+        sleep(1);
     }
 
     sleep(15);
@@ -198,9 +204,8 @@ DECLARE_TEST(Many) {
     for (int i = 0; i < n; ++i) {
         timers[i]->cancel();
 
-        if (timers[i]->count_ != 1) {
-            log_err("/test", "timer %d fired %d times (expected 1)",
-                    i, timers[i]->count_);
+        if (! timers[i]->fired_) {
+            log_err("/test", "timer %d never fired!!", i);
         }
     }
 
