@@ -47,13 +47,17 @@ using namespace oasys;
 
 class OneShotTimer : public Timer {
 public:
-    OneShotTimer() : fired_(false) {}
+    OneShotTimer(bool quiet = false) : quiet_(quiet), fired_(false) {}
     void timeout(const struct timeval& now) {
-        log_notice("/timer/oneshot", "fired at %ld.%ld",
-                   (long unsigned int)now.tv_sec,
-                   (long unsigned int)now.tv_usec);
+        if (! quiet_) {
+            log_notice("/timer/oneshot", "fired at %ld.%ld",
+                       (long unsigned int)now.tv_sec,
+                       (long unsigned int)now.tv_usec);
+        }
+        
         fired_ = true;
     }
+    bool quiet_;
     volatile bool fired_;
 };
 
@@ -188,16 +192,19 @@ DECLARE_TEST(Simultaneous) {
 
 DECLARE_TEST(Many) {
     std::vector<OneShotTimer*> timers;
-    int n = 1000;
-    for (int i = 0; i < (n / 100); ++i) {
-        // do 100 at a time, waiting 1 second between batches
-        for (int j = 0; j < 100; ++j) {
-            OneShotTimer* t = new OneShotTimer();
+    int n = 500;
+    int m = 50;
+    log_notice("/test", "posting %d timers (in batches of %d)", n, m);
+    for (int i = 0; i < (n / m); ++i) {
+        // do 50 at a time, waiting 1 second between batches
+        for (int j = 0; j < m; ++j) {
+            OneShotTimer* t = new OneShotTimer((j != 0) ? true : false);
             t->schedule_in(10000);
             timers.push_back(t);
         }
         sleep(1);
     }
+    log_notice("/test", "waiting for timers to fire (1st of each batch will log)");
 
     sleep(15);
 
