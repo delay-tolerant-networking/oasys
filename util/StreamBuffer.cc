@@ -148,9 +148,6 @@ StreamBuffer::tailbytes()
 void
 StreamBuffer::realloc(size_t size)
 {
-    if(size < size_)
-        return;
-
     buf_ = (char*)::realloc(buf_, size);
     if(buf_ == 0)
     {
