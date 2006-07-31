@@ -319,12 +319,12 @@ proc run {id exec_file exec_opts confname conf exec_env} {
     
     switch "[net::is_localhost $hostname] $opt(xterm)" {
 	"1 1" {
-	    set cmd "xterm -title \"$hostname-$id\" $geometry \
+	    set cmd "xterm -title \"$hostname-$id $exec_file\" $geometry \
 		    -e $script"
 	    set run::xterm($id) 1
 	}
 	"0 1" {
-	    set cmd "xterm -title \"$hostname - $id\" $geometry \
+	    set cmd "xterm -title \"$hostname-$id $exec_file\" $geometry \
 		    -e ssh -t $hostname $script"
 	    set run::xterm($id) 1
 	}
