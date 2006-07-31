@@ -183,16 +183,18 @@ IPSocket::connect()
     set_state(CONNECTING);
 
     if (::connect(fd_, (struct sockaddr*)&sa, sizeof(sa)) < 0) {
-	if (EISCONN == errno)
-            logf(LOG_ERR, "already connected to %s:%d:",
-                 intoa(remote_addr_), remote_port_);
-        else {
-	    if (errno != EINPROGRESS) {
-		logf(LOG_ERR, "error connecting to %s:%d: %s",
-		     intoa(remote_addr_), remote_port_, strerror(errno));
-	    }
-	    return -1;
-	}
+	if (errno == EISCONN)
+            log_debug("already connected to %s:%d",
+                      intoa(remote_addr_), remote_port_);
+        else if (errno == EINPROGRESS) {
+            log_debug("delayed connect to %s:%d (EINPROGRESS)",
+                      intoa(remote_addr_), remote_port_);
+        } else {
+            log_debug("error connecting to %s:%d: %s",
+                      intoa(remote_addr_), remote_port_, strerror(errno));
+        }
+        
+        return -1;
     }
 
     set_state(ESTABLISHED);
@@ -404,7 +406,7 @@ IPSocket::recvfrom(char* bp, size_t len, int flags,
     
     if (cc < 0) {
         if (cc != IOINTR)
-            logf(LOG_ERR, "error in recv(): %s", strerror(errno));
+            logf(LOG_ERR, "error in recvfrom(): %s", strerror(errno));
         return cc;
     }
 
