@@ -53,7 +53,11 @@
 #include "Notifier.h"
 #include "Thread.h"
 
+#ifdef __FreeBSD__
+typedef RETSIGTYPE (__sighandler_t) (int);
+#else
 typedef RETSIGTYPE (*__sighandler_t) (int);
+#endif
 
 namespace oasys {
 
@@ -142,7 +146,11 @@ private:
 
     //! KNOWN ISSUE: Signal handling has race conditions - but it's
     //! not worth the trouble to fix.
+#ifdef __FreeBSD__
+    __sighandler_t* handlers_[NSIG];	///< handlers for signals
+#else
     __sighandler_t handlers_[NSIG];	///< handlers for signals
+#endif
     bool 	   signals_[NSIG];	///< which signals have fired
     bool	   sigfired_;		///< boolean to check if any fired
 
