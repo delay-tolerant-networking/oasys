@@ -289,7 +289,7 @@ protected:
      * Wrapper function to handle initialization and cleanup of the
      * thread. Runs in the context of the newly created thread.
      */
-    void thread_run(ThreadId_t thread_id);
+    void thread_run(const char* thread_name, ThreadId_t thread_id);
 
     /**
      * Derived classes should implement this function which will get

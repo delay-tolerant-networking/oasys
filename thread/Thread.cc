@@ -289,7 +289,7 @@ Thread::pre_thread_run(void* t)
 #endif
 
     ThreadId_t thread_id = Thread::current();
-    thr->thread_run(thread_id);
+    thr->thread_run(thr->name_, thread_id);
 
     return 0;
 }
@@ -303,8 +303,15 @@ Thread::interrupt_signal(int sig)
 
 //----------------------------------------------------------------------------
 void
-Thread::thread_run(ThreadId_t thread_id)
+Thread::thread_run(const char* thread_name, ThreadId_t thread_id)
 {
+    /*
+     * The only reason we pass the name to thread_run is to make it
+     * appear in the gdb backtrace to more easily identify the actual
+     * thread.
+     */
+    (void)thread_name;
+    
 #if GOOGLE_PROFILE_ENABLED
     ProfilerRegisterThread();
 #endif
