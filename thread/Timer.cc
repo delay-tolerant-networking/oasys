@@ -156,7 +156,7 @@ TimerSystem::post_signal(int sig)
 
 //----------------------------------------------------------------------
 void
-TimerSystem::add_sighandler(int sig, __sighandler_t handler)
+TimerSystem::add_sighandler(int sig, sighandlerfn_t* handler)
 {
     log_debug("adding signal handler 0x%x for signal %d",
               (u_int)handler, sig);

@@ -53,11 +53,13 @@
 #include "Notifier.h"
 #include "Thread.h"
 
-#ifdef __FreeBSD__
-typedef RETSIGTYPE (__sighandler_t) (int);
-#else
-typedef RETSIGTYPE (*__sighandler_t) (int);
-#endif
+/**
+ * Typedef for a signal handler function. On some (but not all)
+ * systems, there is a system-provided __sighandler_t typedef that is
+ * equivalent, but in other cases __sighandler_t is a function pointer
+ * (not a function).
+ */
+typedef RETSIGTYPE (sighandlerfn_t) (int);
 
 namespace oasys {
 
@@ -117,7 +119,7 @@ public:
     /**
      * Hook to use the timer thread to safely handle a signal.
      */
-    void add_sighandler(int sig, __sighandler_t handler);
+    void add_sighandler(int sig, sighandlerfn_t* handler);
 
     /**
      * Hook called from an the actual signal handler that notifies the
@@ -146,13 +148,9 @@ private:
 
     //! KNOWN ISSUE: Signal handling has race conditions - but it's
     //! not worth the trouble to fix.
-#ifdef __FreeBSD__
-    __sighandler_t* handlers_[NSIG];	///< handlers for signals
-#else
-    __sighandler_t handlers_[NSIG];	///< handlers for signals
-#endif
-    bool 	   signals_[NSIG];	///< which signals have fired
-    bool	   sigfired_;		///< boolean to check if any fired
+    sighandlerfn_t* handlers_[NSIG];	///< handlers for signals
+    bool 	    signals_[NSIG];	///< which signals have fired
+    bool	    sigfired_;		///< boolean to check if any fired
 
     SpinLock*  system_lock_;
     Notifier   notifier_;
