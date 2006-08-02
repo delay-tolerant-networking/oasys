@@ -694,7 +694,7 @@ IO::poll_with_notifier(
                 buf.appendf("0x%hx ", poll_set[i].revents);
             }
             logf(log, LOG_DEBUG, 
-                 "poll_with_notifier: %d/%d fds ready, status %s",
+                 "poll_with_notifier: %d/%zu fds ready, status %s",
                  cc, nfds, buf.c_str());
         }
         
