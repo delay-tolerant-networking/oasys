@@ -50,7 +50,7 @@
 #include "../debug/Log.h"
 #include "../util/Singleton.h"
 #include "MsgQueue.h"
-#include "Notifier.h"
+#include "OnOffNotifier.h"
 #include "Thread.h"
 
 /**
@@ -137,7 +137,7 @@ public:
      * Accessor for the notifier that indicates if another thread put
      * a timer on the queue.
      */
-    Notifier* notifier() { return &notifier_; }
+    OnOffNotifier* notifier() { return &notifier_; }
 
 private:
     friend class Singleton<TimerSystem>;
@@ -153,7 +153,7 @@ private:
     bool	    sigfired_;		///< boolean to check if any fired
 
     SpinLock*  system_lock_;
-    Notifier   notifier_;
+    OnOffNotifier notifier_;
     TimerQueue timers_;
 
     TimerSystem();

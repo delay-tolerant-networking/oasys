@@ -98,7 +98,7 @@ TimerSystem::schedule_at(struct timeval *when, Timer* timer)
     timer->cancelled_ = 0;
     timers_.push(timer);
 
-    notifier_.notify();
+    notifier_.signal();
 }
 
 //----------------------------------------------------------------------
@@ -151,7 +151,7 @@ TimerSystem::post_signal(int sig)
     _this->sigfired_ = true;
     _this->signals_[sig] = true;
     
-    _this->notifier_.notify();
+    _this->notifier_.signal();
 }
 
 //----------------------------------------------------------------------
