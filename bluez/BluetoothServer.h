@@ -1,4 +1,3 @@
-/* $Id$ */
 #ifndef _OASYS_BT_SERVER_H_
 #define _OASYS_BT_SERVER_H_
 

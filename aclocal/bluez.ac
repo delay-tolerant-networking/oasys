@@ -1,4 +1,4 @@
-dnl $Id$
+dnl 
 dnl Autoconf support for configuring whether BlueZ bluetooth is available
 dnl on the system
 dnl
