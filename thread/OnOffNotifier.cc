@@ -101,7 +101,6 @@ OnOffNotifier::wait(Lock* lock, int timeout)
     {
         PANIC("OnOffNotifier doesn't support multiple waiting threads");
     }
-    waiter_ = true;
     if (!quiet_)
     {
         log_debug("wait() on %s notifier", active_ ? "active" : "inactive");
@@ -114,6 +113,8 @@ OnOffNotifier::wait(Lock* lock, int timeout)
     }
     else
     {
+        waiter_ = true;
+        
         notifier_lock_.unlock();
 
         if (lock) {
