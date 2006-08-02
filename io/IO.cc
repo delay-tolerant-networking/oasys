@@ -694,8 +694,8 @@ IO::poll_with_notifier(
                 buf.appendf("0x%hx ", poll_set[i].revents);
             }
             logf(log, LOG_DEBUG, 
-                 "poll_with_notifier: %d fds, status %s",
-                 cc, buf.c_str());
+                 "poll_with_notifier: %d/%d fds ready, status %s",
+                 cc, nfds, buf.c_str());
         }
         
         // Always prioritize getting data before interrupt via notifier
