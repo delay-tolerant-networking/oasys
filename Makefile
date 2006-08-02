@@ -86,6 +86,7 @@ THREAD_SRCS :=					\
 	thread/Mutex.cc				\
 	thread/NoLock.cc			\
 	thread/Notifier.cc			\
+	thread/OnOffNotifier.cc			\
 	thread/SpinLock.cc			\
 	thread/Thread.cc			\
 	thread/Timer.cc				\
