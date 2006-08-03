@@ -73,9 +73,6 @@ public:
     int try_lock(const char* lock_user);
     //! @}
 
-    /// Override to implement keep_quiet_ in a sane way
-    int logf(log_level_t level, const char *fmt, ...) PRINTFLIKE(3, 4);
-
 protected:
     pthread_mutex_t mutex_;        ///< the underlying mutex
     lock_type_t     type_;         ///< the mutex type

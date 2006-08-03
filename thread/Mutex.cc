@@ -92,7 +92,7 @@ Mutex::Mutex(const char* logbase, lock_type_t type, bool keep_quiet)
 Mutex::~Mutex()
 {
     pthread_mutex_destroy(&mutex_);
-    if (logpath_[0] != 0)
+    if ((keep_quiet_ == false) && (logpath_[0] != 0))
         log_debug("destroyed");
 }
 
@@ -107,7 +107,7 @@ Mutex::lock(const char* lock_user)
 
     ++lock_count_.value;
     
-    if (logpath_[0] != 0)
+    if ((keep_quiet_ == false) && (logpath_[0] != 0))
         log_debug("locked (count %u)", lock_count_.value);
     
     lock_holder_      = Thread::current();
@@ -132,7 +132,7 @@ Mutex::unlock()
         PANIC("error in pthread_mutex_unlock: %s", strerror(errno));
     }
 
-    if (logpath_[0] != 0)
+    if ((keep_quiet_ == false) && (logpath_[0] != 0))
         log_debug("unlocked (count %u)", lock_count_.value);
     
     return err;
@@ -144,7 +144,7 @@ Mutex::try_lock(const char* lock_user)
     int err = pthread_mutex_trylock(&mutex_);
 
     if (err == EBUSY) {
-        if (logpath_[0] != 0) {
+        if ((keep_quiet_ == false) && (logpath_[0] != 0)) {
             log_debug("try_lock busy");
         }
         return EBUSY;
@@ -153,29 +153,12 @@ Mutex::try_lock(const char* lock_user)
     }
 
     ++lock_count_.value;
-    if (logpath_[0] != 0)
+    if ((keep_quiet_ == false) && (logpath_[0] != 0))
         log_debug("try_lock locked (count %u)", lock_count_.value);
     lock_holder_      = Thread::current();
     lock_holder_name_ = lock_user;
     return err;
 }
 
-
-/**
- * Since the Log class uses a Mutex internally, calling logf from
- * within lock() / unlock() would lead to infinite recursion, hence we
- * use the keep_quiet_ flag to suppress all logging for this instance.
- */
-int
-Mutex::logf(log_level_t level, const char *fmt, ...)
-{
-    if (keep_quiet_) return 0;
-    
-    va_list ap;
-    va_start(ap, fmt);
-    int ret = vlogf(level, fmt, ap);
-    va_end(ap);
-    return ret;
-}
 
 } // namespace oasys
