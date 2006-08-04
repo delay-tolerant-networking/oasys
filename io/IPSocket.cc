@@ -216,7 +216,7 @@ IPSocket::async_connect_result()
     }
 
     if (result == 0) {
-        state_ = ESTABLISHED;
+        set_state(ESTABLISHED);
     }
 
     return result;
