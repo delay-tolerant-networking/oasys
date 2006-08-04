@@ -61,7 +61,6 @@
 #include <vector>
 
 #include "../debug/DebugUtils.h"
-#include "SafeArray.h"
 
 namespace oasys {
 
@@ -71,9 +70,12 @@ typedef DWORD     ThreadId_t;
 typedef pthread_t ThreadId_t;
 #endif
 
+class SpinLock;
+
 /**
- * Class to wrap a thread of execution using pthreads. Similar to the
- * Java API.
+ * Class to wrap a thread of execution using native system threads
+ * (i.e. pthreads on UNIX or Windows threads). Similar to the Java
+ * API.
  */
 class Thread {
 public:
@@ -107,11 +109,21 @@ public:
 #endif
 
     /**
-     * Array of all live pthread ids. Used for debugging, see
+     * Maximum number of live threads.
+     */
+    static const int max_live_threads_ = 256;
+
+    /**
+     * Array of all live threads. Used for debugging, see
      * FatalSignals.cc.
      */
-    typedef SafeArray<256, ThreadId_t> IDArray;
-    static IDArray all_thread_ids_;
+    static Thread* all_threads_[Thread::max_live_threads_];
+
+    /**
+     * Spin lock to protect the all threads array on thread startup /
+     * shutdown.
+     */
+    static SpinLock* all_threads_lock_;
 
     /**
      * Activate the thread creation barrier. No new threads will be

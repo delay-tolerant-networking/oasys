@@ -40,6 +40,7 @@
 
 #include "config.h"
 #include "Thread.h"
+#include "SpinLock.h"
 
 #include "../debug/DebugUtils.h"
 #include "../debug/Log.h"
@@ -60,7 +61,11 @@ sigset_t             Thread::interrupt_sigset_;
 
 bool                 Thread::start_barrier_enabled_ = false;
 std::vector<Thread*> Thread::threads_in_barrier_;
-Thread::IDArray      Thread::all_thread_ids_;
+
+const int	     Thread::max_live_threads_;
+Thread*              Thread::all_threads_[max_live_threads_];
+SpinLock             g_all_threads_lock_;
+SpinLock*            Thread::all_threads_lock_ = &g_all_threads_lock_;
 
 //----------------------------------------------------------------------------
 void
@@ -315,8 +320,15 @@ Thread::thread_run(const char* thread_name, ThreadId_t thread_id)
 #if GOOGLE_PROFILE_ENABLED
     ProfilerRegisterThread();
 #endif
-    
-    all_thread_ids_.insert(thread_id);
+
+    all_threads_lock_->lock("thread startup");
+    for (int i = 0; i < max_live_threads_; ++i) {
+        if (all_threads_[i] == NULL) {
+            all_threads_[i] = this;
+            break;
+        }
+    }
+    all_threads_lock_->unlock();
 
 #ifndef __win32__    
     /*
@@ -352,13 +364,20 @@ Thread::thread_run(const char* thread_name, ThreadId_t thread_id)
     }
 #endif //__win32__
 
+    all_threads_lock_->lock("thread startup");
+    for (int i = 0; i < max_live_threads_; ++i) {
+        if (all_threads_[i] == this) {
+            all_threads_[i] = NULL;
+            break;
+        }
+    }
+    all_threads_lock_->unlock();
+    
     if (flags_ & DELETE_ON_EXIT) 
     {
         delete this;
     }
 
-    all_thread_ids_.remove(thread_id_);
-    
 #ifdef __win32__
 
     // Make sure C++ cleanup is called, which does not occur if we

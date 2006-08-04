@@ -121,17 +121,21 @@ FatalSignals::handler(int sig)
         if (! in_abort_handler_) {
             in_abort_handler_ = true;
 
-            Thread::IDArray& ids = Thread::all_thread_ids_;
-            for (size_t i = 0; i < ids.size(); ++i) {
-                if (ids[i] != 0 && ids[i] != Thread::current()) {
+            Thread** ids = Thread::all_threads_;
+            for (int i = 0; i < Thread::max_live_threads_; ++i) {
+
+                if ((ids[i] != NULL) &&
+                    ids[i]->thread_id() != Thread::current())
+                {
+                    ThreadId_t thread_id = ids[i]->thread_id();
                     fprintf(stderr,
                             "fatal handler sending signal to thread %u\n",
-                            (u_int)ids[i]);
-                    pthread_kill(ids[i], sig);
+                            (u_int)thread_id);
+                    pthread_kill(thread_id, sig);
                     sleep(1);
                 }
             }
-
+            
             fprintf(stderr, "fatal handler dumping core\n");
             signal(sig, SIG_DFL);
             kill(getpid(), sig);
