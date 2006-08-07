@@ -73,10 +73,16 @@ public:
     virtual int send(const char* bp, size_t len, int flags);
     virtual int recv(char* bp, size_t len, int flags);
 
+    //@}
+
+    /// In case connect() was called on a nonblocking socket and
+    /// returned EINPROGRESS, this fn returns the errno result of the
+    /// connect attempt. It also sets the socket state appropriately
+    int async_connect_result();
+
     /// Wrapper around poll() for this socket's fd
     virtual int poll_sockfd(int events, int* revents, int timeout_ms);
 
-    //@}
 
     /// Socket State values
     enum state_t {
@@ -114,6 +120,20 @@ public:
       */
     state_t state() { return state_; }
 
+    /**
+     * Socket parameters are public fields that should be set after
+     * creating the socket but before the socket is used.
+     */
+    struct bluetooth_socket_params {
+        bluetooth_socket_params() :
+            reuseaddr_    (true),
+            recv_bufsize_ (0),
+            send_bufsize_ (0) {}
+        bool reuseaddr_;   // default: on
+        int recv_bufsize_; // default: system setting
+        int send_bufsize_; // default: system setting
+    } params_;
+
     /// The socket file descriptor
     int fd();
 
@@ -143,8 +163,8 @@ public:
 
     bool reuse_addr() { return reuse_addr_; }
     void reuse_addr(bool b) { reuse_addr_ = b; }
-protected:
     void init_socket(); 
+protected:
     void init_sa(int zero=(int)ZERO); 
     void set_state(state_t state);
     const char* statetoa(state_t state); 

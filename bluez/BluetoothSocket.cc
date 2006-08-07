@@ -72,8 +72,6 @@ BluetoothSocket::init_socket()
     ASSERT(fd_ == -1);
     state_ = INIT;
 
-    logf(LOG_DEBUG, "socket(PF_BLUETOOTH, %s, %s)",
-         socktypetoa(socktype_),prototoa((proto_t)proto_));
     fd_ = socket(PF_BLUETOOTH, socktype_, (int) proto_);
     if (fd_ == -1) {
         logf(LOG_ERR, "error creating socket: %s", strerror(errno));
@@ -92,20 +90,6 @@ BluetoothSocket::init_socket()
     configure(); 
 }
 
-void
-BluetoothSocket::configure()
-{
-    if (reuse_addr_) {
-        int y = 1;
-        logf(LOG_DEBUG, "setting SO_REUSEADDR");
-        if (::setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &y, sizeof y) != 0) {
-            logf(LOG_WARN, "error setting SO_REUSEADDR: %s",
-                 strerror(errno));
-        }
-    }
-    init_sa((int)ZERO);
-}
-
 int
 BluetoothSocket::bind(bdaddr_t local_addr, u_int8_t local_channel)
 {
@@ -115,6 +99,7 @@ BluetoothSocket::bind(bdaddr_t local_addr, u_int8_t local_channel)
     channel_ = local_channel;
 
     char buff[18];
+    if (!silent_connect_)
     logf(LOG_DEBUG, "binding to %s(%d)", Bluetooth::batostr(&local_addr,buff),
          local_channel);
 
@@ -123,6 +108,7 @@ BluetoothSocket::bind(bdaddr_t local_addr, u_int8_t local_channel)
     if(::bind(fd_,sa_,slen_) != 0) {
         log_level_t level = LOG_ERR;
         if(errno == EADDRINUSE) level = LOG_DEBUG;
+        if (!silent_connect_)
         logf(level, "failed to bind to %s(%d): %s",
              Bluetooth::batostr(&local_addr_,buff), channel_,
              strerror(errno));
@@ -160,16 +146,22 @@ BluetoothSocket::connect(bdaddr_t remote_addr, u_int8_t remote_channel)
 
     set_state(CONNECTING);
 
-    log_debug("socktype_ %d SOCK_STREAM %d",
-              socktype_,SOCK_STREAM);
     if (::connect(fd_,sa_,slen_) < 0) {
-        if (errno != EINPROGRESS) {
-            if (silent_connect_ == false )
-                logf(LOG_ERR, "error connecting to %s(%d): %s",
-                     Bluetooth::batostr(&remote_addr_,buff), channel_,
-                     strerror(errno));
+        if (errno == EISCONN && !silent_connect_)
+            log_debug("already connected to %s-%u",
+                      Bluetooth::batostr(&remote_addr_,buff), channel_);
+        else if (errno == EINPROGRESS && !silent_connect_) {
+            log_debug("delayed connect to %s-%u",
+                      Bluetooth::batostr(&remote_addr_,buff), channel_);
+        } else if(errno==EBADFD) {
+            if (!silent_connect_) log_err("EBADFD");
+            close();
+        } else {
+            if (!silent_connect_)
+                log_debug("error connecting to %s(%d): %s",
+                          Bluetooth::batostr(&remote_addr_,buff), channel_,
+                          strerror(errno));
         }
-        if(errno==EBADFD) close();
         return -1;
     }
 
@@ -179,9 +171,70 @@ BluetoothSocket::connect(bdaddr_t remote_addr, u_int8_t remote_channel)
 }
 
 int
+BluetoothSocket::async_connect_result()
+{
+    ASSERT(state_ == CONNECTING);
+
+    int result;
+    socklen_t len = sizeof(result);
+    logf(LOG_DEBUG, "getting connect result");
+    if (::getsockopt(fd_, SOL_SOCKET, SO_ERROR, &result, &len) != 0) {
+        logf(LOG_ERR, "error getting connect result: %s", strerror(errno));
+        return errno;
+    }
+
+    if (result == 0) {
+        state_ = ESTABLISHED;
+    }
+
+    return result;
+}
+
+int
 BluetoothSocket::connect()
 {
     return connect(remote_addr_,channel_);
+}
+
+void
+BluetoothSocket::configure()
+{
+    ASSERT(fd_ != -1);
+
+    if (params_.reuseaddr_) {
+        int y = 1;
+        logf(LOG_DEBUG, "setting SO_REUSEADDR");
+        if (::setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &y, sizeof y) != 0) {
+            logf(LOG_WARN, "error setting SO_REUSEADDR: %s",
+                 strerror(errno));
+        }
+    }
+
+    if (params_.recv_bufsize_ > 0) {
+        logf(LOG_DEBUG, "setting SO_RCVBUF to %d",
+             params_.recv_bufsize_);
+        if (::setsockopt(fd_, SOL_SOCKET, SO_RCVBUF,
+                         &params_.recv_bufsize_,
+                         sizeof(params_.recv_bufsize_)) < 0)
+        {
+            logf(LOG_WARN, "error setting SO_RCVBUF to %d: %s",
+                 params_.recv_bufsize_, strerror(errno)); 
+        }
+    }
+
+    if (params_.send_bufsize_ > 0) {
+        logf(LOG_DEBUG, "setting SO_SNDBUF to %d",
+             params_.send_bufsize_);
+        if (::setsockopt(fd_, SOL_SOCKET, SO_SNDBUF,
+                         &params_.send_bufsize_,
+                         sizeof(params_.send_bufsize_)) < 0)
+        {
+            logf(LOG_WARN, "error setting SO_SNDBUF to %d: %s",
+                 params_.send_bufsize_, strerror(errno)); 
+        }
+    }
+
+    init_sa((int)ZERO);
 }
 
 int
