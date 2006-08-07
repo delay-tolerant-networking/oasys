@@ -1,4 +1,3 @@
-
 #include <config.h>
 #ifdef OASYS_BLUETOOTH_ENABLED
 
@@ -45,14 +44,19 @@ BluetoothServer::accept(int *fd, bdaddr_t *addr, u_int8_t *channel)
     ASSERT(state_ == LISTENING);
     
     init_sa(BluetoothSocket::ZERO); // zero out sockaddr
-    int ret = ::accept(fd_,sa_,(socklen_t*)&slen_);
+
+    int ret = poll_sockfd(POLLIN, NULL, -1); // wait forever
+
     if (ret == -1) {
         if (errno != EINTR)
             logf(LOG_ERR, "error in accept(): %s [%s:%d]",
                  strerror(errno),
                  __FILE__,__LINE__);
         return ret;
-    }
+    } else if(ret != 1) return ret;
+
+    ret = ::accept(fd_,sa_,(socklen_t*)&slen_);
+    if (ret == -1) return ret;
     
     *fd = ret;
     bacpy(addr,sa_baddr());
@@ -124,6 +128,10 @@ BluetoothServerThread::run()
         char buff[18];
         logf(LOG_DEBUG, "accepted connection fd %d from %s(%d)",
              fd, Bluetooth::batostr(&addr,buff), channel);
+
+        set_remote_addr(addr);
+
+        set_remote_addr(addr);
 
         accepted(fd, addr, channel);
     }
