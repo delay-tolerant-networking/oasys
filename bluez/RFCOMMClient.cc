@@ -17,7 +17,6 @@ RFCOMMClient::rc_connect(bdaddr_t remote_addr)
     char buff[18];
 
     set_remote_addr(remote_addr);
-    silent_connect_ = true; // don't log failed connect()
 
     // query RFCOMMChannel for next available
     channel_ = RFCOMMChannel::next();
@@ -28,24 +27,27 @@ RFCOMMClient::rc_connect(bdaddr_t remote_addr)
 
             close();
 
-            // something is borked
             if (errno != EADDRINUSE) {
-                log_err("error binding to %s:%d: %s",
-                        Bluetooth::batostr(&local_addr_,buff),
-                        channel_,
-                        strerror(errno));
+                // something is borked
+                if ( silent_connect_ == false )
+                    log_err("error binding to %s:%d: %s",
+                            Bluetooth::batostr(&local_addr_,buff),
+                            channel_,
+                            strerror(errno));
 
                 // unrecoverable
                 if (errno == EBADFD) {
-                    return -1;
+                    //return -1;
                 }
+
                 break;
             }
 
-            log_debug("can't bind to %s:%d: %s",
-                      Bluetooth::batostr(&local_addr_,buff),
-                      channel_,
-                      strerror(errno));
+            if ( silent_connect_ == false )
+                log_debug("can't bind to %s:%d: %s",
+                          Bluetooth::batostr(&local_addr_,buff),
+                          channel_,
+                          strerror(errno));
 
         } else {
 
@@ -54,9 +56,10 @@ RFCOMMClient::rc_connect(bdaddr_t remote_addr)
             if ((res = connect()) == 0) {
 
                 // success!
-                log_debug("connected to %s:%d",
-                          Bluetooth::batostr(&remote_addr_,buff),
-                          channel_);
+                if ( silent_connect_ == false )
+                    log_debug("connected to %s:%d",
+                              Bluetooth::batostr(&remote_addr_,buff),
+                              channel_);
 
                 return res;
 
@@ -65,14 +68,15 @@ RFCOMMClient::rc_connect(bdaddr_t remote_addr)
                 close();
 
                 // failed to connect; report it and move on
-                log_debug("can't connect to %s:%d: %s",
-                          Bluetooth::batostr(&remote_addr_,buff),
-                          channel_,
-                          strerror(errno)); 
+                if ( silent_connect_ == false )
+                    log_debug("can't connect to %s:%d: %s",
+                              Bluetooth::batostr(&remote_addr_,buff),
+                              channel_,
+                              strerror(errno)); 
 
                 // unrecoverable
                 if (errno == EBADFD) {
-                    return -1;
+                    //return -1;
                 }
 
             }
