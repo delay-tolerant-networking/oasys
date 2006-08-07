@@ -30,7 +30,7 @@ cd $RUN_DIR
 #
 cat > oasys_valgrind.supp <<EOF
 {
-   Berkeley DB Uninitialized Write
+   Berkeley DB Uninitialized Jump
    Memcheck:Cond
    obj:/usr/lib/libdb-4.3.so
    fun:__log_put
@@ -44,16 +44,36 @@ cat > oasys_valgrind.supp <<EOF
    fun:_ZN5oasys15BerkeleyDBTable3putERKNS_18SerializableObjectEjPS2_i
 }
 {
-   Berkeley DB Uninitialized Write 2
-   Memcheck:Cond
+   Berkeley DB Uninitialized Write
+   Memcheck:Param
+   write(buf)
+   obj:/lib/tls/libpthread-0.60.so
    obj:/usr/lib/libdb-4.3.so
    fun:__log_flush_int
+   obj:/usr/lib/libdb-4.3.so
    fun:__log_put
    fun:__txn_regop_log
    fun:__txn_commit
+   obj:/usr/lib/libdb-4.3.so
    fun:__db_txn_auto_resolve
    fun:__db_put_pp
    fun:_ZN5oasys15BerkeleyDBTable3putERKNS_18SerializableObjectEjPS2_i
+}
+{
+   Berkeley DB Uninitialized Write (on Close)
+   Memcheck:Param
+   pwrite64(buf)
+   fun:pwrite64
+   fun:__os_io
+   obj:/usr/lib/libdb-4.3.so
+   fun:__memp_bhwrite
+   fun:__memp_sync_int
+   fun:__memp_fsync
+   fun:__db_sync
+   fun:__db_refresh
+   fun:__db_close
+   fun:__db_close_pp
+   fun:_ZN5oasys15BerkeleyDBTableD0Ev
 }
 {
    TclReadline Leak
