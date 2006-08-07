@@ -9,7 +9,7 @@ GDB_EXEC=%gdb_exec%
 GDB=%gdb%
 VALGRIND=%valgrind%
 VALGRIND_OPTS=%valgrind_opts%
-OCAL=%local%
+LOCAL=%local%
 PAUSE_AFTER=%pause_after%
 VERBOSE=%verbose%
 XTERM=%xterm%
@@ -29,6 +29,32 @@ cd $RUN_DIR
 # Generate the valgrind suppressions
 #
 cat > oasys_valgrind.supp <<EOF
+{
+   Berkeley DB Uninitialized Write
+   Memcheck:Cond
+   obj:/usr/lib/libdb-4.3.so
+   fun:__log_put
+   fun:__bam_split_log
+   obj:/usr/lib/libdb-4.3.so
+   fun:__bam_split
+   obj:/usr/lib/libdb-4.3.so
+   fun:__db_c_put
+   fun:__db_put
+   fun:__db_put_pp
+   fun:_ZN5oasys15BerkeleyDBTable3putERKNS_18SerializableObjectEjPS2_i
+}
+{
+   Berkeley DB Uninitialized Write 2
+   Memcheck:Cond
+   obj:/usr/lib/libdb-4.3.so
+   fun:__log_flush_int
+   fun:__log_put
+   fun:__txn_regop_log
+   fun:__txn_commit
+   fun:__db_txn_auto_resolve
+   fun:__db_put_pp
+   fun:_ZN5oasys15BerkeleyDBTable3putERKNS_18SerializableObjectEjPS2_i
+}
 {
    TclReadline Leak
    Memcheck:Leak
@@ -60,6 +86,17 @@ cat > oasys_valgrind.supp <<EOF
    obj:/lib/libreadline.so.4.3
    obj:/usr/lib/tclreadline1.2/libtclreadline1.2.so.1
    fun:TclInvokeStringCommand
+}
+{
+   TclReadline Leak 3
+   Memcheck:Leak
+   fun:malloc
+   obj:/lib/libreadline.so.4.3
+   fun:xmalloc
+   fun:sh_set_lines_and_columns
+   fun:_rl_get_screen_size
+   fun:_rl_init_terminal_io
+   fun:rl_initialize
 }
 {
    Tcl dlopen leak
