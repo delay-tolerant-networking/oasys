@@ -69,6 +69,7 @@ proc usage {} {
     puts "    --local-rundir		 Use ./run-0 ./run-1 etc instead of /tmp"
     puts "    --leave-crap               Leave all crap in /tmp dir"
     puts "    --strip                    Strip execs before copying"
+    puts "    --valgrind-suppressions    Generate valgrind error suppressions"
     puts "    --base-test-dir <dir>      Base Directory for test scripts"
 }
 
@@ -79,6 +80,7 @@ proc init {argv} {
     set opt(daemon)        0
     set opt(gdb)           0
     set opt(valgrind)      0
+    set opt(valgrind_suppressions) 0
     set opt(leave_crap)    0
     set opt(logdir)        "."
     set opt(net)           ""
@@ -153,6 +155,7 @@ proc init {argv} {
 	    --no-logs     { set opt(no_logs) 1 }
 	    --leave-crap  { set opt(leave_crap) 1}
 	    --strip       { set opt(strip) 1 }
+	    --valgrind-suppressions { set opt(valgrind_suppressions) 1}
 	    
 	    default  {
 		if {([string index [arg0 $argv] 0] != "-") && \
@@ -237,6 +240,12 @@ proc generate_script {id exec_file exec_opts confname conf exec_env} {
     set script(verbose)     $opt(verbose)
     set script(xterm)       $opt(xterm)
     set script(geometry)    $opt(geometry)
+
+    if {$opt(valgrind_suppressions)} {
+	set script(valgrind_opts) "--gen-suppressions=yes"
+    } else {
+	set script(valgrind_opts) ""
+    }
 
     # environmental variables:
     set env_commands ""

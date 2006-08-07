@@ -8,13 +8,13 @@ RUN_ID="%run_id%"
 GDB_EXEC=%gdb_exec%
 GDB=%gdb%
 VALGRIND=%valgrind%
-LOCAL=%local%
+VALGRIND_OPTS=%valgrind_opts%
+OCAL=%local%
 PAUSE_AFTER=%pause_after%
 VERBOSE=%verbose%
 XTERM=%xterm%
 
 %exec_env%
-
 
 function dbg {
     if [ $VERBOSE = 1 ]; then
@@ -140,7 +140,8 @@ cat > oasys_valgrind.supp <<EOF
 EOF
 
 VALGRIND_OPTS="--tool=memcheck -v --leak-check=yes --num-callers=16 \
-               --suppressions=oasys_valgrind.supp --show-reachable=no"
+               --suppressions=oasys_valgrind.supp --show-reachable=no \
+               $VALGRIND_OPTS"
 
 CHOICE="${XTERM} ${GDB} ${VALGRIND}"
 case $CHOICE in
