@@ -145,13 +145,13 @@ BluetoothClient::timeout_writevall(const struct iovec* iov, int iovcnt, int time
 int
 BluetoothClient::get_nonblocking(bool *nonblockingp)
 {
-    return IO::get_nonblocking(fd_, nonblockingp);
+    return IO::get_nonblocking(fd_, nonblockingp, logpath_);
 }
 
 int
 BluetoothClient::set_nonblocking(bool nonblocking)
 {
-    return IO::set_nonblocking(fd_, nonblocking);
+    return IO::set_nonblocking(fd_, nonblocking, logpath_);
 }
 
 } // namespace oasys
