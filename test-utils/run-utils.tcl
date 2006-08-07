@@ -242,7 +242,7 @@ proc generate_script {id exec_file exec_opts confname conf exec_env} {
     set script(geometry)    $opt(geometry)
 
     if {$opt(valgrind_suppressions)} {
-	set script(valgrind_opts) "--gen-suppressions=yes"
+	set script(valgrind_opts) "--gen-suppressions=all"
     } else {
 	set script(valgrind_opts) ""
     }
