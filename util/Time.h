@@ -1,7 +1,7 @@
 #ifndef __TIME_H__
 #define __TIME_H__
 
-#include "compat/inttypes.h"
+#include "../compat/inttypes.h"
 
 namespace oasys {
 
