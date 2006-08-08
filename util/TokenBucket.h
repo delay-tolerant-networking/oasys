@@ -73,6 +73,12 @@ public:
      */
     void update();
 
+    /**
+     * Return the amount of time (in millseconds) until the bucket
+     * will be full again.
+     */
+    u_int32_t time_to_fill();
+
     /// @{ Accessors
     u_int32_t depth()  const { return depth_; }
     u_int32_t rate()   const { return rate_; }

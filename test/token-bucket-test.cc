@@ -59,12 +59,13 @@ void safe_usleep(u_int32_t usecs) {
 }
 
 DECLARE_TEST(Fast) {
-    // bucket with a depth of 100 tokens and a replacement rate of 1a0
-    // tsoken per ms (i.e. 10000 tokens per second)
+    // bucket with a depth of 100 tokens and a replacement rate of
+    // 10 tokens per ms (i.e. 10000 tokens per second)
     int rate = 10000;
     TokenBucket t("/test/tokenbucket", 100, rate);
 
     CHECK_EQUAL(t.tokens(), 100);
+    CHECK_EQUAL(t.time_to_fill(), 0);
     
     // drain at a constant rate for a while
     for (int i = 0; i < 1000; ++ i) {
@@ -72,7 +73,17 @@ DECLARE_TEST(Fast) {
         safe_usleep(10000);
     }
 
+    // let it fill up
     safe_usleep(1000000);
+    t.update();
+    CHECK_EQUAL(t.tokens(), 100);
+    CHECK_EQUAL(t.time_to_fill(), 0);
+
+    // make sure it doesn't over-fill
+    safe_usleep(1000000);
+    t.update();
+    CHECK_EQUAL(t.tokens(), 100);
+    CHECK_EQUAL(t.time_to_fill(), 0);
     
     // fully drain the bucket
     CHECK(t.drain(100));
@@ -118,8 +129,9 @@ DECLARE_TEST(Slow) {
     TokenBucket t("/test/tokenbucket", 1, 1);
     CHECK_EQUAL(t.tokens(), 1);
     CHECK(t.drain(1));
+    CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 1);
     CHECK(! t.drain(1));
-
+    
     // fully empty the bucket
     safe_usleep(0);
     CHECK(t.drain(t.tokens()));
@@ -145,9 +157,42 @@ DECLARE_TEST(Slow) {
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(TimeToFill) {
+    TokenBucket t("/test/tokenbucket", 10000, 1000);
+
+    safe_usleep(0);
+
+    CHECK_EQUAL(t.time_to_fill(), 0);
+
+    CHECK(t.drain(5000));
+    CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 5);
+
+    safe_usleep(1000000);
+    CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 4);
+
+    safe_usleep(1000000);
+    CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 3);
+
+    CHECK(t.drain(1000));
+    CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 4);
+
+    DO(t.set_rate(100000));
+    safe_usleep(0);
+    DO(t.empty());
+
+    u_int32_t ms = t.time_to_fill();
+    CHECK_EQUAL(ms, 100);
+    safe_usleep(101000);
+
+    CHECK_EQUAL(t.time_to_fill(), 0);
+
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TESTER(Test) {
     ADD_TEST(Fast);
     ADD_TEST(Slow);
+    ADD_TEST(TimeToFill);
 }
 
 DECLARE_TEST_FILE(Test, "token bucket test");

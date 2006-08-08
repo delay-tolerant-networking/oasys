@@ -62,7 +62,7 @@ TokenBucket::update()
     now.get_time();
 
     if (tokens_ == depth_) {
-        log_debug("bucket already full, nothing to update");
+        log_debug("update: bucket already full, nothing to update");
         last_update_ = now;
         return;
     }
@@ -75,8 +75,8 @@ TokenBucket::update()
             new_tokens = depth_ - tokens_;
         }
 
-        log_debug("filling %u/%u tokens after %u milliseconds",
-                  new_tokens, depth_, elapsed);
+        log_debug("update: filling %u/%u spent tokens after %u milliseconds",
+                  new_tokens, depth_ - tokens_, elapsed);
         tokens_ += new_tokens;
         last_update_ = now;
         
@@ -85,7 +85,7 @@ TokenBucket::update()
         // time isn't enough to fill even a single token. in this
         // case, we leave last_update_ to where it was before,
         // otherwise we might starve the bucket.
-        log_debug("%u milliseconds elapsed not enough to fill any tokens...",
+        log_debug("update: %u milliseconds elapsed not enough to fill any tokens",
                   elapsed);
     }
 }
@@ -97,15 +97,28 @@ TokenBucket::drain(u_int32_t length)
     update();
 
     if (length <= tokens_) {
-        log_debug("draining %u/%u tokens from bucket",
+        log_debug("drain: draining %u/%u tokens from bucket",
                   length, tokens_);
         tokens_ -= length;
         return true;
     } else {
-        log_debug("not enough tokens (%u) to drain %u from bucket",
+        log_debug("drain: not enough tokens (%u) to drain %u from bucket",
                   tokens_, length);
         return false;
     }
+}
+
+//----------------------------------------------------------------------
+u_int32_t
+TokenBucket::time_to_fill()
+{
+    update();
+    
+    u_int32_t t = ((depth_ - tokens_) * 1000) / rate_;
+
+    log_debug("time_to_fill: %u tokens will be full in %u msecs",
+              (depth_ - tokens_), t);
+    return t;
 }
 
 //----------------------------------------------------------------------
@@ -114,6 +127,8 @@ TokenBucket::empty()
 {
     tokens_      = 0;
     last_update_.get_time();
+
+    log_debug("empty: clearing bucket");
 }
 
 } // namespace oasys
