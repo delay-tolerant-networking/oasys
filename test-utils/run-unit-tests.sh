@@ -13,7 +13,7 @@ run_and_wait() {
     prog=$1
 
     echo "***"
-    echo "*** $prog"
+    echo "*** Running Test: $prog"
     echo "***"
 
     if [ x$expand_stacktrace = x ] ; then
