@@ -24,6 +24,7 @@ TESTS += \
 	string-tokenize-test			\
 	text-code-test				\
 	timer-test				\
+	token-bucket-test			\
 	type-collection-test		        \
 	util-test				\
 
