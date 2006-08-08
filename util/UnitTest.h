@@ -86,27 +86,36 @@ public:
     UnitTester(std::string name) : 
         name_(name), passed_(0), failed_(0), input_(0) 
     {
-        // XXX/demmer move this to run_tests so it can read argv to
-        // get a -l <loglevel> argument and we don't always get debug
-        // output
-        if (! Log::initialized()) {
-            Log::init(LOG_NOTICE);
-        }
-
-        FatalSignals::init(name_.c_str());
     }
     
     virtual ~UnitTester() {}
 
     int run_tests(int argc, const char* argv[]) {
+        log_level_t level = LOG_NOTICE;
+
+        // always skip argv[0]
+        argc -= 1;
+        argv += 1;
+
+        // first look for -l debug (which must come first)
+        if (argc >= 2 && (strcmp(argv[0], "-l") == 0))
+        {
+            level = str2level(argv[1]);
+            argc -= 2;
+            argv += 2;
+        }
+
+        Log::init(level);
+        FatalSignals::init(name_.c_str());
+        
         add_tests();
 
         bool in_tcl = false;
         
-        if (argc >= 2 &&
-            ((strcmp(argv[1], "-h") == 0) ||
-             (strcmp(argv[1], "-help") == 0) ||
-             (strcmp(argv[1], "--help") == 0)))
+        if (argc >= 1 &&
+            ((strcmp(argv[0], "-h") == 0) ||
+             (strcmp(argv[0], "-help") == 0) ||
+             (strcmp(argv[0], "--help") == 0)))
         {
             printf("%s [-h] {[test name]}*\n", argv[0]);
             printf("test names:\n");
@@ -119,9 +128,9 @@ public:
             exit(0);
         }
 
-        if (argc >= 2 && (strcmp(argv[1], "-test") == 0)) {
-            argc -= 2;
-            argv += 2;
+        if (argc >= 1 && (strcmp(argv[1], "-test") == 0)) {
+            argc -= 1;
+            argv += 1;
             in_tcl = true;
         }
         
