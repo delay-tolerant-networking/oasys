@@ -31,9 +31,15 @@ struct Time {
     //! @return Time in milliseconds
     u_int32_t in_milliseconds();
 
+    //! @return Milliseconds elapsed between this timer and the
+    // current time.
+    u_int32_t elapsed_ms();
+
     //! @{ Standard operators
     Time operator+(const Time& t)  const;
     Time operator-(const Time& t)  const;
+    Time& operator+=(const Time& t);
+    Time& operator-=(const Time& t);
 
     bool operator==(const Time& t) const;
     bool operator<(const Time& t)  const;

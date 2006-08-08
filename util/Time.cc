@@ -76,6 +76,16 @@ Time::in_milliseconds()
     return sec_ * 1000 + usec_/1000;
 }
 
+//----------------------------------------------------------------------
+u_int32_t
+Time::elapsed_ms()
+{
+    Time t;
+    t.get_time();
+    t -= *this;
+    return t.in_milliseconds();
+}
+
 //----------------------------------------------------------------------------
 Time
 Time::operator+(const Time& t) const
@@ -84,18 +94,37 @@ Time::operator+(const Time& t) const
 }
 
 //----------------------------------------------------------------------------
+Time&
+Time::operator+=(const Time& t)
+{
+    sec_  += t.sec_;
+    usec_ += t.usec_;
+    cleanup();
+    return *this;
+}
+
+//----------------------------------------------------------------------------
+Time&
+Time::operator-=(const Time& t)
+{
+    // a precondition for this fn to be correct is (*this >= t)
+    if (usec_ < t.usec_) {
+        usec_ += 1000000;
+        sec_  -= 1;
+    }
+
+    sec_  -= t.sec_;
+    usec_ -= t.usec_;
+    return *this;
+}
+
+//----------------------------------------------------------------------------
 Time
 Time::operator-(const Time& t) const
 {
     // a precondition for this fn to be correct is (*this >= t)
     Time t2(*this);
-    if (t2.usec_ < t.usec_) {
-        t2.usec_ += 1000000;
-        t2.sec_  -= 1;
-    }
-
-    t2.sec_  -= t.sec_;
-    t2.usec_ -= t.usec_;
+    t2 -= t;
     return t2;
 }
 
