@@ -20,6 +20,7 @@ fork_to_die(const char* how) {
                how);
     log_always("/test", "flamebox-ignore ign2 STACK TRACE");
     log_always("/test", "flamebox-ignore ign3 fatal handler dumping core");
+    log_always("/test", "flamebox-ignore ign4 PANIC at test/stack-trace-test.cc");
     
     snprintf(cmd, sizeof(cmd),
              "%s %s 2>&1 | %s -o %s",
@@ -29,6 +30,7 @@ fork_to_die(const char* how) {
     log_always("/test", "flamebox-ignore-cancel ign1");
     log_always("/test", "flamebox-ignore-cancel ign2");;
     log_always("/test", "flamebox-ignore-cancel ign3");;
+    log_always("/test", "flamebox-ignore-cancel ign4");;
 
     return (ok == 0);
 }
@@ -89,7 +91,7 @@ die(const char* how)
         kill(getpid(), SIGQUIT);
     }
 
-    if (!strcmp(how, "PANIC")) {
+    if (!strcmp(how, "Panic")) {
         PANIC("panic");
     }
 
@@ -122,7 +124,7 @@ SIGTESTER(SIGILL);
 SIGTESTER(SIGFPE);
 SIGTESTER(SIGABRT);
 SIGTESTER(SIGQUIT);
-SIGTESTER(PANIC);
+SIGTESTER(Panic);
 
 DECLARE_TESTER(Tester) {
     ADD_TEST(SIGSEGVTest);
@@ -131,7 +133,7 @@ DECLARE_TESTER(Tester) {
     ADD_TEST(SIGFPETest);
     ADD_TEST(SIGABRTTest);
     ADD_TEST(SIGQUITTest);
-    ADD_TEST(PANICTest);
+    ADD_TEST(PanicTest);
 }
 
 int
