@@ -20,7 +20,7 @@ fork_to_die(const char* how) {
                how);
     log_always("/test", "flamebox-ignore ign2 STACK TRACE");
     log_always("/test", "flamebox-ignore ign3 fatal handler dumping core");
-    log_always("/test", "flamebox-ignore ign4 PANIC at test/stack-trace-test.cc");
+    log_always("/test", "flamebox-ignore ign4 PANIC at .*stack-trace-test.cc");
     
     snprintf(cmd, sizeof(cmd),
              "%s %s 2>&1 | %s -o %s",
