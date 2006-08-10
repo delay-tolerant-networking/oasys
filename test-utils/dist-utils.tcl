@@ -5,6 +5,13 @@
 namespace eval dist {
 
 #
+# A handler to call when cleaning up a run directory (i.e. in case
+# there's a mounted directory or something that can't just be cleaned
+# with rm -rf
+#
+set cleanup_handler ""
+
+#
 # Return the proper run directory for the given hostname / test id
 #
 proc get_rundir {hostname id} {
@@ -42,7 +49,17 @@ proc get_rundir {hostname id} {
 #
 
 proc create {manifest basedir subst strip verbose} {
-    set tmpdir "/tmp/distrun.tcl-[pid]"
+    global env
+    # Somehow these /tmp/distrun.tcl dirs seem to leak if they're
+    # uniquified by pid, so instead we just use the username
+    
+    set tmpdir "/tmp/distrun.tcl-$env(USER)"
+
+    if [file exists $tmpdir] {
+	puts "WARNING: $tmpdir leaked from previous test!!"
+	exec rm -rf $tmpdir
+    }
+    
     exec mkdir $tmpdir
 
     if {$verbose} { puts "% constructing file list" }
@@ -99,7 +116,7 @@ proc create {manifest basedir subst strip verbose} {
 #
     
 proc files {manifest_list host_list basedir subst strip {verbose 0}} {
-    global ::dist::distdirs
+    global ::dist::distdirs ::dist::cleanup_handler
 
     set distdir [dist::create $manifest_list $basedir $subst $strip $verbose]
     set dist::distdirs(-1) $distdir
@@ -113,6 +130,15 @@ proc files {manifest_list host_list basedir subst strip {verbose 0}} {
 
 	if {$verbose} { puts "% $distdir -> $host:$targetdir" }
 
+	if {$dist::cleanup_handler != ""} {
+	    
+	    if {$verbose} { puts "% calling cleanup_handler $cleanup_handler" }
+	    $dist::cleanup_handler $host $targetdir
+	} else {
+	    if {$verbose} { puts "% no cleanup handler set" }
+
+	}
+	
 	run::run_cmd $host rm -rf $targetdir
 	
 	if [net::is_localhost $host] {
