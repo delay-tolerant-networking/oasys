@@ -5,9 +5,9 @@
 namespace eval dist {
 
 #
-# A handler to call when cleaning up a run directory (i.e. in case
-# there's a mounted directory or something that can't just be cleaned
-# with rm -rf
+# A handler proc to call for cleaning up a run directory for use in
+# case there's a mounted directory or something that can't just be
+# cleaned with rm -rf. 
 #
 set cleanup_handler ""
 
