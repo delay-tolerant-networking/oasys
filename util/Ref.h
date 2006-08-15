@@ -72,7 +72,7 @@ public:
      * Note: we need the default constructor because otherwise Ref
      * cannot be placed in an STL container.
      */
-    Ref(const char* what1 = "!!INVALID!!", const char* what2 = "")
+    Ref(const char* what1 = "!!DEFAULT REF CONSTRUCTOR!!", const char* what2 = "")
         : object_(NULL), what1_(what1), what2_(what2)
     {
     }
