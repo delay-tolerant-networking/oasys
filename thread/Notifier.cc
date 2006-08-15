@@ -243,6 +243,14 @@ Notifier::notify(SpinLock* lock)
         log_err("unexpected eof writing to pipe");
     } else {
         ASSERT(ret == 1);
+
+        // XXX/demmer potential bug here -- once the pipe has been
+        // written to, this thread might context-switch out and the
+        // other thread (that owns the notifier) could be woken up. at
+        // which point the notifier object itself might be deleted.
+        //
+        // solutions: either be careful to only write at the end of
+        // the fn, or (better) use a lock.
         ++count_;
         if (!quiet_) {
             log_debug("notify count = %d", count_);
