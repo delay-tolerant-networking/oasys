@@ -87,14 +87,19 @@ public:
             object->add_ref(what1_, what2_);
     }
 
+private:
     /**
-     * Constructor (deliberately not implemented) that takes a _Type*
-     * pointer and no debugging string. This causes the compilor to
-     * complain about ambiguity (with the first constructor) when
-     * called with a single argument of NULL, hence forcing the caller
-     * to pass a char* debug string.
+     * Constructor (deliberately private and unimplemented) that takes
+     * a _Type* pointer but no debugging string.
+     *
+     * This is intended to cause the compiler to complain both that
+     * it's private, and to provide ambiguity (with the first
+     * constructor) when called with a single argument of NULL, hence
+     * forcing the caller to pass at least char* debug string.
      */
     Ref(_Type* object);
+
+public:
 
     /**
      * Constructor that takes a temporary ref.
