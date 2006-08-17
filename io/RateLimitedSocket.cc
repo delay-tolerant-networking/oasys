@@ -56,15 +56,17 @@ RateLimitedSocket::send(const char* bp, size_t len, int flags)
 {
     ASSERT(socket_ != NULL);
 
-    bool can_send = bucket_.drain(len * 8);
-    if (!can_send) {
-        log_debug("can't send %zu byte packet since only %u tokens in bucket",
-                  len, bucket_.tokens());
-        return IORATELIMIT;
-    }
+    if (bucket_.rate() != 0) {
+        bool can_send = bucket_.drain(len * 8);
+        if (!can_send) {
+            log_debug("can't send %zu byte packet since only %u tokens in bucket",
+                      len, bucket_.tokens());
+            return IORATELIMIT;
+        }
 
-    log_debug("%u tokens sufficient for %zu byte packet",
-              bucket_.tokens(), len);
+        log_debug("%u tokens sufficient for %zu byte packet",
+                  bucket_.tokens(), len);
+    }
 
     return socket_->send(bp, len, flags);
 }
@@ -76,15 +78,17 @@ RateLimitedSocket::sendto(char* bp, size_t len, int flags,
 {
     ASSERT(socket_ != NULL);
 
-    bool can_send = bucket_.drain(len * 8);
-    if (!can_send) {
-        log_debug("can't send %zu byte packet since only %u tokens in bucket",
-                  len, bucket_.tokens());
-        return IORATELIMIT;
-    }
+    if (bucket_.rate() != 0) {
+        bool can_send = bucket_.drain(len * 8);
+        if (!can_send) {
+            log_debug("can't send %zu byte packet since only %u tokens in bucket",
+                      len, bucket_.tokens());
+            return IORATELIMIT;
+        }
 
-    log_debug("%u tokens sufficient for %zu byte packet",
-              bucket_.tokens(), len);
+        log_debug("%u tokens sufficient for %zu byte packet",
+                  bucket_.tokens(), len);
+    }
 
     return socket_->sendto(bp, len, flags, addr, port);
 }
