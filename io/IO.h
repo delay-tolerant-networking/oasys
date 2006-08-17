@@ -64,6 +64,7 @@ enum IOTimeoutReturn_t {
     IOTIMEOUT 	= -2,   ///< timeout
     IOINTR      = -3,   ///< interrupted by notifier
     IOAGAIN     = -4,   ///< non-blocking sock got EAGAIN
+    IORATELIMIT = -5,   ///< rate limited socket has no space
 };
 
 

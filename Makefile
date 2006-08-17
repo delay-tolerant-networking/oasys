@@ -34,6 +34,7 @@ IO_SRCS :=					\
 	io/IPSocket.cc				\
 	io/NetUtils.cc				\
 	io/PrettyPrintBuffer.cc			\
+	io/RateLimitedSocket.cc			\
 	io/TCPClient.cc				\
 	io/TCPServer.cc				\
 	io/UDPClient.cc				\
