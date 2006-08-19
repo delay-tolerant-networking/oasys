@@ -657,8 +657,16 @@ Log::vlogf(const char* path, log_level_t level,
         
         PANIC("logf buffer overflow");
     }
+
 #endif
 
+#ifdef CHECK_NON_PRINTABLE
+    for (u_int i = 0; i < buflen; ++i) {
+        ASSERT(buf[i] == '\n' ||
+               (buf[i] >= 32 && buf[i] <= 126));
+    }
+#endif
+    
     // do the write, making sure to drain the buffer. since stdout was
     // set to nonblocking, the spin lock prevents other threads from
     // jumping in here
