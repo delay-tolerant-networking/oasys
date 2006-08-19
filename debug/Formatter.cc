@@ -850,7 +850,12 @@ vsnprintf(char *str, size_t strsz, const char *fmt0, va_list ap) __THROW
 	if (strsz == 0) {
 		return -1;
 	}
-	
+
+        /*
+         * demmer: this leaves space for the trailing null -- we need
+         * to be careful in the Formatter call below to adjust
+         * accordingly.
+        */
 	strsz -= 1;
 
 	/*
@@ -1212,7 +1217,17 @@ fp_begin:
                                     sz = 6;
                                 } else {
                                     Formatter::assert_valid(fmtobj);
-                                    sz = fmtobj->format(str, strsz);
+
+                                    // at the entry to vsnprintf, the
+                                    // code decremented strsz by one
+                                    // to leave space for the trailing
+                                    // null, but in case there are
+                                    // nested calls to format, we need
+                                    // the real amount of space here,
+                                    // so bump it up by one again
+                                    // since we're careful not to
+                                    // clobber
+                                    sz = fmtobj->format(str, strsz + 1);
                                 }
                                 
 				if (sz < strsz) {
