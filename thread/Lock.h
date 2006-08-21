@@ -121,6 +121,7 @@ public:
 
 protected:
     friend class ScopeLock;
+    friend class ScopeLockIf;
 
     /**
      * Stores a count of the number of locks currently held, needed
@@ -220,6 +221,75 @@ public:
     
 protected:
     Lock* lock_;
+};
+
+/**
+ * Same as ScopeLock from above, but with a boolean predicate. Only
+ * locks if true. Useful for cases where locking is optional, but
+ * putting things in an if scope will null the scope of the ScopeLock.
+ */
+class ScopeLockIf {
+public:
+    ScopeLockIf(Lock*       l,
+                const char* lock_user,
+                bool        use_lock)
+        : lock_(l), use_lock_(use_lock)
+    {
+        do_lock(lock_user);
+    }
+
+    ScopeLockIf(const Lock* l,
+                const char* lock_user,
+                bool        use_lock)
+        : lock_(const_cast<Lock*>(l)), use_lock_(use_lock)
+    {
+        do_lock(lock_user);
+    }
+
+    ScopeLockIf(oasys::ScopePtr<Lock> l,
+                const char*           lock_user,
+                bool                  use_lock)
+        : lock_(l.ptr()), use_lock_(use_lock)
+    {
+        do_lock(lock_user);
+    }
+    
+    ScopeLockIf(std::auto_ptr<Lock> l,
+                const char*         lock_user,
+                bool                use_lock)
+        : lock_(l.get()), use_lock_(use_lock)
+    {
+        do_lock(lock_user);
+    }
+
+    void do_lock(const char* lock_user) {
+        if (use_lock_) 
+        {
+            int ret = lock_->lock(lock_user);       
+            ASSERT(ret == 0);                       
+            lock_->scope_lock_count_++;
+        }
+    }
+    
+    void unlock() {
+        if (use_lock_) 
+        {
+            lock_->scope_lock_count_--;
+            lock_->unlock();
+            lock_ = 0;
+        }
+    }
+    
+    ~ScopeLockIf()
+    {
+        if (use_lock_ && lock_) {
+            unlock();
+        }
+    }
+    
+protected:
+    Lock* lock_;
+    bool  use_lock_;
 };
 
 } // namespace oasys
