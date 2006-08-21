@@ -123,7 +123,7 @@ public:
      *
      * @param cur_indent The current cumulative indentation
      */
-    void generate(StringBuffer* buf, int indent, int cur_indent = 0) const;
+    void to_string(StringBuffer* buf, int indent, int cur_indent = 0) const;
     
 protected:
     std::string tag_;

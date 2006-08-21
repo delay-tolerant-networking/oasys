@@ -42,55 +42,55 @@
 using namespace oasys;
 using namespace std;
 
-std::string test_generate(const XMLObject* obj, int indent = -1)
+std::string test_to_string(const XMLObject* obj, int indent = -1)
 {
     StringBuffer buf;
-    obj->generate(&buf, indent);
+    obj->to_string(&buf, indent);
     return std::string(buf.c_str(), buf.length());
 }
 
-DECLARE_TEST(GenerateTest) {
+DECLARE_TEST(To_StringTest) {
     {
         XMLObject obj("test");
-        CHECK_EQUALSTR(test_generate(&obj).c_str(), "<test/>");
+        CHECK_EQUALSTR(test_to_string(&obj).c_str(), "<test/>");
     }
 
     {
         XMLObject obj("test");
         obj.add_attr("a1", "v1");
-        CHECK_EQUALSTR(test_generate(&obj).c_str(), "<test a1=\"v1\"/>");
+        CHECK_EQUALSTR(test_to_string(&obj).c_str(), "<test a1=\"v1\"/>");
     }
     
     {
         XMLObject obj("test");
         obj.add_attr("a1", "v1");
         obj.add_attr("a2", "v2");
-        CHECK_EQUALSTR(test_generate(&obj).c_str(), "<test a1=\"v1\" a2=\"v2\"/>");
+        CHECK_EQUALSTR(test_to_string(&obj).c_str(), "<test a1=\"v1\" a2=\"v2\"/>");
     }
     
     {
         XMLObject obj("test");
         obj.add_element(new XMLObject("tag"));
-        CHECK_EQUALSTR(test_generate(&obj).c_str(), "<test><tag/></test>");
+        CHECK_EQUALSTR(test_to_string(&obj).c_str(), "<test><tag/></test>");
     }
 
     {
         XMLObject obj("test");
         obj.add_element(new XMLObject("tag"));
         obj.add_element(new XMLObject("tag2"));
-        CHECK_EQUALSTR(test_generate(&obj).c_str(), "<test><tag/><tag2/></test>");
+        CHECK_EQUALSTR(test_to_string(&obj).c_str(), "<test><tag/><tag2/></test>");
     }
     
     {
         XMLObject obj("test");
         obj.add_text("Some text here");
-        CHECK_EQUALSTR(test_generate(&obj).c_str(), "<test>Some text here</test>");
+        CHECK_EQUALSTR(test_to_string(&obj).c_str(), "<test>Some text here</test>");
     }
 
     {
         XMLObject obj("test");
         obj.add_proc_inst("xyz", "abc=\"foobar\"");
-        CHECK_EQUALSTR(test_generate(&obj).c_str(), "<test><?xyz abc=\"foobar\"?></test>");
+        CHECK_EQUALSTR(test_to_string(&obj).c_str(), "<test><?xyz abc=\"foobar\"?></test>");
     }
 
     {
@@ -98,7 +98,7 @@ DECLARE_TEST(GenerateTest) {
         obj.add_attr("a1", "v1");
         obj.add_element(new XMLObject("tag"));
         obj.add_text("Some text here");
-        CHECK_EQUALSTR(test_generate(&obj).c_str(), "<test a1=\"v1\"><tag/>Some text here</test>");
+        CHECK_EQUALSTR(test_to_string(&obj).c_str(), "<test a1=\"v1\"><tag/>Some text here</test>");
     }
     
     return UNIT_TEST_PASSED;
@@ -106,7 +106,7 @@ DECLARE_TEST(GenerateTest) {
 
 
 DECLARE_TESTER(Test) {    
-    ADD_TEST(GenerateTest);
+    ADD_TEST(To_StringTest);
 }
 
 DECLARE_TEST_FILE(Test, "string tokenize test");

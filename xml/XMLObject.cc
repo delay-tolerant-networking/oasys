@@ -93,7 +93,7 @@ XMLObject::add_text(const char* text, size_t len)
 
 //----------------------------------------------------------------------
 void
-XMLObject::generate(StringBuffer* buf, int indent, int cur_indent) const
+XMLObject::to_string(StringBuffer* buf, int indent, int cur_indent) const
 {
     static const char* space = "                                        "
                                "                                        ";
@@ -125,7 +125,7 @@ XMLObject::generate(StringBuffer* buf, int indent, int cur_indent) const
     
     for (unsigned int i = 0; i < elements_.size(); ++i)
     {
-        elements_[i]->generate(buf, indent, (indent > 0) ? cur_indent + indent : 0);
+        elements_[i]->to_string(buf, indent, (indent > 0) ? cur_indent + indent : 0);
     }
 
     buf->append(text_);
