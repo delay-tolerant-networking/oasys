@@ -253,6 +253,30 @@ IO::mkstemp(char* templ, const char* log)
     return ret;
 }
 
+//----------------------------------------------------------------------
+int
+IO::stat(const char* path, struct stat* buf, const char* log)
+{
+    int ret = ::stat(path, buf);
+    if (log) {
+        logf(log, LOG_DEBUG, "stat %s: %d", path, ret);
+    }
+    
+    return ret;
+}
+
+//----------------------------------------------------------------------
+int
+IO::lstat(const char* path, struct stat* buf, const char* log)
+{
+    int ret = ::lstat(path, buf);
+    if (log) {
+        logf(log, LOG_DEBUG, "stat %s: %d", path, ret);
+    }
+    
+    return ret;
+}
+
 //----------------------------------------------------------------------------
 int
 IO::read(int fd, char* bp, size_t len, 

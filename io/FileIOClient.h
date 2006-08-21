@@ -66,6 +66,8 @@ public:
     int lseek(off_t offset, int whence);
     int truncate(off_t length);
     int mkstemp(char* temp);
+    int stat(struct stat* buf);
+    int lstat(struct stat* buf);
     ///@}
 
     /// Copy len bytes of file contents from the current offset to

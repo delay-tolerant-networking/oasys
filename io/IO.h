@@ -44,6 +44,7 @@
 #include <sys/poll.h>
 #include <sys/uio.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 
 #include "../debug/DebugUtils.h"
 #include "../thread/Notifier.h"
@@ -111,6 +112,10 @@ struct IO {
                         const char* log = 0);
 
     static int mkstemp(char* templ, const char* log = 0);
+
+    static int stat(const char* path, struct stat* buf, const char* log = 0);
+
+    static int lstat(const char* path, struct stat* buf, const char* log = 0);
     //@}
 
     //! @{ XXX/bowei - more documentation

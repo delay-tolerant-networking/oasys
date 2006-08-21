@@ -42,17 +42,20 @@
 
 namespace oasys {
 
+//----------------------------------------------------------------------
 FileIOClient::FileIOClient()
     : FdIOClient(-1)
 {
 }
 
+//----------------------------------------------------------------------
 FileIOClient::~FileIOClient()
 {
     if (fd_ != -1)
         close();
 }
 
+//----------------------------------------------------------------------
 int
 FileIOClient::open(const char* path, int flags, int* errnop)
 {
@@ -61,6 +64,7 @@ FileIOClient::open(const char* path, int flags, int* errnop)
     return fd_;
 }
 
+//----------------------------------------------------------------------
 int
 FileIOClient::open(const char* path, int flags, mode_t mode, int* errnop)
 {
@@ -69,6 +73,7 @@ FileIOClient::open(const char* path, int flags, mode_t mode, int* errnop)
     return fd_;
 }
 
+//----------------------------------------------------------------------
 int
 FileIOClient::close()
 {
@@ -77,6 +82,7 @@ FileIOClient::close()
     return ret;
 }
 
+//----------------------------------------------------------------------
 int
 FileIOClient::reopen(int flags)
 {
@@ -85,6 +91,7 @@ FileIOClient::reopen(int flags)
     return fd_;
 }
 
+//----------------------------------------------------------------------
 int
 FileIOClient::unlink()
 {
@@ -97,18 +104,21 @@ FileIOClient::unlink()
     return ret;
 }
 
+//----------------------------------------------------------------------
 int
 FileIOClient::lseek(off_t offset, int whence)
 {
     return IO::lseek(fd_, offset, whence, logpath_);
 }
 
+//----------------------------------------------------------------------
 int
 FileIOClient::truncate(off_t length)
 {
     return IO::truncate(fd_, length, logpath_);
 }
 
+//----------------------------------------------------------------------
 int
 FileIOClient::mkstemp(char* temp)
 {
@@ -123,6 +133,21 @@ FileIOClient::mkstemp(char* temp)
     return fd_;
 }
 
+//----------------------------------------------------------------------
+int
+FileIOClient::stat(struct stat* buf)
+{
+    return IO::stat(path_.c_str(), buf, logpath_);
+}
+
+//----------------------------------------------------------------------
+int
+FileIOClient::lstat(struct stat* buf)
+{
+    return IO::lstat(path_.c_str(), buf, logpath_);
+}
+
+//----------------------------------------------------------------------
 int
 FileIOClient::copy_contents(size_t len, FileIOClient* dest)
 {
