@@ -68,7 +68,7 @@ public:
      * Read/write out the entire supplied buffer, potentially
      * requiring multiple system calls.
      *
-     * @return the total number of bytes written, or -1 on error
+     * @return the total number of bytes read/written, or -1 on error
      */
     virtual int readall(char* bp, size_t len)                  = 0;
     virtual int writeall(const char* bp, size_t len)           = 0;
