@@ -118,6 +118,8 @@ UTIL_SRCS :=					\
 	util/md5-rsa.c				\
 
 XML_SRCS :=					\
+	xml/ExpatXMLParser.cc			\
+	xml/XMLDocument.cc			\
 	xml/XMLObject.cc			\
 
 SRCS := \

@@ -36,102 +36,96 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "config.h"
+
+#ifdef LIBEXPAT_ENABLED
+
+#include "ExpatXMLParser.h"
+#include "XMLDocument.h"
 #include "XMLObject.h"
-#include "util/StringBuffer.h"
 
 namespace oasys {
 
 //----------------------------------------------------------------------
-XMLObject::XMLObject(const std::string& tag)
-    : tag_(tag), parent_(NULL)
+ExpatXMLParser::ExpatXMLParser(const char* logpath)
+    : Logger("ExpatXMLParser", logpath)
 {
-}
-
-//----------------------------------------------------------------------
-XMLObject::~XMLObject()
-{
-    Elements::iterator i;
-    for (i = elements_.begin(); i != elements_.end(); ++i) {
-        delete *i;
-    }
-}
-
-//----------------------------------------------------------------------
-void
-XMLObject::add_attr(const std::string& attr, const std::string& val)
-{
-    attrs_.push_back(attr);
-    attrs_.push_back(val);
-}
-
-//----------------------------------------------------------------------
-void
-XMLObject::add_proc_inst(const std::string& target,
-                         const std::string& data)
-{
-    proc_insts_.push_back(target);
-    proc_insts_.push_back(data);
 }
     
 //----------------------------------------------------------------------
-void
-XMLObject::add_element(XMLObject* child)
+ExpatXMLParser::~ExpatXMLParser()
 {
-    elements_.push_back(child);
-    child->parent_ = this;
 }
 
 //----------------------------------------------------------------------
-void
-XMLObject::add_text(const char* text, size_t len)
+bool
+ExpatXMLParser::parse(XMLDocument* doc, const std::string& data)
 {
-    if (len == 0) {
-        len = strlen(text);
+    XML_Parser p = XML_ParserCreate(NULL);
+
+    // set up the expat handlers
+    XML_SetUserData(p, this);
+    XML_SetElementHandler(p, start_element, end_element);
+    XML_SetCharacterDataHandler(p, character_data);
+
+    // cache the document and null out the object
+    doc_ = doc;
+    cur_ = NULL;
+
+    if (XML_Parse(p, data.c_str(), data.length(), true) != XML_STATUS_OK) {
+        log_err("parse error at line %d:\n%s",
+                XML_GetCurrentLineNumber(p),
+                XML_ErrorString(XML_GetErrorCode(p)));
+        return false;
     }
-    
-    text_.append(text, len);
+
+    return true;
 }
 
 //----------------------------------------------------------------------
-void
-XMLObject::to_string(StringBuffer* buf, int indent, int cur_indent) const
+void XMLCALL
+ExpatXMLParser::start_element(void* data,
+                              const char* element,
+                              const char** attr)
 {
-    static const char* space = "                                        "
-                               "                                        ";
-    
-    buf->appendf("%.*s<%s", cur_indent, space, tag_.c_str());
-    for (unsigned int i = 0; i < attrs_.size(); i += 2)
-    {
-        buf->appendf(" %s=\"%s\"", attrs_[i].c_str(), attrs_[i+1].c_str());
+    ExpatXMLParser* this2 = (ExpatXMLParser*)data;
+
+    XMLObject* new_object = new XMLObject(element);
+    if (this2->cur_ == NULL) {
+        this2->doc_->set_root(new_object);
+    } else {
+        this2->cur_->add_element(new_object);
     }
 
-    // shorthand for attribute-only tags
-    if (proc_insts_.empty() && elements_.empty() && text_.size() == 0)
-    {
-        buf->appendf("/>");
-        return;
+    this2->cur_ = new_object;
+    while (attr[0] != NULL) {
+        ASSERT(attr[1] != NULL);
+        this2->cur_->add_attr(attr[0], attr[1]);
+        attr += 2;
     }
-    else
-    {
-        buf->appendf(">%s", (indent == -1) ? "" : "\n");
+}
 
-    }
-    
-    for (unsigned int i = 0; i < proc_insts_.size(); i += 2)
-    {
-        buf->appendf("<?%s %s?>%s",
-                     proc_insts_[i].c_str(), proc_insts_[i+1].c_str(),
-                     (indent == -1) ? "" : "\n");
-    }
-    
-    for (unsigned int i = 0; i < elements_.size(); ++i)
-    {
-        elements_[i]->to_string(buf, indent, (indent > 0) ? cur_indent + indent : 0);
-    }
+//----------------------------------------------------------------------
+void XMLCALL
+ExpatXMLParser::end_element(void* data,
+                            const char* element)
+{
+    ExpatXMLParser* this2 = (ExpatXMLParser*)data;
+    ASSERT(this2->cur_->tag() == element);
+    this2->cur_ = this2->cur_->parent();
+}
 
-    buf->append(text_);
-
-    buf->appendf("%.*s</%s>", cur_indent, space, tag_.c_str());
+//----------------------------------------------------------------------
+void XMLCALL
+ExpatXMLParser::character_data(void* data,
+                               const XML_Char* s,
+                               int len)
+{
+    ExpatXMLParser* this2 = (ExpatXMLParser*)data;
+    ASSERT(this2->cur_ != NULL);
+    this2->cur_->add_text(s, len);
 }
 
 } // namespace oasys
+
+#endif /* LIBEXPAT_ENABLED */

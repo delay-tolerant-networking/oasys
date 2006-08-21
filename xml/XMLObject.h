@@ -35,8 +35,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _XMLOBJECT_H_
-#define _XMLOBJECT_H_
+#ifndef _OASYS_XML_OBJECT_H_
+#define _OASYS_XML_OBJECT_H_
 
 #include <string>
 #include <vector>
@@ -88,8 +88,9 @@ public:
     const ProcInsts& proc_insts() const { return proc_insts_; }
     const Elements& elements()    const { return elements_; }
     const std::string& text()     const { return text_; }
+    XMLObject* parent()           const { return parent_; }
     ///
-    
+
     /**
      * Append an attribute/value pair.
      */
@@ -131,6 +132,7 @@ protected:
     ProcInsts   proc_insts_;
     Elements    elements_;
     std::string text_;
+    XMLObject*  parent_;
 
     /**
      * We don't support assignment of the class.
@@ -140,4 +142,4 @@ protected:
 
 } // namespace oasys
 
-#endif /* _XMLOBJECT_H_ */
+#endif /* _OASYS_XML_OBJECT_H_ */

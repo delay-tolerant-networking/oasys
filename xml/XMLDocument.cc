@@ -36,102 +36,53 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "XMLDocument.h"
 #include "XMLObject.h"
 #include "util/StringBuffer.h"
 
 namespace oasys {
 
 //----------------------------------------------------------------------
-XMLObject::XMLObject(const std::string& tag)
-    : tag_(tag), parent_(NULL)
+XMLDocument::XMLDocument()
+    : root_(NULL)
 {
 }
 
 //----------------------------------------------------------------------
-XMLObject::~XMLObject()
+XMLDocument::~XMLDocument()
 {
-    Elements::iterator i;
-    for (i = elements_.begin(); i != elements_.end(); ++i) {
-        delete *i;
-    }
+    delete root_;
 }
 
 //----------------------------------------------------------------------
 void
-XMLObject::add_attr(const std::string& attr, const std::string& val)
-{
-    attrs_.push_back(attr);
-    attrs_.push_back(val);
-}
-
-//----------------------------------------------------------------------
-void
-XMLObject::add_proc_inst(const std::string& target,
-                         const std::string& data)
-{
-    proc_insts_.push_back(target);
-    proc_insts_.push_back(data);
-}
-    
-//----------------------------------------------------------------------
-void
-XMLObject::add_element(XMLObject* child)
-{
-    elements_.push_back(child);
-    child->parent_ = this;
-}
-
-//----------------------------------------------------------------------
-void
-XMLObject::add_text(const char* text, size_t len)
+XMLDocument::add_header(const char* header, size_t len)
 {
     if (len == 0) {
-        len = strlen(text);
+        len = strlen(header);
     }
     
-    text_.append(text, len);
+    header_.append(header, len);
 }
 
 //----------------------------------------------------------------------
 void
-XMLObject::to_string(StringBuffer* buf, int indent, int cur_indent) const
+XMLDocument::set_root(XMLObject* root)
 {
-    static const char* space = "                                        "
-                               "                                        ";
-    
-    buf->appendf("%.*s<%s", cur_indent, space, tag_.c_str());
-    for (unsigned int i = 0; i < attrs_.size(); i += 2)
-    {
-        buf->appendf(" %s=\"%s\"", attrs_[i].c_str(), attrs_[i+1].c_str());
-    }
+    ASSERT(root_ == NULL);
+    root_ = root;
+}
 
-    // shorthand for attribute-only tags
-    if (proc_insts_.empty() && elements_.empty() && text_.size() == 0)
-    {
-        buf->appendf("/>");
-        return;
-    }
-    else
-    {
-        buf->appendf(">%s", (indent == -1) ? "" : "\n");
-
+//----------------------------------------------------------------------
+void
+XMLDocument::to_string(StringBuffer* buf, int indent) const
+{
+    if (header_.length() != 0) {
+        buf->append(header_.c_str(), header_.length());
+        buf->append("\n");
     }
     
-    for (unsigned int i = 0; i < proc_insts_.size(); i += 2)
-    {
-        buf->appendf("<?%s %s?>%s",
-                     proc_insts_[i].c_str(), proc_insts_[i+1].c_str(),
-                     (indent == -1) ? "" : "\n");
-    }
-    
-    for (unsigned int i = 0; i < elements_.size(); ++i)
-    {
-        elements_[i]->to_string(buf, indent, (indent > 0) ? cur_indent + indent : 0);
-    }
-
-    buf->append(text_);
-
-    buf->appendf("%.*s</%s>", cur_indent, space, tag_.c_str());
+    root_->to_string(buf, indent);
 }
 
 } // namespace oasys
