@@ -156,6 +156,14 @@ public:
     }
 
     /**
+     * Accessor for a const object pointer.
+     */
+    const _Type* const_object() const
+    {
+        return object_;
+    }
+
+    /**
      * Operator overload for pointer access.
      */
     _Type* operator->() const
