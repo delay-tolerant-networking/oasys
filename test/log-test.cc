@@ -10,8 +10,8 @@
 
 using namespace oasys;
 
-StringBuffer path1, path2, path3;
-FileIOClient *f1, *f2, *f3;
+StringBuffer path1, path2;
+FileIOClient *f1, *f2;
 
 const char* debug1 =
 "/log-test          debug\n"
@@ -35,12 +35,6 @@ const char* debug2_sorted =
 "/log-test/thread warning\n"
 "/log-test debug\n";
 
-const char* debug3 =
-"/log-test warn\n"
-"/log-this debug\n"
-"-test     always\n"
-"-this     debug\n";
-
 DECLARE_TEST(Init) {
     
     log_notice("/test", "flamebox-ignore logs /log-test");
@@ -48,15 +42,12 @@ DECLARE_TEST(Init) {
     // create two files, one with the test rule enabled, one without
     path1.appendf("/tmp/log-test-%s-1-%d", getenv("USER"), getpid());
     path2.appendf("/tmp/log-test-%s-2-%d", getenv("USER"), getpid());
-    path3.appendf("/tmp/log-test-%s-3-%d", getenv("USER"), getpid());
     
     f1 = new FileIOClient();
     f2 = new FileIOClient();
-    f3 = new FileIOClient();
 
     f1->logpathf("/log/file1");
     f2->logpathf("/log/file2");
-    f3->logpathf("/log/file3");
     
     CHECK(f1->open(path1.c_str(),
                    O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR) > 0);
@@ -64,16 +55,11 @@ DECLARE_TEST(Init) {
     CHECK(f2->open(path2.c_str(),
                    O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR) > 0);
 
-    CHECK(f3->open(path3.c_str(),
-                   O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR) > 0);
-
     CHECK(f1->write(debug1, strlen(debug1)) == (int)strlen(debug1));
     CHECK(f2->write(debug2, strlen(debug2)) == (int)strlen(debug2));
-    CHECK(f3->write(debug3, strlen(debug3)) == (int)strlen(debug3));
     
     CHECK(f1->close() == 0);
     CHECK(f2->close() == 0);
-    CHECK(f3->close() == 0);
 
     // parse debug1
     Log::instance()->parse_debug_file(path1.c_str());
@@ -85,6 +71,7 @@ DECLARE_TEST(Init) {
 }
 
 DECLARE_TEST(RulesTest) {
+    
     // these should all print
     CHECK(logf("/log-test", LOG_DEBUG, "print me") != 0);
     CHECK(logf("/log-test", LOG_INFO,  "print me") != 0);
@@ -451,19 +438,6 @@ DECLARE_TEST(ReparseTest) {
     return UNIT_TEST_PASSED;
 }
 
-DECLARE_TEST(SubstringTest) {
-    Log::instance()->parse_debug_file(path3.c_str());
-
-    CHECK(logf("/log-test",      LOG_WARN, "don't print me") == 0);
-    CHECK(logf("/log/testicle",  LOG_ERR,   "don't print me") == 0);
-    log_notice("/test", "flamebox-ignore logs /log-test");
-    CHECK(logf("/log/thisisisisis", LOG_DEBUG,   "print me") != 0);
-    log_notice("/test", "flamebox-cancel-ignore logs /log-test");
-    CHECK(logf("/log/this",      LOG_DEBUG,  "print me") != 0);
-
-    return UNIT_TEST_PASSED;
-}
-
 DECLARE_TEST(Fini) {
     CHECK(f1->unlink() == 0);
     CHECK(f2->unlink() == 0);
@@ -482,7 +456,6 @@ DECLARE_TESTER(LogTest) {
     ADD_TEST(LoggerTest);
     ADD_TEST(FormatterTest);
     ADD_TEST(ReparseTest);
-    ADD_TEST(SubstringTest);
     ADD_TEST(Fini);
 #endif
 }
