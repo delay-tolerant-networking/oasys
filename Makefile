@@ -117,6 +117,9 @@ UTIL_SRCS :=					\
 	util/jenkins_hash.cc			\
 	util/md5-rsa.c				\
 
+XML_SRCS :=					\
+	xml/XMLObject.cc			\
+
 SRCS := \
 	version.c				\
 	$(COMPAT_SRCS) 				\
@@ -130,6 +133,8 @@ SRCS := \
 	$(TCLCMD_SRCS)				\
 	$(THREAD_SRCS)				\
 	$(UTIL_SRCS)				\
+	$(XML_SRCS)				\
+
 
 OBJS := $(SRCS:.cc=.o)
 OBJS := $(OBJS:.c=.o)

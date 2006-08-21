@@ -27,6 +27,7 @@ TESTS += \
 	token-bucket-test			\
 	type-collection-test		        \
 	util-test				\
+	xml-test				\
 
 #
 # Tests that need to be fixed
