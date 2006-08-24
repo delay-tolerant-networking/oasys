@@ -58,13 +58,17 @@ namespace oasys {
  * @endcode
  */
 template<typename _Class, bool _auto_create = true>
-class Singleton {
+class Singleton;
+
+// Autocreation of the singleton
+template<typename _Class>
+class Singleton<_Class, true> {
 public:
     static _Class* instance() {
         // XXX/demmer this has potential race conditions if multiple
         // threads try to access the singleton for the first time
         
-        if(_auto_create && instance_ == 0) {
+        if(instance_ == 0) {
             instance_ = new _Class();
         }
         ASSERT(instance_);
@@ -83,6 +87,42 @@ public:
 
     static void set_instance(_Class* instance) {
         if (instance_) {
+            PANIC("Singleton set_instance() called with existing object");
+        }
+        instance_ = instance;
+    }
+    
+protected:
+    static _Class* instance_;
+};
+
+// No autocreation of the instance
+template<typename _Class>
+class Singleton<_Class, false> {
+public:
+    static _Class* instance() 
+    {
+        // XXX/demmer this has potential race conditions if multiple
+        // threads try to access the singleton for the first time
+        ASSERT(instance_);
+        return instance_;
+    }
+    
+    static _Class* create() 
+    {
+        if (instance_) 
+        {
+            PANIC("Singleton create() method called more than once");
+        }
+        
+        instance_ = new _Class();
+        return instance_;
+    }
+
+    static void set_instance(_Class* instance) 
+    {
+        if (instance_) 
+        {
             PANIC("Singleton set_instance() called with existing object");
         }
         instance_ = instance;
