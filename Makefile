@@ -96,6 +96,7 @@ UTIL_SRCS :=					\
 	util/CRC32.cc				\
 	util/ExpandableBuffer.cc		\
 	util/Getopt.cc				\
+	util/Glob.cc				\
 	util/HexDumpBuffer.cc			\
 	util/InitSequencer.cc			\
 	util/MD5.cc				\

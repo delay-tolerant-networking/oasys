@@ -53,6 +53,7 @@
 #include "thread/SpinLock.h"
 #include "thread/Timer.h"
 #include "util/StringBuffer.h"
+#include "util/Glob.h"
 
 /**
  * Namespace for the oasys library of system support classes.
@@ -376,7 +377,8 @@ Log::find_rule(const char *path)
     RuleList::iterator iter;
     Rule* rule;
     RuleList* rule_list = rule_list_;
-    for (iter = rule_list->begin(); iter != rule_list->end(); iter++) {
+    for (iter = rule_list->begin(); iter != rule_list->end(); iter++) 
+    {
         rule = &(*iter);
 
         if (rule->path_.length() > pathlen) {
@@ -388,9 +390,19 @@ Log::find_rule(const char *path)
         
         size_t minlen = (pathlen < rulelen) ? pathlen : rulelen;
         
-        if (strncmp(rule_path, path, minlen) == 0) {
+        if (strncmp(rule_path, path, minlen) == 0) 
+        {
             return rule; // match!
 	}
+
+        // XXX/bowei cheap dirty hack to add glob expressions to the
+        // logging. I'm sick of seeing three billion logs for refs
+        // flying by.
+        if (rule_path[0] == '+' &&
+            Glob::fixed_glob(rule_path + 1, path))
+        {
+            return rule;
+        }
     }
 
     return NULL; // no match :-(
