@@ -90,22 +90,29 @@ public:
     
     virtual ~UnitTester() {}
 
-    int run_tests(int argc, const char* argv[]) {
+    int run_tests(int argc, const char* argv[], bool init_log) {
         log_level_t level = LOG_NOTICE;
 
-        // always skip argv[0]
-        argc -= 1;
-        argv += 1;
-
-        // first look for -l debug (which must come first)
-        if (argc >= 2 && (strcmp(argv[0], "-l") == 0))
+        if (argc != 0) 
         {
-            level = str2level(argv[1]);
-            argc -= 2;
-            argv += 2;
+            // always skip argv[0]
+            argc -= 1;
+            argv += 1;
+            
+            // first look for -l debug (which must come first)
+            if (argc >= 2 && (strcmp(argv[0], "-l") == 0))
+            {
+                level = str2level(argv[1]);
+                argc -= 2;
+                argv += 2;
+            }
+            
         }
-
-        Log::init(level);
+        
+        if (init_log)
+        {
+            Log::init(level);
+        }
         FatalSignals::init(name_.c_str());
         
         add_tests();
@@ -262,7 +269,13 @@ private:
 
 #define RUN_TESTER(_UnitTesterClass, testname, argc, argv)      \
     _UnitTesterClass test(testname);                            \
-    return test.run_tests(argc, argv);
+    int _ret = test.run_tests(argc, argv, true);                \
+    return _ret;
+
+#define RUN_TESTER_NO_LOG(_UnitTesterClass, testname, argc, argv) \
+    _UnitTesterClass test(testname);                              \
+    int _ret = test.run_tests(argc, argv, false);                 \
+    return _ret;
 
 #define DECLARE_TEST_FILE(_UnitTesterClass, testname)           \
 int main(int argc, const char* argv[]) {                        \
