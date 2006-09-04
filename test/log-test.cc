@@ -120,6 +120,7 @@ public:
 
 int
 LoggerTest::foo() {
+    int errno_; const char* strerror_; 
     // test macro call with implicit path
     CHECK(log_debug("debug message %d", 10) != 0);
         
@@ -148,6 +149,7 @@ LoggerTest::foo() {
 int
 foo()
 {
+    int errno_; const char* strerror_;
     // test macro calls with explicit path in a non-logger function
     CHECK(log_debug("/log-test/path", "debug message %d", 10) != 0);
     CHECK(log_debug("/log-test/path", "debug %s %d", "message", 10) != 0);

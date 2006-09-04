@@ -19,6 +19,7 @@ protected:
     }
 
     int test() {
+	int errno_; const char* strerror_; 
         int prev = -1;
 
         for (int i = 0; i < count_; ++i) {
@@ -89,6 +90,8 @@ push_pop_test(int count) {
     p.join();
     c.join();
 
+    int errno_; const char* strerror_;
+    
     CHECK_EQUAL(p.total_, count);
     CHECK_EQUAL(c.total_, count);
 

@@ -204,6 +204,11 @@ atomic_add_ret_test(int nthreads, int count, int amount)
         expected += ((i + 1) * amount);
     }
 
+    // To make UnitTest happy, because it is usually supposed to be
+    // used inside a UnitTest class
+    int errno_;
+    const char* strerror_;
+
     for (int i = 0; i < nthreads; ++i) {
         CHECK_GTU(sum[i].value, 0);
         total_sum += sum[i].value;
@@ -261,6 +266,8 @@ atomic_incr_test(int nthreads, int count)
         threads[i]->join();
         delete threads[i];
     }
+
+    int errno_; const char* strerror_;
 
     CHECK_EQUAL(val.value, expected);
     
@@ -327,6 +334,8 @@ compare_and_swap_test(int nthreads, int count) {
         delete threads[i];
     }
 
+    int errno_; const char* strerror_;
+    
     u_int32_t total_success = 0, total_fail = 0;
     for (int i = 0; i < nthreads; ++i) {
         CHECK_GTU(success[i].value, 0);
