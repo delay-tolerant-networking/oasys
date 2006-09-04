@@ -173,7 +173,7 @@ main(int argc, const char** argv)
     }
 
     Tester t("stack-trace-test");
-    return t.run_tests(argc, argv);
+    return t.run_tests(argc, argv, true);
 }
     
 
