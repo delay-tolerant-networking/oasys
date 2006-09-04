@@ -317,6 +317,20 @@ void _name::add_tests()                                         \
                     "CHECK (%s) ok at %s:%d", #x, __FILE__, __LINE__);  \
     } } while(0)
 
+#define CHECK_SYS(x)                                                    \
+    do { if (! (x)) {                                                   \
+	errno_ = errno;							\
+	strerror_ = strerror(errno_);					\
+        ::oasys::Breaker::break_here();                                 \
+        ::oasys::__logf(oasys::LOG_ERR, "/test",                        \
+                    "CHECK FAILED (%s) at %s:%d, errno=%s",             \
+                    #x, __FILE__, __LINE__, strerror_);                 \
+        return oasys::UNIT_TEST_FAILED;                                 \
+    } else {                                                            \
+        ::oasys::__logf(oasys::LOG_NOTICE, "/test",                     \
+                    "CHECK (%s) ok at %s:%d", #x, __FILE__, __LINE__);  \
+    } } while(0)
+
 #define CHECK_EQUAL(_a, _b)                                                     \
     do { int a = _a; int b = _b; if ((a) != (b)) {                              \
 	errno_ = errno;								\
