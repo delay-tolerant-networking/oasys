@@ -9,7 +9,8 @@ AC_DEFUN(AC_OASYS_CONFIG_EXPAT, [
     AC_ARG_WITH(expat,
         AC_HELP_STRING([--with-expat=DIR],
     		   [location of an expat installation (default try)]),
-        ac_expatdir=$withval) 
+        [ac_expatdir=$withval],
+        [ac_expatdir=try])
 
     AC_MSG_CHECKING([whether expat support should be enabled])
 
@@ -70,6 +71,7 @@ AC_DEFUN(AC_OASYS_FIND_EXPAT, [
 
     if test "$ac_expatdir" = system -o \
             "$ac_expatdir" = yes -o \
+            "$ac_expatdir" = try -o \
             "$ac_expatdir" = "" ; 
     then
         ac_expatincdirs="/usr/include /usr/local/include"
@@ -110,6 +112,7 @@ AC_DEFUN(AC_OASYS_FIND_EXPAT, [
               break 4
           ],
           [
+              AC_MSG_RESULT([no])
           ])
     done
     done
