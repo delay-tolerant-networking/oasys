@@ -40,6 +40,7 @@
 #include "xml/XMLDocument.h"
 #include "xml/XMLObject.h"
 #include "xml/ExpatXMLParser.h"
+#include "xml/XMLParser.h"
 
 using namespace oasys;
 using namespace std;
@@ -130,8 +131,8 @@ bool test_parse(XMLParser* p, const std::string data)
     return UNIT_TEST_PASSED;
 }
 
-DECLARE_TEST(ExpatParseTest) {
 #if LIBEXPAT_ENABLED
+DECLARE_TEST(ExpatParseTest) {
     ExpatXMLParser p("/test/expat");
 
     CHECK(test_parse(&p, "<test/>") == UNIT_TEST_PASSED);
@@ -140,13 +141,15 @@ DECLARE_TEST(ExpatParseTest) {
     CHECK(test_parse(&p, "<test><test2/></test>") == UNIT_TEST_PASSED);
     CHECK(test_parse(&p, "<test>Some text</test>") == UNIT_TEST_PASSED);
     
-#endif
     return UNIT_TEST_PASSED;
 }
+#endif
 
 DECLARE_TESTER(Test) {    
     ADD_TEST(ToStringTest);
+#if LIBEXPAT_ENABLED
     ADD_TEST(ExpatParseTest);
+#endif
 }
 
 DECLARE_TEST_FILE(Test, "xml test");
