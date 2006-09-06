@@ -27,11 +27,6 @@ AC_DEFUN(AC_OASYS_CONFIG_EXPAT, [
     else
        AC_MSG_RESULT([yes (dir $ac_expatdir)])
     fi
-  
-    LIBEXPAT_ENABLED=1
-    AC_DEFINE_UNQUOTED(LIBEXPAT_ENABLED, 1, 
-        [whether expat is enabled])
-
     dnl
     dnl Now check if we have a cached value, unless the user specified
     dnl something explicit with the --with-expat= argument, in
@@ -39,22 +34,34 @@ AC_DEFUN(AC_OASYS_CONFIG_EXPAT, [
     dnl cached values)
     dnl
     if test "$ac_expatdir" = yes -a ! x$oasys_cv_path_expat_h = x ; then
-        echo "checking for expat installation... (cached) $oasys_cv_path_expat_h/expat.h, $oasys_cv_path_expat_lib -l$oasys_cv_lib_expat"
+        if test ! "$oasys_cv_lib_expat" = "" ; then
+            echo "checking for expat installation... (cached) $oasys_cv_path_expat_h/expat.h, $oasys_cv_path_expat_lib -l$oasys_cv_lib_expat"
+        else
+            echo "checking for expat installation... (cached) disabled"
+        fi
     else
         AC_OASYS_FIND_EXPAT
     fi
 
-    if test ! $oasys_cv_path_expat_h = /usr/include ; then
-        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_expat_h"
+    if test ! "$oasys_cv_lib_expat" = "" ; then
+        LIBEXPAT_ENABLED=1
+        AC_DEFINE_UNQUOTED(LIBEXPAT_ENABLED, 1, 
+            [whether expat is enabled])
+
+        if test ! $oasys_cv_path_expat_h = /usr/include ; then
+           OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_expat_h"
+        fi
+
+        if test ! $oasys_cv_path_expat_lib = /usr/lib ; then
+            OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_expat_lib"
+        fi
+
+        OASYS_LIBS="$OASYS_LIBS -l$oasys_cv_lib_expat"
+    else
+        LIBEXPAT_ENABLED=0
     fi
 
-    if test ! $oasys_cv_path_expat_lib = /usr/lib ; then
-        OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_expat_lib"
-    fi
-
-    OASYS_LIBS="$OASYS_LIBS -l$oasys_cv_lib_expat"
-
-    fi # LIBEXPAT_ENABLED
+    fi # ac_expatdir != no
 ])
 
 dnl
@@ -113,6 +120,9 @@ AC_DEFUN(AC_OASYS_FIND_EXPAT, [
           ],
           [
               AC_MSG_RESULT([no])
+              oasys_cv_path_expat_h=
+              oasys_cv_path_expat_lib=
+              oasys_cv_lib_expat=
           ])
     done
     done
