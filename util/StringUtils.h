@@ -63,6 +63,7 @@
 
 namespace oasys {
 
+//----------------------------------------------------------------------------
 /**
  * Hashing function class for std::strings.
  */
@@ -73,6 +74,7 @@ struct StringHash {
     }
 };
 
+//----------------------------------------------------------------------------
 /**
  * Less than function.
  */
@@ -83,6 +85,7 @@ struct StringLessThan {
     }
 };
 
+//----------------------------------------------------------------------------
 /**
  * Greater than function.
  */
@@ -93,6 +96,7 @@ struct StringGreaterThan {
     }
 };
 
+//----------------------------------------------------------------------------
 /**
  * Equality function class for std::strings.
  */
@@ -103,6 +107,7 @@ struct StringEquals {
     }
 };
 
+//----------------------------------------------------------------------------
 /**
  * A StringSet is a set with std::string members
  */
@@ -111,6 +116,7 @@ public:
     void dump(const char* log) const;
 };
 
+//----------------------------------------------------------------------------
 /**
  * A StringMap is a map with std::string keys.
  */
@@ -118,6 +124,7 @@ template <class _Type> class StringMap :
     public std::map<std::string, _Type, StringLessThan> {
 };
 
+//----------------------------------------------------------------------------
 /**
  * A StringMultiMap is a multimap with std::string keys.
  */
@@ -125,6 +132,7 @@ template <class _Type> class StringMultiMap :
     public std::multimap<std::string, _Type, StringLessThan> {
 };
 
+//----------------------------------------------------------------------------
 /**
  * A StringHashSet is a hash set with std::string members.
  */
@@ -134,6 +142,7 @@ public:
     void dump(const char* log) const;
 };
 
+//----------------------------------------------------------------------------
 /**
  * A StringHashMap is a hash map with std::string keys.
  */
@@ -141,12 +150,14 @@ template <class _Type> class StringHashMap :
     public _std::hash_map<std::string, _Type, StringHash, StringEquals> {
 };
 
+//----------------------------------------------------------------------------
 /**
  * A StringVector is a std::vector of std::strings.
  */
 class StringVector : public std::vector<std::string> {
 };
 
+//----------------------------------------------------------------------------
 /**
  * Tokenize a single string into a vector.
  * Return the number of tokens parsed.
@@ -156,6 +167,7 @@ tokenize(const std::string& str,
          const std::string& sep,
          std::vector<std::string>* tokens);
 
+//----------------------------------------------------------------------------
 /**
  * Generate a hex string from a binary buffer.
  */
@@ -170,6 +182,7 @@ hex2str(std::string* str, const u_char* bp, size_t len)
     }
 }
 
+//----------------------------------------------------------------------------
 /**
  * Parse a hex string into a binary buffer. Results undefined if the
  * string contains characters other than [0-9a-f].
@@ -184,7 +197,8 @@ str2hex(const std::string& str, u_char* bp, size_t len)
     }
 #undef HEXTONUM
 }
-
+ 
+//----------------------------------------------------------------------------
 /**
  * Return true if the string contains only printable characters.
  */
@@ -200,6 +214,7 @@ str_isascii(const u_char* bp, size_t len)
     return true;
 }
 
+//----------------------------------------------------------------------------
 /**
  * Convert an unsigned long to ascii in the given base. The pointer to
  * the tail end of an adequately sized buffer is supplied, and the
@@ -257,6 +272,14 @@ fast_ultoa(unsigned long val, int base, char* endp)
 
 #undef to_char
 }
+
+//----------------------------------------------------------------------------
+const char*
+bool_to_str(bool b);
+
+//----------------------------------------------------------------------------
+const char*
+str_if(bool b, const char* true_str, const char* false_str = "");
 
 } // namespace oasys
 

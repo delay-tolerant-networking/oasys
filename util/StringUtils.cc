@@ -94,4 +94,30 @@ StringHashSet::dump(const char* log) const
     }
 }
 
+//----------------------------------------------------------------------------
+const char*
+bool_to_str(bool b)
+{
+    if (b) 
+    {
+        return "true";
+    }
+    
+    return "false";
+}
+
+//----------------------------------------------------------------------------
+const char*
+str_if(bool b, const char* true_str, const char* false_str)
+{
+    if (b) 
+    {
+        return true_str;
+    }
+    else
+    {
+        return false_str;
+    }
+}
+
 } // namespace oasys
