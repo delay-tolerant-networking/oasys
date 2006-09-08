@@ -128,7 +128,7 @@ namespace oasys {
 #define LOG_DEFAULT_DBGFILE   "~/.debug"
 
 #define LOG_MAX_PATHLEN (64)
-#define LOG_MAX_LINELEN (256)
+#define LOG_MAX_LINELEN (512)
 
 typedef enum {
     LOG_INVALID = -1,
