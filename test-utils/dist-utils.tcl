@@ -23,7 +23,7 @@ proc get_rundir {hostname id} {
 	regsub -- {C:} $cwd {/cygdrive/c} cwd
 	return "$cwd/run-$id"
     } else {
-	return $opt(rundir_prefix)-$hostname-$id
+	return $opt(rundir_prefix)-$id
     }
 }
 
