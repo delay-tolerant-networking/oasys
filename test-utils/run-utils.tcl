@@ -71,6 +71,7 @@ proc usage {} {
     puts "    --strip                    Strip execs before copying"
     puts "    --valgrind-suppressions    Generate valgrind error suppressions"
     puts "    --base-test-dir <dir>      Base Directory for test scripts"
+    puts "    --seed <seed>           	 Use the specified random seed"
 }
 
 proc init {argv} {
@@ -100,6 +101,7 @@ proc init {argv} {
     set opt(gdb_tmpl)      [import_find gdbrc.template]
     set opt(script_tmpl)   [import_find script.template]
     set opt(base_test_dir) ""
+    set opt(seed)          [clock seconds]
 
     set num_nodes_override 0
     set test_script ""
@@ -152,6 +154,7 @@ proc init {argv} {
 	    --gdb-tmpl    { shift argv; set opt(gdb_tmpl)    [arg0 $argv] }
 	    --script-tmpl { shift argv; set opt(script_tmpl) [arg0 $argv] }
 	    --base-test-dir { shift argv; set opt(base_test_dir) [arg0 $argv] }
+	    --seed 	  { shift argv; set opt(seed) [arg0 $argv] }
 	    --no-logs     { set opt(no_logs) 1 }
 	    --leave-crap  { set opt(leave_crap) 1}
 	    --strip       { set opt(strip) 1 }
@@ -181,6 +184,12 @@ proc init {argv} {
 	puts "* Setting num_nodes to $num_nodes_override"
 	net::num_nodes $num_nodes_override
     }
+
+    #
+    # Check and output the random number seed
+    #
+    puts "* Using random number generator seed $opt(seed)"
+    expr srand($opt(seed))
 
     #
     # Check if the test script is really in the base_test_dir
