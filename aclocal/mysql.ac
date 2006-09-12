@@ -37,10 +37,14 @@ AC_DEFUN(AC_OASYS_CONFIG_MYSQL, [
        AC_DEFINE_UNQUOTED(LIBMYSQLD_ENABLED, 1, 
            [whether the mysql embedded server is enabled])
 
-       AC_SEARCH_LIBS(request_init, wrap)
-       AC_SEARCH_LIBS(exp, m)
-       AC_SEARCH_LIBS(crypt, crypt)
-       AC_SEARCH_LIBS(compress, z)
+       AC_SEARCH_LIBS(request_init, wrap, [], 
+                      AC_MSG_ERROR([can't find request_init() in libwrap]))
+       AC_SEARCH_LIBS(exp, m, [],
+                      AC_MSG_ERROR([can't find exp() in libm]))
+       AC_SEARCH_LIBS(crypt, crypt, [],
+                      AC_MSG_ERROR([can't find crypt() in libcrypt]))
+       AC_SEARCH_LIBS(compress, z, [],
+                      AC_MSG_ERROR([can't find compress() in libz]))
     fi
 
     dnl
@@ -95,6 +99,7 @@ AC_DEFUN(AC_OASYS_FIND_MYSQL, [
         ac_mysqllibdirs="$ac_mysqldir/lib"
     fi
 
+    AC_LANG_PUSH(C++)
     for ac_mysqlincdir in $ac_mysqlincdirs; do
 
 	CPPFLAGS="$ac_save_CPPFLAGS -I$ac_mysqlincdir"
@@ -160,6 +165,7 @@ AC_DEFUN(AC_OASYS_FIND_MYSQL, [
               AC_MSG_RESULT([no])
           ])
     done
+    AC_LANG_POP(C++)
 
     CPPFLAGS="$ac_save_CPPFLAGS"
     LDFLAGS="$ac_save_LDFLAGS"
