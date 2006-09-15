@@ -58,6 +58,8 @@ public:
      * Parse the given data into an xml document object.
      */
     virtual bool parse(XMLDocument* doc, const std::string& data) = 0;
+
+    virtual ~XMLParser() {}
 };
 
 } // namespace oasys
