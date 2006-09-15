@@ -237,10 +237,11 @@ proc generate_script {id exec_file exec_opts confname conf exec_env} {
     
     # runscript
     set script(exec_file)   $exec_file
+    set script(exec_name)   [file tail $exec_file]
     set script(exec_opts)   $exec_opts
     set script(gdb_opts)    $opt(gdbopts)
     set script(run_dir)     $rundir
-    set script(run_id)      $exec_file-$hostname-$id
+    set script(run_id)      $script(exec_name)-$hostname-$id
     set script(gdb_exec)    $opt(gdb_exec)
     set script(gdb)         $opt(gdb)
     set script(valgrind)    $opt(valgrind)
@@ -275,7 +276,7 @@ proc generate_script {id exec_file exec_opts confname conf exec_env} {
     set gdbscript [process_template $opt(gdb_tmpl) gdb]    
     dbg "% gdbscript = \n$gdbscript"
 
-    set run_base "run-$exec_file"
+    set run_base "run-$script(exec_name)"
     
     write_script $id $rundir $run_base.sh  $runscript true
     write_script $id $rundir $run_base.gdb $gdbscript true
@@ -319,11 +320,13 @@ proc run {id exec_file exec_opts confname conf exec_env} {
 
     set hostname $net::host($id)
 
-    dbg "* Generating scripts for $exec_file for $hostname:$id"
+    set exec_name [file tail $exec_file]
+
+    dbg "* Generating scripts for $exec_name for $hostname:$id"
     generate_script $id $exec_file $exec_opts $confname $conf $exec_env
 
     set run::dirs($id) [dist::get_rundir $hostname $id]
-    set script "$run::dirs($id)/run-$exec_file.sh"
+    set script "$run::dirs($id)/run-$exec_name.sh"
 
     if {$opt(geometry) != ""} {
 	set geometry "-geometry $opt(geometry)"
@@ -331,18 +334,18 @@ proc run {id exec_file exec_opts confname conf exec_env} {
 	set geometry ""
     }
 
-    puts "* Running $exec_file on $hostname:$id"
+    puts "* Running $exec_name on $hostname:$id"
 
     # XXX/demmer get rid of the run::xterm useless vars
     
     switch "[net::is_localhost $hostname] $opt(xterm)" {
 	"1 1" {
-	    set cmd "xterm -title \"$hostname-$id $exec_file\" $geometry \
+	    set cmd "xterm -title \"$hostname-$id $exec_name\" $geometry \
 		    -e $script"
 	    set run::xterm($id) 1
 	}
 	"0 1" {
-	    set cmd "xterm -title \"$hostname-$id $exec_file\" $geometry \
+	    set cmd "xterm -title \"$hostname-$id $exec_name\" $geometry \
 		    -e ssh -t $hostname $script"
 	    set run::xterm($id) 1
 	}
@@ -356,24 +359,37 @@ proc run {id exec_file exec_opts confname conf exec_env} {
 	}
     }
 
-    dbg "% $hostname:$id exec $exec_file -- cmd '$cmd'"
+    dbg "% $hostname:$id exec $exec_name -- cmd '$cmd'"
     eval exec $cmd &
 
     do_until "getting exec pid" 10000 {
 	if {![catch {
-	    set exec_pid [run_cmd $hostname cat $run::dirs($id)/$exec_file.pid]
+	    set exec_pid [run_cmd $hostname cat $run::dirs($id)/$exec_name.pid]
 	} err]} {
 	    return
 	}
 	after 500
     }
 
-    dbg "% $hostname:$id exec $exec_file -- pid $exec_pid'"
+    dbg "% $hostname:$id exec $exec_name -- pid $exec_pid'"
     
-    run_cmd $hostname /bin/rm -f $run::dirs($id)/$exec_file.pid
+    run_cmd $hostname /bin/rm -f $run::dirs($id)/$exec_name.pid
     
     lappend run::pids($id) $exec_pid
     return $exec_pid
+}
+
+#
+# Add the pid for a given program that damonizes itself to the
+# one contained in the given run directory file
+#
+proc add_pid {id pid_filename} {
+    global run::dirs run::pids
+
+    set hostname $net::host($id)
+    set pid [run_cmd $hostname cat $run::dirs($id)/$pid_filename]
+    lappend run::pids($id) $pid
+    return $pid
 }
 
 #

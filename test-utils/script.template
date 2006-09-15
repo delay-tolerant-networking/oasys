@@ -1,5 +1,6 @@
 #!/bin/bash
 EXEC_FILE="%exec_file%"
+EXEC_NAME="%exec_name%"
 EXEC_OPTS="%exec_opts%"
 GDB_OPTS="%gdb_opts%"
 RUN_DIR="%run_dir%"
@@ -200,42 +201,48 @@ VALGRIND_OPTS="--tool=memcheck -v --leak-check=yes --num-callers=16 \
                --suppressions=oasys_valgrind.supp --show-reachable=no \
                $VALGRIND_OPTS"
 
+if [ ${EXEC_FILE:0:1} = '/' ] ; then
+    EXEC_PATH=$EXEC_FILE
+else
+    EXEC_PATH=$RUN_DIR/$EXEC_NAME
+fi
+
 CHOICE="${XTERM} ${GDB} ${VALGRIND}"
 case $CHOICE in
     "1 1 0")
-	CMD="$GDB_EXEC $RUN_DIR/$EXEC_FILE -x run-$EXEC_FILE.gdb"
+	CMD="$GDB_EXEC $EXEC_PATH -x run-$EXEC_NAME.gdb"
 	IN="</dev/stdin"
-	OUT="2>&1 | tee -a $EXEC_FILE.out"
+	OUT="2>&1 | tee -a $EXEC_NAME.out"
 	;;
     "1 0 1")
-	CMD="valgrind $VALGRIND_OPTS $RUN_DIR/$EXEC_FILE $EXEC_OPTS"
+	CMD="valgrind $VALGRIND_OPTS $EXEC_PATH $EXEC_OPTS"
 	IN="</dev/stdin"
-	OUT="2>&1 | tee -a $EXEC_FILE.out"
+	OUT="2>&1 | tee -a $EXEC_NAME.out"
 	;;
     "1 0 0") 
-	CMD="$RUN_DIR/$EXEC_FILE $EXEC_OPTS"
+	CMD="$EXEC_PATH $EXEC_OPTS"
 	IN="</dev/stdin"
-	OUT="2>&1 | tee -a $EXEC_FILE.out"
+	OUT="2>&1 | tee -a $EXEC_NAME.out"
 	;;
     "0 1 0")
-	CMD="$GDB_EXEC -batch -x run-test.gdb $GDB_OPTS $RUN_DIR/$EXEC_FILE"
+	CMD="$GDB_EXEC -batch -x run-test.gdb $GDB_OPTS $EXEC_PATH"
 	IN=""
-	OUT=">>$RUN_DIR/$EXEC_FILE.out 2>&1"
+	OUT=">>$RUN_DIR/$EXEC_NAME.out 2>&1"
 	;;
     "0 0 1")
-	CMD="valgrind $VALGRIND_OPTS $RUN_DIR/$EXEC_FILE $EXEC_OPTS"
+	CMD="valgrind $VALGRIND_OPTS $EXEC_PATH $EXEC_OPTS"
 	IN=""
-	OUT=">>$RUN_DIR/$EXEC_FILE.out 2>&1"
+	OUT=">>$RUN_DIR/$EXEC_NAME.out 2>&1"
 	;;
     "0 0 0")
-	CMD="$RUN_DIR/$EXEC_FILE $EXEC_OPTS"
+	CMD="$EXEC_PATH $EXEC_OPTS"
 	IN=""
-	OUT=">>$RUN_DIR/$EXEC_FILE.out 2>&1"
+	OUT=">>$RUN_DIR/$EXEC_NAME.out 2>&1"
 	;;
     *) echo "! garbage arguments to run script"; exit ;;
 esac
 
-EXECCMD="( $CMD $IN & echo \$! > $RUN_DIR/$EXEC_FILE.pid ) $OUT"
+EXECCMD="( $CMD $IN & echo \$! > $RUN_DIR/$EXEC_NAME.pid ) $OUT"
 dbg "% $EXECCMD"
 
 if [ \( "$XTERM" = 1 \) -a \( "$PAUSE_AFTER" = 1 \) ]; then
