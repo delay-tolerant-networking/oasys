@@ -397,13 +397,21 @@ FileSystemTable::put(const SerializableObject&  key,
                            S_IRUSR | S_IWUSR | S_IRGRP);
         if (data_elt_fd == -1)
         {
-            if (errno == ENOENT) {
+            if (errno == ENOENT) 
+            {
+                ASSERT(! (flags      & DS_CREATE));
+                ASSERT(! (open_flags & O_CREAT));
                 log_debug("file not found and DS_CREATE not specified");
                 return DS_NOTFOUND;
-            } else if (errno == EEXIST) {
+            } 
+            else if (errno == EEXIST) 
+            {
+                ASSERT(open_flags & O_EXCL);
                 log_debug("file found and DS_EXCL specified");
                 return DS_EXISTS;
-            } else {
+            } 
+            else 
+            {
                 log_warn("can't open %s: %s", 
                          filename.c_str(), strerror(errno));
                 return DS_ERR;
