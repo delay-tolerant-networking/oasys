@@ -41,26 +41,31 @@ BluetoothServer::listen()
 int
 BluetoothServer::accept(int *fd, bdaddr_t *addr, u_int8_t *channel)
 {
-    ASSERT(state_ == LISTENING);
+    ASSERTF(state_ == LISTENING,
+            "accept() expected state LISTENING, not %s", statetoa(state_));
     
-    init_sa(BluetoothSocket::ZERO); // zero out sockaddr
+    struct sockaddr sa;
+    socklen_t sl = sizeof(sa);
+    memset(&sa,0,sl);
 
-    int ret = poll_sockfd(POLLIN, NULL, -1); // wait forever
-
+    int ret = ::accept(fd_,&sa,&sl);
     if (ret == -1) {
-        if (errno != EINTR)
-            logf(LOG_ERR, "error in accept(): %s [%s:%d]",
-                 strerror(errno),
-                 __FILE__,__LINE__);
+        logf(LOG_ERR, "error in accept(): %s",strerror(errno));
         return ret;
-    } else if(ret != 1) return ret;
-
-    ret = ::accept(fd_,sa_,(socklen_t*)&slen_);
-    if (ret == -1) return ret;
+    }
     
     *fd = ret;
-    bacpy(addr,sa_baddr());
-    *channel = sa_channel();
+
+    switch(proto_) {
+    case RFCOMM:
+        rc_ = (struct sockaddr_rc*) &sa;
+        bacpy(addr,&rc_->rc_bdaddr);
+        *channel = rc_->rc_channel;
+        break;
+    default:
+        ASSERTF(0,"not implemented for %s",prototoa((proto_t)proto_));
+        break;
+    }
 
     monitor(IO::ACCEPT, 0); // XXX/bowei
 
@@ -68,8 +73,8 @@ BluetoothServer::accept(int *fd, bdaddr_t *addr, u_int8_t *channel)
 }
 
 int
-BluetoothServer::timeout_accept(int *fd, bdaddr_t *addr,
-                                u_int8_t *channel, int timeout_ms)
+BluetoothServer::timeout_accept(int *fd, bdaddr_t *addr, u_int8_t *channel,
+                                int timeout_ms)
 {
     int ret = poll_sockfd(POLLIN, NULL, timeout_ms);
 
@@ -115,9 +120,8 @@ BluetoothServerThread::run()
             if (errno == EINTR || ret == IOINTR) 
                 continue;
 
-            logf(LOG_ERR, "error in accept() [%d]: %d %s [%s:%d]",
-                 ret, errno, strerror(errno),
-                 __FILE__,__LINE__);
+            logf(LOG_ERR, "error %d in accept(): %d %s",
+                 ret, errno, strerror(errno));
             close();
 
             ASSERT(errno != 0);
@@ -125,11 +129,8 @@ BluetoothServerThread::run()
             break;
         }
         
-        char buff[18];
         logf(LOG_DEBUG, "accepted connection fd %d from %s(%d)",
-             fd, Bluetooth::batostr(&addr,buff), channel);
-
-        set_remote_addr(addr);
+             fd, bd2str(addr), channel);
 
         set_remote_addr(addr);
 
