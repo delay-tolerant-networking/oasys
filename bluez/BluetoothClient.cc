@@ -151,6 +151,7 @@ BluetoothClient::get_nonblocking(bool *nonblockingp)
 int
 BluetoothClient::set_nonblocking(bool nonblocking)
 {
+    ASSERT(fd_ != -1);
     return IO::set_nonblocking(fd_, nonblocking, logpath_);
 }
 
