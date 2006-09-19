@@ -137,7 +137,9 @@ BluetoothSocket::connect(bdaddr_t remote_addr, u_int8_t remote_channel)
     channel_ = remote_channel;
 
     char buff[18];
-    log_debug("connecting to %s(%d)",Bluetooth::batostr(&remote_addr_,buff),
+    (void)buff;
+    log_debug("connecting to %s(%d)",
+              Bluetooth::batostr(&remote_addr_,buff),
               channel_);
 
     init_sa((int)REMOTE);
