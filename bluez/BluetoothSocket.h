@@ -126,12 +126,14 @@ public:
      */
     struct bluetooth_socket_params {
         bluetooth_socket_params() :
-            reuseaddr_    (true),
-            recv_bufsize_ (0),
-            send_bufsize_ (0) {}
-        bool reuseaddr_;   // default: on
-        int recv_bufsize_; // default: system setting
-        int send_bufsize_; // default: system setting
+            reuseaddr_      (true),
+            silent_connect_ (false),
+            recv_bufsize_   (0),
+            send_bufsize_   (0) {}
+        bool reuseaddr_;      // default: on
+        bool silent_connect_; // default: off
+        int recv_bufsize_;    // default: system setting
+        int send_bufsize_;    // default: system setting
     } params_;
 
     /// The socket file descriptor
@@ -139,14 +141,12 @@ public:
 
     /// The local address that the socket is bound to
     void local_addr(bdaddr_t& addr);
-    bdaddr_t local_addr();
 
     /// The channel that the socket is bound to
     u_int8_t channel();
 
     /// The remote address that the socket is bound to
     void remote_addr(bdaddr_t& addr);
-    bdaddr_t remote_addr();
 
     /// Set the local address that the socket is bound to
     void set_local_addr(bdaddr_t& addr);
@@ -161,19 +161,14 @@ public:
     /// socket file descriptor
     void set_logfd(bool logfd) { logfd_ = logfd; }
 
-    bool reuse_addr() { return reuse_addr_; }
-    void reuse_addr(bool b) { reuse_addr_ = b; }
     void init_socket(); 
 protected:
-    void init_sa(int zero=(int)ZERO); 
     void set_state(state_t state);
     const char* statetoa(state_t state); 
     void set_proto(proto_t proto);
     const char* prototoa(proto_t proto); 
     void get_local();
     void get_remote(); 
-    bdaddr_t* sa_baddr();
-    u_int8_t sa_channel();
 
     static int abort_on_error_; 
     int fd_;
@@ -184,20 +179,8 @@ protected:
     bdaddr_t local_addr_;
     bdaddr_t remote_addr_;
     u_int8_t channel_; 
-    struct sockaddr* sa_;
-    int slen_;
     struct sockaddr_rc* rc_;  /* BTPROTO_RFCOMM */
-    bool reuse_addr_;
-    bool silent_connect_;
 };
-
-class RFCOMMChannel {
-public:
-    static int next();
-private:
-    static int rc_channel_;
-    static SpinLock lock_;
-}; // RFCOMMChannel
 
 } // namespace oasys
 

@@ -36,19 +36,13 @@ public:
 
     int rc_bind() {
         int res = -1;
-        char buff[18];
-
-        // Query RFCOMMChannel for next available channel
-        channel_ = RFCOMMChannel::next();
-        for (int k = 0; k < 30; k++) {
+        for (channel_ = 1; channel_ <= 30; channel_++) {
             if ((res = bind()) != 0) {
 
                 // something is borked
                 if (errno != EADDRINUSE) {
                     log_err("error binding to %s:%d: %s",
-                            Bluetooth::batostr(&local_addr_,buff),
-                            channel_,
-                            strerror(errno));
+                            bd2str(local_addr_), channel_, strerror(errno));
                     if (errno == EBADFD) close();
                     return res;
                 }
@@ -58,11 +52,10 @@ public:
                 return res;
             }
 
-            channel_ = RFCOMMChannel::next();
         }
 
         log_err("Scanned all local RFCOMM channels but unable to bind to %s",
-                Bluetooth::batostr(&local_addr_,buff));
+                bd2str(local_addr_));
         return -1;
     }
 };
