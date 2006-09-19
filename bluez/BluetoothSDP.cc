@@ -11,259 +11,193 @@ extern int errno;
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/rfcomm.h>
+#include "io/IO.h"
 
+#include "Bluetooth.h"
 #include "BluetoothSDP.h"
-//#include <debug/Logger.h>
 
 namespace oasys {
 
 BluetoothServiceDiscoveryClient::
 BluetoothServiceDiscoveryClient(const char* logpath) :
-    Logger("BluetoothServiceDiscoveryClient",logpath),
-    response_list_(NULL),
-    session_handle_(NULL)
+    Logger("BluetoothServiceDiscoveryClient",logpath)
 {
-    bacpy(&local_addr_,BDADDR_ANY);
+    Bluetooth::hci_get_bdaddr(&local_addr_);
+    channel_ = 0;
 }
 
 BluetoothServiceDiscoveryClient::
 ~BluetoothServiceDiscoveryClient()
 {
-    // terminate connection to remote service
-    close();
-
-    // clean up internal data structures
-    if (response_list_) {
-        delete response_list_;
-        response_list_ = NULL;
-    }
 }
 
 bool
 BluetoothServiceDiscoveryClient::
-connect()
+is_dtn_router(bdaddr_t remote)
 {
-    if (session_handle_ != NULL) return true;
-
     // connect to the SDP server running on the remote machine
-    session_handle_ = sdp_connect(
-                        &local_addr_, /* bind to specified local adapter */
-                        &remote_addr_,
-                        SDP_RETRY_IF_BUSY);
+    sdp_session_t* sess =
+        sdp_connect(&local_addr_, /* bind to specified local adapter */
+                    &remote,
+                    0); // formerly SDP_RETRY_IF_BUSY);
 
-    if ( ! session_handle_ ) {
-        // could be a device that does not implement SDP
-        log_debug("failed to connect to SDP server: %s (%d)\n",
-                  strerror(errno), errno);
+    if (!sess) {
+        log_debug("Failed to connect to SDP server on %s: %s\n",
+                  bd2str(remote),strerror(errno));
         return false;
     }
 
-    return true;
-}
+    // specify Universally Unique Identifier of service to query for
+    const uint32_t svc_uuid_int[] = OASYS_BLUETOOTH_SDP_UUID;
+    uuid_t svc_uuid;
 
-bool
-BluetoothServiceDiscoveryClient::
-close()
-{
-    if (session_handle_) {
-        sdp_close(session_handle_);
-        session_handle_ = NULL;
-        return true;
-    }
-    return false;
-}
+    // hi-order (0x0000) specifies start of search range;
+    // lo-order (0xffff) specifies end of range;
+    // 0x0000ffff specifies a search of full range of attributes
+    uint32_t range = 0x0000ffff;
 
-sdp_list_t*
-BluetoothServiceDiscoveryClient::
-do_search() {
+    // specify UUID of the application we're searching for
+    sdp_uuid128_create(&svc_uuid,&svc_uuid_int);
 
-    // connect to SDP service on remote system
-    if (connect()) {
+    // initialize the linked list with UUID to limit SDP
+    // search scope on remote host
+    sdp_list_t *search = sdp_list_append(NULL,&svc_uuid);
 
-        // specify Universally Unique Identifier of service to query for
-        const uint32_t dtn_svc_uuid_int[] = OASYS_BLUETOOTH_SDP_UUID;
-        uuid_t svc_uuid;
+    // search all attributes by specifying full range
+    sdp_list_t *attrid = sdp_list_append(NULL,&range);
 
-        // hi-order (0x0000) specifies start of search range;
-        // lo-order (0xffff) specifies end of range;
-        // 0x0000ffff specifies a search of full range of attributes
-        uint32_t range = 0x0000ffff;
+    // list of service records returned by search request
+    sdp_list_t *seq = NULL;
 
-        // specify DTN's UUID, which is the application we're searching for
-        sdp_uuid128_create(&svc_uuid,&dtn_svc_uuid_int);
+    // get a list of service records that have matching UUID
+    int err = sdp_service_search_attr_req(
+                        sess,                /* open session handle        */
+                        search,              /* define the search (UUID)   */
+                        SDP_ATTR_REQ_RANGE,  /* type of search             */
+                        attrid,              /* search mask for attributes */
+                        &seq);               /* linked list of responses   */
 
-        // initialize the linked list with DTN's UUID to limit SDP 
-        // search scope on remote host
-        sdp_list_t *search = sdp_list_append(NULL,&svc_uuid);
+    // manage the malloc()'s flying around like crazy in BlueZ
+    sdp_list_free(attrid,0);
+    sdp_list_free(search,0);
 
-        // search all attributes by specifying full range
-        sdp_list_t *attrid = sdp_list_append(NULL,&range);
-
-        // list of service records returned by search request
-        sdp_list_t *response_list;
-
-        // get a list of service records that have matching UUID
-        int err = sdp_service_search_attr_req(
-                    session_handle_,     /* open session handle        */
-                    search,              /* define the search (UUID)   */
-                    SDP_ATTR_REQ_RANGE,  /* type of search             */
-                    attrid,              /* search mask for attributes */      
-                    &response_list);     /* linked list of responses   */
-
-        // that's all that we do with this connection
-        //close();
-
-        // manage the malloc()'s flying around like crazy in BlueZ
-        sdp_list_free(attrid,0);
-        sdp_list_free(search,0);
-
-        if (err != 0) {
-            log_debug("problems with sdp search: %s (%d)\n",
-                      strerror(errno),errno);
-            return NULL;
-        }
-
-        return response_list;
+    if (err != 0) {
+        if(sess)
+            sdp_close(sess);
+        log_debug("Service Search failed: %s\n",
+                  strerror(errno));
+        return false;
     }
 
-    // connect() already reported error
-    return NULL;
-}
+    int found = 0;
+    // similar to bluez-utils-2.25/tools/sdptool.c:2896
+    sdp_list_t *next;
+    for (; seq; seq = next) {
 
-sdp_record_t *
-BluetoothServiceDiscoveryClient::
-get_next_service_record()
-{
+        sdp_record_t *record = (sdp_record_t*) seq->data;
 
-    // response_list_ points to the head of the linked list of records
-    // if this is the first call, then connect and initiate the search
-    if (response_list_ == NULL) {
-        sdp_list_t* search = do_search();
-        if (search == NULL) return NULL;
-        response_list_ = new SDPListHead(search);
-        //response_list_->set_free_func((sdp_free_func_t)sdp_record_free);
-    }
-
-    // Pull off the next record from the linked list
-    if (sdp_list_t* record_elem = response_list_->next()) {
-        // copy out the service record
-        sdp_record_t *service_record = (sdp_record_t*) record_elem->data;
-        return service_record;
-    }
-
-    // fell off the end of the linked list
-
-    // reset data structs
-    delete response_list_;
-    response_list_ = NULL;
-
-    // nothing to return
-    return NULL;
-}
-
-bool
-BluetoothServiceDiscoveryClient::
-is_dtn_router(bdaddr_t addr)
-{
-    bacpy(&remote_addr_,&addr);
-    int is_dtn_host = 0;
-
-    // walk through the service records on the remote host
-    while (sdp_record_t *record = get_next_service_record()) {
-
-        // fetch the list of protocol sequences
-        sdp_list_t *proto_list;
+        // pull out name, desc, provider of this record
+        sdp_data_t *d = sdp_data_get(record,SDP_ATTR_SVCNAME_PRIMARY);
+        if(d)
+            remote_eid_.assign(d->val.str,d->unitSize);
 
         // success returns 0
-        if (sdp_get_access_protos(record,&proto_list) == 0) {
+        sdp_list_t *proto; 
+        if (sdp_get_access_protos(record,&proto) == 0) {
 
-            sdp_list_t* proto_seq_iter = proto_list;
-            // Iterate over the elements of proto_seq_list
-            // Each element's data pointer is a linked list of protocols
-            while (proto_seq_iter) {
+            sdp_list_t* next_proto;
+            // iterate over the elements of proto_list
+            // sdptool.c:1095 - sdp_list_foreach(proto, print_access_protos, 0);
+            for (; proto; proto = next_proto) {
 
-                sdp_list_t* ps_list_iter = (sdp_list_t*)proto_seq_iter->data;
-                // Iterate over the elements of ps_list (via ps_list_head)
-                // Each element's data pointer is a linked list
-                // of type sdp_data_t* (attributes for each protocol)
-                while (ps_list_iter) {
+                sdp_list_t* proto_desc = (sdp_list_t*) proto->data;
+                sdp_list_t* next_desc;
+                // sdptool.c:1061
+                // sdp_list_foreach(protDescSeq, print_service_desc, 0);
+                for (; proto_desc; proto_desc = next_desc) {
 
-                    sdp_data_t* attr_list_iter =
-                        (sdp_data_t*) ps_list_iter->data;
+                    sdp_data_t *nextp, *p =
+                        (sdp_data_t*) proto_desc->data;
+
                     int proto = 0;
 
-                    while (attr_list_iter) {
-
-                        switch( attr_list_iter->dtd ) {
+                    for (; p; p = nextp) {
+                        switch(p->dtd) {
                             case SDP_UUID16:
                             case SDP_UUID32:
                             case SDP_UUID128:
                                 proto = sdp_uuid_to_proto(
-                                            &attr_list_iter->val.uuid);
+                                            &p->val.uuid);
                                 if (proto == RFCOMM_UUID) {
-                                    is_dtn_host++;
+                                    found++;
                                 }
-                                break; 
+                                break;
+                            case SDP_UINT8:
+                                if (proto == RFCOMM_UUID)
+                                    channel_ = p->val.uint8;
+                                break;
+                            default:
+                                break;
                         } // switch
 
-                        sdp_data_t* ali_next = attr_list_iter->next;
-                        // free each element after visiting
-                        sdp_data_free(attr_list_iter);
-                        // advance to next element in linked list
-                        attr_list_iter = ali_next;
+                        nextp = p->next;
 
-                    } // attr_list_iter
+                    } // p
 
-                    sdp_list_t* pli_next = ps_list_iter->next;
+                    // advance to next element
+                    next_desc = proto_desc->next;
                     // free each element after visiting
-                    free(ps_list_iter);
-                    // advance to next element in linked list
-                    ps_list_iter = pli_next;
+                    //sdp_list_free(proto_desc,0);
 
-                } // ps_list_iter
+                } // proto_desc
 
-                sdp_list_t* psi_next = proto_seq_iter->next;
+                next_proto = proto->next;
                 // free each element after visiting
-                free(proto_seq_iter);
+                //sdp_list_free(proto,0);
                 // advance to next element in linked list
-                proto_seq_iter = psi_next;
+                proto = next_proto;
 
-            } // proto_seq_iter 
+            } // proto
+
+            next = seq->next;
+            //free(seq);
+            sdp_record_free(record);
+
         } else {
-            log_debug("Failed to retrieve list of protocol sequences: "
-                      "%s (%d)\n", strerror(errno),errno);
-            return false;
+            // error, bail!
+            next = 0;
+            found = -1;
         } // sdp_get_access_protos
 
-    } // service record
- 
-    return (is_dtn_host > 0);
+    } // for()
+
+    sdp_close(sess);
+    return (found>0);
 }
 
 BluetoothServiceRegistration::
-BluetoothServiceRegistration(bdaddr_t* local, const char* logpath) :
+BluetoothServiceRegistration(const char* name,
+                             const char* logpath) :
     Logger("BluetoothServiceRegistration",logpath),
-    session_handle_(NULL)
+    sess_(NULL)
 {
-    bacpy(&local_addr_,local);
-    status_ = register_service();
+    Bluetooth::hci_get_bdaddr(&local_addr_);
+    status_ = register_service(name);
 }
 
 BluetoothServiceRegistration::
 ~BluetoothServiceRegistration()
 {
-    if (session_handle_) 
-        sdp_close(session_handle_);
+    if (sess_) 
+        sdp_close(sess_);
 }
 
 bool
 BluetoothServiceRegistration::
-register_service()
+register_service(const char *service_name)
 {
     uint32_t service_uuid_int[] = OASYS_BLUETOOTH_SDP_UUID;
-    const char *service_name    = OASYS_BLUETOOTH_SDP_NAME;
-    const char *service_dsc     = OASYS_BLUETOOTH_SDP_DESC;
-    const char *service_prov    = OASYS_BLUETOOTH_SDP_PROV;
+    uint8_t rfcomm_channel = 10;
 
     uuid_t root_uuid,
            l2cap_uuid,
@@ -274,8 +208,10 @@ register_service()
                *root_list = 0,
                *proto_list = 0,
                *access_proto_list = 0;
+    sdp_data_t *channel = 0;
     int err = 0;
 
+    // memset(0) happens within sdp_record_alloc()
     sdp_record_t *record = sdp_record_alloc();
 
     // set the general service ID
@@ -294,7 +230,9 @@ register_service()
 
     // set rfcomm information
     sdp_uuid16_create(&rfcomm_uuid,RFCOMM_UUID);
+    channel = sdp_data_alloc(SDP_UINT8, &rfcomm_channel);
     rfcomm_list = sdp_list_append(0,&rfcomm_uuid);
+    sdp_list_append(rfcomm_list, channel);
     sdp_list_append(proto_list,rfcomm_list);
 
     // attach protocol information to service record
@@ -302,17 +240,17 @@ register_service()
     sdp_set_access_protos(record,access_proto_list);
 
     // set the name, provider, and description
-    sdp_set_info_attr(record,service_name,service_prov,service_dsc);
+    sdp_set_info_attr(record,service_name,0,0);
 
     // connect to the local SDP server, register the service record, and
     // disconnect
-    session_handle_ = sdp_connect(
-                        &local_addr_, /* bind to specified adapter */
+    sess_ = sdp_connect(&local_addr_, /* bind to specified adapter */
                         BDADDR_LOCAL, /* connect to local server */
                         SDP_RETRY_IF_BUSY);
-    err = sdp_record_register(session_handle_,record,0);
+    err = sdp_record_register(sess_,record,0);
 
     // cleanup
+    sdp_data_free(channel);
     sdp_list_free(l2cap_list,0);
     sdp_list_free(rfcomm_list,0);
     sdp_list_free(root_list,0);

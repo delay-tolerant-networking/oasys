@@ -12,9 +12,8 @@
 
 // generated using uuidgen on Mac OS X ... a completely arbitrary number :)
 // maybe eventually register something with Bluetooth SIG?
-// the joke here: why UUID?  why not call it GUID?  Cuz the SIG knows best
-#define OASYS_BLUETOOTH_SDP_UUID { 0xDCA3, 0x8352, 0xBF60, 0x11DA, \
-                                   0xA23B, 0x0003, 0x931B, 0x7960 }
+#define OASYS_BLUETOOTH_SDP_UUID { 0xDCA38352, 0xBF6011DA, \
+                                   0xA23B0003, 0x931B7960 }
 
 namespace oasys {
 
@@ -29,68 +28,6 @@ struct _sdp_list {
 
 #endif
 
-/* Object to manage linked list of type sdp_list_t */
-class SDPListHead
-{
-public:
-    SDPListHead() :
-        free_func_(NULL), head_(NULL), current_(NULL)
-    {
-    }
-
-    SDPListHead(sdp_list_t *head)
-        : free_func_(NULL), current_(NULL)
-    {
-        head_ = head;
-    }
-
-    ~SDPListHead()
-    {
-        free_list();
-    }
-
-    // is there some special way to reclaim memory for each element 
-    // of this list?  save a pointer to that function here
-    void set_free_func(sdp_free_func_t f) { free_func_ = f; }
-
-    // get/set pointer to the head of the list
-    sdp_list_t* head() { return head_; }
-    void head(sdp_list_t* head) { free_list(); head_ = head; }
-
-    // iterate over elements of list
-    // fails with NULL when end of list is reached
-    // next call (after NULL) resets to head of list
-    sdp_list_t* next() {
-        if (current_) {
-            current_ = current_->next;
-            return current_;
-        }
-        current_ = head_;
-        return current_;
-    }
-
-protected:
-    void free_list()
-    {
-        // below is lifted straight from BlueZ's sdp.c, with minor mods
-        while (head_) {
-            // save pointer to next
-            sdp_list_t *next = head_->next;
-            // if there's a special way to free data, then execute
-            if (free_func_)
-                free_func_(head_->data);
-            // free this element
-            free(head_);
-            // increment to next
-            head_ = next;
-        }
-    }
-
-    sdp_free_func_t  free_func_;
-    sdp_list_t      *head_;
-    sdp_list_t      *current_;
-};
-
 /**
  * Connect to remote Bluetooth device and query its SDP server
  * for DTN service
@@ -98,61 +35,45 @@ protected:
 class BluetoothServiceDiscoveryClient : public Logger
 {
 public:
-    BluetoothServiceDiscoveryClient(const char* logpath = "/dtn/bt/sdp/client");
+    BluetoothServiceDiscoveryClient(const char*
+                                    logpath="/dtn/cl/bt/sdp/client");
     ~BluetoothServiceDiscoveryClient();
 
-    bool is_dtn_router(bdaddr_t addr);
-
-    void set_local_addr(bdaddr_t& addr) {
-        bacpy(&local_addr_,&addr);
-    }
-
+    bool is_dtn_router(bdaddr_t remote);
     void get_local_addr(bdaddr_t& addr) {
         bacpy(&addr,&local_addr_);
     }
 
+    u_int8_t channel() { return channel_; }
+    const std::string& remote_eid() { return remote_eid_; }
+
 protected:
-    /* iterator over query results */
-    sdp_record_t* get_next_service_record();
-
-    /* Manage connection to remote SDP service */
-    bool          connect();
-    bool          close();
-
-    /* Connect to remote SDP server and return query results */
-    sdp_list_t*   do_search();
-
     /* member data */
     bdaddr_t      remote_addr_;     /* physical address of device to query */
     bdaddr_t      local_addr_;      /* physical address of local adapter */
-    SDPListHead   *response_list_;  /* linked list of SDP responses */
-    sdp_session_t *session_handle_; /* handle to open search request */
+    std::string   remote_eid_;      /* EID of remote router */
+    u_int8_t      channel_;         /* RFCOMM channel */
 };
 
 class BluetoothServiceRegistration : public Logger 
 {
 public:
 
-// generated using uuidgen on Mac OS X ... a completely arbitrary number :)
-// maybe eventually register something with Bluetooth SIG?
-// the joke here: why UUID?  why not call it GUID?  Cuz the SIG knows best
-#define OASYS_BLUETOOTH_SDP_UUID { 0xDCA3, 0x8352, 0xBF60, 0x11DA, \
-                                   0xA23B, 0x0003, 0x931B, 0x7960 }
-
 #define OASYS_BLUETOOTH_SDP_NAME "dtnd"
-#define OASYS_BLUETOOTH_SDP_DESC "Delay Tolerant Networking daemon"
-#define OASYS_BLUETOOTH_SDP_PROV "DTNRG"
 
-    BluetoothServiceRegistration(bdaddr_t*   local   = BDADDR_ANY,
-                                 const char* logpath = "/dtn/bt/sdp/reg");
+    BluetoothServiceRegistration(const char* name = OASYS_BLUETOOTH_SDP_NAME,
+                                 const char* logpath = "/dtn/cl/bt/sdp/reg");
     ~BluetoothServiceRegistration();
 
     bool success() {return status_;};
+    void get_local_addr(bdaddr_t& addr) {
+        bacpy(&addr,&local_addr_);
+    }
 
 protected:
-    bool register_service();
+    bool register_service(const char *name);
 
-    sdp_session_t* session_handle_;
+    sdp_session_t* sess_;
     bool status_;
     bdaddr_t local_addr_;
 };
