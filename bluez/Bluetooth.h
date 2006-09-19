@@ -44,20 +44,33 @@ struct Bluetooth {
                                     int len, char *name, int to,
                                     const char* log = NULL );
 
-    static void hci_get_bdaddr(const char *hcidev, bdaddr_t *bdaddr,
+    static void hci_get_bdaddr(bdaddr_t *bdaddr,
                                const char *log = NULL);
 
     static int hci_dev_up(int dd, const char *hcidev,
                           const char *log = NULL);
     //@}
     
-    static char * batostr(const bdaddr_t *ba, char * str, size_t strsize = 18);
+    static char * _batostr(const bdaddr_t *ba, char * str, size_t strsize = 18);
 
     static bdaddr_t * strtoba(const char *str, bdaddr_t *addr);
 
     static void baswap(bdaddr_t *dst, const bdaddr_t *src);
     
 }; // struct Bluetooth
+
+class Batostr {
+public:
+    Batostr(bdaddr_t addr) { str_ = Bluetooth::_batostr(&addr,buf_,bufsize_); }
+    ~Batostr() { buf_[0] = '\0'; }
+    const char * buf() { return str_; }
+    static const int bufsize_ = sizeof(":00:00:00:00:00:00");
+protected:
+    char buf_[bufsize_];
+    const char* str_;
+};
+
+#define bd2str(addr) oasys::Batostr(addr).buf()
 
 } // namespace oasys
 

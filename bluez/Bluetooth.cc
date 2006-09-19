@@ -76,19 +76,19 @@ Bluetooth::hci_read_remote_name(int dd, const bdaddr_t *bdaddr, int len,
     { 
         bdaddr_t ba;
         baswap(&ba,bdaddr);
-        char buff[18];
         logf(log, LOG_DEBUG, 
              "hci_read_remote_name(%d): [%s] %s len %d to %d",
-             dd,batostr(&ba,buff),name,len,to);
+             dd,bd2str(ba),name,len,to);
     }
     return err;
 }
 
 void
-Bluetooth::hci_get_bdaddr(const char * hcidev, bdaddr_t* bdaddr,
+Bluetooth::hci_get_bdaddr(bdaddr_t* bdaddr,
                           const char * log)
 {
     struct hci_dev_info di;
+    memset(&di,0,sizeof(struct hci_dev_info));
 
     // open socket to HCI control interface
     int fd=socket(AF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI);
@@ -97,20 +97,13 @@ Bluetooth::hci_get_bdaddr(const char * hcidev, bdaddr_t* bdaddr,
         if (log) logf(log, LOG_ERR, "can't open HCI socket");
         return;
     }
-    int dev_id = hci_devid(hcidev);
+    int dev_id = hci_get_route(NULL);
     if (dev_id < 0)
     {
         if (log)
-            logf(log, LOG_DEBUG,
-                 "bad device id -- attempting to up the interface");
-        if (hci_dev_up(fd,hcidev,log) < 0)
         {
-            if (log)
-                logf(log, LOG_ERR, "unable to change device status: %s",
-                     hcidev);
-            return;
-        }
-        if ((dev_id = hci_devid(hcidev)) < 0) {
+            logf(log, LOG_DEBUG,
+                 "bad device id");
             return;
         }
     }
@@ -148,7 +141,7 @@ Bluetooth::hci_dev_up(int dd, const char * hcidev, const char *log)
 
 /* Modified from BlueZ's bluetooth.c */
 char *
-Bluetooth::batostr(const bdaddr_t* ba, char *str, size_t str_size)
+Bluetooth::_batostr(const bdaddr_t* ba, char *str, size_t str_size)
 {
     if (!str)
         return NULL;
