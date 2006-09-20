@@ -71,7 +71,8 @@ proc usage {} {
     puts "    --strip                    Strip execs before copying"
     puts "    --valgrind-suppressions    Generate valgrind error suppressions"
     puts "    --base-test-dir <dir>      Base Directory for test scripts"
-    puts "    --seed <seed>           	 Use the specified random seed"
+    puts "    --seed <seed>              Use the specified random seed"
+    puts "    --dry-run                  Don't really distribute files and run"
 }
 
 proc init {argv} {
@@ -92,7 +93,8 @@ proc init {argv} {
     set opt(strip)         0
     set opt(verbose)       0
     set opt(xterm)         0
-
+    set opt(dry_run)       0
+    
     set opt(gdb_extra)     ""
     set opt(gdb_exec)      "gdb"
     set opt(gdbopts)       ""
@@ -159,6 +161,7 @@ proc init {argv} {
 	    --leave-crap  { set opt(leave_crap) 1}
 	    --strip       { set opt(strip) 1 }
 	    --valgrind-suppressions { set opt(valgrind_suppressions) 1}
+	    --dry-run     { set opt(dry_run) 1 }
 	    
 	    default  {
 		if {([string index [arg0 $argv] 0] != "-") && \
@@ -206,7 +209,11 @@ proc init {argv} {
     puts "* Reading test script $test_script"
     uplevel \#0 source $test_script
 
-    puts "* Distributing files"
+    if { $opt(dry_run) } {
+	puts "* Distributing files"
+    } else {
+	puts "* Generating script files"
+    }
 
     dist::files $manifest::manifest [net::hostlist] [pwd] \
 	$manifest::subst $opt(strip) $opt(verbose)

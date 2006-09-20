@@ -116,13 +116,20 @@ proc create {manifest basedir subst strip verbose} {
 #
     
 proc files {manifest_list host_list basedir subst strip {verbose 0}} {
-    global ::dist::distdirs ::dist::cleanup_handler
+    global ::dist::distdirs ::dist::cleanup_handler opt
 
     set distdir [dist::create $manifest_list $basedir $subst $strip $verbose]
     set dist::distdirs(-1) $distdir
 
-    if {$verbose} { puts "% copying files" }
-    
+    if {$opt(dry_run)} {
+	exec rm -rf $distdir
+	return
+    }
+
+    if {$verbose} {
+	    puts "% copying files" 
+    }
+	    
     set i 0
     foreach host $host_list {
 	set targetdir [get_rundir $host $i]

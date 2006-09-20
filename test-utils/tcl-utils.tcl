@@ -62,3 +62,11 @@ if 0 {
     puts ${s._meta_}
     puts [struct2list s]
 }
+
+#
+# arglist is the list of arguments given, varlist is a list of 
+# {variable_name options "argument text" "argument text"}
+#
+proc parse_args { arglist varlist } {
+    
+}
