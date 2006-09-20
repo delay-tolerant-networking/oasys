@@ -39,7 +39,6 @@ static const char* INIT_COMMAND =
 "    if [catch {\n"
 "	::tclreadline::readline eof\n"
 "    } err] {\n"
-"	puts \"error calling tclreadline eof: $err\"\n"
 "    }\n"
 "    after 0 do_nothing\n"
 "}\n"

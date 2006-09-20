@@ -38,7 +38,6 @@ proc exit_event_loop {} {
     if [catch {
 	::tclreadline::readline eof
     } err] {
-	puts "error calling tclreadline eof: $err"
     }
     after 0 do_nothing
 }
