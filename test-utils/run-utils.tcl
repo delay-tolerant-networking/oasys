@@ -61,6 +61,8 @@ proc usage {} {
     puts "Extended options:"
     puts "    --extra-gdbrc <script>     Add an extra gdbrc to be run"
     puts "    --gdb-opts    <options...> Extra options to gdb"
+    puts "    --extra-exe   <options...> Add extra options to the command line"
+    puts "                               of a specified exe: exe_name=options...;"
     puts "    --alt-gdb     <alt gdb>    Use an alternative debugger"
     puts "    --opts        <options...> Extra options to the program"
     puts "    --gdbrc       <tmpl>       Change remote gdbrc template"
@@ -96,6 +98,7 @@ proc init {argv} {
     set opt(dry_run)       0
     
     set opt(gdb_extra)     ""
+    set opt(exe_extra)     ""
     set opt(gdb_exec)      "gdb"
     set opt(gdbopts)       ""
     set opt(opts)          ""
@@ -150,6 +153,7 @@ proc init {argv} {
 	    -id           -
 	    --id          { shift argv; set opt(conf_id)     [arg0 $argv] }
 	    --extra-gdbrc { shift argv; set opt(gdb_extra)   [arg0 $argv] }
+	    --extra-exe   { shift argv; set opt(exe_extra)   [arg0 $argv] }
 	    --gdb-opts    { shift argv; set opt(gdbopts)     [arg0 $argv] }
 	    --alt-gdb     { shift argv; set opt(gdb_exec)    [arg0 $argv] }
 	    --opts        { shift argv; set opt(opts)        [arg0 $argv] }
@@ -241,6 +245,17 @@ proc generate_script {id exec_file exec_opts confname conf exec_env} {
     set hostname $net::host($id)
 
     set rundir [dist::get_rundir $hostname $id]
+    
+    # Handle extra options
+    set name [file tail $exec_file]
+    if {$opt(exe_extra) != ""} {
+	dbg "% extra exe options $opt(exe_extra), exe name $name"
+	regexp "$name=\(.*\);" $opt(exe_extra) dummy the_opts
+	if [info exists the_opts] {
+	    dbg "% extra options for $name = \"$the_opts\""
+	    append exec_opts $the_opts
+	}
+    }
     
     # runscript
     set script(exec_file)   $exec_file
