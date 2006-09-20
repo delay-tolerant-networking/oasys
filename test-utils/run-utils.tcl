@@ -84,7 +84,7 @@ proc init {argv} {
     set opt(valgrind)      0
     set opt(valgrind_suppressions) 0
     set opt(leave_crap)    0
-    set opt(logdir)        "."
+    set opt(logdir)        ""
     set opt(net)           ""
     set opt(no_logs)       0
     set opt(pause)         0
@@ -557,12 +557,7 @@ proc collect_logs {} {
 
     puts "* Collecting logs/cores into $opt(logdir)"
     if {! [file isdirectory $opt(logdir)]} {
-	if [file exists $opt(logdir)] {
-	    puts "$opt(logdir) exists, putting logs into $opt(logdir)-logs"
-	    set opt(logdir) $opt(logdir)-logs
-	}
-	
-	exec mkdir -p $opt(logdir)
+	set opt(logdir) ""
     }
 
     for {set i 0} {$i < [net::num_nodes]} {incr i} {
@@ -588,10 +583,6 @@ proc collect_logs {} {
 	    set contents [string trim $contents]
 	    
 	    if {[string length $contents] != 0} {
-		puts "***"
-		puts "*** $hostname:$i [file tail $l]:"
-		puts "***"
-
 		set exec_name [manifest::rfile [file rootname [file tail $l]]]
 		if {$exec_name == ""} {
 		    puts "warning: no reverse manifest for [file rootname $l]"
@@ -601,19 +592,34 @@ proc collect_logs {} {
 			    $expand -o $exec_name]
 		}
 
-		
-		puts $contents
+		dbg "% got $hostname:$i [file tail $l]:"
+		if {$opt(logdir) == ""} {
+		    puts "***"
+		    puts "*** $hostname:$i [file tail $l]:"
+		    puts "***"
+
+		    puts $contents
+		} else {
+		    set outf [open "$i-$hostname-[file tail $l].log" "w"]
+		    puts $outf $contents
+		    close $outf
+		}
 	    }
 	}
-
+	
 	foreach c $cores {
 	    if [net::is_localhost $hostname] {
 		set cp "cp "
 	    } else {
 		set cp "scp $hostname:"
 	    }
+	    
+	    if {$opt(logdir) == ""} {
+		set clocal $i-$hostname-[file tail $c]
+	    } else {
+		set clocal $opt(logdir)/$i-$hostname-[file tail $c]
+	    }
 
-	    set clocal $opt(logdir)/$i-$hostname-[file tail $c]
 	    puts "error: found core file $c (copying to $clocal)"
 	    eval exec $cp$c $clocal
 	}
