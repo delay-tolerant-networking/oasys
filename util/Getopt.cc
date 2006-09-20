@@ -50,9 +50,22 @@
 
 namespace oasys {
 
-Opt* Getopt::opts_[256];
-Getopt::OptList Getopt::allopts_;
+//----------------------------------------------------------------------
+Getopt::Getopt()
+{
+    memset(&opts_, 0, sizeof(opts_));
+}
 
+//----------------------------------------------------------------------
+Getopt::~Getopt()
+{
+    while (!allopts_.empty()) {
+        delete allopts_.back();
+        allopts_.pop_back();
+    }
+}
+
+//----------------------------------------------------------------------
 void
 Getopt::addopt(Opt* opt)
 {
@@ -69,6 +82,7 @@ Getopt::addopt(Opt* opt)
     allopts_.push_back(opt);
 }
 
+//----------------------------------------------------------------------
 int
 Getopt::getopt(const char* progname, int argc, char* const argv[],
                const char* extra_usage)
@@ -174,6 +188,7 @@ Getopt::getopt(const char* progname, int argc, char* const argv[],
     return optind;
 }
 
+//----------------------------------------------------------------------
 void
 Getopt::usage(const char* progname, const char* extra_usage)
 {

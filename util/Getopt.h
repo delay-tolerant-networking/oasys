@@ -45,14 +45,24 @@
 namespace oasys {
 
 /*
- * Wrapper class for getopt calls.
+ * Wrapper class for a call to ::getopt.
  */
 class Getopt {
 public:
     /**
+     * Constructor (does nothing).
+     */
+    Getopt();
+     
+    /**
+     * Destructor to clean up all the opts.
+     */
+    ~Getopt();
+    
+    /**
      * Register a new option binding.
      */
-    static void addopt(Opt* opt);
+    void addopt(Opt* opt);
 
     /**
      * Parse argv, processing all registered getopt. Returns the
@@ -63,23 +73,23 @@ public:
      * @param argv   		command line arg values
      * @param extra_opts 	additional usage string
      */
-    static int getopt(const char* progname, int argc, char* const argv[],
-                      const char* extra_usage = "");
-
+    int getopt(const char* progname, int argc, char* const argv[],
+               const char* extra_usage = "");
+    
     /**
      * Prints a nicely formatted usage string to stderr.
      *
      * @param progname   	the name of the executable
      * @param extra_opts 	additional usage string
      */
-    static void usage(const char* progname,
-                      const char* extra_usage = "");
+    void usage(const char* progname,
+               const char* extra_usage = "");
     
 protected:
     typedef std::vector<Opt*> OptList;
     
-    static Opt* opts_[];	// indexed by option character
-    static OptList allopts_;	// list of all getopt
+    Opt*    opts_[256];	// indexed by option character
+    OptList allopts_;	// list of all getopt
 };
 
 } // namespace oasys
