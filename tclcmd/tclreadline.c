@@ -297,6 +297,10 @@ TclReadlineCmd(
 
 	case TCLRL_READ:
 
+            if (tclrl_state == LINE_EOF) {
+                return TCL_OK;
+            }
+
 	    rl_callback_handler_install(argc == 3 ? argv[2] : "%",
 		TclReadlineLineCompleteHandler);
 
