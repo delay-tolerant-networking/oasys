@@ -108,6 +108,7 @@ UTIL_SRCS :=					\
 	util/RateEstimator.cc			\
 	util/RefCountedObject.cc		\
 	util/Regex.cc				\
+	util/Singleton.cc			\
 	util/StreamBuffer.cc			\
 	util/StringBuffer.cc			\
 	util/StringUtils.cc			\

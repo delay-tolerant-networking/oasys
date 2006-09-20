@@ -64,6 +64,17 @@ TimerSystem::TimerSystem()
 }
 
 //----------------------------------------------------------------------
+TimerSystem::~TimerSystem()
+{
+    while (! timers_.empty()) {
+        Timer* t = timers_.top();
+        t->pending_ = false; // to avoid assertion
+        timers_.pop();
+        delete t;
+    }
+}
+
+//----------------------------------------------------------------------
 void
 TimerSystem::schedule_at(struct timeval *when, Timer* timer)
 {

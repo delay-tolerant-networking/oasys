@@ -157,6 +157,7 @@ private:
     TimerQueue timers_;
 
     TimerSystem();
+    virtual ~TimerSystem();
     
     void pop_timer(const struct timeval& now);
     void handle_signals();

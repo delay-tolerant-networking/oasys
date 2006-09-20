@@ -56,13 +56,51 @@ namespace oasys {
  * // in .cc file:
  * MyClass* oasys::Singleton<MyClass>::instance_;
  * @endcode
+ *
+ * Note that you should define a destructor for the class since it
+ * will be called at process exit.
  */
 template<typename _Class, bool _auto_create = true>
 class Singleton;
 
-// Autocreation of the singleton
+/**
+ * Common base class used to store all the singleton pointers and
+ * allow for exit-time deletion of the instances.
+ */
+class SingletonBase {
+public:
+    /// Constructor that adds this instance to the array of all
+    /// singletons. Must be called in a single-threaded context.
+    SingletonBase();
+    
+    /// Virtual destructor to be overridden by derived classes.
+    virtual ~SingletonBase();
+    
+    /// Array of pointers to all singletons
+    static SingletonBase** all_singletons_;
+    
+    /// Count of the number of singletons
+    static int num_singletons_;
+
+private:
+    /**
+     * Inner class that is instantiated once per program and is used
+     * to delete all the singletons when the program exits.
+     */
+    class Fini {
+    public:
+        /// Destructor that clears out all the singletons
+        ~Fini();
+    };
+
+    static Fini fini_;
+};
+
+/**
+ * Singleton template with autocreation.
+ */
 template<typename _Class>
-class Singleton<_Class, true> {
+class Singleton<_Class, true> : public SingletonBase {
 public:
     static _Class* instance() {
         // XXX/demmer this has potential race conditions if multiple
@@ -96,9 +134,11 @@ protected:
     static _Class* instance_;
 };
 
-// No autocreation of the instance
+/**
+ * Singleton template with no autocreation.
+ */
 template<typename _Class>
-class Singleton<_Class, false> {
+class Singleton<_Class, false> : public SingletonBase {
 public:
     static _Class* instance() 
     {
