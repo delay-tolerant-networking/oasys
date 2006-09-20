@@ -197,9 +197,15 @@ cat > oasys_valgrind.supp <<EOF
 
 EOF
 
-VALGRIND_OPTS="--tool=memcheck -v --leak-check=yes --num-callers=16 \
-               --suppressions=oasys_valgrind.supp --show-reachable=no \
+VALGRIND_OPTS="--tool=memcheck -v --num-callers=16 \
+               --leak-check=yes --leak-resolution=high --show-reachable=no \
+               --suppressions=oasys_valgrind.supp \
                $VALGRIND_OPTS"
+
+if [ $VALGRIND = 1 ] ; then
+    export GLIBCXX_FORCE_NEW=1
+    export GLIBCPP_FORCE_NEW=1
+fi
 
 if [ ${EXEC_FILE:0:1} = '/' ] ; then
     EXEC_PATH=$EXEC_FILE
