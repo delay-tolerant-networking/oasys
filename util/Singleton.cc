@@ -68,13 +68,16 @@ SingletonBase::~SingletonBase()
 //----------------------------------------------------------------------
 SingletonBase::Fini::~Fini()
 {
-    for (int i = SingletonBase::num_singletons_ - 1; i >= 0; --i)
+    if (getenv("OASYS_CLEANUP_SINGLETONS"))
     {
-        log_debug("/debug",
-                  "deleting singleton %d (%p)",
-                  i, SingletonBase::all_singletons_[i]);
-        
-        delete SingletonBase::all_singletons_[i];
+        for (int i = SingletonBase::num_singletons_ - 1; i >= 0; --i)
+        {
+            log_debug("/debug",
+                      "deleting singleton %d (%p)",
+                      i, SingletonBase::all_singletons_[i]);
+            
+            delete SingletonBase::all_singletons_[i];
+        }
     }
 
     oasys::Log::shutdown();
