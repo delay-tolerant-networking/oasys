@@ -70,14 +70,13 @@ protected:
      */
     virtual int set(const char* val, size_t len) = 0;
     
-    char shortopt_;
+    char        shortopt_;
     const char* longopt_;
-    void* valp_;
-    bool* setp_;
-    bool needval_;
+    void*       valp_;
+    bool*       setp_;
+    bool        needval_;
     const char* valdesc_;
     const char* desc_;
-    Opt*  next_;
 };
 
 /**

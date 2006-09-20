@@ -61,8 +61,7 @@ Opt::Opt(char shortopt, const char* longopt,
       setp_(setp),
       needval_(needval),
       valdesc_(valdesc),
-      desc_(desc),
-      next_(0)
+      desc_(desc)
 {
     if (setp) *setp = false;
 }
