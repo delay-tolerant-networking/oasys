@@ -81,6 +81,7 @@ TCLCMD_SRCS :=					\
 	tclcmd/HelpCommand.cc			\
 	tclcmd/LogCommand.cc			\
 	tclcmd/TclCommand.cc			\
+	tclcmd/tclreadline.c			\
 
 THREAD_SRCS :=					\
 	thread/Atomic-mutex.cc			\

@@ -35,6 +35,11 @@ proc exit_event_loop {} {
     global forever_timer event_loop_wait stdin
     command_log notice "kicking event loop to exit"
     set event_loop_wait 1
+    if [catch {
+	::tclreadline::readline eof
+    } err] {
+	puts "error calling tclreadline eof: $err"
+    }
     after 0 do_nothing
 }
 
@@ -179,6 +184,7 @@ proc command_loop {prompt} {
 
     if [catch {
 	package require tclreadline
+	tclreadline::readline initialize ""
 	tclreadline::readline eofchar "error exit_command"
 	tclreadline_loop
 	
@@ -212,11 +218,15 @@ proc tclreadline_completer {text start end line} {
 proc tclreadline_loop {} {
     global event_loop_wait
     
-    eval tclreadline::Setup
+    tclreadline::readline builtincompleter 0
     tclreadline::readline customcompleter tclreadline_completer
     
     uplevel \#0 {
 	while {1} {
+	    if {$event_loop_wait == 1} {
+		return
+	    }
+	    
 	    if [info exists tcl_prompt2] {
 		set prompt2 $tcl_prompt2
 	    } else {
@@ -229,12 +239,12 @@ proc tclreadline_loop {} {
 		    append LINE "\n"
 		    append LINE [tclreadline::readline read ${prompt2}]
 		}
-	    } ::tclreadline::errorMsg]} {
-		if {$::tclreadline::errorMsg == "exit_command"} {
+		
+	    } errorMsg]} {
+		if {$errorMsg == "exit_command"} {
 		    break
 		}
-		puts stderr [list tclreadline::Loop: error. \
-			$::tclreadline::errorMsg]
+		puts stderr "tclreadline_loop error. $errorMsg"
 		continue
 	    }
 
@@ -251,8 +261,9 @@ proc tclreadline_loop {} {
 	    }
 
 	    if [catch {
+		
 		set result [eval $LINE]
-		if {$result != "" && [tclreadline::Print]} {
+		if {$result != ""} {
 		    puts $result
 		}
 		set result ""

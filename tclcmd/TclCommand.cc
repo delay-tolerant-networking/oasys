@@ -35,6 +35,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "config.h"
+
 #include "TclCommand.h"
 #include "HelpCommand.h"
 #include "DebugCommand.h"
@@ -45,6 +47,8 @@
 #include "thread/SpinLock.h"
 #include "util/StringBuffer.h"
 #include "util/InitSequencer.h"
+
+extern "C" int Tclreadline_Init(Tcl_Interp* interp);
 
 namespace oasys {
 
@@ -225,6 +229,10 @@ void
 TclCommandInterp::command_loop(const char* prompt)
 {
     StringBuffer cmd("command_loop \"%s\"", prompt);
+
+#if TCLREADLINE_ENABLED
+    Tclreadline_Init(interp_);
+#endif
     
     if (Tcl_Eval(interp_, const_cast<char*>(cmd.c_str())) != TCL_OK) {
         log_err("tcl error in command_loop: \"%s\"", interp_->result);

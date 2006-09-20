@@ -1,0 +1,53 @@
+dnl
+dnl Autoconf support for tclreadline
+dnl
+
+dnl
+dnl Main macro for finding a usable db installation 
+dnl
+AC_DEFUN(AC_OASYS_CONFIG_TCLREADLINE, [
+    AC_ARG_WITH(tclreadline,
+        AC_HELP_STRING([--with-tclreadline],
+    		   [enable or disable tclreadline (default try)]),
+        [ac_tclreadline=$withval],
+        [ac_tclreadline=try])
+
+    AC_MSG_CHECKING([whether tclreadline support should be enabled])
+
+    dnl
+    dnl First make sure we even want it
+    dnl
+    if test "$ac_tclreadline" = no ; then
+    AC_MSG_RESULT([no])
+    TCLREADLINE_ENABLED=0
+
+    else
+
+    dnl
+    dnl If we do, tell the user what we're about to do
+    dnl    
+    if test "$ac_tclreadline" = try ; then
+       AC_MSG_RESULT([try])
+    else
+       AC_MSG_RESULT([yes])
+    fi
+
+    dnl
+    dnl Now check for an installation of libreadline.
+    dnl
+    AC_SEARCH_LIBS(readline, 
+                   readline, 
+		   [oasys_have_readline=1],
+		   [oasys_have_readline=0])
+
+    if test $oasys_have_readline = 1 ; then
+        TCLREADLINE_ENABLED=1
+    else
+        TCLREADLINE_ENABLED=0
+    fi
+
+    fi # ac_tclreadline != no
+
+    AC_DEFINE_UNQUOTED(TCLREADLINE_ENABLED, $TCLREADLINE_ENABLED,
+                       [whether tclreadline is enabled])
+])
