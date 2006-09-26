@@ -86,8 +86,8 @@ proc override_nodelist {ids {remap 1}} {
 #
 proc nodelist {} {
     global net::total_nodes net::host
-    return [lsort -increasing \
-	    [lrange [array names net::host] 0 [expr $net::total_nodes - 1]]]
+    return [lrange [lsort -increasing \
+	    [array names net::host]] 0 [expr $net::total_nodes - 1]]
 }
 
 #
