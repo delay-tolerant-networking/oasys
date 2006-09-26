@@ -214,13 +214,29 @@ proc init {argv} {
     uplevel \#0 source $test_script
 
     if { $opt(dry_run) } {
-	puts "* Distributing files"
-    } else {
 	puts "* Generating script files"
+    } else {
+	puts "* Distributing files"
     }
 
-    dist::files $manifest::manifest [net::hostlist] [pwd] \
+    dist::files $manifest::manifest [net::nodelist] [pwd] \
 	$manifest::subst $opt(strip) $opt(verbose)
+
+    if {$opt(dry_run)} {
+	puts "* Configurations:"
+	global conf::conf
+	foreach c [lsort [array names conf::conf]] {
+	    puts "** configuration file: $c"
+	    puts "$conf::conf($c)"
+	}
+	
+	puts "* Defined nodes:"
+	global net::host net::portbase
+	foreach id [net::nodelist] {
+	    set ports [lsort -unique -increasing $net::used_ports($id)]
+	    puts "Node $id: host=$net::host($id) ports=\[$ports\]"
+	}
+    }
 }
 
 proc process_template {template var_array} {
@@ -497,7 +513,7 @@ proc wait_for_programs {{timeout 5000}} {
 	while {[clock clicks -milliseconds] < $start + $timeout} {
 	    set num_alive 0
 	    
-	    for {set i 0} {$i < [net::num_nodes]} {incr i} {
+	    foreach i [net::nodelist] {
 		set hostname $net::host($i)
 		set livepids {}
 
@@ -568,14 +584,14 @@ proc get_files {varname hostname dir pattern} {
 proc collect_logs {} {
     global opt net::host run::dirs
 
-    if {$opt(no_logs)} { return }
+    if {$opt(no_logs) || $opt(dry_run)} { return }
 
     puts "* Collecting logs/cores into $opt(logdir)"
     if {! [file isdirectory $opt(logdir)]} {
 	set opt(logdir) ""
     }
 
-    for {set i 0} {$i < [net::num_nodes]} {incr i} {
+    foreach i [net::nodelist] {
 	set cores {}
 	set logs  {}
 
@@ -647,10 +663,10 @@ proc collect_logs {} {
 proc cleanup {} {
     global opt net::host run::dirs dist::distdirs
 
-    if {$opt(leave_crap)} { return }
+    if {$opt(leave_crap) || $opt(dry_run)} { return }
 
     puts "* Getting rid of run files"
-    for {set i 0} {$i < [net::num_nodes]} {incr i} {
+    foreach i [net::nodelist] {
 	set hostname $net::host($i)
 
 	if {$opt(local_rundir) && $hostname == "localhost"} {

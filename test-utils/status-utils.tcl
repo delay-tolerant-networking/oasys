@@ -7,23 +7,23 @@ proc help {} {
 }
 
 proc status {} {
-    for {set i 0} {$i < $::net::nodes} {incr i} {
-	set dir $::dist::distdirs($i)
-	set hostname $::net::host($i)
+    foreach id [net::nodelist] {
+	set dir $::dist::distdirs($id)
+	set hostname $::net::host($id)
 
-	if [run::check_pid $hostname $::run::pids($i)] {
+	if [run::check_pid $hostname $::run::pids($id)] {
 	    set status "running"
 	} else {
 	    set status "dead"
 	}
-	puts "host $i $hostname $dir $status"
+	puts "host $id $hostname $dir $status"
     }
 }
 
 proc xterm {args} {
-    for {set i 0} {$i < $::net::nodes} {incr i} {
-	set dir $::dist::distdirs($i)
-	set hostname $::net::host($i)
+    foreach id [net::nodelist] {
+	set dir $::dist::distdirs($id)
+	set hostname $::net::host($id)
 	
 	# ssh will barf trying to lock the xauthority XXX/bowei --
 	# this still has some mysterious problems and interactions

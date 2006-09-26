@@ -63,13 +63,19 @@ namespace eval test {
 
     # Run the script actions
     proc run_script {} {
-	global test::run_actions
+	global test::run_actions opt
+	if {$opt(dry_run)} {
+	    return
+	}
 	uplevel \#0 $test::run_actions
     }
 
     # Run the exit script actions
     proc run_exit_script {} {
-	global test::exit_actions
+	global test::exit_actions opt
+	if {$opt(dry_run)} {
+	    return
+	}
 	if {$test::exit_actions != ""} {
 	    uplevel \#0 $test::exit_actions
 	}
@@ -77,7 +83,10 @@ namespace eval test {
 
     # Run the cleanup script actions
     proc run_cleanup_script {} {
-	global test::cleanup_actions
+	global test::cleanup_actions opt
+	if {$opt(dry_run)} {
+	    return
+	}
 	if {$test::cleanup_actions != ""} {
 	    uplevel \#0 $test::cleanup_actions
 	}

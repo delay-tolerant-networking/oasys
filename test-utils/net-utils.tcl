@@ -6,39 +6,36 @@ namespace eval net {
 #
 # Number of nodes used in the test
 #
-set nodes 0
+set total_nodes 0
 
-#
-# Number of nodes defined by the network definition file
-#
-set defined_nodes 0
-    
 #
 # Define a new node in the test
 #
-proc node { node_id hostname new_portbase {new_extra {} } } {
-    global net::host net::portbase net::extra net::defined_nodes
-    global opt
+proc node { node_id hostname new_portbase } {
+    global net::host net::portbase net::used_ports opt
     
-    set  net::host($node_id)      $hostname
-    set  net::portbase($node_id)  [expr $new_portbase + $opt(conf_id) * 100]
-    set  net::extra($node_id)     $new_extra
-    incr net::defined_nodes
+    set net::host($node_id)       $hostname
+    set net::portbase($node_id)   [expr $new_portbase + $opt(conf_id) * 100]
+    set net::used_ports($node_id) {}
 }
 
 #
 # Set the number of nodes for the test.
 #
 proc num_nodes { {num -1} } {
-    global net::nodes net::defined_nodes
+    global net::total_nodes net::host
+    
     if {$num != -1} {
-	if {$num > $net::defined_nodes} {
+	set defined_nodes [llength [array names net::host]]
+	
+	if {$num > $defined_nodes} {
 	    error "Cannot set number of nodes ($num) greater than the number \
-		    defined ($net::defined_nodes)"
+		    defined ($defined_nodes)"
 	}
-	set net::nodes $num
+	set net::total_nodes $num
     }
-    return $net::nodes
+    
+    return $net::total_nodes
 }
 
 #
@@ -46,35 +43,62 @@ proc num_nodes { {num -1} } {
 # user has already overridden it on the command line with -n <num>.
 #
 proc default_num_nodes {num} {
-    global net::nodes 
-    if {$net::nodes == 0} {
+    global net::total_nodes 
+    if {$net::total_nodes == 0} {
 	num_nodes $num
     }
 }
 
 #
-# Return a list of integers from 0 to num_nodes
+# Script to override the node ids used in the test so they aren't
+# necessarily sequential and packed.
 #
-proc nodelist {} {
-    global net::nodes
-    set ret {}
-    for {set i 0} {$i < $net::nodes} {incr i} {
-	lappend ret $i
+proc override_nodelist {ids {remap 1}} {
+    global net::host net::portbase net::used_ports
+
+    if {[net::num_nodes] == 0} {
+	net::num_nodes [llength $ids]
     }
-    return $ret
+
+    array set oldhost  [array get net::host]
+    array set oldports [array get net::portbase]
+
+    array unset net::host
+    array unset net::portbase
+    array unset net::used_ports
+
+    for {set id 0} {$id < [llength $ids]} {incr id} {
+	set new_id [lindex $ids $id]
+	if {$remap} {
+	    set old_id $id
+	} else {
+	    set old_id $new_id
+	}
+
+	set net::host($new_id)       $oldhost($old_id)
+	set net::portbase($new_id)   $oldports($old_id)
+	set net::used_ports($new_id) {}
+    }
 }
 
 #
-# Return a list of the defined hosts for the number of nodes in the test
+# Return a list of ids for the defined nodes
+#
+proc nodelist {} {
+    global net::total_nodes net::host
+    return [lsort -increasing \
+	    [lrange [array names net::host] 0 [expr $net::total_nodes - 1]]]
+}
+
+#
+# Return a list of the defined hosts for the nodes in the test
 #
 proc hostlist {} {
-    global net::host net::nodes
+    global net::host
     set hosts {}
-
-    for {set i 0} {$i<$net::nodes} {incr i} {
-	lappend hosts $net::host($i)
+    foreach id [net::nodelist] {
+	lappend hosts $net::host($id)
     }
-
     return $hosts
 }
 

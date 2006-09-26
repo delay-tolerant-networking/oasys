@@ -49,9 +49,13 @@ proc get_rundir {hostname id} {
 #
 
 proc create {manifest basedir subst strip verbose} {
-    global env
+    global env opt
     # Somehow these /tmp/distrun.tcl dirs seem to leak if they're
     # uniquified by pid, so instead we just use the username
+
+    if {$opt(dry_run)} {
+	return
+    }
     
     set tmpdir "/tmp/distrun.tcl-$env(USER)"
 
@@ -107,7 +111,7 @@ proc create {manifest basedir subst strip verbose} {
 # Distribute files to localhost/remote hosts
 #
 # @param manifest_list List of manifest files
-# @param host_list     List of destination hosts
+# @param node_list     List of destination node ids
 # @param basedir       Basedir from which the files are taken
 # @param subst         A list of mappings to be done in the 
 #                      manifests, e.g. { exe stripped }
@@ -115,45 +119,44 @@ proc create {manifest basedir subst strip verbose} {
 # @param verbose       Print out what is happening
 #
     
-proc files {manifest_list host_list basedir subst strip {verbose 0}} {
+proc files {manifest_list node_list basedir subst strip {verbose 0}} {
     global ::dist::distdirs ::dist::cleanup_handler opt
+    global net::host
 
     set distdir [dist::create $manifest_list $basedir $subst $strip $verbose]
     set dist::distdirs(-1) $distdir
 
     if {$opt(dry_run)} {
-	exec rm -rf $distdir
 	return
     }
 
     if {$verbose} {
-	    puts "% copying files" 
+	puts "% copying files" 
     }
 	    
-    set i 0
-    foreach host $host_list {
-	set targetdir [get_rundir $host $i]
-	set dist::distdirs($i) $targetdir
+    foreach id $node_list {
+	set hostname $net::host($id)
+	set targetdir [get_rundir $hostname $id]
+	set dist::distdirs($id) $targetdir
 
-	if {$verbose} { puts "% $distdir -> $host:$targetdir" }
+	if {$verbose} { puts "% $distdir -> $hostname:$targetdir" }
 
 	if {$dist::cleanup_handler != ""} {
 	    
 	    if {$verbose} { puts "% calling cleanup_handler $cleanup_handler" }
-	    $dist::cleanup_handler $host $targetdir
+	    $dist::cleanup_handler $hostname $targetdir
 	} else {
 	    if {$verbose} { puts "% no cleanup handler set" }
 
 	}
 	
-	run::run_cmd $host rm -rf $targetdir
+	run::run_cmd $hostname rm -rf $targetdir
 	
-	if [net::is_localhost $host] {
+	if [net::is_localhost $hostname] {
 	    exec cp -r $distdir $targetdir
 	} else {
-	    exec scp -C -r $distdir $host:$targetdir
+	    exec scp -C -r $distdir $hostname:$targetdir
 	}
-	incr i
     }
 
     if {$verbose} { puts "% removing $distdir" }
