@@ -40,35 +40,24 @@
 
 namespace oasys {
 
-/**
- * Create a SerializeAction with the specified type code and context
- *
- * @param type serialization action type code
- * @param context serialization context
- * @param options serialization options
- */
-SerializeAction::SerializeAction(
-    action_t  action, 
-    context_t context, 
-    int       options
-    ) : action_(action), 
-        context_(context), 
-        options_(options), 
-        log_(0), 
-        error_(false)
+//----------------------------------------------------------------------
+SerializeAction::SerializeAction(action_t  action, 
+                                 context_t context, 
+                                 int       options)
+    : action_(action), 
+      context_(context), 
+      options_(options), 
+      log_(0), 
+      error_(false)
 {
 }
 
+//----------------------------------------------------------------------
 SerializeAction::~SerializeAction()
 {
 }
 
-/**
- * Call the virtual serialize() callback which will, in turn, call the
- * various process() callbacks on ourself. If any of the process
- * functions fails due to insufficient buffer space, it will set
- * error_ to true.
- */
+//----------------------------------------------------------------------
 int
 SerializeAction::action(SerializableObject* object)
 {
@@ -85,22 +74,29 @@ SerializeAction::action(SerializableObject* object)
 }
 
 
-/**
- * By default, do nothing.
- */
+//----------------------------------------------------------------------
 void
 SerializeAction::begin_action()
 {
 }
 
-/**
- * By default, do nothing.
- */
+//----------------------------------------------------------------------
 void
 SerializeAction::end_action()
 {
 }
 
+//----------------------------------------------------------------------
+void
+SerializeAction::process(const char* name, unsigned long* i)
+{
+    STATIC_ASSERT(sizeof(*i) == sizeof(u_int32_t),
+                  Sizeof_Unsigned_Long_Equals_UInt32_T);
+    
+    process(name, (u_int32_t*)i);
+}
+
+//----------------------------------------------------------------------
 Builder Builder::static_builder_;
 
 } // namespace oasys

@@ -288,8 +288,13 @@ public:
     {
         process(name, (u_char*)bp, len);
     }
-
     /// @}
+
+    /**
+     * Adaptor function for an unsigned long (i.e. what a size_t is
+     * defined to be on Darwin and potentially others).
+     */
+    virtual void process(const char* name, unsigned long* i);
     
     /** Set a log target for verbose serialization */
     void logpath(const char* log) { log_ = log; }
