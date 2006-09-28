@@ -48,6 +48,13 @@ SparseBitmap<_inttype_t>::SparseBitmap()
 
 //----------------------------------------------------------------------
 template <typename _inttype_t>
+SparseBitmap<_inttype_t>::SparseBitmap(const Builder& b)
+    : bitmap_(b)
+{
+}
+
+//----------------------------------------------------------------------
+template <typename _inttype_t>
 void
 SparseBitmap<_inttype_t>::set(_inttype_t start, _inttype_t len)
 {
@@ -256,6 +263,23 @@ SparseBitmap<_inttype_t>::format(char* bp, size_t buflen) const
     return len;
 }
 
+//----------------------------------------------------------------------
+template <typename _inttype_t>
+void
+SparseBitmap<_inttype_t>::serialize(SerializeAction* a)
+{
+    a->process("bitmap", &this->bitmap_);
+}
+    
+//----------------------------------------------------------------------
+template <typename _inttype_t>
+void
+SparseBitmap<_inttype_t>::Range::serialize(SerializeAction* a)
+{
+    a->process("start", &this->start_);
+    a->process("end",   &this->end_);
+}
+    
 //----------------------------------------------------------------------
 template <typename _inttype_t>
 void

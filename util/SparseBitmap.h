@@ -42,6 +42,8 @@
 #include "config.h"
 #include "../debug/DebugUtils.h"
 #include "../debug/Formatter.h"
+#include "../serialize/Serialize.h"
+#include "../serialize/SerializableVector.h"
 
 namespace oasys {
 
@@ -55,12 +57,18 @@ namespace oasys {
  * must always be greater than start.
  */
 template <typename _inttype_t>
-class SparseBitmap : public Formatter {
+class SparseBitmap : public Formatter,
+                     public SerializableObject {
 public:
     /**
-     * Constructor.
+     * Default constructor.
      */
     SparseBitmap();
+
+    /**
+     * Builder constructor.
+     */
+    SparseBitmap(const Builder&);
 
     /**
      * Set the given bit range to true.
@@ -115,19 +123,33 @@ public:
      * Virtual from Formatter.
      */
     int format(char* bp, size_t len) const;
-
+    
+    /**
+     * Virtual from SerializableObject
+     */
+    void serialize(SerializeAction* a);
+    
 protected:
-    struct Range {
+    class Range : public SerializableObject {
+    public:
+        /// Basic constructor
         Range(_inttype_t start, _inttype_t end)
             : start_(start), end_(end) {}
+
+        /// Builder constructor
+        Range(const Builder&)
+            : start_(0), end_(0) {}
+        
+        /// virtual from SerializableObject
+        void serialize(SerializeAction* a);
         
         _inttype_t start_;
         _inttype_t end_;
     };
     
-    typedef std::vector<Range> RangeVector;
+    typedef SerializableVector<Range> RangeVector;
     RangeVector bitmap_;
-
+    
     void validate();
 
 public:
