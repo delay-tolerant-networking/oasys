@@ -255,7 +255,7 @@ proc process_template {template var_array} {
     return "$script\n"
 }
 
-proc generate_script {id exec_file exec_opts confname conf exec_env} {
+proc generate_script {id exec_name exec_file exec_opts confname conf exec_env} {
     global opt net::host test::testname
 
     set hostname $net::host($id)
@@ -263,19 +263,18 @@ proc generate_script {id exec_file exec_opts confname conf exec_env} {
     set rundir [dist::get_rundir $hostname $id]
     
     # Handle extra options
-    set name [file tail $exec_file]
     if {$opt(exe_extra) != ""} {
-	dbg "% extra exe options $opt(exe_extra), exe name $name"
-	regexp "$name=\(.*\);" $opt(exe_extra) dummy the_opts
+	dbg "% extra exe options $opt(exe_extra), exe name $exec_name"
+	regexp "$exec_name=\(.*\);" $opt(exe_extra) dummy the_opts
 	if [info exists the_opts] {
-	    dbg "% extra options for $name = \"$the_opts\""
+	    dbg "% extra options for $exec_name = \"$the_opts\""
 	    append exec_opts $the_opts
 	}
     }
     
     # runscript
+    set script(exec_name)   $exec_name
     set script(exec_file)   $exec_file
-    set script(exec_name)   [file tail $exec_file]
     set script(exec_opts)   $exec_opts
     set script(gdb_opts)    $opt(gdbopts)
     set script(run_dir)     $rundir
@@ -352,16 +351,22 @@ proc write_script {id dir filename contents do_chmod} {
 #
 # Run a given program on the specified list of nodes
 #
-proc run {id exec_file exec_opts confname conf exec_env} {
+proc run {id exec_name exec_opts confname conf exec_env {exec_file ""}} {
     global opt manifest::manifest manifest::subst 
     global run::pids run::dirs run::xterm
 
     set hostname $net::host($id)
 
-    set exec_name [file tail $exec_file]
+    if {$exec_file == ""} {
+	set exec_file $exec_name
+    }
+
+    if {[string index $exec_name 0] == "/"} {
+	error "exec_name can't be a full path"
+    }
 
     dbg "* Generating scripts for $exec_name for $hostname:$id"
-    generate_script $id $exec_file $exec_opts $confname $conf $exec_env
+    generate_script $id $exec_name $exec_file $exec_opts $confname $conf $exec_env
 
     set run::dirs($id) [dist::get_rundir $hostname $id]
     set script "$run::dirs($id)/run-$exec_name.sh"
