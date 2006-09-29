@@ -236,6 +236,16 @@ DECLARE_TEST(Clear) {
     CHECK_EQUAL(b.num_entries(), 2);
     CHECK_EQUAL(b.num_set(), 10);
 
+    // don't do anything
+    DO(b.clear(0, 100));
+    CHECK_EQUAL(b.num_set(), 0);
+    CHECK_EQUAL(b.num_entries(), 0);
+    DO(b.set(10, 10));
+    CHECK_EQUAL(b.num_set(), 10);
+    DO(b.clear(0, 10));
+    DO(b.clear(20, 10));
+    CHECK_EQUAL(b.num_set(), 10);
+
     return UNIT_TEST_PASSED;
 }
 
@@ -279,6 +289,32 @@ DECLARE_TEST(Compact) {
     DO(b.format(buf, sizeof(buf)));
     CHECK_EQUALSTR(buf, "[ 5..10 ]");
     
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(SetClear) {
+    SparseBitmap<int> b;
+
+    DO(b.set(1));
+    DO(b.set(3));
+    DO(b.set(5));
+    DO(b.set(7));
+
+    DO(b.clear(1));
+    CHECK_EQUAL(b.first(), 3);
+    CHECK_EQUAL(b.num_entries(), 3);
+
+    DO(b.clear(3));
+    CHECK_EQUAL(b.first(), 5);
+    CHECK_EQUAL(b.num_entries(), 2);
+
+    DO(b.clear(5));
+    CHECK_EQUAL(b.first(), 7);
+    CHECK_EQUAL(b.num_entries(), 1);
+
+    DO(b.clear(7));
+    CHECK_EQUAL(b.num_entries(), 0);
+
     return UNIT_TEST_PASSED;
 }
 
@@ -380,6 +416,7 @@ DECLARE_TESTER(Test) {
     ADD_TEST(Sparse);
     ADD_TEST(Clear);
     ADD_TEST(Compact);
+    ADD_TEST(SetClear);
     ADD_TEST(Iterator);
 }
 
