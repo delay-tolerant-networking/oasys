@@ -349,17 +349,32 @@ SparseBitmap<_inttype_t>::iterator::operator++(int)
 //----------------------------------------------------------------------
 template <typename _inttype_t>
 typename SparseBitmap<_inttype_t>::iterator
-SparseBitmap<_inttype_t>::iterator::operator+(int diff)
+SparseBitmap<_inttype_t>::iterator::operator+(unsigned int diff)
 {
     typename SparseBitmap::iterator tmp = *this;
-
-    // XXX/demmer this is quite inefficient if diff is large, but
-    // typically we only use this operator for small numbers (i.e. 1)
-    while (diff != 0) {
-        tmp++;
-        diff--;
-    }
+    tmp += diff;
     return tmp;
+}
+
+//----------------------------------------------------------------------
+template <typename _inttype_t>
+typename SparseBitmap<_inttype_t>::iterator&
+SparseBitmap<_inttype_t>::iterator::operator+=(unsigned int diff)
+{
+    while (diff != 0) {
+        size_t space = iter_->end_ - (iter_->start_ + offset_);
+        
+        if (space >= diff) {
+            offset_ += diff;
+            break;
+        }
+        
+        diff -= (space + 1);
+        iter_++;
+        offset_ = 0;
+    }
+
+    return *this;
 }
 
 //----------------------------------------------------------------------
@@ -392,18 +407,32 @@ SparseBitmap<_inttype_t>::iterator::operator--(int)
 //----------------------------------------------------------------------
 template <typename _inttype_t>
 typename SparseBitmap<_inttype_t>::iterator
-SparseBitmap<_inttype_t>::iterator::operator-(int diff)
+SparseBitmap<_inttype_t>::iterator::operator-(unsigned int diff)
 {
     typename SparseBitmap::iterator tmp = *this;
-
-    // XXX/demmer this is quite inefficient if diff is large, but
-    // typically we only use this operator for small numbers (i.e. 1)
-    while (diff != 0) {
-        tmp--;
-        diff--;
-    }
+    tmp -= diff;
     return tmp;
 }
+
+//----------------------------------------------------------------------
+template <typename _inttype_t>
+typename SparseBitmap<_inttype_t>::iterator&
+SparseBitmap<_inttype_t>::iterator::operator-=(unsigned int diff)
+{
+    while (diff != 0) {
+        if (offset_ >= static_cast<_inttype_t>(diff)) {
+            offset_ -= diff;
+            break;
+        }
+        
+        diff -= (offset_ + 1);
+        iter_--;
+        offset_ = iter_->end_ - iter_->start_;
+    }
+
+    return *this;
+}
+
 
 //----------------------------------------------------------------------
 template <typename _inttype_t>

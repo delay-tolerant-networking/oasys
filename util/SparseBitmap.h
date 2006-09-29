@@ -188,7 +188,12 @@ public:
         /**
          * Addition operator.
          */
-        iterator operator+(int diff);
+        iterator operator+(unsigned int diff);
+
+        /**
+         * Addition and assigment operator.
+         */
+        iterator& operator+=(unsigned int diff);
 
         /**
          * Prefix decrement operator.
@@ -203,7 +208,12 @@ public:
         /**
          * Subtraction operator.
          */
-        iterator operator-(int diff);
+        iterator operator-(unsigned int diff);
+
+        /**
+         * Subtraction and assigment operator.
+         */
+        iterator& operator-=(unsigned int diff);
 
         /**
          * Equality operator.

@@ -340,7 +340,38 @@ DECLARE_TEST(Iterator) {
 
     DO(i = b.end() - 1);
     CHECK_EQUAL(*i, 6);
+
+    DO(i = b.begin());
+    CHECK_EQUAL(*i, 1);
+    DO(i += 1);
+    CHECK_EQUAL(*i, 2);
+    DO(i += 2);
+    CHECK_EQUAL(*i, 6);
+
+    DO(i -= 3);
+    CHECK_EQUAL(*i, 1);
     
+    DO(i += 2);
+    CHECK_EQUAL(*i, 5);
+    DO(i -= 2);
+    CHECK_EQUAL(*i, 1);
+
+    DO(i += 2);
+    DO(i -= 1);
+    CHECK_EQUAL(*i, 2);
+
+    DO(b.set(10, 10000000));
+    DO(i = b.begin());
+    CHECK_EQUAL(*i, 1);
+    DO(i += 4);
+    CHECK_EQUAL(*i, 10);
+    DO(i += (10000000 - 1));
+    CHECK_EQUAL(*i, 10000009);
+    DO(i++);
+    CHECK(i == b.end());
+    DO(i--);
+    CHECK_EQUAL(*i, 10000009);
+
     return UNIT_TEST_PASSED;
 }
 
