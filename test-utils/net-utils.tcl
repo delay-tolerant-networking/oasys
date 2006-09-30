@@ -11,12 +11,28 @@ set total_nodes 0
 #
 # Define a new node in the test
 #
-proc node { node_id hostname new_portbase } {
-    global net::host net::portbase net::used_ports opt
-    
+proc node { node_id hostname new_portbase {opts ""} } {
+    global net::host net::listen_addr net::internal_host
+    global net::portbase net::used_ports opt
+
     set net::host($node_id)       $hostname
     set net::portbase($node_id)   [expr $new_portbase + $opt(conf_id) * 100]
     set net::used_ports($node_id) {}
+
+    # defaults for options 
+    set net::listen_addr($node_id)   0.0.0.0
+    set net::internal_host($node_id) $hostname
+    foreach {var val} $opts {
+	if {$var == "-listen_addr"} {
+	    set net::listen_addr($node_id) $val
+	    
+	} elseif {$var == "-internal_host"} {
+	    set net::internal_host($node_id) $val
+
+	} else {
+	    error "unknown test node option $var"
+	}
+    }
 }
 
 #
@@ -54,18 +70,23 @@ proc default_num_nodes {num} {
 # necessarily sequential and packed.
 #
 proc override_nodelist {ids {remap 1}} {
-    global net::host net::portbase net::used_ports
+    global net::host net::listen_addr net::internal_host
+    global net::portbase net::used_ports
 
     if {[net::num_nodes] == 0} {
 	net::num_nodes [llength $ids]
     }
 
-    array set oldhost  [array get net::host]
-    array set oldports [array get net::portbase]
+    array set oldhost     [array get net::host]
+    array set oldlisten   [array get net::listen_addr]
+    array set oldinternal [array get net::internal_host]
+    array set oldports    [array get net::portbase]
 
     array unset net::host
     array unset net::portbase
     array unset net::used_ports
+    array unset net::listen_addr
+    array unset net::internal_host
 
     for {set id 0} {$id < [llength $ids]} {incr id} {
 	set new_id [lindex $ids $id]
@@ -75,9 +96,11 @@ proc override_nodelist {ids {remap 1}} {
 	    set old_id $new_id
 	}
 
-	set net::host($new_id)       $oldhost($old_id)
-	set net::portbase($new_id)   $oldports($old_id)
-	set net::used_ports($new_id) {}
+	set net::host($new_id)          $oldhost($old_id)
+	set net::portbase($new_id)      $oldports($old_id)
+	set net::used_ports($new_id)    {}
+	set net::internal_host($new_id) $oldinternal($old_id)
+	set net::listen_addr($new_id)   $oldlisten($old_id)
     }
 }
 
