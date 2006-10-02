@@ -67,7 +67,8 @@ proc usage {} {
     puts "    --opts        <options...> Extra options to the program"
     puts "    --gdbrc       <tmpl>       Change remote gdbrc template"
     puts "    --script      <tmpl>       Change remote run script template"
-    puts "    --no-logs                  Don't collect logs/cores"
+    puts "    --no-logs                  Don't collect logs"
+    puts "    --no-cores                 Don't collect cores"
     puts "    --local-rundir		 Use ./run-0 ./run-1 etc instead of /tmp"
     puts "    --leave-crap               Leave all crap in /tmp dir"
     puts "    --strip                    Strip execs before copying"
@@ -89,6 +90,7 @@ proc init {argv} {
     set opt(logdir)        ""
     set opt(net)           ""
     set opt(no_logs)       0
+    set opt(no_cores)      0
     set opt(pause)         0
     set opt(rundir_prefix) "/tmp/run-[pid]"
     set opt(local_rundir)  0
@@ -162,6 +164,7 @@ proc init {argv} {
 	    --base-test-dir { shift argv; set opt(base_test_dir) [arg0 $argv] }
 	    --seed 	  { shift argv; set opt(seed) [arg0 $argv] }
 	    --no-logs     { set opt(no_logs) 1 }
+	    --no-cores    { set opt(no_cores) 1 }
 	    --leave-crap  { set opt(leave_crap) 1}
 	    --strip       { set opt(strip) 1 }
 	    --valgrind-suppressions { set opt(valgrind_suppressions) 1}
@@ -589,7 +592,7 @@ proc get_files {varname hostname dir pattern} {
 proc collect_logs {} {
     global opt net::host run::dirs
 
-    if {$opt(no_logs) || $opt(dry_run)} { return }
+    if {($opt(no_logs) && $opt(no_cores)) || $opt(dry_run)} { return }
 
     puts "* Collecting logs/cores into $opt(logdir)"
     if {! [file isdirectory $opt(logdir)]} {
@@ -607,16 +610,24 @@ proc collect_logs {} {
 	set hostname $net::host($i)
 	set dir      $run::dirs($i)
 
-	get_files cores $hostname $dir "*core*"
-	get_files logs  $hostname $dir "*.out"
-	get_files logs  $hostname $dir "*.err"
-	
-	dbg "* $hostname:$i cores = $cores"
-	dbg "* $hostname:$i logs = $logs"
+        if {! $opt(no_cores)} {
+            get_files cores $hostname $dir "*core*"
+            dbg "* $hostname:$i cores = $cores"
+        }
+
+        if {! $opt(no_logs)} {
+            get_files logs  $hostname $dir "*.out"
+            get_files logs  $hostname $dir "*.err"
+            dbg "* $hostname:$i logs = $logs"
+        }
 
 	foreach l $logs {
-	    set contents [run_cmd $hostname cat $l]
-	    set contents [string trim $contents]
+            if [catch {
+                set contents [run_cmd $hostname cat $l]
+                set contents [string trim $contents]
+            } err] {
+                set contents "error getting log $l: $err"
+            }
 	    
 	    if {[string length $contents] != 0} {
 		set exec_name [manifest::rfile [file rootname [file tail $l]]]
@@ -657,7 +668,11 @@ proc collect_logs {} {
 	    }
 
 	    puts "error: found core file $c (copying to $clocal)"
-	    eval exec $cp$c $clocal
+            if [catch {
+                eval exec $cp$c $clocal
+            } err] {
+                puts "error getting core file: $err"
+            }
 	}
     }
 }
