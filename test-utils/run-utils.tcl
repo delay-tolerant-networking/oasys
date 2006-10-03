@@ -189,6 +189,11 @@ proc init {argv} {
 
     puts "* Reading net definition file $opt(net)"
     import $opt(net)
+
+    if {$opt(local_rundir) && ($opt(net) != "localhost")} {
+        puts "WARNING: can't use local_rundir and non-localhost network"
+        set opt(local_rundir) false
+    }
     
     if {$num_nodes_override != 0} {
 	puts "* Setting num_nodes to $num_nodes_override"
