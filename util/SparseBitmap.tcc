@@ -164,11 +164,11 @@ SparseBitmap<_inttype_t>::clear(_inttype_t start, _inttype_t len)
         }
 
         // case 2: shrink an entry on the left
-        else if (start <= i->start_ && end < i->end_ && end > i->start_) {
+        else if (start <= i->start_ && end < i->end_ && end >= i->start_) {
             i->start_ = end + 1;
         }
 
-        else if (start > i->start_ && start < i->end_)
+        else if (start > i->start_ && start <= i->end_)
         {
             // case 3: shrink an entry on the right
             if (end >= i->end_)

@@ -315,6 +315,49 @@ DECLARE_TEST(SetClear) {
     DO(b.clear(7));
     CHECK_EQUAL(b.num_entries(), 0);
 
+    DO(b.set(1));
+    DO(b.set(2));
+    DO(b.set(3));
+
+    CHECK_EQUAL(b.first(), 1);
+    CHECK_EQUAL(b.num_set(), 3);
+
+    DO(b.clear(1));
+    CHECK_EQUAL(b.first(), 2);
+    CHECK_EQUAL(*(b.begin()), 2);
+    CHECK_EQUAL(b.num_set(), 2);
+
+    DO(b.clear(2));
+    CHECK_EQUAL(b.first(), 3);
+    CHECK_EQUAL(*(b.begin()), 3);
+    CHECK_EQUAL(b.num_set(), 1);
+
+    DO(b.clear(3));
+    CHECK_EQUAL(b.num_entries(), 0);
+    CHECK(b.begin() == b.end());
+    
+    DO(b.set(1));
+    DO(b.set(2));
+    DO(b.set(3));
+
+    CHECK_EQUAL(b.last(), 3);
+    CHECK_EQUAL(b.num_set(), 3);
+
+    DO(b.clear(3));
+    CHECK_EQUAL(b.last(), 2);
+    CHECK_EQUAL(*(--b.end()), 2);
+    CHECK_EQUAL(b.num_set(), 2);
+
+    DO(b.clear(2));
+    CHECK_EQUAL(b.last(), 1);
+    CHECK_EQUAL(*(--b.end()), 1);
+    CHECK_EQUAL(b.num_set(), 1);
+
+    DO(b.clear(1));
+    CHECK_EQUAL(b.num_entries(), 0);
+    CHECK(b.begin() == b.end());
+    
+
     return UNIT_TEST_PASSED;
 }
 
