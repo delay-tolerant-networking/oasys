@@ -23,6 +23,24 @@ proc do_until {what timeout script} {
     }
 }
 
+#
+# Rename the after proc to real_after so we can still run tcl events
+# in the background during the 'after $N' syntax
+#
+rename after real_after
+
+proc after {args} {
+    if {[llength $args] == 1} {
+        global after_vwait
+        set delay [lindex $args 0]
+        set after_vwait 0
+        real_after $delay set after_vwait 1
+        vwait after_vwait
+    } else {
+        eval real_after $args
+    }
+}
+
 proc gethostbyname {host} {
     if {![catch {package require Tclx} err]} {
 	return [lindex [host_info addresses $host] 0]
