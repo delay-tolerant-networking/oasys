@@ -31,6 +31,25 @@ DurableObjectCache<_DataType>::~DurableObjectCache()
 //----------------------------------------------------------------------------
 template <typename _DataType>
 void
+DurableObjectCache<_DataType>::get_stats(StringBuffer* buf)
+{
+    buf->appendf("%zu bytes -- "
+                 "%zu elements -- "
+                 "%zu live -- "
+                 "%u hits -- "
+                 "%u misses -- "
+                 "%u evictions",
+                 size(),
+                 count(),
+                 live(),
+                 hits(),
+                 misses(),
+                 evictions());
+}
+                                             
+//----------------------------------------------------------------------------
+template <typename _DataType>
+void
 DurableObjectCache<_DataType>::get_cache_key(std::string* cache_key,
                                              const SerializableObject& key)
 {

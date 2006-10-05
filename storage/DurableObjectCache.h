@@ -41,6 +41,8 @@
 #error DurableObjectCache.h must only be included from within DurableStore.h
 #endif
 
+#include "../util/StringBuffer.h"
+
 template <typename _DataType>
 class DurableObjectCache : public Logger {
 public:
@@ -102,13 +104,18 @@ public:
 
     /// @{
     /// Accessors
-    size_t size()   { return size_; }
-    size_t count()  { return cache_.size(); }
-    size_t live()   { return cache_.size() - lru_.size(); }
-    int hits()      { return hits_; }
-    int misses()    { return misses_; }
-    int evictions() { return evictions_; }
+    size_t size()   const { return size_; }
+    size_t count()  const { return cache_.size(); }
+    size_t live()   const { return cache_.size() - lru_.size(); }
+    int hits()      const { return hits_; }
+    int misses()    const { return misses_; }
+    int evictions() const { return evictions_; }
     /// @}
+
+    /**
+     * Get a string representation of the stats in the given string buffer.
+     */
+    void get_stats(StringBuffer* buf);
 
     /**
      * Reset the cache statistics.
