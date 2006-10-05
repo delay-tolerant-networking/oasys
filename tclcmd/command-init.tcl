@@ -206,7 +206,6 @@ proc tclreadline_completer {text start end line} {
     if {$event_loop_wait == 1} {
 	error "exit_command"
     }
-    puts "called completer"
     return ""
 }
 

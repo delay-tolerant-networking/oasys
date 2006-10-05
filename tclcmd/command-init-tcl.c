@@ -207,7 +207,6 @@ static const char* INIT_COMMAND =
 "    if {$event_loop_wait == 1} {\n"
 "	error \"exit_command\"\n"
 "    }\n"
-"    puts \"called completer\"\n"
 "    return \"\"\n"
 "}\n"
 "\n"
