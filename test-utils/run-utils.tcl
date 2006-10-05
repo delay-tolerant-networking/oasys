@@ -194,6 +194,11 @@ proc init {argv} {
         puts "WARNING: can't use local_rundir and non-localhost network"
         set opt(local_rundir) false
     }
+
+    if {$opt(local_rundir) && ($opt(rundir_prefix) != "/tmp/run-[pid]")} {
+        puts "WARNING: ignoring local_rundir since rundir specified as $opt(rundir_prefix)"
+        set opt(local_rundir) 0
+    }
     
     if {$num_nodes_override != 0} {
 	puts "* Setting num_nodes to $num_nodes_override"
