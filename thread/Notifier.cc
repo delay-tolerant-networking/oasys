@@ -146,7 +146,7 @@ Notifier::drain_pipe(size_t bytes)
 }
 
 bool
-Notifier::wait(SpinLock* lock, int timeout)
+Notifier::wait(SpinLock* lock, int timeout, bool drain_the_pipe)
 {
     if (waiter_) {
         PANIC("Notifier doesn't support multiple waiting threads");
@@ -179,7 +179,10 @@ Notifier::wait(SpinLock* lock, int timeout)
         }
         return false; // timeout
     } else {
-        drain_pipe(1);
+        if (drain_the_pipe)
+        {
+            drain_pipe(1);
+        }
         if (!quiet_) {
             log_debug("notifier wait successfully notified");
         }
@@ -219,7 +222,7 @@ Notifier::notify(SpinLock* lock)
             // it is important that we re-take the lock before writing
             // to maintain the atomicity required by MsgQueue
             if (num_retries == 0) {
-                log_warn("pipe appears to be full -- retrying write until success");
+                log_warn("pipe appears to be full -- retrying write until success"); 
             }
 
             if (++num_retries == 600) {

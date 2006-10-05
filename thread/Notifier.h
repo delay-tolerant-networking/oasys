@@ -80,7 +80,9 @@ public:
      * Returns true if the thread was notified, false if a timeout
      * occurred.
      */
-    bool wait(SpinLock* lock = NULL, int timeout = -1);
+    bool wait(SpinLock* lock      = NULL, 
+              int timeout         = -1, 
+              bool drain_the_pipe = true);
 
     /**
      * Notify a waiter.
