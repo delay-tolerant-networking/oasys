@@ -172,6 +172,11 @@ protected:
  */
 class ScopeLock {
 public:
+    ScopeLock()
+        : lock_(NULL)
+    {
+    }
+    
     ScopeLock(Lock*       l,
               const char* lock_user)
         : lock_(l)
@@ -200,18 +205,27 @@ public:
         do_lock(lock_user);
     }
 
+    void set_lock(Lock* l, const char* lock_user)
+    {
+        lock_ = l;
+        do_lock(lock_user);
+    }
+
     void do_lock(const char* lock_user) {
-        int ret = lock_->lock(lock_user);       
-        ASSERT(ret == 0);                       
+        ASSERT(lock_ != NULL);
+        int ret = lock_->lock(lock_user);
+        ASSERT(ret == 0);
         lock_->scope_lock_count_++;
     }
-    
+
     void unlock() {
-        lock_->scope_lock_count_--;
-        lock_->unlock();
-        lock_ = 0;
+        if (lock_ != NULL) {
+            lock_->scope_lock_count_--;
+            lock_->unlock();
+            lock_ = NULL;
+        }
     }
-    
+
     ~ScopeLock()
     {
         if (lock_) {
