@@ -67,8 +67,8 @@ SpinLock::lock(const char* lock_user)
         atomic_incr(&total_spins_);
         if (warn_on_contention_ && ++nspins > 1000000) {
             fprintf(stderr,
-                    "warning: spin lock held by %s reached spin limit\n",
-                    lock_holder_name_);
+                    "warning: %s is waiting for spin lock held by %s, which has reached spin limit\n",
+                    lock_user, lock_holder_name_);
             StackTrace::print_current_trace(false);
             nspins = 0;
         }
