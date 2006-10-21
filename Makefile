@@ -166,8 +166,14 @@ SRCDIR	 := .
 BUILDDIR := .
 endif
 
+#
+# Special override rules for objects that can't use the default build options
+#
 debug/gdtoa-%.o: debug/gdtoa-%.c debug/arith.h
 	$(CC) -I./debug -g -DINFNAN_CHECK -c $< -o $@
+
+tclcmd/tclreadline.o: tclcmd/tclreadline.c
+	$(CC) $(CPPFLAGS) $(DEBUG) $(OPTIMIZE) $(PROFILE) -c $< -o $@
 
 #
 # Include the Makefile for tests
@@ -181,8 +187,7 @@ include Rules.make
 
 #
 # Need special rules for the gdtoa sources adapted from the source
-# distribution. These must be defined before the common rules
-# are pulled in from Rules.make.
+# distribution.
 #
 debug/arith-native.h: debug/gdtoa-arithchk.c
 	@mkdir -p debug
