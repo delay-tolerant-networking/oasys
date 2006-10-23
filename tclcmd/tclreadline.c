@@ -78,12 +78,6 @@
  */
 void rl_extend_line_buffer(int len);
 
-/*
- * demmer: thseone too
- */
-int ding();
-extern char **completion_matches (char *, rl_compentry_func_t *);
-
 #ifdef EXECUTING_MACRO_HACK
 /**
  * this prototype is private in readline's file `macro.c'.
@@ -301,8 +295,17 @@ TclReadlineCmd(
                 return TCL_OK;
             }
 
+            // The editline wrapper defines the wrong function
+            // parameter prototype for rl_callback_handler_install, so
+            // we need to cast below.
+#if READLINE_IS_EDITLINE
+#define CALLBACK_CAST (void (*)(void))
+#else
+#define CALLBACK_CAST
+#endif
 	    rl_callback_handler_install(argc == 3 ? argv[2] : "%",
-		TclReadlineLineCompleteHandler);
+		CALLBACK_CAST TclReadlineLineCompleteHandler);
+#undef CALLBACK_CAST
 
 	    Tcl_CreateFileHandler(0, TCL_READABLE,
 		TclReadlineReadHandler, (ClientData) NULL);
@@ -524,7 +527,7 @@ TclReadlineLineCompleteHandler(char* ptr)
 
     } else {
 
-	/**
+	/*
 	 * From version 0.9.3 upwards, all lines are
 	 * returned, even empty lines. (Only non-empty
 	 * lines are stuffed in readline's history.)
@@ -534,6 +537,15 @@ TclReadlineLineCompleteHandler(char* ptr)
 
 	char* expansion = (char*) NULL;
 	int status = history_expand(ptr, &expansion);
+
+        /*
+         * demmer: the editline wrapper returns a null pointer when
+         * history_expand is passed an empty string, so we need to
+         * make it look like what readline returns.
+         */
+        if (expansion == NULL && ptr[0] == '\0') {
+            expansion = strdup("");
+        }
 
 	if (status >= 1) {
 	    /* TODO: make this a valid tcl output */
