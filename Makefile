@@ -10,6 +10,7 @@ COMPAT_SRCS :=					\
 	compat/fpclassify.c			\
 	compat/getopt_long.c			\
 	compat/inet_aton.c			\
+	compat/editline_compat.c		\
 
 DEBUG_SRCS :=					\
 	debug/DebugUtils.cc			\

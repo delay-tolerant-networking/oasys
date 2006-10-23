@@ -37,13 +37,31 @@ AC_DEFUN(AC_OASYS_CONFIG_TCLREADLINE, [
     dnl
     AC_SEARCH_LIBS(readline, 
                    readline, 
-		   [oasys_have_readline=1],
-		   [oasys_have_readline=0])
+		   [TCLREADLINE_ENABLED=1],
+		   [TCLREADLINE_ENABLED=0])
 
-    if test $oasys_have_readline = 1 ; then
-        TCLREADLINE_ENABLED=1
+    dnl
+    dnl Find out if we're using the BSD libedit implementation of 
+    dnl readline functionality.
+    dnl
+    if test $TCLREADLINE_ENABLED = 1 ; then
+         AC_CACHE_CHECK([whether readline is GNU readline or BSD editline],
+	  	        [oasys_cv_readline_is_editline],
+ 		        [AC_LINK_IFELSE([AC_LANG_CALL([], [rl_extend_line_buffer])],
+ 		       		        [oasys_cv_readline_is_editline=GNU],
+ 		       		        [oasys_cv_readline_is_editline=editline])])
+        if test $oasys_cv_readline_is_editline = editline ; then
+            AC_DEFINE_UNQUOTED(READLINE_IS_EDITLINE, 1,
+                               [whether readline is actually BSD's libedit])
+        fi
+
+	dnl Finally, spit out an informative message
+	AC_MSG_CHECKING([whether tclreadline support was found])
+        AC_MSG_RESULT([yes])
     else
-        TCLREADLINE_ENABLED=0
+	dnl Finally, spit out an informative message
+	AC_MSG_CHECKING([whether tclreadline support was found])
+        AC_MSG_RESULT([no])
     fi
 
     fi # ac_tclreadline != no
