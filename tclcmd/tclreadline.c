@@ -88,6 +88,10 @@
 #   include <readline/history.h>
 #endif
 
+#ifdef READLINE_IS_EDITLINE
+#define rl_completion_matches completion_matches
+#endif
+
 /**
  * this prototype is missing
  * in readline.h
@@ -806,7 +810,7 @@ TclReadlineCompletion(char* text, int start, int end)
     }
 
     if (!matches && tclrl_use_builtin_completer) {
-	matches = completion_matches(text, TclReadline0generator);
+	matches = rl_completion_matches(text, TclReadline0generator);
     }
 
     return matches;
