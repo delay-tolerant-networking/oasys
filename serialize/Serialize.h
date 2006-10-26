@@ -161,6 +161,11 @@ public:
     virtual void end_action();
 
     /**
+     * Reset error flag to false.  Enables serializer reuse.
+     */
+    void reset_error() { error_ = false; }
+
+    /**
      * Accessor for the action type.
      */
     action_t action_code() { return action_; }
