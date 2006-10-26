@@ -40,6 +40,11 @@ if [ "$1" = "--config_opts" ] ; then
     shift; shift;
 fi
 
+if [ "$1" = "--path" ] ; then
+    PATH=$2
+    shift; shift;
+fi
+
 echo "***"
 echo "*** Building $build_name"
 echo "***"
