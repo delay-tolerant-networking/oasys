@@ -16,14 +16,24 @@
 #    limitations under the License.
 #
 
+dry_run=0
+
 echodo () {
-    echo $*
-    $*
+    echo "> $*"
+    if [ ! $dry_run = 1 ] ; then $* ; fi
 }
 
 build_name=""
 build_dir="."
 config_opts=""
+
+while [ $# != 0 ] ; do
+
+if [ "$1" = "-n" ] ; then
+    dry_run=1
+    echo "> dry run"
+    shift
+fi
 
 if [ "$1" = "--build_name" ] ; then
     build_name=$2
@@ -45,6 +55,8 @@ if [ "$1" = "--path" ] ; then
     shift; shift;
 fi
 
+done
+
 echo "***"
 echo "*** Building $build_name"
 echo "***"
@@ -57,7 +69,7 @@ if [ $build_dir != "." ] ; then
     srcdir=".."
 fi
 
-echodo $srcdir/configure -C $config_opts
+eval echodo $srcdir/configure -C $config_opts
 
 MAKEFLAGS="-k"
 nprocs=`cat /proc/cpuinfo | grep processor | wc -l`
