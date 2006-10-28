@@ -155,14 +155,14 @@ StringBuffer::vappendf(const char* fmt, va_list ap)
         // or we write it again below
     }
 
-    if (ret >= buf_->nfree())
+    if (ret >= (int)buf_->nfree())
     {
         buf_->reserve(std::max(buf_->len() + ret + 1,
                                buf_->buf_len() * 2));
         buf_->reserve(buf_->len() + ret + 1);
         ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
         ASSERT(ret > 0);
-        ASSERT(ret < buf_->nfree()); // ret doesn't include null char
+        ASSERT(ret < (int)buf_->nfree()); // ret doesn't include null char
     }
     
     ASSERT(ret >= 0);

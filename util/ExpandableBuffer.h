@@ -91,7 +91,7 @@ struct ExpandableBuffer {
     }
 
     //! @return bytes free
-    int nfree() const {
+    size_t nfree() const {
         ASSERT(buf_len_ >= len_);
         return buf_len_ - len_;
     }
