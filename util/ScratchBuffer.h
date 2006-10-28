@@ -53,6 +53,12 @@ public:
         }
         return reinterpret_cast<_memory_t>(buf_);
     }
+
+    //! @return Read-only pointer to buffer
+    const _memory_t buf() const {
+        return reinterpret_cast<const _memory_t>(buf_);
+    }
+
 };
 
 /*!
@@ -88,6 +94,11 @@ public:
             reserve(size);
         }
         return reinterpret_cast<_memory_t>(buf_);
+    }
+
+    //! @return Read-only pointer to buffer
+    const _memory_t buf() const {
+        return reinterpret_cast<const _memory_t>(buf_);
     }
 
     //! virtual from ExpandableBuffer
