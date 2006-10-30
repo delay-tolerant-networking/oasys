@@ -48,63 +48,101 @@ AC_DEFUN(AC_OASYS_CONFIG_XERCES, [
     dnl
     dnl Handle --with-xerces-c=DIR
     dnl
-    ac_with_xerces_c='/usr/local'
     AC_ARG_WITH(xerces-c,
         AC_HELP_STRING([--with-xerces-c=DIR],
-            [location of a xerces-c installation (default /usr/local)]),
-        ac_with_xerces_c=$withval)
+            [location of a xerces-c installation (default try)]),
+        [ac_with_xerces_c=$withval],
+        [ac_with_xerces_c=try])
+
+    AC_MSG_CHECKING([whether xerces-c support should be enabled])
 
     dnl
-    dnl Test the xerces-c installation
+    dnl Disable xerces-c if requested
     dnl
-    AC_CACHE_CHECK([for xerces-c library installation], oasys_cv_lib_xerces_c,
-    [
-        if test -d "$ac_with_xerces_c"; then
-            AC_LANG([C++])
-            ac_save_LIBS="$LIBS"
-            LIBS="-L$ac_with_xerces_c/lib -lxerces-c"
-            ac_save_CPPFLAGS="$CPPFLAGS"
-            CPPFLAGS="-I$ac_with_xerces_c/include"
-    
-            AC_LINK_IFELSE(
-                AC_LANG_PROGRAM(
-                    [
-                        #include <xercesc/util/PlatformUtils.hpp>
-                        #include <xercesc/util/XMLString.hpp>
-                        #include <xercesc/dom/DOM.hpp>
-                    ],
-    
-                    [
-                        xercesc::XMLPlatformUtils::Initialize();
-                        {
-                            xercesc::DOMImplementation* impl
-                                = xercesc::DOMImplementationRegistry::getDOMImplementation
-                                    (xercesc::XMLString::transcode("XML 1.0"));
-                        }
-                        xercesc::XMLPlatformUtils::Terminate();
-                    ]),
-                [
-                    oasys_cv_lib_xerces_c="$ac_with_xerces_c"
-                ],
-                [
-                    oasys_cv_lib_xerces_c=""
-                ]
-            )
-    
-            LIBS="$ac_save_LIBS"
-            CPPFLAGS="$ac_save_CPPFLAGS"
-    
-        fi
-    
-    ])
-
-    if test -z "$oasys_cv_lib_xerces_c"; then
+    if test "$ac_with_xerces_c" = no; then
+        AC_MSG_RESULT([no])
         XERCES_C_ENABLED=0
     else
-        XERCES_C_ENABLED=1
-        AC_DEFINE(XERCES_C_ENABLED, 1, [whether xerces support is enabled])
-        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_lib_xerces_c/include"
-        OASYS_LIBS="$OASYS_LIBS -L$oasys_cv_lib_xerces_c/lib -lxerces-c"
+
+    dnl
+    dnl Find the xerces-c installation
+    dnl
+    if test "$ac_with_xerces_c" = try \
+         -o "$ac_with_xerces_c" = yes \ 
+         -o "$ac_with_xerces_c" = "" ; then
+        AC_MSG_RESULT([try])
+        ac_xerces_inst_dirs="/usr /usr/local"
+    else
+        AC_MSG_RESULT([yes (dir $ac_with_xerces_c)])
+        ac_xerces_inst_dirs="$ac_with_xerces_c"
     fi
 
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    ac_save_LDFLAGS="$LDFLAGS"
+    ac_save_LIBS="$LIBS"
+
+    AC_MSG_CHECKING([whether xerces-c (>= v2.7.0) was found])
+    AC_CACHE_VAL(oasys_cv_path_xerces_c,
+    [
+        for ac_xerces_inst_dir in $ac_xerces_inst_dirs; do
+            if test -d "$ac_xerces_inst_dir"; then
+                AC_LANG([C++])
+                CPPFLAGS="-I$ac_xerces_inst_dir/include"
+                LDFLAGS="-L$ac_xerces_inst_dir/lib"
+                LIBS="-lxerces-c"
+
+                AC_LINK_IFELSE(
+                    AC_LANG_PROGRAM(
+                        [
+                            #include <xercesc/util/PlatformUtils.hpp>
+                            #include <xercesc/util/XMLString.hpp>
+                            #include <xercesc/dom/DOM.hpp>
+                        ],
+    
+                        [
+                            #if _XERCES_VERSION >= 20700
+
+                            xercesc::XMLPlatformUtils::Initialize();
+                            {
+                                xercesc::DOMImplementation* impl
+                                    = xercesc::DOMImplementationRegistry::getDOMImplementation
+                                        (xercesc::XMLString::transcode("XML 1.0"));
+                            }
+                            xercesc::XMLPlatformUtils::Terminate();
+
+                            #else
+                                #error
+                            #endif
+                        ]),
+                    [
+                        oasys_cv_path_xerces_c="$ac_xerces_inst_dir"
+                        break
+                    ],
+                    [
+                        oasys_cv_path_xerces_c=
+                    ]
+                )
+            fi
+        done
+    ])
+
+    CPPFLAGS="$ac_save_CPPFLAGS"
+    LDFLAGS="$ac_save_LDFLAGS"
+    LIBS="$ac_save_LIBS"
+
+    if test -z "$oasys_cv_path_xerces_c"; then
+        AC_MSG_RESULT([no])
+        XERCES_C_ENABLED=0
+    else
+	AC_MSG_RESULT([yes])
+        XERCES_C_ENABLED=1
+        AC_DEFINE(XERCES_C_ENABLED, 1, [whether xerces support is enabled])
+        if test ! "$oasys_cv_path_xerces_c" = /usr ; then
+            OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_xerces_c/include"
+            OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_xerces_c/lib"
+        fi
+        OASYS_LIBS="$OASYS_LIBS -lxerces-c"
+    fi
+
+    fi
 ])
