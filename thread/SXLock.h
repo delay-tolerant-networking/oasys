@@ -120,13 +120,6 @@ class ScopeLock_ ## _name {                             \
         do_lock(lock_user);                             \
     }                                                   \
                                                         \
-    ScopeLock_ ## _name (auto_ptr<SXLock> rw_lock,      \
-                         const char*      lock_user)    \
-        : rw_lock_(rw_lock.get())                       \
-    {                                                   \
-        do_lock(lock_user);                             \
-    }                                                   \
-                                                        \
     ~ScopeLock_ ## _name ()                             \
     {                                                   \
         if (rw_lock_) {                                 \

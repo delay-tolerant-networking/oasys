@@ -18,8 +18,6 @@
 #ifndef _OASYS_LOCK_H_
 #define _OASYS_LOCK_H_
 
-#include <memory>
-
 #include "Atomic.h"
 #include "Thread.h"
 
@@ -177,13 +175,6 @@ public:
         do_lock(lock_user);
     }
 
-    ScopeLock(std::auto_ptr<Lock> l,
-              const char*         lock_user)
-        : lock_(l.get())
-    {
-        do_lock(lock_user);
-    }
-
     void set_lock(Lock* l, const char* lock_user)
     {
         lock_ = l;
@@ -247,14 +238,6 @@ public:
         do_lock(lock_user);
     }
     
-    ScopeLockIf(std::auto_ptr<Lock> l,
-                const char*         lock_user,
-                bool                use_lock)
-        : lock_(l.get()), use_lock_(use_lock)
-    {
-        do_lock(lock_user);
-    }
-
     void do_lock(const char* lock_user) {
         if (use_lock_) 
         {

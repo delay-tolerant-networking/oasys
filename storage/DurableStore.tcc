@@ -41,9 +41,7 @@ DurableStore::get_table(SingleTypeDurableTable<_DataType>** table,
 {
     int err;
 
-    // build the (single-element) vector of prototypes -- note that
-    // the vector stores auto_ptr instances so the objects are cleaned
-    // up automatically when the vector goes away
+    // build the (single-element) vector of prototypes
     PrototypeVector prototypes;
     prototypes.push_back(new _DataType(Builder()));
 
@@ -96,9 +94,7 @@ DurableStore::get_table(MultiTypeDurableTable<_BaseType, _Collection>** table,
     high = TypeCollectionCode<_Collection, _BaseType>::TYPECODE_HIGH;
 
     // Now for each defined element in the range, create an instance
-    // and stuff it in the vector of protypes. Note that the vector
-    // stores auto_ptr instances so the objects are cleaned up
-    // automatically when the vector is destroyed.
+    // and stuff it in the vector of protypes. 
 
     for (code = low; code <= high; ++code)
     {
