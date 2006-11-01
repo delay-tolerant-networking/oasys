@@ -32,6 +32,7 @@ TESTS += \
 	serialize-stream-test			\
 	serialize-test				\
 	smtp-test				\
+	sparse-array-test			\
 	sparse-bitmap-test			\
 	spin-lock-test				\
 	stack-trace-test			\

@@ -1,6 +1,8 @@
 #ifndef __SPARSE_RANGE_H__
 #define __SPARSE_RANGE_H__
 
+#include <list>
+
 /*!  
  * SparseArray defines a logical array of _Type which is expected to
  * be sparse.  SparseArray can be very smart, but right now is dumb
@@ -15,20 +17,26 @@ public:
 	size_t size_;
         _Type* data_;
 
-        Block(size_t offset, size_t size)
+        Block(size_t offset = 0, size_t size = 0)
             : offset_(offset), size_(size), data_(0)
         {
-            data_ = calloc(size, sizeof(_Type));
+            data_ = static_cast<_Type*>(calloc(size, sizeof(_Type)));
         }
         
 	struct BlockCompare {
-	    bool operator()(const Block& a, const Block& b) {
+	    bool operator()(const Block& a, const Block& b) 
+            {
 		return a.offset_ < b.offset_;
 	    }
 	};
     };
     typedef std::list<Block> BlockList;
 
+    ~SparseArray() 
+    {
+        // XXX/bowei - TODO delete the blocks
+    }
+    
     /*!  
      * In the empty sparse area, the SparseArray returns an element
      * which is the default constructor of _Type.
@@ -48,16 +56,16 @@ public:
      */
     void range_write(size_t offset, size_t elts, const _Type* in)
     {
+        (void)in;
         allocate(offset, elts);
-        memcpy();
     }
 
     /*!
      * For debugging only!
      */
-    BlockList::const_iterator debug_iterator() const 
+    const BlockList& debug_blocks() const 
     { 
-        return blocks_.begin(); 
+        return blocks_;
     }
     
 private:
@@ -70,7 +78,7 @@ private:
      *
      * @return Pointer to allocated region.
      */
-    _Type* allocate(size_t offset, size_t elts)
+    _Type* allocate(size_t offset, size_t size)
     {
         bool merge = false;
         
@@ -78,27 +86,28 @@ private:
         // Take care of any existing blocks which overlap the new
         // block like this:
         //
-        //     |---- new block ----| 
-        // |---- old block ----|
-        //
-	BlockList::iterator itr = blocks_.begin();
-	while (*itr != blocks_.end())
+        // |-- old block --|
+        //                   |- new block -| case 1
+        //   |-new block-|                   case 2
+        //     |---- new block ----|         case 3
+	typename BlockList::iterator itr = blocks_.begin();
+	while (itr != blocks_.end())
 	{
-            // block occurs before
-            if (itr->offset_ + itr->size_ < offset)
+            // case 1: block occurs before, don't merge if bordering
+            if (itr->offset_ + itr->size_ <= offset)
             {
                 ++itr;
                 continue;
             }              
 
-            // new block is completely contained in an existing block
+            // case 2: new block is completely contained in an existing block
             if (itr->offset_ <= offset && 
                 (itr->offset_ + itr->size_ >= offset + size))
             {
                 return &itr->data_[offset - itr->offset_];
             }
 
-            // current block overlaps part of the new block
+            // case 3: current block overlaps part of the new block
             if (itr->offset_ <= offset && 
                 (itr->offset_ + itr->size_ > offset) &&
                 (itr->offset_ + itr->size_ < offset + size))
@@ -116,32 +125,33 @@ private:
             NOTREACHED;
 	}
 
+        Block new_block;
         if (merge) 
         {
             ASSERT(itr != blocks_.end());
 
-            size_t new_size = offset + size - itr->offset;
-            itr->data_ = realloc(itr->data_, sizeof(_Type) * new_size);
+            size_t new_size = offset + size - itr->offset_;
+            itr->data_ = static_cast<_Type*>
+                         (realloc(itr->data_, sizeof(_Type) * new_size));
             itr->size_ = new_size;
             new_block = *itr;
         }
         else
         {
-            ASSERT(itr->offset_ > offset);
             new_block = Block(offset, size);
             blocks_.insert(itr, new_block);
             --itr;
-            ASSERT(itr != blocks_.begin());
         }
         
-        BlockList::iterator tail = itr;
+        typename BlockList::iterator tail = itr;
         ++tail;
         
         //
         // fixup the tail, which includes any blocks like this:
         //
         // |---- new block ----|
-        //         |---- old block ----|
+        //    |- old block -|             case 1
+        //         |---- old block ----|  case 2
         //
         while (tail != blocks_.end())
         {
@@ -151,21 +161,39 @@ private:
                 break;
             }
             
+            // case 1
+            if (tail->offset_ <= itr->offset_ + itr->size_ &&
+                tail->offset_ + tail->size_ <= itr->offset_ + itr->size_)
+            {
+                // copy over the old data
+                size_t offset = tail->offset_ - itr->offset_;
+                for (size_t i = 0; i<tail->size_; ++i)
+                {
+                    itr->data_[offset + i] = tail->data_[i];
+                }
+                free(tail->data_);
+                blocks_.erase(tail++);
+                continue;
+            }
+            
+            // case 2
             if (tail->offset_ <= itr->offset_ + itr->size_)
             {
                 size_t new_size = tail->offset_ + tail->size_ - itr->offset_;
-                itr->data_ = realloc(itr->data_, new_size);
+                itr->data_ = static_cast<_Type*>(realloc(itr->data_, new_size));
                 itr->size_ = new_size;
                 
                 // copy over the old data
                 size_t offset = tail->offset_ - itr->offset_;
-                for (size_t i = 0; i<tail->size; ++i)
+                for (size_t i = 0; i<tail->size_; ++i)
                 {
                     itr->data_[offset + i] = tail->data_[i];
                 }
+                free(tail->data_);
                 blocks_.erase(tail++);
                 continue;
             }
+
             NOTREACHED;
         }
 
