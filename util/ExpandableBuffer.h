@@ -45,7 +45,7 @@ struct ExpandableBuffer {
         }
 
         reserve(other.buf_len_);
-        memcpy(other.buf_, buf_, buf_len_);
+        memcpy(buf_, other.buf_, buf_len_);
         len_ = other.len_;
     }
 
