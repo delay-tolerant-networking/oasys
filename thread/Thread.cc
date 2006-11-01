@@ -163,20 +163,23 @@ Thread::start()
     ResumeThread(h_thread);
 #else 
 
-    // XXX/bowei - Why do we retry so many times? Shouldn't we just
-    // give up?
+    // If the thread create fails, we retry once every 100ms for up to
+    // a minute before panic'ing. This allows a temporary resource
+    // shortage (typically memory) to clean itself up before dying
+    // completely.
     int ntries = 0;
     while (pthread_create(&thread_id_, 0, Thread::pre_thread_run, this) != 0) 
     {
-        if (++ntries == 10000) {
+        if (++ntries == 600) {
             PANIC("maximum thread creation attempts");
 #ifdef OASYS_DEBUG_MEMORY_ENABLED
             DbgMemInfo::debug_dump();
 #endif
         }
         
-        log_err("/thread", "error in thread_id_create: %s, retrying",
+        log_err("/thread", "error in thread_id_create: %s, retrying in 100ms",
                 strerror(errno));
+        usleep(100000);
     }
 
     // since in most cases we want detached threads, users must
