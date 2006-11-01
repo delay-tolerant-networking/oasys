@@ -26,6 +26,7 @@ echodo () {
 build_name=""
 build_dir="."
 config_opts=""
+build_tests=1
 
 while [ $# != 0 ] ; do
 
@@ -55,6 +56,11 @@ if [ "$1" = "--path" ] ; then
     shift; shift;
 fi
 
+if [ "$1" = "--no_build_tests" ] ; then
+    build_tests=0
+    shift; shift;
+fi
+
 done
 
 echo "***"
@@ -78,4 +84,7 @@ if [ $nprocs -gt 1 ]; then
 fi
 
 echodo make $MAKEFLAGS
-echodo make $MAKEFLAGS tests
+if [ $build_tests = 1 ] ; then
+    echodo make $MAKEFLAGS tests
+fi
+
