@@ -121,6 +121,7 @@ public:
             reuseaddr_    (true),
             reuseport_    (false),
             tcp_nodelay_  (false),
+            broadcast_    (false),
             recv_bufsize_ (0),
             send_bufsize_ (0)
         {
@@ -129,6 +130,7 @@ public:
         bool reuseaddr_;	// default: on
         bool reuseport_;	// default: off
         bool tcp_nodelay_;	// default: off
+        bool broadcast_;	// default: off
         
         int recv_bufsize_;	// default: system setting
         int send_bufsize_;	// default: system setting

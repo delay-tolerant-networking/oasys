@@ -243,6 +243,16 @@ IPSocket::configure()
 		 strerror(errno));
 	}
     }
+
+    if (socktype_ == SOCK_DGRAM && params_.broadcast_) {
+        int y = 1;
+        logf(LOG_DEBUG, "setting SO_BROADCAST");
+
+        if (::setsockopt(fd_, SOL_SOCKET, SO_BROADCAST, &y, sizeof(y)) != 0) {
+            logf(LOG_WARN, "error setting SO_BROADCAST: %s",
+                 strerror(errno));
+        }
+    }
     
     if (params_.recv_bufsize_ > 0) {
         logf(LOG_DEBUG, "setting SO_RCVBUF to %d",
