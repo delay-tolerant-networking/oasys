@@ -45,6 +45,7 @@ template<typename _memory_t>
 class ScratchBuffer<_memory_t, 0> : public ExpandableBuffer {
 public:
     ScratchBuffer(size_t size = 0) : ExpandableBuffer(size) {}
+    ScratchBuffer(const ScratchBuffer& other) : ExpandableBuffer(other) {}
     
     //! @return Pointer of buffer of size, otherwise 0
     _memory_t buf(size_t size = 0) {
@@ -68,12 +69,10 @@ public:
 template<typename _memory_t, size_t _static_size>
 class ScratchBuffer : public ExpandableBuffer {
 public:
-    ScratchBuffer() {
-        buf_     = static_buf_; 
-        buf_len_ = _static_size;        
-    }
-
-    ScratchBuffer(size_t size) {
+    //! Standard default constructor
+    ScratchBuffer(size_t size = 0)
+        : ExpandableBuffer(0)
+    {
         buf_     = static_buf_;
         buf_len_ = _static_size;
 
@@ -82,6 +81,23 @@ public:
         }
     }
 
+    //! We need to implement our own copy constructor to make sure to
+    //! call the right reserve() call
+    ScratchBuffer(const ScratchBuffer& other)
+        : ExpandableBuffer(0)
+    {
+        buf_     = static_buf_;
+        buf_len_ = _static_size;
+        
+        reserve(other.buf_len_);
+        memcpy(buf_, other.buf_, other.buf_len_);
+        len_ = other.len_;
+
+        ASSERT(using_malloc() == other.using_malloc());
+    }
+
+    //! The destructor clears the buf_ pointer if pointing at the
+    //! static segment so ExpandableBuffer doesn't try to delete it
     virtual ~ScratchBuffer() {
         if (! using_malloc()) {
             buf_ = 0;
@@ -128,7 +144,7 @@ public:
 
 private:
     char static_buf_[_static_size];
-    bool using_malloc() { 
+    bool using_malloc() const {
 	return buf_ != static_buf_;
     }
 };
