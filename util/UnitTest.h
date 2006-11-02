@@ -26,6 +26,7 @@
 #include "../debug/FatalSignals.h"
 #include "../debug/Log.h"
 #include "../io/PrettyPrintBuffer.h"
+#include "../util/Random.h"
 
 namespace oasys {
 
@@ -155,6 +156,22 @@ public:
                    
             exit(0);
         }
+
+        struct timeval tv;
+        ::gettimeofday(&tv, 0);
+        u_int random_seed = tv.tv_sec;
+        
+        if (argc >= 2 &&
+            (strcmp(argv[0], "--seed") == 0))
+        {
+            char* end;
+            random_seed = strtoul(argv[1], &end, 10);
+            argc -= 2;
+            argv += 2;
+        }
+
+        oasys::Random::seed(random_seed);
+        printf("Test random seed: %u\n", random_seed);
 
         if (argc >= 1 && (strcmp(argv[1], "-test") == 0)) {
             argc -= 1;
