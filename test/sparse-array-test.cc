@@ -21,6 +21,23 @@ using namespace oasys;
 
 typedef SparseArray<char> SA;
 
+void 
+dump_range(const SA& sa)
+{
+    char buf[256];
+
+
+    for (SA::BlockList::const_iterator itr = sa.blocks().begin();
+         itr != sa.blocks().end(); ++itr)
+    {
+        memset(buf, 0, 256);
+        memcpy(buf, itr->data_, itr->size_);
+        printf("(offset %u size %u \"%s\") ", 
+               itr->offset_, itr->size_, buf);
+    }
+    printf("\n");
+}
+
 bool
 check_range(const SA&     sa, 
             const size_t* offsets,
@@ -28,11 +45,11 @@ check_range(const SA&     sa,
             const char**  data,
             size_t        count)
 {
-    (void)data;
+    dump_range(sa);
     
     size_t i = 0;
-    for (SA::BlockList::const_iterator itr = sa.debug_blocks().begin();
-         itr != sa.debug_blocks().end(); ++itr)
+    for (SA::BlockList::const_iterator itr = sa.blocks().begin();
+         itr != sa.blocks().end(); ++itr)
     {
         if (count - i == 0 ||
             itr->offset_ != offsets[i] || 
@@ -41,41 +58,30 @@ check_range(const SA&     sa,
             return false;
         }
 
-/*
         if (memcmp(data[i], itr->data_, itr->size_) != 0)
         {
             return false;
         }
-*/
         ++i;
     }
 
     return true;
 }
 
-void 
-dump_range(const SA& sa)
-{
-    for (SA::BlockList::const_iterator itr = sa.debug_blocks().begin();
-         itr != sa.debug_blocks().end(); ++itr)
-    {
-        printf("(offset %u size %u) ", itr->offset_, itr->size_);
-    }
-    printf("\n");
-}
-
 DECLARE_TEST(Test1) {
     SA sa;
+    CHECK(sa.size() == 0);
 
-    sa.range_write(1, 4, "");
-    sa.range_write(6, 9, "");
-    sa.range_write(20, 25, "");
+    sa.range_write(1, 4, "1234");
+    sa.range_write(6, 9, "123456789");
+    sa.range_write(20, 3, "123");
 
-    size_t offsets[]      = { 1, 6, 20 };
-    size_t sizes[]        = { 4, 9, 25 };
-    const char* data[]    = { "", "", "" };
+    size_t      offsets[] = { 1, 6, 20 };
+    size_t      sizes[]   = { 4, 9, 3 };
+    const char* data[]    = { "1234", "123456789", "123" };
     
     CHECK(check_range(sa, offsets, sizes, data, 3));
+    CHECK(sa.size() == 23);
     
     return UNIT_TEST_PASSED;
 }
@@ -83,16 +89,17 @@ DECLARE_TEST(Test1) {
 DECLARE_TEST(Test2) {
     SA sa;
 
-    sa.range_write(1, 4, "");
-    sa.range_write(1, 4, "");
-    sa.range_write(7, 3, "");
+    sa.range_write(1, 4, "1234");
+    sa.range_write(1, 4, "5678");
+    sa.range_write(7, 3, "123");
 
-    size_t offsets[]      = {1, 7};
-    size_t sizes[]        = {4, 3};
-    const char* data[]    = { "", ""};
+    size_t offsets[]   = {1, 7};
+    size_t sizes[]     = {4, 3};
+    const char* data[] = { "5678", "123"};
     
     CHECK(check_range(sa, offsets, sizes, data, 2));
-    
+    CHECK(sa.size() == 10);    
+
     return UNIT_TEST_PASSED;
 }
 
@@ -100,17 +107,18 @@ DECLARE_TEST(Test2) {
 DECLARE_TEST(Test3) {
     SA sa;
 
-    sa.range_write(1, 4, "");
-    sa.range_write(3, 4, "");
-    sa.range_write(4, 5, "");
-    sa.range_write(5, 5, "");
+    sa.range_write(1, 4, "1234");
+    sa.range_write(3, 4, "1234");
+    sa.range_write(4, 5, "12345");
+    sa.range_write(5, 5, "12345");
 
     size_t offsets[]      = {1};
     size_t sizes[]        = {9};
-    const char* data[]    = { ""};
+    const char* data[]    = {"121112345"};
     
     CHECK(check_range(sa, offsets, sizes, data, 1));
-    
+    CHECK(sa.size() == 10);    
+
     return UNIT_TEST_PASSED;
 }
 
@@ -118,52 +126,53 @@ DECLARE_TEST(Test3) {
 DECLARE_TEST(Test4) {
     SA sa;
 
-    sa.range_write(2, 1, "");
-    sa.range_write(4, 1, "");
-    sa.range_write(7, 1, "");
-    sa.range_write(0, 10, "");
+    sa.range_write(2, 1, "1");
+    sa.range_write(4, 1, "2");
+    sa.range_write(7, 1, "3");
+    sa.range_write(0, 10, "1234567890");
 
     size_t offsets[]      = {0};
     size_t sizes[]        = {10};
-    const char* data[]    = { ""};
+    const char* data[]    = { "1234567890"};
     
-    dump_range(sa);
     CHECK(check_range(sa, offsets, sizes, data, 1));
-    
+    CHECK(sa.size() == 10);        
+
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(Test5) {
     SA sa;
 
-    sa.range_write(1, 10, "");
-    sa.range_write(11, 10, "");
-    sa.range_write(21, 10, "");
+    sa.range_write(1, 10,  "1234567890");
+    sa.range_write(11, 10, "1234567890");
+    sa.range_write(21, 10, "1234567890");
 
     size_t offsets[]      = {1, 11, 21};
     size_t sizes[]        = {10, 10, 10};
-    const char* data[]    = {"", "", ""};
+    const char* data[]    = {"1234567890", "1234567890", "1234567890"};
     
-    dump_range(sa);
     CHECK(check_range(sa, offsets, sizes, data, 3));
-    
+    CHECK(sa.size() == 31);    
+
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(Test6) {
     SA sa;
 
-    sa.range_write(3, 5,  "");
-    sa.range_write(0, 4,  "");
-    sa.range_write(9, 11, "");
-    sa.range_write(7, 7,  "");
+    sa.range_write(3, 5,  "aaaaa");
+    sa.range_write(0, 4,  "bbbb");
+    sa.range_write(9, 11, "ccccccccccc");
+    sa.range_write(7, 7,  "ddddddd");
 
     size_t offsets[]      = {0};
     size_t sizes[]        = {20};
-    const char* data[]    = {""};
+    //                        12345678901234567890
+    const char* data[]    = {"bbbbaaadddddddcccccc"};
     
-    dump_range(sa);
     CHECK(check_range(sa, offsets, sizes, data, 1));
+    CHECK(sa.size() == 20);    
     
     return UNIT_TEST_PASSED;
 }
@@ -171,16 +180,16 @@ DECLARE_TEST(Test6) {
 DECLARE_TEST(Test7) {
     SA sa;
 
-    sa.range_write(1, 10, "");
-    sa.range_write(11, 10, "");
-    sa.range_write(21, 10, "");
+    sa.range_write(1, 10, "xxxxxxxxxx");
+    sa.range_write(11, 10, "yyyyyyyyyy");
+    sa.range_write(21, 10, "zzzzzzzzzz");
 
     size_t offsets[]      = {1, 11, 21};
     size_t sizes[]        = {10, 10, 10};
-    const char* data[]    = {"", "", ""};
+    const char* data[]    = {"xxxxxxxxxx", "yyyyyyyyyy", "zzzzzzzzzz"};
     
-    dump_range(sa);
     CHECK(check_range(sa, offsets, sizes, data, 3));
+    CHECK(sa.size() == 31);    
     
     return UNIT_TEST_PASSED;
 }
@@ -188,34 +197,61 @@ DECLARE_TEST(Test7) {
 DECLARE_TEST(Test8) {
     SA sa;
 
-    sa.range_write(1, 10, "");
-    sa.range_write(11, 10, "");
-    sa.range_write(21, 10, "");
+    sa.range_write(3, 7,  "aaaaaaa");
+    sa.range_write(2, 8, "bbbbbbbb");
+    sa.range_write(0, 10, "cccccccccc");
 
-    size_t offsets[]      = {1, 11, 21};
-    size_t sizes[]        = {10, 10, 10};
-    const char* data[]    = {"", "", ""};
+    size_t offsets[]      = {0};
+    size_t sizes[]        = {10};
+    const char* data[]    = {"cccccccccc"};
     
-    dump_range(sa);
-    CHECK(check_range(sa, offsets, sizes, data, 3));
-    
+    CHECK(check_range(sa, offsets, sizes, data, 1));
+    CHECK(sa.size() == 10);    
+
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(Test9) {
     SA sa;
 
-    sa.range_write(1, 10, "");
-    sa.range_write(11, 10, "");
-    sa.range_write(21, 10, "");
+    sa.range_write(0, 4, "aaaa");
+    sa.range_write(6, 4, "bbbb");
+    sa.range_write(2, 6, "cccccc");
 
-    size_t offsets[]      = {1, 11, 21};
-    size_t sizes[]        = {10, 10, 10};
-    const char* data[]    = {"", "", ""};
+    size_t offsets[]      = {0};
+    size_t sizes[]        = {10};
+    const char* data[]    = {"aaccccccbb"};
     
-    dump_range(sa);
-    CHECK(check_range(sa, offsets, sizes, data, 3));
+    CHECK(check_range(sa, offsets, sizes, data, 1));
+    CHECK(sa.size() == 10);    
     
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(Test10) {
+    SA sa;
+
+    sa.range_write(0, 4, "aaaa");
+    sa.range_write(6, 4, "bbbb");
+    sa.range_write(2, 6, "cccccc");
+    sa.range_write(20, 2, "dd");
+    
+    size_t offsets[]      = {0, 20};
+    size_t sizes[]        = {10, 2};
+    const char* data[]    = {"aaccccccbb", "dd"};
+    
+    CHECK(check_range(sa, offsets, sizes, data, 2));
+
+    CHECK(sa[0] == 'a');
+    CHECK(sa[2] == 'c');
+    CHECK(sa[20] == 'd');
+    CHECK(sa[21] == 'd');
+    CHECK(sa[100] == 0);
+    CHECK(sa[1000] == 0);
+    CHECK(sa[10000] == 0);
+    CHECK(sa[100000] == 0);
+    CHECK(sa.size() == 22);    
+
     return UNIT_TEST_PASSED;
 }
 
@@ -229,6 +265,7 @@ DECLARE_TESTER(Test) {
     ADD_TEST(Test7);
     ADD_TEST(Test8);
     ADD_TEST(Test9);
+    ADD_TEST(Test10);
 }
 
 DECLARE_TEST_FILE(Test, "sparse array test");

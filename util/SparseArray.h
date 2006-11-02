@@ -34,7 +34,12 @@ public:
 
     ~SparseArray() 
     {
-        // XXX/bowei - TODO delete the blocks
+	for (typename BlockList::iterator itr = blocks_.begin();
+             itr != blocks_.end(); ++itr)
+        {
+            free(itr->data_);
+            itr->data_ = 0;
+        }
     }
     
     /*!  
@@ -42,28 +47,60 @@ public:
      * which is the default constructor of _Type.
      */
     _Type operator[](size_t offset) const
-    {}
-    
-    /*!
-     * Copy out of the SparseRange a range of bytes. This is more
-     * efficient than looping through with operator[].
-     */
-    void range_copy(_Type* out, size_t offset, size_t elts) const
-    {}
+    {
+	for (typename BlockList::const_iterator itr = blocks_.begin();
+             itr != blocks_.end(); ++itr)
+        {
+            if (itr->offset_ <= offset &&
+                itr->offset_ + itr->size_ > offset)
+            {
+                return itr->data_[offset - itr->offset_];
+            }
+            
+            if (itr->offset_ > offset)
+            {
+                break;
+            }
+        }        
 
+        return _Type();
+    }
+    
     /*!
      * Write into the sparse map. Allocates a block if needed.
      */
     void range_write(size_t offset, size_t elts, const _Type* in)
     {
-        (void)in;
-        allocate(offset, elts);
+        _Type* dest = allocate(offset, elts);
+        ASSERT(dest != 0);
+
+        for (size_t i = 0; i<elts; ++i)
+        {
+            dest[i] = in[i];
+        }
     }
 
     /*!
-     * For debugging only!
+     * @return size of the SparseArray, which is from 0...last written
+     * to range.
      */
-    const BlockList& debug_blocks() const 
+    size_t size() const
+    {
+        if (blocks_.empty())
+        {
+            return 0;
+        }
+
+        typename BlockList::const_iterator i = blocks_.end();
+        --i;
+
+        return i->offset_ + i->size_;
+    }
+
+    /*!
+     * @return List of the blocks.
+     */
+    const BlockList& blocks() const 
     { 
         return blocks_;
     }
