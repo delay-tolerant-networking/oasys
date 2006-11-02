@@ -27,7 +27,8 @@ namespace oasys {
 Notifier::Notifier(const char* logpath, bool quiet)
     : Logger("Notifier", logpath), 
       count_(0),
-      quiet_(quiet)
+      quiet_(quiet),
+      busy_notifiers_(0)
 {
     logpath_appendf("/notifier");
     
@@ -66,6 +67,15 @@ Notifier::~Notifier()
     err = close(pipe_[1]);
     if (err != 0) {
         log_err("error closing pipe %d: %s", pipe_[1], strerror(errno));
+    }
+    
+    // Allow graceful deletion by a wait thread in a wait/notify scenario:
+    // Upon notification by some "finished" signal, a wait thread
+    // may decide to delete this object. We want to avoid having that happen
+    // while notification of the "finished" message is still in progress.
+    while(atomic_cmpxchg32(&busy_notifiers_, 0, 1) != 0)
+    {
+        usleep(100000);
     }
 }
 
@@ -172,6 +182,7 @@ Notifier::wait(SpinLock* lock, int timeout, bool drain_the_pipe)
 void
 Notifier::notify(SpinLock* lock)
 {
+	atomic_incr(&busy_notifiers_);
     char b = 0;
     int num_retries = 0;
 
@@ -238,6 +249,7 @@ Notifier::notify(SpinLock* lock)
             log_debug("notify count = %d", count_);
         }
     }
+    atomic_decr(&busy_notifiers_);
 }
 
 } // namespace oasys

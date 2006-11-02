@@ -19,6 +19,7 @@
 #define _OASYS_NOTIFIER_H_
 
 #include "../debug/Log.h"
+#include "Lock.h"
 
 namespace oasys {
 
@@ -97,6 +98,7 @@ protected:
     int  count_;  // for debugging as well
     int  pipe_[2];
     bool quiet_;  // no logging
+    atomic_t busy_notifiers_; // keep track notifications in progress
 };
 
 } // namespace oasys
