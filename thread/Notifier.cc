@@ -69,10 +69,18 @@ Notifier::~Notifier()
         log_err("error closing pipe %d: %s", pipe_[1], strerror(errno));
     }
     
-    // Allow graceful deletion by a wait thread in a wait/notify scenario:
+    // Allow graceful deletion by a wait thread in a wait/notify scenario.
+    //
     // Upon notification by some "finished" signal, a wait thread
-    // may decide to delete this object. We want to avoid having that happen
-    // while notification of the "finished" message is still in progress.
+    // may decide to delete this object.
+    //
+    // We want to avoid having that happen while
+    // notification of the "finished" message is still in progress.
+    //
+    // This deletion is only safe if no threads, other than the waiter,
+    // receiving the "finished" signal will use the notify object
+    // after the "finished" signal is sent.
+    
     while(atomic_cmpxchg32(&busy_notifiers_, 0, 1) != 0)
     {
         usleep(100000);
