@@ -40,8 +40,6 @@
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <iostream>
-#include <sstream>
 #include "XMLSerialize.h"
 
 namespace oasys {
@@ -79,25 +77,25 @@ XMLMarshal::process(const char *name, SerializableObject* object)
 void
 XMLMarshal::process(const char *name, u_int32_t *i)
 {
-    std::ostringstream val;
-    val << *i;
-    current_node_->add_attr(std::string(name), val.str());
+    StringBuffer buf;
+    buf.appendf("%u", *i);
+    current_node_->add_attr(name, buf.data());
 }
 
 void
 XMLMarshal::process(const char *name, u_int16_t *i)
 {
-    std::ostringstream val;
-    val << *i;
-    current_node_->add_attr(std::string(name), val.str());
+    StringBuffer buf;
+    buf.appendf("%hu", *i);
+    current_node_->add_attr(name, buf.data());
 }
 
 void
 XMLMarshal::process(const char *name, u_int8_t *i)
 {
-    std::ostringstream val;
-    val << static_cast<u_int32_t>(*i);
-    current_node_->add_attr(std::string(name), val.str());
+    StringBuffer buf;
+    buf.appendf("%hhu", *i);
+    current_node_->add_attr(name, buf.data());
 }
 
 void
