@@ -32,7 +32,7 @@ dump_range(const SA& sa)
     {
         memset(buf, 0, 256);
         memcpy(buf, itr->data_, itr->size_);
-        printf("(offset %u size %u \"%s\") ", 
+        printf("(offset %zu size %zu \"%s\") ", 
                itr->offset_, itr->size_, buf);
     }
     printf("\n");
