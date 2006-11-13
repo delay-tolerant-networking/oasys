@@ -31,7 +31,7 @@ public:
     void move_to_back(typename std::list<_Type>::iterator iter)
     {
         // STL note: This is a constant time operation
-        splice(this->end(), *this, iter);
+        this->splice(this->end(), *this, iter);
     }
 };
 
