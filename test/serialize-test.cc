@@ -401,7 +401,7 @@ DECLARE_TEST(StringSerializeTest) {
                    "51966 this is a string end 61453 true 12345test");
 
     LimitObj obj(true);
-    StringSerialize s2(Serialize::CONTEXT_LOCAL, Serialize::INCLUDE_NAME);
+    StringSerialize s2(Serialize::CONTEXT_LOCAL, StringSerialize::INCLUDE_NAME);
     s2.action(&obj);
     CHECK_EQUALSTR(s2.buf().c_str(),
                    "uzero 0 szero 0 one 1 "
@@ -429,7 +429,7 @@ DECLARE_TEST(PrefixAdapterTest) {
     prefix = 2001;
     LimitObj obj(true);
     CHECK_EQUALSTR(key_maker(prefix_adapter(&prefix, &obj), 
-                             Serialize::INCLUDE_NAME).c_str(),
+                             StringSerialize::INCLUDE_NAME).c_str(),
                    "prefix 2001 uzero 0 szero 0 one 1 "
                    "negone 4294967295 umax 4294967295 smax 2147483647")    
     
