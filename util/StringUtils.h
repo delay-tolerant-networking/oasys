@@ -161,6 +161,18 @@ hex2str(std::string* str, const u_char* bp, size_t len)
     }
 }
 
+//----------------------------------------------------------------------
+/**
+ * Ditto that returns a temporary.
+ */
+inline std::string
+hex2str(const u_char* bp, size_t len)
+{
+    std::string ret;
+    hex2str(&ret, bp, len);
+    return ret;
+}
+
 //----------------------------------------------------------------------------
 /**
  * Parse a hex string into a binary buffer. Results undefined if the
