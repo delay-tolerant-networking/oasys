@@ -90,6 +90,11 @@ StringBuffer::append(const char* str, size_t len)
 {
     if (len == 0) {
         len = strlen(str);
+
+        // might be a zero length string after all
+        if (len == 0) {
+            return 0;
+        }
     }
     
     // len is not past the end of str
