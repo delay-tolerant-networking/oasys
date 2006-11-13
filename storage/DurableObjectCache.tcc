@@ -70,7 +70,7 @@ DurableObjectCache<_DataType>::get_cache_key(std::string* cache_key,
                                              const SerializableObject& key)
 {
     StringSerialize serialize(Serialize::CONTEXT_LOCAL,
-                              Serialize::DOT_SEPARATED);
+                              StringSerialize::DOT_SEPARATED);
     if (serialize.action(&key) != 0) {
         PANIC("error sizing key");
     }

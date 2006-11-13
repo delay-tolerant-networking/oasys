@@ -136,7 +136,7 @@ MemoryTable::get(const SerializableObject& key,
     ASSERTF(!multitype_, "single-type get called for multi-type table");
     
     StringSerialize serialize(Serialize::CONTEXT_LOCAL,
-                              Serialize::DOT_SEPARATED);
+                              StringSerialize::DOT_SEPARATED);
     if (serialize.action(&key) != 0) {
         PANIC("error sizing key");
     }
@@ -168,7 +168,7 @@ MemoryTable::get(const SerializableObject&   key,
     ASSERTF(multitype_, "multi-type get called for single-type table");
     
     StringSerialize serialize(Serialize::CONTEXT_LOCAL,
-                              Serialize::DOT_SEPARATED);
+                              StringSerialize::DOT_SEPARATED);
     if (serialize.action(&key) != 0) {
         PANIC("error sizing key");
     }
@@ -205,7 +205,7 @@ MemoryTable::put(const SerializableObject& key,
                  int                       flags)
 {
     StringSerialize serialize(Serialize::CONTEXT_LOCAL,
-                              Serialize::DOT_SEPARATED);
+                              StringSerialize::DOT_SEPARATED);
     if (serialize.action(&key) != 0) {
         PANIC("error sizing key");
     }
@@ -262,7 +262,7 @@ int
 MemoryTable::del(const SerializableObject& key)
 { 
     StringSerialize serialize(Serialize::CONTEXT_LOCAL,
-                              Serialize::DOT_SEPARATED);
+                              StringSerialize::DOT_SEPARATED);
     if (serialize.action(&key) != 0) {
         PANIC("error sizing key");
     }

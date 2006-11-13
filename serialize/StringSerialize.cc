@@ -19,6 +19,7 @@
 
 namespace oasys {
 
+//----------------------------------------------------------------------
 StringSerialize::StringSerialize(context_t context, int options)
     : SerializeAction(Serialize::INFO, context, options)
 {
@@ -29,48 +30,67 @@ StringSerialize::StringSerialize(context_t context, int options)
     }
 }
 
+//----------------------------------------------------------------------
+void
+StringSerialize::add_preamble(const char* name, const char* type)
+{
+    if (options_ & INCLUDE_NAME) {
+        buf_.append(name);
+        buf_.append(sep_);
+    }
+
+    if (options_ & INCLUDE_TYPE) {
+        buf_.append(type);
+        buf_.append(sep_);
+    }
+}
+
+//----------------------------------------------------------------------
 void
 StringSerialize::process(const char* name, u_int32_t* i)
 {
-    if (options_ & INCLUDE_NAME) {
-        buf_.append(name);
-        buf_.append(sep_);
+    add_preamble(name, "u_int32_t");
+    if (options_ & SCHEMA_ONLY) {
+        return;
     }
-
+            
     buf_.append_int(*i, 10);
     buf_.append(sep_);
 }
 
+//----------------------------------------------------------------------
 void
 StringSerialize::process(const char* name, u_int16_t* i)
 {
-    if (options_ & INCLUDE_NAME) {
-        buf_.append(name);
-        buf_.append(sep_);
+    add_preamble(name, "u_int16_t");
+    if (options_ & SCHEMA_ONLY) {
+        return;
     }
-    
+            
     buf_.append_int(*i, 10);
     buf_.append(sep_);
 }
 
+//----------------------------------------------------------------------
 void
 StringSerialize::process(const char* name, u_int8_t* i)
 {
-    if (options_ & INCLUDE_NAME) {
-        buf_.append(name);
-        buf_.append(sep_);
+    add_preamble(name, "u_int8_t");
+    if (options_ & SCHEMA_ONLY) {
+        return;
     }
-    
+
     buf_.append_int(*i, 10);
     buf_.append(sep_);
 }
 
+//----------------------------------------------------------------------
 void
 StringSerialize::process(const char* name, bool* b)
 {
-    if (options_ & INCLUDE_NAME) {
-        buf_.append(name);
-        buf_.append(sep_);
+    add_preamble(name, "bool");
+    if (options_ & SCHEMA_ONLY) {
+        return;
     }
 
     if (*b) {
@@ -82,39 +102,42 @@ StringSerialize::process(const char* name, bool* b)
     buf_.append(sep_);
 }
 
+//----------------------------------------------------------------------
 void
 StringSerialize::process(const char* name, u_char* bp, size_t len)
 {
-    if (options_ & INCLUDE_NAME) {
-        buf_.append(name);
-        buf_.append(sep_);
+    add_preamble(name, "char_buf");
+    if (options_ & SCHEMA_ONLY) {
+        return;
     }
 
     buf_.append((const char*)bp, len);
     buf_.append(sep_);
 }
 
+//----------------------------------------------------------------------
 void
 StringSerialize::process(const char* name, std::string* s)
 {
-    if (options_ & INCLUDE_NAME) {
-        buf_.append(name);
-        buf_.append(sep_);
+    add_preamble(name, "string");
+    if (options_ & SCHEMA_ONLY) {
+        return;
     }
 
     buf_.append(s->data(), s->length());
     buf_.append(sep_);
 }
 
+//----------------------------------------------------------------------
 void
 StringSerialize::process(const char* name, u_char** bp,
                          size_t* lenp, int flags)
 {
-    if (options_ & INCLUDE_NAME) {
-        buf_.append(name);
-        buf_.append(sep_);
+    add_preamble(name, "char_buf_var");
+    if (options_ & SCHEMA_ONLY) {
+        return;
     }
-    
+
     if (flags & Serialize::NULL_TERMINATED) {
         buf_.append((const char*)*bp);
         buf_.append(sep_);
@@ -124,6 +147,7 @@ StringSerialize::process(const char* name, u_char** bp,
     }
 }
 
+//----------------------------------------------------------------------
 void
 StringSerialize::end_action()
 {

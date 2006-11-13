@@ -28,6 +28,14 @@ namespace oasys {
  */
 class StringSerialize : public SerializeAction {
 public:
+    /** Valid serialization options for StringSerialize */
+    enum {
+        INCLUDE_NAME    = 1 << 0, ///< Serialize includes name
+        INCLUDE_TYPE    = 1 << 1, ///< Serialize includes type
+        SCHEMA_ONLY	= 1 << 2, ///< Don't serialize the value
+        DOT_SEPARATED   = 1 << 3, ///< Use . not " " as field separations
+    };
+
     /**
      * Constructor
      */
@@ -66,6 +74,8 @@ public:
     /// @}
 
 private:
+    void add_preamble(const char* name, const char* type);
+    
     StringBuffer buf_; ///< string buffer
     char         sep_; ///< separator character (either " " or ".")
 };

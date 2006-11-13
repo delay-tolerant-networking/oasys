@@ -64,12 +64,6 @@ public:
         USE_CRC = 1 << 0,
     };
 
-    /** Options for StringSerialize */
-    enum {
-        INCLUDE_NAME    = 1 << 0, ///< Serialize as "name1 value1 name2 value2 "
-        DOT_SEPARATED   = 1 << 1, ///< Use . not " " as field separations
-    };
-
     /** Options for un/marshaling process() methods */
     enum {
         ALLOC_MEM       = 1<<0, ///< Allocated memory to be freed by the user 
