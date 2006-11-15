@@ -49,6 +49,7 @@ IO_SRCS :=					\
 	io/IO.cc				\
 	io/IPClient.cc				\
 	io/IPSocket.cc				\
+	io/MmapFile.cc				\
 	io/NetUtils.cc				\
 	io/PrettyPrintBuffer.cc			\
 	io/RateLimitedSocket.cc			\
@@ -159,7 +160,6 @@ SRCS := \
 	$(UTIL_SRCS)				\
 	$(XML_SRCS)				\
 
-
 OBJS := $(SRCS:.cc=.o)
 OBJS := $(OBJS:.c=.o)
 
@@ -170,11 +170,15 @@ ALLSRCS := $(SRCS)
 CPPS := $(SRCS:.cc=.E)
 CPPS := $(CPPS:.c=.E)
 
+TOOLS	:= \
+	tools/md5chunks				\
+	tools/zsize				\
+
 #
-# Default target is to build the library and the compat library
+# Default target is to build the library, the compat library, and the tools
 #
 LIBFILES := liboasys.a liboasyscompat.a
-all: checkconfigure $(LIBFILES)
+all: checkconfigure $(LIBFILES) $(TOOLS)
 
 #
 # If srcdir/builddir aren't set by some other makefile, 
@@ -312,6 +316,13 @@ liboasyscompat.a: $(COMPAT_OBJS)
 	rm -f $@
 	$(AR) ruc $@ $^
 	$(RANLIB) $@ || true
+
+# Rules for linking tools
+tools/md5chunks: tools/md5chunks.cc liboasys.a
+	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(LIBS)
+
+tools/zsize: tools/zsize.cc liboasys.a
+	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys -lz $(LIBS)
 
 .PHONY: cpps
 cpps: $(CPPS)
