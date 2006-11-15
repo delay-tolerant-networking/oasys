@@ -54,7 +54,7 @@ MmapFile::map(const char* filename, int prot, int flags,
     }
 
     ASSERT(ptr_ == NULL);
-    ASSERT(offset < len);
+    ASSERT(offset < (int)len);
 
     FileIOClient f;
     f.logpathf("%s/file", logpath_);
