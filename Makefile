@@ -322,7 +322,7 @@ tools/md5chunks: tools/md5chunks.cc liboasys.a
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(LIBS)
 
 tools/zsize: tools/zsize.cc liboasys.a
-	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys -lz $(LIBS)
+	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(LIBS)
 
 .PHONY: cpps
 cpps: $(CPPS)
