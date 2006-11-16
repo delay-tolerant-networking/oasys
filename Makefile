@@ -318,10 +318,10 @@ liboasyscompat.a: $(COMPAT_OBJS)
 	$(RANLIB) $@ || true
 
 # Rules for linking tools
-tools/md5chunks: tools/md5chunks.cc liboasys.a
+tools/md5chunks: tools/md5chunks.o liboasys.a
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(LIBS)
 
-tools/zsize: tools/zsize.cc liboasys.a
+tools/zsize: tools/zsize.o liboasys.a
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(LIBS)
 
 .PHONY: cpps
