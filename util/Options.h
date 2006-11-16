@@ -22,6 +22,10 @@
 #include <vector>
 #include "../compat/inet_aton.h"
 
+#ifdef OASYS_BLUETOOTH_ENABLED
+#include <bluetooth/bluetooth.h>
+#endif // OASYS_BLUETOOTH_ENABLED
+
 namespace oasys {
 
 /**
@@ -463,7 +467,6 @@ protected:
 };
 
 #ifdef OASYS_BLUETOOTH_ENABLED
-#include <bluetooth/bluetooth.h>
 /**
  * Bluetooth address (colon-separated hex) option class.
  */
