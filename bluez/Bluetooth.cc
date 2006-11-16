@@ -1,5 +1,5 @@
 /*
- *    Copyright 2006 Intel Corporation
+ *    Copyright 2006 Baylor University
  * 
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -25,11 +25,6 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 extern int errno;
-
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/hci.h>
-#include <bluetooth/hci_lib.h>
-#include <bluetooth/rfcomm.h>
 
 #include "Bluetooth.h"
 #include "debug/Log.h"

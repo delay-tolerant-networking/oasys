@@ -1,5 +1,5 @@
 /*
- *    Copyright 2006 Intel Corporation
+ *    Copyright 2006 Baylor University
  * 
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -17,20 +17,13 @@
 #include <config.h>
 #ifdef OASYS_BLUETOOTH_ENABLED
 
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-extern int errno;
-
-#include <sys/socket.h>
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/hci.h>
-#include <bluetooth/rfcomm.h>
 #include "io/IO.h"
 
 #include "Bluetooth.h"
 #include "BluetoothSDP.h"
+
+#include <errno.h>
+extern int errno;
 
 namespace oasys {
 

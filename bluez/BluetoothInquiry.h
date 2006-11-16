@@ -1,5 +1,5 @@
 /*
- *    Copyright 2006 Intel Corporation
+ *    Copyright 2006 Baylor University
  * 
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -20,9 +20,8 @@
 #include <config.h> 
 #ifdef OASYS_BLUETOOTH_ENABLED
 
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/rfcomm.h>
-#include <bluetooth/hci.h> 
+#include <bluetooth/bluetooth.h> // for bdaddr_t
+#include <bluetooth/hci.h>       // for inquiry_info
 
 #include "../debug/Log.h"
 
@@ -42,7 +41,7 @@ public:
 #define BT_INQ_LENGTH 8
 
     BluetoothInquiry(const char * logbase = "/dtn/btinquiry");
-    ~BluetoothInquiry();
+    virtual ~BluetoothInquiry();
 
     /*
      * Perform inquiry action

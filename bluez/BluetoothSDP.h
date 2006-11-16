@@ -1,5 +1,5 @@
 /*
- *    Copyright 2006 Intel Corporation
+ *    Copyright 2006 Baylor University
  * 
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -20,11 +20,15 @@
 #include <config.h> 
 #ifdef OASYS_BLUETOOTH_ENABLED
 
+#include "../debug/Log.h"
+
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
+
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/sdp.h>
 #include <bluetooth/sdp_lib.h>
-
-#include "../debug/Log.h"
 
 // generated using uuidgen on Mac OS X ... a completely arbitrary number :)
 // maybe eventually register something with Bluetooth SIG?
@@ -53,7 +57,7 @@ class BluetoothServiceDiscoveryClient : public Logger
 public:
     BluetoothServiceDiscoveryClient(const char*
                                     logpath="/dtn/cl/bt/sdp/client");
-    ~BluetoothServiceDiscoveryClient();
+    virtual ~BluetoothServiceDiscoveryClient();
 
     bool is_dtn_router(bdaddr_t remote);
     void get_local_addr(bdaddr_t& addr) {
@@ -79,7 +83,7 @@ public:
 
     BluetoothServiceRegistration(const char* name = OASYS_BLUETOOTH_SDP_NAME,
                                  const char* logpath = "/dtn/cl/bt/sdp/reg");
-    ~BluetoothServiceRegistration();
+    virtual ~BluetoothServiceRegistration();
 
     bool success() {return status_;};
     void get_local_addr(bdaddr_t& addr) {

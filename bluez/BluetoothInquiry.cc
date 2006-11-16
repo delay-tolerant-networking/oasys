@@ -1,5 +1,5 @@
 /*
- *    Copyright 2006 Intel Corporation
+ *    Copyright 2006 Baylor University
  * 
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -17,18 +17,11 @@
 #include <config.h>
 #ifdef OASYS_BLUETOOTH_ENABLED
 
-#include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/fcntl.h>
 #include <sys/socket.h>
 
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/hci.h>
-#include <bluetooth/rfcomm.h>
-
-#include "io/IO.h"
-#include "../debug/Log.h"
 #include "Bluetooth.h"
 #include "BluetoothInquiry.h"
 
