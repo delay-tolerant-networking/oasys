@@ -254,6 +254,42 @@ IPSocket::configure()
         }
     }
     
+    if (socktype_ == SOCK_DGRAM && params_.multicast_) {
+
+        // set up receiver to join in on multicast tree
+        struct ip_mreq mcast_request;
+        memset(&mcast_request,0,sizeof(struct ip_mreq));
+
+        // Force remote addr to match multicast (class D)
+        // 224.0.0.0 - 239.255.255.255
+        in_addr_t mcast_addr = inet_addr("224.0.0.0");
+        if (mcast_addr & remote_addr_ != mcast_addr) {
+            logf(LOG_WARN, "multicast option set on non-multicast address: "
+                           "%s",intoa(remote_addr_));
+            return;
+        }
+
+        // set up remote address for multicast options struct
+        mcast_request.imr_multiaddr.s_addr = remote_addr_;
+        mcast_request.imr_interface.s_addr = INADDR_ANY;
+
+        // pass struct into setsockopt
+        if (::setsockopt(fd_, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+                         (void*) &mcast_request, sizeof (struct ip_mreq)) < 0)
+        {
+            logf(LOG_WARN, "error setting multicast options: %s",
+                           strerror(errno));
+        }
+
+        // set TTL on outbound packets
+        u_char ttl = (u_char) params_.mcast_ttl_ & 0xff;
+        if (::setsockopt(fd_, IPPROTO_IP, IP_MULTICAST_TTL, (void*) &ttl, 1)
+                < 0) {
+            logf(LOG_WARN, "error setting multicast ttl: %s",
+                           strerror(errno));
+        }
+    }
+
     if (params_.recv_bufsize_ > 0) {
         logf(LOG_DEBUG, "setting SO_RCVBUF to %d",
              params_.recv_bufsize_);

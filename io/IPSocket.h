@@ -122,6 +122,8 @@ public:
             reuseport_    (false),
             tcp_nodelay_  (false),
             broadcast_    (false),
+            multicast_    (false),
+            mcast_ttl_    (1),
             recv_bufsize_ (0),
             send_bufsize_ (0)
         {
@@ -131,7 +133,10 @@ public:
         bool reuseport_;	// default: off
         bool tcp_nodelay_;	// default: off
         bool broadcast_;	// default: off
-        
+        bool multicast_;    // default: off
+
+        u_int mcast_ttl_;   // default: 1
+
         int recv_bufsize_;	// default: system setting
         int send_bufsize_;	// default: system setting
     } params_;
