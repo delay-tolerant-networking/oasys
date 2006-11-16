@@ -1,4 +1,8 @@
 
+#include "config.h"
+
+#if OASYS_ZLIB_ENABLED
+
 #include <sys/errno.h>
 #include <zlib.h>
 
@@ -7,6 +11,7 @@
 #include "../io/MmapFile.h"
 #include "../util/Getopt.h"
 #include "../util/MD5.h"
+
 
 using namespace oasys;
 
@@ -66,3 +71,18 @@ main(int argc, char* const argv[])
     printf("%s\t%u\t%lu\n", filename.c_str(), len, zlen);
     fflush(stdout);
 }
+
+#else // OASYS_ZLIB_ENABLED
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int
+main(int argc, char* const argv[])
+{
+    (void)argc;
+    fprintf(stderr, "%s: zlib required\n", argv[0]);
+    exit(1);
+}
+
+#endif // OASYS_ZLIB_ENABLED
