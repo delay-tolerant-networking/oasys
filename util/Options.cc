@@ -17,7 +17,6 @@
 
 #include <config.h>
 #ifdef OASYS_BLUETOOTH_ENABLED
-#include <bluetooth/bluetooth.h>
 #include "bluez/Bluetooth.h"
 #endif // OASYS_BLUETOOTH_ENABLED
 
