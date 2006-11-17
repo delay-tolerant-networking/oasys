@@ -24,7 +24,9 @@
  */
 #include "config.h"
 
-#ifndef HAVE_FPCLASSIFY
+#ifdef HAVE_FPCLASSIFY
+#include <math.h>
+#else
 
 #ifdef __cplusplus
 extern "C" {

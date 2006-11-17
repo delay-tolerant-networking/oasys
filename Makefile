@@ -40,6 +40,9 @@ DEBUG_SRCS :=					\
 	debug/gdtoa-gdtoa.c			\
 	debug/gdtoa-gmisc.c			\
 	debug/gdtoa-misc.c			\
+	debug/_hdtoa.c				\
+	debug/_ldtoa.c				\
+	debug/vfprintf.c			\
 
 IO_SRCS :=					\
 	io/BufferedIO.cc			\
@@ -194,6 +197,9 @@ endif
 #
 debug/gdtoa-%.o: debug/gdtoa-%.c debug/arith.h
 	$(CC) -I./debug -g -DINFNAN_CHECK -c $< -o $@
+
+debug/vfprintf.o: debug/vfprintf.c
+	$(CC) $(CPPFLAGS) $(DEBUG) $(OPTIMIZE) $(PROFILE) -c $< -o $@
 
 tclcmd/tclreadline.o: tclcmd/tclreadline.c
 	$(CC) $(CPPFLAGS) $(DEBUG) $(OPTIMIZE) $(PROFILE) -c $< -o $@
