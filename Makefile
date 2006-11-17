@@ -181,7 +181,11 @@ TOOLS	:= \
 # Default target is to build the library, the compat library, and the tools
 #
 LIBFILES := liboasys.a liboasyscompat.a
-all: checkconfigure $(LIBFILES) $(TOOLS)
+all: checkconfigure prebuild $(LIBFILES) $(TOOLS)
+
+# need to generate files first
+.PHONY: prebuild
+prebuild: debug/arith.h
 
 #
 # If srcdir/builddir aren't set by some other makefile, 
@@ -195,7 +199,7 @@ endif
 #
 # Special override rules for objects that can't use the default build options
 #
-debug/gdtoa-%.o: debug/gdtoa-%.c debug/arith.h
+debug/gdtoa-%.o: debug/gdtoa-%.c
 	$(CC) -I./debug -g -DINFNAN_CHECK -c $< -o $@
 
 debug/vfprintf.o: debug/vfprintf.c
