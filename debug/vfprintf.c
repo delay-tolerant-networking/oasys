@@ -579,7 +579,7 @@ static int exponent(char *, int, int);
  */
 int
 //__vfprintf(FILE *fp, const char *fmt0, va_list ap)
-vsnprintf(char *str, size_t strsz, const char *fmt0, va_list ap) __THROW
+vsnprintf(char *str, size_t strsz, const char *fmt0, va_list ap)
 {
 	char *fmt;		/* format string */
 	int ch;			/* character from fmt */
@@ -1456,7 +1456,7 @@ error:
  * demmer: add an implementation of snprintf as well.
  */
 int
-snprintf(char *str, size_t strsz, const char *fmt, ...) __THROW
+snprintf(char *str, size_t strsz, const char *fmt, ...)
 {
 	va_list ap;
 	int ret;
