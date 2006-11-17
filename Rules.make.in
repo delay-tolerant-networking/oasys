@@ -60,7 +60,7 @@ catchdefault:
 
 %.E: %.c
 	@rm -f $@; mkdir -p $(@D)
-	$(CXX) $(CFLAGS) -c $< -E -o $@
+	$(CC) $(CFLAGS) -c $< -E -o $@
 
 #
 # Make stripped binaries from debug binaries
