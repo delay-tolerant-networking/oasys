@@ -30,7 +30,7 @@ namespace oasys {
 StreamBuffer::StreamBuffer(size_t size) : 
     start_(0), end_(0), size_(size)
 {
-    if(size_ == 0)
+    if (size_ == 0)
         size_ = 4;
 
     buf_ = static_cast<char*>(malloc(size_));
@@ -39,7 +39,7 @@ StreamBuffer::StreamBuffer(size_t size) :
 
 StreamBuffer::~StreamBuffer()
 {
-    if(buf_) 
+    if (buf_) 
     {
         free(buf_);
         buf_ = 0;
@@ -74,7 +74,7 @@ StreamBuffer::reserve(size_t amount)
     {
         // do nothing
     } 
-    else if(amount <= start_) 
+    else if (amount <= (start_ + tailbytes())) 
     {
         moveup();
     } 
@@ -84,6 +84,8 @@ StreamBuffer::reserve(size_t amount)
         realloc(((amount + fullbytes())> size_*2) ? 
                 (amount + fullbytes()): (size_*2));
     }
+
+    ASSERT(amount <= tailbytes());
 }
 
 void
@@ -100,7 +102,7 @@ StreamBuffer::consume(size_t amount)
     ASSERT(amount <= fullbytes());
 
     start_ += amount;
-    if(start_ == end_)
+    if (start_ == end_)
     {
         start_ = end_ = 0;
     }
@@ -128,7 +130,7 @@ void
 StreamBuffer::realloc(size_t size)
 {
     buf_ = (char*)::realloc(buf_, size);
-    if(buf_ == 0)
+    if (buf_ == 0)
     {
         logf("/StreamBuffer", LOG_CRIT, "Out of memory");
         ASSERT(0);
@@ -140,6 +142,10 @@ StreamBuffer::realloc(size_t size)
 void
 StreamBuffer::moveup()
 {
+    if (start_ == 0) {
+        return;
+    }
+            
     memmove(&buf_[0], &buf_[start_], end_ - start_);
     end_   = end_ - start_;
     start_ = 0;
