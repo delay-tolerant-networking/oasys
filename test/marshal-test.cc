@@ -35,7 +35,7 @@ public:
         d2(0xbaddf00d),
         e(56789),
         u(INT_MAX),
-        u64(LLONG_MAX),
+        u64(18446744073709551615ULL), // copy of ULLONG_MAX since it's non-standard
         s1("hello")
     {
         memset(s2, 0, sizeof(s2));
