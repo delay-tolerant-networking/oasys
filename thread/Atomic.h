@@ -43,7 +43,7 @@
 #include "Atomic-mutex.h"
 #else
 
-#if defined(__i386__) && defined(__GNUC__)
+#if (defined(__i386__) || defined(__amd64__)) && defined(__GNUC__)
 #include "Atomic-x86.h"
 #elif defined(__POWERPC__) || defined(PPC)
 #include "Atomic-ppc.h"

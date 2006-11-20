@@ -47,6 +47,19 @@ StringSerialize::add_preamble(const char* name, const char* type)
 
 //----------------------------------------------------------------------
 void
+StringSerialize::process(const char* name, u_int64_t* i)
+{
+    add_preamble(name, "u_int64_t");
+    if (options_ & SCHEMA_ONLY) {
+        return;
+    }
+            
+    buf_.append_int(*i, 10);
+    buf_.append(sep_);
+}
+
+//----------------------------------------------------------------------
+void
 StringSerialize::process(const char* name, u_int32_t* i)
 {
     add_preamble(name, "u_int32_t");
@@ -67,7 +80,7 @@ StringSerialize::process(const char* name, u_int16_t* i)
         return;
     }
             
-    buf_.append_int(*i, 10);
+    buf_.append_int(static_cast<u_int32_t>(*i), 10);
     buf_.append(sep_);
 }
 
@@ -80,7 +93,7 @@ StringSerialize::process(const char* name, u_int8_t* i)
         return;
     }
 
-    buf_.append_int(*i, 10);
+    buf_.append_int(static_cast<u_int32_t>(*i), 10);
     buf_.append(sep_);
 }
 
@@ -104,7 +117,7 @@ StringSerialize::process(const char* name, bool* b)
 
 //----------------------------------------------------------------------
 void
-StringSerialize::process(const char* name, u_char* bp, size_t len)
+StringSerialize::process(const char* name, u_char* bp, u_int32_t len)
 {
     add_preamble(name, "char_buf");
     if (options_ & SCHEMA_ONLY) {
@@ -131,7 +144,7 @@ StringSerialize::process(const char* name, std::string* s)
 //----------------------------------------------------------------------
 void
 StringSerialize::process(const char* name, u_char** bp,
-                         size_t* lenp, int flags)
+                         u_int32_t* lenp, int flags)
 {
     add_preamble(name, "char_buf_var");
     if (options_ & SCHEMA_ONLY) {

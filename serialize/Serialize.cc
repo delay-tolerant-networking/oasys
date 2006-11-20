@@ -66,16 +66,6 @@ SerializeAction::end_action()
 }
 
 //----------------------------------------------------------------------
-void
-SerializeAction::process(const char* name, unsigned long* i)
-{
-    STATIC_ASSERT(sizeof(*i) == sizeof(u_int32_t),
-                  Sizeof_Unsigned_Long_Equals_UInt32_T);
-    
-    process(name, (u_int32_t*)i);
-}
-
-//----------------------------------------------------------------------
 Builder Builder::static_builder_;
 
 } // namespace oasys

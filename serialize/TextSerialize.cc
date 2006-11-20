@@ -36,6 +36,13 @@ TextMarshal::TextMarshal(context_t         context,
 
 //----------------------------------------------------------------------------
 void 
+TextMarshal::process(const char* name, u_int64_t* i)
+{
+    buf_.appendf("%s: %llu\n", name, U64FMT(*i));
+}
+
+//----------------------------------------------------------------------------
+void 
 TextMarshal::process(const char* name, u_int32_t* i)
 {
     buf_.appendf("%s: %u\n", name, *i);
@@ -64,7 +71,7 @@ TextMarshal::process(const char* name, bool* b)
 
 //----------------------------------------------------------------------------
 void 
-TextMarshal::process(const char* name, u_char* bp, size_t len)
+TextMarshal::process(const char* name, u_char* bp, u_int32_t len)
 {
     buf_.appendf("%s: TextCode\n", name);
     TextCode coder(reinterpret_cast<char*>(bp), len,
@@ -73,7 +80,7 @@ TextMarshal::process(const char* name, u_char* bp, size_t len)
 
 //----------------------------------------------------------------------------
 void 
-TextMarshal::process(const char* name, u_char** bp, size_t* lenp, int flags)
+TextMarshal::process(const char* name, u_char** bp, u_int32_t* lenp, int flags)
 {
     (void)flags;
     buf_.appendf("%s: TextCode\n", name);
@@ -120,6 +127,22 @@ TextUnmarshal::TextUnmarshal(context_t context, u_char* buf,
       cur_(reinterpret_cast<char*>(buf))
 {}
  
+//----------------------------------------------------------------------------   
+void 
+TextUnmarshal::process(const char* name, u_int64_t* i)
+{
+    if (error()) 
+        return;
+
+    u_int64_t num;
+    int err = get_num(name, &num);
+    
+    if (err != 0) 
+        return;
+
+    *i = num;
+}
+
 //----------------------------------------------------------------------------   
 void 
 TextUnmarshal::process(const char* name, u_int32_t* i)
@@ -204,7 +227,7 @@ TextUnmarshal::process(const char* name, bool* b)
 
 //----------------------------------------------------------------------------
 void 
-TextUnmarshal::process(const char* name, u_char* bp, size_t len)
+TextUnmarshal::process(const char* name, u_char* bp, u_int32_t len)
 {
     if (error()) 
         return;
@@ -243,7 +266,7 @@ TextUnmarshal::process(const char* name, u_char* bp, size_t len)
 //----------------------------------------------------------------------------
 void 
 TextUnmarshal::process(const char* name, u_char** bp, 
-                       size_t* lenp, int flags)
+                       u_int32_t* lenp, int flags)
 {
     (void)name;
     (void)bp;
@@ -394,6 +417,28 @@ TextUnmarshal::get_num(const char* field_name, u_int32_t* num)
         return -1;
     
     *num = strtoul(cur_, &eol, 0);
+    ASSERT(*eol == '\n');
+    
+    cur_ = eol + 1;
+    
+    return 0;
+}
+
+//----------------------------------------------------------------------------
+int
+TextUnmarshal::get_num(const char* field_name, u_int64_t* num)
+{
+    char* eol;
+    if (get_line(&eol) != 0) {
+        signal_error();
+        return -1;
+    }
+
+    ASSERT(*eol == '\n');
+    if (match_fieldname(field_name, eol) != 0)
+        return -1;
+    
+    *num = strtoull(cur_, &eol, 0);
     ASSERT(*eol == '\n');
     
     cur_ = eol + 1;

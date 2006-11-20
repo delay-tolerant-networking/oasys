@@ -133,6 +133,21 @@ StringBuffer::append_int(u_int32_t val, int base)
 }
 
 size_t
+StringBuffer::append_int(u_int64_t val, int base)
+{
+    char tmp[16];
+    size_t len = fast_ultoa(val, base, &tmp[15]);
+
+    ASSERT(len < 16);
+    
+    buf_->reserve(buf_->len() + len);
+    memcpy(buf_->end(), &tmp[16 - len], len);
+    buf_->set_len(buf_->len() + len);
+
+    return len;
+}
+
+size_t
 StringBuffer::vappendf(const char* fmt, va_list ap)
 {
     if (buf_->nfree() == 0) {

@@ -189,10 +189,10 @@ DECLARE_TEST(MultipleInheritance) {
     CHECK(dynamic_cast<MultiLeaf*>(obj) != 0);
     CHECK(reinterpret_cast<void*>(dynamic_cast<MultiLeaf*>(obj)) != 
 	  reinterpret_cast<void*>(obj));
-    CHECK( (reinterpret_cast<int>(obj) - 
-	    reinterpret_cast<int>(dynamic_cast<MultiLeaf*>(obj)) + 4)
+    CHECK( (reinterpret_cast<u_int64_t>(obj) - 
+	    reinterpret_cast<u_int64_t>(dynamic_cast<MultiLeaf*>(obj)) + 4)
 	    ==
-	   (reinterpret_cast<int>(static_cast<Obj*>(baz))) );
+	   (reinterpret_cast<u_int64_t>(static_cast<Obj*>(baz))) );
 
     return UNIT_TEST_PASSED;
 }

@@ -193,6 +193,11 @@ public:
         (void)name;
         object->serialize(this);
     }
+
+    /**
+     * Process function for an 8 byte integer.
+     */
+    virtual void process(const char* name, u_int64_t* i) = 0;
     
     /**
      * Process function for a 4 byte integer.
@@ -221,7 +226,7 @@ public:
      * @param bp     buffer
      * @param len    buffer length
      */
-    virtual void process(const char* name, u_char* bp, size_t len) = 0;
+    virtual void process(const char* name, u_char* bp, u_int32_t len) = 0;
 
     /**
      * Process function for a variable length char buffer.
@@ -236,7 +241,7 @@ public:
      *               the data stored will be a null-terminated C-string. 
      */
     virtual void process(const char* name, u_char** bp,
-                         size_t* lenp, int flags) = 0;
+                         u_int32_t* lenp, int flags) = 0;
 
     /**
      * Process function for a c++ string.
@@ -247,6 +252,11 @@ public:
     /**
      * Adaptor functions for signed/unsigned compatibility
      */
+    virtual void process(const char* name, int64_t* i)
+    {
+        process(name, (u_int64_t*)i);
+    }
+    
     virtual void process(const char* name, int32_t* i)
     {
         process(name, (u_int32_t*)i);
@@ -262,18 +272,12 @@ public:
         process(name, (u_int8_t*)i);
     }
 
-    virtual void process(const char* name, char* bp, size_t len)
+    virtual void process(const char* name, char* bp, u_int32_t len)
     {
         process(name, (u_char*)bp, len);
     }
     /// @}
 
-    /**
-     * Adaptor function for an unsigned long (i.e. what a size_t is
-     * defined to be on Darwin and potentially others).
-     */
-    virtual void process(const char* name, unsigned long* i);
-    
     /** Set a log target for verbose serialization */
     void logpath(const char* log) { log_ = log; }
     

@@ -129,7 +129,7 @@ public:
     // virtual from SerializableObject
     void serialize(SerializeAction* a)
     {
-        size_t len = 0;
+        u_int32_t len = 0;
         a->process(name_.c_str(), 
 		   reinterpret_cast<u_char**>(&str_), &len,
 		   Serialize::NULL_TERMINATED | Serialize::ALLOC_MEM);
@@ -177,12 +177,12 @@ public:
  
     const char* value() const { return buf_; }
     char*       take_buf()    { own_buf_ = false; return buf_; }
-    size_t      size()  const { return size_; }
+    u_int32_t   size()  const { return size_; }
 
 private:
-    char*  buf_;
-    size_t size_;    
-    bool   own_buf_;
+    char*     buf_;
+    u_int32_t size_;    
+    bool      own_buf_;
 };
 
 //----------------------------------------------------------------------------

@@ -29,8 +29,13 @@ public:
         b(-100),
         c(0x77),
         d(0xbaddf00d),
+        a2(200),
+        b2(-100),
+        c2(0x77),
+        d2(0xbaddf00d),
         e(56789),
         u(INT_MAX),
+        u64(LLONG_MAX),
         s1("hello")
     {
         memset(s2, 0, sizeof(s2));
@@ -54,8 +59,13 @@ public:
         b(0),
         c(0),
         d(0),
+        a2(0),
+        b2(0),
+        c2(0),
+        d2(0),
         e(0),
         u(0),
+        u64(0),
         s1(""),
         const_len(0x99),
         nullterm_len(0x99),
@@ -76,6 +86,7 @@ public:
         action->process("d", &d);
         action->process("e", &e);
         action->process("u", &u);
+        action->process("u64", &u64);
         action->process("s1", &s1);
         action->process("s2", s2, sizeof(s2));
         action->process("const_buf", &const_buf, &const_len, Serialize::ALLOC_MEM);
@@ -84,12 +95,14 @@ public:
     }
 
     int32_t   a, b, c, d;
+    int64_t   a2, b2, c2, d2;
     short     e;
     u_int32_t u;
+    u_int64_t u64;
     string    s1;
     char      s2[32];
 
-    size_t    const_len, nullterm_len, null_len;
+    u_int32_t    const_len, nullterm_len, null_len;
     u_char    *const_buf, *nullterm_buf, *null_buf;
 };
 
@@ -147,9 +160,9 @@ DECLARE_TEST(Compare) {
     CHECK_EQUALSTRN(o1.nullterm_buf, o2.nullterm_buf, o1.nullterm_len);
 
     CHECK_EQUAL(o1.null_len, 0);
-    CHECK_EQUAL((int)o2.null_buf, 0);
+    CHECK(o1.null_buf == 0);
     CHECK_EQUAL(o1.null_len, 0);
-    CHECK_EQUAL((int)o2.null_buf, 0);
+    CHECK(o2.null_buf == 0);
 
     return UNIT_TEST_PASSED;
 }

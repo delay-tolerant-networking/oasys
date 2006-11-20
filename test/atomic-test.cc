@@ -137,11 +137,17 @@ protected:
         log_notice("/test", "thread %p starting", this);
 
         for (u_int i = 0; i < count_; ++i) {
-            u_int32_t old = atomic_cmpxchg32(val_, 0, (u_int32_t)this);
+#ifdef __amd64__
+            u_int32_t thisval = ((u_int64_t)this) & 0xffffffff;
+#else
+            u_int32_t thisval = (u_int32_t)this;
+#endif
+            
+            u_int32_t old = atomic_cmpxchg32(val_, 0, thisval);
             if (old == 0) {
-                ASSERT(val_->value == (u_int32_t)this);
-                old = atomic_cmpxchg32(val_, (u_int32_t)this, 0);
-                ASSERT(old == (u_int32_t)this);
+                ASSERT(val_->value == thisval);
+                old = atomic_cmpxchg32(val_, thisval, 0);
+                ASSERT(old == thisval);
                 atomic_incr(success_);
             } else {
                 atomic_incr(fail_);

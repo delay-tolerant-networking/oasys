@@ -59,6 +59,24 @@ Marshal::end_action()
 }
 
 void
+Marshal::process(const char* name, u_int64_t* i)
+{
+    u_char* buf = next_slice(8);
+    if (buf == NULL) return;
+
+    buf[0] = ((*i)>>56) & 0xff;
+    buf[1] = ((*i)>>48) & 0xff;
+    buf[2] = ((*i)>>40) & 0xff;
+    buf[3] = ((*i)>>32) & 0xff;
+    buf[4] = ((*i)>>24) & 0xff;
+    buf[5] = ((*i)>>16) & 0xff;
+    buf[6] = ((*i)>>8)  & 0xff;
+    buf[7] = (*i)       & 0xff;
+
+    if (log_) logf(log_, LOG_DEBUG, "int64  %s=>(%llu)", name, U64FMT(*i));
+}
+
+void
 Marshal::process(const char* name, u_int32_t* i)
 {
     u_char* buf = next_slice(4);
@@ -107,7 +125,7 @@ Marshal::process(const char* name, bool* b)
 }
 
 void 
-Marshal::process(const char* name, u_char* bp, size_t len)
+Marshal::process(const char* name, u_char* bp, u_int32_t len)
 {
     u_char* buf = next_slice(len);
     if (buf == NULL) return;
@@ -116,14 +134,14 @@ Marshal::process(const char* name, u_char* bp, size_t len)
     if (log_) {
         std::string s;
         hex2str(&s, bp, len < 16 ? len : 16);
-        logf(log_, LOG_DEBUG, "bufc   %s=>(%zu: '%.*s')",
+        logf(log_, LOG_DEBUG, "bufc   %s=>(%u: '%.*s')",
              name, len, (int)s.length(), s.data());
     }
 }
     
 void 
 Marshal::process(const char* name, u_char** bp,
-                 size_t* lenp, int flags)
+                 u_int32_t* lenp, int flags)
 {
     int str_len;
 
@@ -132,7 +150,7 @@ Marshal::process(const char* name, u_char** bp,
     } else {
         std::string len_name = name;
         len_name += ".len";
-        process(len_name.c_str(), (u_int32_t*)lenp);
+        process(len_name.c_str(), lenp);
         str_len = *lenp;
     }
 
@@ -154,8 +172,8 @@ Marshal::process(const char* name, u_char** bp,
 void 
 Marshal::process(const char* name, std::string* s)
 {
-    size_t len = s->length();
-    process(name, (u_int32_t*)&len);
+    u_int32_t len = s->length();
+    process(name, &len);
 
     u_char* buf = next_slice(len);
     if (buf == NULL) return;
@@ -164,10 +182,10 @@ Marshal::process(const char* name, std::string* s)
     
     if (log_) {
         if (len < 32)
-            logf(log_, LOG_DEBUG, "string %s=>(%zu: '%.*s')",
-                 name, len, (int)len, s->data());
+            logf(log_, LOG_DEBUG, "string %s=>(%u: '%.*s')",
+                 name, len, len, s->data());
         else 
-            logf(log_, LOG_DEBUG, "string %s=>(%zu: '%.*s'...)",
+            logf(log_, LOG_DEBUG, "string %s=>(%u: '%.*s'...)",
                  name, len, 32, s->data());
     }
 }
@@ -213,6 +231,19 @@ Unmarshal::begin_action()
 }
 
 void
+Unmarshal::process(const char* name, u_int64_t* i)
+{
+    u_char* buf = next_slice(8);
+    if (buf == NULL) return;
+
+    u_int64_t high = *i = (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3];
+    u_int64_t low  = *i = (buf[4] << 24) | (buf[5] << 16) | (buf[6] << 8) | buf[7];
+    
+    *i = (high << 32) | low;
+    if (log_) logf(log_, LOG_DEBUG, "int32  %s<=(%llu)", name, U64FMT(*i));
+}
+
+void
 Unmarshal::process(const char* name, u_int32_t* i)
 {
     u_char* buf = next_slice(4);
@@ -253,7 +284,7 @@ Unmarshal::process(const char* name, bool* b)
 }
 
 void 
-Unmarshal::process(const char* name, u_char* bp, size_t len)
+Unmarshal::process(const char* name, u_char* bp, u_int32_t len)
 {
     u_char* buf = next_slice(len);
     if (buf == NULL) return;
@@ -263,13 +294,13 @@ Unmarshal::process(const char* name, u_char* bp, size_t len)
     if (log_) {
         std::string s;
         hex2str(&s, bp, len < 16 ? len : 16);
-        logf(log_, LOG_DEBUG, "bufc   %s<=(%zu: '%.*s')",
+        logf(log_, LOG_DEBUG, "bufc   %s<=(%u: '%.*s')",
              name, len, (int)s.length(), s.data());
     }
 }
 
 void 
-Unmarshal::process(const char* name, u_char** bp, size_t* lenp, int flags)
+Unmarshal::process(const char* name, u_char** bp, u_int32_t* lenp, int flags)
 {
     if (flags & Serialize::NULL_TERMINATED) {
         u_char* cbuf = buf() + offset();
@@ -291,7 +322,7 @@ Unmarshal::process(const char* name, u_char** bp, size_t* lenp, int flags)
     } else {
         std::string len_name = name;
         len_name += ".len";
-        process(len_name.c_str(), (u_int32_t*)lenp);
+        process(len_name.c_str(), lenp);
     }
 
     if (*lenp != 0) {
@@ -311,7 +342,7 @@ Unmarshal::process(const char* name, u_char** bp, size_t* lenp, int flags)
     if (log_) {
         std::string s;
         hex2str(&s, *bp, *lenp < 16 ? *lenp : 16);
-        logf(log_, LOG_DEBUG, "bufc   %s<=(%zu: '%.*s')",
+        logf(log_, LOG_DEBUG, "bufc   %s<=(%u: '%.*s')",
              name, *lenp, (int)s.length(), s.data());
     }
 }
@@ -321,8 +352,8 @@ Unmarshal::process(const char* name, std::string* s)
 {
     ASSERT(s != 0);
 
-    size_t len;
-    process(name, (u_int32_t*)&len);
+    u_int32_t len;
+    process(name, &len);
 
     u_char* buf = next_slice(len);
     if (buf == 0) return;
@@ -330,10 +361,10 @@ Unmarshal::process(const char* name, std::string* s)
     s->assign((char*)buf, len);
     if (log_) {
         if (len < 32)
-            logf(log_, LOG_DEBUG, "string %s<=(%zu: '%.*s')",
-                 name, len, (int)len, s->data());
+            logf(log_, LOG_DEBUG, "string %s<=(%u: '%.*s')",
+                 name, len, len, s->data());
         else 
-            logf(log_, LOG_DEBUG, "string %s<=(%zu: '%.*s'...)",
+            logf(log_, LOG_DEBUG, "string %s<=(%u: '%.*s'...)",
                  name, len, 32, s->data());
     }
 }
@@ -350,6 +381,13 @@ MarshalSize::begin_action()
     if (options_ & USE_CRC) {
         size_ += sizeof(CRC32::CRC_t);
     }
+}
+
+void
+MarshalSize::process(const char* name, u_int64_t* i)
+{
+    (void)name;
+    size_ += get_size(i);
 }
 
 void
@@ -381,7 +419,7 @@ MarshalSize::process(const char* name, bool* b)
 }
 
 void
-MarshalSize::process(const char* name, u_char* bp, size_t len)
+MarshalSize::process(const char* name, u_char* bp, u_int32_t len)
 {
     (void)name;
     size_ += get_size(bp, len);
@@ -396,7 +434,7 @@ MarshalSize::process(const char* name, std::string* s)
 
 void
 MarshalSize::process(const char* name, u_char** bp,
-                     size_t* lenp, int flags)
+                     u_int32_t* lenp, int flags)
 {
     (void)name;
     if(flags & Serialize::NULL_TERMINATED) {
@@ -426,7 +464,7 @@ DECL_CRC(u_int8_t)
 DECL_CRC(bool)
 
 void
-MarshalCRC::process(const char* name, u_char* bp, size_t len)
+MarshalCRC::process(const char* name, u_char* bp, u_int32_t len)
 {
     (void)name;
     crc_.update(bp, len);
@@ -434,7 +472,7 @@ MarshalCRC::process(const char* name, u_char* bp, size_t len)
 
 void
 MarshalCRC::process(const char* name, u_char** bp,
-                     size_t* lenp, int flags)
+                     u_int32_t* lenp, int flags)
 {
     (void)name;
     if(flags & Serialize::NULL_TERMINATED) {
@@ -457,7 +495,7 @@ MarshalCRC::process(const char* name, std::string* s)
  * MarshalCopy
  *
  *****************************************************************************/
-size_t
+u_int32_t
 MarshalCopy::copy(ExpandableBuffer* buf,
                   const SerializableObject* src,
                   SerializableObject* dst)

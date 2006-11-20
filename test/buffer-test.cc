@@ -198,7 +198,12 @@ DECLARE_TEST(StringBuffer2) {
     memset(scratch, 0, 4096);
 
     for (int i=0; i<40; ++i) {
-        buf.appendf("You are in a twisty maze of passages, all alike.");
+        buf.appendf("%s %s %s %s",
+                    "You are in a ",
+                    "twisty ",
+                    "maze of passages, ",
+                    "all alike.");
+        
         ptr += sprintf(ptr, "You are in a twisty maze of passages, all alike.");
     }
     

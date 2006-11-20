@@ -62,12 +62,13 @@ public:
     // Virtual functions inherited from SerializeAction
     void end_action();
 
+    void process(const char* name, u_int64_t* i);
     void process(const char* name, u_int32_t* i);
     void process(const char* name, u_int16_t* i);
     void process(const char* name, u_int8_t* i);
     void process(const char* name, bool* b);
-    void process(const char* name, u_char* bp, size_t len);
-    void process(const char* name, u_char** bp, size_t* lenp, int flags);
+    void process(const char* name, u_char* bp, u_int32_t len);
+    void process(const char* name, u_char** bp, u_int32_t* lenp, int flags);
     void process(const char* name, std::string* s);
 
 private:
@@ -93,12 +94,13 @@ public:
     // Virtual functions inherited from SerializeAction
     void begin_action();
 
+    void process(const char* name, u_int64_t* i);
     void process(const char* name, u_int32_t* i);
     void process(const char* name, u_int16_t* i);
     void process(const char* name, u_int8_t* i);
     void process(const char* name, bool* b);
-    void process(const char* name, u_char* bp, size_t len);
-    void process(const char* name, u_char** bp, size_t* lenp, int flags);
+    void process(const char* name, u_char* bp, u_int32_t len);
+    void process(const char* name, u_char** bp, u_int32_t* lenp, int flags);
     void process(const char* name, std::string* s); 
 
 private:
@@ -136,33 +138,35 @@ public:
     }
 
     /** @return Measured size */
-    size_t size() { return size_; }
+    u_int32_t size() { return size_; }
 
     /// @{
     /// Static functions to simply return the serialized sizes. Called
     /// from the various process() variants.
-    static size_t get_size(u_int32_t*)           { return 4; }
-    static size_t get_size(u_int16_t*)           { return 2; }
-    static size_t get_size(u_int8_t*)            { return 1; }
-    static size_t get_size(bool*)                { return 1; }
-    static size_t get_size(u_char*, size_t len)  { return len; }
-    static size_t get_size(std::string* s)       { return s->length() + 4; }
+    static u_int32_t get_size(u_int64_t*)           { return 8; }
+    static u_int32_t get_size(u_int32_t*)           { return 4; }
+    static u_int32_t get_size(u_int16_t*)           { return 2; }
+    static u_int32_t get_size(u_int8_t*)            { return 1; }
+    static u_int32_t get_size(bool*)                { return 1; }
+    static u_int32_t get_size(u_char*, u_int32_t len)  { return len; }
+    static u_int32_t get_size(std::string* s)       { return s->length() + 4; }
     /// @}
     
     /// @{
     /// Virtual functions inherited from SerializeAction
     void begin_action();
+    void process(const char* name, u_int64_t* i);
     void process(const char* name, u_int32_t* i);
     void process(const char* name, u_int16_t* i);
     void process(const char* name, u_int8_t* i);
     void process(const char* name, bool* b);
-    void process(const char* name, u_char* bp, size_t len);
-    void process(const char* name, u_char** bp, size_t* lenp, int flags);
+    void process(const char* name, u_char* bp, u_int32_t len);
+    void process(const char* name, u_char** bp, u_int32_t* lenp, int flags);
     void process(const char* name, std::string* s);
     /// @}
 
 private:
-    size_t size_;
+    u_int32_t size_;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -194,8 +198,8 @@ public:
     void process(const char* name, u_int16_t* i);
     void process(const char* name, u_int8_t* i);
     void process(const char* name, bool* b);
-    void process(const char* name, u_char* bp, size_t len);
-    void process(const char* name, u_char** bp, size_t* lenp, int flags);
+    void process(const char* name, u_char* bp, u_int32_t len);
+    void process(const char* name, u_char** bp, u_int32_t* lenp, int flags);
     void process(const char* name, std::string* s);
 
 private:
@@ -210,9 +214,9 @@ private:
 class MarshalCopy {
 public:
     /// Copy method, returns the serialized size
-    static size_t copy(ExpandableBuffer* buf,
-                       const SerializableObject* src,
-                       SerializableObject* dst);
+    static u_int32_t copy(ExpandableBuffer* buf,
+                          const SerializableObject* src,
+                          SerializableObject* dst);
 };
 
 } // namespace oasys

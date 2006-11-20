@@ -29,6 +29,16 @@ KeyMarshal::KeyMarshal(ExpandableBuffer* buf,
 //////////////////////////////////////////////////////////////////////////////
 void 
 KeyMarshal::process(const char* name,
+                    u_int64_t*  i)
+{
+    (void)name;
+    process_int64(*i, 16, "%16x");
+    border();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+void 
+KeyMarshal::process(const char* name,
                     u_int32_t*  i)
 {
     (void)name;
@@ -70,7 +80,7 @@ KeyMarshal::process(const char* name,
 void 
 KeyMarshal::process(const char* name,
                     u_char*     bp,
-                    size_t      len)
+                    u_int32_t      len)
 {
     (void)name;
     if (error()) 
@@ -86,7 +96,7 @@ KeyMarshal::process(const char* name,
 void 
 KeyMarshal::process(const char* name,
                     u_char**    bp,
-                    size_t*     lenp,
+                    u_int32_t*     lenp,
                     int         flags)
 {
     (void)name;
@@ -95,7 +105,7 @@ KeyMarshal::process(const char* name,
 
     ASSERT(! (lenp == 0 && ! (flags & Serialize::NULL_TERMINATED)));
 
-    size_t len;
+    u_int32_t len;
     if (flags & Serialize::NULL_TERMINATED) {
         len = strlen(reinterpret_cast<char*>(*bp));
     } else {
@@ -152,7 +162,19 @@ KeyMarshal::end_action()
 
 //////////////////////////////////////////////////////////////////////////////
 void
-KeyMarshal::process_int(u_int32_t i, size_t size, const char* format)
+KeyMarshal::process_int(u_int32_t i, u_int32_t size, const char* format)
+{
+    if (error()) 
+        return;
+
+    buf_->reserve(buf_->len() + size + 1);
+    int cc = snprintf(buf_->end(), size + 1, format, i);
+    ASSERT(cc == (int)size);
+    buf_->set_len(buf_->len() + size);
+}
+
+void
+KeyMarshal::process_int64(u_int64_t i, u_int32_t size, const char* format)
 {
     if (error()) 
         return;
@@ -170,7 +192,7 @@ KeyMarshal::border()
         return;
     }
 
-    size_t border_len = strlen(border_);
+    u_int32_t border_len = strlen(border_);
     buf_->reserve(border_len);
     memcpy(buf_->end(), border_, border_len);
     buf_->set_len(buf_->len() + border_len);
@@ -178,7 +200,7 @@ KeyMarshal::border()
 
 //////////////////////////////////////////////////////////////////////////////
 KeyUnmarshal::KeyUnmarshal(const char* buf,
-                           size_t      buf_len,
+                           u_int32_t   buf_len,
                            const char* border)
     : SerializeAction(Serialize::UNMARSHAL, Serialize::CONTEXT_LOCAL),
       buf_(buf),
@@ -186,6 +208,18 @@ KeyUnmarshal::KeyUnmarshal(const char* buf,
       border_len_( (border == 0) ? 0 : strlen(border)),
       cur_(0)
 {}
+
+//////////////////////////////////////////////////////////////////////////////
+void 
+KeyUnmarshal::process(const char* name, u_int64_t* i)
+{
+    (void)name;
+    u_int64_t val = process_int64();
+    if (! error()) {
+        *i = val;
+    }
+    border();
+}
 
 //////////////////////////////////////////////////////////////////////////////
 void 
@@ -244,7 +278,7 @@ KeyUnmarshal::process(const char* name, bool* b)
 
 //////////////////////////////////////////////////////////////////////////////
 void 
-KeyUnmarshal::process(const char* name, u_char* bp, size_t len)
+KeyUnmarshal::process(const char* name, u_char* bp, u_int32_t len)
 {
     (void)name;
     if (error()) {
@@ -264,20 +298,20 @@ KeyUnmarshal::process(const char* name, u_char* bp, size_t len)
 //////////////////////////////////////////////////////////////////////////////
 void 
 KeyUnmarshal::process(const char* name, u_char** bp, 
-                      size_t* lenp, int flags)
+                      u_int32_t* lenp, int flags)
 {
     (void)name;
     if (error()) {
         return;
     }
 
-    size_t len = process_int(8);
+    u_int32_t len = process_int(8);
     if (error()) {
         return;
     }
     
     if (flags & Serialize::ALLOC_MEM) {
-        size_t malloc_len = (flags & Serialize::NULL_TERMINATED) ? 
+        u_int32_t malloc_len = (flags & Serialize::NULL_TERMINATED) ? 
                             len + 1 : len;
         *bp = static_cast<u_char*>(malloc(malloc_len));
         if (*bp == 0) {
@@ -316,7 +350,7 @@ KeyUnmarshal::process(const char* name, std::string* s)
         return;
     }
 
-    size_t len = process_int(8);
+    u_int32_t len = process_int(8);
     if (error()) {
         return;
     }
@@ -343,7 +377,7 @@ KeyUnmarshal::process(const char* name, SerializableObject* object)
 
 //////////////////////////////////////////////////////////////////////////////
 u_int32_t
-KeyUnmarshal::process_int(size_t size)
+KeyUnmarshal::process_int(u_int32_t size)
 {
     char buf[9];
 
@@ -357,6 +391,34 @@ KeyUnmarshal::process_int(size_t size)
     
     char* endptr;
     u_int32_t val = strtoul(buf, &endptr, 16);
+    
+    if (endptr == &buf_[cur_]) {
+        signal_error();
+        return 0;
+    }
+
+    cur_ += size;
+
+    return val;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+u_int64_t
+KeyUnmarshal::process_int64()
+{
+    u_int32_t size = 16;
+    char buf[32];
+
+    if (cur_ + size > buf_len_) {
+        signal_error();
+        return 0;
+    }
+
+    memset(buf, 0, 32);
+    memcpy(buf, &buf_[cur_], size);
+    
+    char* endptr;
+    u_int64_t val = strtoull(buf, &endptr, 16);
     
     if (endptr == &buf_[cur_]) {
         signal_error();

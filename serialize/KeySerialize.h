@@ -41,12 +41,13 @@ public:
                const char*       border = 0);
     
     //! @{ Virtual functions inherited from SerializeAction
+    void process(const char* name, u_int64_t* i);
     void process(const char* name, u_int32_t* i);
     void process(const char* name, u_int16_t* i);
     void process(const char* name, u_int8_t* i);
     void process(const char* name, bool* b);
-    void process(const char* name, u_char* bp, size_t len);
-    void process(const char* name, u_char** bp, size_t* lenp, int flags);
+    void process(const char* name, u_char* bp, u_int32_t len);
+    void process(const char* name, u_char** bp, u_int32_t* lenp, int flags);
     void process(const char* name, std::string* s);
     void process(const char* name, SerializableObject* object);
 
@@ -63,7 +64,8 @@ private:
     ExpandableBuffer* buf_;
     const char*       border_;
 
-    void process_int(u_int32_t i, size_t size, const char* format);
+    void process_int(u_int32_t i, u_int32_t size, const char* format);
+    void process_int64(u_int64_t i, u_int32_t size, const char* format);
     void border();
 };
 
@@ -73,27 +75,29 @@ private:
 class KeyUnmarshal : public SerializeAction {
 public:
     KeyUnmarshal(const char* buf,
-                 size_t      buf_len,
+                 u_int32_t      buf_len,
                  const char* border = 0);
     
     //! @{ Virtual functions inherited from SerializeAction
+    void process(const char* name, u_int64_t* i);
     void process(const char* name, u_int32_t* i);
     void process(const char* name, u_int16_t* i);
     void process(const char* name, u_int8_t* i);
     void process(const char* name, bool* b);
-    void process(const char* name, u_char* bp, size_t len);
-    void process(const char* name, u_char** bp, size_t* lenp, int flags);
+    void process(const char* name, u_char* bp, u_int32_t len);
+    void process(const char* name, u_char** bp, u_int32_t* lenp, int flags);
     void process(const char* name, std::string* s);
     void process(const char* name, SerializableObject* object);
 
     //! @}
 private:
     const char* buf_;
-    size_t      buf_len_;
-    size_t      border_len_;
-    size_t      cur_;
+    u_int32_t      buf_len_;
+    u_int32_t      border_len_;
+    u_int32_t      cur_;
 
-    u_int32_t process_int(size_t size);
+    u_int32_t process_int(u_int32_t size);
+    u_int64_t process_int64();
     void border();
 };
 

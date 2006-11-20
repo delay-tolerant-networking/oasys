@@ -41,12 +41,13 @@ public:
                 const char*       comment     = 0);
 
     //! @{ Virtual functions inherited from SerializeAction
+    void process(const char* name, u_int64_t* i);
     void process(const char* name, u_int32_t* i);
     void process(const char* name, u_int16_t* i);
     void process(const char* name, u_int8_t* i);
     void process(const char* name, bool* b);
-    void process(const char* name, u_char* bp, size_t len);
-    void process(const char* name, u_char** bp, size_t* lenp, int flags);
+    void process(const char* name, u_char* bp, u_int32_t len);
+    void process(const char* name, u_char** bp, u_int32_t* lenp, int flags);
     void process(const char* name, std::string* s);
     void process(const char* name, SerializableObject* object);
 
@@ -71,12 +72,13 @@ public:
                   size_t length, int options = 0);
     
     //! @{ Virtual functions inherited from BufferedSerializeAction
+    void process(const char* name, u_int64_t* i);
     void process(const char* name, u_int32_t* i);
     void process(const char* name, u_int16_t* i);
     void process(const char* name, u_int8_t* i);
     void process(const char* name, bool* b);
-    void process(const char* name, u_char* bp, size_t len);
-    void process(const char* name, u_char** bp, size_t* lenp, int flags);
+    void process(const char* name, u_char* bp, u_int32_t len);
+    void process(const char* name, u_char** bp, u_int32_t* lenp, int flags);
     void process(const char* name, std::string* s);
     void process(const char* name, SerializableObject* object);
     //! @}
@@ -90,6 +92,7 @@ private:
     int  get_line(char** end);
     int  match_fieldname(const char* field_name, char* eol);
     int  get_num(const char* field_name, u_int32_t* num);
+    int  get_num(const char* field_name, u_int64_t* num);
     int  get_textcode(ExpandableBuffer* buf);
 };
 

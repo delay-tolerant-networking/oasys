@@ -323,7 +323,7 @@ int main(int argc, const char* argv[]) {                        \
 #define DECLARE_TESTER(_name)                                   \
 class _name : public oasys::UnitTester {                        \
 public:                                                         \
-    _name::_name(std::string name) : UnitTester(name) {}        \
+    _name(std::string name) : UnitTester(name) {}               \
 protected:                                                      \
     void add_tests();                                           \
 };                                                              \
@@ -446,13 +446,17 @@ void _name::add_tests()                                         \
         ::oasys::Breaker::break_here();                                                 \
         oasys::logf("/test", oasys::LOG_ERR,                                            \
                     "CHECK FAILED: '" #a "' (%llu) != '" #b "' (%llu) at %s:%d",        \
-                    (u_int64_t)(a), (u_int64_t)(b), __FILE__, __LINE__);                \
+                    (long long unsigned int)(a),                                        \
+                    (long long unsigned int)(b),                                        \
+                    __FILE__, __LINE__);                                                \
         return oasys::UNIT_TEST_FAILED;                                                 \
     } else {                                                                            \
         oasys::logf("/test", oasys::LOG_NOTICE,                                         \
                     "CHECK '" #a "' (%llu) == '" #b "' (%llu) "                         \
                     "at %s:%d",                                                         \
-                    (u_int64_t)(a), (u_int64_t)(b), __FILE__, __LINE__);                \
+                    (long long unsigned int)(a),                                        \
+                    (long long unsigned int)(b),                                        \
+                    __FILE__, __LINE__);                                                \
     } } while(0)
 
 #define CHECK_EQUALSTR(a, b)                                            \

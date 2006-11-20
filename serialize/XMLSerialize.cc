@@ -75,6 +75,14 @@ XMLMarshal::process(const char *name, SerializableObject* object)
 }
 
 void
+XMLMarshal::process(const char *name, u_int64_t *i)
+{
+    StringBuffer buf;
+    buf.appendf("%llu", U64FMT(*i));
+    current_node_->add_attr(name, buf.data());
+}
+
+void
 XMLMarshal::process(const char *name, u_int32_t *i)
 {
     StringBuffer buf;
@@ -107,7 +115,7 @@ XMLMarshal::process(const char *name, bool *b)
 }
 
 void
-XMLMarshal::process(const char *name, u_char *bp, size_t len)
+XMLMarshal::process(const char *name, u_char *bp, u_int32_t len)
 {
     current_node_->add_attr(std::string(name),
         std::string(reinterpret_cast<char *>(bp), len));
@@ -115,10 +123,10 @@ XMLMarshal::process(const char *name, u_char *bp, size_t len)
 
 void
 XMLMarshal::process(const char *name, u_char **bp,
-                    size_t *lenp, int flags)
+                    u_int32_t *lenp, int flags)
 {
     ASSERT(! (lenp == 0 && ! (flags & Serialize::NULL_TERMINATED)));
-
+    
     size_t len;
     if (flags & Serialize::NULL_TERMINATED) {
         len = strlen(reinterpret_cast<char *>(*bp));

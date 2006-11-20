@@ -52,8 +52,8 @@ ExpatXMLParser::parse(XMLDocument* doc, const std::string& data)
     cur_ = NULL;
 
     if (XML_Parse(p, data.c_str(), data.length(), true) != XML_STATUS_OK) {
-        log_err("parse error at line %d:\n%s",
-                XML_GetCurrentLineNumber(p),
+        log_err("parse error at line %u:\n%s",
+                static_cast<u_int32_t>(XML_GetCurrentLineNumber(p)),
                 XML_ErrorString(XML_GetErrorCode(p)));
         return false;
     }

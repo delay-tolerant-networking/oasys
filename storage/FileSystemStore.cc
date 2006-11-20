@@ -543,6 +543,8 @@ FileSystemTable::get_common(const SerializableObject& key,
         fd = open(file_path.c_str(), O_RDWR);
         if (fd == -1) 
         {
+            log_debug("error opening file %s: %s",
+                      file_path.c_str(), strerror(errno));
             if (errno == ENOENT) 
             {
                 return DS_NOTFOUND;
