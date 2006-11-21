@@ -84,6 +84,7 @@ public:
     virtual const char *parse(const char *xml_doc = 0);
 
     // Virtual functions inherited from SerializeAction
+    virtual void process(const char *name, u_int64_t *i);
     virtual void process(const char *name, u_int32_t *i);
     virtual void process(const char *name, u_int16_t *i);
     virtual void process(const char *name, u_int8_t *i);

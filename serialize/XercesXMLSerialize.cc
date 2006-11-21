@@ -214,6 +214,19 @@ XercesXMLUnmarshal::next_elem()
 }
 
 void
+XercesXMLUnmarshal::process(const char *name, u_int64_t *i)
+{
+    XMLCh *tag_name = xercesc::XMLString::transcode(name);
+    char *value = xercesc::XMLString::transcode(
+        root_elem_->getAttribute(tag_name));
+
+    *i = atoll(value);
+
+    xercesc::XMLString::release(&tag_name);
+    xercesc::XMLString::release(&value);
+}
+
+void
 XercesXMLUnmarshal::process(const char *name, u_int32_t *i)
 {
     XMLCh *tag_name = xercesc::XMLString::transcode(name);
