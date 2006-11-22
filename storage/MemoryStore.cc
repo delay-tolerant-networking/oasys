@@ -112,6 +112,15 @@ MemoryStore::get_table_names(StringVector* names)
     return 0;
 }
 
+//----------------------------------------------------------------------------
+std::string 
+MemoryStore::get_info() const
+{
+    StringBuffer desc;
+
+    return "Memory";
+}
+
 /******************************************************************************
  *
  * MemoryTable

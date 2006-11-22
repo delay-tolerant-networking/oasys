@@ -69,6 +69,11 @@ public:
      * Hook to get all of the names of the tables in the store.
      */
     virtual int get_table_names(StringVector* names) = 0;
+
+    /**
+     * @return Text description of database configuration.
+     */
+    virtual std::string get_info() const = 0;
     
 protected:
 

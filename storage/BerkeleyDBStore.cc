@@ -431,6 +431,15 @@ BerkeleyDBStore::get_table_names(StringVector* names)
 }
 
 //----------------------------------------------------------------------------
+std::string 
+BerkeleyDBStore::get_info() const
+{
+    StringBuffer desc;
+
+    return "BerkeleyDB";
+}
+
+//----------------------------------------------------------------------------
 int  
 BerkeleyDBStore::get_meta_table(BerkeleyDBTable** table)
 {

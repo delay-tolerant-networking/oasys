@@ -157,4 +157,11 @@ DurableStore::get_table_names(StringVector* table_names)
     return err;
 }
 
+//----------------------------------------------------------------------------
+std::string
+DurableStore::get_info() const
+{
+    return impl_->get_info();
+}
+
 } // namespace oasys

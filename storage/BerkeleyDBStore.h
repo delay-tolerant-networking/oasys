@@ -67,7 +67,7 @@ public:
 
     int del_table(const std::string& name);
     int get_table_names(StringVector* names);
-
+    std::string get_info() const;
     /// @}
 
 private:

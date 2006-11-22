@@ -181,6 +181,13 @@ public:
      */
     int get_table_names(StringVector* table_names);
 
+    /*!
+     * Get descriptive information about the store.
+     *
+     * @return Text string describing storage configuration.
+     */
+    std::string get_info() const;
+
 private:
     /**
      * Typedef for the list of objects passed to the implementation to

@@ -207,6 +207,15 @@ FileSystemStore::get_table_names(StringVector* names)
 }
 
 //----------------------------------------------------------------------------
+std::string 
+FileSystemStore::get_info() const
+{
+    StringBuffer desc;
+
+    return "FileSystemStore";
+}
+
+//----------------------------------------------------------------------------
 int 
 FileSystemStore::check_database()
 {
