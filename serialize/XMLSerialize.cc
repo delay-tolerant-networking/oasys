@@ -42,6 +42,12 @@
 
 #include "XMLSerialize.h"
 
+#include <config.h>
+#ifdef XERCES_C_ENABLED
+#include <xercesc/util/Base64.hpp>
+#include <xercesc/util/XMLString.hpp>
+#endif
+
 namespace oasys {
 
 XMLMarshal::XMLMarshal(ExpandableBuffer *buf, const char *root_tag)
@@ -117,8 +123,15 @@ XMLMarshal::process(const char *name, bool *b)
 void
 XMLMarshal::process(const char *name, u_char *bp, u_int32_t len)
 {
+#ifdef XERCES_C_ENABLED
+    unsigned int elen;
+    XMLByte *estr = xercesc::Base64::encode(bp, len, &elen);
     current_node_->add_attr(std::string(name),
-        std::string(reinterpret_cast<char *>(bp), len));
+        std::string(reinterpret_cast<char *>(estr), elen));
+    xercesc::XMLString::release(&estr);
+#else
+    signal_error();
+#endif
 }
 
 void
@@ -134,8 +147,15 @@ XMLMarshal::process(const char *name, u_char **bp,
         len = *lenp;
     }
 
+#ifdef XERCES_C_ENABLED
+    unsigned int elen;
+    XMLByte *estr = xercesc::Base64::encode(*bp, len, &elen);
     current_node_->add_attr(std::string(name),
-        std::string(reinterpret_cast<char *>(*bp), len));
+        std::string(reinterpret_cast<char *>(estr), elen));
+    xercesc::XMLString::release(&estr);
+#else
+    signal_error();
+#endif
 }
 
 void
