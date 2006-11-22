@@ -34,6 +34,9 @@ namespace oasys {
  *
  * Note that in all cases, ranges must be well-formed, i.e. the end
  * must always be greater than start.
+ *
+ * XXX/bowei -- this isn't a bitmap. that still needs to be
+ * implemented.
  */
 template <typename _inttype_t>
 class SparseBitmap : public Formatter,
