@@ -130,6 +130,10 @@ XMLMarshal::process(const char *name, u_char *bp, u_int32_t len)
         std::string(reinterpret_cast<char *>(estr), elen));
     xercesc::XMLString::release(&estr);
 #else
+    (void) name;
+    (void) bp;
+    (void) len;
+    
     signal_error();
 #endif
 }
@@ -138,12 +142,17 @@ void
 XMLMarshal::process(const char *name, u_char **bp,
                     u_int32_t *lenp, int flags)
 {
+    (void) name;
+
     ASSERT(! (lenp == 0 && ! (flags & Serialize::NULL_TERMINATED)));
     
     size_t len;
-    if (flags & Serialize::NULL_TERMINATED) {
+    if (flags & Serialize::NULL_TERMINATED) 
+    {
         len = strlen(reinterpret_cast<char *>(*bp));
-    } else {
+    } 
+    else 
+    {
         len = *lenp;
     }
 
