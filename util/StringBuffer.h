@@ -115,13 +115,24 @@ public:
     size_t appendf(const char* fmt, ...) PRINTFLIKE(2, 3);
 
     /**
-     * Formatting append function.
+     * Formatting append function. Note that this may not actually
+     * format the full string if there's not enough space in the
+     * buffer, so the VAPPENDF macro below should be used in most
+     * cases instead.
      *
-     * @param fmt the format string
-     * @param ap the format argument list
-     * @return the number of bytes written
+     * The lenp parameter can be used to pass in the length that the
+     * buffer should be set to (if known) and returns the length of
+     * the buffer after formatting. If *lenp is less than the return
+     * value, the format string was truncated.
+     *
+     * @param fmt  the format string
+     * @param lenp length of the underlying buffer
+     * @param ap   the format argument list
+     *
+     * @return the return value from vsnprintf, i.e. the length of the
+     * full formatted string
      */
-    size_t vappendf(const char* fmt, va_list ap);
+    size_t vappendf(const char* fmt, size_t* lenp, va_list ap);
     
     /**
      * Append an ascii representation of the given integer.
@@ -161,6 +172,38 @@ private:
 };
 
 /**
+ * Since it's unsafe to call a function multiple times with the same
+ * va_list, this wrapper macro is needed to wrap multiple calls to
+ * vsnprintf in a varargs function.
+ */
+#define VAPPENDF(_stringbuf, _fmt)                              \
+    do {                                                        \
+        size_t ret;                                             \
+        size_t len = 0;                                         \
+                                                                \
+        /* call once optimistically with no known length */     \
+        {                                                       \
+            va_list ap;                                         \
+            va_start(ap, _fmt);                                 \
+            ret = (_stringbuf).vappendf(_fmt, &len, ap);        \
+            va_end(ap);                                         \
+        }                                                       \
+                                                                \
+        /* call again with the known length */                  \
+        if (ret >= len)                                         \
+        {                                                       \
+            (_stringbuf).trim(len);                             \
+            len = ret;                                          \
+            va_list ap;                                         \
+            va_start(ap, _fmt);                                 \
+            ret = (_stringbuf).vappendf(_fmt, &len, ap);        \
+            va_end(ap);                                         \
+        }                                                       \
+                                                                \
+        ASSERT(ret == len);                                     \
+    } while (0)
+
+/**
  * Initially stack allocated StringBuffer, which handles the common
  * cases where the StringBuffer is used to sprintf a bunch of stuff
  * together.
@@ -191,12 +234,10 @@ StaticStringBuffer<_sz>::StaticStringBuffer(const char* fmt, ...)
 {
     if (fmt != 0) 
     {
-        va_list ap;
-        va_start(ap, fmt);
-        vappendf(fmt, ap);
-        va_end(ap);
+        VAPPENDF(*this, fmt);
     }
 }
+
 
 } // namespace oasys
 

@@ -350,34 +350,19 @@ TclCommandInterp::append_result(const char* result)
 }
 
 void
-TclCommandInterp::vresultf(const char* fmt, va_list ap, bool append)
-{
-    StringBuffer buf;
-    buf.vappendf(fmt, ap);
-    
-    if (append) {
-        Tcl_AppendResult(interp_, buf.c_str(), NULL);
-    } else {
-        Tcl_SetResult(interp_, const_cast<char*>(buf.c_str()), TCL_VOLATILE);
-    }
-}
-
-void
 TclCommandInterp::resultf(const char* fmt, ...)
 {
-    va_list ap;
-    va_start(ap, fmt);
-    vresultf(fmt, ap, false);
-    va_end(ap);
+    StringBuffer buf;
+    VAPPENDF(buf, fmt);
+    set_result(buf.c_str());
 }
 
 void
 TclCommandInterp::append_resultf(const char* fmt, ...)
 {
-    va_list ap;
-    va_start(ap, fmt);
-    vresultf(fmt, ap, true);
-    va_end(ap);
+    StringBuffer buf;
+    VAPPENDF(buf, fmt);
+    append_result(buf.c_str());
 }
 
 void
@@ -473,19 +458,17 @@ TclCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
 void
 TclCommand::resultf(const char* fmt, ...)
 {
-    va_list ap;
-    va_start(ap, fmt);
-    TclCommandInterp::instance()->vresultf(fmt, ap, false);
-    va_end(ap);
+    StringBuffer buf;
+    VAPPENDF(buf, fmt);
+    TclCommandInterp::instance()->set_result(buf.c_str());
 }
 
 void
 TclCommand::append_resultf(const char* fmt, ...)
 {
-    va_list ap;
-    va_start(ap, fmt);
-    TclCommandInterp::instance()->vresultf(fmt, ap, true);
-    va_end(ap);
+    StringBuffer buf;
+    VAPPENDF(buf, fmt);
+    TclCommandInterp::instance()->append_result(buf.c_str());
 }
 
 

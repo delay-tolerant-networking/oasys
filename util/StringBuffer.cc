@@ -48,10 +48,7 @@ StringBuffer::StringBuffer(const char* fmt, ...)
 
     if (fmt != 0) 
     {
-        va_list ap;
-        va_start(ap, fmt);
-        vappendf(fmt, ap);
-        va_end(ap);
+        VAPPENDF(*this, fmt);
     }
 }
 
@@ -148,46 +145,25 @@ StringBuffer::append_int(u_int64_t val, int base)
 }
 
 size_t
-StringBuffer::vappendf(const char* fmt, va_list ap)
+StringBuffer::vappendf(const char* fmt, size_t* lenp, va_list ap)
 {
-    if (buf_->nfree() == 0) {
-        ASSERT(buf_->buf_len() != 0);
-        buf_->reserve(buf_->buf_len() * 2);
-    }
-    
-    int ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
-    
-    if (ret == -1)
+    if (buf_->nfree() < (*lenp + 1))
     {
-        // Retarded glibc implementation in Fedora Core 1. From the
-        // man pages:
-        //
-        // The glibc implementation of the functions snprintf and
-        // vsnprintf conforms to the C99 standard, i.e., behaves as
-        // described above, since glibc version 2.1. Until glibc 2.0.6
-        // they would return -1 when the output was truncated.
-        do {
-            buf_->reserve(buf_->buf_len() * 2);
-            ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
-        } while(ret == -1);
-        
-        // we should be safe now, either the string has been written
-        // or we write it again below
+        ASSERT(buf_->buf_len() != 0);
+        buf_->reserve(std::max(*lenp + 1, buf_->buf_len() * 2));
+        ASSERT(buf_->nfree() >= (*lenp + 1));
     }
 
-    if (ret >= (int)buf_->nfree())
-    {
-        buf_->reserve(std::max(buf_->len() + ret + 1,
-                               buf_->buf_len() * 2));
-        buf_->reserve(buf_->len() + ret + 1);
-        ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
-        ASSERT(ret > 0);
-        ASSERT(ret < (int)buf_->nfree()); // ret doesn't include null char
-    }
-    
+    int ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
+
+    // Note that we don't support old glibc implementations that
+    // return -1 from vsnprintf when the output is truncated, but
+    // depend on vsnprintf returning the length that the formatted
+    // string would have been
     ASSERT(ret >= 0);
-    buf_->set_len(buf_->len() + ret);
-    ASSERT(*buf_->end() == '\0');
+
+    *lenp = std::min(ret, (int)buf_->nfree());
+    buf_->set_len(buf_->len() + *lenp);
         
     return ret;
 }
@@ -195,11 +171,9 @@ StringBuffer::vappendf(const char* fmt, va_list ap)
 size_t
 StringBuffer::appendf(const char* fmt, ...)
 {
-    va_list ap;
-    va_start(ap, fmt);
-    size_t ret = vappendf(fmt, ap);
-    va_end(ap);
-    return ret;
+    size_t oldlen = buf_->len();
+    VAPPENDF(*this, fmt);
+    return buf_->len() - oldlen;
 }
 
 } // namespace oasys

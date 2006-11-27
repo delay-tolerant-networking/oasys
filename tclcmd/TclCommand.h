@@ -165,11 +165,6 @@ public:
      * Format and append the TclResult string.
      */
     void append_resultf(const char* fmt, ...) PRINTFLIKE(2, 3);
-    
-    /**
-     * Format and set the TclResult string.
-     */
-    void vresultf(const char* fmt, va_list ap, bool append);
 
     /**
      * Useful function for generating error strings indicating that
