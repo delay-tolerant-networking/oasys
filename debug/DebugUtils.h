@@ -25,8 +25,8 @@
 
 #define ASSERT(x)                                                       \
     do { if (! (x)) {                                                   \
-        fprintf(stderr, "ASSERTION FAILED (" #x ") at %s:%d\n",         \
-                __FILE__, __LINE__);                                    \
+        fprintf(stderr, "ASSERTION FAILED (%s) at %s:%d\n",             \
+                (#x), __FILE__, __LINE__);                              \
         ::oasys::Breaker::break_here();                                 \
         ::oasys::FatalSignals::die();                                   \
     } } while(0);
@@ -36,8 +36,8 @@
 #define ASSERTF(x, fmt, args...)                                        \
     do { if (! (x)) {                                                   \
         fprintf(stderr,                                                 \
-                "ASSERTION FAILED (" #x ") at %s:%d: " fmt "\n",        \
-                __FILE__, __LINE__, ## args);                           \
+                "ASSERTION FAILED (%s) at %s:%d: " fmt "\n",            \
+                (#x), __FILE__, __LINE__, ## args);                     \
         ::oasys::Breaker::break_here();                                 \
         ::oasys::FatalSignals::die();                                   \
     } } while(0);
