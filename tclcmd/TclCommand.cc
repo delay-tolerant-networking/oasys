@@ -312,16 +312,12 @@ TclCommandInterp::tcl_cmd(ClientData client_data, Tcl_Interp* interp,
     // first check for builtin commands
     if (command->do_builtins_) 
     {
-        if (objc == 2) 
-        {
+        if (objc >= 2) {
             const char* cmd = Tcl_GetStringFromObj(objv[1], NULL);
             if (strcmp(cmd, "info") == 0) {
                 return command->cmd_info(interp);
             }
-        }
-        else if (objc > 2) 
-        {
-            const char* cmd = Tcl_GetStringFromObj(objv[1], NULL);
+
             if (strcmp(cmd, "set") == 0) {
                 return command->cmd_set(objc, (Tcl_Obj**)objv, interp);
             }
@@ -492,6 +488,7 @@ TclCommand::cmd_info(Tcl_Interp* interp)
 int
 TclCommand::cmd_set(int objc, Tcl_Obj** objv, Tcl_Interp* interp)
 {
+    (void)interp;
     ASSERT(objc >= 2);
     
     // handle "set binding [value]" command
@@ -501,7 +498,11 @@ TclCommand::cmd_set(int objc, Tcl_Obj** objv, Tcl_Interp* interp)
     }
 
     const char* var = Tcl_GetStringFromObj(objv[2], NULL);
-    Tcl_Obj* val = objv[3];
+    int val_len = 0;
+    const char* val = NULL;
+    if (objc == 4) {
+        val = Tcl_GetStringFromObj(objv[3], &val_len);
+    }
     
     BindingTable::iterator itr;
     itr = bindings_.find(var);
@@ -510,189 +511,44 @@ TclCommand::cmd_set(int objc, Tcl_Obj** objv, Tcl_Interp* interp)
         resultf("set: binding for %s does not exist", var);
         return TCL_ERROR;
     }
+    Opt* opt = (*itr).second;
 
     // set value (if any)
-    Binding* b = (*itr).second;
-
-    if (objc == 4) 
-    {
-        switch(b->type_) 
-        {
-        case BINDING_INT:
-            if (Tcl_GetIntFromObj(interp, val, b->val_.intval_) != TCL_OK) {
-                resultf("%s set: %s not an integer value",
-                        Tcl_GetStringFromObj(objv[0], 0),
-                        Tcl_GetStringFromObj(val, 0));
-                return TCL_ERROR;
-            }
-            break;
-            
-        case BINDING_INT16:
-            int intval;
-            if (Tcl_GetIntFromObj(interp, val, &intval) != TCL_OK) {
-                resultf("%s set: %s not an integer value",
-                        Tcl_GetStringFromObj(objv[0], 0),
-                        Tcl_GetStringFromObj(val, 0));
-                return TCL_ERROR;
-            }
-
-            if (intval > 0xffff) {
-                resultf("%s set: %s too big for short integer",
-                        Tcl_GetStringFromObj(objv[0], 0),
-                        Tcl_GetStringFromObj(val, 0));
-                return TCL_ERROR;
-            }
-                        
-            *(b->val_.int16val_) = intval;
-            break;
-            
-        case BINDING_DOUBLE:
-            if (Tcl_GetDoubleFromObj(interp, val, b->val_.doubleval_) != TCL_OK) {
-                resultf("%s set: %s not an double value",
-                        Tcl_GetStringFromObj(objv[0], 0),
-                        Tcl_GetStringFromObj(val, 0));
-                return TCL_ERROR;
-            }
-            break;
-            
-        case BINDING_BOOL:
-            int boolval;
-            if (Tcl_GetBooleanFromObj(interp, val, &boolval) != TCL_OK) {
-                resultf("%s set: %s not an integer value",
-                        Tcl_GetStringFromObj(objv[0], 0),
-                        Tcl_GetStringFromObj(val, 0));
-                return TCL_ERROR;
-            }
-            *(b->val_.boolval_) = boolval;
-            break;
-            
-        case BINDING_ADDR:
-        {
-            char* addr = Tcl_GetStringFromObj(val, 0);
-            if (gethostbyname(addr, b->val_.addrval_) != 0) {
-                resultf("%s set: invalid value '%s' for addr", 
-                        Tcl_GetStringFromObj(objv[0], 0), addr);
-                return TCL_ERROR;
-            }
-            break;
-
-        }    
-        case BINDING_STRING:
-            b->val_.stringval_->assign(Tcl_GetStringFromObj(val, 0));
-            break;
-            
-        default:
-            logf(LOG_CRIT, "unimplemented binding type %d", b->type_);
-            ASSERT(0);
+    if (val) {
+        if (opt->set(val, val_len) != 0) {
+            resultf("%s set %s: invalid value '%s'",
+                    Tcl_GetStringFromObj(objv[0], 0), var, val);
+            return TCL_ERROR;
         }
     }
 
-    switch(b->type_) 
-    {
-    case BINDING_INT:
-        resultf("%d", *(b->val_.intval_));
-        break;
+    StaticStringBuffer<256> buf;
+    opt->get(&buf);
+    set_result(buf.c_str());
 
-    case BINDING_INT16:
-        resultf("%d", *(b->val_.int16val_));
-        break;
-
-    case BINDING_DOUBLE:
-        resultf("%f", *(b->val_.doubleval_));
-        break;
-
-    case BINDING_BOOL:
-        if (*(b->val_.boolval_))
-            set_result("true");
-        else
-            set_result("false");
-        break;
-        
-    case BINDING_ADDR:
-        resultf("%s", intoa(*(b->val_.addrval_)));
-        break;
-        
-    case BINDING_STRING:
-        set_result(b->val_.stringval_->c_str());
-        break;
-        
-    default:
-        logf(LOG_CRIT, "unimplemented binding type %d", b->type_);
-        ASSERT(0);
-    }
-    
-    return 0;
+    return TCL_OK;
 }
-
-// boilerplate code
-#define BIND_FUNCTIONS(_fn, _type, _typecode)                           \
-void                                                                    \
-_fn(const char* name, _type* val, const char* help)                     \
-{                                                                       \
-    if (bindings_.find(name) != bindings_.end())                        \
-    {   if (Log::initialized()) {                                       \
-            log_warn("warning, binding for %s already exists", name);   \
-        }                                                               \
-    }                                                                   \
-                                                                        \
-    if (Log::initialized()) {                                           \
-        log_debug("creating %s binding for %s -> %p",                   \
-                  #_type, name, val);                                   \
-    }                                                                   \
-                                                                        \
-    bindings_[name] = new Binding(_typecode, val);                      \
-    StringBuffer subcmd("set %s", name);                                \
-    add_to_help(subcmd.c_str(), help);                                  \
-}                                                                       \
-                                                                        \
-void                                                                    \
-_fn(const char* name, _type* val, _type initval, const char* help)      \
-{                                                                       \
-    *val = initval;                                                     \
-    if (bindings_.find(name) != bindings_.end())                        \
-    {                                                                   \
-        if (Log::initialized()) {                                       \
-            log_warn("warning, binding for %s already exists", name);   \
-        }                                                               \
-    }                                                                   \
-                                                                        \
-                                                                        \
-    if (Log::initialized()) {                                           \
-        log_debug("creating %s binding for %s -> %p",                   \
-                  #_type, name, val);                                   \
-    }                                                                   \
-                                                                        \
-    bindings_[name] = new Binding(_typecode, val);                      \
-    StringBuffer subcmd("set %s", name);                                \
-    add_to_help(subcmd.c_str(), help);                                  \
-}
-
-BIND_FUNCTIONS(TclCommand::bind_i, int, BINDING_INT);
-BIND_FUNCTIONS(TclCommand::bind_i, int16_t, BINDING_INT16);
-BIND_FUNCTIONS(TclCommand::bind_d, double, BINDING_DOUBLE);
-BIND_FUNCTIONS(TclCommand::bind_b, bool, BINDING_BOOL);
-BIND_FUNCTIONS(TclCommand::bind_addr, in_addr_t, BINDING_ADDR);
 
 void
-TclCommand::bind_s(const char* name, std::string* val,
-                   const char* initval, const char* help)
+TclCommand::bind_var(Opt* opt)
 {
-    if (initval)
-        val->assign(initval);
-    
+    const char* name = opt->longopt_;
     if (bindings_.find(name) != bindings_.end()) {
         if (Log::initialized()) {
             log_warn("warning, binding for %s already exists", name);
         }
     }
 
-    if (Log::initialized()) {
-        log_debug("creating string binding for %s -> %p", name, val);
-    }
+    bindings_[name] = opt;
 
-    bindings_[name] = new Binding(BINDING_STRING, val);
-    StringBuffer subcmd("set %s", name);
-    add_to_help(subcmd.c_str(), help);
+    // we're now strict about requiring help strings
+    ASSERT(opt->desc_ != NULL && opt->desc_[0] != '\0');
+    
+    StaticStringBuffer<256> subcmd("set %s", name);
+    if (opt->valdesc_[0]) {
+        subcmd.appendf(" <%s>", opt->valdesc_);
+    }
+    add_to_help(subcmd.c_str(), opt->desc_);
 }
 
 void
@@ -711,7 +567,7 @@ TclCommand::unbind(const char* name)
         log_debug("removing binding for %s", name);
     }
 
-    Binding* old = iter->second;
+    Opt* old = iter->second;
     bindings_.erase(iter);
 
     delete old;

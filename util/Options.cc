@@ -25,6 +25,7 @@
 
 #include "Options.h"
 #include "io/NetUtils.h"
+#include "util/StringBuffer.h"
 
 namespace oasys {
 
@@ -92,6 +93,17 @@ BoolOpt::set(const char* val, size_t len)
 }
 
 //----------------------------------------------------------------------
+void
+BoolOpt::get(StringBuffer* buf)
+{
+    if (*((bool*)valp_)) {
+        buf->appendf("true");
+    } else {
+        buf->appendf("false");
+    }
+}
+
+//----------------------------------------------------------------------
 IntOpt::IntOpt(const char* opt, int* valp,
                const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)
@@ -125,6 +137,13 @@ IntOpt::set(const char* val, size_t len)
 }
 
 //----------------------------------------------------------------------
+void
+IntOpt::get(StringBuffer* buf)
+{
+    buf->appendf("%d", *(int*)valp_);
+}
+
+//----------------------------------------------------------------------
 UIntOpt::UIntOpt(const char* opt, u_int* valp,
                  const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)
@@ -155,6 +174,53 @@ UIntOpt::set(const char* val, size_t len)
         *setp_ = true;
     
     return 0;
+}
+
+//----------------------------------------------------------------------
+void
+UIntOpt::get(StringBuffer* buf)
+{
+    buf->appendf("%u", *(u_int*)valp_);
+}
+
+//----------------------------------------------------------------------
+UInt64Opt::UInt64Opt(const char* opt, u_int64_t* valp,
+                     const char* valdesc, const char* desc, bool* setp)
+    : Opt(0, opt, valp, setp, true, valdesc, desc)
+{
+}
+
+//----------------------------------------------------------------------
+UInt64Opt::UInt64Opt(char shortopt, const char* longopt, u_int64_t* valp,
+                     const char* valdesc, const char* desc, bool* setp)
+    : Opt(shortopt, longopt, valp, setp, true, valdesc, desc)
+{
+}
+
+//----------------------------------------------------------------------
+int
+UInt64Opt::set(const char* val, size_t len)
+{
+    u_int64_t newval;
+    char* endptr = 0;
+    
+    newval = strtoull(val, &endptr, 0);
+    if (endptr != (val + len))
+        return -1;
+            
+    *((u_int64_t*)valp_) = newval;
+    
+    if (setp_)
+        *setp_ = true;
+    
+    return 0;
+}
+
+//----------------------------------------------------------------------
+void
+UInt64Opt::get(StringBuffer* buf)
+{
+    buf->appendf("%llu", U64FMT((*(u_int64_t*)valp_)));
 }
 
 //----------------------------------------------------------------------
@@ -194,6 +260,13 @@ UInt16Opt::set(const char* val, size_t len)
 }
 
 //----------------------------------------------------------------------
+void
+UInt16Opt::get(StringBuffer* buf)
+{
+    buf->appendf("%u", *(u_int16_t*)valp_);
+}
+
+//----------------------------------------------------------------------
 UInt8Opt::UInt8Opt(const char* opt, u_int8_t* valp,
                    const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)
@@ -230,6 +303,13 @@ UInt8Opt::set(const char* val, size_t len)
 }
 
 //----------------------------------------------------------------------
+void
+UInt8Opt::get(StringBuffer* buf)
+{
+    buf->appendf("%u", *(u_int8_t*)valp_);
+}
+
+//----------------------------------------------------------------------
 DoubleOpt::DoubleOpt(const char* opt, double* valp,
                      const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)
@@ -263,6 +343,13 @@ DoubleOpt::set(const char* val, size_t len)
 }
 
 //----------------------------------------------------------------------
+void
+DoubleOpt::get(StringBuffer* buf)
+{
+    buf->appendf("%f", *(double*)valp_);
+}
+
+//----------------------------------------------------------------------
 StringOpt::StringOpt(const char* opt, std::string* valp,
                      const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)
@@ -288,6 +375,12 @@ StringOpt::set(const char* val, size_t len)
     return 0;
 }
 
+//----------------------------------------------------------------------
+void
+StringOpt::get(StringBuffer* buf)
+{
+    buf->appendf("%s", ((std::string*)valp_)->c_str());
+}
 
 //----------------------------------------------------------------------
 CharBufOpt::CharBufOpt(const char* opt, char* valp, size_t* lenp, size_t buflen,
@@ -324,6 +417,13 @@ CharBufOpt::set(const char* val, size_t len)
 }
 
 //----------------------------------------------------------------------
+void
+CharBufOpt::get(StringBuffer* buf)
+{
+    buf->appendf("%.*s", (int)*lenp_, (char*)valp_);
+}
+
+//----------------------------------------------------------------------
 InAddrOpt::InAddrOpt(const char* opt, in_addr_t* valp,
                      const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)
@@ -355,6 +455,13 @@ InAddrOpt::set(const char* val, size_t len)
         *setp_ = true;
     
     return 0;
+}
+
+//----------------------------------------------------------------------
+void
+InAddrOpt::get(StringBuffer* buf)
+{
+    buf->appendf("%s", intoa(*((in_addr_t*)valp_)));
 }
 
 //----------------------------------------------------------------------
@@ -398,6 +505,22 @@ EnumOpt::set(const char* val, size_t len)
     return -1;
 }
 
+//----------------------------------------------------------------------
+void
+EnumOpt::get(StringBuffer* buf)
+{
+    size_t i = 0;
+
+    while (cases_[i].key != 0)
+    {
+        if ((*(int*)valp_) == cases_[i].val) {
+            buf->append(cases_[i].key);
+            return;
+        }
+	++i;
+    }
+}
+
 #ifdef OASYS_BLUETOOTH_ENABLED
 //----------------------------------------------------------------------
 BdAddrOpt::BdAddrOpt(const char* opt, bdaddr_t* valp,
@@ -432,6 +555,14 @@ BdAddrOpt::set(const char* val, size_t len)
 
     return 0;
 }
+
+//----------------------------------------------------------------------
+void
+BdAddrOpt::get(StringBuffer* buf)
+{
+    buf->appendf("%s", bd2str(*((bdaddr_t)valp_)));
+}
+
 #endif // OASYS_BLUETOOTH_ENABLED
 
 } // namespace oasys

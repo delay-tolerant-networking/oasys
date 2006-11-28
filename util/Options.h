@@ -28,6 +28,8 @@
 
 namespace oasys {
 
+class StringBuffer;
+
 /**
  * Base class for options. These can be used either with the Getopt
  * class for parsing argv-style declarations or with the OptParser
@@ -36,6 +38,7 @@ namespace oasys {
 class Opt {
     friend class Getopt;
     friend class OptParser;
+    friend class TclCommand;
 
 public:
     virtual ~Opt();
@@ -52,6 +55,11 @@ protected:
      * Virtual callback to set the option to the given string value.
      */
     virtual int set(const char* val, size_t len) = 0;
+    
+    /**
+     * Virtual callback to get a string version of the current value.
+     */
+    virtual void get(StringBuffer* buf) = 0;
     
     char        shortopt_;
     const char* longopt_;
@@ -95,6 +103,7 @@ public:
 
 protected:
     int set(const char* val, size_t len);
+    void get(StringBuffer* buf);
 };
 
 /**
@@ -134,6 +143,7 @@ public:
     
 protected:
     int set(const char* val, size_t len);
+    void get(StringBuffer* buf);
 };
 
 /**
@@ -173,6 +183,47 @@ public:
     
 protected:
     int set(const char* val, size_t len);
+    void get(StringBuffer* buf);
+};
+
+/**
+ * Unsigned 64-bit option class.
+ */
+class UInt64Opt : public Opt {
+public:
+    /**
+     * Basic constructor.
+     *
+     * @param opt     the option string
+     * @param valp    pointer to the value
+     * @param valdesc short description for the value 
+     * @param desc    descriptive string
+     * @param setp    optional pointer to indicate whether or not
+                      the option was set
+     */
+    UInt64Opt(const char* opt, u_int64_t* valp,
+              const char* valdesc = "", const char* desc = "",
+              bool* setp = NULL);
+    
+    /**
+     * Alternative constructor with both short and long options,
+     * suitable for getopt calls.
+     *
+     * @param shortopt  short option character
+     * @param longopt   long option string
+     * @param valp      pointer to the value
+     * @param valdesc short description for the value 
+     * @param desc      descriptive string
+     * @param setp      optional pointer to indicate whether or not
+                        the option was set
+     */
+    UInt64Opt(char shortopt, const char* longopt, u_int64_t* valp,
+              const char* valdesc = "", const char* desc = "",
+              bool* setp = NULL);
+    
+protected:
+    int set(const char* val, size_t len);
+    void get(StringBuffer* buf);
 };
 
 /**
@@ -212,6 +263,7 @@ public:
     
 protected:
     int set(const char* val, size_t len);
+    void get(StringBuffer* buf);
 };
 
 /**
@@ -249,8 +301,9 @@ public:
              const char* valdesc = "", const char* desc = "",
              bool* setp = NULL);
 
-    protected:
-        int set(const char* val, size_t len);
+protected:
+    int set(const char* val, size_t len);
+    void get(StringBuffer* buf);
 };
 
 /**
@@ -290,6 +343,7 @@ public:
     
 protected:
     int set(const char* val, size_t len);
+    void get(StringBuffer* buf);
 };
 
 /**
@@ -329,6 +383,7 @@ public:
 
 protected:
     int set(const char* val, size_t len);
+    void get(StringBuffer* buf);
 };
 
 /**
@@ -376,6 +431,7 @@ protected:
     size_t* lenp_;
     
     int set(const char* val, size_t len);
+    void get(StringBuffer* buf);
 };
 
 /**
@@ -415,6 +471,7 @@ public:
 
 protected:
     int set(const char* val, size_t len);
+    void get(StringBuffer* buf);
 };
 
 /**
@@ -463,6 +520,7 @@ public:
 
 protected:
     int set(const char* val, size_t len);
+    void get(StringBuffer* buf);
     Case* cases_;
 };
 
@@ -504,6 +562,7 @@ public:
 
 protected:
     int set(const char* val, size_t len);
+    void get(StringBuffer* buf);
 };
 #endif // OASYS_BLUETOOTH_ENABLED
 

@@ -71,20 +71,17 @@ HelpCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
         for (iter = cmdlist->begin(); iter != cmdlist->end(); iter++) {
             if (!strcmp((*iter)->name(), argv[1])) {
                 const char *help = (*iter)->help_string();
-                const char *binfo = "";
 
                 if (!help || (help && help[0] == '\0')) {
                     help = "(no help, sorry)";
                 }
 
-                StringBuffer buf;
                 if ((*iter)->hasBindings()) {
-                    buf.appendf("%s info\n\t%s", (*iter)->name(),
-                                "Lists settable parameters.\n");
-                    binfo = buf.c_str();
+                    append_resultf("%s info\n\t%s", (*iter)->name(),
+                                   "Lists settable parameters.\n\n");
                 }
 
-                resultf("%s%s", binfo, help);
+                append_result(help);
                 
                 return TCL_OK;
             }

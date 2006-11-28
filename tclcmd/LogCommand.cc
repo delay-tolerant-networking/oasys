@@ -23,8 +23,8 @@ namespace oasys {
 LogCommand::LogCommand()
     : TclCommand("log")
 {
-    bind_s("logfile", &Log::instance()->logfile_,
-           "The pathname to the logfile.");
+    bind_var(new StringOpt("logfile", &Log::instance()->logfile_,
+                           "file", "The pathname to the logfile."));
 
     add_to_help("<path> <level> <string>", 
                 "Log message string with path, level");

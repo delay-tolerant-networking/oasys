@@ -29,6 +29,7 @@ bool test_set 	= 0;
 int port 	= 10;
 int xyz 	= 50;
 double f 	= 10.5;
+u_int64_t u64   = 123456789123456789ULL;
 std::string name("name");
 
 OptParser p;
@@ -38,6 +39,7 @@ DECLARE_TEST(Init) {
     p.addopt(new IntOpt("port", &port, "<port>", "listen port"));
     p.addopt(new IntOpt("xyz",  &xyz,  "<val>", "x y z"));
     p.addopt(new DoubleOpt("f", &f, "<f>", "f"));
+    p.addopt(new UInt64Opt("u64", &u64, "<u64>", "u64"));
     p.addopt(new StringOpt("name", &name, "<name>", "app name"));
 
     return UNIT_TEST_PASSED;
@@ -52,14 +54,17 @@ DECLARE_TEST(ValidArgString) {
     CHECK_EQUAL(port, 10);
     CHECK_EQUALSTR(name.c_str(), "name");
     CHECK_EQUAL(xyz, 50);
+    CHECK_EQUAL_U64(u64, 123456789123456789ULL);
     CHECK(f == 10.5);
     
-    CHECK(p.parse("test port=100 name=mike xyz=10 f=100.4", &invalid));
+    CHECK(p.parse("test port=100 name=mike xyz=10 f=100.4 u64=9876543219876545321",
+                  &invalid));
     CHECK_EQUAL(test, true);
     CHECK_EQUAL(test_set, true);
     CHECK_EQUAL(port, 100);
     CHECK_EQUALSTR(name.c_str(), "mike");
     CHECK_EQUAL(xyz, 10);
+    CHECK_EQUAL_U64(u64, 9876543219876545321ULL);
     CHECK(f == 100.4);
 
     CHECK(p.parse("test=false"));

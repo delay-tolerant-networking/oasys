@@ -28,15 +28,17 @@
 
 #include "../compat/inttypes.h"
 #include "../debug/DebugUtils.h"
+#include "../util/Options.h"
 #include "../util/Singleton.h"
 #include "../util/StringBuffer.h"
 
 namespace oasys {
 
 // forward decls
+class Lock;
+class Opt;
 class TclCommandInterp;
 class TclCommand;
-class Lock;
 
 /**
  * A list of TclCommands
@@ -311,131 +313,21 @@ protected:
     bool do_builtins_;		///< Set to false if a module doesn't want
                                 ///< builtin commands like "set"
 
-    /**
-     * Binding type constants
-     */
-    enum type_t {
-        BINDING_INVALID = -1,
-        BINDING_INT = 1,
-        BINDING_INT16,
-        BINDING_DOUBLE, 
-        BINDING_BOOL, 
-        BINDING_STRING, 
-        BINDING_ADDR
-    };
-    
     /** 
-     * Internal structure for bindings.
+     * Type for the table of variable bindings.
      */
-    struct Binding {
-        Binding(type_t type, void* val)
-            : type_(type)
-        {
-            val_.voidval_ = val;
-        }
-
-        type_t type_;             	///< Type of the binding
-        
-        union {
-            void*	voidval_;
-            int*	intval_;
-            int16_t*	int16val_;
-            double*	doubleval_;
-            bool*	boolval_;
-            in_addr_t*	addrval_;
-            std::string* stringval_;
-        } val_; 			///< Union for value pointer
-    };
-    
-    /** 
-     * Type for the table of bindings.
-     */
-    typedef std::map<std::string, Binding*> BindingTable;
+    typedef std::map<std::string, Opt*> BindingTable;
 
     /**
      * The table of registered bindings.
      */
     BindingTable bindings_;
+
+    /**
+     * Bind an option to the set command.
+     */
+    void bind_var(Opt* opt);
    
-    /**
-     * Bind an integer to the set command
-     */
-    void bind_i(const char* name, int* val, const char *help = NULL);
-    void bind_i(const char* name, int* val, int initval,
-                const char* help = NULL);
-
-    /**
-     * Bind a 16 bit integer to the set command.
-     */
-    void bind_i(const char* name, int16_t* val, const char *help = NULL);
-    void bind_i(const char* name, int16_t* val, int16_t initval,
-                const char* help = NULL);
-    
-    ///@{
-    /**
-     * Unsigned / signed aliases for other integer types.
-     */
-    void bind_i(const char* name, unsigned int* val,
-                const char* help = NULL)
-    {
-        bind_i(name, (int*)val, help);
-    }
-
-    void bind_i(const char* name, unsigned int* val, unsigned int initval,
-                const char* help = NULL)
-    {
-        bind_i(name, (int*)val, initval, help);
-    }
-    
-    void bind_i(const char* name, u_int16_t* val,
-                const char* help = NULL)
-    {
-        bind_i(name, (int16_t*)val, help);
-    }
-
-    void bind_i(const char* name, u_int16_t* val, u_int16_t initval,
-                const char* help = NULL)
-    {
-        bind_i(name, (int16_t*)val, initval, help);
-    }
-    
-    ///@}
-    
-    /**
-     * Bind a double to the set command
-     */
-    void bind_d(const char* name, double* val, const char* help = NULL);
-    void bind_d(const char* name, double* val, double initval,
-                const char* help = NULL);
-
-    /**
-     * Bind a boolean to the set command
-     */
-    void bind_b(const char* name, bool* val, const char* help = NULL);
-    void bind_b(const char* name, bool* val, bool initval,
-                const char* help = NULL);
-    
-    /**
-     * Bind a string to the set command
-     */
-    void bind_s(const char* name, std::string* str,
-                const char* initval, const char* help);
-
-    void bind_s(const char* name, std::string* str,
-                const char* help = NULL)
-    {
-        return bind_s(name, str, NULL, help);
-    }
-
-    /**
-     * Bind an ip addr for the set command, allowing the user to pass
-     * a hostname and/or a dotted quad style address
-     */
-    void bind_addr(const char* name, in_addr_t* addrp,
-                   const char* help = NULL);
-    void bind_addr(const char* name, in_addr_t* addrp,
-                   in_addr_t initval, const char* help = NULL);
-
     /**
      * Unbind a variable.
      */
