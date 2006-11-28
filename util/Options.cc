@@ -560,7 +560,7 @@ BdAddrOpt::set(const char* val, size_t len)
 void
 BdAddrOpt::get(StringBuffer* buf)
 {
-    buf->appendf("%s", bd2str(*((bdaddr_t)valp_)));
+    buf->appendf("%s", bd2str(*((bdaddr_t*)valp_)));
 }
 
 #endif // OASYS_BLUETOOTH_ENABLED
