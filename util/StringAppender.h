@@ -31,9 +31,13 @@ namespace oasys {
  */
 class StringAppender {
 public:
+    /*!
+     * @param buf  Buffer to append strings to.
+     * @param size Size of buf. This includes room for the terminating '\0'.
+     */
     StringAppender(char* buf, size_t size);
 
-    /**
+    /*!
      * Append the string to the tail of the buffer.
      *
      * @param str string data
@@ -42,7 +46,7 @@ public:
      */
     size_t append(const char* str, size_t len = 0);
 
-    /**
+    /*!
      * Append the string to the tail of the buffer.
      *
      * @param str string data
@@ -53,7 +57,7 @@ public:
         return append(str.data(), str.length());
     }
 
-    /**
+    /*!
      * Append the character to the tail of the buffer.
      *
      * @param c the character
@@ -61,7 +65,7 @@ public:
      */
     size_t append(char c);
 
-    /**
+    /*!
      * Formatting append function.
      *
      * @param fmt the format string
@@ -69,7 +73,7 @@ public:
      */
     size_t appendf(const char* fmt, ...) PRINTFLIKE(2, 3);
 
-    /**
+    /*!
      * Formatting append function.
      *
      * @param fmt the format string
@@ -77,10 +81,15 @@ public:
      * @return the number of bytes written
      */
     size_t vappendf(const char* fmt, va_list ap);
+
+    /*!
+     * @return resulting length of the buffer.
+     */
+    size_t length() { return len_; }
     
 private:
     char*  cur_;
-    size_t size_;
+    size_t remaining_;
     size_t len_;
 };
 
