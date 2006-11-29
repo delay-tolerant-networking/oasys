@@ -133,6 +133,7 @@ UTIL_SRCS :=					\
 	util/Regex.cc				\
 	util/Singleton.cc			\
 	util/StreamBuffer.cc			\
+	util/StringAppender.cc			\
 	util/StringBuffer.cc			\
 	util/StringUtils.cc			\
 	util/TextCode.cc			\
