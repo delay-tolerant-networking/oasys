@@ -37,6 +37,7 @@ TESTS += \
 	spin-lock-test				\
 	stack-trace-test			\
 	static-buffer-test			\
+	string-appender-test			\
 	string-hash-test			\
 	string-tokenize-test			\
 	text-code-test				\
