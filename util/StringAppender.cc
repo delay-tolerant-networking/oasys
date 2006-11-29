@@ -5,23 +5,25 @@ namespace oasys {
 
 //----------------------------------------------------------------------------
 StringAppender::StringAppender(char* buf, size_t size)
-    : cur_(buf), remaining_(size), len_(0)
+    : cur_(buf), remaining_(size), len_(0), desired_(0)
 {}
 
 //----------------------------------------------------------------------------
 size_t 
 StringAppender::append(const char* str, size_t len)
 {
-    if (remaining_ == 0) 
-    {
-        return 0;
-    }
-    
     if (len == 0)
     {
         len = strlen(str);
     }
 
+    desired_ += len;
+
+    if (remaining_ == 0) 
+    {
+        return 0;
+    }
+    
     len = std::min(len, remaining_ - 1);
     memcpy(cur_, str, len);
     cur_[len] = '\0';
@@ -39,6 +41,8 @@ StringAppender::append(const char* str, size_t len)
 size_t 
 StringAppender::append(char c)
 {
+    ++desired_;
+
     if (remaining_ <= 1) 
     {
         return 0;
@@ -71,12 +75,15 @@ StringAppender::appendf(const char* fmt, ...)
 size_t 
 StringAppender::vappendf(const char* fmt, va_list ap)
 {
+    size_t ret = vsnprintf(cur_, remaining_, fmt, ap);
+
+    desired_ += ret;
+
     if (remaining_ == 0) 
     {
         return 0;
     }
 
-    size_t ret = vsnprintf(cur_, remaining_, fmt, ap);
     ret = std::min(ret, remaining_ - 1);
 
     cur_       += ret;

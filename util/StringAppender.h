@@ -86,11 +86,18 @@ public:
      * @return resulting length of the buffer.
      */
     size_t length() { return len_; }
+
+    /*!
+     * @return Length of the whole string, if there was infinite
+     * space.
+     */
+    size_t desired_length() { return desired_; }
     
 private:
     char*  cur_;
     size_t remaining_;
     size_t len_;
+    size_t desired_;
 };
 
 } // namespace oasys

@@ -54,27 +54,38 @@ DECLARE_TEST(Test1) {
     CHECK_EQUAL(sa.append("hello"), 5);
     CHECK_EQUALSTR("hello|**************", convert_buf());
     CHECK_EQUAL(sa.length(), 5);
+    CHECK_EQUAL(sa.desired_length(), 5);
 
     CHECK_EQUAL(sa.append(' '), 1);
     CHECK_EQUALSTR("hello |*************", convert_buf());
     CHECK_EQUAL(sa.length(), 6);
+    CHECK_EQUAL(sa.desired_length(), 6);
 
     size_t ret = sa.appendf("%d", 12345);
     CHECK_EQUAL(ret, 5);
     CHECK_EQUALSTR("hello 12345|********", convert_buf());
     CHECK_EQUAL(sa.length(), 11);
+    CHECK_EQUAL(sa.desired_length(), 11);
     
     ret = sa.appendf(" %d %s", 12345, "hurdy gurdy");
     CHECK_EQUAL(ret, 8);
     CHECK_EQUALSTR("hello 12345 12345 h|", convert_buf());
-    CHECK_EQUAL(sa.length(), SIZE-1);
+    CHECK_EQUAL(sa.length(), SIZE - 1);
+    CHECK_EQUAL(sa.desired_length(), 29);
 
     CHECK_EQUAL(sa.append("hello"), 0);
+    CHECK_EQUAL(sa.length(), SIZE - 1);
+    CHECK_EQUAL(sa.desired_length(), 34);
+
     CHECK_EQUAL(sa.append('c'), 0);
+    CHECK_EQUAL(sa.length(), SIZE - 1);
+    CHECK_EQUAL(sa.desired_length(), 35);
+
     ret = sa.appendf("hello %d", 1234);
     CHECK_EQUAL(ret, 0);
     CHECK_EQUALSTR("hello 12345 12345 h|", convert_buf());
     CHECK_EQUAL(sa.length(), SIZE-1);
+    CHECK_EQUAL(sa.desired_length(), 45);
 
     return UNIT_TEST_PASSED;
 }
