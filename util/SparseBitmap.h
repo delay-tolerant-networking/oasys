@@ -19,10 +19,12 @@
 
 #include <vector>
 #include "config.h"
+
 #include "../debug/DebugUtils.h"
 #include "../debug/Formatter.h"
 #include "../serialize/Serialize.h"
 #include "../serialize/SerializableVector.h"
+#include "../util/StringAppender.h"
 
 namespace oasys {
 
