@@ -279,7 +279,7 @@ XercesXMLUnmarshal::process(const char *name, bool *b)
 }
 
 void
-XercesXMLUnmarshal::process(const char *name, u_char *bp, size_t len)
+XercesXMLUnmarshal::process(const char *name, u_char *bp, u_int32_t len)
 {
     if (len < 2) return;
 
@@ -297,10 +297,10 @@ XercesXMLUnmarshal::process(const char *name, u_char *bp, size_t len)
 
 void
 XercesXMLUnmarshal::process(const char* name, u_char** bp,
-                            size_t* lenp, int flags)
+                            u_int32_t* lenp, int flags)
 {
     if (flags & Serialize::ALLOC_MEM) {
-        size_t len = *lenp;
+        u_int32_t len = *lenp;
         if (flags & Serialize::NULL_TERMINATED)
             len += 1;
         *bp = static_cast<u_char*>(malloc(len));

@@ -90,9 +90,9 @@ public:
     virtual void process(const char *name, u_int8_t *i);
     virtual void process(const char *name, bool *b);
     virtual void process(const char *name, u_char *bp,
-                         size_t len);
+                         u_int32_t len);
     virtual void process(const char* name, u_char** bp,
-                         size_t* lenp, int flags);
+                         u_int32_t* lenp, int flags);
     virtual void process(const char *name, std::string *s);
 
 protected:
