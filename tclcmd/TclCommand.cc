@@ -349,7 +349,7 @@ void
 TclCommandInterp::resultf(const char* fmt, ...)
 {
     StringBuffer buf;
-    VAPPENDF(buf, fmt);
+    STRINGBUFFER_VAPPENDF(buf, fmt);
     set_result(buf.c_str());
 }
 
@@ -357,7 +357,7 @@ void
 TclCommandInterp::append_resultf(const char* fmt, ...)
 {
     StringBuffer buf;
-    VAPPENDF(buf, fmt);
+    STRINGBUFFER_VAPPENDF(buf, fmt);
     append_result(buf.c_str());
 }
 
@@ -455,7 +455,7 @@ void
 TclCommand::resultf(const char* fmt, ...)
 {
     StringBuffer buf;
-    VAPPENDF(buf, fmt);
+    STRINGBUFFER_VAPPENDF(buf, fmt);
     TclCommandInterp::instance()->set_result(buf.c_str());
 }
 
@@ -463,7 +463,7 @@ void
 TclCommand::append_resultf(const char* fmt, ...)
 {
     StringBuffer buf;
-    VAPPENDF(buf, fmt);
+    STRINGBUFFER_VAPPENDF(buf, fmt);
     TclCommandInterp::instance()->append_result(buf.c_str());
 }
 
