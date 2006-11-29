@@ -117,7 +117,7 @@ public:
     /**
      * Formatting append function. Note that this may not actually
      * format the full string if there's not enough space in the
-     * buffer, so the VAPPENDF macro below should be used in most
+     * buffer, so the STRINGBUFFER_VAPPENDF macro below should be used in most
      * cases instead.
      *
      * The lenp parameter can be used to pass in the length that the
@@ -176,7 +176,7 @@ private:
  * va_list, this wrapper macro is needed to wrap multiple calls to
  * vsnprintf in a varargs function.
  */
-#define VAPPENDF(_stringbuf, _fmt)                              \
+#define STRINGBUFFER_VAPPENDF(_stringbuf, _fmt)                              \
     do {                                                        \
         size_t ret;                                             \
         size_t len = 0;                                         \
@@ -234,7 +234,7 @@ StaticStringBuffer<_sz>::StaticStringBuffer(const char* fmt, ...)
 {
     if (fmt != 0) 
     {
-        VAPPENDF(*this, fmt);
+        STRINGBUFFER_VAPPENDF(*this, fmt);
     }
 }
 

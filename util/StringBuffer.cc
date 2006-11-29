@@ -48,7 +48,7 @@ StringBuffer::StringBuffer(const char* fmt, ...)
 
     if (fmt != 0) 
     {
-        VAPPENDF(*this, fmt);
+        STRINGBUFFER_VAPPENDF(*this, fmt);
     }
 }
 
@@ -172,7 +172,7 @@ size_t
 StringBuffer::appendf(const char* fmt, ...)
 {
     size_t oldlen = buf_->len();
-    VAPPENDF(*this, fmt);
+    STRINGBUFFER_VAPPENDF(*this, fmt);
     return buf_->len() - oldlen;
 }
 
