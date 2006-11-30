@@ -314,7 +314,7 @@ TclCommandInterp::tcl_cmd(ClientData client_data, Tcl_Interp* interp,
     {
         if (objc >= 2) {
             const char* cmd = Tcl_GetStringFromObj(objv[1], NULL);
-            if (strcmp(cmd, "info") == 0) {
+            if (strcmp(cmd, "cmd_info") == 0) {
                 return command->cmd_info(interp);
             }
 

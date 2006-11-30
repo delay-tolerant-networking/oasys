@@ -77,7 +77,7 @@ HelpCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
                 }
 
                 if ((*iter)->hasBindings()) {
-                    append_resultf("%s info\n\t%s", (*iter)->name(),
+                    append_resultf("%s cmd_info\n\t%s", (*iter)->name(),
                                    "Lists settable parameters.\n\n");
                 }
 
