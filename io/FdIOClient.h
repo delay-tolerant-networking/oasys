@@ -33,6 +33,12 @@ public:
     //! @param intr Optional notifier to use to interrupt blocked I/O
     FdIOClient(int fd, Notifier* intr = 0);
 
+    //! Explicitly set the file descriptor
+    void set_fd(int fd) { fd_ = fd; }
+
+    //! Accessor for the file descriptor
+    int fd() { return fd_; }
+
     //! @{ Virtual from IOClient
     virtual int read(char* bp, size_t len);
     virtual int readv(const struct iovec* iov, int iovcnt);
