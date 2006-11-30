@@ -110,6 +110,24 @@ public:
     }
 
     /*!
+     * Helper class to unpin a file descriptor at the end of a scope.
+     */
+    class ScopedUnpin {
+    public:
+        ScopedUnpin(OpenFdCache* cache, const _Key& key)
+            : cache_(cache), key_(key) {}
+
+        ~ScopedUnpin()
+        {
+            cache_->unpin(key_);
+        }
+
+    private:
+        OpenFdCache* cache_;
+        _Key         key_;
+    };
+
+    /*!
      * Put an fd in the file cache which may evict unpinned fds. Also
      * pin the fd that was just put into the cache.
      * 
