@@ -15,6 +15,7 @@
 #
 
 TESTS += \
+	alist-test				\
 	atomic-test				\
 	berkeley-db-test			\
 	buffer-test				\
