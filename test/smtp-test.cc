@@ -66,6 +66,32 @@ public:
     SMTPHandler* new_handler() { return new TestSMTPHandler(); }
 };
 
+int check_msgs() {
+    int errno_;
+    const char* strerror_;
+    
+    CHECK(ml.size() == 3);
+
+    for (int i = 0; i < 3; ++i) {
+        CHECK_EQUALSTR(ml[i].from_.c_str(), msgs[i].from_.c_str());
+        CHECK_EQUAL(ml[i].to_.size(), msgs[i].to_.size());
+        CHECK_EQUAL(ml[i].to_.size(), 2);
+        
+        CHECK_EQUALSTR(ml[i].to_[0].c_str(), msgs[i].to_[0].c_str());
+        CHECK_EQUALSTR(ml[i].to_[1].c_str(), msgs[i].to_[1].c_str());
+
+        // nice hack mike...
+        if (ml[i].msg_.length() > 4 && ml[i].msg_.substr(0, 4) == "MIME") {
+            // no comparison
+        } else {
+            CHECK_EQUALSTR(ml[i].msg_.c_str(), msgs[i].msg_.c_str());
+        }
+    }
+
+    ml.clear();
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TEST(SmtpPipe) {
     int pipe1[2];
     int pipe2[2];
@@ -97,7 +123,7 @@ DECLARE_TEST(SmtpPipe) {
     close(pipe1[0]);
     close(pipe2[1]);
     
-    return UNIT_TEST_PASSED;
+    return check_msgs();
 }
 
 TestSMTPFactory f;
@@ -136,54 +162,33 @@ DECLARE_TEST(SmtpSockets) {
     c.close();
     session_done->wait();
 
-    return UNIT_TEST_PASSED;
+    return check_msgs();
 }
 
 DECLARE_TEST(SmtpPython) {
     CHECK(system("python ./smtp-test-send.py") == 0);
     session_done->wait();
-    return UNIT_TEST_PASSED;
+    return check_msgs();
 }
 
 DECLARE_TEST(SmtpTcl) {
-    CHECK(system("tclsh ./smtp-test-send.tcl") == 0);
-    session_done->wait();
-    return UNIT_TEST_PASSED;
-}
-
-DECLARE_TEST(CheckMsgs) {
-    CHECK(ml.size() == 3);
-
-    for (int i = 0; i < 3; ++i) {
-        CHECK_EQUALSTR(ml[i].from_.c_str(), msgs[i].from_.c_str());
-        CHECK_EQUAL(ml[i].to_.size(), msgs[i].to_.size());
-        CHECK_EQUAL(ml[i].to_.size(), 2);
-        
-        CHECK_EQUALSTR(ml[i].to_[0].c_str(), msgs[i].to_[0].c_str());
-        CHECK_EQUALSTR(ml[i].to_[1].c_str(), msgs[i].to_[1].c_str());
-
-        // nice hack mike...
-        if (ml[i].msg_.length() > 4 && ml[i].msg_.substr(0, 4) == "MIME") {
-            // no comparison
-        } else {
-            CHECK_EQUALSTR(ml[i].msg_.c_str(), msgs[i].msg_.c_str());
-        }
+    int status;
+    CHECK((status = system("tclsh ./smtp-test-send.tcl")) == 0 ||
+          WEXITSTATUS(status) == 99);
+    if (status == 0) {
+        session_done->wait();
+        return check_msgs();
+    } else {
+        return UNIT_TEST_PASSED;
     }
-
-    ml.clear();
-    return UNIT_TEST_PASSED;
 }
 
 DECLARE_TESTER(Tester) {
     ADD_TEST(StartServer);
     ADD_TEST(SmtpPipe);
-    ADD_TEST(CheckMsgs);
     ADD_TEST(SmtpSockets);
-    ADD_TEST(CheckMsgs);
     ADD_TEST(SmtpPython);
-    ADD_TEST(CheckMsgs);
     ADD_TEST(SmtpTcl);
-    ADD_TEST(CheckMsgs);
     ADD_TEST(StopServer);
 }
 

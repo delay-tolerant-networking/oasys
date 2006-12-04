@@ -17,10 +17,13 @@
 #
 
 
-
-package require Tcl
-package require mime
-package require smtp
+if [catch {
+    package require Tcl
+    package require mime
+    package require smtp
+} err] {
+    exit 99
+}
 
 set msg0 "line 01: This is the body of the message
 line 02: This is the body of the message
