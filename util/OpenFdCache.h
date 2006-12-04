@@ -182,6 +182,8 @@ public:
      */
     void close(const _Key& key) 
     {
+        ScopeLock l(&lock_, "OpenFdCache::close");
+        
         typename FdMap::iterator i = open_fds_map_.find(key);
 
         if (i == open_fds_map_.end()) 
@@ -200,6 +202,8 @@ public:
      * Close and release all of the cached fds.
      */
     void close_all() {
+        ScopeLock l(&lock_, "OpenFdCache::close_all");
+        
         log_debug("There were %u open fds upon close.", open_fds_.size());
         
         for (typename FdList::iterator i = open_fds_.begin(); 
