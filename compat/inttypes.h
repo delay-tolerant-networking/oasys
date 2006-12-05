@@ -69,10 +69,6 @@ typedef unsigned __int64 uint64_t;
  * On 64 bit platforms, a u_int64_t can't be formatted as %llu since
  * it's not a long long int. This macro adds a cast where needed.
  */
-#ifdef __amd64
 #define U64FMT(x) static_cast<long long unsigned int>(x)
-#else
-#define U64FMT(x) x
-#endif
 
 #endif /* _OASYS_INTTYPES_H_ */
