@@ -140,7 +140,7 @@ namespace eval tell {
 	# socket proactively since we expect the other side to shut
 	# down as well
 	if {[lindex $cmd 0] == "shutdown"} {
-	    close_socket $host $port
+	    wait_for_close $host $port
 	}
 
 	if {$cmd_error == 0 || $result == ""} {
@@ -176,6 +176,51 @@ namespace eval tell {
 	}
 	
 	unset tell::sockets($host:$port)
+    }
+
+    proc wait_for_eof {host port} {
+        global tell::sockets tell::tell_verbose
+        if {$tell_verbose} {
+            puts "tell::wait_for_eof $host:$port"
+        }
+
+        set ignored [gets $tell::sockets($host:$port)]
+
+        if {![eof $tell::sockets($host:$port)]} {
+            puts "tell error: wait_for_eof got data on socket"
+        }
+
+        close_socket $host $port
+    }
+
+    proc wait_for_close {host port {timeout 30000}} {
+	global tell::sockets tell::tell_verbose
+
+	if {$tell_verbose} {
+	    puts "tell:wait_for_close $host:$port"
+	}
+        
+        if {! [info exists tell::sockets($host:$port)]} {
+            if {$tell_verbose} {
+                puts "tell:wait_for_close $host:$port socket doesn't exist"
+            }
+            return
+        }
+        
+	catch {
+	    fileevent $tell::sockets($host:$port) readable \
+                    "tell::wait_for_eof $host $port"
+	}
+
+        do_until "tell::wait_for_close $host:$port" $timeout {
+            if {! [info exists tell::sockets($host:$port)] } {
+                if {$tell_verbose} {
+                    puts "tell::wait_for_close eof on socket"
+                }
+                break
+            }
+            after 1000
+        }
     }
     
     proc response {sock host port} {
