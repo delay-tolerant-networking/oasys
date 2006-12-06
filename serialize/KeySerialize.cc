@@ -80,7 +80,7 @@ KeyMarshal::process(const char* name,
 void 
 KeyMarshal::process(const char* name,
                     u_char*     bp,
-                    u_int32_t      len)
+                    u_int32_t   len)
 {
     (void)name;
     if (error()) 
@@ -96,7 +96,7 @@ KeyMarshal::process(const char* name,
 void 
 KeyMarshal::process(const char* name,
                     u_char**    bp,
-                    u_int32_t*     lenp,
+                    u_int32_t*  lenp,
                     int         flags)
 {
     (void)name;
@@ -173,6 +173,7 @@ KeyMarshal::process_int(u_int32_t i, u_int32_t size, const char* format)
     buf_->set_len(buf_->len() + size);
 }
 
+//////////////////////////////////////////////////////////////////////////////
 void
 KeyMarshal::process_int64(u_int64_t i, u_int32_t size, const char* format)
 {
@@ -185,6 +186,7 @@ KeyMarshal::process_int64(u_int64_t i, u_int32_t size, const char* format)
     buf_->set_len(buf_->len() + size);
 }
 
+//////////////////////////////////////////////////////////////////////////////
 void
 KeyMarshal::border()
 {
