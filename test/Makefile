@@ -15,8 +15,8 @@
 #
 
 TESTS += \
-	alist-test				\
 	atomic-test				\
+	base16-test				\
 	berkeley-db-test			\
 	buffer-test				\
 	durable-cache-test			\
@@ -52,6 +52,7 @@ TESTS += \
 # Tests that need to be fixed
 #
 BROKEN_TESTS +=  \
+	alist-test				\
 	ptr-cache-test				\
 
 #

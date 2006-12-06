@@ -117,6 +117,7 @@ THREAD_SRCS :=					\
 	thread/Timer.cc				\
 
 UTIL_SRCS :=					\
+	util/Base16.cc				\
 	util/CRC32.cc				\
 	util/ExpandableBuffer.cc		\
 	util/Getopt.cc				\
