@@ -13,8 +13,8 @@ public:
      *
      * @return Number of bytes encoded.
      */
-    static size_t encode(char* in, size_t in_len, 
-                         char* out16, size_t out16_len);
+    static size_t encode(const u_int8_t* in, size_t in_len, 
+                         u_int8_t* out16, size_t out16_len);
     
     /*!
      * Decode the input from Base16. out should be 1/2 the size of
@@ -22,8 +22,8 @@ public:
      *
      * @return Number of bytes decoded.
      */
-    static size_t decode(char* in16, size_t in16_len, 
-                         char* out, size_t out_len);
+    static size_t decode(const u_int8_t* in16, size_t in16_len, 
+                         u_int8_t* out, size_t out_len);
 };
 
 };

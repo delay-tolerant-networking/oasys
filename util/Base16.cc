@@ -4,9 +4,9 @@ namespace oasys {
 
 //------------------------------------------------------------------------------
 size_t 
-Base16::encode(char* in, size_t in_len, char* out16, size_t out16_len)
+Base16::encode(const u_int8_t* in, size_t in_len, u_int8_t* out16, size_t out16_len)
 {
-    const char* encoding = "0123456789ABCDEF";
+    const u_int8_t* encoding = reinterpret_cast<const u_int8_t*>("0123456789ABCDEF");
 
     if (in_len * 2 > out16_len) 
     {
@@ -24,7 +24,7 @@ Base16::encode(char* in, size_t in_len, char* out16, size_t out16_len)
     
 //------------------------------------------------------------------------------
 size_t 
-Base16::decode(char* in16, size_t in16_len, char* out, size_t out_len)
+Base16::decode(const u_int8_t* in16, size_t in16_len, u_int8_t* out, size_t out_len)
 {
     if (in16_len/2 > out_len) 
     {
