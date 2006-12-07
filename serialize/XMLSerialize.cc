@@ -85,7 +85,7 @@ XMLMarshal::process(const char *name, u_int64_t *i)
 {
     StringBuffer buf;
     buf.appendf("%llu", U64FMT(*i));
-    current_node_->add_attr(name, buf.data());
+    current_node_->add_attr(name, std::string(buf.data()));
 }
 
 void
@@ -93,7 +93,7 @@ XMLMarshal::process(const char *name, u_int32_t *i)
 {
     StringBuffer buf;
     buf.appendf("%u", *i);
-    current_node_->add_attr(name, buf.data());
+    current_node_->add_attr(name, std::string(buf.data()));
 }
 
 void
@@ -101,7 +101,7 @@ XMLMarshal::process(const char *name, u_int16_t *i)
 {
     StringBuffer buf;
     buf.appendf("%hu", *i);
-    current_node_->add_attr(name, buf.data());
+    current_node_->add_attr(name, std::string(buf.data()));
 }
 
 void
@@ -109,7 +109,7 @@ XMLMarshal::process(const char *name, u_int8_t *i)
 {
     StringBuffer buf;
     buf.appendf("%hhu", *i);
-    current_node_->add_attr(name, buf.data());
+    current_node_->add_attr(name, std::string(buf.data()));
 }
 
 void

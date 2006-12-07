@@ -213,6 +213,26 @@ XercesXMLUnmarshal::next_elem()
     }
 }
 
+void 
+XercesXMLUnmarshal::process(const char *name, SerializableObject* object)
+{
+    const char *next =  next_elem();
+
+    // if there are no more elements, just return
+    if (next == 0) 
+        return;
+
+    // check that we actually have the right child, otherwise return
+    if (strcmp(name, next) != 0) {
+        log_warn("unexpected element found. Expected: %s; found: %s",
+                 name, next);
+        signal_error();
+        return;
+    }
+
+    object->serialize(this);
+}
+
 void
 XercesXMLUnmarshal::process(const char *name, u_int64_t *i)
 {
