@@ -173,6 +173,26 @@ hex2str(const u_char* bp, size_t len)
     return ret;
 }
 
+//----------------------------------------------------------------------
+/**
+ * A hex2str variant with a char*
+ */
+inline void
+hex2str(std::string* str, const char* bp, size_t len)
+{
+    return hex2str(str, reinterpret_cast<const u_char*>(bp), len);
+}
+
+//----------------------------------------------------------------------
+/**
+ * A hex2str variant with a char*
+ */
+inline std::string
+hex2str(const char* bp, size_t len)
+{
+    return hex2str(reinterpret_cast<const u_char*>(bp), len);
+}
+
 //----------------------------------------------------------------------------
 /**
  * Parse a hex string into a binary buffer. Results undefined if the
