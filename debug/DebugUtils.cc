@@ -18,4 +18,10 @@
 
 void
 oasys::Breaker::break_here()
+{
+    oasys_break();
+}
+
+void 
+oasys_break() 
 {}

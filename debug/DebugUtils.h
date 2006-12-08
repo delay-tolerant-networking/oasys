@@ -143,6 +143,10 @@ public:
 
 } // namespace oasys
 
+//! This is outside because it's annoying to type such a long name in
+//! gdb
+void oasys_break();
+
 #include "../memory/Memory.h"
 
 #endif /* _OASYS_DEBUG_UTILS_H_ */
