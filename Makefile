@@ -27,6 +27,7 @@ COMPAT_SRCS :=					\
 	compat/getopt_long.c			\
 	compat/inet_aton.c			\
 	compat/editline_compat.c		\
+	compat/xdr_int64_compat.c		\
 
 DEBUG_SRCS :=					\
 	debug/DebugUtils.cc			\
@@ -201,6 +202,9 @@ endif
 #
 # Special override rules for objects that can't use the default build options
 #
+compat/xdr_int64_compat.o: compat/xdr_int64_compat.c
+	$(CC) $(CPPFLAGS) $(DEBUG) $(OPTIMIZE) $(PROFILE) -c $< -o $@
+
 debug/gdtoa-%.o: debug/gdtoa-%.c
 	$(CC) -I./debug -g -DINFNAN_CHECK -c $< -o $@
 
