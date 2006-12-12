@@ -130,8 +130,7 @@ public:
     void serialize(SerializeAction* a)
     {
         u_int32_t len = 0;
-        a->process(name_.c_str(), 
-		   reinterpret_cast<u_char**>(&str_), &len,
+        a->process(name_.c_str(), &str_, &len,
 		   Serialize::NULL_TERMINATED | Serialize::ALLOC_MEM);
         free_mem_ = true;
     }
@@ -167,8 +166,7 @@ public:
     // virtual from SerializableObject
     void serialize(SerializeAction* a)
     {
-	a->process("bytes", (u_char**)&buf_,
-                   &size_, Serialize::ALLOC_MEM);
+	a->process("bytes", &buf_, &size_, Serialize::ALLOC_MEM);
 
         if (a->action_code() == Serialize::UNMARSHAL) {
             own_buf_ = true;

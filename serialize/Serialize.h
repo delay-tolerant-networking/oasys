@@ -276,6 +276,14 @@ public:
     {
         process(name, (u_char*)bp, len);
     }
+
+    virtual void process(const char* name, char** bp,
+                         u_int32_t* lenp, int flags)
+    {
+        process(name, (u_char**)bp, lenp, flags);
+    }
+
+    
     /// @}
 
     /** Set a log target for verbose serialization */
