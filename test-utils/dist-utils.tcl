@@ -52,7 +52,6 @@ proc get_rundir {hostname id} {
 # is the same
 # 
 # @param manifest_list List of manifest files
-# @param basedir       Basedir from which the files are taken
 # @param subst         A list of mappings to be done in the 
 #                      manifests, e.g. { exe stripped }
 # @param strip         Strip ELF executables to save transmission time
@@ -64,7 +63,7 @@ proc get_rundir {hostname id} {
 # { D remote-directory }
 #
 
-proc create {manifest basedir subst strip verbose} {
+proc create {manifest subst strip verbose} {
     global env opt
     # Somehow these /tmp/distrun.tcl dirs seem to leak if they're
     # uniquified by pid, so instead we just use the username
@@ -96,9 +95,9 @@ proc create {manifest basedir subst strip verbose} {
 		    exec mkdir -p "$tmpdir/$dir"
 		}
 		if {$verbose} {
-		    puts "% $basedir/$src -> $tmpdir/$dst"
+		    puts "% $src -> $tmpdir/$dst"
 		}
-		exec cp "$basedir/$src" "$tmpdir/$dst"
+		exec cp "$src" "$tmpdir/$dst"
 
 		if { $strip && [file executable $tmpdir/$dst] } {
 		    # This should be safe, strip bails if it's not an exe
@@ -128,18 +127,17 @@ proc create {manifest basedir subst strip verbose} {
 #
 # @param manifest_list List of manifest files
 # @param node_list     List of destination node ids
-# @param basedir       Basedir from which the files are taken
 # @param subst         A list of mappings to be done in the 
 #                      manifests, e.g. { exe stripped }
 # @param strip         Strip executables in the distribution
 # @param verbose       Print out what is happening
 #
     
-proc files {manifest_list node_list basedir subst strip {verbose 0}} {
+proc files {manifest_list node_list subst strip {verbose 0}} {
     global ::dist::distdirs ::dist::cleanup_handler opt
     global net::host
 
-    set distdir [dist::create $manifest_list $basedir $subst $strip $verbose]
+    set distdir [dist::create $manifest_list $subst $strip $verbose]
     set dist::distdirs(-1) $distdir
 
     if {$opt(dry_run)} {

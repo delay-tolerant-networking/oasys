@@ -250,7 +250,7 @@ proc init {argv} {
 	puts "* Distributing files"
     }
 
-    dist::files $manifest::manifest [net::nodelist] [pwd] \
+    dist::files $manifest::manifest [net::nodelist] \
 	$manifest::subst $opt(strip) $opt(verbose)
 
     if {$opt(dry_run)} {
