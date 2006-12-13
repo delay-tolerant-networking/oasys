@@ -130,7 +130,8 @@ DECLARE_TEST(Slow) {
 
     CHECK_EQUAL(total, nsecs);
 
-    safe_usleep(1000000);
+    // and one more for good measure
+    safe_usleep(1010000);
     CHECK(t.drain(1));
 
     return UNIT_TEST_PASSED;
