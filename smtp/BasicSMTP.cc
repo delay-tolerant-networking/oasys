@@ -58,7 +58,7 @@ BasicSMTPSender::get_DATA(const std::string** data)
 int
 BasicSMTPSender::smtp_error(int code)
 {
-    log_err("/oasys/smtp-sender", "unexpected error %d", code);
+    log_err_p("/oasys/smtp-sender", "unexpected error %d", code);
     return -1;
 }
 

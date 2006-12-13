@@ -568,14 +568,14 @@ IO::get_nonblocking(int fd, bool *nonblockingp, const char* log)
     ASSERT(nonblockingp);
     
     if ((flags = fcntl(fd, F_GETFL)) < 0) {
-        if (log) log_debug(log, "get_nonblocking: fcntl GETFL err %s",
-                           strerror(errno));
+        if (log) log_debug_p(log, "get_nonblocking: fcntl GETFL err %s",
+                             strerror(errno));
         return -1;
     }
 
     *nonblockingp = (flags & O_NONBLOCK);
-    if (log) log_debug(log, "get_nonblocking: %s mode",
-                       *nonblockingp ? "nonblocking" : "blocking");
+    if (log) log_debug_p(log, "get_nonblocking: %s mode",
+                         *nonblockingp ? "nonblocking" : "blocking");
     return 0;
 }
 
@@ -587,8 +587,8 @@ IO::set_nonblocking(int fd, bool nonblocking, const char* log)
     bool already = 0;
     
     if ((flags = fcntl(fd, F_GETFL)) < 0) {
-        if (log) log_debug(log, "set_nonblocking: fcntl GETFL err %s",
-                           strerror(errno));
+        if (log) log_debug_p(log, "set_nonblocking: fcntl GETFL err %s",
+                             strerror(errno));
         return -1;
     }
     
@@ -608,15 +608,15 @@ IO::set_nonblocking(int fd, bool nonblocking, const char* log)
     }
     
     if (fcntl(fd, F_SETFL, flags) < 0) {
-        if (log) log_debug(log, "set_nonblocking: fcntl SETFL err %s",
-                           strerror(errno));
+        if (log) log_debug_p(log, "set_nonblocking: fcntl SETFL err %s",
+                             strerror(errno));
         return -1;
     }
 
-  done:
-    if (log) log_debug(log, "set_nonblocking: %s mode %s",
-                       nonblocking ? "nonblocking" : "blocking",
-                       already     ? "already set" : "set");
+ done:
+    if (log) log_debug_p(log, "set_nonblocking: %s mode %s",
+                         nonblocking ? "nonblocking" : "blocking",
+                         already     ? "already set" : "set");
     return 0;
 }
 
@@ -655,7 +655,7 @@ IO::poll_with_notifier(
     }
 
     // poll loop
-  retry:
+ retry:
     int cc = ::poll(poll_set, nfds, timeout);
     if (cc < 0 && errno == EINTR) {
         if (timeout > 0) {
@@ -671,7 +671,7 @@ IO::poll_with_notifier(
     else if (cc == 0) 
     {
         if (log) {
-            logf(log, LOG_DEBUG, "poll_with_notifier timed out");
+            log_debug_p(log, "poll_with_notifier timed out");
         }
         return IOTIMEOUT;
     } 
@@ -681,9 +681,9 @@ IO::poll_with_notifier(
         // there's some strange bug in the poll emulation
         if (cc > (int)nfds) {
             if (log) {
-                logf(log, LOG_WARN,
-                     "poll_with_notifier: returned bogus high value %d, "
-                     "capping to %zu", cc, nfds);
+                log_warn_p(log,
+                           "poll_with_notifier: returned bogus high value %d, "
+                           "capping to %zu", cc, nfds);
             }
             cc = nfds;
         }
@@ -696,9 +696,9 @@ IO::poll_with_notifier(
             {
                 buf.appendf("0x%hx ", poll_set[i].revents);
             }
-            logf(log, LOG_DEBUG, 
-                 "poll_with_notifier: %d/%zu fds ready, status %s",
-                 cc, nfds, buf.c_str());
+            log_debug_p(log,
+                        "poll_with_notifier: %d/%zu fds ready, status %s",
+                        cc, nfds, buf.c_str());
         }
         
         // Always prioritize getting data before interrupt via notifier
@@ -744,8 +744,8 @@ IO::poll_with_notifier(
         if (intr != 0 && (poll_set[nfds - 1].revents & POLLERR))
         {
             if (log) {
-                logf(log, LOG_DEBUG,
-                     "poll_with_notifier: error in notifier fd!");
+                log_debug_p(log,
+                            "poll_with_notifier: error in notifier fd!");
             }
 
             return IOERROR; // Technically this is not an error with
@@ -757,7 +757,7 @@ IO::poll_with_notifier(
                  (poll_set[nfds - 1].revents & (POLLIN | POLLPRI)) )
         {
             if (log) {
-                logf(log, LOG_DEBUG, "poll_with_notifier: interrupted");
+                log_debug_p(log, "poll_with_notifier: interrupted");
             }
             intr->drain_pipe(1);
             
@@ -824,44 +824,44 @@ IO::rwdata(
         switch (op) {
         case READV:
             cc = ::readv(fd, iov, iovcnt);
-            if (log) logf(log, LOG_DEBUG, "::readv() fd %d cc %d", fd, cc);
+            if (log) log_debug_p(log, "::readv() fd %d cc %d", fd, cc);
             break;
         case RECV:
             cc = ::recv(fd, iov[0].iov_base, iov[0].iov_len, flags);
-            if (log) logf(log, LOG_DEBUG, "::recv() fd %d %p/%zu cc %d", 
-                          fd, iov[0].iov_base, iov[0].iov_len, cc);
+            if (log) log_debug_p(log, "::recv() fd %d %p/%zu cc %d", 
+                                 fd, iov[0].iov_base, iov[0].iov_len, cc);
             break;
         case RECVFROM:
             cc = ::recvfrom(fd, iov[0].iov_base, iov[0].iov_len, flags,
                             args->recvfrom.from, 
                             args->recvfrom.fromlen);
-            if (log) logf(log, LOG_DEBUG, "::recvfrom() fd %d %p/%zu cc %d", 
-                          fd, iov[0].iov_base, iov[0].iov_len, cc);
+            if (log) log_debug_p(log, "::recvfrom() fd %d %p/%zu cc %d", 
+                                 fd, iov[0].iov_base, iov[0].iov_len, cc);
             break;
         case RECVMSG:
             cc = ::sendmsg(fd, args->msg_hdr, flags);
-            if (log) logf(log, LOG_DEBUG, "::recvmsg() fd %d %p cc %d", 
-                          fd, args->msg_hdr, cc);
+            if (log) log_debug_p(log, "::recvmsg() fd %d %p cc %d", 
+                                 fd, args->msg_hdr, cc);
             break;
         case WRITEV:
             cc = ::writev(fd, iov, iovcnt);
-            if (log) logf(log, LOG_DEBUG, "::writev() fd %d cc %d", fd, cc);
+            if (log) log_debug_p(log, "::writev() fd %d cc %d", fd, cc);
             break;
         case SEND:
             cc = ::send(fd, iov[0].iov_base, iov[0].iov_len, flags);
-            if (log) logf(log, LOG_DEBUG, "::send() fd %d %p/%zu cc %d", 
-                          fd, iov[0].iov_base, iov[0].iov_len, cc);
+            if (log) log_debug_p(log, "::send() fd %d %p/%zu cc %d", 
+                                 fd, iov[0].iov_base, iov[0].iov_len, cc);
             break;
         case SENDTO:
             cc = ::sendto(fd, iov[0].iov_base, iov[0].iov_len, flags,
                           args->sendto.to, args->sendto.tolen);
-            if (log) logf(log, LOG_DEBUG, "::sendto() fd %d %p/%zu cc %d", 
-                          fd, iov[0].iov_base, iov[0].iov_len, cc);
+            if (log) log_debug_p(log, "::sendto() fd %d %p/%zu cc %d", 
+                                 fd, iov[0].iov_base, iov[0].iov_len, cc);
             break;
         case SENDMSG:
             cc = ::sendmsg(fd, args->msg_hdr, flags);
-            if (log) logf(log, LOG_DEBUG, "::sendmsg() fd %d %p cc %d", 
-                          fd, args->msg_hdr, cc);
+            if (log) log_debug_p(log, "::sendmsg() fd %d %p cc %d", 
+                                 fd, args->msg_hdr, cc);
             break;
         default:
             PANIC("Unknown IO type");
@@ -906,6 +906,7 @@ IO::rwvall(
     const char*           log
     )
 {
+    (void)fcn_name;
     ASSERT(op == READV || op == WRITEV);
     ASSERT(! (timeout != -1 && start == 0));
 
@@ -917,20 +918,20 @@ IO::rwvall(
 		        0, timeout, 0, start, intr, true, log);
 	if (cc < 0) {
 	    if (log && cc != IOTIMEOUT && cc != IOINTR) {
-		logf(log, LOG_DEBUG, "%s %s %s", 
-		     fcn_name, ioerr2str(cc), strerror(errno));
+		log_debug_p(log, "%s %s %s", 
+                            fcn_name, ioerr2str(cc), strerror(errno));
 	    }
 	    return cc;
 	} else if (cc == 0) {
             if (log) {
-                logf(log, LOG_DEBUG, "%s eof", fcn_name);
+                log_debug_p(log, "%s eof", fcn_name);
             }
 	    return IOEOF;
 	} else {
 	    cow_iov.consume(cc);
             if (log) {
-                logf(log, LOG_DEBUG, "%s %d bytes %zu left %d total",
-                     fcn_name, cc, cow_iov.bytes_left(), total_bytes);
+                log_debug_p(log, "%s %d bytes %zu left %d total",
+                            fcn_name, cc, cow_iov.bytes_left(), total_bytes);
             }
             
             if (timeout > 0) {

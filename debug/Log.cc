@@ -396,11 +396,11 @@ Log::redirect_stdio()
 
     int err;
     if ((err = dup2(logfd_, 1)) != 1) {
-        log_err("/log", "error redirecting stdout: %s", strerror(errno));
+        logf("/log", LOG_ERR, "error redirecting stdout: %s", strerror(errno));
     }
 
     if ((err = dup2(logfd_, 2)) != 2) {
-        log_err("/log", "error redirecting stderr: %s", strerror(errno));
+        logf("/log", LOG_ERR, "error redirecting stderr: %s", strerror(errno));
     }
 }
 
@@ -600,8 +600,8 @@ Log::vlogf(const char* path, log_level_t level,
     }
 
     // bail if we're not going to output the line
-    if (! __log_enabled(level, path) &&
-        (classname == NULL || ! __log_enabled(level, classname)))
+    if (! log_enabled(level, path) &&
+        (classname == NULL || ! log_enabled(level, classname)))
     {
         return 0;
     }
@@ -688,7 +688,7 @@ Log::log_multiline(const char* path, log_level_t level,
     }
 
     // bail if we're not going to output the line.
-    if (! __log_enabled(level, path))
+    if (! log_enabled(level, path))
         return 0;
 
     // generate the log prefix

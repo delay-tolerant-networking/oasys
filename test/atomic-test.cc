@@ -38,7 +38,7 @@ protected:
         atomic_incr(barrier_);
         while (barrier_->value != 0) {}
 
-        log_notice("/test", "thread %p starting", this);
+        log_notice_p("/test", "thread %p starting", this);
         for (u_int i = 0; i < count_; ++i) {
             u_int32_t newval;
             if (amount_ == 1) {
@@ -48,7 +48,7 @@ protected:
             }
             atomic_add(sum_, newval);
         }
-        log_notice("/test", "thread %p done", this);
+        log_notice_p("/test", "thread %p done", this);
     }
 
     atomic_t* barrier_;
@@ -70,11 +70,11 @@ protected:
         atomic_incr(barrier_);
         while (barrier_->value != 0) {}
 
-        log_notice("/test", "thread %p starting", this);
+        log_notice_p("/test", "thread %p starting", this);
         for (u_int i = 0; i < count_; ++i) {
             atomic_incr(val_);
         }
-        log_notice("/test", "thread %p done", this);
+        log_notice_p("/test", "thread %p done", this);
     }
 
     atomic_t* barrier_;
@@ -95,7 +95,7 @@ protected:
         atomic_incr(barrier_);
         while (barrier_->value != 0) {}
         
-        log_notice("/test", "thread %p starting", this);
+        log_notice_p("/test", "thread %p starting", this);
 
         for (u_int i = 0; i < count_; ++i) {
             while (! atomic_cmpxchg32(val_, 0, 0)) {} // wait until != 0
@@ -111,7 +111,7 @@ protected:
             }
         }
         
-        log_notice("/test", "thread %p done", this);
+        log_notice_p("/test", "thread %p done", this);
     }
 
     atomic_t* barrier_;
@@ -134,7 +134,7 @@ protected:
         atomic_incr(barrier_);
         while (barrier_->value != 0) {}
         
-        log_notice("/test", "thread %p starting", this);
+        log_notice_p("/test", "thread %p starting", this);
 
         for (u_int i = 0; i < count_; ++i) {
 #ifdef __amd64__
@@ -154,7 +154,7 @@ protected:
             }
         }
         
-        log_notice("/test", "thread %p done", this);
+        log_notice_p("/test", "thread %p done", this);
     }
 
     atomic_t* barrier_;

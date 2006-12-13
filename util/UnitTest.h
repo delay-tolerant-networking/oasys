@@ -331,50 +331,50 @@ void _name::add_tests()                                         \
 
 #define DO(x)                                                           \
     do {                                                                \
-        ::oasys::__logf(oasys::LOG_NOTICE, "/test",                     \
+        log_notice_p("/test",                                           \
                     "DO (%s) at %s:%d", #x, __FILE__, __LINE__);        \
         x;                                                              \
     } while (0)
 
 #define CHECK(x)                                                        \
     do { if (! (x)) {                                                   \
-	errno_ = errno;							\
-	strerror_ = strerror(errno_);					\
+	errno_ = errno;                                                 \
+	strerror_ = strerror(errno_);                                   \
         ::oasys::Breaker::break_here();                                 \
-        ::oasys::__logf(oasys::LOG_ERR, "/test",                        \
+        log_err_p("/test",                                              \
                     "CHECK FAILED (%s) at %s:%d",                       \
                     #x, __FILE__, __LINE__);                            \
         return oasys::UNIT_TEST_FAILED;                                 \
     } else {                                                            \
-        ::oasys::__logf(oasys::LOG_NOTICE, "/test",                     \
+        log_notice_p("/test",                                           \
                     "CHECK (%s) ok at %s:%d", #x, __FILE__, __LINE__);  \
     } } while(0)
 
 #define CHECK_SYS(x)                                                    \
     do { if (! (x)) {                                                   \
-	errno_ = errno;							\
-	strerror_ = strerror(errno_);					\
+	errno_ = errno;                                                 \
+	strerror_ = strerror(errno_);                                   \
         ::oasys::Breaker::break_here();                                 \
-        ::oasys::__logf(oasys::LOG_ERR, "/test",                        \
+        log_err_p("/test",                                              \
                     "CHECK FAILED (%s) at %s:%d, errno=%s",             \
                     #x, __FILE__, __LINE__, strerror_);                 \
         return oasys::UNIT_TEST_FAILED;                                 \
     } else {                                                            \
-        ::oasys::__logf(oasys::LOG_NOTICE, "/test",                     \
+        log_notice_p("/test",                                           \
                     "CHECK (%s) ok at %s:%d", #x, __FILE__, __LINE__);  \
     } } while(0)
 
 #define CHECK_EQUAL(_a, _b)                                                     \
     do { int a = _a; int b = _b; if ((a) != (b)) {                              \
-	errno_ = errno;								\
-	strerror_ = strerror(errno_);						\
+	errno_ = errno;                                                         \
+	strerror_ = strerror(errno_);                                           \
         ::oasys::Breaker::break_here();                                         \
-        oasys::logf("/test", oasys::LOG_ERR,                                    \
+        log_err_p("/test",                                                      \
                     "CHECK FAILED: '" #_a "' (%d) != '" #_b "' (%d) at %s:%d",  \
                     (a), (b), __FILE__, __LINE__);                              \
         return oasys::UNIT_TEST_FAILED;                                         \
     } else {                                                                    \
-        oasys::logf("/test", oasys::LOG_NOTICE,                                 \
+        log_notice_p("/test",                                                   \
                     "CHECK '" #_a "' (%d) == '" #_b "' (%d) "                   \
                     "at %s:%d", (a), (b), __FILE__, __LINE__);                  \
     } } while(0)
@@ -384,12 +384,12 @@ void _name::add_tests()                                         \
 	errno_ = errno;								\
 	strerror_ = strerror(errno_);						\
         ::oasys::Breaker::break_here();                                         \
-        oasys::logf("/test", oasys::LOG_ERR,                                    \
-                    "CHECK FAILED: '" #_a "' (%d) < '" #_b "' (%d) at %s:%d",  \
+        log_err_p("/test",                                                      \
+                    "CHECK FAILED: '" #_a "' (%d) < '" #_b "' (%d) at %s:%d",   \
                     (a), (b), __FILE__, __LINE__);                              \
         return oasys::UNIT_TEST_FAILED;                                         \
     } else {                                                                    \
-        oasys::logf("/test", oasys::LOG_NOTICE,                                 \
+        log_notice_p("/test",                                                   \
                     "CHECK '" #_a "' (%d) < '" #_b "' (%d) "                    \
                     "at %s:%d", (a), (b), __FILE__, __LINE__);                  \
     } } while(0)
@@ -399,12 +399,12 @@ void _name::add_tests()                                         \
 	errno_ = errno;								\
 	strerror_ = strerror(errno_);						\
         ::oasys::Breaker::break_here();                                         \
-        oasys::logf("/test", oasys::LOG_ERR,                                    \
+        log_err_p("/test",                                                      \
                     "CHECK FAILED: '" #_a "' (%d) > '" #_b "' (%d) at %s:%d",  \
                     (a), (b), __FILE__, __LINE__);                              \
         return oasys::UNIT_TEST_FAILED;                                         \
     } else {                                                                    \
-        oasys::logf("/test", oasys::LOG_NOTICE,                                 \
+        log_notice_p("/test",                                                   \
                     "CHECK '" #_a "' (%d) > '" #_b "' (%d) "                    \
                     "at %s:%d", (a), (b), __FILE__, __LINE__);                  \
     } } while(0)
@@ -414,12 +414,12 @@ void _name::add_tests()                                         \
 	errno_ = errno;								\
 	strerror_ = strerror(errno_);						\
         ::oasys::Breaker::break_here();                                         \
-        oasys::logf("/test", oasys::LOG_ERR,                                    \
+        log_err_p("/test",                                                      \
                     "CHECK FAILED: '" #_a "' (%u) <= '" #_b "' (%u) at %s:%u",  \
                     (a), (b), __FILE__, __LINE__);                              \
         return oasys::UNIT_TEST_FAILED;                                         \
     } else {                                                                    \
-        oasys::logf("/test", oasys::LOG_NOTICE,                                 \
+        log_notice_p("/test",                                                   \
                     "CHECK '" #_a "' (%u) <= '" #_b "' (%u) "                   \
                     "at %s:%d", (a), (b), __FILE__, __LINE__);                  \
     } } while(0)
@@ -429,12 +429,12 @@ void _name::add_tests()                                         \
 	errno_ = errno;								\
 	strerror_ = strerror(errno_);						\
         ::oasys::Breaker::break_here();                                         \
-        oasys::logf("/test", oasys::LOG_ERR,                                    \
+        log_err_p("/test",                                                      \
                     "CHECK FAILED: '" #_a "' (%u) >= '" #_b "' (%u) at %s:%u",  \
                     (a), (b), __FILE__, __LINE__);                              \
         return oasys::UNIT_TEST_FAILED;                                         \
     } else {                                                                    \
-        oasys::logf("/test", oasys::LOG_NOTICE,                                 \
+        log_notice_p("/test",                                                   \
                     "CHECK '" #_a "' (%u) >= '" #_b "' (%u) "                   \
                     "at %s:%d", (a), (b), __FILE__, __LINE__);                  \
     } } while(0)
@@ -444,14 +444,14 @@ void _name::add_tests()                                         \
 	errno_ = errno;									\
 	strerror_ = strerror(errno_);							\
         ::oasys::Breaker::break_here();                                                 \
-        oasys::logf("/test", oasys::LOG_ERR,                                            \
+        log_err_p("/test",                                                              \
                     "CHECK FAILED: '" #a "' (%llu) != '" #b "' (%llu) at %s:%d",        \
                     (long long unsigned int)(a),                                        \
                     (long long unsigned int)(b),                                        \
                     __FILE__, __LINE__);                                                \
         return oasys::UNIT_TEST_FAILED;                                                 \
     } else {                                                                            \
-        oasys::logf("/test", oasys::LOG_NOTICE,                                         \
+        log_notice_p("/test",                                                           \
                     "CHECK '" #a "' (%llu) == '" #b "' (%llu) "                         \
                     "at %s:%d",                                                         \
                     (long long unsigned int)(a),                                        \
@@ -464,31 +464,31 @@ void _name::add_tests()                                         \
 	errno_ = errno;							\
 	strerror_ = strerror(errno_);					\
         ::oasys::Breaker::break_here();                                 \
-        oasys::logf("/test", oasys::LOG_ERR,                            \
+        log_err_p("/test",                                              \
                     "CHECK FAILED: '" #a "' != '" #b "' at %s:%d.",     \
                     __FILE__, __LINE__);                                \
-        oasys::logf("/test", oasys::LOG_ERR, "Contents of " #a          \
+        log_err_p("/test", "Contents of " #a                            \
                     " (length %zu): ", strlen(a));                      \
         oasys::PrettyPrintBuf buf_a(a, strlen(a));                      \
         std::string s;                                                  \
         bool done;                                                      \
         do {                                                            \
             done = buf_a.next_str(&s);                                  \
-            oasys::logf("/test", oasys::LOG_ERR, s.c_str());            \
+            log_err_p("/test", s.c_str());                              \
         } while (!done);                                                \
                                                                         \
-        oasys::logf("/test", oasys::LOG_ERR, "Contents of " #b          \
+        log_err_p("/test", "Contents of " #b                            \
                     " (length %zu): ", strlen(b));                      \
         oasys::PrettyPrintBuf buf_b(b, strlen(b));                      \
                                                                         \
         do {                                                            \
             done = buf_b.next_str(&s);                                  \
-            oasys::logf("/test", oasys::LOG_ERR, s.c_str());            \
+            log_err_p("/test", s.c_str());                              \
         } while (!done);                                                \
                                                                         \
         return oasys::UNIT_TEST_FAILED;                                 \
     } else {                                                            \
-        oasys::logf("/test", oasys::LOG_NOTICE,                         \
+        log_notice_p("/test",                                           \
                     "CHECK '" #a "' (%s) == '" #b "' (%s) "             \
                     "at %s:%d", (a), (b), __FILE__, __LINE__);          \
     } } while(0);
@@ -499,13 +499,13 @@ void _name::add_tests()                                         \
 	     errno_ = errno;							\
 	     strerror_ = strerror(errno_);					\
              ::oasys::Breaker::break_here();                                    \
-             oasys::logf("/test", oasys::LOG_ERR,  "CHECK FAILED: "             \
+             log_err_p("/test",  "CHECK FAILED: "                               \
                          "'" #a "' (%.*s...) != '" #b "' (%.*s...) at %s:%d",   \
                          print_len, (a), print_len, (b),                        \
                          __FILE__, __LINE__);                                   \
              return oasys::UNIT_TEST_FAILED;                                    \
          } else {                                                               \
-             oasys::logf("/test", oasys::LOG_NOTICE,                            \
+             log_notice_p("/test",                                              \
                          "CHECK '" #a "' (%.*s...) == '" #b "' (%.*s...) "      \
                          "at %s:%d",                                            \
                          print_len, (a), print_len, (b), __FILE__, __LINE__);   \

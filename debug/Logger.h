@@ -48,8 +48,8 @@ namespace oasys {
  *       logf("/logger/test" LOG_DEBUG, "intiializing"); // but can be given
  *
  *       log_debug("loggertest initializing");           // macros work
- *       __log_debug("/logger/test", "initializing");    // but this case needs
- *                                                       // to be __log_debug
+ *       log_debug_p("/logger/test", "initializing");    // but this case needs
+ *                                                       // to be log_debug_p
  *       set_logpath("/path");
  *       logpath_appendf("/a"); // logpath is "/path/a"
  *       logpath_appendf("/b"); // logpath is "/path/b"
@@ -59,7 +59,7 @@ namespace oasys {
  */
 
 class Logger {
-public:
+public:    
     /**
      * Constructor that initializes the logpath with a printf style
      * format string.
@@ -118,28 +118,15 @@ public:
      */
     inline bool log_enabled(log_level_t level) const
     {
-        return oasys::__log_enabled(level, logpath_) ||
-            oasys::__log_enabled(level, classname_);
+        return oasys::log_enabled(level, logpath_) ||
+            oasys::log_enabled(level, classname_);
     }
 
     /**
-     * As described in Log.h, the log_debug style macros call
-     * log_enabled(level, path) before calling __logf. In the case of
-     * the Logger, the path parameter isn't really the path, but is
-     * actually the format string, so we actually call log_enabled on
-     * the logpath_ instance.
-     *
-     * Also, all Logger instances store the class name of the
-     * implementation, and logging can be enabled/disabled on that
-     * target as well, so we check it.
+     * Typedef used in the log_debug() style macros to help provide
+     * more useful error messages.
      */
-    inline bool __log_enabled(log_level_t level, const char* path) const
-    {
-        (void)path;
-        return oasys::__log_enabled(level, logpath_) ||
-            oasys::__log_enabled(level, classname_);
-    }
-
+    typedef log_level_t Can_Only_Be_Called_By_A_Logger;
     
     /**
      * Wrapper around vlogf that uses the logpath_ instance.
@@ -164,14 +151,6 @@ public:
     inline int logf(const char* logpath, log_level_t level,
                     const char* fmt, ...) const
         PRINTFLIKE(4, 5);
-
-    /**
-     * Wrapper around __logf, used by the log_debug style macros.
-     *
-     * (See Log.h for a full explanation of the need for __logf)
-     */
-    inline int __logf(log_level_t level, const char *fmt, ...) const
-        PRINTFLIKE(3, 4);
 
     /**
      * And finally, one for log_multiline..
@@ -227,17 +206,6 @@ Logger::logpath_appendf(const char* fmt, ...)
 //----------------------------------------------------------------------
 int
 Logger::logf(log_level_t level, const char *fmt, ...) const
-{
-    va_list ap;
-    va_start(ap, fmt);
-    int ret = vlogf(level, fmt, ap);
-    va_end(ap);
-    return ret;
-}
-
-//----------------------------------------------------------------------
-int
-Logger::__logf(log_level_t level, const char *fmt, ...) const
 {
     va_list ap;
     va_start(ap, fmt);

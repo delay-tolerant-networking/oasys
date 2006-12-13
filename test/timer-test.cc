@@ -29,9 +29,9 @@ public:
     OneShotTimer(bool quiet = false) : quiet_(quiet), fired_(false) {}
     void timeout(const struct timeval& now) {
         if (! quiet_) {
-            log_notice("/timer/oneshot", "fired at %ld.%ld",
-                       (long unsigned int)now.tv_sec,
-                       (long unsigned int)now.tv_usec);
+            log_notice_p("/timer/oneshot", "fired at %ld.%ld",
+                         (long unsigned int)now.tv_sec,
+                         (long unsigned int)now.tv_usec);
         }
         
         fired_ = true;
@@ -50,9 +50,9 @@ class PeriodicTimer : public Timer {
     
     void timeout(const struct timeval& now) {
         int late = TIMEVAL_DIFF_USEC(now, when());
-        log_notice(log_, "timer at %ld.%ld (%d usec late)",
-                   (long unsigned int)now.tv_sec, (long unsigned int)now.tv_usec,
-                   late);
+        log_notice_p(log_, "timer at %ld.%ld (%d usec late)",
+                     (long unsigned int)now.tv_sec, (long unsigned int)now.tv_usec,
+                     late);
         ++count_;
         reschedule();
     }
@@ -173,7 +173,7 @@ DECLARE_TEST(Many) {
     std::vector<OneShotTimer*> timers;
     int n = 500;
     int m = 50;
-    log_notice("/test", "posting %d timers (in batches of %d)", n, m);
+    log_notice_p("/test", "posting %d timers (in batches of %d)", n, m);
     for (int i = 0; i < (n / m); ++i) {
         // do 50 at a time, waiting 1 second between batches
         for (int j = 0; j < m; ++j) {
@@ -183,7 +183,7 @@ DECLARE_TEST(Many) {
         }
         sleep(1);
     }
-    log_notice("/test", "waiting for timers to fire (1st of each batch will log)");
+    log_notice_p("/test", "waiting for timers to fire (1st of each batch will log)");
 
     sleep(15);
 
@@ -191,7 +191,7 @@ DECLARE_TEST(Many) {
         timers[i]->cancel();
 
         if (! timers[i]->fired_) {
-            log_err("/test", "timer %d never fired!!", i);
+            log_err_p("/test", "timer %d never fired!!", i);
         }
     }
 

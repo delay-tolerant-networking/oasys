@@ -414,30 +414,11 @@ log_multiline(const char* path, log_level_t level, const char* msg)
 }
 
 /**
- * See the big block comment below for an explanation of the __logf
- * variant.
- */
-inline int
-__logf(log_level_t level, const char *path, const char *fmt, ...)
-    PRINTFLIKE(3, 4);
-
-inline int
-__logf(log_level_t level, const char *path, const char *fmt, ...)
-{
-    if (!path) return -1;
-    va_list ap;
-    va_start(ap, fmt);
-    int ret = vlogf(path, level, fmt, ap);
-    va_end(ap);
-    return ret;
-}
-
-/**
  * Global function to determine if the log path is enabled. Overridden
  * by the Logger class.
  */
 inline bool
-__log_enabled(log_level_t level, const char* path)
+log_enabled(log_level_t level, const char* path)
 {
     log_level_t threshold = oasys::Log::instance()->log_level(path);
     return (level >= threshold);
@@ -453,109 +434,80 @@ __log_enabled(log_level_t level, const char* path)
  * formatting and argument calculations are only done if the log path
  * is enabled.
  *
- * Note that the implementation is slightly confusing due to the need
- * to support the Logger class. Logger implements a logf() and vlogf()
- * function that doesn't take the path as the first parameter, but
- * instead uses an instance variable to keep the path recorded.
- * Thus, the macros need to support both a non-Logger call of the form:
+ * Since most users of logging are a subclass of Logger, the
+ * log_debug() style macros assume that they are being called in a
+ * method of a Logger class instance. To assist users with more
+ * informative error messages, these macros refer to the
+ * Can_Only_Be_Called_By_A_Logger typedef that won't be in scope for
+ * any non-Logger contexts.
  *
- *    log_debug("/path", "format string %s", "arguments");
- *
- * and of the form:
- *
- *    log_debug("Logger format string %s", "arguments");
- *
- * To implement this, the macro calls __log_enabled(path, level) which
- * calls either the Logger member function or the global
- * implementation with whatever the first argument to the macro is.
- * The Logger::__log_enabled() implementation actually ignores this
- * parameter (since it's actually the format string) and just checks
- * whether its logpath_ path is enabled.
- *
- * In addition, these macros call __logf() instead of logf, and both
- * the global and the Logger class implementation take the log level
- * as the first parameter.
- *
- * What makes this slightly more complicated is that derived classes
- * of Logger can optionally call logging functions with an explicit
- * path, ignoring the logpath_ instance.
- *
- * This poses a problem for the macro, since at compile time, it's
- * impossible to distinguish between the following two cases:
- *
- *    log_debug("this is just %s", "a const char* argument");
- *    log_debug("/path", "this is a path %s", "and a const char* argument");
- *
- * The second call will actually generate a compilation error, since
- * the compiler will assume that the first argument to the macro is
- * the format string (which it isn't). To handle this case, the set of
- * __log_debug style macros always assumes that the path is the first
- * argument and can therefore be used in any context where the path is
- * explicitly provided.
+ * The log_debug_p() variant should be used in global contexts.
  */
 
 // compile out all log_debug calls when not debugging
 #ifdef NDEBUG
 inline int log_nop() { return 0; }
 #define log_debug(args...)   log_nop()
-#define __log_debug(args...) log_nop()
+#define log_debug_p(args...) log_nop()
 #else
-#define log_debug(p, args...)                                   \
-    ((__log_enabled(oasys::LOG_DEBUG, (p))) ?                   \
-     __logf(oasys::LOG_DEBUG, (p)  , ## args) : 0)
+#define log_debug(args...)                                                      \
+     (this->log_enabled((Can_Only_Be_Called_By_A_Logger)oasys::LOG_DEBUG) ?     \
+      this->logf(oasys::LOG_DEBUG, ## args) : 0)
 
-#define __log_debug(p, args...)                                 \
-    ((oasys::__log_enabled(oasys::LOG_DEBUG, (p))) ?            \
-     oasys::__logf(oasys::LOG_DEBUG, (p) , ## args) : 0)
+#define log_debug_p(p, args...)                         \
+    ((oasys::log_enabled(oasys::LOG_DEBUG, (p))) ?      \
+     oasys::logf((p), oasys::LOG_DEBUG, ## args) : 0)
+
 #endif // NDEBUG
 
-#define log_info(p, args...)                                    \
-    ((__log_enabled(oasys::LOG_INFO, (p))) ?                    \
-     __logf(oasys::LOG_INFO, (p) , ## args) : 0)
+#define log_info(args...)                                                        \
+     (this->log_enabled((Can_Only_Be_Called_By_A_Logger)oasys::LOG_INFO) ?       \
+      this->logf(oasys::LOG_INFO, ## args) : 0)
 
-#define __log_info(p, args...)                                  \
-    ((oasys::__log_enabled(oasys::LOG_INFO, (p))) ?             \
-     oasys::__logf(oasys::LOG_INFO, (p) , ## args) : 0)
+#define log_info_p(p, args...)                                 \
+    ((oasys::log_enabled(oasys::LOG_INFO, (p))) ?                      \
+     oasys::logf((p), oasys::LOG_INFO, ## args) : 0)
 
-#define log_notice(p, args...)                                  \
-    ((__log_enabled(oasys::LOG_NOTICE, (p))) ?                  \
-     __logf(oasys::LOG_NOTICE, (p) , ## args) : 0)
+#define log_notice(args...)                                                        \
+     (this->log_enabled((Can_Only_Be_Called_By_A_Logger)oasys::LOG_NOTICE) ?       \
+      this->logf(oasys::LOG_NOTICE, ## args) : 0)
 
-#define __log_notice(p, args...)                                \
-    ((oasys::__log_enabled(oasys::LOG_NOTICE, (p))) ?           \
-     oasys::__logf(oasys::LOG_NOTICE, (p) , ## args) : 0)
+#define log_notice_p(p, args...)                                 \
+    ((oasys::log_enabled(oasys::LOG_NOTICE, (p))) ?                      \
+     oasys::logf((p), oasys::LOG_NOTICE, ## args) : 0)
 
-#define log_warn(p, args...)                                    \
-    ((__log_enabled(oasys::LOG_WARN, (p))) ?                    \
-     __logf(oasys::LOG_WARN, (p) , ## args) : 0)
+#define log_warn(args...)                                                        \
+     (this->log_enabled((Can_Only_Be_Called_By_A_Logger)oasys::LOG_WARN) ?       \
+      this->logf(oasys::LOG_WARN, ## args) : 0)
 
-#define __log_warn(p, args...)                                  \
-    ((oasys::__log_enabled(oasys::LOG_WARN, (p))) ?             \
-     oasys::__logf(oasys::LOG_WARN, (p) , ## args) : 0)
+#define log_warn_p(p, args...)                                 \
+    ((oasys::log_enabled(oasys::LOG_WARN, (p))) ?                      \
+     oasys::logf((p), oasys::LOG_WARN, ## args) : 0)
 
-#define log_err(p, args...)                                     \
-    ((__log_enabled(oasys::LOG_ERR, (p))) ?                     \
-     __logf(oasys::LOG_ERR, (p) , ## args) : 0)
+#define log_err(args...)                                                        \
+     (this->log_enabled((Can_Only_Be_Called_By_A_Logger)oasys::LOG_ERR) ?       \
+      this->logf(oasys::LOG_ERR, ## args) : 0)
 
-#define __log_err(p, args...)                                   \
-    ((oasys::__log_enabled(oasys::LOG_ERR, (p))) ?              \
-     oasys::__logf(oasys::LOG_ERR, (p) , ## args) : 0)
+#define log_err_p(p, args...)                                 \
+    ((oasys::log_enabled(oasys::LOG_ERR, (p))) ?                      \
+     oasys::logf((p), oasys::LOG_ERR, ## args) : 0)
 
-#define log_crit(p, args...)                                    \
-    ((__log_enabled(oasys::LOG_CRIT, (p))) ?                    \
-     __logf(oasys::LOG_CRIT, (p) , ## args) : 0)
+#define log_crit(args...)                                                        \
+     (this->log_enabled((Can_Only_Be_Called_By_A_Logger)oasys::LOG_CRIT) ?       \
+      this->logf(oasys::LOG_CRIT, ## args) : 0)
 
-#define __log_crit(p, args...)                                  \
-    ((oasys::__log_enabled(oasys::LOG_CRIT, (p))) ?             \
-     oasys::__logf(oasys::LOG_CRIT, (p) , ## args) : 0)
+#define log_crit_p(p, args...)                                 \
+    ((oasys::log_enabled(oasys::LOG_CRIT, (p))) ?                      \
+     oasys::logf((p), oasys::LOG_CRIT, ## args) : 0)
 
-#define log_always(p, args...)                                  \
-    ((__log_enabled(oasys::LOG_ALWAYS, (p))) ?                  \
-     __logf(oasys::LOG_ALWAYS, (p) , ## args) : 0)
+#define log_always(args...)                                                        \
+     (this->log_enabled((Can_Only_Be_Called_By_A_Logger)oasys::LOG_ALWAYS) ?       \
+      this->logf(oasys::LOG_ALWAYS, ## args) : 0)
 
-#define __log_always(p, args...)                                \
-    ((oasys::__log_enabled(oasys::LOG_ALWAYS, (p))) ?           \
-     oasys::__logf(oasys::LOG_ALWAYS, (p) , ## args) : 0)
+#define log_always_p(p, args...)                                 \
+    ((oasys::log_enabled(oasys::LOG_ALWAYS, (p))) ?                      \
+     oasys::logf((p), oasys::LOG_ALWAYS, ## args) : 0)
+
 
 // Include Logger.h for simplicity.
 #include "Logger.h"

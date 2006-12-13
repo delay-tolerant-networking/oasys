@@ -51,9 +51,9 @@ SingletonBase::Fini::~Fini()
     {
         for (int i = SingletonBase::num_singletons_ - 1; i >= 0; --i)
         {
-            log_debug("/debug",
-                      "deleting singleton %d (%p)",
-                      i, SingletonBase::all_singletons_[i]);
+            log_debug_p("/debug",
+                        "deleting singleton %d (%p)",
+                        i, SingletonBase::all_singletons_[i]);
             
             delete SingletonBase::all_singletons_[i];
         }

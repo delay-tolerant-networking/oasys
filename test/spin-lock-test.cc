@@ -86,8 +86,8 @@ test(const char* what, SpinLock* lock1, SpinLock* lock2, int n)
     t2->start();
 
     while (count1 != nspins && count2 != nspins) {
-        log_notice("/test", "count1:     %d", count1);
-        log_notice("/test", "count2:     %d", count2);
+        log_notice_p("/test", "count1:     %d", count1);
+        log_notice_p("/test", "count2:     %d", count2);
         sleep(1);
     }
 
@@ -95,14 +95,14 @@ test(const char* what, SpinLock* lock1, SpinLock* lock2, int n)
     t2->join();
 
 #ifndef NDEBUG
-    log_notice("/log", "total spins: %d",  SpinLock::total_spins_.value);
-    log_notice("/log", "total yields: %d", SpinLock::total_yields_.value);
+    log_notice_p("/log", "total spins: %d",  SpinLock::total_spins_.value);
+    log_notice_p("/log", "total yields: %d", SpinLock::total_yields_.value);
 #endif
 
-    log_notice("/test", "count1:     %d", count1);
-    log_notice("/test", "count2:     %d", count2);
-    log_notice("/test", "total:      %d", total);
-    log_notice("/test", "count sum:  %d", count1 + count2);
+    log_notice_p("/test", "count1:     %d", count1);
+    log_notice_p("/test", "count2:     %d", count2);
+    log_notice_p("/test", "total:      %d", total);
+    log_notice_p("/test", "count sum:  %d", count1 + count2);
     delete t1;
     delete t2;
 

@@ -32,21 +32,21 @@ char expand_stacktrace[1024];
 bool
 fork_to_die(const char* how) {
     char cmd[1024];
-    log_always("/test", "flamebox-ignore ign1 .*got fatal %s - will dump core",
+    log_always_p("/test", "flamebox-ignore ign1 .*got fatal %s - will dump core",
                how);
-    log_always("/test", "flamebox-ignore ign2 STACK TRACE");
-    log_always("/test", "flamebox-ignore ign3 fatal handler dumping core");
-    log_always("/test", "flamebox-ignore ign4 PANIC at .*stack-trace-test.cc");
+    log_always_p("/test", "flamebox-ignore ign2 STACK TRACE");
+    log_always_p("/test", "flamebox-ignore ign3 fatal handler dumping core");
+    log_always_p("/test", "flamebox-ignore ign4 PANIC at .*stack-trace-test.cc");
     
     snprintf(cmd, sizeof(cmd),
              "%s %s 2>&1 | %s -o %s",
              executable, how, expand_stacktrace, executable);
     int ok = system(cmd);
     
-    log_always("/test", "flamebox-ignore-cancel ign1");
-    log_always("/test", "flamebox-ignore-cancel ign2");;
-    log_always("/test", "flamebox-ignore-cancel ign3");;
-    log_always("/test", "flamebox-ignore-cancel ign4");;
+    log_always_p("/test", "flamebox-ignore-cancel ign1");
+    log_always_p("/test", "flamebox-ignore-cancel ign2");;
+    log_always_p("/test", "flamebox-ignore-cancel ign3");;
+    log_always_p("/test", "flamebox-ignore-cancel ign4");;
 
     return (ok == 0);
 }

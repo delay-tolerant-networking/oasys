@@ -516,7 +516,7 @@ BerkeleyDBStore::db_errcall(const DB_ENV* dbenv,
 {
     (void)dbenv;
     (void)errpfx;
-    __log_err("/storage/berkeleydb", "DB internal error: %s", msg);
+    log_err_p("/storage/berkeleydb", "DB internal error: %s", msg);
 }
 
 #else
@@ -526,7 +526,7 @@ void
 BerkeleyDBStore::db_errcall(const char* errpfx, char* msg)
 {
     (void)errpfx;
-    __log_err("/storage/berkeleydb", "DB internal error: %s", msg);
+    log_err_p("/storage/berkeleydb", "DB internal error: %s", msg);
 }
 
 #endif

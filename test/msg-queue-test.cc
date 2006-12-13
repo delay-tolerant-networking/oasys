@@ -84,12 +84,12 @@ DECLARE_TEST(Init) {
     // Quiet down the spin lock
     SpinLock::warn_on_contention_ = false;
 
-    log_always("/test", "flamebox-ignore ign pipe appears to be full");;
+    log_always_p("/test", "flamebox-ignore ign pipe appears to be full");;
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(Fini) {
-    log_always("/test", "flamebox-ignore-cancel ign");;
+    log_always_p("/test", "flamebox-ignore-cancel ign");;
     return UNIT_TEST_PASSED;
 }
 

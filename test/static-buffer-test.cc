@@ -35,7 +35,7 @@ DECLARE_TEST(StringTest2) {
     buf.appendf("%d%d%d%s", 10, 20, 123, "foobarbaz");
     sprintf(buf2, "%d%d%d%s", 10, 20, 123, "foobarbaz");
 
-    log_debug("\"%s\" \"%s\"", buf.c_str(), buf2);
+    log_debug_p("\"%s\" \"%s\"", buf.c_str(), buf2);
 
     return (strncmp(buf2, buf.c_str(), 10) == 0) ? 0 : UNIT_TEST_FAILED;
 }

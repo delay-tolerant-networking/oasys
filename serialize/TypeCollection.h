@@ -179,7 +179,7 @@ public:
         ASSERT(dispatch_.find(typecode) != dispatch_.end());
         *obj = dynamic_cast<_Type*>(dispatch_[typecode]->new_object());
         if (*obj == NULL) {
-            log_crit("/oasys/type_collection", "out of memory");
+            log_crit_p("/oasys/type_collection", "out of memory");
             return TypeCollectionErr::MEMORY;
         }
         

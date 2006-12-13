@@ -202,14 +202,14 @@ _InternalKeyDurableTableClass::iterator::next()
     
     else if (err != DS_OK)
     {
-        __log_err(table_->logpath(), "error in iterator next");
+        log_err_p(table_->logpath(), "error in iterator next");
         return err;
     }
 
     err = iter_->get_key(&cur_val_);
     if (err != 0)
     {
-        __log_err(table_->logpath(), "error in iterator get_key");
+        log_err_p(table_->logpath(), "error in iterator get_key");
         return DS_ERR;
     }
 

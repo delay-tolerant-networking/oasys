@@ -51,7 +51,7 @@ void
 Thread::activate_start_barrier()
 {
     start_barrier_enabled_ = true;
-    log_debug("/thread", "activating thread creation barrier");
+    log_debug_p("/thread", "activating thread creation barrier");
 }
 
 //----------------------------------------------------------------------------
@@ -60,9 +60,9 @@ Thread::release_start_barrier()
 {
     start_barrier_enabled_ = false;
 
-    log_debug("/thread",
-              "releasing thread creation barrier -- %zu queued threads",
-              threads_in_barrier_.size());
+    log_debug_p("/thread",
+                "releasing thread creation barrier -- %zu queued threads",
+                threads_in_barrier_.size());
     
     for (size_t i = 0; i < threads_in_barrier_.size(); ++i) 
     {
@@ -136,13 +136,13 @@ Thread::start()
     // check if the creation barrier is enabled
     if (start_barrier_enabled_) 
     {
-        log_debug("/thread", "delaying start of thread %p due to barrier",
-                  this);
+        log_debug_p("/thread", "delaying start of thread %p due to barrier",
+                    this);
         threads_in_barrier_.push_back(this);
         return;
     }
 
-    log_debug("/thread", "starting thread %p", this);
+    log_debug_p("/thread", "starting thread %p", this);
 
 #ifdef __win32__
 
@@ -177,8 +177,8 @@ Thread::start()
 #endif
         }
         
-        log_err("/thread", "error in thread_id_create: %s, retrying in 100ms",
-                strerror(errno));
+        logf("/thread", LOG_ERR, "error in thread_id_create: %s, retrying in 100ms",
+             strerror(errno));
         usleep(100000);
     }
 
@@ -238,7 +238,7 @@ Thread::interrupt()
 #ifdef __win32__
     NOTIMPLEMENTED;
 #else
-    log_debug("/thread", "interrupting thread %p", this);
+    log_debug_p("/thread", "interrupting thread %p", this);
     kill(INTERRUPT_SIG);
 #endif
 }

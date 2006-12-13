@@ -168,7 +168,7 @@ DECLARE_TEST(TextSerializeTest1) {
     TextMarshal marshal(Serialize::CONTEXT_LOCAL, &buf);
     marshal.action(&one);
 
-    log_info("%s", (const char*)buf.buf());
+    log_info_p("%s", (const char*)buf.buf());
         
     return UNIT_TEST_PASSED;
 }

@@ -53,7 +53,7 @@ const char* debug2_sorted =
 
 DECLARE_TEST(Init) {
     
-    log_notice("/test", "flamebox-ignore logs /log-test");
+    log_notice_p("/test", "flamebox-ignore logs /log-test");
 
     // create two files, one with the test rule enabled, one without
     path1.appendf("/tmp/log-test-%s-1-%d", getenv("USER"), getpid());
@@ -95,11 +95,11 @@ DECLARE_TEST(RulesTest) {
     CHECK(logf("/log-test", LOG_ERR,   "print me") != 0);
     CHECK(logf("/log-test", LOG_CRIT,  "print me") != 0);
 
-    CHECK(log_debug("/log-test", "print me") != 0);
-    CHECK(log_info("/log-test",  "print me") != 0);
-    CHECK(log_warn("/log-test", "print me") != 0);
-    CHECK(log_err("/log-test", "print me") != 0);
-    CHECK(log_crit("/log-test", "print me") != 0);
+    CHECK(log_debug_p("/log-test", "print me") != 0);
+    CHECK(log_info_p("/log-test",  "print me") != 0);
+    CHECK(log_warn_p("/log-test", "print me") != 0);
+    CHECK(log_err_p("/log-test", "print me") != 0);
+    CHECK(log_crit_p("/log-test", "print me") != 0);
 
     CHECK(logf("/log-test/disabled", LOG_CRIT, "print me") != 0);
 
@@ -108,12 +108,12 @@ DECLARE_TEST(RulesTest) {
     CHECK(logf("/log-test/disabled", LOG_WARN,  "don't print me") == 0);
     CHECK(logf("/log-test/disabled", LOG_ERR,   "don't print me") == 0);
 
-    CHECK(log_debug("/log-test/disabled", "don't print me") == 0);
-    CHECK(log_info("/log-test/disabled",  "don't print me") == 0);
-    CHECK(log_warn("/log-test/disabled",  "don't print me") == 0);
-    CHECK(log_err("/log-test/disabled",   "don't print me") == 0);
+    CHECK(log_debug_p("/log-test/disabled", "don't print me") == 0);
+    CHECK(log_info_p("/log-test/disabled",  "don't print me") == 0);
+    CHECK(log_warn_p("/log-test/disabled",  "don't print me") == 0);
+    CHECK(log_err_p("/log-test/disabled",   "don't print me") == 0);
     
-    CHECK(log_crit("/log-test/disabled",  "but print me!!") != 0);
+    CHECK(log_crit_p("/log-test/disabled",  "but print me!!") != 0);
 
     CHECK(log_multiline("/log-test/multiline", LOG_DEBUG,
                          "print me\n"
@@ -148,9 +148,9 @@ LoggerTest::foo() {
     CHECK(logf(LOG_DEBUG, "debug %s %d", "message", 10) != 0);
 
     // test macro calls with explicit path
-    CHECK(__log_debug("/log-test/other/path",
+    CHECK(log_debug_p("/log-test/other/path",
                       "debug message %d", 10) != 0);
-    CHECK(__log_debug("/log-test/other/path",
+    CHECK(log_debug_p("/log-test/other/path",
                       "debug %s %d", "message", 10) != 0);
 
     // and non-macro calls
@@ -167,8 +167,8 @@ foo()
 {
     int errno_; const char* strerror_;
     // test macro calls with explicit path in a non-logger function
-    CHECK(log_debug("/log-test/path", "debug message %d", 10) != 0);
-    CHECK(log_debug("/log-test/path", "debug %s %d", "message", 10) != 0);
+    CHECK(log_debug_p("/log-test/path", "debug message %d", 10) != 0);
+    CHECK(log_debug_p("/log-test/path", "debug %s %d", "message", 10) != 0);
 
     // and non-macro calls
     CHECK(logf("/log-test/path", LOG_DEBUG,
@@ -387,7 +387,7 @@ DECLARE_TEST(ReparseTest) {
     t3.start();
     t4.start();
 
-    CHECK(__log_enabled(LOG_INFO, "/log-test/thread"));
+    CHECK(log_enabled(LOG_INFO, "/log-test/thread"));
     t1.output_ = t2.output_ = t3.output_ = t3.output_ = true;
     sleep(2);
 
@@ -396,7 +396,7 @@ DECLARE_TEST(ReparseTest) {
         StringBuffer rules;
         Log::instance()->dump_rules(&rules);
         CHECK_EQUALSTR(rules.c_str(), debug2_sorted);
-        CHECK(! __log_enabled(LOG_INFO, "/log-test/thread"));
+        CHECK(! log_enabled(LOG_INFO, "/log-test/thread"));
     }
     t1.output_ = t2.output_ = t3.output_ = t4.output_ = true;
     sleep(2);
@@ -460,7 +460,7 @@ DECLARE_TEST(Fini) {
     CHECK(f1->unlink() == 0);
     CHECK(f2->unlink() == 0);
 
-    log_notice("/test", "flamebox-ignore-cancel logs");
+    log_notice_p("/test", "flamebox-ignore-cancel logs");
 
     return UNIT_TEST_PASSED;
 }

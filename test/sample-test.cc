@@ -28,7 +28,7 @@ DECLARE_TEST(AnotherTest) {
 }
 
 DECLARE_TEST(InputTest) {
-    log_debug("/test", "InputTest: should be foo");
+    log_debug_p("/test", "InputTest: should be foo");
     
     return UNIT_TEST_INPUT;
 }
