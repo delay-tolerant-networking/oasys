@@ -25,15 +25,15 @@ main(int argc, const char** argv)
 
     int size = FileUtils::size(filename);
     if (size < 0) {
-        log_err(LOG, "error getting file size %s: %s",
-                filename, strerror(errno));
+        log_err_p(LOG, "error getting file size %s: %s",
+                  filename, strerror(errno));
         exit(1);
     }
 
     MmapFile mm("/md5chunks/mmap");
     const u_char* bp = (const u_char*)mm.map(filename, PROT_READ, 0);
     if (bp == NULL) {
-        log_err(LOG, "error mmap'ing file: %s", strerror(errno));
+        log_err_p(LOG, "error mmap'ing file: %s", strerror(errno));
         exit(1);
     }
     

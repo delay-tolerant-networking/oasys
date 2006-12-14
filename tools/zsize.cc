@@ -40,7 +40,7 @@ main(int argc, char* const argv[])
     Log::init();
 
     if (filename == "") {
-        log_err(LOG, "filename must be set");
+        log_err_p(LOG, "filename must be set");
         exit(1);
     }
 
@@ -52,18 +52,18 @@ main(int argc, char* const argv[])
     const u_char* src = (const u_char*)mm.map(filename.c_str(), PROT_READ, 0,
                                               len, offset);
     if (src == NULL) {
-        log_err(LOG, "error mmap'ing file: %s", strerror(errno));
+        log_err_p(LOG, "error mmap'ing file: %s", strerror(errno));
         exit(1);
     }
 
     unsigned long zlen = compressBound(len);
     void* dst = malloc(zlen);
-    log_debug(LOG, "calling compress on %lu byte buffer: src len %u",
-              zlen, len);
+    log_debug_p(LOG, "calling compress on %lu byte buffer: src len %u",
+                zlen, len);
     
     int cc = compress((Bytef*)dst, &zlen, src, len);
     if (cc != Z_OK) {
-        log_err(LOG, "error in compress: %s", zError(cc));
+        log_err_p(LOG, "error in compress: %s", zError(cc));
         exit(1);
     }
     free(dst);
