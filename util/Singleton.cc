@@ -35,7 +35,8 @@ SingletonBase::SingletonBase()
         memset(all_singletons_, 0, (MAX_SINGLETONS * sizeof(SingletonBase*)));
     }
 
-    all_singletons_[num_singletons_++] = this;
+    if (num_singletons_ < MAX_SINGLETONS)
+        all_singletons_[num_singletons_++] = this;
 }
 
 
