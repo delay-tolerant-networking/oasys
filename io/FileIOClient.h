@@ -49,13 +49,14 @@ public:
     int lstat(struct stat* buf);
     ///@}
 
-    /// Copy len bytes of file contents from the current offset to
-    /// another open file. Return the amount copied or -1 if error
-    int copy_contents(size_t len, FileIOClient* dest);
+    /// Copy the contents of the current file to the given destination
+    /// file. If len is non-zero, copy at most that many bytes,
+    /// otherwise copy the whole file.
+    int copy_contents(FileIOClient* dest, size_t len = 0);
 
     /// Set the path associated with this file handle
-    void set_path(const char* path) {
-        path_.assign(path);
+    void set_path(const std::string& path) {
+        path_ = path;
     }
 
     /// Reopen a previously opened path

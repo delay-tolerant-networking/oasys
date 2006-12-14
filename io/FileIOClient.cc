@@ -128,31 +128,54 @@ FileIOClient::lstat(struct stat* buf)
 
 //----------------------------------------------------------------------
 int
-FileIOClient::copy_contents(size_t len, FileIOClient* dest)
+FileIOClient::copy_contents(FileIOClient* dest, size_t len)
 {
-    char buf[1024];
-    int cnt;
+    char buf[4096];
+    int n, cc;
     int origlen = len;
+    int total = 0;
 
-    while (len > 0) {
-        cnt = (len < sizeof(buf)) ? len : sizeof(buf);
+    while (1) {
+        if (origlen == 0) {
+            n = sizeof(buf);
+        } else {
+            n = std::min(len, sizeof(buf));
+        }
 
-        if (readall(buf, cnt) != cnt) {
+        cc = read(buf, n);
+        if (cc < 0) {
             log_err("copy_contents: error reading %d bytes: %s",
-                    cnt, strerror(errno));
+                    n, strerror(errno));
             return -1;
         }
 
-        if (dest->writeall(buf, cnt) != cnt) {
+        if (cc == 0) {
+            if (origlen != 0 && len != 0) {
+                log_err("copy_contents: file %s too short (expected %d bytes)",
+                        path_.c_str(), origlen);
+                return -1;
+            }
+
+            break;
+        }
+        
+        if (dest->writeall(buf, cc) != cc) {
             log_err("copy_contents: error writing %d bytes: %s",
-                    cnt, strerror(errno));
+                    cc, strerror(errno));
             return -1;
         }
 
-        len -= cnt;
+        total += cc;
+        
+        if (origlen != 0) {
+            len -= cc;
+            if (len == 0) {
+                break;
+            }
+        }
     }
     
-    return origlen;
+    return total;
 }
 
 } // namespace oasys
