@@ -926,6 +926,9 @@ IO::rwvall(
             if (log) {
                 log_debug_p(log, "%s eof", fcn_name);
             }
+            // XXX/demmer this is a strange case since we may have
+            // actually read/written some amount before getting the
+            // eof... 
 	    return IOEOF;
 	} else {
 	    cow_iov.consume(cc);
