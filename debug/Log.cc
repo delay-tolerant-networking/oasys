@@ -525,7 +525,7 @@ Log::gen_prefix(char* buf, size_t buflen,
             len = snprintf(ptr, buflen, 
                            "%02d:%02d:%02d.%03ld ",
                            walltime.tm_hour, walltime.tm_min,
-                           walltime.tm_sec, tv.tv_usec / 1000);
+                           walltime.tm_sec, (long)tv.tv_usec / 1000);
         } else {
             len = snprintf(ptr, buflen, 
                            "%ld.%06ld ",
