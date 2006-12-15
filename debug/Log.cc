@@ -22,6 +22,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <time.h>
 #include <algorithm>
 
 #include "config.h"
@@ -240,6 +241,9 @@ Log::parse_debug_file(const char* debug_path)
                 }
                 if (strstr(logpath, "classname") != 0) {
                     output_flags_ |= OUTPUT_CLASSNAME;
+                }
+                if (strstr(logpath, "walltime") != 0) {
+                    output_flags_ |= OUTPUT_WALLTIME;
                 }
                 
                 continue;
@@ -515,9 +519,19 @@ Log::gen_prefix(char* buf, size_t buflen,
     if (output_flags_ & OUTPUT_TIME) {
         struct timeval tv;
         getlogtime(&tv);
-        len = snprintf(ptr, buflen, 
-                       "%ld.%06ld ",
-                       (long)tv.tv_sec, (long)tv.tv_usec);
+        if (output_flags_ & OUTPUT_WALLTIME) {
+            struct tm walltime;
+            gmtime_r(&tv.tv_sec, &walltime);
+            len = snprintf(ptr, buflen, 
+                           "%02d:%02d:%02d.%03ld ",
+                           walltime.tm_hour, walltime.tm_min,
+                           walltime.tm_sec, tv.tv_usec / 1000);
+        } else {
+            len = snprintf(ptr, buflen, 
+                           "%ld.%06ld ",
+                           (long)tv.tv_sec, (long)tv.tv_usec);
+        }
+        
         buflen -= len;
         ptr += len;
     }

@@ -77,14 +77,16 @@
  * of debug output, and these options are specified on a line in the
  * .debug file prefixed with '%' (see example above):
  *
- * no_path   - Don't display log path
- * no_time - Don't display time stamp
- * no_level  - Don't display log level
- * brief     - Truncate log name to a fixed length and use brief error codes
- * color   - Use terminal escape code to colorize output
- * object  - When possible, display the address of the object that 
- *           generated the log.
- * classname - When possible, display the class that generated the log message.
+ * no_path   - Don't display log path<br>
+ * no_time - Don't display time stamp<br>
+ * no_level  - Don't display log level<br>
+ * brief     - Truncate log name to a fixed length and use brief error codes<br>
+ * color   - Use terminal escape code to colorize output<br>
+ * object  - When possible, display the address of the object that
+ *           generated the log.<br>
+ * classname - When possible, display the class that generated the log message.<br>
+ * walltime  - If time is displayed, format it as HH:MM:SS.mmm instead of the
+ *             default SSSSS.uuuuuu
  */
 
 #include <stdarg.h>
@@ -337,6 +339,7 @@ private:
         OUTPUT_OBJ       = 1<<4,   // output the obj generating the log
         OUTPUT_SHORT     = 1<<10,  // shorten prefix
         OUTPUT_COLOR     = 1<<11,  // colorific
+        OUTPUT_WALLTIME  = 1<<12,  // output time as HH:MM:SS.mmm
     };
 
     /**
