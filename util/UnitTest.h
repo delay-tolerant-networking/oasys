@@ -112,21 +112,17 @@ public:
     
     virtual ~UnitTester() {}
 
-    void init_logging(int argc, const char* argv[]) {
+    void init_logging(int* argc, const char*** argv) {
         log_level_t level = LOG_NOTICE;
 
-        if (argc != 0) 
+        if (*argc != 0) 
         {
-            // always skip argv[0]
-            argc -= 1;
-            argv += 1;
-            
             // first look for -l debug (which must come first)
-            if (argc >= 2 && (strcmp(argv[0], "-l") == 0))
+            if (*argc >= 2 && (strcmp((*argv)[0], "-l") == 0))
             {
-                level = str2level(argv[1]);
-                argc -= 2;
-                argv += 2;
+                level = str2level((*argv)[1]);
+                *argc -= 2;
+                *argv += 2;
             }
             
         }
@@ -135,8 +131,12 @@ public:
     }        
 
     int run_tests(int argc, const char* argv[], bool init_log) {
+        const char* progname = argv[0];
+        argc -= 1;
+        argv += 1;
+        
         if (init_log) {
-            init_logging(argc, argv);
+            init_logging(&argc, &argv);
         }
         
         FatalSignals::init(name_.c_str());
@@ -144,12 +144,12 @@ public:
 
         bool in_tcl = false;
         
-        if (argc >= 1 &&
+        if (argc > 0 &&
             ((strcmp(argv[0], "-h") == 0) ||
              (strcmp(argv[0], "-help") == 0) ||
              (strcmp(argv[0], "--help") == 0)))
         {
-            printf("%s [-h] {[test name]}*\n", argv[0]);
+            printf("%s [-h] {[test name]}*\n", progname);
             printf("test names:\n");
             for (UnitTestList::const_iterator i = tests_.begin();
                  i != tests_.end(); ++i)
