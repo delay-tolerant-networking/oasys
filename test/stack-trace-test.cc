@@ -181,15 +181,17 @@ main(int argc, const char** argv)
     }
     
     // the various test cases above simply re-run the test script
-    // passing an argument
-    if (argc == 2) {
+    // after setting the environment variable indicating the test case
+    const char* testname = getenv("STACK_TRACE_TEST");
+    if (e != NULL) {
         oasys::Log::init(oasys::LOG_INFO);
         oasys::FatalSignals::init(argv[0]);
-        a(argv[1]);
+        a(testname);
     }
 
     Tester t("stack-trace-test");
-    return t.run_tests(argc, argv, true);
+    t.init(argc, argv, true);
+    return t.run_tests();
 }
     
 

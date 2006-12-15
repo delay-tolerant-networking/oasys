@@ -105,101 +105,77 @@ class UnitTester {
     typedef std::vector<UnitTest*> UnitTestList;
 
 public:
-    UnitTester(std::string name) : 
-        name_(name), passed_(0), failed_(0), input_(0) 
-    {
-    }
-    
+    UnitTester(std::string name) :
+        name_(name), passed_(0), failed_(0), input_(0),
+        progname_(0), in_tcl_(false)
+    {}
+
     virtual ~UnitTester() {}
-
-    void init_logging(int* argc, const char*** argv) {
-        log_level_t level = LOG_NOTICE;
-
-        if (*argc != 0) 
-        {
-            // first look for -l debug (which must come first)
-            if (*argc >= 2 && (strcmp((*argv)[0], "-l") == 0))
-            {
-                level = str2level((*argv)[1]);
-                *argc -= 2;
-                *argv += 2;
-            }
-            
-        }
-        
-        Log::init(level);
-    }        
-
-    int run_tests(int argc, const char* argv[], bool init_log) {
-        const char* progname = argv[0];
+    
+    void init(int argc, const char* argv[], bool init_log)
+    {
+        progname_ = argv[0];
         argc -= 1;
         argv += 1;
         
-        if (init_log) {
-            init_logging(&argc, &argv);
-        }
-        
-        FatalSignals::init(name_.c_str());
-        add_tests();
-
-        bool in_tcl = false;
-        
-        if (argc > 0 &&
-            ((strcmp(argv[0], "-h") == 0) ||
-             (strcmp(argv[0], "-help") == 0) ||
-             (strcmp(argv[0], "--help") == 0)))
-        {
-            printf("%s [-h] {[test name]}*\n", progname);
-            printf("test names:\n");
-            for (UnitTestList::const_iterator i = tests_.begin();
-                 i != tests_.end(); ++i)
-            {
-                printf("    %s\n", (*i)->name_.c_str());
-            }
-                   
-            exit(0);
-        }
-
+        log_level_t level = LOG_NOTICE;
         struct timeval tv;
         ::gettimeofday(&tv, 0);
         u_int random_seed = tv.tv_sec;
-        
-        if (argc >= 2 &&
-            (strcmp(argv[0], "--seed") == 0))
-        {
-            char* end;
-            random_seed = strtoul(argv[1], &end, 10);
-            argc -= 2;
-            argv += 2;
+
+        while (argc != 0) {
+            if ((strcmp(argv[0], "-l") == 0) && (argc >= 2))
+            {
+                level = str2level(argv[1]);
+                argc -= 2;
+                argv += 2;
+            }
+            else if (((strcmp(argv[0], "-h") == 0) ||
+                      (strcmp(argv[0], "-help") == 0) ||
+                      (strcmp(argv[0], "--help") == 0)))
+            {
+                printf("%s [-h] {[test name]}*\n", progname_);
+                printf("test names:\n");
+                for (UnitTestList::const_iterator i = tests_.begin();
+                     i != tests_.end(); ++i)
+                {
+                    printf("    %s\n", (*i)->name_.c_str());
+                }
+                
+                exit(0);
+            }
+            else if (strcmp(argv[0], "--in_tcl") == 0)
+            {
+                in_tcl_ = true;
+            }
+            else if ((strcmp(argv[0], "--seed") == 0) && (argc >= 2))
+            {
+                char* end;
+                random_seed = strtoul(argv[1], &end, 10);
+                argc -= 2;
+                argv += 2;
+            }
+            else
+            {
+                fprintf(stderr, "unknown unit test argument '%s',",
+                        argv[0]);
+                exit(1);
+            }
         }
+
+        if (init_log) {
+            Log::init(level);
+        }
+        FatalSignals::init(name_.c_str());
 
         oasys::Random::seed(random_seed);
         printf("Test random seed: %u\n", random_seed);
+    }
 
-        if (argc >= 1 && (strcmp(argv[1], "-test") == 0)) {
-            argc -= 1;
-            argv += 1;
-            in_tcl = true;
-        }
-        
-        UnitTestList new_tests;
-        while (argc != 0) {
-            for (UnitTestList::iterator i = tests_.begin();
-                 i != tests_.end(); ++i)
-            {
-                const char* testname = argv[0];
-                if (strcmp((*i)->name_.c_str(), testname) == 0) {
-                    new_tests.push_back(*i);
-                }
-            }            
-            argc--;
-            argv++;
-        }
-        if (new_tests.size() > 0) {
-            std::swap(tests_, new_tests);
-        }
+    int run_tests() {
+        add_tests();
 
-        if (in_tcl) {
+        if (in_tcl_) {
             print_tcl_header();
         } else {
             print_header();
@@ -215,7 +191,7 @@ public:
             int err = (*i)->run();
             switch(err) {
             case UNIT_TEST_PASSED:
-                if (in_tcl) {
+                if (in_tcl_) {
                     fprintf(stderr, "{ %d %s P } ", 
                             test_num, (*i)->name_.c_str());
                 } else {
@@ -224,7 +200,7 @@ public:
                 passed_++;
                 break;
             case UNIT_TEST_FAILED:
-                if (in_tcl) {
+                if (in_tcl_) {
                     fprintf(stderr, "{ %d %s F } ", 
                             test_num, (*i)->name_.c_str());
                 } else {
@@ -233,7 +209,7 @@ public:
                 failed_++;
                 break;
             case UNIT_TEST_INPUT:
-                if (in_tcl) {
+                if (in_tcl_) {
                     fprintf(stderr, "{ %d %s I } ", 
                             test_num, (*i)->name_.c_str());
                 } else {
@@ -245,7 +221,7 @@ public:
             }
         }
 
-        if (in_tcl) {
+        if (in_tcl_) {
             print_tcl_tail();
         } else {
             print_results();
@@ -295,6 +271,8 @@ private:
     int passed_;
     int failed_;
     int input_;
+    const char* progname_;
+    bool in_tcl_;
 };
 
 /// @{ Helper macros for implementing unit tests
@@ -310,12 +288,14 @@ private:
 
 #define RUN_TESTER(_UnitTesterClass, testname, argc, argv)      \
     _UnitTesterClass test(testname);                            \
-    int _ret = test.run_tests(argc, argv, true);                \
+    test.init(argc, argv, true);                                \
+    int _ret = test.run_tests();                                \
     return _ret;
 
 #define RUN_TESTER_NO_LOG(_UnitTesterClass, testname, argc, argv) \
     _UnitTesterClass test(testname);                              \
-    int _ret = test.run_tests(argc, argv, false);                 \
+    test.init(argc, argv, false);                                 \
+    int _ret = test.run_tests();                                  \
     return _ret;
 
 #define DECLARE_TEST_FILE(_UnitTesterClass, testname)           \
