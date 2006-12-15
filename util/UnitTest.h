@@ -112,7 +112,7 @@ public:
     
     virtual ~UnitTester() {}
 
-    int run_tests(int argc, const char* argv[], bool init_log) {
+    void init_logging(int argc, const char* argv[]) {
         log_level_t level = LOG_NOTICE;
 
         if (argc != 0) 
@@ -131,12 +131,15 @@ public:
             
         }
         
-        if (init_log)
-        {
-            Log::init(level);
+        Log::init(level);
+    }        
+
+    int run_tests(int argc, const char* argv[], bool init_log) {
+        if (init_log) {
+            init_logging(argc, argv);
         }
-        FatalSignals::init(name_.c_str());
         
+        FatalSignals::init(name_.c_str());
         add_tests();
 
         bool in_tcl = false;
