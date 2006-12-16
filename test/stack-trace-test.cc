@@ -69,6 +69,8 @@ die(const char* how)
     lim.rlim_cur = 0;
     lim.rlim_max = 0;
     setrlimit(RLIMIT_CORE, &lim);
+
+    setenv("STACK_TRACE_TEST", how, 1);
     
     if (!strcmp(how, "SIGSEGV")) {
         int *ptr = 0;
@@ -183,7 +185,7 @@ main(int argc, const char** argv)
     // the various test cases above simply re-run the test script
     // after setting the environment variable indicating the test case
     const char* testname = getenv("STACK_TRACE_TEST");
-    if (e != NULL) {
+    if (testname != NULL) {
         oasys::Log::init(oasys::LOG_INFO);
         oasys::FatalSignals::init(argv[0]);
         a(testname);
