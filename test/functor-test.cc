@@ -17,10 +17,8 @@
 
 #include "util/UnitTest.h"
 #include <list>
-#include "../util/Functors.h"
 
-using namespace std;
-using namespace oasys;
+#include "../util/Functors.h"
 
 class A {
 public:
@@ -33,8 +31,17 @@ private:
     int b_;
 };
 
+void fcn(const std::list<A>& l, const A& a)
+{ 
+    (void)a;
+    const int target = 6;
+
+    std::list<A>::const_iterator i = 
+        std::find_if(l.begin(), l.end(), oasys::eq_functor(target, &A::value));
+}
+
 DECLARE_TEST(Test1) {
-    list<A> l;
+    std::list<A> l;
 
     // 3
     l.push_back(A(1, 2));
@@ -47,21 +54,23 @@ DECLARE_TEST(Test1) {
 
     int target = 6;
 
-    list<A>::const_iterator i = 
-        std::find_if(l.begin(), l.end(), eq_functor(target, &A::value));
+    std::list<A>::const_iterator i = 
+        std::find_if(l.begin(), l.end(), oasys::eq_functor(target, &A::value));
     CHECK(i->value() == 6);
     --i;
     CHECK(i == l.begin());
 
     target = 8;
-    i = std::find_if(l.begin(), l.end(), lt_functor(target, &A::value));
+    i = std::find_if(l.begin(), l.end(), oasys::lt_functor(target, &A::value));
     CHECK(i == l.end());
 
     target = 3;
-    i = std::find_if(l.begin(), l.end(), neq_functor(target, &A::value));
+    i = std::find_if(l.begin(), l.end(), oasys::neq_functor(target, &A::value));
     CHECK(i->value() == 6);
 
-    return UNIT_TEST_PASSED;
+    fcn(l, A(2,3));
+
+    return oasys::UNIT_TEST_PASSED;
 }
 
 DECLARE_TESTER(Test) {

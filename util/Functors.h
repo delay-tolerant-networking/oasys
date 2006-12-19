@@ -1,5 +1,7 @@
-#ifndef __FCNADAPTERS_H__
-#define __FCNADAPTERS_H__
+#ifndef __FUNCTORS_H__
+#define __FUNCTORS_H__
+
+#include <functional>
 
 namespace oasys {
 
@@ -10,15 +12,18 @@ namespace oasys {
  * internals of the STL).
  *
  * The lower case function should be used instead of the classes
- * directly.
+ * directly (see below). 
  */
 
 //! See below for the function you should use
-template<typename _Value, typename _Class, typename _Comp>
+template<typename _Value, 
+         typename _Class, 
+         typename _Comp,
+         typename _Ret>
 struct CompFunctor {
-    CompFunctor(const _Value& value, 
-                _Value        (_Class::*m_fcn_ptr)() const,
-                const _Comp&  comparator) 
+    CompFunctor(_Value value, 
+                _Ret (_Class::*m_fcn_ptr)() const,
+                const _Comp& comparator) 
         : value_(value), 
           m_fcn_ptr_(m_fcn_ptr),
           comparator_(comparator) {}
@@ -28,26 +33,26 @@ struct CompFunctor {
 	return comparator_(value_, other_val);
     }
     
-    const _Value& value_;
-    _Value (_Class::*m_fcn_ptr_)() const;
-    const _Comp&  comparator_;
+    _Value value_;
+    _Ret (_Class::*m_fcn_ptr_)() const;
+    const _Comp& comparator_;
 };
 
 /*!
- * This function takes an object t of type _T and a member accessor
- * function f and returns the functor:
+ * This function takes an object t of type _T, a member accessor
+ * function f and a comparison function and returns the functor:
  *
  *      bool F(const _T& other) { 
  *          return other.f() -OP- t.f(); 
  *      }
  */
-template<typename _Value, typename _Class, typename _Comp>
-CompFunctor<_Value, _Class, _Comp> 
+template<typename _Value, typename _Class, typename _Comp, typename _Ret>
+CompFunctor<_Value, _Class, _Comp, _Ret> 
 comp_functor(const _Class& t, 
-             _Value        (_Class::*m_fcn_ptr)() const,
-             _Comp         comparator)
+             _Ret (_Class::*m_fcn_ptr)() const,
+             _Comp comparator)
 {
-    return CompFunctor<_Value, _Class, _Comp>(t, m_fcn_ptr, comparator);
+    return CompFunctor<_Value, _Class, _Comp, _Ret>(t, m_fcn_ptr, comparator);
 }
 
 /*!
@@ -55,12 +60,22 @@ comp_functor(const _Class& t,
  * operator overloads.
  */
 #define MAKE_FUNCTOR(_name, _operator)                          \
-template<typename _Value, typename _Class>                      \
-CompFunctor<_Value, _Class, _operator<_Value> >                 \
-_name(const _Value& value, _Value (_Class::*m_fcn_ptr)() const) \
+                                                                \
+template<typename _Value, typename _Class, typename _Ret>       \
+inline CompFunctor<_Value, _Class, _operator<_Value>,  _Ret>    \
+_name(_Value value, _Ret (_Class::*m_fcn_ptr)() const)          \
 {                                                               \
     _operator<_Value> comp;                                     \
-    return CompFunctor<_Value, _Class, _operator<_Value> >      \
+    return CompFunctor<_Value, _Class, _operator<_Value>, _Ret> \
+        (value, m_fcn_ptr, comp);                               \
+}                                                               \
+                                                                \
+template<typename _Value, typename _Class, typename _Ret>       \
+inline CompFunctor<_Value, _Class, _operator<_Value>, _Ret>     \
+_name(_Value value, const _Ret (_Class::*m_fcn_ptr)() const)    \
+{                                                               \
+    _operator<_Value> comp;                                     \
+    return CompFunctor<_Value, _Class, _operator<_Value>, _Ret> \
         (value, m_fcn_ptr, comp);                               \
 }
 
@@ -71,10 +86,11 @@ MAKE_FUNCTOR(lt_functor,  std::less);
 MAKE_FUNCTOR(gte_functor, std::greater_equal);
 MAKE_FUNCTOR(lte_functor, std::less_equal);
 
+
 #undef MAKE_FUNCTOR
 
 //! @}
 
 } // namespace oasys
 
-#endif /* __FCNADAPTERS_H__ */
+#endif /* __FUNCTORS_H__ */
