@@ -21,6 +21,7 @@ TESTS += \
 	buffer-test				\
 	durable-cache-test			\
 	filesys-db-test				\
+	functor-test				\
 	io-basic-test				\
 	log-test				\
 	marshal-test				\
