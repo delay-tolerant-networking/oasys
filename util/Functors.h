@@ -14,18 +14,23 @@ namespace oasys {
  */
 
 //! See below for the function you should use
-template<typename _T, typename _Ret, typename _Comp>
+template<typename _Value, typename _Class, typename _Comp>
 struct CompFunctor {
-    Eq(const _T& t, _Ret (_T::*m_fcn_ptr)() const) 
-        : t_(t), m_fcn_ptr_(m_fcn_ptr) {}
+    CompFunctor(const _Value& value, 
+                _Value        (_Class::*m_fcn_ptr)() const,
+                const _Comp&  comparator) 
+        : value_(value), 
+          m_fcn_ptr_(m_fcn_ptr),
+          comparator_(comparator) {}
     
-    bool operator()(const _T& other) const {
-        _Comp comparator;
-	return comparator(t_.*m_fcn_ptr_(), other.*m_fcn_ptr_());
+    bool operator()(const _Class& other) const {
+        const _Value& other_val = (other.*m_fcn_ptr_)();
+	return comparator_(value_, other_val);
     }
     
-    const _T& t_;
-    _Ret (_T::*m_fcn_ptr_)() const;
+    const _Value& value_;
+    _Value (_Class::*m_fcn_ptr_)() const;
+    const _Comp&  comparator_;
 };
 
 /*!
@@ -36,23 +41,27 @@ struct CompFunctor {
  *          return other.f() -OP- t.f(); 
  *      }
  */
-template<typename _T, typename _Ret, typename _Comp>
-CompFunctor<_T, _Ret, _Comp> 
-comp_functor(const _T& t, _Ret (_T::*m_fcn_ptr)() const)
+template<typename _Value, typename _Class, typename _Comp>
+CompFunctor<_Value, _Class, _Comp> 
+comp_functor(const _Class& t, 
+             _Value        (_Class::*m_fcn_ptr)() const,
+             _Comp         comparator)
 {
-    return CompFunctor<_T, _Ret, _Comp>(t, m_fcn_ptr);
+    return CompFunctor<_Value, _Class, _Comp>(t, m_fcn_ptr, comparator);
 }
 
 /*!
  * @{ This next set of functions implement the above for the standard
  * operator overloads.
  */
-#define MAKE_FUNCTOR(_name, _operator)
-template<typename _T, typename _Ret>
-CompFunctor<_T, _Ret, _operator>
-_name(const _T& t, _Ret (_T::*m_fcn_ptr)() const)
-{
-    return CompFunctor<_T, _Ret, operator>(t, m_fcn_ptr);
+#define MAKE_FUNCTOR(_name, _operator)                          \
+template<typename _Value, typename _Class>                      \
+CompFunctor<_Value, _Class, _operator<_Value> >                 \
+_name(const _Value& value, _Value (_Class::*m_fcn_ptr)() const) \
+{                                                               \
+    _operator<_Value> comp;                                     \
+    return CompFunctor<_Value, _Class, _operator<_Value> >      \
+        (value, m_fcn_ptr, comp);                               \
 }
 
 MAKE_FUNCTOR(eq_functor,  std::equal_to);
