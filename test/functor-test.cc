@@ -68,4 +68,4 @@ DECLARE_TESTER(Test) {
     ADD_TEST(Test1);
 }
 
-DECLARE_TEST_FILE(Test, "sample test");
+DECLARE_TEST_FILE(Test, "functor test");
