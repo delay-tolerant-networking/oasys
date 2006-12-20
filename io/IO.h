@@ -106,7 +106,7 @@ struct IO {
     
     static int munmap(void* start, size_t length, const char* log = 0);
     
-    static int mkdir(const char* path, unsigned mode, const char* log = 0);
+    static int mkdir(const char* path, mode_t mode, const char* log = 0);
 
     //@}
 
