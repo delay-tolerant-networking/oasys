@@ -20,6 +20,7 @@
 #include <sys/poll.h>
 #include <sys/types.h>
 #include <sys/fcntl.h>
+#include <sys/mman.h>
 
 #include "IO.h"
 
@@ -29,6 +30,8 @@
 #include "thread/Notifier.h"
 
 namespace oasys {
+
+static int page_size = ::getpagesize();
 
 //----------------------------------------------------------------------------
 //! Small helper class which is a copy-on-write iovec and also handle
@@ -252,6 +255,66 @@ IO::lstat(const char* path, struct stat* buf, const char* log)
     if (log) {
         logf(log, LOG_DEBUG, "stat %s: %d", path, ret);
     }
+    
+    return ret;
+}
+
+void*
+IO::mmap(int fd, off_t offset, size_t length, IO_Mmap_t mode, const char* log) 
+{
+    int prot = 0;
+    int flags = 0;
+    //int page_size = ::getpagesize();
+    off_t map_offset = offset & ~(page_size - 1);
+    
+    switch (mode) {
+    case MMAP_RO:
+        prot = PROT_READ;
+        flags = MAP_PRIVATE;
+        break;
+        
+    case MMAP_RW:
+        prot = PROT_READ | PROT_WRITE;
+        flags = MAP_SHARED;
+        break;
+    }
+            
+    void* ptr = ::mmap(NULL, length, prot, flags, fd, map_offset);
+    if (log) {
+        logf(log, LOG_DEBUG, "mmap: %p", ptr);
+    }
+    
+    if (ptr == MAP_FAILED) {
+        return NULL;
+    }
+    
+    return (u_int8_t*)ptr + (offset & (page_size - 1));  
+}
+
+int
+IO::munmap(void* start, size_t length, const char* log)
+{
+    void* map_start = (void*)((unsigned long)start & ~(page_size - 1));
+    size_t map_length = length + ((unsigned long)start & (page_size - 1));
+    
+    int ret = ::munmap(map_start, map_length);
+    if (log) {
+        logf(log, LOG_DEBUG, "munmap %p, length %zu: %d", start, length, ret);
+    }
+    
+    return ret;
+}
+
+int
+IO::mkdir(const char* path, mode_t mode, const char* log)
+{
+    int ret = ::mkdir(path, mode);
+    if (log) {
+        logf(log, LOG_DEBUG, "mkdir %s: %d", path, ret);
+    }
+    
+    if (ret < 0 && errno == EEXIST)
+        return 0;
     
     return ret;
 }

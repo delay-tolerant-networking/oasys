@@ -63,6 +63,11 @@ struct IO {
         CONNECT,
         ACCEPT,
     };
+    
+    enum IO_Mmap_t {
+        MMAP_RO,
+        MMAP_RW,
+    };
 
     /**
      * @return Text for the io error.
@@ -95,6 +100,14 @@ struct IO {
     static int stat(const char* path, struct stat* buf, const char* log = 0);
 
     static int lstat(const char* path, struct stat* buf, const char* log = 0);
+    
+    static void* mmap(int file, off_t offset, size_t length, IO_Mmap_t mode,
+                      const char* log = 0);
+    
+    static int munmap(void* start, size_t length, const char* log = 0);
+    
+    static int mkdir(const char* path, unsigned mode, const char* log = 0);
+
     //@}
 
     //! @{ XXX/bowei - more documentation
