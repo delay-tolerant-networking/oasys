@@ -33,6 +33,8 @@
 #include "StorageConfig.h"
 #include "util/InitSequencer.h"
 
+#if LIBDB_ENABLED
+
 #define NO_TX  0 // for easily going back and changing TX id's later
 
 namespace oasys {
@@ -995,3 +997,5 @@ BerkeleyDBIterator::raw_data(void** data, size_t* len)
 }
 
 } // namespace oasys
+
+#endif // LIBDB_ENABLED

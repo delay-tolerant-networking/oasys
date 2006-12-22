@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 
+#include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
