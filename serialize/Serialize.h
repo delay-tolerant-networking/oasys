@@ -101,11 +101,14 @@ protected:
  * Utility class which enables different serializations
  * for in_addr_t and u_int32_t
  */
-class InAddr {
+class InAddrPtr {
 public:
-    InAddr(in_addr_t *addr)
+    InAddrPtr(in_addr_t *addr)
         : addr_(addr) {}
 
+    in_addr_t* addr() const { return addr_; }
+
+protected:
     in_addr_t *addr_;
 };
 
@@ -304,9 +307,9 @@ public:
      * Default serialization of an in_addr_t
      * is to treat it as an integer
      */
-    virtual void process(const char* name, InAddr* a)
+    virtual void process(const char* name, const InAddrPtr& a)
     {
-        process(name, (u_int32_t*)a->addr_);
+        process(name, static_cast<u_int32_t*>(a.addr()));
     }
 
     /** Set a log target for verbose serialization */
