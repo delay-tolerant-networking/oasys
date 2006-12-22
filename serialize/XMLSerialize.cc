@@ -175,9 +175,9 @@ XMLMarshal::process(const char *name, std::string *s)
 }
 
 void
-XMLMarshal::process(const char* name, InAddr* a)
+XMLMarshal::process(const char* name, const InAddrPtr& a)
 {
-    const char *addr = intoa(*a->addr_);
+    const char *addr = intoa(*a.addr());
     current_node_->add_attr(std::string(name), std::string(addr));
 }
 
