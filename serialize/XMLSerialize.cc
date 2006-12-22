@@ -41,6 +41,7 @@
  */
 
 #include "XMLSerialize.h"
+#include <io/NetUtils.h>
 
 #include <config.h>
 #ifdef XERCES_C_ENABLED
@@ -171,6 +172,13 @@ void
 XMLMarshal::process(const char *name, std::string *s)
 {
     current_node_->add_attr(std::string(name), *s);
+}
+
+void
+XMLMarshal::process(const char* name, InAddr* a)
+{
+    const char *addr = intoa(*a->addr_);
+    current_node_->add_attr(std::string(name), std::string(addr));
 }
 
 } // namespace oasys

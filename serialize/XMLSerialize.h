@@ -74,6 +74,7 @@ public:
     virtual void process(const char *name, u_char **bp,
                          u_int32_t *lenp, int flags);
     virtual void process(const char *name, std::string *s);
+    virtual void process(const char* name, InAddr* a);
 
     /// Accessor to the internal XMLDocument
     const XMLDocument& doc() const { return doc_; }
