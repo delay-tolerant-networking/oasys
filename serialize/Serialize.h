@@ -28,6 +28,8 @@
 #include <sys/types.h>
 #include "../compat/inttypes.h"
 
+#include <netinet/in.h>
+
 namespace oasys {
 
 class Serialize;
@@ -93,6 +95,18 @@ public:
 
 protected:
     static Builder static_builder_;
+};
+
+/**
+ * Utility class which enables different serializations
+ * for in_addr_t and u_int32_t
+ */
+class InAddr {
+public:
+    InAddr(in_addr_t *addr)
+        : addr_(addr) {}
+
+    in_addr_t *addr_;
 };
 
 /**
@@ -285,6 +299,15 @@ public:
 
     
     /// @}
+
+    /**
+     * Default serialization of an in_addr_t
+     * is to treat it as an integer
+     */
+    virtual void process(const char* name, InAddr* a)
+    {
+        process(name, (u_int32_t*)a->addr_);
+    }
 
     /** Set a log target for verbose serialization */
     void logpath(const char* log) { log_ = log; }
