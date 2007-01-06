@@ -29,9 +29,13 @@ namespace oasys {
  */
 template<typename _Key, typename _Value>
 class AList : public oasys::SerializableObject {
-    typedef std::list<_Key, _Value> List;
-
 public:
+    struct Ent {
+        _Key   key_;
+        _Value value_;
+    };
+    typedef std::list<Ent> List;
+
     /*!
      * @param k Key to retrieve.
      * @return True if the key exists.
@@ -61,20 +65,56 @@ public:
     
 private:
     List list_;
+
+    struct KeyIsEqual {
+        KeyIsEqual(const _Key& key) : key_(key) {}
+        bool operator()(const Ent& ent) { return ent.key_ == key_; }
+
+        _Key key_;
+    };
+
+    struct ValueIsEqual {
+        ValueIsEqual(const _Value& value) : value_(value) {}
+        bool operator()(const Ent& ent) { return ent.value_ == value_; }
+
+        _Value value_;
+    };
 };
 
 //----------------------------------------------------------------------------
 template<typename _Key, typename _Value>
-bool AList<_Key, _Value>::exists(const _Key& k) const
+bool AList<_Key, _Value>::key_exists(const _Key& k) const
+{
+    return list_.end() != 
+        std::find_if(list_.begin(), list_.end(), KeyIsEqual(k));
+}
+
+//----------------------------------------------------------------------------
+template<typename _Key, typename _Value>
+bool AList<_Key, _Value>::value_exists(const _Key& k) const
+{
+    return list_.end() != 
+        std::find_if(list_.begin(), list_.end(), KeyIsEqual(k));
+}
+
+//----------------------------------------------------------------------------
+template<typename _Key, typename _Value>
+bool AList<_Key, _Value>::get_by_key(const _Key& k, _Value* v) const
 {
     return true;
 }
 
 //----------------------------------------------------------------------------
 template<typename _Key, typename _Value>
-bool AList<_Key, _Value>::get(const _Key& k, _Value* v) const
+bool AList<_Key, _Value>::get_by_value(const _Key& k, _Value* v) const
 {
     return true;
+}
+
+//----------------------------------------------------------------------------
+template<typename _Key, typename _Value>
+void AList<_Key, _Value>::add(const _Key& k, _Value v)
+{
 }
 
 //----------------------------------------------------------------------------
