@@ -147,6 +147,9 @@ public:
 //! gdb
 void oasys_break();
 
+//! This as well for dumping formattable objects
+const char* oasys_dump(const void* obj);
+
 #include "../memory/Memory.h"
 
 #endif /* _OASYS_DEBUG_UTILS_H_ */

@@ -15,13 +15,35 @@
  */
 
 #include "DebugUtils.h"
+#include "Formatter.h"
+#include "DebugDumpBuf.h"
 
+//----------------------------------------------------------------------------
 void
 oasys::Breaker::break_here()
 {
     oasys_break();
 }
 
+//----------------------------------------------------------------------------
 void 
 oasys_break() 
 {}
+
+//----------------------------------------------------------------------------
+const char*
+oasys_dump(const void* obj)
+{
+    const oasys::Formatter* fobj = 
+        reinterpret_cast<const oasys::Formatter*>(obj);
+
+#ifndef NDEBUG
+    if (fobj->format_magic_ != FORMAT_MAGIC) 
+    {
+        return "Pointer doesn't point to Formatter";
+    }
+#endif // NDEBUG
+    
+    fobj->format(oasys::DebugDumpBuf::buf_, oasys::DebugDumpBuf::size_);
+    return oasys::DebugDumpBuf::buf_;
+}
