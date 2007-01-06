@@ -57,7 +57,8 @@ comp_functor(const _Class& t,
 
 /*!
  * @{ This next set of functions implement the above for the standard
- * operator overloads.
+ * operator overloads. There need to be several different overloadings
+ * because of issues with constness.
  */
 #define MAKE_FUNCTOR(_name, _operator)                          \
                                                                 \
@@ -72,12 +73,13 @@ _name(_Value value, _Ret (_Class::*m_fcn_ptr)() const)          \
                                                                 \
 template<typename _Value, typename _Class, typename _Ret>       \
 inline CompFunctor<_Value, _Class, _operator<_Value>, _Ret>     \
-_name(_Value value, const _Ret (_Class::*m_fcn_ptr)() const)    \
+_name(_Value value, _Ret (_Class::*m_fcn_ptr)())                \
 {                                                               \
     _operator<_Value> comp;                                     \
     return CompFunctor<_Value, _Class, _operator<_Value>, _Ret> \
         (value, m_fcn_ptr, comp);                               \
 }
+//! @}
 
 MAKE_FUNCTOR(eq_functor,  std::equal_to);
 MAKE_FUNCTOR(neq_functor, std::not_equal_to);
