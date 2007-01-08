@@ -108,6 +108,14 @@ public:
         }
         instance_ = instance;
     }
+
+    /**
+     * Used if you really want to be able to replace the instance
+     * (i.e. if it's not acting as a true singleton).
+     */
+    static void force_set_instance(_Class* instance) {
+        instance_ = instance;
+    }
     
 protected:
     static _Class* instance_;
