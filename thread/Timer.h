@@ -23,6 +23,7 @@
 #include <sys/time.h>
 #include <queue>
 #include <signal.h>
+#include <math.h>
 
 #include "config.h"
 #include "../debug/DebugUtils.h"
@@ -71,6 +72,12 @@ namespace oasys {
 #define TIMEVAL_LT(t1, t2) \
     (((t1).tv_sec  <  (t2).tv_sec) ||  \
      (((t1).tv_sec == (t2).tv_sec) && ((t1).tv_usec < (t2).tv_usec)))
+
+#define DOUBLE_TO_TIMEVAL(d, tv)                                             \
+    do {                                                                     \
+        (tv).tv_sec  = static_cast<unsigned long>(floor(d));                 \
+        (tv).tv_usec = static_cast<unsigned long>((d - floor(d)) * 1000000); \
+    } while (0)
 
 class SpinLock;
 class Timer;
