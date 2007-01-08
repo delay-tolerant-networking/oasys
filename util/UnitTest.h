@@ -363,7 +363,7 @@ void _name::add_tests()                                         \
     } } while(0)
 
 #define CHECK_LT(_a, _b)                                                        \
-    do { int a = _a; int b = _b; if (! (((a) < (b))) {                          \
+    do { int a = _a; int b = _b; if (! (((a) < (b)))) {                         \
 	errno_ = errno;								\
 	strerror_ = strerror(errno_);						\
         ::oasys::Breaker::break_here();                                         \
@@ -442,15 +442,16 @@ void _name::add_tests()                                         \
                     __FILE__, __LINE__);                                                \
     } } while(0)
 
-#define CHECK_EQUALSTR(a, b)                                            \
-    do { if (strcmp((a), (b)) != 0) {                                   \
+#define CHECK_EQUALSTR(_a, _b)                                          \
+    do { const char* a = _a; const char* b = _b;                        \
+        if (strcmp((a), (b)) != 0) {                                    \
 	errno_ = errno;							\
 	strerror_ = strerror(errno_);					\
         ::oasys::Breaker::break_here();                                 \
         log_err_p("/test",                                              \
-                    "CHECK FAILED: '" #a "' != '" #b "' at %s:%d.",     \
+                    "CHECK FAILED: '" #_a "' != '" #_b "' at %s:%d.",   \
                     __FILE__, __LINE__);                                \
-        log_err_p("/test", "Contents of " #a                            \
+        log_err_p("/test", "Contents of " #_a                           \
                     " (length %zu): ", strlen(a));                      \
         oasys::PrettyPrintBuf buf_a(a, strlen(a));                      \
         std::string s;                                                  \
@@ -460,7 +461,7 @@ void _name::add_tests()                                         \
             log_err_p("/test", s.c_str());                              \
         } while (!done);                                                \
                                                                         \
-        log_err_p("/test", "Contents of " #b                            \
+        log_err_p("/test", "Contents of " #_b                           \
                     " (length %zu): ", strlen(b));                      \
         oasys::PrettyPrintBuf buf_b(b, strlen(b));                      \
                                                                         \
@@ -472,7 +473,7 @@ void _name::add_tests()                                         \
         return oasys::UNIT_TEST_FAILED;                                 \
     } else {                                                            \
         log_notice_p("/test",                                           \
-                    "CHECK '" #a "' (%s) == '" #b "' (%s) "             \
+                    "CHECK '" #_a "' (%s) == '" #_b "' (%s) "           \
                     "at %s:%d", (a), (b), __FILE__, __LINE__);          \
     } } while(0);
 
