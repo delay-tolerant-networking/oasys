@@ -46,6 +46,7 @@ TESTS += \
 	timer-test				\
 	token-bucket-test			\
 	type-collection-test		        \
+	updatable-priority-queue-test		\
 	util-test				\
 	xml-test				\
 
