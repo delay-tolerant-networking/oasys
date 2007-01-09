@@ -110,6 +110,9 @@ public:
     }
 
     /**
+     * PLEASE DON'T USE THIS AS THIS CLEARLY BREAKS THE SINGLETON
+     * CONTRACT.
+     *
      * Used if you really want to be able to replace the instance
      * (i.e. if it's not acting as a true singleton).
      */
