@@ -64,9 +64,8 @@ TimerSystem::schedule_at(struct timeval *when, Timer* timer)
     if (when == 0) {
         // special case a NULL timeval as an immediate timer
         log_debug("scheduling timer %p immediately", timer);
-        
-        timer->when_.tv_sec = 0;
-        timer->when_.tv_usec = 0;
+
+        ::gettimeofday(&timer->when_, 0);
     } else {
         ::gettimeofday(&now, 0);
         log_debug("scheduling timer %p in %ld ms at %u:%u",
