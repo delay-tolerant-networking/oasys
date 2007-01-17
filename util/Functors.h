@@ -2,6 +2,7 @@
 #define __FUNCTORS_H__
 
 #include <functional>
+#include <algorithm>
 
 namespace oasys {
 
