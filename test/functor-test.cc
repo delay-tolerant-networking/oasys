@@ -82,16 +82,16 @@ DECLARE_TEST(Test2) {
     l.push_back(4);
     l.push_back(7);
 
-    CHECK(oasys::elt_of(l, 1));
-    CHECK(oasys::elt_of(l, 2));
-    CHECK(oasys::elt_of(l, 3));
-    CHECK(oasys::elt_of(l, 4));
-    CHECK(oasys::elt_of(l, 7));
-    CHECK(! oasys::elt_of(l, -1));
-    CHECK(! oasys::elt_of(l, 0));
-    CHECK(! oasys::elt_of(l, 5));
-    CHECK(! oasys::elt_of(l, 6));
-    CHECK(! oasys::elt_of(l, 8));
+    CHECK(oasys::element_of(l, 1));
+    CHECK(oasys::element_of(l, 2));
+    CHECK(oasys::element_of(l, 3));
+    CHECK(oasys::element_of(l, 4));
+    CHECK(oasys::element_of(l, 7));
+    CHECK(! oasys::element_of(l, -1));
+    CHECK(! oasys::element_of(l, 0));
+    CHECK(! oasys::element_of(l, 5));
+    CHECK(! oasys::element_of(l, 6));
+    CHECK(! oasys::element_of(l, 8));
 
     return oasys::UNIT_TEST_PASSED;
 }
@@ -108,12 +108,12 @@ DECLARE_TEST(Test3) {
     // 7
     l.push_back(A(2, 5));
 
-    CHECK(oasys::elt_of(l, 3, &A::value));
-    CHECK(oasys::elt_of(l, 6, &A::value));
-    CHECK(oasys::elt_of(l, 7, &A::value));
-    CHECK(! oasys::elt_of(l, 2, &A::value));
-    CHECK(! oasys::elt_of(l, 5, &A::value));
-    CHECK(! oasys::elt_of(l, 9, &A::value));
+    CHECK(oasys::element_of(l, 3, &A::value));
+    CHECK(oasys::element_of(l, 6, &A::value));
+    CHECK(oasys::element_of(l, 7, &A::value));
+    CHECK(! oasys::element_of(l, 2, &A::value));
+    CHECK(! oasys::element_of(l, 5, &A::value));
+    CHECK(! oasys::element_of(l, 9, &A::value));
 
     return oasys::UNIT_TEST_PASSED;
 }
