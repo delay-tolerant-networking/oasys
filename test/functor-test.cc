@@ -73,8 +73,55 @@ DECLARE_TEST(Test1) {
     return oasys::UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(Test2) {
+    std::list<int> l;
+
+    l.push_back(1);
+    l.push_back(2);
+    l.push_back(3);
+    l.push_back(4);
+    l.push_back(7);
+
+    CHECK(oasys::elt_of(l, 1));
+    CHECK(oasys::elt_of(l, 2));
+    CHECK(oasys::elt_of(l, 3));
+    CHECK(oasys::elt_of(l, 4));
+    CHECK(oasys::elt_of(l, 7));
+    CHECK(! oasys::elt_of(l, -1));
+    CHECK(! oasys::elt_of(l, 0));
+    CHECK(! oasys::elt_of(l, 5));
+    CHECK(! oasys::elt_of(l, 6));
+    CHECK(! oasys::elt_of(l, 8));
+
+    return oasys::UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(Test3) {
+    std::list<A> l;
+
+    // 3
+    l.push_back(A(1, 2));
+
+    // 6
+    l.push_back(A(4, 2));
+
+    // 7
+    l.push_back(A(2, 5));
+
+    CHECK(oasys::elt_of(l, 3, &A::value));
+    CHECK(oasys::elt_of(l, 6, &A::value));
+    CHECK(oasys::elt_of(l, 7, &A::value));
+    CHECK(! oasys::elt_of(l, 2, &A::value));
+    CHECK(! oasys::elt_of(l, 5, &A::value));
+    CHECK(! oasys::elt_of(l, 9, &A::value));
+
+    return oasys::UNIT_TEST_PASSED;
+}
+
 DECLARE_TESTER(Test) {
     ADD_TEST(Test1);
+    ADD_TEST(Test2);
+    ADD_TEST(Test3);
 }
 
 DECLARE_TEST_FILE(Test, "functor test");

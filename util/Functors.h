@@ -93,6 +93,44 @@ MAKE_FUNCTOR(lte_functor, std::less_equal);
 
 //! @}
 
+/*!
+ * @return True if elt exists in the container cont.
+ *
+ * NB bowei: If this template template parameter things doesn't work
+ * out, there is a typedef called value_type in the STL impl that can
+ * be used.
+ */
+template<typename _ContType, typename _EltType>
+bool
+elt_of(const _ContType& cont, const _EltType& elt)
+{
+    return std::find(cont.begin(), cont.end(), elt) != cont.end();
+}
+
+/*!
+ * @return True if elt exists in the container cont->mem_fcn.
+ */
+template
+<
+    typename _ContType, 
+    typename _EltType, 
+    typename _EltType2, 
+    typename _Ret
+>
+bool
+elt_of(const _ContType& cont, 
+       const _EltType& value, 
+       _Ret (_EltType2::*m_fcn_ptr)() const)
+{
+    typename _ContType::const_iterator begin = cont.begin();
+    typename _ContType::const_iterator end   = cont.end();
+    typename _ContType::const_iterator itr;
+
+    itr = std::find_if(begin, end, eq_functor(value, m_fcn_ptr));
+
+    return itr != end;
+}
+
 } // namespace oasys
 
 #endif /* __FUNCTORS_H__ */
