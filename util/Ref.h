@@ -240,6 +240,14 @@ public:
     {
         return (object_ != other.object_);
     }
+ 
+    /**
+     * Less than operator.
+     */
+    bool operator<(const Ref<_Type>& other) const
+    {
+        return (object_ < other.object_);
+    }
     
 private:
     /**
