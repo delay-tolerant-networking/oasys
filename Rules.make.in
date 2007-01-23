@@ -30,6 +30,7 @@ CFLAGS		= $(CPPFLAGS) $(DEBUG) $(OPTIMIZE) $(DEPFLAGS) $(WARN) $(PROFILE)
 LIBS		= @LIBS@
 OASYS_LIBS	= @OASYS_LIBS@
 LDFLAGS		= @LDFLAGS@
+XSD_TOOL    = @XSD_TOOL@
 
 #
 # Add a phony rule to make sure this isn't included before the default
