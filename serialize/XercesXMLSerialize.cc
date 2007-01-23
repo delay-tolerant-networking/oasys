@@ -153,6 +153,38 @@ XercesXMLUnmarshal::~XercesXMLUnmarshal()
     XercesXMLUnmarshal::lock_->unlock();
 }
 
+const xercesc::DOMDocument *
+XercesXMLUnmarshal::doc(const char *xml_doc)
+{
+    if (! xml_doc) {
+        log_warn("parser received empty xml document");
+        signal_error();
+        return 0;
+    }
+
+    // load an error handler
+    ValidationError error_handler;
+    parser_->setErrorHandler(&error_handler);
+
+    // parse the given xml document
+    xercesc::MemBufInputSource message(
+        reinterpret_cast<const XMLByte * const>(xml_doc),
+        strlen(xml_doc), "message");
+    xercesc::Wrapper4InputSource xml_source(&message, false);
+    parser_->resetDocumentPool();
+    doc_ = parser_->parse(xml_source);
+
+    // was the message valid?
+    if (error_handler.is_set()) {
+        log_warn("message dropped\n\t%s \n\toffending message was: %s",
+            error_handler.message(), xml_doc);
+        signal_error();
+        return 0;
+    }
+
+    return doc_;
+}
+
 // Parse, optionally validate, and build a DOM tree
 // from the supplied xml document
 const char *

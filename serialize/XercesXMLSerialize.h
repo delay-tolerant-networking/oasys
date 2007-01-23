@@ -75,6 +75,8 @@ public:
     XercesXMLUnmarshal(bool validation, const char *schema=0);
     virtual ~XercesXMLUnmarshal();
 
+    const xercesc::DOMDocument *doc(const char *xml_doc = 0);
+
     /**
      * Parse, optionally validate, and build a DOM tree from
      * the provided xml document.  Return the first element tag.
