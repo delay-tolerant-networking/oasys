@@ -28,9 +28,9 @@ AC_DEFUN(AC_OASYS_CONFIG_XSD, [
 
     AC_CHECK_TOOL(XSD_TOOL, $ac_with_xsd_tool)
     if test -z "$XSD_TOOL" ; then
-       AC_MSG_WARN([Cannot find a working xsd tool])
-       AC_MSG_WARN([   You will not be able to regenerate XML schema bindings])
-       AC_MSG_WARN([   if you make changes to the .xsd file])
-       AC_MSG_WARN([   Use --with-xsd-tool=(name) to specify the location of this tool])
+       AC_MSG_NOTICE([Cannot find a working xsd tool])
+       AC_MSG_NOTICE([   You will not be able to regenerate XML schema bindings])
+       AC_MSG_NOTICE([   if you make changes to the .xsd file])
+       AC_MSG_NOTICE([   Use --with-xsd-tool=(name) to specify the location of this tool])
     fi
 ])
