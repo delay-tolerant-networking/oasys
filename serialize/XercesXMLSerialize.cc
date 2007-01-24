@@ -61,7 +61,8 @@ namespace oasys {
 
 XercesXMLUnmarshal::XercesXMLUnmarshal(bool validation,
                                        const char *schema)
-    : Logger("XercesXMLUnmarshal", "/XercesXMLUnmarshal"), root_elem_(0)
+    : Logger("XercesXMLUnmarshal", "/XercesXMLUnmarshal"), root_tag_str(NULL),
+         root_elem_(0)
 {    
     XercesXMLUnmarshal::lock_->lock("Constructing XercesXMLUnmarshal");
 
