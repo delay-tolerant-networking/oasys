@@ -318,6 +318,7 @@ DurableObjectCache<_DataType>::release(const SerializableObject& key,
     if (! cache_elem->live_) {
         log_err("release(%s): release object %p already on LRU list!!",
                 cache_key.c_str(), data);
+	Breaker::break_here();
         lru_.move_to_back(cache_elem->lru_iter_);
     } else {
         log_debug("release(%s): release object %p", cache_key.c_str(), data);
