@@ -114,9 +114,16 @@ public:
     
     void init(int argc, const char* argv[], bool init_log)
     {
-        progname_ = argv[0];
-        argc -= 1;
-        argv += 1;
+        if (argc == 0)
+        {
+            progname_ = "unit-test";
+        }
+        else
+        {
+            progname_ = argv[0];
+            argc -= 1;
+            argv += 1;
+        }
         
         log_level_t level = LOG_NOTICE;
         struct timeval tv;
