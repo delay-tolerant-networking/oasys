@@ -77,6 +77,7 @@ SERIALIZE_SRCS :=				\
 	serialize/BufferedSerializeAction.cc	\
 	serialize/KeySerialize.cc		\
 	serialize/MarshalSerialize.cc		\
+	serialize/Serialize2Hash.cc		\
 	serialize/SQLSerialize.cc		\
 	serialize/Serialize.cc			\
 	serialize/StringSerialize.cc		\
