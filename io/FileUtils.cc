@@ -18,13 +18,16 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/sendfile.h>
 #include <dirent.h>
+#include <fcntl.h>
 
 #include "debug/Log.h"
 #include "FileUtils.h"
 
 namespace oasys {
 
+//------------------------------------------------------------------
 bool
 FileUtils::readable(const char* path, const char* log)
 {
@@ -53,6 +56,7 @@ FileUtils::readable(const char* path, const char* log)
     return true;
 }
 
+//------------------------------------------------------------------
 int
 FileUtils::size(const char* path, const char* log)
 {
@@ -79,6 +83,7 @@ FileUtils::size(const char* path, const char* log)
     return st.st_size;
 }
 
+//------------------------------------------------------------------
 void
 FileUtils::abspath(std::string* path)
 {
@@ -92,6 +97,7 @@ FileUtils::abspath(std::string* path)
     }
 }
 
+//------------------------------------------------------------------
 int
 FileUtils::rm_all_from_dir(const char* path)
 {
@@ -120,5 +126,49 @@ FileUtils::rm_all_from_dir(const char* path)
     return 0;
 }
 
+//------------------------------------------------------------------
+int
+FileUtils::fast_copy_file(const char* src_filename, const char* dest_filename)
+{
+    int src_fd = open(src_filename, O_RDONLY);
+    if (src_fd == -1) 
+    {
+        return -1;
+    }
+
+    int dest_fd = open(dest_filename, O_WRONLY | O_CREAT | O_EXCL);
+    if (dest_fd == -1)
+    {
+        close(src_fd);
+        return -1;
+    }
+
+    struct stat stat_buf;
+    int err = fstat(src_fd, &stat_buf);
+    ASSERT(err != -1);
+    
+    const size_t BUFSIZE = 1024 * 8;
+    char buf[BUFSIZE];
+    int cc = 0;
+    do {
+        cc = read(src_fd, buf, BUFSIZE);
+        write(dest_fd, buf, cc);
+    } while (cc > 0);
+        
+    /*
+      GRRR -- stupid Linus disabled sendfile between things that are
+      not sockets even though the man page doesn't say anything about
+      that.
+
+      off_t offset = 0;
+      ssize_t total_bytes = sendfile(dest_fd, src_fd, &offset, stat_buf.st_size);
+      ASSERTF(total_bytes == stat_buf.st_size, "error %s", strerror(errno));
+    */    
+
+    close(src_fd);
+    close(dest_fd);
+
+    return 0;
+}
 
 } // end namespace

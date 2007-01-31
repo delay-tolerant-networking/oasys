@@ -45,6 +45,11 @@ public:
     /// Deletes all of the files from a given directory
     /// @return 0 on success, errno otherwise
     static int rm_all_from_dir(const char* path);
+    
+    /*!
+     * Copy a file as fast as possible to dest.
+     */
+    static int fast_copy_file(const char* src_filename, const char* dest_filename);
 };
 
 }
