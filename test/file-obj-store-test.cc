@@ -53,14 +53,33 @@ DECLARE_TEST(StoreTest) {
 }
 
 DECLARE_TEST(FileTest) {
+    CHECK(g_store->new_object("test") == 0);
+
+    FileBackedObjectHandle h;
+    h = g_store->get_handle("test", 0);
     
+    const char* teststr = "hello world";
+
+    CHECK(h->write_bytes(0, reinterpret_cast<const u_char*>(teststr), 
+                         strlen(teststr)) == strlen(teststr));
+
+    char buf[256];
+    memset(buf, 0, 256);
+    CHECK(h->read_bytes(0, reinterpret_cast<u_char*>(buf), 
+                        strlen(teststr)) == strlen(teststr));
+    CHECK_EQUALSTR(buf, teststr);
+    h.reset();
+
+    FILE* f = fopen("testdir/test", "r");
+    fgets(buf, 256, f);
+    CHECK_EQUALSTR(buf, teststr);
 
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(Cleanup) {
     delete g_store;
-    system("rm -rf testdir");
+//    system("rm -rf testdir");
 
     return UNIT_TEST_PASSED;
 }

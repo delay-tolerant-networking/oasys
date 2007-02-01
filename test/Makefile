@@ -20,6 +20,7 @@ TESTS += \
 	berkeley-db-test			\
 	buffer-test				\
 	durable-cache-test			\
+	file-obj-store-test			\
 	filesys-db-test				\
 	functor-test				\
 	io-basic-test				\
