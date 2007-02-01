@@ -34,7 +34,7 @@ public:
      *
      * The object MUST exist already in the store.
      */
-    FileBackedObjectHandle get_handle(const std::string& key, int flags);
+    FileBackedObjectHandle get_handle(const std::string& key, int flags = 0);
     
     /*!
      * @return True if the object exists.

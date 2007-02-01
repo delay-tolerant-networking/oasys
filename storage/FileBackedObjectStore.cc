@@ -35,7 +35,9 @@ FileBackedObjectStore::new_object(const std::string& key)
         return -1;
     }
     
-    int fd = open(object_path(key).c_str(), O_WRONLY | O_CREAT | O_EXCL);
+    int fd = open(object_path(key).c_str(), 
+                  O_WRONLY | O_CREAT | O_EXCL,
+                  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     ASSERT(fd != -1);
     close(fd);
 

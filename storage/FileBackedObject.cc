@@ -83,7 +83,7 @@ FileBackedObject::get_stats(struct stat* stat_buf) const
 {
     ASSERT(fd_ != -1);
     
-    int err = fstat(fd_, stat_buf);
+    int err = stat(filename_.c_str(), stat_buf);
     ASSERT(err == 0);
 }
 
@@ -94,12 +94,25 @@ FileBackedObject::set_stats(struct stat* stat_buf)
     ASSERT(fd_ != -1);
 
     (void) stat_buf;
+    // XXX/bowei -- LALALA
+}
+
+//----------------------------------------------------------------------------
+size_t
+FileBackedObject::size() const
+{
+    struct stat stat_buf;
+    get_stats(&stat_buf);
+    
+    return stat_buf.st_size;
 }
 
 //----------------------------------------------------------------------------
 size_t 
 FileBackedObject::read_bytes(size_t offset, u_char* buf, size_t length) const
 {
+    open();
+
     ASSERT(fd_ != -1);
     
     off_t off = lseek(fd_, offset, SEEK_SET);
@@ -108,6 +121,8 @@ FileBackedObject::read_bytes(size_t offset, u_char* buf, size_t length) const
     int cc = read(fd_, buf, length);
     ASSERT(static_cast<size_t>(cc) == length);
 
+    close();
+
     return cc;
 }
 
@@ -115,6 +130,8 @@ FileBackedObject::read_bytes(size_t offset, u_char* buf, size_t length) const
 size_t 
 FileBackedObject::write_bytes(size_t offset, const u_char* buf, size_t length)
 {
+    open();
+
     ASSERT(fd_ != -1);
 
     off_t off = lseek(fd_, offset, SEEK_SET);
@@ -122,6 +139,8 @@ FileBackedObject::write_bytes(size_t offset, const u_char* buf, size_t length)
     
     int cc = write(fd_, buf, length);
     ASSERT(static_cast<size_t>(cc) == length);
+
+    close();
     
     return cc;
 }
@@ -130,10 +149,14 @@ FileBackedObject::write_bytes(size_t offset, const u_char* buf, size_t length)
 void 
 FileBackedObject::truncate(size_t size)
 {
+    open();
+
     ASSERT(fd_ != -1);
     
     int err = ftruncate(fd_, size);
     ASSERT(err == 0);
+
+    close();
 }
 
 //----------------------------------------------------------------------------
@@ -151,8 +174,10 @@ FileBackedObject::FileBackedObject(const std::string& filename,
 
 //----------------------------------------------------------------------------
 void
-FileBackedObject::open()
+FileBackedObject::open() const
 {
+    ASSERT(! (flags_ & UNLINKED));
+
     if (fd_ != -1)
     {
         return;
@@ -164,7 +189,7 @@ FileBackedObject::open()
 
 //----------------------------------------------------------------------------
 void
-FileBackedObject::close()
+FileBackedObject::close() const
 {
     if (fd_ == -1 || flags_ & KEEP_OPEN)
     {
@@ -189,6 +214,7 @@ FileBackedObject::unlink()
     ASSERT(err == 0);
     
     filename_ = "/INVALID_FILE";
+    flags_ |= UNLINKED;
 }
 
 } // namespace oasys

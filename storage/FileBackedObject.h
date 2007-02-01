@@ -27,6 +27,7 @@ public:
      */
     enum {
         KEEP_OPEN = 1 << 0,     // keep the fd open while FileBackedObject exists.
+        UNLINKED  = 1 << 8,     // status bit for unlinked file
     };
     
     /*! 
@@ -81,13 +82,14 @@ public:
     TxHandle start_tx(int flags);
     
     /*!
-     * @return new Tx object. Caller assumes responsibility of the TX.
-     */
-
-    /*!
      * Return the stats maintained by the file system.
      */
     void get_stats(struct stat* stat_buf) const;
+
+    /*!
+     * Return the size in bytes of the file.
+     */
+    size_t size() const;
 
     /*!
      * This only sets the following fields:
@@ -119,7 +121,7 @@ public:
 
 private:
     std::string filename_;
-    int         fd_;
+    mutable int fd_;
     int         flags_;
 
     /*!
@@ -133,12 +135,12 @@ private:
     /*!
      * Open the file if needed and according to the flags.
      */
-    void open();
+    void open() const;
     
     /*!
      * Close the file if needed and according to the flags.
      */
-    void close();
+    void close() const;
     
     /*!
      * Delete the file from the filesystem.
