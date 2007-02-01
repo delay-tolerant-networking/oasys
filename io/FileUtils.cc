@@ -127,7 +127,7 @@ FileUtils::rm_all_from_dir(const char* path)
 
 //------------------------------------------------------------------
 int
-FileUtils::fast_copy_file(const char* src_filename, const char* dest_filename)
+FileUtils::fast_copy(const char* src_filename, const char* dest_filename)
 {
     int src_fd = open(src_filename, O_RDONLY);
     if (src_fd == -1) 
@@ -151,7 +151,9 @@ FileUtils::fast_copy_file(const char* src_filename, const char* dest_filename)
     int cc = 0;
     do {
         cc = read(src_fd, buf, BUFSIZE);
-        write(dest_fd, buf, cc);
+
+	int dd = write(dest_fd, buf, cc);
+	ASSERT(dd == cc);
     } while (cc > 0);
         
     /*

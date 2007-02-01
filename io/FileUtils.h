@@ -48,8 +48,11 @@ public:
     
     /*!
      * Copy a file as fast as possible to dest.
+     *
+     * @return -1 if the src cannot be opened or the dest cannot be
+     * created exclusively.
      */
-    static int fast_copy_file(const char* src_filename, const char* dest_filename);
+    static int fast_copy(const char* src_filename, const char* dest_filename);
 };
 
 }
