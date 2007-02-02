@@ -16,12 +16,11 @@ class FileBackedObjectStore;
 typedef std::auto_ptr<FileBackedObject> FileBackedObjectHandle;
 
 class FileBackedObject {
+public:
     class Tx;
-    
     friend class FileBackedObject::Tx;
     friend class FileBackedObjectStore;
     
-public:
     /*!
      * Parameters to the FileBackedObject
      */
