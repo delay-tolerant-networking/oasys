@@ -1,43 +1,22 @@
+dnl 
+dnl   Copyright 2006-2007 The MITRE Corporation
 dnl
-dnl License Agreement
-dnl 
-dnl NOTICE
-dnl This software (or technical data) was produced for the U. S.
-dnl Government under contract W15P7T-05-C-F600, and is
-dnl subject to the Rights in Data-General Clause 52.227-14 (JUNE 1987)
-dnl 
-dnl Copyright (C) 2006. The MITRE Corporation (http://www.mitre.org/).
-dnl All Rights Reserved.
-dnl 
-dnl Redistribution and use in source and binary forms, with or without
-dnl modification, are permitted provided that the following conditions
-dnl are met:
-dnl 
-dnl * Redistributions of source code must retain the above copyright
-dnl notice, this list of conditions and the following disclaimer.
-dnl 
-dnl * Redistributions in binary form must reproduce the above copyright
-dnl notice, this list of conditions and the following disclaimer in the
-dnl documentation and/or other materials provided with the distribution.
-dnl 
-dnl * The US Government will not be charged any license fee and/or
-dnl royalties related to this software.
-dnl 
-dnl * Neither name of The MITRE Corporation; nor the names of its
-dnl contributors may be used to endorse or promote products derived from
-dnl this software without specific prior written permission.
-dnl 
-dnl THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-dnl ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-dnl LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-dnl A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
-dnl HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-dnl INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-dnl BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-dnl OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-dnl ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
-dnl TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-dnl USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+dnl   Licensed under the Apache License, Version 2.0 (the "License");
+dnl   you may not use this file except in compliance with the License.
+dnl   You may obtain a copy of the License at
+dnl
+dnl       http://www.apache.org/licenses/LICENSE-2.0
+dnl
+dnl   Unless required by applicable law or agreed to in writing, software
+dnl   distributed under the License is distributed on an "AS IS" BASIS,
+dnl   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+dnl   See the License for the specific language governing permissions and
+dnl   limitations under the License.
+dnl
+dnl   The US Government will not be charged any license fee and/or royalties
+dnl   related to this software. Neither name of The MITRE Corporation; nor the
+dnl   names of its contributors may be used to endorse or promote products
+dnl   derived from this software without specific prior written permission.
 dnl
 
 dnl
