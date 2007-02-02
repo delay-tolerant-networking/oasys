@@ -97,12 +97,15 @@ STORAGE_SRCS :=					\
 	storage/BerkeleyDBStore.cc		\
 	storage/DurableStore.cc                 \
 	storage/DurableStoreImpl.cc		\
+	storage/FileBackedObject.cc		\
+	storage/FileBackedObjectStore.cc	\
 	storage/FileSystemStore.cc		\
 	storage/MemoryStore.cc                  \
 
 TCLCMD_SRCS :=					\
 	tclcmd/ConsoleCommand.cc		\
 	tclcmd/DebugCommand.cc			\
+	tclcmd/GettimeofdayCommand.cc		\
 	tclcmd/HelpCommand.cc			\
 	tclcmd/LogCommand.cc			\
 	tclcmd/TclCommand.cc			\
@@ -179,6 +182,7 @@ CPPS := $(CPPS:.c=.E)
 
 TOOLS	:= \
 	tools/md5chunks				\
+	tools/oasys_tclsh			\
 	tools/zsize				\
 
 #
@@ -337,6 +341,9 @@ liboasyscompat.a: $(COMPAT_OBJS)
 # Rules for linking tools
 tools/md5chunks: tools/md5chunks.o liboasys.a
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(LIBS)
+
+tools/oasys_tclsh: tools/oasys_tclsh.o liboasys.a
+	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(LIBS) $(OASYS_LIBS)
 
 tools/zsize: tools/zsize.o liboasys.a
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(LIBS)
