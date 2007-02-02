@@ -1,3 +1,5 @@
 *.d
 md5chunks
 zsize
+oasys_tclsh
+
