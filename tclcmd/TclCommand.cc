@@ -17,8 +17,9 @@
 #include "config.h"
 
 #include "TclCommand.h"
-#include "HelpCommand.h"
 #include "DebugCommand.h"
+#include "GettimeofdayCommand.h"
+#include "HelpCommand.h"
 #include "LogCommand.h"
 
 #include "debug/DebugUtils.h"
@@ -83,14 +84,10 @@ TclCommandInterp::do_init(char* argv0, bool no_default_cmds)
 
     // register the default commands
     if (! no_default_cmds) {
-        HelpCommand* help = new HelpCommand();
-        reg(help);
-
-        LogCommand* log = new LogCommand();
-        reg(log);
-
-        DebugCommand* debug = new DebugCommand();
-        reg(debug);
+        reg(new DebugCommand());
+        reg(new GettimeofdayCommand());
+        reg(new HelpCommand());
+        reg(new LogCommand());
     }
     
     // evaluate the boot-time tcl commands (copied since tcl may
