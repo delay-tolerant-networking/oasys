@@ -41,7 +41,7 @@ public:
      */
     class Tx : public Logger {
     public:
-        Tx(const FileBackedObject* backing_file, int flags);
+        Tx(FileBackedObject* backing_file, int flags);
 
 	/*!
 	 * Destructor commits the transaction if it already hasn't
@@ -62,7 +62,7 @@ public:
         void abort();
         
     private:
-        std::string original_filename_;
+        FileBackedObject* original_file_;
         FileBackedObject* tx_file_;
     };
 
@@ -146,6 +146,11 @@ private:
      * Delete the file from the filesystem.
      */
     void unlink();
+
+    /*!
+     * Reload the fd from the file.
+     */
+    void reload();
 };
 
 } // namespace oasys

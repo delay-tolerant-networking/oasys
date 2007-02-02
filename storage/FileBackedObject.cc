@@ -11,15 +11,16 @@
 namespace oasys {
 
 //----------------------------------------------------------------------------
-FileBackedObject::Tx::Tx(const FileBackedObject* backing_file, int flags)
+FileBackedObject::Tx::Tx(FileBackedObject* backing_file, int flags)
     : Logger("FileBackedObject", "/store/file-backed/tx"),
-      original_filename_(backing_file->filename()),
+      original_file_(backing_file),
       tx_file_(0)
 {
-    logpathf("/store/file-backed/tx/%s", original_filename_.c_str());
+    logpathf("/store/file-backed/tx/%s", original_file_->filename().c_str());
 
-    std::string tx_filename = original_filename_ + ".tx";
-    int err = FileUtils::fast_copy(original_filename_.c_str(), tx_filename.c_str());
+    std::string tx_filename = original_file_->filename() + ".tx";
+    int err = FileUtils::fast_copy(original_file_->filename().c_str(), 
+                                   tx_filename.c_str());
     ASSERT(err == 0);
 
     tx_file_ = new FileBackedObject(tx_filename, flags);
@@ -33,8 +34,9 @@ FileBackedObject::Tx::~Tx()
     if (tx_file_ != 0)
     {
         int err = rename(tx_file_->filename().c_str(), 
-                         original_filename_.c_str());
+                         original_file_->filename().c_str());
         ASSERT(err == 0);
+        original_file_->reload();
         delete_z(tx_file_);
     }
 
@@ -72,8 +74,6 @@ FileBackedObject::~FileBackedObject()
 FileBackedObject::TxHandle 
 FileBackedObject::start_tx(int flags)
 {
-    ASSERT(fd_ != -1);
-
     return TxHandle(new Tx(this, flags));
 }
     
@@ -81,8 +81,6 @@ FileBackedObject::start_tx(int flags)
 void 
 FileBackedObject::get_stats(struct stat* stat_buf) const
 {
-    ASSERT(fd_ != -1);
-    
     int err = stat(filename_.c_str(), stat_buf);
     ASSERT(err == 0);
 }
@@ -91,8 +89,6 @@ FileBackedObject::get_stats(struct stat* stat_buf) const
 void 
 FileBackedObject::set_stats(struct stat* stat_buf)
 {
-    ASSERT(fd_ != -1);
-
     (void) stat_buf;
     // XXX/bowei -- LALALA
 }
@@ -215,6 +211,14 @@ FileBackedObject::unlink()
     
     filename_ = "/INVALID_FILE";
     flags_ |= UNLINKED;
+}
+
+//----------------------------------------------------------------------------
+void 
+FileBackedObject::reload()
+{
+    close();
+    open();
 }
 
 } // namespace oasys

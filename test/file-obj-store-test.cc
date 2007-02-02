@@ -68,12 +68,41 @@ DECLARE_TEST(FileTest) {
     CHECK(h->read_bytes(0, reinterpret_cast<u_char*>(buf), 
                         strlen(teststr)) == strlen(teststr));
     CHECK_EQUALSTR(buf, teststr);
+    CHECK(h->size() == strlen(teststr));
     h.reset();
 
     FILE* f = fopen("testdir/test", "r");
     fgets(buf, 256, f);
     CHECK_EQUALSTR(buf, teststr);
 
+    fclose(f);
+
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(TXTest) {
+    const char* teststr = "hello world";
+    const char* teststr2 = "goodbye world";
+
+    FileBackedObjectHandle h;
+    h = g_store->get_handle("test", 0);
+
+    FileBackedObject::TxHandle tx = h->start_tx(0);
+    tx->object()->write_bytes(0, reinterpret_cast<const u_char*>(teststr2), strlen(teststr2));
+
+    char buf[256];
+    memset(buf, 0, 256);
+    CHECK(h->read_bytes(0, reinterpret_cast<u_char*>(buf), strlen(teststr)) == strlen(teststr));
+    CHECK_EQUALSTR(buf, teststr);    
+    CHECK(h->size() == strlen(teststr));
+
+    // commit the transaction
+    tx.reset();
+
+    CHECK(h->read_bytes(0, reinterpret_cast<u_char*>(buf), strlen(teststr2)) == strlen(teststr2));
+    CHECK_EQUALSTR(buf, teststr2);    
+    CHECK(h->size() == strlen(teststr2));    
+    
     return UNIT_TEST_PASSED;
 }
 
@@ -88,6 +117,7 @@ DECLARE_TESTER(Test) {
     ADD_TEST(Init);
     ADD_TEST(StoreTest);
     ADD_TEST(FileTest);
+    ADD_TEST(TXTest);
     ADD_TEST(Cleanup);
 }
 
