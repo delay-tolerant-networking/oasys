@@ -148,6 +148,11 @@ private:
     void unlink();
 
     /*!
+     * FSync the data in fd.
+     */
+    void fsync_data();
+    
+    /*!
      * Reload the fd from the file.
      */
     void reload();

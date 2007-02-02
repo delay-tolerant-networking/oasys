@@ -33,6 +33,7 @@ FileBackedObject::Tx::~Tx()
 {
     if (tx_file_ != 0)
     {
+        tx_file_->fsync_data();
         int err = rename(tx_file_->filename().c_str(), 
                          original_file_->filename().c_str());
         ASSERT(err == 0);
@@ -211,6 +212,13 @@ FileBackedObject::unlink()
     
     filename_ = "/INVALID_FILE";
     flags_ |= UNLINKED;
+}
+
+//----------------------------------------------------------------------------
+void 
+FileBackedObject::fsync_data()
+{
+    fdatasync(fd_);
 }
 
 //----------------------------------------------------------------------------
