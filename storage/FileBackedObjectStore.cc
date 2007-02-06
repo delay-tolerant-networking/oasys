@@ -31,7 +31,7 @@ FileBackedObjectStore::FileBackedObjectStore(const std::string& root)
     ASSERTF(err == 0, "Can't stat root %s, error=%s",
             root_.c_str(), strerror(errno));
     ASSERTF(dir_stat.st_mode & S_IRWXU, 
-            "%s must have rwx permissions.");
+            "%s must have rwx permissions.", root_.c_str());
     
     logpathf("/store/file-backed/%s", root.c_str());
 }
