@@ -1,3 +1,4 @@
+#include "config.h"
 #include "FileBackedObject.h"
 
 #include <sys/types.h>
@@ -92,6 +93,7 @@ FileBackedObject::set_stats(struct stat* stat_buf)
 {
     (void) stat_buf;
     // XXX/bowei -- LALALA
+    NOTIMPLEMENTED;
 }
 
 //----------------------------------------------------------------------------
@@ -218,7 +220,11 @@ FileBackedObject::unlink()
 void 
 FileBackedObject::fsync_data()
 {
+#ifdef HAVE_FDATASYNC
     fdatasync(fd_);
+#else
+    fsync(fd_);
+#endif
 }
 
 //----------------------------------------------------------------------------

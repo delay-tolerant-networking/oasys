@@ -69,5 +69,5 @@ dnl Checks for library functions.
 dnl -------------------------------------------------------------------------
 AC_DEFUN(AC_OASYS_SYSTEM_FUNCTIONS, [
     AC_OASYS_FUNC_FPCLASSIFY
-    AC_CHECK_FUNCS([getaddrinfo gethostbyname gethostbyname_r getopt_long inet_aton inet_pton pthread_yield sched_yield])
+    AC_CHECK_FUNCS([fdatasync getaddrinfo gethostbyname gethostbyname_r getopt_long inet_aton inet_pton pthread_yield sched_yield])
 ])                                
