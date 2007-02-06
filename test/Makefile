@@ -73,7 +73,6 @@ OLD_TESTS :=					\
 	tcp-timeout-read-test			\
 	tcp-writeall-test			\
 	thread-test				\
-	url-test				\
 
 TEST_SRCS := $(patsubst %,test/%.cc,$(TESTS))
 ALLSRCS += $(TEST_SRCS)
