@@ -49,6 +49,7 @@ TESTS += \
 	type-collection-test		        \
 	updatable-priority-queue-test		\
 	util-test				\
+	url-test				\
 	xml-test				\
 
 #

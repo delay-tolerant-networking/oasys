@@ -19,8 +19,8 @@
 #define _OASYS_URL_H_
 
 
-#include <list>
 #include <string>
+#include <vector>
 
 #include "../compat/inttypes.h"
 
@@ -34,6 +34,7 @@ typedef enum urlerr_t {
     URLPARSE_BADPROTO,	/* bad protocol */
     URLPARSE_BADPORT,	/* bad port */
     URLPARSE_NOHOST,	/* no host */
+    URLPARSE_NOPARAMVAL, /* no value for cgi parameter */
 };
 
 /**
@@ -76,6 +77,7 @@ public:
           host_(copy.host_),
           port_(copy.port_),
           path_(copy.path_),
+          params_(copy.params_),
           err_(copy.err_)
     {
     }
@@ -107,8 +109,10 @@ public:
      * Cons up this url from constituent pieces.
      */
     void format(const std::string& proto,
-                const std::string& host, u_int16_t port,
-                const std::string& path);
+                const std::string& host,
+                const u_int16_t port,
+                const std::string& path,
+                const std::vector<std::string>& params);
     
     /**
      * Return the result of the parse operation.
@@ -145,6 +149,7 @@ public:
     std::string host_;	/* the hostname part */
     u_int16_t   port_;	/* the port (0 if doesn't exists) */
     std::string path_;	/* the path part */
+    std::vector<std::string> params_; /* var=val query parameter pairs */
     
     urlerr_t err_;	/* parse status */
 

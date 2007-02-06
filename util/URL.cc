@@ -96,8 +96,37 @@ URL::parse_internal()
     if (beg >= url_.length())
         return URLPARSE_OK;
 
-    // otherwise store the path and we're done
-    path_.assign(url_, beg, url_.length() - beg);
+    // find a ? to see if we need to parse params
+    end = url_.find('?', beg);
+    if (end == std::string::npos) {
+        // if there are no parameters, then just store the path 
+        path_.assign(url_, beg, url_.length() - beg);
+        return URLPARSE_OK;
+    }
+
+    // assign the path part
+    path_.assign(url_, beg, end - beg);
+
+    // start parsing parameters
+    beg = end + 1;
+    while (1) {
+        end = url_.find('=', beg);
+        if (end == std::string::npos) {
+            return URLPARSE_NOPARAMVAL;
+        }
+        
+        params_.push_back(url_.substr(beg, end - beg));
+        beg = end + 1;
+        end = url_.find('&', beg);
+        if (end == std::string::npos) {
+            params_.push_back(url_.substr(beg, url_.length() - beg));
+            break;
+        } else {
+            params_.push_back(url_.substr(beg, end - beg));
+        }
+        beg = end + 1;
+    }
+
     return URLPARSE_OK;
 }
 
@@ -109,8 +138,11 @@ URL::parse()
 }
 
 void
-URL::format(const std::string& proto, const std::string& host, u_int16_t port,
-            const std::string& path)
+URL::format(const std::string& proto,
+            const std::string& host,
+            const u_int16_t port,
+            const std::string& path,
+            const std::vector<std::string>& params)
 {
     StringBuffer buf;
     
@@ -118,6 +150,7 @@ URL::format(const std::string& proto, const std::string& host, u_int16_t port,
     host_ = host;
     port_ = port;
     path_ = path;
+    params_.insert(params_.begin(), params.begin(), params.end());
 
     buf.append(proto);
     buf.append("://");
@@ -131,8 +164,14 @@ URL::format(const std::string& proto, const std::string& host, u_int16_t port,
         buf.append('/');
 
     buf.append(path);
+
+    for (size_t i = 0; i < params.size(); i += 2) {
+        buf.appendf("%c%s=%s", (i == 0) ? '?' : '&',
+                    params[i].c_str(), params[i + 1].c_str());
+    }
     
     url_.assign(buf.data(), buf.length());
+
     err_ = URLPARSE_OK;
 }
 
