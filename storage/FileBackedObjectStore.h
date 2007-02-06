@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "../debug/Logger.h"
+#include "../thread/Atomic.h"
 #include "../storage/FileBackedObject.h"
 
 struct stat;
@@ -17,6 +18,10 @@ class FileBackedObjectStore;
 //----------------------------------------------------------------------------
 class FileBackedObjectStore : public Logger {
 public:
+    struct Stats {
+	unsigned int open_handles_;
+    };
+    
     /*!
      * @root Root of the file backed store.
      */
@@ -55,9 +60,20 @@ public:
      */
     int copy_object(const std::string& src, const std::string& dest);
     
+    Stats get_stats() const;
+    
 private:
+    /*!
+     * Root directory of the datastore.
+     */
     std::string root_;
 
+    /*!  
+     * Number of FileBackedObject handles which are still
+     * outstanding.
+     */
+    atomic_t open_handles_;
+    
     /*!
      * Path to the object.
      */

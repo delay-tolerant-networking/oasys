@@ -1,4 +1,3 @@
-#include "config.h"
 #include "FileBackedObject.h"
 
 #include <sys/types.h>
@@ -220,11 +219,7 @@ FileBackedObject::unlink()
 void 
 FileBackedObject::fsync_data()
 {
-#ifdef HAVE_FDATASYNC
     fdatasync(fd_);
-#else
-    fsync(fd_);
-#endif
 }
 
 //----------------------------------------------------------------------------
