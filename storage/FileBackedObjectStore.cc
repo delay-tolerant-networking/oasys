@@ -17,13 +17,23 @@ FileBackedObjectStore::FileBackedObjectStore(const std::string& root)
     // check that the root directory is readable
     struct stat dir_stat;
     int err = stat(root_.c_str(), &dir_stat);
-    err = errno;
-
-    ASSERTF(err == 0, "Can't stat %s, maybe directory doesn't exist?, error=%s",
-	    root_.c_str(), strerror(err));
-
+    if (err != 0 && errno == ENOENT)
+    {
+        log_info("Root directory %s not found, attempting to create.", 
+                 root.c_str());
+	char cmd[256];
+	snprintf(cmd, 256, "mkdir -p %s", root.c_str());
+	system(cmd);
+        
+        err = stat(root_.c_str(), &dir_stat);
+    }
+    
+    ASSERTF(err == 0, "Can't stat root %s, error=%s",
+            root_.c_str(), strerror(errno));
+    ASSERTF(dir_stat.st_mode & S_IRWXU, 
+            "%s must have rwx permissions.");
+    
     logpathf("/store/file-backed/%s", root.c_str());
-    // XXX/bowei -- check the permissions are ok
 }
 
 //----------------------------------------------------------------------------
