@@ -135,7 +135,9 @@ FileUtils::fast_copy(const char* src_filename, const char* dest_filename)
         return -1;
     }
 
-    int dest_fd = open(dest_filename, O_WRONLY | O_CREAT | O_EXCL);
+    int dest_fd = open(dest_filename, 
+                       O_WRONLY | O_CREAT | O_EXCL,
+                       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if (dest_fd == -1)
     {
         close(src_fd);
