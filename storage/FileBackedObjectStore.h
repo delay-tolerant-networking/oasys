@@ -38,6 +38,8 @@ public:
      * Get the handle to object referenced by key.
      *
      * The object MUST exist already in the store.
+     *
+     * @param flags Object flags for open. See FileBackedObject.
      */
     FileBackedObjectHandle get_handle(const std::string& key, int flags = 0);
     
@@ -59,7 +61,10 @@ public:
      * @return -1 if the src doesn't exist or the dest already exists.
      */
     int copy_object(const std::string& src, const std::string& dest);
-    
+
+    /*!
+     * @return Statistics of the object store.
+     */
     Stats get_stats() const;
     
 private:
