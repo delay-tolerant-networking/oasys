@@ -2,6 +2,7 @@
 #define __BASE16_H__
 
 #include "../debug/DebugUtils.h"
+#include "../compat/inttypes.h"
 
 namespace oasys {
 

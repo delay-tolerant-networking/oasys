@@ -521,7 +521,7 @@ Log::gen_prefix(char* buf, size_t buflen,
         getlogtime(&tv);
         if (output_flags_ & OUTPUT_WALLTIME) {
             struct tm walltime;
-            gmtime_r(&tv.tv_sec, &walltime);
+            gmtime_r((const time_t*)&tv.tv_sec, &walltime);
             len = snprintf(ptr, buflen, 
                            "%02d:%02d:%02d.%03ld ",
                            walltime.tm_hour, walltime.tm_min,

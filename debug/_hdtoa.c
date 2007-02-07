@@ -50,6 +50,7 @@
 #include "compat/fpclassify.h"
 
 #include <sys/cdefs.h>
+#undef __FBSDID
 #define __FBSDID(x) 
 __FBSDID("$FreeBSD: src/lib/libc/gdtoa/_hdtoa.c,v 1.3 2005/01/18 18:44:07 das Exp $");
 

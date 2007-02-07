@@ -2,6 +2,7 @@
 #define __SERIALIZE2HASH_H__
 
 #include "../util/ScratchBuffer.h"
+#include "../compat/inttypes.h"
 
 namespace oasys {
 

@@ -23,6 +23,7 @@
 
 #include "../debug/Logger.h"
 #include "../util/Pointers.h"
+#include "../compat/inttypes.h"
 
 namespace oasys {
 

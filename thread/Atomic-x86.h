@@ -19,6 +19,7 @@
 #define _OASYS_ATOMIC_X86_H_
 
 #include "../debug/DebugUtils.h"
+#include "../compat/inttypes.h"
 
 namespace oasys {
 
