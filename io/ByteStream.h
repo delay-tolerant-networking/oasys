@@ -1,6 +1,8 @@
 #ifndef __BYTESTREAM_H__
 #define __BYTESTREAM_H__
 
+#include "../debug/DebugUtils.h"
+
 namespace oasys {
 
 /*!
@@ -19,9 +21,9 @@ public:
  */
 class InByteStream {
 public:
-    virtual int begin()                       = 0;
-    virtual int read(u_char* buf, size_t len) = 0;
-    virtual int end()                         = 0;
+    virtual int begin()                             = 0;
+    virtual int read(u_char* buf, size_t len) const = 0;
+    virtual int end()                               = 0;
 };
 
 } // namespace oasys
