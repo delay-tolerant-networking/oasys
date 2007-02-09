@@ -19,6 +19,7 @@
 #include "util/UnitTest.h"
 #include "storage/FileBackedObject.h"
 #include "storage/FileBackedObjectStore.h"
+#include "storage/FileBackedObjectStream.h"
 
 using namespace oasys;
 
@@ -88,27 +89,56 @@ DECLARE_TEST(TXTest) {
     h = g_store->get_handle("test", 0);
 
     FileBackedObject::TxHandle tx = h->start_tx(0);
-    tx->object()->write_bytes(0, reinterpret_cast<const u_char*>(teststr2), strlen(teststr2));
+    tx->object()->write_bytes(0, reinterpret_cast<const u_char*>(teststr2), 
+                              strlen(teststr2));
 
     char buf[256];
     memset(buf, 0, 256);
-    CHECK(h->read_bytes(0, reinterpret_cast<u_char*>(buf), strlen(teststr)) == strlen(teststr));
+    CHECK(h->read_bytes(0, reinterpret_cast<u_char*>(buf), strlen(teststr)) == 
+          strlen(teststr));
     CHECK_EQUALSTR(buf, teststr);    
     CHECK(h->size() == strlen(teststr));
 
     // commit the transaction
     tx.reset();
 
-    CHECK(h->read_bytes(0, reinterpret_cast<u_char*>(buf), strlen(teststr2)) == strlen(teststr2));
+    CHECK(h->read_bytes(0, reinterpret_cast<u_char*>(buf), strlen(teststr2)) == 
+          strlen(teststr2));
     CHECK_EQUALSTR(buf, teststr2);    
     CHECK(h->size() == strlen(teststr2));    
     
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(StreamTest) {
+    FileBackedObjectHandle h;
+    h = g_store->get_handle("test", 0);
+    
+    u_char buf[256];
+    {
+        const char* teststr = "goodbye world";
+        FileBackedObjectInStream in(h.get());
+        int err = in.read(buf, strlen(teststr));
+        CHECK(err == 0);
+        CHECK(memcmp(buf, teststr, strlen(teststr)) == 0);
+    }
+
+    {
+        const char* teststr = "hello world again";
+        FileBackedObjectOutStream out(h.get());
+        size_t err = out.write(reinterpret_cast<const u_char*>(teststr), strlen(teststr));
+        CHECK(err == 0);
+        err = h->read_bytes(0, buf, strlen(teststr));
+        CHECK(err == strlen(teststr));
+        CHECK(memcmp(buf, teststr, strlen(teststr)) == 0);
+    }
+
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TEST(Cleanup) {
     delete g_store;
-//    system("rm -rf testdir");
+    system("rm -rf testdir");
 
     return UNIT_TEST_PASSED;
 }
@@ -118,6 +148,7 @@ DECLARE_TESTER(Test) {
     ADD_TEST(StoreTest);
     ADD_TEST(FileTest);
     ADD_TEST(TXTest);
+    ADD_TEST(StreamTest);
     ADD_TEST(Cleanup);
 }
 
