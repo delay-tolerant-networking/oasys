@@ -9,9 +9,8 @@ namespace oasys {
 
 //------------------------------------------------------------------
 StreamSerialize::StreamSerialize(OutByteStream* stream,
-                                 action_t       action,
                                  context_t      context)
-    : SerializeAction(action, context),
+    : SerializeAction(Serialize::MARSHAL, context),
       stream_(stream)
 {}
 
@@ -208,9 +207,8 @@ StreamSerialize::process(const char* name, std::string* s)
 
 //------------------------------------------------------------------
 StreamUnserialize::StreamUnserialize(InByteStream* stream,
-                                     action_t       action,
                                      context_t      context)
-    : SerializeAction(action, context),
+    : SerializeAction(Serialize::UNMARSHAL, context),
       stream_(stream)
 {}
 

@@ -15,12 +15,9 @@ class InByteStream;
 class StreamSerialize : public SerializeAction {
 public:
     StreamSerialize(OutByteStream* stream,
-                    action_t       action,
                     context_t      context);
 
     //! @{ virtual from SerializeAction
-    int action(SerializableObject* object);
-
     void begin_action();
     void end_action();
 
@@ -45,12 +42,9 @@ private:
 class StreamUnserialize : public SerializeAction {
 public:
     StreamUnserialize(InByteStream* stream,
-                    action_t       action,
                     context_t      context);
 
     //! @{ virtual from SerializeAction
-    int action(SerializableObject* object);
-
     void begin_action();
     void end_action();
 
