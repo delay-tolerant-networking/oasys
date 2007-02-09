@@ -40,6 +40,7 @@ TESTS += \
 	spin-lock-test				\
 	stack-trace-test			\
 	static-buffer-test			\
+	stream-serialize-test			\
 	string-appender-test			\
 	string-hash-test			\
 	string-tokenize-test			\

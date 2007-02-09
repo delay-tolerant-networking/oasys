@@ -99,7 +99,7 @@ public:
             const_buf = bc.take_buf();
 
             action->process("nullterm_buf", &bc, 0);
-            nullterm_len = bc.len();
+            nullterm_len = bc.len() - 1;
             nullterm_buf = bc.take_buf();
 
             action->process("null_buf", &bc);
