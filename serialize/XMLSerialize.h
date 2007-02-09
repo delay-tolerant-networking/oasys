@@ -42,18 +42,23 @@ public:
     XMLMarshal(ExpandableBuffer *buf, const char *root_tag);
 
     // Virtual process functions inherited from SerializeAction
-    virtual void end_action();
-    virtual void process(const char *name, SerializableObject* object);
-    virtual void process(const char *name, u_int64_t *i);
-    virtual void process(const char *name, u_int32_t *i);
-    virtual void process(const char *name, u_int16_t *i);
-    virtual void process(const char *name, u_int8_t *i);
-    virtual void process(const char *name, bool *b);
-    virtual void process(const char *name, u_char *bp, u_int32_t len);
-    virtual void process(const char *name, u_char **bp,
-                         u_int32_t *lenp, int flags);
-    virtual void process(const char *name, std::string *s);
-    virtual void process(const char* name, const InAddrPtr& a);
+    void end_action();
+    void process(const char *name, SerializableObject* object);
+    void process(const char *name, u_int64_t *i);
+    void process(const char *name, u_int32_t *i);
+    void process(const char *name, u_int16_t *i);
+    void process(const char *name, u_int8_t *i);
+    void process(const char *name, bool *b);
+    void process(const char *name, u_char *bp, u_int32_t len);
+    void process(const char*            name, 
+                  BufferCarrier<u_char>* carrier,
+                  size_t*                lenp);
+    void process(const char*            name,
+                 BufferCarrier<u_char>* carrier,
+                 size_t*                lenp,
+                 u_char                 terminator);
+    void process(const char *name, std::string *s);
+    void process(const char* name, const InAddrPtr& a);
 
     /// Accessor to the internal XMLDocument
     const XMLDocument& doc() const { return doc_; }

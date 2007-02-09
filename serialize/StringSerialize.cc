@@ -142,22 +142,37 @@ StringSerialize::process(const char* name, std::string* s)
 }
 
 //----------------------------------------------------------------------
-void
-StringSerialize::process(const char* name, u_char** bp,
-                         u_int32_t* lenp, int flags)
+void 
+StringSerialize::process(const char*            name, 
+                         BufferCarrier<u_char>* carrier)
 {
     add_preamble(name, "char_buf_var");
     if (options_ & SCHEMA_ONLY) {
         return;
     }
 
-    if (flags & Serialize::NULL_TERMINATED) {
-        buf_.append((const char*)*bp);
-        buf_.append(sep_);
-    } else {
-        buf_.append((const char*)*bp, *lenp);
-        buf_.append(sep_);
+    buf_.append(reinterpret_cast<char*>(carrier->buf()), carrier->len());
+    buf_.append(sep_);
+}
+
+//----------------------------------------------------------------------
+void 
+StringSerialize::process(const char*            name,
+                         BufferCarrier<u_char>* carrier,
+                         u_char                 terminator)
+{
+    add_preamble(name, "char_buf_var");
+    if (options_ & SCHEMA_ONLY) {
+        return;
     }
+
+    size_t size = 0;
+    while (carrier->buf()[size] != terminator)
+    {
+        ++size;
+    }
+    buf_.append(reinterpret_cast<char*>(carrier->buf()), size);
+    buf_.append(sep_);
 }
 
 //----------------------------------------------------------------------

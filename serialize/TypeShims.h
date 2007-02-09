@@ -107,20 +107,31 @@ private:
 };
 
 //----------------------------------------------------------------------------
+/* XXX/bowei -- This needs to be updated. It's wrong. Don't uncomment
+without fixing.
+
 class NullStringShim : public Formatter, public SerializableObject {
 public:
     NullStringShim(const char* str, const char* name = "string") 
-	: name_(name), str_(const_cast<char*>(str)) 
+	: name_(name), 
+          str_(const_cast<char*>(str)),
+          free_mem_(false)
     {
 	free_mem_ = (str == 0);
     }
 
     NullStringShim(const Builder&)
-        : name_("string"), str_(NULL), free_mem_(false)
+        : name_("string"), 
+          str_(NULL), 
+          free_mem_(false)
     {}
 
-    ~NullStringShim() { if(free_mem_) { free(str_); } }
-
+    ~NullStringShim() {
+        if(free_mem_) {
+            free(str_); 
+        } 
+    }
+    
     // virtual from Formatter
     int format(char* buf, size_t sz) const {
         return snprintf(buf, sz, "%s", str_);
@@ -130,8 +141,18 @@ public:
     void serialize(SerializeAction* a)
     {
         u_int32_t len = 0;
-        a->process(name_.c_str(), &str_, &len,
-		   Serialize::NULL_TERMINATED | Serialize::ALLOC_MEM);
+        BufferCarrier<char> bc(str_, false);
+        
+        a->process(name_.c_str(), &bc, &len, '\0');
+        if (bc.owned())
+        {
+            str_ = bc.take_buf();
+        }
+        else if (a->action_code() == Serialize::UNMARSHAL)
+        {
+            str_ = static_cast<char*>(malloc(sizeof(char) * len));
+            memcpy(str_, bc.buf(), len);
+        }
         free_mem_ = true;
     }
 
@@ -139,10 +160,14 @@ public:
 
 private:
     std::string name_;
-    char* str_;
-    bool free_mem_;
+    char*       str_;
+    bool        free_mem_;
 };
+*/
 
+/*
+XXX/bowei -- This needs to be updated. It's wrong. Don't uncomment
+without fixing.
 //----------------------------------------------------------------------------
 class ByteBufShim : public Formatter, public SerializableObject {
 public:
@@ -166,10 +191,17 @@ public:
     // virtual from SerializableObject
     void serialize(SerializeAction* a)
     {
-	a->process("bytes", &buf_, &size_, Serialize::ALLOC_MEM);
+        BufferCarrier<char> bc(buf_, false);
+        a->process("bytes", &bc, &size_, '\0');
 
-        if (a->action_code() == Serialize::UNMARSHAL) {
-            own_buf_ = true;
+        if (bc.owned())
+        {
+            buf_ = bc.take_buf();
+        }
+        else
+        {
+            buf_ = static_cast<char*>(malloc(sizeof(char) * size_));
+            memcpy(str_, bc.buf(), len);
         }
     }
  
@@ -182,6 +214,7 @@ private:
     u_int32_t size_;    
     bool      own_buf_;
 };
+*/
 
 //----------------------------------------------------------------------------
 /*!

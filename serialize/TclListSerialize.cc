@@ -75,27 +75,41 @@ TclListSerialize::process(const char* name, u_char* bp, u_int32_t len)
     Tcl_ListObjAppendElement(interp_, list_obj_, Tcl_NewByteArrayObj(bp, len));
 }
 
+
+void 
+TclListSerialize::process(const char*            name, 
+                          BufferCarrier<u_char>* carrier)
+{
+    Tcl_ListObjAppendElement(interp_, 
+                             list_obj_, 
+                             Tcl_NewStringObj(name, -1));
+
+    Tcl_ListObjAppendElement(interp_, 
+                             list_obj_,
+                             Tcl_NewStringObj(reinterpret_cast<char*>(carrier->buf()),
+                                              carrier->len()));
+}
+
+void 
+TclListSerialize::process(const char*            name,
+                          BufferCarrier<u_char>* carrier,
+                          u_char                 terminator)
+{
+    size_t size = 0;
+    while (carrier->buf()[size] != terminator)
+    {
+        ++size;
+    }
+    carrier->set_len(size);
+    process(name, carrier);
+}
+
 void
 TclListSerialize::process(const char* name, std::string* s)
 {
     Tcl_ListObjAppendElement(interp_, list_obj_, Tcl_NewStringObj(name, -1));
     Tcl_ListObjAppendElement(interp_, list_obj_,
                              Tcl_NewStringObj(s->data(), s->length()));
-}
-
-void
-TclListSerialize::process(const char* name, u_char** bp,
-                          u_int32_t* lenp, int flags)
-{
-    if (flags & Serialize::NULL_TERMINATED) {
-        Tcl_ListObjAppendElement(interp_, list_obj_, Tcl_NewStringObj(name, -1));
-        Tcl_ListObjAppendElement(interp_, list_obj_,
-                                 Tcl_NewStringObj((char*)*bp, -1));
-    } else {
-        Tcl_ListObjAppendElement(interp_, list_obj_, Tcl_NewStringObj(name, -1));
-        Tcl_ListObjAppendElement(interp_, list_obj_,
-                                 Tcl_NewStringObj((char*)*bp, *lenp));
-    }
 }
 
 void

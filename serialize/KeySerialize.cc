@@ -93,31 +93,43 @@ KeyMarshal::process(const char* name,
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void 
-KeyMarshal::process(const char* name,
-                    u_char**    bp,
-                    u_int32_t*  lenp,
-                    int         flags)
+void
+KeyMarshal::process(const char*            name, 
+                    BufferCarrier<u_char>* carrier)
 {
-    (void)name;
-    if (error()) 
+    (void) name;
+
+    if (error()) {
         return;
+    }
+    
+    process_int(carrier->len(), 8, "%08x");
+    buf_->reserve(buf_->len() + carrier->len());
+    memcpy(buf_->end(), carrier->buf(), carrier->len());
+    buf_->set_len(buf_->len() + carrier->len());
+    border();
+}
 
-    ASSERT(! (lenp == 0 && ! (flags & Serialize::NULL_TERMINATED)));
+//////////////////////////////////////////////////////////////////////////////
+void 
+KeyMarshal::process(const char*            name,
+                    BufferCarrier<u_char>* carrier,
+                    u_char                 terminator)
+{
+    (void) name;
 
-    u_int32_t len;
-    if (flags & Serialize::NULL_TERMINATED) {
-        len = strlen(reinterpret_cast<char*>(*bp));
-    } else {
-        len = *lenp;
+    if (error()) {
+        return;
     }
 
-    process_int(len, 8, "%08x");
-
-    buf_->reserve(buf_->len() + len);
-    memcpy(buf_->end(), *bp, len);
-    buf_->set_len(buf_->len() + len);
-    border();
+    size_t size = 0;
+    while (carrier->buf()[size] != terminator)
+    {
+        ++size;
+    }
+    carrier->set_len(size);
+    
+    process(name, carrier);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -299,48 +311,62 @@ KeyUnmarshal::process(const char* name, u_char* bp, u_int32_t len)
 
 //////////////////////////////////////////////////////////////////////////////
 void 
-KeyUnmarshal::process(const char* name, u_char** bp, 
-                      u_int32_t* lenp, int flags)
+KeyUnmarshal::process(const char*            name, 
+                      BufferCarrier<u_char>* carrier)
 {
     (void)name;
+
+    ASSERT(carrier->is_empty());
+
     if (error()) {
         return;
     }
-
+    
     u_int32_t len = process_int(8);
-    if (error()) {
-        return;
-    }
-    
-    if (flags & Serialize::ALLOC_MEM) {
-        u_int32_t malloc_len = (flags & Serialize::NULL_TERMINATED) ? 
-                            len + 1 : len;
-        *bp = static_cast<u_char*>(malloc(malloc_len));
-        if (*bp == 0) {
-            signal_error();
-            return;
-        }
-    }
-
-    ASSERT(*bp);
-    if (lenp) {
-        *lenp = len;
-    }
-    
     if (cur_ + len > buf_len_) {
         signal_error();
         return;
     }
 
-    if (flags & Serialize::NULL_TERMINATED) {
-        memcpy(*bp, &buf_[cur_], len);
-        (*bp)[len] = '\0';
-    } else {
-        memcpy(*bp, &buf_[cur_], len);
-    }
-    
+    u_char* buf = static_cast<u_char*>(malloc(sizeof(u_char) * len));
+    ASSERT(buf != 0);
+    memcpy(buf, &buf_[cur_], len);
     cur_ += len;
     border();
+
+    carrier->set_buf(buf, len, true);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+void 
+KeyUnmarshal::process(const char*            name,
+                      BufferCarrier<u_char>* carrier,
+                      u_char                 terminator)
+{
+    (void)name;
+
+    ASSERT(carrier->is_empty());
+
+    if (error()) {
+        return;
+    }
+    
+    u_int32_t len = process_int(8);
+    if (cur_ + len > buf_len_) {
+        signal_error();
+        return;
+    }
+
+    u_char* buf = static_cast<u_char*>(malloc(sizeof(u_char) * len + 1));
+    ASSERT(buf != 0);
+
+    memcpy(buf, &buf_[cur_], len);
+    buf[len] = terminator;
+
+    cur_ += len;
+    border();
+
+    carrier->set_buf(buf, len + 1, true);
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -118,33 +118,39 @@ XMLMarshal::process(const char *name, u_char *bp, u_int32_t len)
 #endif
 }
 
-void
-XMLMarshal::process(const char *name, u_char **bp,
-                    u_int32_t *lenp, int flags)
+void 
+XMLMarshal::process(const char*            name, 
+                    BufferCarrier<u_char>* carrier,
+                    size_t*                lenp)
 {
-    (void) name;
-
-    ASSERT(! (lenp == 0 && ! (flags & Serialize::NULL_TERMINATED)));
-    
-    size_t len;
-    if (flags & Serialize::NULL_TERMINATED) 
-    {
-        len = strlen(reinterpret_cast<char *>(*bp));
-    } 
-    else 
-    {
-        len = *lenp;
-    }
-
 #ifdef XERCES_C_ENABLED
     unsigned int elen;
-    XMLByte *estr = xercesc::Base64::encode(*bp, len, &elen);
+    XMLByte *estr = xercesc::Base64::encode(carrier->buf(), *lenp, &elen);
     current_node_->add_attr(std::string(name),
-        std::string(reinterpret_cast<char *>(estr), elen));
+                            std::string(reinterpret_cast<char *>(estr), elen));
     xercesc::XMLString::release(&estr);
 #else
+    (void) name;
+    (void) carrier;
+    (void) lenp;
     signal_error();
 #endif
+}
+
+void 
+XMLMarshal::process(const char*            name,
+                    BufferCarrier<u_char>* carrier,
+                    size_t*                lenp,
+                    u_char                 terminator)
+{
+    (void) lenp;
+
+    size_t len = 0;
+    while (carrier->buf()[len] != terminator)
+    {
+        ++len;
+    }
+    process(name, carrier, &len);
 }
 
 void

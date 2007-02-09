@@ -18,61 +18,133 @@ class BufferCarrier {
     NO_ASSIGN_COPY(BufferCarrier);
 
 public:
+    typedef _Type Type;
+    
     /*!
-     * @param owned True iff you are passing ownership of the buffer.
+     * Empty BufferCarrier, ready to recieve a buffer.
      */
-    BufferCarrier(_Type* buf, bool owned)
-        : buf_(buf), 
-          owned_(owned) 
+    BufferCarrier()
+        : buf_(0),
+          len_(0),
+          pass_ownership_(false)
     {}
 
     /*!
-     * If we own the buffer, then destroy it when we die.
+     * @param owned True iff you are passing ownership of the buffer
+     * to this class.
+     */
+    BufferCarrier(_Type* buf, size_t len, bool pass_ownership)
+        : buf_(buf), 
+          len_(len),
+          pass_ownership_(pass_ownership) 
+    {}
+
+    /*!
+     * If we still own the buffer at the end of our life, then destroy
+     * it when we die.
      */
     ~BufferCarrier() 
     { 
-        if (owned_) { 
+        if (pass_ownership_ && buf_ != 0) 
+        { 
             free(buf_);
-            buf_ = 0;
+            reset();
         }
     }
 
-    _Type* buf()   
+    _Type* buf() const
     { 
         return buf_; 
     }
+
+    size_t len() const
+    {
+        return len_;
+    }
     
-    bool owned() 
+    bool pass_ownership() const
     { 
-        return owned_; 
+        return pass_ownership_;
+    }
+
+    bool is_empty() const
+    {
+        return buf_ == 0;
+    }
+
+    void set_buf(_Type* buf, size_t len, bool pass_ownership)
+    {
+        buf_ = buf;
+        len_ = len;
+        pass_ownership_ = pass_ownership;
+    }
+    
+    void set_len(size_t len)
+    {
+        len_ = len;
     }
 
     /*!
-     * Set buffer and _maybe_ ownership.
-     */
-    void set_buf(_Type* buf, bool pass_ownership)
-    {
-        buf_   = buf;
-        owned_ = pass_ownership;
-    }
-    
-    /*!
-     * We must own the buffer in order to give it away.
+     * Take the buffer from the carrier. After taking, the carrier is
+     * reset to not hold anything.
      */
     _Type* take_buf() 
     { 
-        ASSERT(owned_);
-        
-        _Type* ret = buf_;
-        owned_     = 0;
-        buf_       = 0;
+        if (pass_ownership_)
+        {
+            _Type* ret = buf_;
+            reset();
+            
+            return ret;
+        }
+        else
+        {
+            if (buf_ == 0)
+            {
+                reset();
+                return 0;
+            }
+            else
+            {
+                _Type* new_buf = static_cast<_Type*>(malloc(sizeof(_Type) * len_));
+                ASSERT(new_buf != 0);
+                
+                memcpy(new_buf, buf_, len_);
+                reset();
 
-        return ret;
+                return new_buf;
+            }
+
+        }
     }
         
+    /*!
+     * Reset BufferCarrier to not hold anything.
+     */
+    void reset()
+    {
+        buf_            = 0;
+        pass_ownership_ = 0;
+        len_            = 0;
+    }
+    
+
+    /*!
+     * Convert between different types of buffers. Note the len will
+     * be messed up!
+     */ 
+    template<typename _OtherType>
+    static void convert(BufferCarrier* out, const BufferCarrier<_OtherType>& in)
+    {
+        out->buf_ = reinterpret_cast<Type*>(in.buf());
+        out->len_ = in.len();
+        out->pass_ownership_ = in.pass_ownership();
+    }
+    
 private:
     _Type* buf_;
-    bool   owned_;
+    size_t len_;
+    bool   pass_ownership_;
 };
 
 } // namespace oasys

@@ -66,6 +66,85 @@ SerializeAction::end_action()
 }
 
 //----------------------------------------------------------------------
+void 
+SerializeAction::process(const char* name, SerializableObject* object)
+{
+    (void)name;
+    object->serialize(this);
+}
+
+//----------------------------------------------------------------------
+void
+SerializeAction::process(const char* name, int64_t* i)
+{
+    process(name, (u_int64_t*)i);
+}
+
+//----------------------------------------------------------------------------    
+void
+SerializeAction::process(const char* name, int32_t* i)
+{
+    process(name, (u_int32_t*)i);
+}
+
+//----------------------------------------------------------------------------    
+void
+SerializeAction::process(const char* name, int16_t* i)
+{
+    process(name, (u_int16_t*)i);
+}
+
+//----------------------------------------------------------------------------    
+void
+SerializeAction::process(const char* name, int8_t* i)
+{
+    process(name, (u_int8_t*)i);
+}
+
+//----------------------------------------------------------------------------    
+void
+SerializeAction::process(const char* name, char* bp, u_int32_t len)
+{
+    process(name, (u_char*)bp, len);
+}
+
+//----------------------------------------------------------------------------    
+void 
+SerializeAction::process(const char*          name, 
+                         BufferCarrier<char>* carrier)
+{
+    BufferCarrier<u_char> uc;
+    BufferCarrier<u_char>::convert(&uc, *carrier);
+    process(name, &uc);
+    BufferCarrier<char>::convert(carrier, uc);
+
+    // Take the buffer away from the temporary
+    uc.take_buf();
+}
+
+//----------------------------------------------------------------------------    
+void 
+SerializeAction::process(const char*          name,
+                         BufferCarrier<char>* carrier,
+                         char                 terminator)
+{
+    BufferCarrier<u_char> uc;
+    BufferCarrier<u_char>::convert(&uc, *carrier);
+    process(name, &uc, static_cast<u_char>(terminator));
+    BufferCarrier<char>::convert(carrier, uc);
+
+    // Take the buffer away from the temporary
+    uc.take_buf();
+}
+
+//----------------------------------------------------------------------
+void 
+SerializeAction::process(const char* name, const InAddrPtr& a)
+{
+    process(name, static_cast<u_int32_t*>(a.addr()));
+}
+
+//----------------------------------------------------------------------
 Builder Builder::static_builder_;
 
 } // namespace oasys

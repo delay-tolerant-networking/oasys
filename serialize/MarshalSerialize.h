@@ -21,10 +21,11 @@
 #include "BufferedSerializeAction.h"
 #include "../util/ExpandableBuffer.h"
 #include "../util/CRC32.h"
-
+
+
 namespace oasys {
 
-//////////////////////////////////////////////////////////////////////////////
+
 /**
  * Marshal is a SerializeAction that flattens an object into a byte
  * stream.
@@ -68,14 +69,18 @@ public:
     void process(const char* name, u_int8_t* i);
     void process(const char* name, bool* b);
     void process(const char* name, u_char* bp, u_int32_t len);
-    void process(const char* name, u_char** bp, u_int32_t* lenp, int flags);
+    void process(const char*            name, 
+                 BufferCarrier<u_char>* carrier);
+    void process(const char*            name,
+                 BufferCarrier<u_char>* carrier,
+                 u_char                 terminator);
     void process(const char* name, std::string* s);
 
 private:
     bool add_crc_;
 };
-
-//////////////////////////////////////////////////////////////////////////////
+
+
 /**
  * Unmarshal is a SerializeAction that constructs an object's
  * internals from a flat byte stream.
@@ -100,14 +105,18 @@ public:
     void process(const char* name, u_int8_t* i);
     void process(const char* name, bool* b);
     void process(const char* name, u_char* bp, u_int32_t len);
-    void process(const char* name, u_char** bp, u_int32_t* lenp, int flags);
+    void process(const char*            name, 
+                 BufferCarrier<u_char>* carrier);
+    void process(const char*            name,
+                 BufferCarrier<u_char>* carrier,
+                 u_char                 terminator);
     void process(const char* name, std::string* s); 
 
 private:
     bool has_crc_;
 };
-
-//////////////////////////////////////////////////////////////////////////////
+
+
 /**
  * MarshalSize is a SerializeAction that determines the buffer size
  * needed to run a Marshal action over the object.
@@ -161,52 +170,18 @@ public:
     void process(const char* name, u_int8_t* i);
     void process(const char* name, bool* b);
     void process(const char* name, u_char* bp, u_int32_t len);
-    void process(const char* name, u_char** bp, u_int32_t* lenp, int flags);
+    void process(const char*            name, 
+                 BufferCarrier<u_char>* carrier);
+    void process(const char*            name,
+                 BufferCarrier<u_char>* carrier,
+                 u_char                 terminator);
     void process(const char* name, std::string* s);
     /// @}
 
 private:
     u_int32_t size_;
 };
-
-//////////////////////////////////////////////////////////////////////////////
-/**
- * MarshalCRC: compute the CRC32 checksum of the bits.
- */
-class MarshalCRC : public SerializeAction {
-public:
-    MarshalCRC(context_t context)
-        : SerializeAction(Serialize::INFO, context) {}
-    
-    u_int32_t crc() { return crc_.value(); }
-    
-    /** @{ Make it so this can take const objects */
-    int action(const SerializableObject* const_object)
-    {
-        SerializableObject* object = (SerializableObject*)const_object;
-        return SerializeAction::action(object);
-    }
-    void process(const char* name, SerializableObject* const_object)
-    {
-        SerializableObject* object = (SerializableObject*)const_object;
-        return SerializeAction::process(name, object);
-    }
-    /** @} */
 
-    // virtual from SerializeAction
-    void process(const char* name, u_int32_t* i);
-    void process(const char* name, u_int16_t* i);
-    void process(const char* name, u_int8_t* i);
-    void process(const char* name, bool* b);
-    void process(const char* name, u_char* bp, u_int32_t len);
-    void process(const char* name, u_char** bp, u_int32_t* lenp, int flags);
-    void process(const char* name, std::string* s);
-
-private:
-    CRC32 crc_;
-};
-
-
 //////////////////////////////////////////////////////////////////////////////
 /**
  * MarshalCopy: Copy one object to another using Marshal/Unmarshal.

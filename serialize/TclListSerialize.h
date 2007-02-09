@@ -66,7 +66,11 @@ public:
     void process(const char* name, u_int8_t* i);
     void process(const char* name, bool* b);
     void process(const char* name, u_char* bp, u_int32_t len);
-    void process(const char* name, u_char** bp, u_int32_t* lenp, int flags);
+    void process(const char*          name, 
+                 BufferCarrier<u_char>* carrier);
+    void process(const char*          name,
+                 BufferCarrier<u_char>* carrier,
+                 u_char                 terminator);
     void process(const char* name, std::string* s);
     void process(const char* name, SerializableObject* object);
     /// @}

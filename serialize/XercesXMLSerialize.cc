@@ -327,6 +327,41 @@ XercesXMLUnmarshal::process(const char *name, u_char *bp, u_int32_t len)
     xercesc::XMLString::release(&tag_name);
 }
 
+void 
+XercesXMLUnmarshal::process(const char*            name, 
+                            BufferCarrier<u_char>* carrier)
+{
+    XMLCh *tag_name = xercesc::XMLString::transcode(name);
+    // XXX/bowei -- I don't know the xercesc API but this seems to be
+    // a leak which needs a release() call:
+    std::string value(xercesc::XMLString::transcode(
+                          root_elem_->getAttribute(tag_name)));
+    xercesc::XMLString::release(&tag_name); 
+
+    u_char* buf = static_cast<u_char*>(malloc(sizeof(u_char) * value.size()));
+    memcpy(buf, value.data(), value.size());
+    carrier->set_buf(buf, value.size(), true);
+}
+    
+void 
+XercesXMLUnmarshal::process(const char*            name,
+                            BufferCarrier<u_char>* carrier,
+                            u_char                 terminator)
+{
+    XMLCh *tag_name = xercesc::XMLString::transcode(name);
+    // XXX/bowei -- I don't know the xercesc API but this seems to be
+    // a leak which needs a release() call:
+    std::string value(xercesc::XMLString::transcode(
+                          root_elem_->getAttribute(tag_name)));
+    xercesc::XMLString::release(&tag_name); 
+
+    u_char* buf = static_cast<u_char*>(malloc(sizeof(u_char) * value.size() + 1));
+    memcpy(buf, value.data(), value.size());
+    buf[value.size()] = terminator;
+    carrier->set_buf(buf, value.size(), true);
+}
+
+/*
 void
 XercesXMLUnmarshal::process(const char* name, u_char** bp,
                             u_int32_t* lenp, int flags)
@@ -357,7 +392,7 @@ XercesXMLUnmarshal::process(const char* name, u_char** bp,
     }
 
     xercesc::XMLString::release(&tag_name);
-}
+}*/
 
 void
 XercesXMLUnmarshal::process(const char *name, std::string *s)

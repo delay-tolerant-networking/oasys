@@ -26,9 +26,10 @@
 #include <string>
 #include <vector>
 #include <sys/types.h>
-#include "../compat/inttypes.h"
-
 #include <netinet/in.h>
+
+#include "../compat/inttypes.h"
+#include "../util/BufferCarrier.h"
 
 namespace oasys {
 
@@ -205,11 +206,7 @@ public:
      * class can of course override it to make use of the name (as is
      * done by SQLTableFormat, for example).
      */
-    virtual void process(const char* name, SerializableObject* object)
-    {
-        (void)name;
-        object->serialize(this);
-    }
+    virtual void process(const char* name, SerializableObject* object);
 
     /**
      * Process function for an 8 byte integer.
@@ -246,71 +243,68 @@ public:
     virtual void process(const char* name, u_char* bp, u_int32_t len) = 0;
 
     /**
-     * Process function for a variable length char buffer.
+     * Process function for a variable length byte buffer.
      *
-     * @param name   field name
-     * @param bp     buffer, allocated by SerializeAction if ALLOC_MEM 
-     *               flag is set.
-     * @param lenp   IN: If ALLOC_MEM flags is set, then len is the 
-     *               length of the buffer allocated.
-     *               OUT: contains the length of the buffer
-     * @param flags  ALLOC_MEM as above, NULL_TERMINATED specifies that
-     *               the data stored will be a null-terminated C-string. 
+     * @param carrier Caller may want to check if they want to take
+     * ownership of the buffer that is coming up from the
+     * Serialization process !! -if it's possible- !!. This allows
+     * zero copy semantics using underlying buffers if possible.
+     *
+     * @param lenp in/out - Length of the byte array.
      */
-    virtual void process(const char* name, u_char** bp,
-                         u_int32_t* lenp, int flags) = 0;
+    virtual void process(const char*            name, 
+                         BufferCarrier<u_char>* carrier) = 0;
+   
+    /*!
+     * XXX/bowei document
+     *
+     * Process function for variable length byte arrays ending with
+     * terminator. Byte array returned WILL ALWAYS be terminated with
+     * the terminator.
+     *
+     * @param carrier Caller may want to check if they want to take
+     * ownership of the buffer that is coming up from the
+     * Serialization process !! -if it's possible- !!.This allows zero
+     * copy semantics using underlying buffers if possible.
+     *
+     * @param lenp in - ignored, out - length of byte array.
+     *
+     * @param terminator What terminates the string. DO NOT put a
+     * default parameter here!!!
+     */
+    virtual void process(const char*            name,
+                         BufferCarrier<u_char>* carrier,
+                         u_char                 terminator) = 0;
 
     /**
      * Process function for a c++ string.
      */
     virtual void process(const char* name, std::string* s) = 0;
 
-    ///@{
-    /**
-     * Adaptor functions for signed/unsigned compatibility
+    /*!
+     * @{ Adaptor functions for signed/unsigned compatibility
      */
-    virtual void process(const char* name, int64_t* i)
-    {
-        process(name, (u_int64_t*)i);
-    }
-    
-    virtual void process(const char* name, int32_t* i)
-    {
-        process(name, (u_int32_t*)i);
-    }
-    
-    virtual void process(const char* name, int16_t* i)
-    {
-        process(name, (u_int16_t*)i);
-    }
-
-    virtual void process(const char* name, int8_t* i)
-    {
-        process(name, (u_int8_t*)i);
-    }
-
-    virtual void process(const char* name, char* bp, u_int32_t len)
-    {
-        process(name, (u_char*)bp, len);
-    }
-
-    virtual void process(const char* name, char** bp,
-                         u_int32_t* lenp, int flags)
-    {
-        process(name, (u_char**)bp, lenp, flags);
-    }
-
-    
+    virtual void process(const char* name, int64_t* i);    
+    virtual void process(const char* name, int32_t* i);
+    virtual void process(const char* name, int16_t* i);
+    virtual void process(const char* name, int8_t* i);
+    virtual void process(const char* name, char* bp, u_int32_t len);
     /// @}
+
+    //! @{ syntactic sugar for char buffers
+    virtual void process(const char*          name, 
+                         BufferCarrier<char>* carrier);
+    
+    virtual void process(const char*          name,
+                         BufferCarrier<char>* carrier,
+                         char                 terminator);
+    //! @}
 
     /**
      * Default serialization of an in_addr_t
      * is to treat it as an integer
      */
-    virtual void process(const char* name, const InAddrPtr& a)
-    {
-        process(name, static_cast<u_int32_t*>(a.addr()));
-    }
+    virtual void process(const char* name, const InAddrPtr& a);
 
     /** Set a log target for verbose serialization */
     void logpath(const char* log) { log_ = log; }
