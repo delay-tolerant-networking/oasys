@@ -350,11 +350,16 @@ Unmarshal::process(const char*            name,
     (void) name;
     
     // look for terminator
-    u_char* cbuf = buf();
+    u_char* cbuf = 0;
     u_char* c;
     size_t len = 0;
     do {
         c = next_slice(1);
+        if (cbuf == 0)
+        {
+            cbuf = c;
+        }
+
         if (c == 0)
         {
             signal_error();
