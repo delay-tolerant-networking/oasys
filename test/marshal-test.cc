@@ -89,9 +89,34 @@ public:
         action->process("u64", &u64);
         action->process("s1", &s1);
         action->process("s2", s2, sizeof(s2));
-        action->process("const_buf", &const_buf, &const_len, Serialize::ALLOC_MEM);
-        action->process("nullterm_buf", &nullterm_buf, &nullterm_len, Serialize::NULL_TERMINATED);
-        action->process("null_buf", &null_buf, &null_len, Serialize::ALLOC_MEM);
+
+        if (action->action_code() == Serialize::UNMARSHAL)
+        {
+            BufferCarrier<u_char> bc;
+
+            action->process("const_buf", &bc);
+            const_len = bc.len();
+            const_buf = bc.take_buf();
+
+            action->process("nullterm_buf", &bc, 0);
+            nullterm_len = bc.len();
+            nullterm_buf = bc.take_buf();
+
+            action->process("null_buf", &bc);
+            null_len = bc.len();
+            null_buf = bc.take_buf();
+        }
+        else
+        {
+            BufferCarrier<u_char> bc(const_buf, const_len, false);
+            action->process("const_buf", &bc);
+            
+            bc.set_buf(nullterm_buf, nullterm_len, false);
+            action->process("nullterm_buf", &bc, 0);
+
+            bc.set_buf(null_buf, null_len, false);
+            action->process("null_buf", &bc);
+        }
     }
 
     int32_t   a, b, c, d;
