@@ -124,6 +124,11 @@ private:
     int         flags_;
 
     /*!
+     * Offset into the file, maintained to optimize out a call to seek.
+     */
+    mutable size_t cur_offset_;
+
+    /*!
      * Opens file on construction.
      *
      * @param filename Name of the backing file.

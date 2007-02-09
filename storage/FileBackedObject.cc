@@ -1,3 +1,4 @@
+#include "config.h"
 #include "FileBackedObject.h"
 
 #include <sys/types.h>
@@ -113,12 +114,17 @@ FileBackedObject::read_bytes(size_t offset, u_char* buf, size_t length) const
 
     ASSERT(fd_ != -1);
     
-    off_t off = lseek(fd_, offset, SEEK_SET);
-    ASSERT(static_cast<size_t>(off) == offset);
+    if (cur_offset_ != offset)
+    {
+        off_t off = lseek(fd_, offset, SEEK_SET);
+        ASSERT(static_cast<size_t>(off) == offset);
+        cur_offset_ = offset;
+    }
 
     int cc = read(fd_, buf, length);
     ASSERT(static_cast<size_t>(cc) == length);
-
+    cur_offset_ += cc;
+    
     close();
 
     return cc;
@@ -132,11 +138,16 @@ FileBackedObject::write_bytes(size_t offset, const u_char* buf, size_t length)
 
     ASSERT(fd_ != -1);
 
-    off_t off = lseek(fd_, offset, SEEK_SET);
-    ASSERT(static_cast<size_t>(off) == offset);
+    if (cur_offset_ != offset)
+    {
+        off_t off = lseek(fd_, offset, SEEK_SET);
+        ASSERT(static_cast<size_t>(off) == offset);
+        cur_offset_ = offset;
+    }
     
     int cc = write(fd_, buf, length);
     ASSERT(static_cast<size_t>(cc) == length);
+    cur_offset_ += cc;
 
     close();
     
@@ -183,6 +194,8 @@ FileBackedObject::open() const
     
     fd_ = ::open(filename_.c_str(), O_RDWR);
     ASSERT(fd_ != -1);
+
+    cur_offset_ = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -219,7 +232,11 @@ FileBackedObject::unlink()
 void 
 FileBackedObject::fsync_data()
 {
+#ifdef HAVE_FDATASYNC
     fdatasync(fd_);
+#else
+    fsync(fd_);
+#endif
 }
 
 //----------------------------------------------------------------------------
