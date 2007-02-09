@@ -80,6 +80,7 @@ SERIALIZE_SRCS :=				\
 	serialize/Serialize2Hash.cc		\
 	serialize/SQLSerialize.cc		\
 	serialize/Serialize.cc			\
+	serialize/StreamSerialize.cc		\
 	serialize/StringSerialize.cc		\
 	serialize/TclListSerialize.cc		\
 	serialize/TextSerialize.cc		\
@@ -99,6 +100,7 @@ STORAGE_SRCS :=					\
 	storage/DurableStoreImpl.cc		\
 	storage/FileBackedObject.cc		\
 	storage/FileBackedObjectStore.cc	\
+	storage/FileBackedObjectStream.cc	\
 	storage/FileSystemStore.cc		\
 	storage/MemoryStore.cc                  \
 
