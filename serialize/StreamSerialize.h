@@ -17,6 +17,9 @@ public:
     StreamSerialize(OutByteStream* stream,
                     context_t      context);
 
+    // const parameter for action
+    int action(const SerializableObject* object);
+
     //! @{ virtual from SerializeAction
     void begin_action();
     void end_action();

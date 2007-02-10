@@ -15,6 +15,13 @@ StreamSerialize::StreamSerialize(OutByteStream* stream,
 {}
 
 //------------------------------------------------------------------
+int
+StreamSerialize::action(const SerializableObject* object)
+{
+    return SerializeAction::action(const_cast<SerializableObject*>(object));
+}
+
+//------------------------------------------------------------------
 void 
 StreamSerialize::begin_action()
 {
