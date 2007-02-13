@@ -449,7 +449,7 @@ IO::recvmsg(int fd, struct msghdr* msg, int flags,
             Notifier* intr, const char* log)
 {
     RwDataExtraArgs args;
-    args.msg_hdr = msg;
+    args.recvmsg_hdr = msg;
     return rwdata(RECVMSG, fd, 0, 0, flags, -1, &args, 0, 
 	          intr, false, log);
 }
@@ -580,7 +580,7 @@ IO::sendmsg(int fd, const struct msghdr* msg, int flags,
             Notifier* intr, const char* log)
 {
     RwDataExtraArgs args;
-    args.msg_hdr = msg;
+    args.sendmsg_hdr = msg;
 
     return rwdata(SENDMSG, fd, 0, 0, flags, -1, &args, 0, 
 	          intr, false, log);
@@ -902,9 +902,9 @@ IO::rwdata(
                                  fd, iov[0].iov_base, iov[0].iov_len, cc);
             break;
         case RECVMSG:
-            cc = ::sendmsg(fd, args->msg_hdr, flags);
+            cc = ::recvmsg(fd, args->recvmsg_hdr, flags);
             if (log) log_debug_p(log, "::recvmsg() fd %d %p cc %d", 
-                                 fd, args->msg_hdr, cc);
+                                 fd, args->recvmsg_hdr, cc);
             break;
         case WRITEV:
             cc = ::writev(fd, iov, iovcnt);
@@ -922,9 +922,9 @@ IO::rwdata(
                                  fd, iov[0].iov_base, iov[0].iov_len, cc);
             break;
         case SENDMSG:
-            cc = ::sendmsg(fd, args->msg_hdr, flags);
+            cc = ::sendmsg(fd, args->sendmsg_hdr, flags);
             if (log) log_debug_p(log, "::sendmsg() fd %d %p cc %d", 
-                                 fd, args->msg_hdr, cc);
+                                 fd, args->sendmsg_hdr, cc);
             break;
         default:
             PANIC("Unknown IO type");

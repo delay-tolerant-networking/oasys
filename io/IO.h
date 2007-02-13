@@ -229,8 +229,10 @@ struct IO {
 
     //! Union used to pass extra arguments to rwdata
     union RwDataExtraArgs {
-        const struct msghdr* msg_hdr;
+        const struct msghdr* sendmsg_hdr;
 
+        struct msghdr* recvmsg_hdr;
+        
         struct {
             const struct sockaddr* to;
             socklen_t tolen;
