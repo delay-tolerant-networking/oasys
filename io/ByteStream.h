@@ -11,6 +11,7 @@ namespace oasys {
  */
 class OutByteStream {
 public:
+    virtual ~OutByteStream() {}
     virtual int begin()                              = 0;
     virtual int write(const u_char* buf, size_t len) = 0;
     virtual int end()                                = 0;
@@ -21,6 +22,7 @@ public:
  */
 class InByteStream {
 public:
+    virtual ~InByteStream() {}
     virtual int begin()                             = 0;
     virtual int read(u_char* buf, size_t len) const = 0;
     virtual int end()                               = 0;
