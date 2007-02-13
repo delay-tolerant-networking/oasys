@@ -1,6 +1,7 @@
 #ifndef __BYTESTREAM_H__
 #define __BYTESTREAM_H__
 
+#include <sys/types.h>
 #include "../debug/DebugUtils.h"
 
 namespace oasys {
