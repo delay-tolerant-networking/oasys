@@ -471,7 +471,7 @@ MarshalSize::process(const char*            name,
 {
     (void) carrier;
 
-    size_t size;
+    u_int32_t size;
     process(name, &size);
     size_ += carrier->len();
 }
