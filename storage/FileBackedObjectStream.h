@@ -12,7 +12,8 @@ class FileBackedObject;
  */
 class FileBackedObjectOutStream : public OutByteStream {
 public:
-    FileBackedObjectOutStream(FileBackedObject* obj);
+    FileBackedObjectOutStream(FileBackedObject* obj, 
+                              size_t offset = 0);
 
     // virtual from OutByteStream
     int begin();
@@ -30,16 +31,17 @@ private:
  */
 class FileBackedObjectInStream : public InByteStream {
 public:
-    FileBackedObjectInStream(FileBackedObject* obj);
+    FileBackedObjectInStream(FileBackedObject* obj, 
+                             size_t offset = 0);
 
     // virtual from InByteStream
     int begin();
-    int read(u_char* buf, size_t len);
+    int read(u_char* buf, size_t len) const;
     int end();
 
 private:
     FileBackedObject* object_;
-    size_t offset_;
+    mutable size_t offset_;
 };
 
 

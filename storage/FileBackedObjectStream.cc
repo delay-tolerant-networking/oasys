@@ -5,9 +5,10 @@
 namespace oasys {
 
 //----------------------------------------------------------------------------
-FileBackedObjectOutStream::FileBackedObjectOutStream(FileBackedObject* obj)
+FileBackedObjectOutStream::FileBackedObjectOutStream(FileBackedObject* obj,
+                                                     size_t offset)
     : object_(obj),
-      offset_(0)
+      offset_(offset)
 {
 }
 
@@ -38,9 +39,10 @@ FileBackedObjectOutStream::end()
 }
 
 //----------------------------------------------------------------------------
-FileBackedObjectInStream::FileBackedObjectInStream(FileBackedObject* obj)
+FileBackedObjectInStream::FileBackedObjectInStream(FileBackedObject* obj,
+                                                   size_t offset)
     : object_(obj),
-      offset_(0)
+      offset_(offset)
 {
 }
 
@@ -53,7 +55,7 @@ FileBackedObjectInStream::begin()
 
 //----------------------------------------------------------------------------
 int 
-FileBackedObjectInStream::read(u_char* buf, size_t len)
+FileBackedObjectInStream::read(u_char* buf, size_t len) const
 {
     size_t cc = object_->read_bytes(offset_, buf, len);
     offset_ += len;
