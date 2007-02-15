@@ -12,6 +12,7 @@ namespace oasys {
 
 class FileBackedObject;
 class FileBackedObjectStore;
+class SerializableObject;
 
 typedef std::auto_ptr<FileBackedObject> FileBackedObjectHandle;
 
@@ -56,6 +57,11 @@ public:
         FileBackedObject* object();
 
         /*!
+         * Commit the transaction.
+         */
+        void commit();
+
+        /*!
          * Abort the transaction.
          */
         void abort();
@@ -78,7 +84,7 @@ public:
     /*!
      * @return A new transaction on the file.
      */
-    TxHandle start_tx(int flags);
+    TxHandle start_tx(int flags = KEEP_OPEN);
     
     /*!
      * Return the stats maintained by the file system.
@@ -118,6 +124,16 @@ public:
      */
     const std::string& filename() const { return filename_; }
 
+    /*!
+     * @return Error code from StreamSerialize.
+     */
+    int serialize(const SerializableObject* obj);
+
+    /*!
+     * @return Error code from StreamUnserialize.
+     */
+    int unserialize(SerializableObject* obj);
+    
 private:
     std::string filename_;
     mutable int fd_;

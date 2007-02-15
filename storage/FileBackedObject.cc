@@ -9,6 +9,10 @@
 #include "../debug/DebugUtils.h"
 #include "../io/FileUtils.h"
 
+#include "../serialize/Serialize.h"
+#include "../serialize/StreamSerialize.h"
+#include "../storage/FileBackedObjectStream.h"
+
 namespace oasys {
 
 //----------------------------------------------------------------------------
@@ -32,17 +36,7 @@ FileBackedObject::Tx::Tx(FileBackedObject* backing_file, int flags)
 //----------------------------------------------------------------------------
 FileBackedObject::Tx::~Tx()
 {
-    if (tx_file_ != 0)
-    {
-        tx_file_->fsync_data();
-        int err = rename(tx_file_->filename().c_str(), 
-                         original_file_->filename().c_str());
-        ASSERT(err == 0);
-        original_file_->reload();
-        delete_z(tx_file_);
-    }
-
-    log_debug("tx committed");
+    commit();
 }
         
 //----------------------------------------------------------------------------
@@ -52,6 +46,25 @@ FileBackedObject::Tx::object()
     return tx_file_;
 }
         
+//----------------------------------------------------------------------------
+void
+FileBackedObject::Tx::commit()
+{
+    if (tx_file_ == 0)
+    {
+        return;
+    }
+
+    tx_file_->fsync_data();
+    int err = rename(tx_file_->filename().c_str(), 
+                     original_file_->filename().c_str());
+    ASSERT(err == 0);
+    original_file_->reload();
+    delete_z(tx_file_);
+
+    log_debug("tx committed");    
+}
+
 //----------------------------------------------------------------------------
 void
 FileBackedObject::Tx::abort()
@@ -166,6 +179,26 @@ FileBackedObject::truncate(size_t size)
     ASSERT(err == 0);
 
     close();
+}
+
+//----------------------------------------------------------------------------
+int
+FileBackedObject::serialize(const SerializableObject* obj)
+{
+    FileBackedObjectOutStream stream(this);
+    StreamSerialize serial(&stream, Serialize::CONTEXT_LOCAL);
+
+    return serial.action(obj);
+}
+
+//----------------------------------------------------------------------------
+int
+FileBackedObject::unserialize(SerializableObject* obj)
+{
+    FileBackedObjectInStream stream(this);
+    StreamUnserialize serial(&stream, Serialize::CONTEXT_LOCAL);
+
+    return serial.action(obj);
 }
 
 //----------------------------------------------------------------------------
