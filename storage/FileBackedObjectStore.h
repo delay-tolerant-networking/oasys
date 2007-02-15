@@ -19,6 +19,9 @@ class FileBackedObjectStore;
 class FileBackedObjectStore : public Logger {
 public:
     struct Stats {
+        Stats();
+
+        unsigned int total_objects_;
 	unsigned int open_handles_;
     };
     

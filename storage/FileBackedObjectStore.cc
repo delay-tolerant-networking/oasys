@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <dirent.h>
 
 #include "../io/FileUtils.h"
 #include "FileBackedObjectStore.h"
@@ -121,6 +122,24 @@ FileBackedObjectStore::copy_object(const std::string& src,
 }
 
 //----------------------------------------------------------------------------
+FileBackedObjectStore::Stats
+FileBackedObjectStore::get_stats() const
+{
+    Stats stats;
+
+    DIR* dir = opendir(root_.c_str());
+    ASSERT(dir != 0);
+    struct dirent* ent;
+    do {
+        ent = readdir(dir);
+        ++stats.total_objects_;
+    } while (ent != 0);
+    closedir(dir);
+
+    return stats;
+}
+
+//----------------------------------------------------------------------------
 std::string
 FileBackedObjectStore::object_path(const std::string& key)
 {
@@ -130,5 +149,11 @@ FileBackedObjectStore::object_path(const std::string& key)
 
     return path;
 }
+
+//----------------------------------------------------------------------------
+FileBackedObjectStore::Stats::Stats()
+    : total_objects_(0),
+      open_handles_(0)
+{}
 
 } // namespace oasys
