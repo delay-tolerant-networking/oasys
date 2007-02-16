@@ -126,6 +126,7 @@ THREAD_SRCS :=					\
 UTIL_SRCS :=					\
 	util/Base16.cc				\
 	util/CRC32.cc				\
+	util/Daemonizer.cc			\
 	util/ExpandableBuffer.cc		\
 	util/Getopt.cc				\
 	util/Glob.cc				\
