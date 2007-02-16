@@ -60,11 +60,11 @@ public:
     }
 
     /**
-     * Construct the url from the given std::string.
+     * Construct a URL from a scheme and ssp.
      */
-    URL(const char* url)
+    URL(const std::string& scheme, const std::string& ssp)
     {
-        url_.assign(url);
+        url_ = scheme + ':' + ssp;
         parse();
     }
 
