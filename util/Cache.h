@@ -27,14 +27,30 @@
 
 namespace oasys {
 
+class CacheHelper {
+};
+
 /*!
- * Generic cache implementation. To simplify the contract, 
+ * Generic cache implementation.
  *
- * The _EvictFcn is required to implement the signature:
+ * CacheHelper has the following signature:
  *
- *    void (*)(_Key& k, _Val& v);
+ * bool over_limit(const _Key& key, const _Val& value)
+ * 
+ * Return true if the cache limits have been exceeded when adding this
+ * new value to the cache.
+ *
+ * void put(const _Key& key, const _Val& value)
+ *
+ * Update statistics on the cache for over_limit computation.
+ *
+ * void cleanup(_Key& key, const _Val& value)
+ *
+ * Element has been removed from the cache, cleanup the object and
+ * update stored statistics.
+ *
  */ 
-template<typename _Key, typename _Val, typename _EvictFcn>
+template<typename _Key, typename _Val, typename _CacheHelper>
 class Cache : Logger {
 public:
     /*!
@@ -56,11 +72,14 @@ public:
     typedef std::map<_Key, typename CacheList::iterator> CacheMap;
 
     /*!
-     * Constructor that takes the cache limit.
+     * Constructor.
      */
-    Cache(const char* logpath, size_t max)
-        : Logger("Cache", logpath), max_(max) {}
-
+    Cache(const char*        logpath, 
+          const _CacheHelper helper)
+        : Logger("Cache", logpath),
+          helper_(helper) 
+    {}
+    
     /*!
      * Get an item from the cache and optionally pin it.
      *
@@ -81,7 +100,8 @@ public:
         }
         
         cache_list_.move_to_back(i->second);
-        if (pin) {
+        if (pin) 
+        {
             ++(i->second->pin_count_);
         }
         
@@ -144,9 +164,16 @@ public:
             return false;
         }
 
-        while (cache_map_.size() + 1 > max_) 
+        while (helper_.over_limit(key, val))
         {
-            if (! evict_last()) {
+            if (cache_map_.size() == 0)
+            {
+                PANIC("Putting object into cache of size greater than "
+                      "entire cache limits!");
+            }
+            
+            if (! evict_last()) 
+            {
                 break;
             }
         }
@@ -156,7 +183,8 @@ public:
             cache_list_.insert(cache_list_.end(),
                                LRUListEnt(key, val, 1));
 
-        if (iter) {
+        if (iter) 
+        {
             *iter = new_ent;
         }
 
@@ -166,12 +194,13 @@ public:
                   cache_map_.size());
 
         cache_map_[key] = new_ent;
+        helper_.put(key, val);
 
         return val;
     }
 
     /*!
-     * Evict the given key, calling the _EvictFcn on it.
+     * Forcibly evict key.
      */
     void evict(const _Key& key) 
     {
@@ -185,8 +214,7 @@ public:
         }
 
         ASSERT(key == i->second->key_);
-        _EvictFcn e;
-        e(key, i->second->val_);
+        helper_.cleanup(key, i->second->val_);
         log_debug("evict(%s): evicted entry size=%zu",
                   InlineFormatter<_Key>().format(key),
                   cache_map_.size());
@@ -198,7 +226,8 @@ public:
     /*!
      * Evict all of the cached vals.
      */
-    void evict_all() {
+    void evict_all() 
+    {
         ScopeLock l(&lock_, "Cache::evict_all");
         
         log_debug("evict_all(): %zu open vals", cache_list_.size());
@@ -214,14 +243,17 @@ public:
                 log_debug("evict_all(): evicting %s",
                           InlineFormatter<_Key>().format(i->key_));
             }
-
-            _EvictFcn e;
-            e(i->key_, i->val_);
+            helper_.cleanup(key, i->second->val_);
         }
 
         cache_list_.clear();
         cache_map_.clear();
     }
+    
+    /*!
+     * @return Helper object.
+     */
+    _CacheHelper* get_helper() { return &helper_; }
 
     /*!
      * Helper class to unpin an element at the end of a scope.
@@ -242,13 +274,13 @@ public:
     };
 
 
-private:
+protected:
     SpinLock lock_;
 
-    CacheList cache_list_;
-    CacheMap  cache_map_;
-
-    size_t max_;
+private:
+    CacheList    cache_list_;
+    CacheMap     cache_map_;
+    _CacheHelper helper_;
 
     /*!
      * Search from the beginning of the list and throw out a single,
@@ -273,8 +305,7 @@ private:
             log_debug("evict_last(): evicting %s size=%zu",
                       InlineFormatter<_Key>().format(i->key_),
                       cache_map_.size());
-            _EvictFcn e;
-            e(i->key_, i->val_);
+            helper_.cleanup(i->key_, i->val_);
             cache_map_.erase(i->key_);
             cache_list_.erase(i);
         }
