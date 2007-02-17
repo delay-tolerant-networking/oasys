@@ -19,6 +19,7 @@ TESTS += \
 	base16-test				\
 	berkeley-db-test			\
 	buffer-test				\
+	cache-test				\
 	durable-cache-test			\
 	file-obj-store-test			\
 	filesys-db-test				\
