@@ -15,11 +15,12 @@ namespace oasys {
  */
 template<typename _Vector, typename _Type>
 class CommaPushBack {
+public:
     CommaPushBack(_Vector* v)
         : v_(v) 
     {}
     
-    CommaPushBack& operator,(_Type type) {
+    CommaPushBack operator,(_Type type) {
         v_->push_back(type);
         return *this;
     }
@@ -27,7 +28,6 @@ class CommaPushBack {
 private:
     _Vector* v_;
 };
-
 
 } // namespace oasys
 
