@@ -44,7 +44,7 @@ class CacheHelper {
  *
  * Update statistics on the cache for over_limit computation.
  *
- * void cleanup(_Key& key, const _Val& value)
+ * void cleanup(const _Key& key, const _Val& value)
  *
  * Element has been removed from the cache, cleanup the object and
  * update stored statistics.
@@ -68,8 +68,9 @@ public:
         int  pin_count_;
     };
 
-    typedef LRUList<LRUListEnt> CacheList;
-    typedef std::map<_Key, typename CacheList::iterator> CacheMap;
+    typedef LRUList<LRUListEnt>          CacheList;
+    typedef typename CacheList::iterator Handle;
+    typedef std::map<_Key, Handle>       CacheMap;
 
     /*!
      * Constructor.
@@ -83,11 +84,16 @@ public:
     /*!
      * Get an item from the cache and optionally pin it.
      *
+     * @param handle Returns a handle to the Cache element on the
+     * list. This handle is useful for a call to cache functions pin()
+     * and unpin() because they do not incur an additional search
+     * through the std::map for the element.
+     *
      * @return whether or not the value is in the cache, and assign
      * *valp to the value.
      */
-    bool get(const _Key& key, _Val* valp, bool pin = false,
-             typename CacheList::iterator* iter = NULL)
+    bool get(const _Key& key, _Val* valp = 0, bool pin = false,
+             Handle* handle = 0)
     {
         ScopeLock l(&lock_, "Cache::get_and_pin");
         
@@ -109,11 +115,15 @@ public:
                   InlineFormatter<_Key>().format(key), 
                   i->second->pin_count_,
                   cache_map_.size());
+        
+        if (valp != 0)
+        {
+            *valp = i->second->val_;
+        }
 
-        *valp = i->second->val_;
-
-        if (iter != NULL) {
-            *iter = i->second;
+        if (handle != 0) 
+        {
+            *handle = i->second;
         }
         
         return true;
@@ -122,9 +132,37 @@ public:
     /*!
      * Syntactic sugar.
      */
-    bool get_and_pin(const _Key& key, _Val* valp)
+    bool get_and_pin(const _Key& key, _Val* valp = 0,
+                     Handle* handle = 0)
     {
-        return get(key, valp, true);
+        return get(key, valp, true, handle);
+    }
+
+    /*!
+     * Pin the val referenced by _Key.
+     */
+    void pin(const _Key& key) 
+    {
+        ScopeLock l(&lock_, "Cache::pin");
+
+        typename CacheMap::iterator i = cache_map_.find(key);
+        ASSERT(i != cache_map_.end());
+        
+        pin(i->second);
+    }
+
+    /*!
+     * Pin based on the iterator Handle.
+     */
+    void pin(Handle handle)
+    {
+        ScopeLock l(&lock_, "Cache::pin");
+
+        ++(handle->pin_count_);
+        log_debug("pin(%s): pinned entry pin_count=%d size=%zu",
+                  InlineFormatter<_Key>().format(handle->key_),
+                  handle->pin_count_,
+                  cache_map_.size());
     }
 
     /*!
@@ -137,14 +175,24 @@ public:
         typename CacheMap::iterator i = cache_map_.find(key);
         ASSERT(i != cache_map_.end());
         
-        --(i->second->pin_count_);
-
-        log_debug("unpin(%s): unpinned entry pin_count=%d size=%zu",
-                  InlineFormatter<_Key>().format(key),
-                  i->second->pin_count_,
-                  cache_map_.size());
+        unpin(i->second);
     }
 
+    /*!
+     * Unpin based on the iterator Handle.
+     */
+    void unpin(Handle handle)
+    {
+        ScopeLock l(&lock_, "Cache::unpin");
+
+        ASSERT(handle->pin_count_ > 0);
+        --(handle->pin_count_);
+        log_debug("unpin(%s): unpinned entry pin_count=%d size=%zu",
+                  InlineFormatter<_Key>().format(handle->key_),
+                  handle->pin_count_,
+                  cache_map_.size());
+    }
+    
     /*!
      * Put an val in the file cache which may evict unpinned vals.
      * Also pin the val that was just put into the cache.
@@ -153,7 +201,7 @@ public:
      * false if there was a collision on the key.
      */
     bool put_and_pin(const _Key& key, const _Val& val,
-                     typename CacheList::iterator* iter = NULL) 
+                     Handle* iter = 0) 
     {
         ScopeLock l(&lock_, "Cache::put_and_pin");
 
@@ -179,7 +227,7 @@ public:
         }
         
         // start off with pin count 1
-        typename CacheList::iterator new_ent =
+        Handle new_ent =
             cache_list_.insert(cache_list_.end(),
                                LRUListEnt(key, val, 1));
 
@@ -213,6 +261,13 @@ public:
             return;
         }
 
+        if (i->second->pin_count_ > 0)
+        {
+            log_warn("evict(%s): entry still busy, count = %u",
+                     InlineFormatter<_Key>().format(key),
+                     i->second->pin_count_);
+        }
+
         ASSERT(key == i->second->key_);
         helper_.cleanup(key, i->second->val_);
         log_debug("evict(%s): evicted entry size=%zu",
@@ -232,7 +287,7 @@ public:
         
         log_debug("evict_all(): %zu open vals", cache_list_.size());
         
-        for (typename CacheList::iterator i = cache_list_.begin(); 
+        for (Handle i = cache_list_.begin(); 
              i != cache_list_.end(); ++i)
         {
             if (i->pin_count_ > 0) {
@@ -243,13 +298,13 @@ public:
                 log_debug("evict_all(): evicting %s",
                           InlineFormatter<_Key>().format(i->key_));
             }
-            helper_.cleanup(key, i->second->val_);
+            helper_.cleanup(i->key_, i->val_);
         }
 
         cache_list_.clear();
         cache_map_.clear();
     }
-    
+
     /*!
      * @return Helper object.
      */
@@ -291,7 +346,7 @@ private:
     bool evict_last()
     {
         bool found = false;
-        typename CacheList::iterator i;
+        Handle i;
         for (i = cache_list_.begin(); i != cache_list_.end(); ++i)
         {
             if (i->pin_count_ == 0) {
