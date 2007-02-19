@@ -35,7 +35,7 @@ struct Helper {
         birth_log_.push_back(value);
     }
 
-    void cleanup(std::string& key, const int& value)
+    void cleanup(const std::string& key, const int& value)
     {
         (void) key; (void) value;
         --elts_;
@@ -108,6 +108,17 @@ DECLARE_TEST(Test1) {
 
     c.clear();
     pusher = pusher, 1, 2, 4, 5, 7, 6;
+    CHECK(cache.get_helper()->death_log_ == c);
+
+    cache.evict("i");
+    c.clear();
+    pusher = pusher, 1, 2, 4, 5, 7, 6, 9;
+    CHECK(cache.get_helper()->death_log_ == c);
+
+    cache.unpin("c");
+    cache.evict_all();
+    c.clear();
+    pusher = pusher, 1, 2, 4, 5, 7, 6, 9, 3, 8;
     CHECK(cache.get_helper()->death_log_ == c);
 
     return UNIT_TEST_PASSED;
