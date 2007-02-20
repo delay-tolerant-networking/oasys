@@ -71,7 +71,7 @@ void
 DebugSerialize::process(const char*            name, 
                    	BufferCarrier<u_char>* carrier)
 {
-    buf_.appendf("%s: binary addr=%p length=%u\n", 
+    buf_.appendf("%s: binary addr=%p length=%zu\n", 
 	         name, carrier->buf(), carrier->len());
 }
 
@@ -85,7 +85,7 @@ DebugSerialize::process(const char*            name,
     while (carrier->buf()[len] != terminator)
 	++len;
 
-    buf_.appendf("%s: binary addr=%p length=%u\n", 
+    buf_.appendf("%s: binary addr=%p length=%zu\n", 
 	         name, carrier->buf(), len);
 }
 
