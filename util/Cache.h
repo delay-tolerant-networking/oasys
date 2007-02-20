@@ -244,7 +244,7 @@ public:
         cache_map_[key] = new_ent;
         helper_.put(key, val);
 
-        return val;
+        return true;
     }
 
     /*!
@@ -327,7 +327,6 @@ public:
         Cache* cache_;
         _Key   key_;
     };
-
 
 protected:
     SpinLock lock_;
