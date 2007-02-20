@@ -147,8 +147,11 @@ public:
 //! gdb
 void oasys_break();
 
-//! This as well for dumping formattable objects
+//! This as well for dumping formattable objects.
 const char* oasys_dump(const void* obj);
+
+//! Dump out a serializable object using the serialization routines.
+const char* oasys_sdump(const void* obj);
 
 #include "../memory/Memory.h"
 

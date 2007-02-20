@@ -75,6 +75,7 @@ MEMORY_SRCS :=                                  \
 
 SERIALIZE_SRCS :=				\
 	serialize/BufferedSerializeAction.cc	\
+	serialize/DebugSerialize.cc		\
 	serialize/KeySerialize.cc		\
 	serialize/MarshalSerialize.cc		\
 	serialize/Serialize2Hash.cc		\

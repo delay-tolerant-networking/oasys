@@ -17,6 +17,7 @@
 #include "DebugUtils.h"
 #include "Formatter.h"
 #include "DebugDumpBuf.h"
+#include "../serialize/DebugSerialize.h"
 
 //----------------------------------------------------------------------------
 void
@@ -45,5 +46,27 @@ oasys_dump(const void* obj)
 #endif // NDEBUG
     
     fobj->format(oasys::DebugDumpBuf::buf_, oasys::DebugDumpBuf::size_);
+    return oasys::DebugDumpBuf::buf_;
+}
+
+//----------------------------------------------------------------------------
+const char* 
+oasys_sdump(const void* obj)
+{
+    oasys::DebugSerialize s(oasys::Serialize::CONTEXT_LOCAL,
+	                    oasys::DebugDumpBuf::buf_, 
+	                    oasys::DebugDumpBuf::size_);
+    s.action((oasys::SerializableObject*)obj);
+    return oasys::DebugDumpBuf::buf_;
+}
+
+//----------------------------------------------------------------------------
+const char* 
+oasys_sdumpn(const void* obj)
+{
+    oasys::DebugSerialize s(oasys::Serialize::CONTEXT_NETWORK,
+	                    oasys::DebugDumpBuf::buf_, 
+	                    oasys::DebugDumpBuf::size_);
+    s.action((oasys::SerializableObject*)obj);
     return oasys::DebugDumpBuf::buf_;
 }
