@@ -15,6 +15,7 @@
  */
 
 #include <stdio.h>
+#include <sys/stat.h>
 
 #include "util/UnitTest.h"
 #include "storage/FileBackedObject.h"
