@@ -191,8 +191,8 @@ public:
         
         int count = ++(i->second->pin_count_);
         log_debug("pin(%s): pinned entry pin_count=%d size=%zu",
-                  InlineFormatter<_Key>().format(handle->key_),
-                  handle->pin_count_,
+                  InlineFormatter<_Key>().format(key),
+                  count,
                   cache_map_.size());
         return count;
     }
