@@ -68,9 +68,46 @@ public:
         int  pin_count_;
     };
 
-    typedef LRUList<LRUListEnt>          CacheList;
-    typedef typename CacheList::iterator Handle;
-    typedef std::map<_Key, Handle>       CacheMap;
+    typedef LRUList<LRUListEnt> CacheList;
+    typedef std::map<_Key, typename CacheList::iterator> CacheMap;
+
+    /*!
+     * Handle to an element to an entry in the cache. Valid as long as
+     * the pin count is > 0.
+     */
+    class Handle {
+        friend class Cache;
+
+    public:
+        Handle() : cache_(0) {}
+        
+        // Copyable and assignable
+
+        int pin() {
+            return cache_->pin(*this);
+        }
+
+        int unpin() {
+            int count = cache_->unpin(*this);
+
+            // Pin count == 0, invalid this handle.
+            if (count == 0)
+            {
+                cache_ = 0;
+            }
+
+            return count;
+        }
+        
+        bool valid() { return cache_ != 0; }
+        
+    private:
+        Cache* cache_;
+        typename CacheList::iterator itr_;
+
+        Handle(Cache* cache, typename CacheList::iterator itr)
+            : cache_(cache), itr_(itr) {}
+    };
 
     /*!
      * Constructor.
@@ -123,7 +160,7 @@ public:
 
         if (handle != 0) 
         {
-            *handle = i->second;
+            *handle = Handle(this, i->second);
         }
         
         return true;
@@ -140,57 +177,77 @@ public:
 
     /*!
      * Pin the val referenced by _Key.
+     *
+     * @return New pin count after this call.
      */
-    void pin(const _Key& key) 
+    int pin(const _Key& key) 
     {
         ScopeLock l(&lock_, "Cache::pin");
 
         typename CacheMap::iterator i = cache_map_.find(key);
         ASSERT(i != cache_map_.end());
         
-        pin(i->second);
-    }
-
-    /*!
-     * Pin based on the iterator Handle.
-     */
-    void pin(Handle handle)
-    {
-        ScopeLock l(&lock_, "Cache::pin");
-
-        ++(handle->pin_count_);
+        int count = ++(i->second->pin_count_);
         log_debug("pin(%s): pinned entry pin_count=%d size=%zu",
                   InlineFormatter<_Key>().format(handle->key_),
                   handle->pin_count_,
                   cache_map_.size());
+        return count;
+    }
+
+    /*!
+     * Pin based on the iterator Handle.
+     *
+     * @return New pin count after this call.
+     */
+    int pin(Handle handle)
+    {
+        ScopeLock l(&lock_, "Cache::pin");
+
+        int count = ++(handle.itr_->pin_count_);
+        log_debug("pin(%s): pinned entry pin_count=%d size=%zu",
+                  InlineFormatter<_Key>().format(handle->key_),
+                  handle->pin_count_,
+                  cache_map_.size());
+        return count;
     }
 
     /*!
      * Unpin the val referenced by _Key.
+     *
+     * @return New pin count after this call.
      */
-    void unpin(const _Key& key) 
+    int unpin(const _Key& key) 
     {
         ScopeLock l(&lock_, "Cache::unpin");
 
         typename CacheMap::iterator i = cache_map_.find(key);
         ASSERT(i != cache_map_.end());
-        
-        unpin(i->second);
+        ASSERT(i->second->pin_count_ > 0);
+        int count = --(i->second->pin_count_);
+        log_debug("unpin(%s): unpinned entry pin_count=%d size=%zu",
+                  InlineFormatter<_Key>().format(i->second->key_),
+                  i->second->pin_count_,
+                  cache_map_.size());
+        return count;
     }
 
     /*!
      * Unpin based on the iterator Handle.
+     *
+     * @return New pin count after this call.
      */
-    void unpin(Handle handle)
+    int unpin(Handle handle)
     {
         ScopeLock l(&lock_, "Cache::unpin");
 
-        ASSERT(handle->pin_count_ > 0);
-        --(handle->pin_count_);
+        ASSERT(handle.itr_->pin_count_ > 0);
+        int count = --(handle.itr_->pin_count_);
         log_debug("unpin(%s): unpinned entry pin_count=%d size=%zu",
-                  InlineFormatter<_Key>().format(handle->key_),
-                  handle->pin_count_,
+                  InlineFormatter<_Key>().format(handle.itr_->key_),
+                  handle.itr_->pin_count_,
                   cache_map_.size());
+        return count;
     }
     
     /*!
@@ -201,7 +258,7 @@ public:
      * false if there was a collision on the key.
      */
     bool put_and_pin(const _Key& key, const _Val& val,
-                     Handle* iter = 0) 
+                     Handle* handle = 0) 
     {
         ScopeLock l(&lock_, "Cache::put_and_pin");
 
@@ -227,13 +284,13 @@ public:
         }
         
         // start off with pin count 1
-        Handle new_ent =
+        typename CacheList::iterator new_ent =
             cache_list_.insert(cache_list_.end(),
                                LRUListEnt(key, val, 1));
 
-        if (iter) 
+        if (handle) 
         {
-            *iter = new_ent;
+            *handle = Handle(this, new_ent);
         }
 
         log_debug("put_and_pin(%s): added entry pin_count=%d size=%zu",
@@ -287,7 +344,7 @@ public:
         
         log_debug("evict_all(): %zu open vals", cache_list_.size());
         
-        for (Handle i = cache_list_.begin(); 
+        for (typename CacheList::iterator i = cache_list_.begin(); 
              i != cache_list_.end(); ++i)
         {
             if (i->pin_count_ > 0) {
@@ -345,7 +402,7 @@ private:
     bool evict_last()
     {
         bool found = false;
-        Handle i;
+        typename CacheList::iterator i;
         for (i = cache_list_.begin(); i != cache_list_.end(); ++i)
         {
             if (i->pin_count_ == 0) {
