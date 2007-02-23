@@ -74,6 +74,9 @@ public:
     /*!
      * Handle to an element to an entry in the cache. Valid as long as
      * the pin count is > 0.
+     *
+     * XXX/bowei -- this is kind of bogus for multithreading
+     * performance...FIXME later.
      */
     class Handle {
         friend class Cache;
@@ -95,7 +98,6 @@ public:
             {
                 cache_ = 0;
             }
-
             return count;
         }
         
@@ -206,8 +208,8 @@ public:
 
         int count = ++(handle.itr_->pin_count_);
         log_debug("pin(%s): pinned entry pin_count=%d size=%zu",
-                  InlineFormatter<_Key>().format(handle->key_),
-                  handle->pin_count_,
+                  InlineFormatter<_Key>().format(handle.itr_->key_),
+                  handle.itr_->pin_count_,
                   cache_map_.size());
         return count;
     }
