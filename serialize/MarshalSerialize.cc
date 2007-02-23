@@ -556,28 +556,28 @@ MarshalSize::process(const char*            name,
 //     crc_.update((u_char*)s->c_str(), s->size());
 // }
 
-// /******************************************************************************
-//  *
-//  * MarshalCopy
-//  *
-//  *****************************************************************************/
-// u_int32_t
-// MarshalCopy::copy(ExpandableBuffer* buf,
-//                   const SerializableObject* src,
-//                   SerializableObject* dst)
-// {
-//     Marshal m(Serialize::CONTEXT_LOCAL, buf);
-//     if (m.action(src) != 0) {
-//         PANIC("error marshalling object");
-//     }
-    
-//     Unmarshal um(Serialize::CONTEXT_LOCAL,
-//                  (const u_char*)buf->raw_buf(), buf->len());
-//     if (um.action(dst) != 0) {
-//         PANIC("error marshalling object");
-//     }
+/******************************************************************************
+ *
+ * MarshalCopy
+ *
+ *****************************************************************************/
+u_int32_t
+MarshalCopy::copy(ExpandableBuffer* buf,
+                  const SerializableObject* src,
+                  SerializableObject* dst)
+{
+    Marshal m(Serialize::CONTEXT_LOCAL, buf);
+    if (m.action(src) != 0) {
+        PANIC("error marshalling object");
+    }
+ 
+    Unmarshal um(Serialize::CONTEXT_LOCAL,
+                 (const u_char*)buf->raw_buf(), buf->len());
+    if (um.action(dst) != 0) {
+        PANIC("error marshalling object");
+    }
 
-//     return buf->len();
-// }
+    return buf->len();
+}
 
 } // namespace oasys
