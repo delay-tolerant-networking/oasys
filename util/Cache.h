@@ -21,6 +21,7 @@
 
 #include "../debug/InlineFormatter.h"
 #include "../debug/Logger.h"
+#include "../thread/Atomic.h"
 #include "../thread/SpinLock.h"
 #include "../util/LRUList.h"
 
@@ -63,9 +64,10 @@ public:
             : key_(key), val_(val), pin_count_(pin_count)
         {}
 
-        _Key key_;
-        _Val val_;
-        int  pin_count_;
+        _Key     key_;
+        _Val     val_;
+	int      pin_count_;
+        SpinLock lock_;
     };
 
     typedef LRUList<LRUListEnt> CacheList;
@@ -112,6 +114,38 @@ public:
     };
 
     /*!
+     * Helper class for external refs which manage how many references
+     * are on an object.
+     */
+    class ExternalHandle {
+    public:
+	ExternalHandle(Handle cache_handle)
+	    : cache_handle_(cache_handle) 
+	{
+	    cache_handle_.pin();
+	}
+
+	ExternalHandle(const ExternalHandle& other) 
+	    : cache_handle_(other.cache_handle_)
+	{
+	    cache_handle_.pin();
+	}
+
+	ExternalHandle& operator=(const ExternalHandle& other)
+	{
+	    cache_handle_ = other.cache_handle_;
+	    cache_handle_.pin();
+
+	    return *this;
+	}
+
+	~ExternalHandle() { cache_handle_.unpin(); }
+
+    private:
+	Handle cache_handle_;
+    };
+    
+    /*!
      * Constructor.
      */
     Cache(const char*        logpath, 
@@ -145,9 +179,10 @@ public:
         }
         
         cache_list_.move_to_back(i->second);
+	ScopeLock ll(&i->second->lock_, "Cache::get_and_pin");
         if (pin) 
         {
-            ++(i->second->pin_count_);
+	    ++i->second->pin_count_;
         }
         
         log_debug("get(%s): got entry pin_count=%d size=%zu",
@@ -182,18 +217,20 @@ public:
      *
      * @return New pin count after this call.
      */
-    int pin(const _Key& key) 
+    u_int32_t pin(const _Key& key) 
     {
         ScopeLock l(&lock_, "Cache::pin");
 
         typename CacheMap::iterator i = cache_map_.find(key);
         ASSERT(i != cache_map_.end());
         
-        int count = ++(i->second->pin_count_);
+	ScopeLock ll(&i->second->lock_, "Cache::pin");
+	++i->second->pin_count_;
         log_debug("pin(%s): pinned entry pin_count=%d size=%zu",
                   InlineFormatter<_Key>().format(key),
-                  count,
+                  i->second->pin_count_,
                   cache_map_.size());
+
         return count;
     }
 
@@ -204,13 +241,13 @@ public:
      */
     int pin(Handle handle)
     {
-        ScopeLock l(&lock_, "Cache::pin");
-
-        int count = ++(handle.itr_->pin_count_);
+	ScopeLock l(&handle.itr_->lock_, "Cache::pin");
+        int count = ++handle.itr_->pin_count_;
         log_debug("pin(%s): pinned entry pin_count=%d size=%zu",
                   InlineFormatter<_Key>().format(handle.itr_->key_),
-                  handle.itr_->pin_count_,
+                  count,
                   cache_map_.size());
+
         return count;
     }
 
@@ -225,8 +262,11 @@ public:
 
         typename CacheMap::iterator i = cache_map_.find(key);
         ASSERT(i != cache_map_.end());
+
+	ScopeLock ll(&i->second->lock_, "Cache::pin");
         ASSERT(i->second->pin_count_ > 0);
-        int count = --(i->second->pin_count_);
+
+        int count = --i->second->pin_count_;
         log_debug("unpin(%s): unpinned entry pin_count=%d size=%zu",
                   InlineFormatter<_Key>().format(i->second->key_),
                   i->second->pin_count_,
@@ -241,10 +281,9 @@ public:
      */
     int unpin(Handle handle)
     {
-        ScopeLock l(&lock_, "Cache::unpin");
+        ScopeLock l(&handle.itr_->lock_, "Cache::unpin");
 
-        ASSERT(handle.itr_->pin_count_ > 0);
-        int count = --(handle.itr_->pin_count_);
+        int count = --handle.itr_->pin_count_;
         log_debug("unpin(%s): unpinned entry pin_count=%d size=%zu",
                   InlineFormatter<_Key>().format(handle.itr_->key_),
                   handle.itr_->pin_count_,
@@ -322,7 +361,7 @@ public:
 
         if (i->second->pin_count_ > 0)
         {
-            log_warn("evict(%s): entry still busy, count = %u",
+            log_warn("evict(%s): entry still busy, count = %d",
                      InlineFormatter<_Key>().format(key),
                      i->second->pin_count_);
         }

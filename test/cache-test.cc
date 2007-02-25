@@ -13,7 +13,8 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
+#include <pthread.h>
+#include <stdlib.h>
 
 #include "util/UnitTest.h"
 #include "util/STLUtil.h"
@@ -124,8 +125,114 @@ DECLARE_TEST(Test1) {
     return UNIT_TEST_PASSED;
 }
 
+struct Helper2 {
+    Helper2() : max_(100000), elts_(0) {}
+
+    bool over_limit(int key, const int& value)
+    {
+        (void) key; (void) value;
+        return elts_ + 1> max_;
+    }
+
+    void put(int key, const int& value)
+    {
+        (void) key; (void) value;
+        ++elts_;
+    }
+
+    void cleanup(int key, const int& value)
+    {
+        (void) key; (void) value;
+        --elts_;
+    }
+
+    size_t max_;
+    size_t elts_;
+};
+typedef Cache<int, int, Helper2> ThreadCache;
+
+struct Params {
+    int          max_elements_;
+    int          iterations_;
+    ThreadCache* cache_;
+};
+
+void* cache_worker(void* param)
+{
+    Params* p = static_cast<Params*>(param);
+
+    for (int i = 0; i<p->iterations_; ++i)
+    {
+	int cache_elem = random() % p->max_elements_;
+	// pin and unpin entries in the cache randomly
+	int j = 1;
+	int val;
+	ThreadCache::Handle handle;
+
+	p->cache_->get_and_pin(cache_elem, &val, &handle);
+	do 
+	{
+	    if ( (random() % 10) > 6)
+	    {
+		handle.pin();
+		++j;
+	    }
+	    else
+	    {
+		handle.unpin();
+		--j;
+	    }
+	} while (j>0);
+
+	if (i%10000 == 0)
+	{
+	    log_notice_p("/test", "mark itr=%d, cache_elem=%d", i, cache_elem);
+	}
+    }
+
+    return NULL;
+}
+
+DECLARE_TEST(Test2) {
+    // Multithreading threading test
+    Params p;
+    ThreadCache cache("/test", Helper2());
+
+    p.max_elements_= 10000;
+    p.iterations_  = 500000;
+    p.cache_       = &cache;
+
+    for (int i = 0; i<p.max_elements_; ++i)
+    {
+	cache.put_and_pin(i, i);
+	cache.unpin(i);
+    }
+
+    struct timeval begin;
+    gettimeofday(&begin, NULL);
+
+    pthread_t thread[10];
+    for (int i=0; i<10; ++i)
+    {
+	pthread_create(&thread[i], NULL, cache_worker, &p);
+    }
+
+    for (int i=0; i<10; ++i)
+    {
+	pthread_join(thread[i], NULL);
+    }
+
+    struct timeval end;
+    gettimeofday(&end, NULL);
+
+    log_notice_p("/test", "time = %d seconds", (int)(end.tv_sec - begin.tv_sec));
+
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TESTER(Test) {
     ADD_TEST(Test1);
+    ADD_TEST(Test2);
 }
 
 DECLARE_TEST_FILE(Test, "cache test");
