@@ -217,7 +217,7 @@ public:
      *
      * @return New pin count after this call.
      */
-    u_int32_t pin(const _Key& key) 
+    int pin(const _Key& key) 
     {
         ScopeLock l(&lock_, "Cache::pin");
 
@@ -225,10 +225,10 @@ public:
         ASSERT(i != cache_map_.end());
         
 	ScopeLock ll(&i->second->lock_, "Cache::pin");
-	++i->second->pin_count_;
+	int count = ++i->second->pin_count_;
         log_debug("pin(%s): pinned entry pin_count=%d size=%zu",
                   InlineFormatter<_Key>().format(key),
-                  i->second->pin_count_,
+                  count,
                   cache_map_.size());
 
         return count;

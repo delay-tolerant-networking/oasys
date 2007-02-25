@@ -105,6 +105,8 @@ DECLARE_TEST(Test1) {
     CHECK(cache.get_helper()->death_log_ == c);
 
     cache.put_and_pin("i", 9);
+    cache.pin("i");
+    cache.unpin("i");
     cache.unpin("i");
 
     c.clear();
