@@ -133,8 +133,15 @@ public:
 
 	ExternalHandle& operator=(const ExternalHandle& other)
 	{
+            if (&other == this)
+            {
+                return *this;
+            }
+
+            Handle old_handle = cache_handle_;
 	    cache_handle_ = other.cache_handle_;
 	    cache_handle_.pin();
+            old_handle.unpin();
 
 	    return *this;
 	}
