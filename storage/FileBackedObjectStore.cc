@@ -140,6 +140,27 @@ FileBackedObjectStore::get_stats() const
 }
 
 //----------------------------------------------------------------------------
+void 
+FileBackedObjectStore::get_object_names(std::vector<std::string>* names)
+{
+    DIR* dir = opendir(root_.c_str());
+    struct dirent* dirent;
+
+    names->clear();
+    do {
+        dirent = readdir(dir);
+        if (dirent != 0)
+        {
+            if (! (strcmp(dirent->d_name, ".")  == 0 ||
+                   (strcmp(dirent->d_name, "..") == 0)))
+            {
+                names->push_back(dirent->d_name);
+            }
+        }
+    } while(dirent != 0);
+}
+
+//----------------------------------------------------------------------------
 std::string
 FileBackedObjectStore::object_path(const std::string& key)
 {

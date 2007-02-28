@@ -16,8 +16,10 @@
 
 #include <stdio.h>
 #include <sys/stat.h>
+#include <algorithm>
 
 #include "util/UnitTest.h"
+#include "util/STLUtil.h"
 #include "storage/FileBackedObject.h"
 #include "storage/FileBackedObjectStore.h"
 #include "storage/FileBackedObjectStream.h"
@@ -137,9 +139,27 @@ DECLARE_TEST(StreamTest) {
     return UNIT_TEST_PASSED;
 }
 
-DECLARE_TEST(Cleanup) {
-    delete g_store;
-    system("rm -rf testdir");
+DECLARE_TEST(AllNamesTest) {
+    CHECK(g_store->new_object("all_dir1") == 0);
+    CHECK(g_store->new_object("all_dir2") == 0);
+    CHECK(g_store->new_object("all_dir3") == 0);
+    CHECK(g_store->new_object("all_dir4") == 0);
+    CHECK(g_store->new_object("all_dir5") == 0);
+    CHECK(g_store->new_object("all_dir6") == 0);
+    CHECK(g_store->new_object("all_dir7") == 0);
+
+    std::vector<std::string> v;
+    g_store->get_object_names(&v);
+    
+    std::vector<std::string> c;
+    CommaPushBack<std::vector<std::string>, std::string> pusher(&c);
+    pusher = pusher, 
+             "all_dir1", "all_dir2", "all_dir3", 
+             "all_dir4", "all_dir5", "all_dir6", 
+             "all_dir7", "test";
+    std::sort(v.begin(), v.end());
+    
+    CHECK(v == c); 
 
     return UNIT_TEST_PASSED;
 }
@@ -150,7 +170,7 @@ DECLARE_TESTER(Test) {
     ADD_TEST(FileTest);
     ADD_TEST(TXTest);
     ADD_TEST(StreamTest);
-    ADD_TEST(Cleanup);
+    ADD_TEST(AllNamesTest);
 }
 
 DECLARE_TEST_FILE(Test, "sample test");

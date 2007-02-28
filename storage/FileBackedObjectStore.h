@@ -70,6 +70,12 @@ public:
      */
     Stats get_stats() const;
     
+    /*!
+     * @return A vector of strings of all of the objects in the
+     * store.
+     */
+    void get_object_names(std::vector<std::string>* names);
+    
 private:
     /*!
      * Root directory of the datastore.
