@@ -21,7 +21,6 @@
 
 #include "../debug/Logger.h"
 #include "Serialize.h"
-#include "MarshalSerialize.h"
 
 namespace oasys {
 
@@ -106,37 +105,57 @@ template<typename _Collection, typename _Type> class TypeCollectionCode;
  */
 class TypeCollection {
 public:
-    /// Typedef for type codes
+    /*!
+     * Typedef for type codes.
+     */
     typedef u_int32_t TypeCode_t;
-
+    typedef std::map<TypeCode_t, TypeCollectionHelper*> TypeMap;
+    
     enum {
         UNKNOWN_TYPE = 0xffffffff
     };
 
-    /// Typedef for an allocator function usable as a callback
+    /*!
+     * Typedef for an allocator function usable as a callback
+     */
     typedef int (*Allocator_t)(TypeCode_t typecode,
                                SerializableObject** data);
-    
-    TypeCollection() {}
 
+    /*!
+     * Register a typecode into the type collection.
+     */
     void reg(TypeCode_t typecode, TypeCollectionHelper* helper) {
         ASSERT(dispatch_.find(typecode) == dispatch_.end());
         dispatch_[typecode] = helper;
     }
 
-    /**
-     * Return the stringified type code.
+    /*!
+     * @return the stringified type code.
      */
     const char* type_name(TypeCode_t typecode) {
 	if(dispatch_.find(typecode) == dispatch_.end()) {
 	    return "";
 	} 
-
 	return dispatch_[typecode]->name();
     }
 
+    /*!
+     * Output a list of the registered types in the TypeCollection.
+     */
+    void dump() const
+    {
+        log_info_p("/oasys/type-collection", "Registered types:");
+        for (TypeMap::const_iterator i = dispatch_.begin();
+             i != dispatch_.end(); ++i)
+        {
+            log_info_p("/oasys/type-collection", "%30s %8u",
+                       i->second->name(), 
+                       i->first);
+        }
+    }
+    
 protected:
-    std::map<TypeCode_t, TypeCollectionHelper*> dispatch_;
+    TypeMap  dispatch_;
 };
 
 template<typename _Collection>
@@ -179,7 +198,7 @@ public:
         ASSERT(dispatch_.find(typecode) != dispatch_.end());
         *obj = dynamic_cast<_Type*>(dispatch_[typecode]->new_object());
         if (*obj == NULL) {
-            log_crit_p("/oasys/type_collection", "out of memory");
+            log_crit_p("/oasys/type-collection", "out of memory");
             return TypeCollectionErr::MEMORY;
         }
         
@@ -199,8 +218,8 @@ template<typename _Collection, typename _Class>
 class TypeCollectionDispatch : public TypeCollectionHelper {
 public:
     /** Register upon creation. */
-    TypeCollectionDispatch<_Collection, _Class>(TypeCollection::TypeCode_t typecode,
-                                                const char* name)
+    TypeCollectionDispatch<_Collection, _Class>
+    (TypeCollection::TypeCode_t typecode, const char* name)
         : name_(name)
     {
         TypeCollectionInstance<_Collection>::instance()->reg(typecode, this);
@@ -217,8 +236,7 @@ public:
      *     of multiple inheritance.
      */
     SerializableObject* new_object() {
-        return static_cast<SerializableObject*>
-	    (new _Class(Builder()));
+        return static_cast<SerializableObject*>(new _Class(Builder()));
     }
 
     const char* name() const { return name_; }
