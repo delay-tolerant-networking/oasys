@@ -25,6 +25,7 @@
 #include "../debug/DebugUtils.h"
 
 #include "../serialize/Serialize.h"
+#include "../serialize/MarshalSerialize.h"
 #include "../serialize/StringSerialize.h"
 #include "../serialize/TypeCollection.h"
 
