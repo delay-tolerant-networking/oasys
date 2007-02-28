@@ -22,8 +22,15 @@
 namespace oasys {
 
 struct DebugDumpBuf {
+    // Used as a static space in the process memory to dump debugging
+    // information.
     static const size_t size_ = 1024 * 8;
     static char buf_[size_];
+    
+    // Used as a static space in the process memory to store a list of
+    // pointers.
+    static const size_t ptr_size_ = 1024;
+    static void* ptrs_[ptr_size_];
 };
 
 } // namespace oasys
