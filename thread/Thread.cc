@@ -89,6 +89,7 @@ Thread::id_equal(ThreadId_t a, ThreadId_t b)
 Thread::Thread(const char* name, int flags)
     : flags_(flags)
 {
+	setup_in_progress_ = true;
     if ((flags & CREATE_JOINABLE) && (flags & DELETE_ON_EXIT)) {
         flags &= ~DELETE_ON_EXIT;
     }
@@ -190,6 +191,7 @@ Thread::start()
     }
 
 #endif // __win32__
+	setup_in_progress_ = false;
 }
 
 //----------------------------------------------------------------------------
@@ -357,6 +359,10 @@ Thread::thread_run(const char* thread_name, ThreadId_t thread_id)
     
     if (flags_ & DELETE_ON_EXIT) 
     {
+    	while(setup_in_progress_)
+    	{
+    		usleep(100000);
+    	}
         delete this;
     }
 

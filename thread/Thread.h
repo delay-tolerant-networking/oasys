@@ -255,6 +255,10 @@ protected:
     static sigset_t interrupt_sigset_;
 #endif    
 
+    // boolean to avoid performing DELETE_ON_EXIT
+    // before thread setup has completed
+    bool setup_in_progress_;
+
     static bool                 start_barrier_enabled_;
     static std::vector<Thread*> threads_in_barrier_;
 
