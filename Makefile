@@ -347,7 +347,7 @@ tools/md5chunks: tools/md5chunks.o liboasys.a
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(LIBS)
 
 tools/oasys_tclsh: tools/oasys_tclsh.o liboasys.a
-	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(LIBS) $(OASYS_LIBS)
+	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(OASYS_LIBS) $(LIBS)
 
 tools/zsize: tools/zsize.o liboasys.a
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(LIBS)
