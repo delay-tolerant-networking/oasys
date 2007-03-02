@@ -110,7 +110,7 @@ AC_DEFUN(AC_OASYS_FIND_EXPAT, [
 
 	CPPFLAGS="$ac_save_CPPFLAGS -I$ac_expatincdir"
 	LDFLAGS="$ac_save_LDFLAGS -L$ac_expatlibdir"
-	if test x"$STATIC" = x"libs" ; then
+	if test x"$STATIC" = x"extlibs" ; then
 		LIBS="-Wl,-Bstatic -l$ac_expatlib -Wl,-Bdynamic $ac_save_LIBS"
 	else
 		LIBS="-l$ac_expatlib $ac_save_LIBS"

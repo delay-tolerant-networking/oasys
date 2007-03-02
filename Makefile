@@ -189,11 +189,7 @@ TOOLS	:= \
 	tools/oasys_tclsh			\
 	tools/zsize				\
 
-#
-# Default target is to build the library, the compat library, and the tools
-#
-LIBFILES := liboasys.a liboasyscompat.a
-all: checkconfigure prebuild $(LIBFILES) $(TOOLS)
+all: checkconfigure prebuild libs $(TOOLS)
 
 # need to generate files first
 .PHONY: prebuild
@@ -212,16 +208,16 @@ endif
 # Special override rules for objects that can't use the default build options
 #
 compat/xdr_int64_compat.o: compat/xdr_int64_compat.c
-	$(CC) $(CPPFLAGS) $(DEBUG) $(OPTIMIZE) $(PROFILE) -c $< -o $@
+	$(CC) $(CFLAGS_NOWARN) -c $< -o $@
 
 debug/gdtoa-%.o: debug/gdtoa-%.c
-	$(CC) -I./debug -g -DINFNAN_CHECK -c $< -o $@
+	$(CC) -I./debug $(DEBUG) $(PICFLAGS) -DINFNAN_CHECK -c $< -o $@
 
 debug/vfprintf.o: debug/vfprintf.c
-	$(CC) $(CPPFLAGS) $(DEBUG) $(OPTIMIZE) $(PROFILE) -c $< -o $@
+	$(CC) $(CFLAGS_NOWARN) -c $< -o $@
 
 tclcmd/tclreadline.o: tclcmd/tclreadline.c
-	$(CC) $(CPPFLAGS) $(DEBUG) $(OPTIMIZE) $(PROFILE) -c $< -o $@
+	$(CC) $(CFLAGS_NOWARN) -c $< -o $@
 
 #
 # Include the Makefile for tests
@@ -234,12 +230,23 @@ include $(SRCDIR)/test/Makefile
 include Rules.make
 
 #
+# Based on configuration options, select the libraries to build
+#
+LIBFILES := liboasys.a liboasyscompat.a
+ifeq ($(SHLIBS),yes)
+LIBFILES += liboasys.$(SHLIB_EXT) liboasyscompat.$(SHLIB_EXT)
+endif
+
+.PHONY: libs
+libs: $(LIBFILES)
+
+#
 # Need special rules for the gdtoa sources adapted from the source
 # distribution.
 #
 debug/arith-native.h: debug/gdtoa-arithchk.c
 	@mkdir -p debug
-	$(CC) $(DEBUG) $(OPTIMIZE) $< -o debug/arithchk
+	$(CC) $(DEBUG) $(OPTIMIZE) $(PICFLAGS) $< -o debug/arithchk
 	debug/arithchk > $@
 	rm -f debug/arithchk
 
@@ -331,25 +338,32 @@ $(SRCDIR)/Rules.make.in:
 	@echo error -- Makefile did not set SRCDIR properly
 	@exit 1
 
-# XXX/demmer handle .so as well
 liboasys.a: $(OBJS)
 	rm -f $@
 	$(AR) ruc $@ $^
 	$(RANLIB) $@ || true
+
+liboasys.$(SHLIB_EXT): $(OBJS)
+	rm -f $@
+	$(CXX) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(LIBS) $(OASYS_LIBS) -o $@
 
 liboasyscompat.a: $(COMPAT_OBJS)
 	rm -f $@
 	$(AR) ruc $@ $^
 	$(RANLIB) $@ || true
 
+liboasyscompat.$(SHLIB_EXT): $(COMPAT_OBJS)
+	rm -f $@
+	$(CXX) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(LIBS) -o $@
+
 # Rules for linking tools
-tools/md5chunks: tools/md5chunks.o liboasys.a
+tools/md5chunks: tools/md5chunks.o $(LIBFILES)
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(LIBS)
 
-tools/oasys_tclsh: tools/oasys_tclsh.o liboasys.a
+tools/oasys_tclsh: tools/oasys_tclsh.o $(LIBFILES)
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(OASYS_LIBS) $(LIBS)
 
-tools/zsize: tools/zsize.o liboasys.a
+tools/zsize: tools/zsize.o $(LIBFILES)
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(LIBS)
 
 .PHONY: cpps

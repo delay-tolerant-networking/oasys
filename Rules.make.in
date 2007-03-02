@@ -13,6 +13,7 @@ TARGET 		= @TARGET@
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 bindir		= @bindir@
+libdir		= @libdir@
 CC		= @CC@
 CXX		= @CXX@
 AR		= @AR@
@@ -24,13 +25,18 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA 	= @INSTALL_DATA@
 OPTIMIZE	= @OPTIMIZE@
 PROFILE         = @PROFILE@
+SHLIBS		= @SHLIBS@
+SHLIB_EXT	= @SHLIB_EXT@
+PICFLAGS        = @PICFLAGS@
 CPPFLAGS	= -I$(BUILDDIR) -I$(SRCDIR) @CPPFLAGS@
 WARN		= -Wall -W -Wcast-align @OPTIMIZE_WARN@ -Werror
-CFLAGS		= $(CPPFLAGS) $(DEBUG) $(OPTIMIZE) $(DEPFLAGS) $(WARN) $(PROFILE)
+CFLAGS_NOWARN	= $(CPPFLAGS) $(DEBUG) $(OPTIMIZE) $(PICFLAGS) $(DEPFLAGS) $(PROFILE)
+CFLAGS          = $(CFLAGS_NOWARN) $(WARN)
 LIBS		= @LIBS@
 OASYS_LIBS	= @OASYS_LIBS@
-LDFLAGS		= @LDFLAGS@
-XSD_TOOL    = @XSD_TOOL@
+LDFLAGS		= @LDFLAGS@ -Wl,-rpath=. -Wl,-rpath=$(prefix)/lib
+LDFLAGS_SHLIB	= @LDFLAGS_SHLIB@
+XSD_TOOL	= @XSD_TOOL@
 
 #
 # Add a phony rule to make sure this isn't included before the default

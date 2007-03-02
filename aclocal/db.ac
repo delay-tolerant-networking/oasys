@@ -172,7 +172,7 @@ AC_DEFUN(AC_OASYS_FIND_DB, [
       for ac_dblib    in db-$ac_dbver; do
 
 	LDFLAGS="$ac_save_LDFLAGS -L$ac_dblibdir"
-	if test x"$STATIC" = x"libs" ; then
+	if test x"$STATIC" = x"extlibs" ; then
 		LIBS="-Wl,-Bstatic -l$ac_dblib -Wl,-Bdynamic $ac_save_LIBS"
 	else
 		LIBS="-l$ac_dblib $ac_save_LIBS"

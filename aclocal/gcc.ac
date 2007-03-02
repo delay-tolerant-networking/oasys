@@ -131,7 +131,7 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
 
     dnl
     dnl Handle --enable-static[=yes|no]
-    dnl        --enable-static-libs[=yes|no]
+    dnl        --enable-static-external-libs[=yes|no]
     dnl
     AC_ARG_ENABLE(static,
                   AC_HELP_STRING([--enable-static],
@@ -142,23 +142,94 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
     AC_MSG_CHECKING([whether to link statically])
     AC_MSG_RESULT($static)
 
-    AC_ARG_ENABLE(static-libs,
-                  AC_HELP_STRING([--enable-static-libs],
-                                 [use static supporting libraries]),
-                  [staticlibs=$enableval],
-                  [staticlibs=no])
+    AC_ARG_ENABLE(static-external-libs,
+                  AC_HELP_STRING([--enable-static-external-libs],
+                                 [use static external libraries]),
+                  [staticextlibs=$enableval],
+                  [staticextlibs=no])
 
-    AC_MSG_CHECKING([whether to link using static supporting libraries])
-    AC_MSG_RESULT($staticlibs)
+    AC_MSG_CHECKING([whether to link using static external libraries])
+    AC_MSG_RESULT($staticextlibs)
 
     STATIC=no
     if [[ $static = yes ]] ; then
        STATIC=yes
        LDFLAGS="$LDFLAGS -static"
-    elif [[ $staticlibs = yes ]] ; then
-        STATIC=libs
+    elif [[ $staticextlibs = yes ]] ; then
+       STATIC=extlibs
     fi
     AC_SUBST(STATIC)
+
+    AC_MSG_CHECKING([whether to try to build shared libraries])
+    if [[ $static = yes ]] ; then
+        AC_MSG_RESULT(no)
+    else
+
+    dnl    
+    dnl Handle --enable-shlibs 
+    dnl
+    dnl Turns on shared library building which also builds all code 
+    dnl with -fPIC -DPIC.
+    dnl
+    AC_ARG_ENABLE(shlibs,
+                  AC_HELP_STRING([--enable-shlibs],
+                                 [enable building of shared libraries (default try)]),
+                  [shlibs=enableval],
+                  [shlibs=yes])
+
+    AC_MSG_RESULT($shlibs)
+
+    SHLIBS=no
+    PICFLAGS=""
+    LDFLAGS_SHLIB=""
+    if [[ $shlibs = yes ]] ; then
+       ac_save_LDFLAGS=$LDFLAGS
+       ac_save_CFLAGS=$CFLAGS
+       picflags="-fPIC -DPIC"
+       CFLAGS="$picflags $ac_save_CFLAGS"
+       AC_MSG_CHECKING([whether the compiler supports -fPIC])
+       AC_COMPILE_IFELSE([int myfunc() {return 0;}], [pic=yes], [pic=no])
+       AC_MSG_RESULT($pic)
+
+       if [[ $pic = yes ]] ; then
+           
+           for shopt in -shared "-dynamiclib -single_module" ; do
+             AC_MSG_CHECKING([whether the compiler can link a dynamic library with $shopt])
+	     LDFLAGS="$shopt $ac_save_LDFLAGS"
+             AC_LINK_IFELSE([void myfunc() {}], [shlink=yes], [shlink=no])
+             AC_MSG_RESULT($shlink)
+
+             if [[ $shlink = yes ]] ; then
+                 SHLIBS=yes
+                 PICFLAGS=$picflags
+                 LDFLAGS_SHLIB="$shopt $PICFLAGS"
+
+		 AC_MSG_CHECKING([extension for dynamic libraries])
+		 dnl XXX/demmer this could be done in some better way but I don't know how
+		 if [[ "$shopt" = "-dynamiclib -single_module" ]] ; then
+                     SHLIB_EXT=dylib
+                 elif [[ $shopt = -shared ]] ; then
+                     SHLIB_EXT=so
+                 else
+                     # shouldn't happen if above options are correctly checked
+                     AC_MSG_ERROR(internal error in configure script)
+                 fi
+		 AC_MSG_RESULT($SHLIB_EXT)
+
+                 break
+             fi
+           done
+       fi
+
+       CFLAGS=$ac_save_CFLAGS
+       LDFLAGS=$ac_save_LDFLAGS
+    fi
+    AC_SUBST(SHLIBS)
+    AC_SUBST(SHLIB_EXT)
+    AC_SUBST(PICFLAGS)
+    AC_SUBST(LDFLAGS_SHLIB)
+
+    fi # ! $static = yes
 
     dnl
     dnl Handle the various autoconf options for cross compilation that 

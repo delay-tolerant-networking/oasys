@@ -146,7 +146,7 @@ AC_DEFUN(AC_OASYS_FIND_TCL, [
 
         #AC_MSG_CHECKING([for tcl library in $ac_tcllibdir, -l$ac_tcllib])
 	LDFLAGS="$ac_save_LDFLAGS -L$ac_tcllibdir"
-    	if test x"$STATIC" = x"libs" ; then
+    	if test x"$STATIC" = x"extlibs" ; then
 		LIBS="-Wl,-Bstatic -l$ac_tcllib -Wl,-Bdynamic -ldl -lm $ac_save_LIBS"
 	else
 		LIBS="-l$ac_tcllib $ac_save_LIBS"
