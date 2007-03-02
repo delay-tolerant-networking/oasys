@@ -28,7 +28,6 @@ dnl -------------------------------------------------------------------------
 dnl Checks for system libraries
 dnl -------------------------------------------------------------------------
 AC_DEFUN(AC_OASYS_SYSTEM_LIBRARIES, [
-    CPPFLAGS="$CPPFLAGS -pthread"
     AC_SEARCH_LIBS(pthread_create, pthread, [], 
       AC_MSG_ERROR([can't find required library function (pthread_create)]))
     AC_CHECK_FUNC(pthread_yield, [], [AC_SEARCH_LIBS(sched_yield, rt, [],
