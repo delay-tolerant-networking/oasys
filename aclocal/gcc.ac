@@ -216,6 +216,13 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
                  fi
 		 AC_MSG_RESULT($SHLIB_EXT)
 
+		 AC_MSG_CHECKING([if the compiler supports -Wl,--rpath=.])
+		 LDFLAGS="$LDFLAGS -Wl,-rpath=/foo"
+		 AC_LINK_IFELSE([void myfunc() {}], [rpath=yes], [rpath=no])
+		 AC_MSG_RESULT($rpath)
+		 if [[ $rpath = yes ]] ; then
+		     RPATH="-Wl,-rpath=. -Wl,-rpath=\$(prefix)/lib"
+		 fi
                  break
              fi
            done
@@ -227,6 +234,7 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
     AC_SUBST(SHLIBS)
     AC_SUBST(SHLIB_EXT)
     AC_SUBST(PICFLAGS)
+    AC_SUBST(RPATH)
     AC_SUBST(LDFLAGS_SHLIB)
 
     fi # ! $static = yes
