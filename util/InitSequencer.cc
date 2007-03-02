@@ -25,7 +25,8 @@ namespace oasys {
 //
 // InitSequencer
 //
-template<> InitSequencer* Singleton<InitSequencer>::instance_;
+template<>
+InitSequencer* Singleton<InitSequencer>::instance_ = NULL;
 
 /// Sort in decreasing order
 struct InitStepSort {
