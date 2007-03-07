@@ -76,9 +76,6 @@ public:
     /*!
      * Handle to an element to an entry in the cache. Valid as long as
      * the pin count is > 0.
-     *
-     * XXX/bowei -- this is kind of bogus for multithreading
-     * performance...FIXME later.
      */
     class Handle {
         friend class Cache;
@@ -141,12 +138,22 @@ public:
             Handle old_handle = cache_handle_;
 	    cache_handle_ = other.cache_handle_;
 	    cache_handle_.pin();
-            old_handle.unpin();
+
+	    if (old_handle.valid())
+	    {
+		old_handle.unpin();
+	    }
 
 	    return *this;
 	}
 
-	~ExternalHandle() { cache_handle_.unpin(); }
+	~ExternalHandle() 
+	{ 
+	    if (cache_handle_.valid())
+	    {
+		cache_handle_.unpin(); 
+	    }
+	}
 
     private:
 	Handle cache_handle_;
