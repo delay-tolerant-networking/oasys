@@ -19,6 +19,9 @@
 #define _OASYS_FILE_UTILS_H_
 
 #include <string>
+#include <sys/stat.h>
+
+#include "../debug/Formatter.h"
 
 namespace oasys {
 
@@ -53,6 +56,15 @@ public:
      * created exclusively.
      */
     static int fast_copy(const char* src_filename, const char* dest_filename);
+
+    struct StatFormat : public Formatter {
+	StatFormat(const struct stat& stat)
+	    : stat_(stat) {}
+
+	int format(char* buf, size_t len) const;
+
+	struct stat stat_;
+    };
 };
 
 }
