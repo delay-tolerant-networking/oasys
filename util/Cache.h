@@ -116,7 +116,9 @@ public:
      */
     class ExternalHandle {
     public:
-	ExternalHandle(Handle cache_handle)
+	ExternalHandle() {}
+
+	explicit ExternalHandle(Handle cache_handle)
 	    : cache_handle_(cache_handle) 
 	{
 	    cache_handle_.pin();
