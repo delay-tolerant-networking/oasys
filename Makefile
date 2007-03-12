@@ -110,6 +110,7 @@ TCLCMD_SRCS :=					\
 	tclcmd/DebugCommand.cc			\
 	tclcmd/GettimeofdayCommand.cc		\
 	tclcmd/HelpCommand.cc			\
+	tclcmd/IdleTclExit.cc			\
 	tclcmd/LogCommand.cc			\
 	tclcmd/TclCommand.cc			\
 	tclcmd/tclreadline.c			\
