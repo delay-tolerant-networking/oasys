@@ -144,6 +144,13 @@ public:
     void reg_atexit(void(*fn)(void*), void* data);
 
     /**
+     * Make and register a new tcl channel for the given file
+     * descriptor and flags. Returns a pointer to the new channel
+     * object.
+     */
+    Tcl_Channel register_file_channel(ClientData fd, int readOrWrite);
+
+    /**
      * Set the TclResult string.
      */
     void set_result(const char* result);

@@ -299,6 +299,21 @@ TclCommandInterp::reg_atexit(void(*fn)(void*), void* data)
     ScopeLock l(lock_, "TclCommandInterp::reg_atexit");
     Tcl_CreateExitHandler(fn, data);
 }
+
+Tcl_Channel
+TclCommandInterp::register_file_channel(ClientData fd, int readOrWrite)
+{
+    Tcl_Channel channel = Tcl_MakeFileChannel(fd, readOrWrite);
+    
+    if (channel == NULL) {
+        log_err("can't create tcl file channel: %s",
+                strerror(Tcl_GetErrno()));
+        return NULL;
+    }
+
+    Tcl_RegisterChannel(interp_, channel);
+    return channel;
+}
     
 int 
 TclCommandInterp::tcl_cmd(ClientData client_data, Tcl_Interp* interp,
