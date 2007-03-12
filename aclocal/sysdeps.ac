@@ -56,7 +56,16 @@ AC_DEFUN(AC_OASYS_SYSTEM_TYPES, [
     AC_C_INLINE
     AC_C_VOLATILE
     AC_TYPE_MODE_T
-    AC_TYPE_OFF_T
+    AC_MSG_CHECKING([value for _FILE_OFFSET_BITS preprocessor symbol])
+    ac_file_offset_bits=64
+    AC_ARG_WITH(file-offset-bits,
+	AC_HELP_STRING([--with-file-offset-bits=N],
+		       [value for _FILE_OFFSET_BITS (default 64)]),
+		       ac_file_offset_bits=$withval)
+    AC_DEFINE_UNQUOTED(_FILE_OFFSET_BITS, $ac_file_offset_bits,
+                       [preprocessor symbol to control the size of off_t])
+    AC_MSG_RESULT($ac_file_offset_bits)
+    AC_CHECK_SIZEOF(off_t)
     AC_TYPE_SIGNAL
     AC_TYPE_SIZE_T
     AC_CHECK_TYPES([ptrdiff_t])
