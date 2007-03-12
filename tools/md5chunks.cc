@@ -1,4 +1,6 @@
 
+#include "config.h"
+
 #include <sys/errno.h>
 
 #include "../debug/Log.h"

@@ -14,10 +14,11 @@
  *    limitations under the License.
  */
 
+#include "MmapFile.h"
+
 #include <fcntl.h>
 #include <sys/errno.h>
 
-#include "MmapFile.h"
 #include "FileIOClient.h"
 #include "FileUtils.h"
 

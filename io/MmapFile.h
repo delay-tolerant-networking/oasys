@@ -17,6 +17,8 @@
 #ifndef _MMAPFILE_H_
 #define _MMAPFILE_H_
 
+#include "config.h"
+
 #include <sys/types.h>
 #include <sys/mman.h>
 #include "../debug/Log.h"
