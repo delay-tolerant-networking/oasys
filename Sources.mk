@@ -103,7 +103,7 @@ UTIL_SRCS :=					\
 	util/StringBuffer.cc			\
 	util/StringUtils.cc			\
 	util/TextCode.cc			\
-	util/URL.cc				\
+	util/URI.cc				\
 	util/jenkins_hash.c			\
 	util/jenkins_hash.cc			\
 	util/md5-rsa.c				\

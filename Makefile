@@ -150,7 +150,7 @@ UTIL_SRCS :=					\
 	util/TextCode.cc			\
 	util/Time.cc                            \
 	util/TokenBucket.cc                     \
-	util/URL.cc				\
+        util/URI.cc				\
 	util/jenkins_hash.c			\
 	util/jenkins_hash.cc			\
 	util/md5-rsa.c				\
