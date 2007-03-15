@@ -62,9 +62,13 @@ AC_DEFUN(AC_OASYS_SYSTEM_TYPES, [
 	AC_HELP_STRING([--with-file-offset-bits=N],
 		       [value for _FILE_OFFSET_BITS (default 64)]),
 		       ac_file_offset_bits=$withval)
-    AC_DEFINE_UNQUOTED(_FILE_OFFSET_BITS, $ac_file_offset_bits,
-                       [preprocessor symbol to control the size of off_t])
     AC_MSG_RESULT($ac_file_offset_bits)
+    if test $ac_file_offset_bits = 64 ; then
+        LFSDEFS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+    else 
+        LFSDEFS="-D_FILE_OFFSET_BITS=$ac_file_offset_bits"
+    fi
+    AC_SUBST(LFSDEFS)
     AC_CHECK_SIZEOF(off_t)
     AC_TYPE_SIGNAL
     AC_TYPE_SIZE_T
