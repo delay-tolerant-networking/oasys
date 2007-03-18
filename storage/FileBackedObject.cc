@@ -97,6 +97,10 @@ void
 FileBackedObject::get_stats(struct stat* stat_buf) const
 {
     int err = stat(filename_.c_str(), stat_buf);
+
+    FileUtils::StatFormat statfmt(*stat_buf);
+    log_debug_p("/store/file-backed", "stat: *%p", &statfmt);
+
     ASSERT(err == 0);
 }
 
@@ -135,7 +139,6 @@ FileBackedObject::read_bytes(size_t offset, u_char* buf, size_t length) const
     }
 
     int cc = read(fd_, buf, length);
-    ASSERT(static_cast<size_t>(cc) == length);
     cur_offset_ += cc;
     
     close();
