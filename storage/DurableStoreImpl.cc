@@ -112,7 +112,7 @@ DurableTableImpl::flatten(const SerializableObject& key,
         return 0;
     }
 
-    Marshal marshaller(Serialize::CONTEXT_LOCAL, key_buf, 256);
+    Marshal marshaller(Serialize::CONTEXT_LOCAL, key_buf, size);
     marshaller.action(&key);
     
     return sizer.size();
