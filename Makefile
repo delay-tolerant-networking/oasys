@@ -126,6 +126,7 @@ THREAD_SRCS :=					\
 	thread/Timer.cc				\
 
 UTIL_SRCS :=					\
+	util/App.cc				\
 	util/Base16.cc				\
 	util/CRC32.cc				\
 	util/Daemonizer.cc			\

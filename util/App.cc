@@ -1,0 +1,183 @@
+/*
+ *    Copyright 2007 Intel Corporation
+ * 
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ * 
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+#include <config.h>
+
+#include "App.h"
+#include "Random.h"
+#include "../debug/FatalSignals.h"
+
+namespace oasys {
+
+//----------------------------------------------------------------------
+App::App(const char* classname,
+         const char* name,
+         const char* version)
+    : Logger(classname, name),
+      name_(name),
+      version_(version),
+      random_seed_(0),
+      random_seed_set_(false),
+      print_version_(false),
+      loglevelstr_(""),
+      loglevel_(LOG_DEFAULT_THRESHOLD),
+      logfile_("-"),
+      debugpath_(LOG_DEFAULT_DBGFILE),
+      daemonize_(false),
+      conf_file_(""),
+      conf_file_set_(false)
+{
+}
+
+//----------------------------------------------------------------------
+void
+App::init_app(int argc, char* const argv[], const char* extra_usage)
+{
+#ifdef OASYS_DEBUG_MEMORY_ENABLED
+    DbgMemInfo::init();
+#endif
+    
+    fill_options();
+    
+    int remainder = opts_.getopt(argv[0], argc, argv, extra_usage);
+    
+    if (print_version_) 
+    {
+        printf("%s version %s\n", name_.c_str(), version_.c_str());
+        exit(0);
+    }
+    
+    validate_options(argc, argv, remainder);
+
+    init_log();
+    FatalSignals::init(name_.c_str());
+    init_random();
+
+    if (daemonize_) {
+        daemonizer_.daemonize(true);
+    }
+}
+
+//----------------------------------------------------------------------
+void
+App::validate_options(int argc, char* const argv[], int remainder)
+{
+    if (remainder != argc) 
+    {
+        fprintf(stderr, "invalid argument '%s'\n", argv[remainder]);
+        opts_.usage(name_.c_str());
+        exit(1);
+    }
+}
+
+//----------------------------------------------------------------------
+void
+App::fill_options()
+{
+    fill_default_options(0);
+}
+
+//----------------------------------------------------------------------
+void
+App::fill_default_options(int flags)
+{
+    opts_.addopt(
+        new BoolOpt('v', "version", &print_version_,
+                           "print version information and exit"));
+
+    opts_.addopt(
+        new StringOpt('o', "output", &logfile_, "<output>",
+                             "file name for logging output "
+                             "(default - indicates stdout)"));
+
+    opts_.addopt(
+        new StringOpt('l', NULL, &loglevelstr_, "<level>",
+                             "default log level [debug|warn|info|crit]"));
+
+    opts_.addopt(
+        new IntOpt('s', "seed", &random_seed_, "<seed>",
+                          "random number generator seed", &random_seed_set_));
+
+    if (flags & DAEMONIZE_OPT) {
+        opts_.addopt(
+            new BoolOpt('d', "daemonize", &daemonize_,
+                        "run as a daemon"));
+    }
+
+    if (flags & CONF_FILE_OPT) {
+        opts_.addopt(
+            new StringOpt('c', "conf", &conf_file_, "<conf>",
+                          "set the configuration file", &conf_file_set_));
+    }
+}
+
+//----------------------------------------------------------------------
+void
+App::init_log()
+{
+    // Parse the debugging level argument
+    if (loglevelstr_.length() != 0) 
+    {
+        loglevel_ = str2level(loglevelstr_.c_str());
+        if (loglevel_ == LOG_INVALID) 
+        {
+            fprintf(stderr, "invalid level value '%s' for -l option, "
+                    "expected debug | info | warning | error | crit\n",
+                    loglevelstr_.c_str());
+            notify_and_exit(1);
+        }
+    }
+    Log::init(logfile_.c_str(), loglevel_, "", debugpath_.c_str());
+    Log::instance()->add_reparse_handler(SIGHUP);
+    Log::instance()->add_rotate_handler(SIGUSR1);
+
+    if (daemonize_) {
+        if (logfile_ == "-") {
+            fprintf(stderr, "daemon mode requires setting of -o <logfile>\n");
+            notify_and_exit(1);
+        }
+        
+        Log::instance()->redirect_stdio();
+    }
+}
+
+//----------------------------------------------------------------------
+void
+App::init_random()
+{
+    // seed the random number generator
+    if (!random_seed_set_) 
+    {
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        random_seed_ = tv.tv_usec;
+    }
+    
+    log_notice("random seed is %u\n", random_seed_);
+    Random::seed(random_seed_);
+}
+
+//----------------------------------------------------------------------
+void
+App::notify_and_exit(char status)
+{
+    if (daemonize_) {
+        daemonizer_.notify_parent(status);
+    }
+    exit(status);
+}
+
+} // namespace oasys
