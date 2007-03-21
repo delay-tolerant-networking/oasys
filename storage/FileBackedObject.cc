@@ -78,9 +78,12 @@ FileBackedObject::Tx::abort()
 //----------------------------------------------------------------------------
 FileBackedObject::~FileBackedObject()
 {
+    oasys::ScopeLock l(&lock_, "FileBackedObject::~Destructor");
+
     if (fd_ != -1)
     {
         ::close(fd_);
+	log_debug_p("/st/filebacked", "destruct %p fd = -1", this);
         fd_ = -1;
     }
 }
@@ -127,6 +130,8 @@ FileBackedObject::size() const
 size_t 
 FileBackedObject::read_bytes(size_t offset, u_char* buf, size_t length) const
 {
+    oasys::ScopeLock l(&lock_, "FileBackedObject::read_bytes");
+
     open();
 
     ASSERT(fd_ != -1);
@@ -134,7 +139,13 @@ FileBackedObject::read_bytes(size_t offset, u_char* buf, size_t length) const
     if (cur_offset_ != offset)
     {
         off_t off = lseek(fd_, offset, SEEK_SET);
+
+	if (off == -1 && size() == 0)
+	{
+	    off = 0;
+	}
         ASSERT(static_cast<size_t>(off) == offset);
+
         cur_offset_ = offset;
     }
 
@@ -150,6 +161,8 @@ FileBackedObject::read_bytes(size_t offset, u_char* buf, size_t length) const
 size_t 
 FileBackedObject::write_bytes(size_t offset, const u_char* buf, size_t length)
 {
+    oasys::ScopeLock l(&lock_, "FileBackedObject::write_bytes");
+
     open();
 
     ASSERT(fd_ != -1);
@@ -157,6 +170,11 @@ FileBackedObject::write_bytes(size_t offset, const u_char* buf, size_t length)
     if (cur_offset_ != offset)
     {
         off_t off = lseek(fd_, offset, SEEK_SET);
+
+	if (off == -1 && size() == 0)
+	{
+	    off = 0;
+	}
         ASSERT(static_cast<size_t>(off) == offset);
         cur_offset_ = offset;
     }
@@ -174,6 +192,8 @@ FileBackedObject::write_bytes(size_t offset, const u_char* buf, size_t length)
 void 
 FileBackedObject::truncate(size_t size)
 {
+    oasys::ScopeLock l(&lock_, "FileBackedObject::truncate");
+
     open();
 
     ASSERT(fd_ != -1);
@@ -188,6 +208,8 @@ FileBackedObject::truncate(size_t size)
 int
 FileBackedObject::serialize(const SerializableObject* obj)
 {
+    oasys::ScopeLock l(&lock_, "FileBackedObject::serialize");
+
     FileBackedObjectOutStream stream(this);
     StreamSerialize serial(&stream, Serialize::CONTEXT_LOCAL);
 
@@ -198,6 +220,8 @@ FileBackedObject::serialize(const SerializableObject* obj)
 int
 FileBackedObject::unserialize(SerializableObject* obj)
 {
+    oasys::ScopeLock l(&lock_, "FileBackedObject::unserialize");
+
     FileBackedObjectInStream stream(this);
     StreamUnserialize serial(&stream, Serialize::CONTEXT_LOCAL);
 
@@ -209,7 +233,8 @@ FileBackedObject::FileBackedObject(const std::string& filename,
                                    int flags)
     : filename_(filename),
       fd_(-1),
-      flags_(flags)
+      flags_(flags),
+      lock_("/st/filebacked/lock")
 {
     if (flags_ & KEEP_OPEN)
     {
@@ -221,6 +246,8 @@ FileBackedObject::FileBackedObject(const std::string& filename,
 void
 FileBackedObject::open() const
 {
+    oasys::ScopeLock l(&lock_, "FileBackedObject::open");
+
     ASSERT(! (flags_ & UNLINKED));
 
     if (fd_ != -1)
@@ -238,12 +265,16 @@ FileBackedObject::open() const
 void
 FileBackedObject::close() const
 {
+    oasys::ScopeLock l(&lock_, "FileBackedObject::close");
+
     if (fd_ == -1 || flags_ & KEEP_OPEN)
     {
         return;
     }
 
     ::close(fd_);
+
+    log_debug_p("/st/filebacked", "close %p fd = -1", this);
     fd_ = -1;
 }
 
@@ -251,9 +282,12 @@ FileBackedObject::close() const
 void
 FileBackedObject::unlink()
 {
+    oasys::ScopeLock l(&lock_, "FileBackedObject::close");
+
     if (fd_ != 0)
     {
         ::close(fd_);
+	log_debug_p("/st/filebacked", "unlink %p fd = -1", this);
         fd_ = -1;
     }
     
@@ -268,6 +302,7 @@ FileBackedObject::unlink()
 void 
 FileBackedObject::fsync_data()
 {
+    oasys::ScopeLock l(&lock_, "FileBackedObject::fsync_data");
 #ifdef HAVE_FDATASYNC
     fdatasync(fd_);
 #else
@@ -279,6 +314,8 @@ FileBackedObject::fsync_data()
 void 
 FileBackedObject::reload()
 {
+    oasys::ScopeLock l(&lock_, "FileBackedObject::reload");
+
     close();
     open();
 }

@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include "../thread/Mutex.h"
 #include "../debug/Logger.h"
 
 // predecl
@@ -138,6 +139,8 @@ private:
     std::string filename_;
     mutable int fd_;
     int         flags_;
+
+    oasys::Mutex lock_;
 
     /*!
      * Offset into the file, maintained to optimize out a call to seek.
