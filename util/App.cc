@@ -15,6 +15,7 @@
  */
 
 #include <config.h>
+#include <signal.h>
 
 #include "App.h"
 #include "Random.h"
