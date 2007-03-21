@@ -86,13 +86,15 @@ public:
 
     /*!
      * Take the buffer from the carrier. After taking, the carrier is
-     * reset to not hold anything.
+     * reset to not hold anything and !! len() == 0 !!
      */
-    _Type* take_buf() 
+    _Type* take_buf(size_t* length) 
     { 
         if (pass_ownership_)
         {
             _Type* ret = buf_;
+	    *length = len();
+
             reset();
             
             return ret;
@@ -101,7 +103,9 @@ public:
         {
             if (buf_ == 0)
             {
+		*length = len();
                 reset();
+
                 return 0;
             }
             else
@@ -110,6 +114,8 @@ public:
                 ASSERT(new_buf != 0);
                 
                 memcpy(new_buf, buf_, len_);
+		*length = len();
+
                 reset();
 
                 return new_buf;

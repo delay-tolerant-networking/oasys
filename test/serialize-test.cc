@@ -311,7 +311,8 @@ struct KeyObj_1 : public SerializableObject {
         {
             BufferCarrier<char> bc;
             action->process("c_str", &bc, 0);
-            c_str_ = bc.take_buf();
+	    size_t len;
+            c_str_ = bc.take_buf(&len);
         }
         else
         {
