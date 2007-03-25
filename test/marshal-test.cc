@@ -94,17 +94,19 @@ public:
         {
             BufferCarrier<u_char> bc;
 
+	    size_t size;
             action->process("const_buf", &bc);
-            const_len = bc.len();
-            const_buf = bc.take_buf();
+            const_buf = bc.take_buf(&size);
+	    const_len = size;
 
             action->process("nullterm_buf", &bc, 0);
-            nullterm_len = bc.len() - 1;
-            nullterm_buf = bc.take_buf();
+            nullterm_buf = bc.take_buf(&size);
+	    nullterm_len = size;
+	    --nullterm_len;
 
             action->process("null_buf", &bc);
-            null_len = bc.len();
-            null_buf = bc.take_buf();
+            null_buf = bc.take_buf(&size);
+	    null_len = size;
         }
         else
         {
