@@ -39,7 +39,8 @@ App::App(const char* classname,
       debugpath_(LOG_DEFAULT_DBGFILE),
       daemonize_(false),
       conf_file_(""),
-      conf_file_set_(false)
+      conf_file_set_(false),
+      ignore_sigpipe_(true)
 {
 }
 
@@ -64,7 +65,7 @@ App::init_app(int argc, char* const argv[], const char* extra_usage)
     validate_options(argc, argv, remainder);
 
     init_log();
-    FatalSignals::init(name_.c_str());
+    init_signals();
     init_random();
 
     if (daemonize_) {
@@ -142,8 +143,6 @@ App::init_log()
         }
     }
     Log::init(logfile_.c_str(), loglevel_, "", debugpath_.c_str());
-    Log::instance()->add_reparse_handler(SIGHUP);
-    Log::instance()->add_rotate_handler(SIGUSR1);
 
     if (daemonize_) {
         if (logfile_ == "-") {
@@ -152,6 +151,21 @@ App::init_log()
         }
         
         Log::instance()->redirect_stdio();
+    }
+}
+
+//----------------------------------------------------------------------
+void
+App::init_signals()
+{
+    FatalSignals::init(name_.c_str());
+
+    Log::instance()->add_reparse_handler(SIGHUP);
+    Log::instance()->add_rotate_handler(SIGUSR1);
+    
+    if (ignore_sigpipe_) {
+        log_debug("ignoring SIGPIPE");
+        signal(SIGPIPE, SIG_IGN);
     }
 }
 

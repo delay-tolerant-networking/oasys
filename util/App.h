@@ -105,10 +105,12 @@ protected:
     oasys::Daemonizer     daemonizer_;
     std::string           conf_file_;
     bool                  conf_file_set_;
+    bool                  ignore_sigpipe_;
     /// @} 
 
 private:    
     void init_log();
+    void init_signals();
     void init_random();
 };
 
