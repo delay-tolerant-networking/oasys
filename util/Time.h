@@ -34,6 +34,14 @@ struct Time {
     {
         cleanup();
     }
+
+    //! Return a Time structure containing the current time
+    static Time now()
+    {
+        Time t;
+        t.get_time();
+        return t;
+    }
     
     //! Get the time into the structure
     void get_time();
