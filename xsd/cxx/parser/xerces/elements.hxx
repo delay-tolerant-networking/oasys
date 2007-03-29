@@ -1,6 +1,6 @@
 // file      : xsd/cxx/parser/xerces/elements.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_PARSER_XERCES_ELEMENTS_HXX
@@ -768,10 +768,7 @@ namespace xsd
         template <typename C>
         struct event_router: xercesc::DefaultHandler
         {
-          event_router (event_consumer<C>& consumer)
-              : consumer_ (consumer)
-          {
-          }
+          event_router (event_consumer<C>&);
 
           // I know, some of those consts are stupid. But that's what
           // Xerces folks put into their interfaces and VC-7.1 thinks

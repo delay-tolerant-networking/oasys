@@ -14,6 +14,9 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include <errno.h>
 #include <stdlib.h>
@@ -39,58 +42,58 @@ static int page_size = ::getpagesize();
 class COWIoVec {
 public:
     COWIoVec(const struct iovec* iov, int iovcnt) 
-	: iov_(const_cast<struct iovec*>(iov)),
-	  iovcnt_(iovcnt),
-	  bytes_left_(0),
-	  copied_(false),
-	  dynamic_iov_(0)
+        : iov_(const_cast<struct iovec*>(iov)),
+          iovcnt_(iovcnt),
+          bytes_left_(0),
+          copied_(false),
+          dynamic_iov_(0)
     {
-	for (int i=0; i<iovcnt_; ++i) {
-	    bytes_left_ += iov_[i].iov_len;
-	}
+        for (int i=0; i<iovcnt_; ++i) {
+            bytes_left_ += iov_[i].iov_len;
+        }
     }
 
     ~COWIoVec() { 
-	if (dynamic_iov_ != 0) {
-	    free(iov_); 
-	    dynamic_iov_ = 0;
-	} 
+        if (dynamic_iov_ != 0) {
+            free(iov_); 
+            dynamic_iov_ = 0;
+        } 
     }
     
     /**
      * @return number of bytes left in the iovecs
      */
     void consume(size_t cc) {
-	ASSERT(bytes_left_ >= cc);
+        ASSERT(bytes_left_ >= cc);
 
-	// common case, all the bytes are gone on the first run
-	if (!copied_ && cc == bytes_left_) {
-	    iov_        = 0;
-	    bytes_left_ = 0;
-	    return;
-	}
-	
-	if (!copied_) {
-	    copy();
+        // common case, all the bytes are gone on the first run
+        if (!copied_ && cc == bytes_left_) {
+            iov_        = 0;
+            bytes_left_ = 0;
+            return;
         }
-	
-	// consume the iovecs
-	bytes_left_ -= cc;
-	while (cc > 0) {
-	    ASSERT(iovcnt_ > 0);
+        
+        if (!copied_) {
+            copy();
+        }
+        
+        // consume the iovecs
+        bytes_left_ -= cc;
+        while (cc > 0) {
+            ASSERT(iovcnt_ > 0);
 
-	    if (iov_[0].iov_len <= cc) {
-		cc -= iov_[0].iov_len;
-		--iovcnt_;
-		++iov_;
-	    } else {
-		iov_[0].iov_base = reinterpret_cast<char*>
+            if (iov_[0].iov_len <= cc) {
+                cc -= iov_[0].iov_len;
+                --iovcnt_;
+                ++iov_;
+            } else {
+                iov_[0].iov_base = reinterpret_cast<char*>
                                    (iov_[0].iov_base) + cc;
-		iov_[0].iov_len  -= cc;
+                iov_[0].iov_len  -= cc;
                 cc = 0;
                 break;
             }
-	}
+        }
         
         // For safety
         if (bytes_left_ == 0) {
@@ -99,19 +102,19 @@ public:
     }
 
     void copy() {
-	ASSERT(!copied_);
-	
-	copied_ = true;
-	if (iovcnt_ <= 16) {
-	    memcpy(static_iov_, iov_, 
-		   iovcnt_ * sizeof(struct iovec));
-	    iov_ = static_iov_;
-	} else {
-	    dynamic_iov_ = static_cast<struct iovec*>
+        ASSERT(!copied_);
+        
+        copied_ = true;
+        if (iovcnt_ <= 16) {
+            memcpy(static_iov_, iov_, 
+                   iovcnt_ * sizeof(struct iovec));
+            iov_ = static_iov_;
+        } else {
+            dynamic_iov_ = static_cast<struct iovec*>
                            (malloc(iovcnt_ * sizeof(struct iovec)));
-	    memcpy(dynamic_iov_, iov_, iovcnt_* sizeof(struct iovec));
-	    iov_ = dynamic_iov_;
-	}
+            memcpy(dynamic_iov_, iov_, iovcnt_* sizeof(struct iovec));
+            iov_ = dynamic_iov_;
+        }
     }
     
     const struct iovec* iov()        { return iov_; }
@@ -440,7 +443,7 @@ IO::recvfrom(int fd, char* bp, size_t len, int flags,
     args.recvfrom.from    = from;
     args.recvfrom.fromlen = fromlen;
     return rwdata(RECVFROM, fd, &iov, 1, flags, -1, &args, 0, intr, 
-	          false, log);
+                  false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -451,7 +454,7 @@ IO::recvmsg(int fd, struct msghdr* msg, int flags,
     RwDataExtraArgs args;
     args.recvmsg_hdr = msg;
     return rwdata(RECVMSG, fd, 0, 0, flags, -1, &args, 0, 
-	          intr, false, log);
+                  intr, false, log);
 }
 
 
@@ -464,7 +467,7 @@ IO::write(int fd, const char* bp, size_t len,
     iov.iov_base = const_cast<char*>(bp);
     iov.iov_len  = len;
     return rwdata(WRITEV, fd, &iov, 1, 0, -1, 0, 0, 
-	          intr, false, log);
+                  intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -473,7 +476,7 @@ IO::writev(int fd, const struct iovec* iov, int iovcnt,
            Notifier* intr, const char* log)
 {
     return rwdata(WRITEV, fd, iov, iovcnt, 0, -1, 0, 0, 
-	          intr, false, log);
+                  intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -505,7 +508,7 @@ IO::timeout_write(int fd, const char* bp, size_t len, int timeout_ms,
     iov.iov_base = const_cast<char*>(bp);
     iov.iov_len  = len;
     return rwdata(WRITEV, fd, &iov, 1, 0, timeout_ms, 0, 0, 
-	          intr, false, log);
+                  intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -514,7 +517,7 @@ IO::timeout_writev(int fd, const struct iovec* iov, int iovcnt, int timeout_ms,
                    Notifier* intr, const char* log)
 {
     return rwdata(WRITEV, fd, iov, iovcnt, 0, timeout_ms, 0, 0, 
-	          intr, false, log);
+                  intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -571,7 +574,7 @@ IO::sendto(int fd, char* bp, size_t len, int flags,
     args.sendto.tolen = tolen;
 
     return rwdata(SENDTO, fd, &iov, 1, flags, -1, &args, 0, 
-	          intr, false, log);
+                  intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -583,7 +586,7 @@ IO::sendmsg(int fd, const struct msghdr* msg, int flags,
     args.sendmsg_hdr = msg;
 
     return rwdata(SENDMSG, fd, 0, 0, flags, -1, &args, 0, 
-	          intr, false, log);
+                  intr, false, log);
 }
 
 //----------------------------------------------------------------------------
@@ -704,8 +707,8 @@ IO::poll_with_notifier(
     if (intr == 0) {
         poll_set = fds;
     } else {
-	intr_poll_set.buf(sizeof(struct pollfd) * (nfds + 1));
-	poll_set = intr_poll_set.buf();
+        intr_poll_set.buf(sizeof(struct pollfd) * (nfds + 1));
+        poll_set = intr_poll_set.buf();
   
         for (size_t i=0; i<nfds; ++i) {
             poll_set[i].fd      = fds[i].fd;
@@ -865,10 +868,10 @@ IO::rwdata(
     switch (op) {
     case READV: case RECV: case RECVFROM: case RECVMSG:
         poll_fd.events = POLLIN | POLLPRI; 
-	break;
+        break;
     case WRITEV: case SEND: case SENDTO: case SENDMSG:
         poll_fd.events = POLLOUT; 
-	break;
+        break;
     default:
         PANIC("Unknown IO type");
     }
@@ -931,8 +934,8 @@ IO::rwdata(
         }
         
         if (cc < 0 && 
-	    ( (errno == EAGAIN && ignore_eagain) || errno == EINTR) ) 
-	{
+            ( (errno == EAGAIN && ignore_eagain) || errno == EINTR) ) 
+        {
             if (timeout > 0) {
                 timeout = adjust_timeout(timeout, start_time);
             }
@@ -940,11 +943,11 @@ IO::rwdata(
         }
 
         if (cc < 0) {
-	    if (errno == EAGAIN) {
-		return IOAGAIN;
-	    } else {
-		return IOERROR;
-	    }
+            if (errno == EAGAIN) {
+                return IOAGAIN;
+            } else {
+                return IOERROR;
+            }
         } else if (cc == 0) {
             return IOEOF;
         } else {
@@ -977,24 +980,24 @@ IO::rwvall(
     int total_bytes = cow_iov.bytes_left();
 
     while (cow_iov.bytes_left() > 0) {
-	int cc = rwdata(op, fd, cow_iov.iov(), cow_iov.iovcnt(), 
-		        0, timeout, 0, start, intr, true, log);
-	if (cc < 0) {
-	    if (log && cc != IOTIMEOUT && cc != IOINTR) {
-		log_debug_p(log, "%s %s %s", 
+        int cc = rwdata(op, fd, cow_iov.iov(), cow_iov.iovcnt(), 
+                        0, timeout, 0, start, intr, true, log);
+        if (cc < 0) {
+            if (log && cc != IOTIMEOUT && cc != IOINTR) {
+                log_debug_p(log, "%s %s %s", 
                             fcn_name, ioerr2str(cc), strerror(errno));
-	    }
-	    return cc;
-	} else if (cc == 0) {
+            }
+            return cc;
+        } else if (cc == 0) {
             if (log) {
                 log_debug_p(log, "%s eof", fcn_name);
             }
             // XXX/demmer this is a strange case since we may have
             // actually read/written some amount before getting the
             // eof... 
-	    return IOEOF;
-	} else {
-	    cow_iov.consume(cc);
+            return IOEOF;
+        } else {
+            cow_iov.consume(cc);
             if (log) {
                 log_debug_p(log, "%s %d bytes %zu left %d total",
                             fcn_name, cc, cow_iov.bytes_left(), total_bytes);
@@ -1003,7 +1006,7 @@ IO::rwvall(
             if (timeout > 0) {
                 timeout = adjust_timeout(timeout, start);
             }
-	}
+        }
     }
 
     return total_bytes;

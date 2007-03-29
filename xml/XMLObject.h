@@ -71,7 +71,7 @@ public:
     ///
 
     /**
-     * Append an attribute/value pair.
+     * Append an attribute/string value pair.
      */
     void add_attr(const std::string& attr, const std::string& val);
     
@@ -112,6 +112,8 @@ protected:
     Elements    elements_;
     std::string text_;
     XMLObject*  parent_;
+    
+    static std::string make_xml_safe(const std::string& str);
 
     /**
      * We don't support assignment of the class.

@@ -17,7 +17,6 @@
 #ifndef _OASYS_BT_CLIENT_H_
 #define _OASYS_BT_CLIENT_H_
 
-#include <config.h> 
 #ifdef OASYS_BLUETOOTH_ENABLED
 
 #include "../io/IOClient.h"

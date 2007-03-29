@@ -25,7 +25,6 @@
 #include <signal.h>
 #include <math.h>
 
-#include "config.h"
 #include "../debug/DebugUtils.h"
 #include "../debug/Log.h"
 #include "../util/Singleton.h"

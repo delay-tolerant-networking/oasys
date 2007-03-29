@@ -14,6 +14,10 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "DebugUtils.h"
 #include "Formatter.h"
 #include "DebugDumpBuf.h"
@@ -54,8 +58,8 @@ const char*
 oasys_sdump(const void* obj)
 {
     oasys::DebugSerialize s(oasys::Serialize::CONTEXT_LOCAL,
-	                    oasys::DebugDumpBuf::buf_, 
-	                    oasys::DebugDumpBuf::size_);
+                            oasys::DebugDumpBuf::buf_, 
+                            oasys::DebugDumpBuf::size_);
     s.action((oasys::SerializableObject*)obj);
     return oasys::DebugDumpBuf::buf_;
 }
@@ -65,8 +69,8 @@ const char*
 oasys_sdumpn(const void* obj)
 {
     oasys::DebugSerialize s(oasys::Serialize::CONTEXT_NETWORK,
-	                    oasys::DebugDumpBuf::buf_, 
-	                    oasys::DebugDumpBuf::size_);
+                            oasys::DebugDumpBuf::buf_, 
+                            oasys::DebugDumpBuf::size_);
     s.action((oasys::SerializableObject*)obj);
     return oasys::DebugDumpBuf::buf_;
 }

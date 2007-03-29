@@ -19,7 +19,10 @@
  *    derived from this software without specific prior written permission.
  */
 
-#include <config.h>
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #ifdef XERCES_C_ENABLED
 
 #include <sys/stat.h>

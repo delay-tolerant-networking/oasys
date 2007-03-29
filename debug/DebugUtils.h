@@ -104,7 +104,7 @@ template <>      struct STATIC_ASSERTION_FAILURE<true>{};
 #define STATIC_ASSERT(_x, _what)                   \
     typedef static_assert_test                     \
     <                                              \
-	sizeof(STATIC_ASSERTION_FAILURE<(bool)(_x)>) \
+        sizeof(STATIC_ASSERTION_FAILURE<(bool)(_x)>) \
     > static_assert_typedef_ ## _what;
 /** @} */
 
@@ -152,7 +152,5 @@ const char* oasys_dump(const void* obj);
 
 //! Dump out a serializable object using the serialization routines.
 const char* oasys_sdump(const void* obj);
-
-#include "../memory/Memory.h"
 
 #endif /* _OASYS_DEBUG_UTILS_H_ */

@@ -14,6 +14,9 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include "XMLObject.h"
 #include "util/StringBuffer.h"
@@ -44,6 +47,7 @@ XMLObject::add_attr(const std::string& attr, const std::string& val)
 }
 
 //----------------------------------------------------------------------
+
 void
 XMLObject::add_proc_inst(const std::string& target,
                          const std::string& data)
@@ -81,7 +85,8 @@ XMLObject::to_string(StringBuffer* buf, int indent, int cur_indent) const
     buf->appendf("%.*s<%s", cur_indent, space, tag_.c_str());
     for (unsigned int i = 0; i < attrs_.size(); i += 2)
     {
-        buf->appendf(" %s=\"%s\"", attrs_[i].c_str(), attrs_[i+1].c_str());
+        buf->appendf(" %s=\"%s\"", attrs_[i].c_str(),
+                     make_xml_safe(attrs_[i+1]).c_str());
     }
 
     // shorthand for attribute-only tags
@@ -111,6 +116,25 @@ XMLObject::to_string(StringBuffer* buf, int indent, int cur_indent) const
     buf->append(text_);
 
     buf->appendf("%.*s</%s>", cur_indent, space, tag_.c_str());
+}
+
+std::string
+XMLObject::make_xml_safe(const std::string& str)
+{
+    std::string result;
+    
+    for (size_t i = 0; i < str.length(); ++i) {
+        switch (str[i]) {
+            case '\"': result += "&quot;"; break;
+            case '&': result += "&amp;"; break;
+            case '<': result += "&lt;"; break;
+            case '>': result += "&gt;"; break;
+            case '\'': result += "&apos;"; break;
+            default: result += str[i]; break;
+        }
+    }
+         
+    return result;
 }
 
 } // namespace oasys

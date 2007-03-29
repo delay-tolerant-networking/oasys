@@ -35,8 +35,6 @@
  * atomicity guarantees.
  */
 
-#include "config.h"
-
 #ifdef OASYS_ATOMIC_NONATOMIC
 #include "Atomic-fake.h"
 #elif defined(OASYS_ATOMIC_MUTEX)

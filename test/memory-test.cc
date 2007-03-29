@@ -14,10 +14,12 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 #include <list>
-
-#include <debug/Log.h>
-#include <memory/Memory.h>
+#include "../debug/Log.h"
+#include "../memory/Memory.h"
 
 using namespace oasys;
 
@@ -51,10 +53,10 @@ delete_all_foo()
 {
     while(lFoos.size() > 0)
     {
-	Foo_1* obj = lFoos.front();
-	delete obj;
+        Foo_1* obj = lFoos.front();
+        delete obj;
 
-	lFoos.pop_front();
+        lFoos.pop_front();
     }
 }
 
@@ -71,7 +73,7 @@ main(int argc, char* argv[])
     DbgMemInfo::init(DbgMemInfo::USE_SIGNAL, "/tmp/dump");
 
     log_info("/memory", "offset of data=%u\n", 
-	     offsetof(dbg_mem_t, block_));
+             offsetof(dbg_mem_t, block_));
 
     // Create 11 Foo_1 object in different places
     Alloc_3();

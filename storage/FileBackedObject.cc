@@ -1,4 +1,7 @@
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "FileBackedObject.h"
 
 #include <sys/types.h>
@@ -83,7 +86,7 @@ FileBackedObject::~FileBackedObject()
     if (fd_ != -1)
     {
         ::close(fd_);
-	log_debug_p("/st/filebacked", "destruct %p fd = -1", this);
+        log_debug_p("/st/filebacked", "destruct %p fd = -1", this);
         fd_ = -1;
     }
 }
@@ -140,10 +143,10 @@ FileBackedObject::read_bytes(size_t offset, u_char* buf, size_t length) const
     {
         off_t off = lseek(fd_, offset, SEEK_SET);
 
-	if (off == -1 && size() == 0)
-	{
-	    off = 0;
-	}
+        if (off == -1 && size() == 0)
+        {
+            off = 0;
+        }
         ASSERT(static_cast<size_t>(off) == offset);
 
         cur_offset_ = offset;
@@ -171,10 +174,10 @@ FileBackedObject::write_bytes(size_t offset, const u_char* buf, size_t length)
     {
         off_t off = lseek(fd_, offset, SEEK_SET);
 
-	if (off == -1 && size() == 0)
-	{
-	    off = 0;
-	}
+        if (off == -1 && size() == 0)
+        {
+            off = 0;
+        }
         ASSERT(static_cast<size_t>(off) == offset);
         cur_offset_ = offset;
     }
@@ -287,7 +290,7 @@ FileBackedObject::unlink()
     if (fd_ != 0)
     {
         ::close(fd_);
-	log_debug_p("/st/filebacked", "unlink %p fd = -1", this);
+        log_debug_p("/st/filebacked", "unlink %p fd = -1", this);
         fd_ = -1;
     }
     

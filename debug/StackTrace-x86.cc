@@ -14,6 +14,9 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #if defined(__i386__)
 
@@ -23,10 +26,10 @@
 #include <asm/sigcontext.h>
 struct sigframe
 {
-	char *pretcode;
-	int sig;
-	struct sigcontext sc;
-	struct _fpstate fpstate;
+        char *pretcode;
+        int sig;
+        struct sigcontext sc;
+        struct _fpstate fpstate;
 };
 #endif
 
@@ -46,22 +49,22 @@ StackTrace::get_trace(void* stack[], size_t size, u_int sighandler_frame)
     stack[0] = 0; // fake frame for this this fn, just use 0
     size_t frame = 1;
     while (frame < size) {
-	if (*(fp + 1) == 0 || *fp == 0)
-	    break;
+        if (*(fp + 1) == 0 || *fp == 0)
+            break;
         
-	if (sighandler_frame != 0 && frame == sighandler_frame) {
+        if (sighandler_frame != 0 && frame == sighandler_frame) {
 #if defined(__linux__) 
-	    struct sigframe* sf = (struct sigframe*)(fp+1);
-	    struct sigcontext* scxt = &(sf->sc);
-	    stack[frame] = (void*) scxt->eip;
+            struct sigframe* sf = (struct sigframe*)(fp+1);
+            struct sigcontext* scxt = &(sf->sc);
+            stack[frame] = (void*) scxt->eip;
 #else
-	    stack[frame] = *(fp + 1);
+            stack[frame] = *(fp + 1);
 #endif 
-	} else {
-	    stack[frame] = *(fp + 1);
-	}
+        } else {
+            stack[frame] = *(fp + 1);
+        }
         
-	fp = (void **)(*fp);
+        fp = (void **)(*fp);
         ++frame;
     }
 

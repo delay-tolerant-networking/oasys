@@ -23,6 +23,7 @@ AC_DEFUN(AC_OASYS_CONFIG_STORAGE, [
     AC_OASYS_CONFIG_DB
     AC_OASYS_CONFIG_MYSQL
     AC_OASYS_CONFIG_POSTGRES
+    AC_OASYS_CONFIG_EXTERNAL_DS
 
     dnl
     dnl Figure out if at least one sql option is enabled.

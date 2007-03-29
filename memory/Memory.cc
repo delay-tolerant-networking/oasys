@@ -14,13 +14,14 @@
  *    limitations under the License.
  */
 
-
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 #include <fcntl.h>
 #include <string.h>
-
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
 #include "Memory.h"
 
 #ifdef OASYS_DEBUG_MEMORY_ENABLED
@@ -45,24 +46,24 @@ DbgMemInfo::init(
     // XXX/bowei Needs to be changed to MMAP
     entries_ = 0;
     table_   = (dbg_mem_entry_t*)
-	calloc(_DBG_MEM_TABLE_SIZE, sizeof(dbg_mem_entry_t));
+        calloc(_DBG_MEM_TABLE_SIZE, sizeof(dbg_mem_entry_t));
     memset(table_, 0, sizeof(dbg_mem_entry_t) * _DBG_MEM_TABLE_SIZE);
 
     if(flags & DbgMemInfo::USE_SIGNAL) 
     {
 
-	memset(&signal_, 0, sizeof(struct sigaction));
-	signal_.sa_sigaction = DbgMemInfo::signal_handler;
-	//signal_.sa_mask    = 
-	signal_.sa_flags     = SA_SIGINFO;
-	
-	::sigaction(SIGUSR2, &signal_, 0);
+        memset(&signal_, 0, sizeof(struct sigaction));
+        signal_.sa_sigaction = DbgMemInfo::signal_handler;
+        //signal_.sa_mask    = 
+        signal_.sa_flags     = SA_SIGINFO;
+        
+        ::sigaction(SIGUSR2, &signal_, 0);
     }
     
     if(dump_file) 
     {
-	dump_file_ = open(dump_file, 
-			  O_WRONLY | O_CREAT | O_APPEND);
+        dump_file_ = open(dump_file, 
+                          O_WRONLY | O_CREAT | O_APPEND);
     }
 
     init_ = true;
@@ -74,7 +75,7 @@ DbgMemInfo::debug_dump(bool only_diffs)
 {
     for(int i=0; i<_DBG_MEM_TABLE_SIZE; ++i) 
     {
-	dbg_mem_entry_t* entry = &table_[i];
+        dbg_mem_entry_t* entry = &table_[i];
         if (entry->frames_[0] == 0)
             continue;
 
@@ -97,7 +98,7 @@ void
 DbgMemInfo::dump_to_file(int fd)
 {
     if(fd == -1) {
-	return;
+        return;
     }
 
     struct timeval time;
@@ -109,7 +110,7 @@ DbgMemInfo::dump_to_file(int fd)
 
     for(int i=0; i<_DBG_MEM_TABLE_SIZE; ++i)
     {
-	dbg_mem_entry_t* entry = &table_[i];
+        dbg_mem_entry_t* entry = &table_[i];
         if(entry->frames_[0] == 0)
             continue;
         
@@ -173,7 +174,7 @@ operator new(size_t size) throw (std::bad_alloc)
                           (malloc(sizeof(oasys::dbg_mem_t) + size));
 
     if(b == 0) {
-	throw std::bad_alloc();
+        throw std::bad_alloc();
     }
     
     memset(b, 0, sizeof(oasys::dbg_mem_t));
@@ -183,16 +184,16 @@ operator new(size_t size) throw (std::bad_alloc)
     // non-init allocations have frame == 0
     if (oasys::DbgMemInfo::initialized()) {
         void* frames[_DBG_MEM_FRAMES];
-	
+        
         set_frame_info(frames);
-	b->entry_ = oasys::DbgMemInfo::inc(frames, size);
+        b->entry_ = oasys::DbgMemInfo::inc(frames, size);
 
 // logging may not be initialized yet...
         
-// 	log_debug("/memory", "new a=%p, f=[%p %p %p]\n",              
-// 		  &b->block_, frames[0], frames[1], frames[2]);     
+//      log_debug("/memory", "new a=%p, f=[%p %p %p]\n",              
+//                &b->block_, frames[0], frames[1], frames[2]);     
     }
-								
+                                                                
     return (void*)&b->block_;                               
 }
 
@@ -206,12 +207,12 @@ operator delete(void *ptr) throw ()
     if (b->entry_ != 0) {
 // logging may not be initialized yet...
         
-// 	log_debug("/memory", "delete a=%p, f=[%p %p %p]\n", 
-// 		  &b->block_, 
-// 		  b->entry_->frames_[0], b->entry_->frames_[1], 
-// 		  b->entry_->frames_[2]);
+//      log_debug("/memory", "delete a=%p, f=[%p %p %p]\n", 
+//                &b->block_, 
+//                b->entry_->frames_[0], b->entry_->frames_[1], 
+//                b->entry_->frames_[2]);
 
-	oasys::DbgMemInfo::dec(b);
+        oasys::DbgMemInfo::dec(b);
     }
     
     char* bp = (char*)(b);

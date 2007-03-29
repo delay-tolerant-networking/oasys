@@ -1,6 +1,6 @@
 // file      : xsd/cxx/tree/containers.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_CONTAINERS_HXX
@@ -23,7 +23,6 @@ namespace xsd
   {
     namespace tree
     {
-
       // Test whether X is a fundamental C++ type.
       //
 
@@ -142,58 +141,24 @@ namespace xsd
       class optional<X, false>
       {
       public:
-        ~optional ()
-        {
-          delete x_;
-        }
+        ~optional ();
 
         explicit
-        optional (flags f = 0, type* container = 0)
-            : x_ (0), flags_ (f), container_ (container)
-        {
-        }
+        optional (flags = 0, type* container = 0);
 
         explicit
-        optional (const X& x, flags f = 0, type* container = 0)
-            : x_ (0), flags_ (f), container_ (container)
-        {
-          set (x);
-        }
+        optional (const X&, flags = 0, type* container = 0);
 
-        optional (const optional& x, flags f = 0, type* container = 0)
-            : x_ (0), flags_ (f), container_ (container)
-        {
-          if (x)
-            set (*x);
-        }
+        optional (const optional&, flags = 0, type* container = 0);
 
         template <typename S>
         optional (istream<S>&, flags = 0, type* container = 0);
 
         optional&
-        operator= (const X& x)
-        {
-          if (x_ == &x)
-            return *this;
-
-          set (x);
-
-          return *this;
-        }
+        operator= (const X&);
 
         optional&
-        operator= (const optional& x)
-        {
-          if (this == &x)
-            return *this;
-
-          if (x)
-            set (*x);
-          else
-            reset ();
-
-          return *this;
-        }
+        operator= (const optional&);
 
         // Pointer-like interface.
         //
@@ -227,7 +192,7 @@ namespace xsd
 
         operator bool_convertible () const
         {
-          return x_ != 0 ? &self_::reset : 0;
+          return x_ != 0 ? &self_::true_ : 0;
         }
 
         // Get/set interface.
@@ -252,40 +217,17 @@ namespace xsd
         }
 
         void
-        set (const X& x)
-        {
-          // We always do a fresh copy because X may not be x's
-          // dynamic type.
-          //
-          X* r (x._clone (flags_, container_));
-
-          delete x_;
-          x_ = r;
-        }
+        set (const X&);
 
         void
-        set (std::auto_ptr<X> x)
-        {
-          X* r (0);
-
-          if (x.get () != 0)
-          {
-            if (x->_container () == container_)
-              r = x.release ();
-            else
-              r = x->_clone (flags_, container_);
-          }
-
-          delete x_;
-          x_ = r;
-        }
+        set (std::auto_ptr<X>);
 
         void
-        reset ()
-        {
-          delete x_;
-          x_ = 0;
-        }
+        reset ();
+
+      private:
+        void
+        true_ ();
 
       private:
         X* x_;
@@ -307,46 +249,18 @@ namespace xsd
         }
 
         explicit
-        optional (const X& y, flags = 0, type* = 0)
-            : present_ (false)
-        {
-          set (y);
-        }
+        optional (const X&, flags = 0, type* = 0);
 
-        optional (const optional& y, flags = 0, type* = 0)
-            : present_ (false)
-        {
-          if (y)
-            set (*y);
-        }
+        optional (const optional&, flags = 0, type* = 0);
 
         template <typename S>
         optional (istream<S>&, flags = 0, type* container = 0);
 
         optional&
-        operator= (const X& y)
-        {
-          if (&x_ == &y)
-            return *this;
-
-          set (y);
-
-          return *this;
-        }
+        operator= (const X&);
 
         optional&
-        operator= (const optional& y)
-        {
-          if (this == &y)
-            return *this;
-
-          if (y)
-            set (*y);
-          else
-            reset ();
-
-          return *this;
-        }
+        operator= (const optional&);
 
         // Pointer-like interface.
         //
@@ -380,7 +294,7 @@ namespace xsd
 
         operator bool_convertible () const
         {
-          return present () ? &self_::reset : 0;
+          return present () ? &self_::true_ : 0;
         }
 
         // Get/set interface.
@@ -416,6 +330,10 @@ namespace xsd
         {
           present_ = false;
         }
+
+      private:
+        void
+        true_ ();
 
       private:
         bool present_;
@@ -564,8 +482,11 @@ namespace xsd
         void
         reset (type* x = 0)
         {
-          delete x_;
-          x_ = x;
+	  if (x_ != x)
+	  {
+            delete x_;
+            x_ = x;
+	  }
         }
 
       private:
@@ -1008,7 +929,12 @@ namespace xsd
         }
 
         explicit
-        sequence (size_type n, const X& x = X ())
+        sequence (size_type n)
+            : sequence_common (n, X ())
+        {
+        }
+
+        sequence (size_type n, const X& x)
             : sequence_common (n, x)
         {
         }
@@ -1045,7 +971,13 @@ namespace xsd
 
       public:
         void
-        resize (size_type n, const X& x = X ())
+        resize (size_type n)
+        {
+          sequence_common::resize (n, X ());
+        }
+
+        void
+        resize (size_type n, const X& x)
         {
           sequence_common::resize (n, x);
         }
@@ -1314,54 +1246,21 @@ namespace xsd
       class one<X, false>
       {
       public:
-        ~one ()
-        {
-          delete x_;
-        }
+        ~one ();
 
-        one (flags f, type* container)
-            : x_ (0), flags_ (f), container_ (container)
-        {
-        }
+        one (flags, type* container);
 
-        one (const X& x, flags f, type* container)
-            : x_ (0), flags_ (f), container_ (container)
-        {
-          set (x);
-        }
+        one (const X&, flags, type* container);
 
-        one (std::auto_ptr<X> x, flags f, type* container)
-            : x_ (0), flags_ (f), container_ (container)
-        {
-          set (x);
-        }
+        one (std::auto_ptr<X>, flags, type* container);
 
         template <typename S>
         one (istream<S>&, flags, type* container);
 
-        one (const one<X>& x, flags f, type* container)
-            : x_ (0), flags_ (f), container_ (container)
-        {
-          if (x.present ())
-            set (x.get ());
-        }
+        one (const one&, flags, type* container);
 
-        one<X>&
-        operator= (const one<X>& x)
-        {
-          if (this == &x)
-            return *this;
-
-          if (x.present ())
-            set (x.get ());
-          else
-          {
-            delete x_;
-            x_ = 0;
-          }
-
-          return *this;
-        }
+        one&
+        operator= (const one&);
 
       public:
         const X&
@@ -1377,33 +1276,10 @@ namespace xsd
         }
 
         void
-        set (const X& x)
-        {
-          // We always do a fresh copy because X may not be x's
-          // dynamic type.
-          //
-          X* r (x._clone (flags_, container_));
-
-          delete x_;
-          x_ = r;
-        }
+        set (const X&);
 
         void
-        set (std::auto_ptr<X> x)
-        {
-          X* r (0);
-
-          if (x.get () != 0)
-          {
-            if (x->_container () == container_)
-              r = x.release ();
-            else
-              r = x->_clone (flags_, container_);
-          }
-
-          delete x_;
-          x_ = r;
-        }
+        set (std::auto_ptr<X>);
 
         bool
         present () const
@@ -1435,13 +1311,13 @@ namespace xsd
         template <typename S>
         one (istream<S>&, flags, type* container);
 
-        one (const one<X>& x, flags, type*)
+        one (const one& x, flags, type*)
             : x_ (x.x_), present_ (x.present_)
         {
         }
 
-        one<X>&
-        operator= (const one<X>& x)
+        one&
+        operator= (const one& x)
         {
           if (this == &x)
             return *this;
@@ -1485,6 +1361,8 @@ namespace xsd
     }
   }
 }
+
+#include <xsd/cxx/tree/containers.txx>
 
 #endif  // XSD_CXX_TREE_CONTAINERS_HXX
 

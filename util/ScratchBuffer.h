@@ -145,7 +145,7 @@ public:
 private:
     char static_buf_[_static_size];
     bool using_malloc() const {
-	return buf_ != static_buf_;
+        return buf_ != static_buf_;
     }
 };
 

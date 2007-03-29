@@ -1,0 +1,20 @@
+dnl
+dnl Autoconf support for external data store
+dnl
+
+AC_DEFUN(AC_OASYS_CONFIG_EXTERNAL_DS, [
+    ac_eds='no'
+    AC_ARG_WITH(eds,
+        AC_HELP_STRING([--with-eds],
+    		   	[external data store support]),
+        ac_eds=$withval) 
+    dnl
+    dnl First make sure we even want it
+    dnl
+    if test "$ac_eds" = no; then
+        EXTERNAL_DS_ENABLED=0
+    else
+        EXTERNAL_DS_ENABLED=1
+        AC_DEFINE_UNQUOTED(EXTERNAL_DS_ENABLED, 1, [whether external data store support is enabled])
+    fi # EXTERNAL_DS_ENABLED
+])

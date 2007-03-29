@@ -41,7 +41,9 @@ public:
     /*!
      * Constructor.
      */
-    MsgQueue(const char* logpath, SpinLock* lock = NULL);
+    MsgQueue(const char* logpath, 
+             SpinLock* lock = NULL, 
+             bool delete_lock = true);
         
     /**
      * Destructor.
@@ -109,6 +111,7 @@ public:
 protected:
     SpinLock*          lock_;
     std::deque<_elt_t> queue_;
+    bool               delete_lock_;
     bool               notify_when_empty_;
 };
 

@@ -14,11 +14,12 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include <unistd.h>
 #include <errno.h>
-
-#include "config.h"
 
 #ifdef HAVE_SYNCH_H
 #include <synch.h>

@@ -1,6 +1,6 @@
 // file      : xsd/cxx/tree/exceptions.ixx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #if defined(XSD_CXX_TREE_USE_CHAR) || !defined(XSD_CXX_TREE_USE_WCHAR)
@@ -122,6 +122,17 @@ namespace xsd
       print (std::basic_ostream<char>& os) const
       {
         os << "unexpected enumerator '" << enumerator () << "'";
+      }
+
+
+      // expected_text_content
+      //
+      template<>
+      inline
+      void expected_text_content<char>::
+      print (std::basic_ostream<char>& os) const
+      {
+        os << "expected text content";
       }
 
 
@@ -354,6 +365,17 @@ namespace xsd
       print (std::basic_ostream<wchar_t>& os) const
       {
         os << L"unexpected enumerator '" << enumerator () << L"'";
+      }
+
+
+      // expected_text_content
+      //
+      template<>
+      inline
+      void expected_text_content<wchar_t>::
+      print (std::basic_ostream<wchar_t>& os) const
+      {
+        os << L"expected text content";
       }
 
 

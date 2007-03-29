@@ -1,6 +1,6 @@
 // file      : xsd/cxx/xml/dom/namespace-infomap.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_XML_DOM_NAMESPACE_INFOMAP_HXX

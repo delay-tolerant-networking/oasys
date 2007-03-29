@@ -1,6 +1,6 @@
 // file      : xsd/cxx/xml/dom/serialization.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_XML_DOM_SERIALIZATION_HXX
@@ -67,7 +67,7 @@ namespace xsd
         // This one helps Sun C++ to overcome its fears.
         //
         template <typename C>
-        xml::dom::auto_ptr<xercesc::DOMDocument>
+        inline xml::dom::auto_ptr<xercesc::DOMDocument>
         serialize (const C* root_element,
                    const C* root_element_namespace,
                    const namespace_infomap<C>& map,

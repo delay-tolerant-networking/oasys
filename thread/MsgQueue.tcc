@@ -28,8 +28,8 @@
  */
 
 template<typename _elt_t>
-MsgQueue<_elt_t>::MsgQueue(const char* logpath, SpinLock* lock)
-    : Notifier(logpath), notify_when_empty_(false)
+MsgQueue<_elt_t>::MsgQueue(const char* logpath, SpinLock* lock, bool delete_lock)
+    : Notifier(logpath), delete_lock_(delete_lock), notify_when_empty_(false)
 {
     logpath_appendf("/msgqueue");
     
@@ -49,7 +49,9 @@ MsgQueue<_elt_t>::~MsgQueue()
                 queue_.size());
     }
     
-    delete lock_;
+    if (delete_lock_)
+        delete lock_;
+    
     lock_ = 0;
 }
 

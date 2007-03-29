@@ -17,7 +17,6 @@
 #ifndef _OASYS_BTSDP_H_
 #define _OASYS_BTSDP_H_
 
-#include <config.h> 
 #ifdef OASYS_BLUETOOTH_ENABLED
 
 #include "../debug/Log.h"

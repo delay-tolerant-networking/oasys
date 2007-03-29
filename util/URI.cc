@@ -14,6 +14,10 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "URI.h"
 #include "debug/Log.h"
 
@@ -65,7 +69,7 @@ URI::parse()
             ((err = validate_port()) != URI_PARSE_OK) ||
             ((err = validate_path()) != URI_PARSE_OK) ||
             ((err = validate_query()) != URI_PARSE_OK) ||
-	    ((err = validate_fragment()) != URI_PARSE_OK)) {
+            ((err = validate_fragment()) != URI_PARSE_OK)) {
             return (parse_err_ = err);
         }
 
@@ -102,7 +106,7 @@ URI::parse_generic_ssp()
         ASSERT(authority_len > 0);
 
         authority_.assign(ssp_, authority_start, authority_len);
-	curr_pos = authority_end;
+        curr_pos = authority_end;
     }
 
     // path component is required (although it may be empty)
@@ -141,7 +145,7 @@ URI::parse_generic_ssp()
         size_t fragment_start = curr_pos;
         size_t fragment_len   = ssp_.length() - fragment_start;
         ASSERT(fragment_len > 0);
-	
+        
         fragment_.assign(ssp_, fragment_start, fragment_len);
         curr_pos = ssp_.length();
     }
@@ -209,7 +213,7 @@ URI::parse_authority()
             return URI_PARSE_BAD_PORT;
         }
         port_include_ = true;
-	
+        
         size_t port_start = curr_pos + 1; // skip ':' character
         size_t port_len   = authority_.length() - port_start;
         if (port_len > 0) {
@@ -426,7 +430,7 @@ URI::normalize_authority()
             i += 2;
             continue;
         }
-	
+        
         if (isalpha(c) && isupper(c)) {
             host_.replace(i, 1, 1, tolower(c));
         }
@@ -472,7 +476,7 @@ URI::decode_authority()
             if (isalpha(c) && islower(c)) {
                 userinfo_.replace(p + 2, 1, 1, toupper(c));
             }
-		
+                
             p += 3;
             continue;
         }
@@ -504,7 +508,7 @@ URI::decode_authority()
         int hex_value;
         sscanf(hex_string.c_str(), "%x", &hex_value);
         char c = (char)hex_value;
-	
+        
         // skip "unallowed" characters
         if (!is_unreserved(c) &&
             !is_sub_delim(c)) {
@@ -517,7 +521,7 @@ URI::decode_authority()
             if (isalpha(c) && islower(c)) {
                 host_.replace(p + 2, 1, 1, toupper(c));
             }
-		
+                
             p += 3;
             continue;
         }
@@ -711,7 +715,7 @@ URI::validate_ip_literal(const std::string& host)
                 return URI_PARSE_BAD_IPV6;
             }
 
-	    if (++i == 4) {
+            if (++i == 4) {
                 if (curr_pos != host.length()) {
                     log_debug_p(log, "URI::validate_ip_literal: "
                                 "end of host expected");
@@ -720,15 +724,15 @@ URI::validate_ip_literal(const std::string& host)
                 break;
             }
 
-	    if ((curr_pos == host.length()) || (host.at(curr_pos) != '.')) {
+            if ((curr_pos == host.length()) || (host.at(curr_pos) != '.')) {
                 log_debug_p(log, "URI::validate_ip_literal: "
-                            "period character expected");
+                                 "period character expected");
                 return URI_PARSE_BAD_IPV6;
             }
             ++curr_pos; // skip period character
         }
 
-	num_pieces += 2;
+        num_pieces += 2;
     }
 
     ASSERT(curr_pos == host.length());
@@ -905,7 +909,7 @@ URI::decode_path()
             if (isalpha(c) && islower(c)) {
                 path_.replace(p + 2, 1, 1, toupper(c));
             }
-		
+                
             p += 3;
             continue;
         }
@@ -1017,7 +1021,7 @@ URI::decode_query()
             if (isalpha(c) && islower(c)) {
                 query_.replace(p + 2, 1, 1, toupper(c));
             }
-		
+                
             p += 3;
             continue;
         }
@@ -1129,7 +1133,7 @@ URI::decode_fragment()
             if (isalpha(c) && islower(c)) {
                 fragment_.replace(p + 2, 1, 1, toupper(c));
             }
-		
+                
             p += 3;
             continue;
         }

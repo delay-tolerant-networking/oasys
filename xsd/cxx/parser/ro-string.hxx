@@ -1,6 +1,6 @@
 // file      : xsd/cxx/parser/ro-string.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_PARSER_RO_STRING_HXX
@@ -139,7 +139,7 @@ namespace xsd
         compare (const C* str, size_type n) const
         {
           size_type s1 (size ());
-          size_type s (std::min (s1, n));
+          size_type s (s1 < n ? s1 : n);
 
           int r (s != 0 ? traits_type::compare (data (), str, s) : 0);
 

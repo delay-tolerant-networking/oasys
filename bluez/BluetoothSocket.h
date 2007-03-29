@@ -17,7 +17,6 @@
 #ifndef _OASYS_BT_SOCKET_H_
 #define _OASYS_BT_SOCKET_H_
 
-#include <config.h> 
 #ifdef OASYS_BLUETOOTH_ENABLED
 
 #include <stdlib.h>

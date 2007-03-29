@@ -14,8 +14,10 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
-#include <config.h>
 #ifdef OASYS_BLUETOOTH_ENABLED
 #include "bluez/Bluetooth.h"
 #endif // OASYS_BLUETOOTH_ENABLED
@@ -499,7 +501,7 @@ EnumOpt::set(const char* val, size_t len)
             
             return 0;
         }
-	++i;
+        ++i;
     }
     
     return -1;
@@ -517,7 +519,7 @@ EnumOpt::get(StringBuffer* buf)
             buf->append(cases_[i].key);
             return;
         }
-	++i;
+        ++i;
     }
 }
 

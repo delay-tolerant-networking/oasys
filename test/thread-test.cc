@@ -14,6 +14,10 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <unistd.h>
 #include <debug/DebugUtils.h>
 #include <thread/Thread.h>
@@ -35,10 +39,10 @@ main()
     Log::init(LOG_DEBUG);
 
     while(true) {
-	for(int i=0; i<THREADS_TO_CREATE; ++i) {
-	    MyThread* t = new MyThread();
-	    t->start();
-	}
-	::sleep(1);
+        for(int i=0; i<THREADS_TO_CREATE; ++i) {
+            MyThread* t = new MyThread();
+            t->start();
+        }
+        ::sleep(1);
     }
 }

@@ -14,12 +14,13 @@
  *    limitations under the License.
  */
 
-
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 #include "HelpCommand.h"
-
-#include "memory/Memory.h"
-#include "util/StringBuffer.h"
-#include "util/StringUtils.h"
+#include "../memory/Memory.h"
+#include "../util/StringBuffer.h"
+#include "../util/StringUtils.h"
 
 namespace oasys {
 

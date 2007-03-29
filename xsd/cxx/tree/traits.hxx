@@ -1,6 +1,6 @@
 // file      : xsd/cxx/tree/traits.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_TRAITS_HXX
@@ -8,10 +8,6 @@
 
 // Do not include this file directly. Rather include elements.hxx.
 //
-
-#include <sstream>
-
-#include <xsd/cxx/xml/string.hxx> // xml::transcode
 
 namespace xsd
 {
@@ -39,25 +35,16 @@ namespace xsd
         typedef bool type;
 
         static type
-        create (const xercesc::DOMElement& e, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (e.getTextContent ()), 0, f, c);
-        }
+        create (const xercesc::DOMElement& e, flags f, tree::type* c);
 
         static type
-        create (const xercesc::DOMAttr& a, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (a.getValue ()), 0, f, c);
-        }
+        create (const xercesc::DOMAttr& a, flags f, tree::type* c);
 
         static type
         create (const std::basic_string<C>& s,
                 const xercesc::DOMElement*,
                 flags,
-                tree::type*)
-        {
-          return (s == bits::true_<C> ()) || (s == bits::one<C> ());
-        }
+                tree::type*);
       };
 
 
@@ -70,30 +57,16 @@ namespace xsd
         typedef signed char type;
 
         static type
-        create (const xercesc::DOMElement& e, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (e.getTextContent ()), 0, f, c);
-        }
+        create (const xercesc::DOMElement& e, flags f, tree::type* c);
 
         static type
-        create (const xercesc::DOMAttr& a, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (a.getValue ()), 0, f, c);
-        }
+        create (const xercesc::DOMAttr& a, flags f, tree::type* c);
 
         static type
         create (const std::basic_string<C>& s,
                 const xercesc::DOMElement*,
                 flags,
-                tree::type*)
-        {
-          std::basic_istringstream<C> is (s);
-
-          short t;
-          is >> t;
-
-          return static_cast<type> (t);
-        }
+                tree::type*);
       };
 
 
@@ -103,30 +76,16 @@ namespace xsd
         typedef unsigned char type;
 
         static type
-        create (const xercesc::DOMElement& e, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (e.getTextContent ()), 0, f, c);
-        }
+        create (const xercesc::DOMElement& e, flags f, tree::type* c);
 
         static type
-        create (const xercesc::DOMAttr& a, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (a.getValue ()), 0, f, c);
-        }
+        create (const xercesc::DOMAttr& a, flags f, tree::type* c);
 
         static type
         create (const std::basic_string<C>& s,
                 const xercesc::DOMElement*,
                 flags,
-                tree::type*)
-        {
-          std::basic_istringstream<C> is (s);
-
-          unsigned short t;
-          is >> t;
-
-          return static_cast<type> (t);
-        }
+                tree::type*);
       };
 
 
@@ -139,30 +98,16 @@ namespace xsd
         typedef short type;
 
         static type
-        create (const xercesc::DOMElement& e, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (e.getTextContent ()), 0, f, c);
-        }
+        create (const xercesc::DOMElement& e, flags f, tree::type* c);
 
         static type
-        create (const xercesc::DOMAttr& a, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (a.getValue ()), 0, f, c);
-        }
+        create (const xercesc::DOMAttr& a, flags f, tree::type* c);
 
         static type
         create (const std::basic_string<C>& s,
                 const xercesc::DOMElement*,
                 flags,
-                tree::type*)
-        {
-          std::basic_istringstream<C> is (s);
-
-          type t;
-          is >> t;
-
-          return t;
-        }
+                tree::type*);
       };
 
 
@@ -172,30 +117,16 @@ namespace xsd
         typedef unsigned short type;
 
         static type
-        create (const xercesc::DOMElement& e, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (e.getTextContent ()), 0, f, c);
-        }
+        create (const xercesc::DOMElement& e, flags f, tree::type* c);
 
         static type
-        create (const xercesc::DOMAttr& a, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (a.getValue ()), 0, f, c);
-        }
+        create (const xercesc::DOMAttr& a, flags f, tree::type* c);
 
         static type
         create (const std::basic_string<C>& s,
                 const xercesc::DOMElement*,
                 flags,
-                tree::type*)
-        {
-          std::basic_istringstream<C> is (s);
-
-          type t;
-          is >> t;
-
-          return t;
-        }
+                tree::type*);
       };
 
 
@@ -208,30 +139,16 @@ namespace xsd
         typedef int type;
 
         static type
-        create (const xercesc::DOMElement& e, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (e.getTextContent ()), 0, f, c);
-        }
+        create (const xercesc::DOMElement& e, flags f, tree::type* c);
 
         static type
-        create (const xercesc::DOMAttr& a, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (a.getValue ()), 0, f, c);
-        }
+        create (const xercesc::DOMAttr& a, flags f, tree::type* c);
 
         static type
         create (const std::basic_string<C>& s,
                 const xercesc::DOMElement*,
                 flags,
-                tree::type*)
-        {
-          std::basic_istringstream<C> is (s);
-
-          type t;
-          is >> t;
-
-          return t;
-        }
+                tree::type*);
       };
 
 
@@ -241,30 +158,16 @@ namespace xsd
         typedef unsigned int type;
 
         static type
-        create (const xercesc::DOMElement& e, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (e.getTextContent ()), 0, f, c);
-        }
+        create (const xercesc::DOMElement& e, flags f, tree::type* c);
 
         static type
-        create (const xercesc::DOMAttr& a, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (a.getValue ()), 0, f, c);
-        }
+        create (const xercesc::DOMAttr& a, flags f, tree::type* c);
 
         static type
         create (const std::basic_string<C>& s,
                 const xercesc::DOMElement*,
                 flags,
-                tree::type*)
-        {
-          std::basic_istringstream<C> is (s);
-
-          type t;
-          is >> t;
-
-          return t;
-        }
+                tree::type*);
       };
 
 
@@ -277,30 +180,16 @@ namespace xsd
         typedef long long type;
 
         static type
-        create (const xercesc::DOMElement& e, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (e.getTextContent ()), 0, f, c);
-        }
+        create (const xercesc::DOMElement& e, flags f, tree::type* c);
 
         static type
-        create (const xercesc::DOMAttr& a, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (a.getValue ()), 0, f, c);
-        }
+        create (const xercesc::DOMAttr& a, flags f, tree::type* c);
 
         static type
         create (const std::basic_string<C>& s,
                 const xercesc::DOMElement*,
                 flags,
-                tree::type*)
-        {
-          std::basic_istringstream<C> is (s);
-
-          type t;
-          is >> t;
-
-          return t;
-        }
+                tree::type*);
       };
 
 
@@ -310,30 +199,16 @@ namespace xsd
         typedef unsigned long long type;
 
         static type
-        create (const xercesc::DOMElement& e, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (e.getTextContent ()), 0, f, c);
-        }
+        create (const xercesc::DOMElement& e, flags f, tree::type* c);
 
         static type
-        create (const xercesc::DOMAttr& a, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (a.getValue ()), 0, f, c);
-        }
+        create (const xercesc::DOMAttr& a, flags f, tree::type* c);
 
         static type
         create (const std::basic_string<C>& s,
                 const xercesc::DOMElement*,
                 flags,
-                tree::type*)
-        {
-          std::basic_istringstream<C> is (s);
-
-          type t;
-          is >> t;
-
-          return t;
-        }
+                tree::type*);
       };
 
 
@@ -346,30 +221,16 @@ namespace xsd
         typedef float type;
 
         static type
-        create (const xercesc::DOMElement& e, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (e.getTextContent ()), 0, f, c);
-        }
+        create (const xercesc::DOMElement& e, flags f, tree::type* c);
 
         static type
-        create (const xercesc::DOMAttr& a, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (a.getValue ()), 0, f, c);
-        }
+        create (const xercesc::DOMAttr& a, flags f, tree::type* c);
 
         static type
         create (const std::basic_string<C>& s,
                 const xercesc::DOMElement*,
                 flags,
-                tree::type*)
-        {
-          std::basic_istringstream<C> is (s);
-
-          type t;
-          is >> t;
-
-          return t;
-        }
+                tree::type*);
       };
 
 
@@ -379,30 +240,16 @@ namespace xsd
         typedef double type;
 
         static type
-        create (const xercesc::DOMElement& e, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (e.getTextContent ()), 0, f, c);
-        }
+        create (const xercesc::DOMElement& e, flags f, tree::type* c);
 
         static type
-        create (const xercesc::DOMAttr& a, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (a.getValue ()), 0, f, c);
-        }
+        create (const xercesc::DOMAttr& a, flags f, tree::type* c);
 
         static type
         create (const std::basic_string<C>& s,
                 const xercesc::DOMElement*,
                 flags,
-                tree::type*)
-        {
-          std::basic_istringstream<C> is (s);
-
-          type t;
-          is >> t;
-
-          return t;
-        }
+                tree::type*);
       };
 
 
@@ -412,34 +259,22 @@ namespace xsd
         typedef long double type;
 
         static type
-        create (const xercesc::DOMElement& e, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (e.getTextContent ()), 0, f, c);
-        }
+        create (const xercesc::DOMElement& e, flags f, tree::type* c);
 
         static type
-        create (const xercesc::DOMAttr& a, flags f, tree::type* c)
-        {
-          return create (xml::transcode<C> (a.getValue ()), 0, f, c);
-        }
+        create (const xercesc::DOMAttr& a, flags f, tree::type* c);
 
         static type
         create (const std::basic_string<C>& s,
                 const xercesc::DOMElement*,
                 flags,
-                tree::type*)
-        {
-          std::basic_istringstream<C> is (s);
-
-          type t;
-          is >> t;
-
-          return t;
-        }
+                tree::type*);
       };
     }
   }
 }
+
+#include <xsd/cxx/tree/traits.txx>
 
 #endif  // XSD_CXX_TREE_TRAITS_HXX
 

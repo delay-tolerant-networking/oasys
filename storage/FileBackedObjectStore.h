@@ -22,7 +22,7 @@ public:
         Stats();
 
         unsigned int total_objects_;
-	unsigned int open_handles_;
+        unsigned int open_handles_;
     };
     
     /*!

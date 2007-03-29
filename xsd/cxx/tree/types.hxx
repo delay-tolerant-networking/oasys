@@ -1,6 +1,6 @@
 // file      : xsd/cxx/tree/types.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_TYPES_HXX
@@ -81,10 +81,7 @@ namespace xsd
         }
 
         virtual string*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new string (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         string (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -182,10 +179,7 @@ namespace xsd
         }
 
         virtual normalized_string*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new normalized_string (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         normalized_string (const xercesc::DOMElement&,
@@ -286,10 +280,7 @@ namespace xsd
         }
 
         virtual token*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new token (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         token (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -381,10 +372,7 @@ namespace xsd
         }
 
         virtual nmtoken*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new nmtoken (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         nmtoken (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -451,10 +439,7 @@ namespace xsd
         }
 
         virtual nmtokens*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new nmtokens (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         nmtokens (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -521,10 +506,7 @@ namespace xsd
         }
 
         virtual name*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new name (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         name (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -627,10 +609,7 @@ namespace xsd
         }
 
         virtual ncname*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new ncname (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         ncname (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -731,10 +710,7 @@ namespace xsd
         }
 
         virtual language*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new language (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         language (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -790,16 +766,10 @@ namespace xsd
         }
 
         virtual bool
-        before (const identity& y) const
-        {
-          return id_ < static_cast<const identity_impl&> (y).id_;
-        }
+        before (const identity& y) const;
 
         virtual void
-        throw_duplicate_id () const
-        {
-          throw duplicate_id<C> (id_);
-        }
+        throw_duplicate_id () const;
 
       private:
         const ncname& id_;
@@ -871,10 +841,7 @@ namespace xsd
         }
 
         virtual id*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new id (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         id (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -888,44 +855,16 @@ namespace xsd
 
       public:
         id&
-        operator= (C c)
-        {
-          unregister_id ();
-          base () = c;
-          register_id ();
-
-          return *this;
-        }
+        operator= (C c);
 
         id&
-        operator= (const C* s)
-        {
-          unregister_id ();
-          base () = s;
-          register_id ();
-
-          return *this;
-        }
+        operator= (const C* s);
 
         id&
-        operator= (const primary_type& str)
-        {
-          unregister_id ();
-          base () = str;
-          register_id ();
-
-          return *this;
-        }
+        operator= (const primary_type& str);
 
         id&
-        operator= (const id& str)
-        {
-          unregister_id ();
-          base () = str;
-          register_id ();
-
-          return *this;
-        }
+        operator= (const id& str);
 
       protected:
         id ()
@@ -941,31 +880,10 @@ namespace xsd
         //
       private:
         void
-        register_id ()
-        {
-          if (this->_container () != this && !this->empty ())
-          {
-            //std::cerr << "registering " << _container ()
-            //          << " as '" << *this
-            //          << "' on " << _container () << std::endl;
-
-            this->_container ()->_register_id (identity_,
-                                               this->_container ());
-          }
-        }
+        register_id ();
 
         void
-        unregister_id ()
-        {
-          if (this->_container () != this && !this->empty ())
-          {
-            //std::cerr << "un-registering " << _container ()
-            //          << " as '" << *this
-            //          << "' on " << _container () << std::endl;
-
-            this->_container ()->_unregister_id (identity_);
-          }
-        }
+        unregister_id ();
 
       private:
         identity_impl<C, B> identity_;
@@ -1028,10 +946,7 @@ namespace xsd
         }
 
         virtual idref*
-        _clone (flags f = 0, tree::type* container = 0) const
-        {
-          return new idref (*this, f, container);
-        }
+        _clone (flags = 0, tree::type* container = 0) const;
 
       public:
         idref (const xercesc::DOMElement&,
@@ -1128,40 +1043,15 @@ namespace xsd
         {
         }
 
-
-        // It would have been cleaner to mention empty, _root, etc. with
-        // the using-declaration but HP aCC3 can't handle it in some
-        // non-trivial to track down cases. So we are going to use the
-        // old-n-ugly this-> techniques.
-        //
       private:
         const tree::type*
-        get_ () const
-        {
-          if (!this->empty () && this->_container () != this)
-          {
-            return this->_root ()->_lookup_id (identity_);
-          }
-          else
-            return 0;
-        }
+        get_ () const;
 
         tree::type*
-        get_ ()
-        {
-          if (!this->empty () && this->_container () != this)
-          {
-            return this->_root ()->_lookup_id (identity_);
-          }
-          else
-            return 0;
-        }
+        get_ ();
 
-      private:
         void
-        true_ ()
-        {
-        }
+        true_ ();
 
       private:
         identity_impl<C, B> identity_;
@@ -1190,10 +1080,7 @@ namespace xsd
         }
 
         virtual idrefs*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new idrefs (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         idrefs (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -1260,10 +1147,7 @@ namespace xsd
         }
 
         virtual uri*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new uri (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         uri (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -1336,10 +1220,7 @@ namespace xsd
         }
 
         virtual qname*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new qname (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         qname (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -1415,10 +1296,7 @@ namespace xsd
         }
 
         virtual base64_binary*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new base64_binary (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         base64_binary (const xercesc::DOMElement&,
@@ -1481,10 +1359,7 @@ namespace xsd
         }
 
         virtual hex_binary*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new hex_binary (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         hex_binary (const xercesc::DOMElement&,
@@ -1567,10 +1442,7 @@ namespace xsd
         }
 
         virtual date*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new date (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         date (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -1668,10 +1540,7 @@ namespace xsd
         }
 
         virtual date_time*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new date_time (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         date_time (const xercesc::DOMElement&,
@@ -1773,10 +1642,7 @@ namespace xsd
         }
 
         virtual duration*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new duration (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         duration (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -1874,10 +1740,7 @@ namespace xsd
         }
 
         virtual day*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new day (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         day (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -1975,10 +1838,7 @@ namespace xsd
         }
 
         virtual month*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new month (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         month (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -2076,10 +1936,7 @@ namespace xsd
         }
 
         virtual month_day*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new month_day (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         month_day (const xercesc::DOMElement&,
@@ -2181,10 +2038,7 @@ namespace xsd
         }
 
         virtual year*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new year (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         year (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -2282,10 +2136,7 @@ namespace xsd
         }
 
         virtual year_month*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new year_month (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         year_month (const xercesc::DOMElement&,
@@ -2386,10 +2237,7 @@ namespace xsd
         }
 
         virtual time*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new time (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         time (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -2487,10 +2335,7 @@ namespace xsd
         }
 
         virtual entity*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new entity (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         entity (const xercesc::DOMElement&, flags = 0, type* container = 0);
@@ -2557,10 +2402,7 @@ namespace xsd
         }
 
         virtual entities*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new entities (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       public:
         entities (const xercesc::DOMElement&, flags = 0, type* container = 0);

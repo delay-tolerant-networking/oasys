@@ -1,10 +1,10 @@
 // file      : xsd/cxx/parser/non-validating/types.txx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <limits>
-#include <xsd/cxx/parser/istream.hxx>
+#include <xsd/cxx/parser/zc-istream.hxx>
 
 namespace xsd
 {
@@ -43,7 +43,7 @@ namespace xsd
           trim (str);
 
           short t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
           is >> t;
 
           return static_cast<type> (t);
@@ -78,7 +78,7 @@ namespace xsd
           trim (str);
 
           unsigned short t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
           is >> t;
 
           return static_cast<type> (t);
@@ -113,7 +113,7 @@ namespace xsd
           trim (str);
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
           is >> t;
 
           return t;
@@ -148,7 +148,7 @@ namespace xsd
           trim (str);
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
           is >> t;
 
           return t;
@@ -183,7 +183,7 @@ namespace xsd
           trim (str);
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
           is >> t;
 
           return t;
@@ -218,7 +218,7 @@ namespace xsd
           trim (str);
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
           is >> t;
 
           return t;
@@ -253,7 +253,7 @@ namespace xsd
           trim (str);
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
           is >> t;
 
           return t;
@@ -288,7 +288,7 @@ namespace xsd
           trim (str);
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
           is >> t;
 
           return t;
@@ -364,7 +364,7 @@ namespace xsd
             return std::numeric_limits<type>::quiet_NaN ();
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
           is >> t;
 
           return t;
@@ -408,7 +408,7 @@ namespace xsd
             return std::numeric_limits<type>::quiet_NaN ();
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
           is >> t;
 
           return t;
@@ -443,7 +443,7 @@ namespace xsd
           trim (str);
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
           is >> t;
 
           return t;

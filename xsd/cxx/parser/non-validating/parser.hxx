@@ -1,6 +1,6 @@
 // file      : xsd/cxx/parser/non-validating/parser.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_PARSER_NON_VALIDATING_PARSER_HXX
@@ -86,18 +86,27 @@ namespace xsd
         };
 
 
-        // @@ Not used in the generated code at moment.
+        //
         //
         template <typename C>
         struct simple_content: virtual empty_content<C>
         {
+          //
+          //
+          virtual void
+          _attribute (const ro_string<C>& ns,
+                      const ro_string<C>& name,
+                      const ro_string<C>& value);
+
+          virtual void
+          _characters (const ro_string<C>&);
         };
 
 
         //
         //
         template <typename C>
-        struct complex_content: virtual simple_content<C>
+        struct complex_content: virtual empty_content<C>
         {
           //
           //
@@ -130,10 +139,11 @@ namespace xsd
           struct state
           {
             state ()
-                : depth_ (0), parser_ (0)
+                : any_ (false), depth_ (0), parser_ (0)
             {
             }
 
+            bool any_;
             std::size_t depth_;
             parser_base<C>* parser_;
           };

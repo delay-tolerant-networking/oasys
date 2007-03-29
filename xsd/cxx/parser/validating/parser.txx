@@ -1,6 +1,6 @@
 // file      : xsd/cxx/parser/validating/parser.txx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <cassert>
@@ -189,6 +189,103 @@ namespace xsd
         }
 
 
+        // simple_content
+        //
+
+        template <typename C>
+        void simple_content<C>::
+        _attribute (const ro_string<C>& ns,
+                    const ro_string<C>& name,
+                    const ro_string<C>& value)
+        {
+          // Weed out special attributes: xsi:type, xsi:nil,
+          // xsi:schemaLocation and xsi:noNamespaceSchemaLocation.
+          // See section 3.2.7 in Structures for details.
+          //
+          if (ns == xml::bits::xsi_namespace<C> () &&
+              (name == xml::bits::type<C> () ||
+               name == xml::bits::nil<C> () ||
+               name == xml::bits::schema_location<C> () ||
+               name == xml::bits::no_namespace_schema_location<C> ()))
+            return;
+
+          // Also some parsers (notably Xerces-C++) supplies us with
+          // namespace-prefix mapping attributes.
+          //
+          if (ns == xml::bits::xmlns_namespace<C> ())
+            return;
+
+          if (!_attribute_impl (ns, name, value))
+            _unexpected_attribute (ns, name, value);
+        }
+
+        template <typename C>
+        void simple_content<C>::
+        _characters (const ro_string<C>& str)
+        {
+          // We do not care if the user is not interested in handling
+          // character content.
+          //
+          _characters_impl (str);
+        }
+
+        template <typename C>
+        void simple_content<C>::
+        _pre_impl ()
+        {
+          this->_pre ();
+          _pre_a_validate ();
+        }
+
+        template <typename C>
+        void simple_content<C>::
+        _post_impl ()
+        {
+          _post_a_validate ();
+          this->_post ();
+        }
+
+        template <typename C>
+        void simple_content<C>::
+        _pre_a_validate ()
+        {
+        }
+
+        template <typename C>
+        void simple_content<C>::
+        _post_a_validate ()
+        {
+        }
+
+        template <typename C>
+        bool simple_content<C>::
+        _attribute_impl (const ro_string<C>& ns,
+                         const ro_string<C>& name,
+                         const ro_string<C>& value)
+        {
+          return _attribute_impl_phase_one (ns, name, value) ||
+            _attribute_impl_phase_two (ns, name, value);
+        }
+
+        template <typename C>
+        bool simple_content<C>::
+        _attribute_impl_phase_one (const ro_string<C>&,
+                                   const ro_string<C>&,
+                                   const ro_string<C>&)
+        {
+          return false;
+        }
+
+        template <typename C>
+        bool simple_content<C>::
+        _attribute_impl_phase_two (const ro_string<C>&,
+                                   const ro_string<C>&,
+                                   const ro_string<C>&)
+        {
+          return false;
+        }
+
+
         // complex_content
         //
 
@@ -202,7 +299,9 @@ namespace xsd
 
           if (s.depth_++ > 0)
           {
-            if (s.parser_)
+            if (s.any_)
+              _start_any_element (ns, name);
+            else if (s.parser_)
               s.parser_->_start_element (ns, name);
           }
           else
@@ -253,12 +352,14 @@ namespace xsd
 
             if (--s.depth_ > 0)
             {
-              if (s.parser_)
+              if (s.any_)
+                _end_any_element (ns, name);
+              else if (s.parser_)
                 s.parser_->_end_element (ns, name);
             }
             else
             {
-              if (s.parser_ != 0)
+              if (s.parser_ != 0 && !s.any_)
                 s.parser_->_post_impl ();
 
               if (!_end_element_impl (ns, name))
@@ -294,7 +395,9 @@ namespace xsd
 
           if (s.depth_ > 0)
           {
-            if (s.parser_)
+            if (s.any_)
+              _any_attribute (ns, name, value);
+            else if (s.parser_)
               s.parser_->_attribute (ns, name, value);
           }
           else
@@ -312,7 +415,9 @@ namespace xsd
 
           if (s.depth_ > 0)
           {
-            if (s.parser_)
+            if (s.any_)
+              _any_characters (str);
+            else if (s.parser_)
               s.parser_->_characters (str);
           }
           else
@@ -386,15 +491,13 @@ namespace xsd
         {
         }
 
-
-
         template <typename C>
         bool complex_content<C>::
         _attribute_impl (const ro_string<C>& ns,
                          const ro_string<C>& name,
                          const ro_string<C>& value)
         {
-          return _attribute_impl_phase_one (ns, name, value, false) ||
+          return _attribute_impl_phase_one (ns, name, value) ||
             _attribute_impl_phase_two (ns, name, value);
         }
 
@@ -402,10 +505,9 @@ namespace xsd
         bool complex_content<C>::
         _attribute_impl_phase_one (const ro_string<C>&,
                                    const ro_string<C>&,
-                                   const ro_string<C>&,
-                                   bool valid)
+                                   const ro_string<C>&)
         {
-          return valid;
+          return false;
         }
 
         template <typename C>

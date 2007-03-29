@@ -14,6 +14,9 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -25,7 +28,6 @@
 #include <time.h>
 #include <algorithm>
 
-#include "config.h"
 #include "DebugUtils.h"
 #include "Log.h"
 #include "compat/inttypes.h"
@@ -199,12 +201,12 @@ Log::parse_debug_file(const char* debug_path)
     
     while (!feof(fp)) {
         if (fgets(buf, sizeof(buf), fp) > 0) {
-	    char *line = buf;
-	    char *logpath;
-	    char *level;
-	    char *rest;
+            char *line = buf;
+            char *logpath;
+            char *level;
+            char *rest;
 
-	    ++linenum;
+            ++linenum;
 
             logpath = line;
 
@@ -242,9 +244,9 @@ Log::parse_debug_file(const char* debug_path)
                 if (strstr(logpath, "classname") != 0) {
                     output_flags_ |= OUTPUT_CLASSNAME;
                 }
-                if (strstr(logpath, "walltime") != 0) {
+                /*if (strstr(logpath, "walltime") != 0) {
                     output_flags_ |= OUTPUT_WALLTIME;
-                }
+                }*/
                 
                 continue;
             }
@@ -376,7 +378,7 @@ Log::find_rule(const char *path)
         if (strncmp(rule_path, path, minlen) == 0) 
         {
             return rule; // match!
-	}
+        }
 
         // XXX/bowei cheap dirty hack to add glob expressions to the
         // logging. I'm sick of seeing three billion logs for refs
@@ -476,9 +478,9 @@ Log::log_level(const char *path)
     Rule *r = find_rule(path);
 
     if (r) {
-	return r->level_;
+        return r->level_;
     } else {
-	return default_threshold_;
+        return default_threshold_;
     }
 }
 
@@ -519,18 +521,18 @@ Log::gen_prefix(char* buf, size_t buflen,
     if (output_flags_ & OUTPUT_TIME) {
         struct timeval tv;
         getlogtime(&tv);
-        if (output_flags_ & OUTPUT_WALLTIME) {
+        /*if (output_flags_ & OUTPUT_WALLTIME) {
             struct tm walltime;
             gmtime_r((const time_t*)&tv.tv_sec, &walltime);
             len = snprintf(ptr, buflen, 
                            "%02d:%02d:%02d.%03ld ",
                            walltime.tm_hour, walltime.tm_min,
                            walltime.tm_sec, (long)tv.tv_usec / 1000);
-        } else {
+        } else {*/
             len = snprintf(ptr, buflen, 
                            "%ld.%06ld ",
                            (long)tv.tv_sec, (long)tv.tv_usec);
-        }
+        //}
         
         buflen -= len;
         ptr += len;
@@ -609,8 +611,8 @@ Log::vlogf(const char* path, log_level_t level,
 
     /* Make sure that paths that don't start with a slash still show up. */
     if (*path != '/') {
-	snprintf(pathbuf, sizeof pathbuf, "/%s", path);
-	path = pathbuf;
+        snprintf(pathbuf, sizeof pathbuf, "/%s", path);
+        path = pathbuf;
     }
 
     // bail if we're not going to output the line
@@ -697,8 +699,8 @@ Log::log_multiline(const char* path, log_level_t level,
 
     /* Make sure that paths that don't start with a slash still show up. */
     if (*path != '/') {
-	snprintf(pathbuf, sizeof pathbuf, "/%s", path);
-	path = pathbuf;
+        snprintf(pathbuf, sizeof pathbuf, "/%s", path);
+        path = pathbuf;
     }
 
     // bail if we're not going to output the line.

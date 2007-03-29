@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "Base16.h"
 
 namespace oasys {

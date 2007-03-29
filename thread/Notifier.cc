@@ -14,6 +14,9 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include <errno.h>
 #include <unistd.h>
@@ -42,7 +45,7 @@ Notifier::Notifier(const char* logpath, bool quiet)
     
     for (int n = 0; n < 2; ++n) {
         if (IO::set_nonblocking(pipe_[n], true, quiet ? 0 : logpath_) != 0) 
-	{
+        {
             PANIC("error setting fd %d to nonblocking: %s",
                      pipe_[n], strerror(errno));
         }
@@ -190,7 +193,7 @@ Notifier::wait(SpinLock* lock, int timeout, bool drain_the_pipe)
 void
 Notifier::notify(SpinLock* lock)
 {
-	atomic_incr(&busy_notifiers_);
+        atomic_incr(&busy_notifiers_);
     char b = 0;
     int num_retries = 0;
 

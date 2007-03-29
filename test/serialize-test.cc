@@ -14,6 +14,9 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include <iostream>
 #include <debug/DebugUtils.h>
@@ -35,13 +38,13 @@ using namespace oasys;
 class OneOfEach : public oasys::SerializableObject {
 public:
     OneOfEach() : 
-	a(200), 
-	b(-100), 
-	c(0x77), 
-	d(0xbaddf00d), 
-	e(56789), 
-	u(INT_MAX), 
-	s1("hello") 
+        a(200), 
+        b(-100), 
+        c(0x77), 
+        d(0xbaddf00d), 
+        e(56789), 
+        u(INT_MAX), 
+        s1("hello") 
     {
         memset(s2, 0, sizeof(s2));
         strcpy(s2, "Zanzibar");
@@ -117,10 +120,10 @@ DECLARE_TEST(CompareTest_CRC) {
 DECLARE_TEST(SizeTest) {
     OneOfEach o;
     size_t sz = 4 + 4 + 4 + 4 +
-	        2 + 
-	        4 +
-		4 + 5 +
-	        32;
+                2 + 
+                4 +
+                4 + 5 +
+                32;
 
     oasys::MarshalSize sizer1(Serialize::CONTEXT_NETWORK, 0);
     sizer1.action(&o);
@@ -139,8 +142,8 @@ DECLARE_TEST(NullStringTest1) {
 
     NullStringShim id(0);
     oasys::Unmarshal uv(Serialize::CONTEXT_LOCAL, 
-	                reinterpret_cast<u_char*>(test), 
-	                strlen(test) + 1, 0);
+                        reinterpret_cast<u_char*>(test), 
+                        strlen(test) + 1, 0);
     uv.action(&id);
     CHECK(strcmp(test, id.value()) == 0);
 
@@ -154,8 +157,8 @@ DECLARE_TEST(NullStringTest2) {
     Builder b;
     NullStringShim id(b);
     oasys::Unmarshal uv(Serialize::CONTEXT_LOCAL, 
-	                reinterpret_cast<u_char*>(test), 
-	                strlen(test) + 1, 0);
+                        reinterpret_cast<u_char*>(test), 
+                        strlen(test) + 1, 0);
     uv.action(&id);
     CHECK(strcmp(test, id.value()) == 0);
 
@@ -311,7 +314,7 @@ struct KeyObj_1 : public SerializableObject {
         {
             BufferCarrier<char> bc;
             action->process("c_str", &bc, 0);
-	    size_t len;
+            size_t len;
             c_str_ = bc.take_buf(&len);
         }
         else

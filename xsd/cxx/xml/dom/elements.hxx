@@ -1,6 +1,6 @@
 // file      : xsd/cxx/xml/dom/elements.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_XML_DOM_ELEMENTS_HXX
@@ -8,12 +8,14 @@
 
 #include <string>
 
-#include <xercesc/dom/DOM.hpp>
+#include <xercesc/dom/DOMAttr.hpp>
+#include <xercesc/dom/DOMElement.hpp>
+#include <xercesc/dom/DOMDocument.hpp>
+#include <xercesc/dom/DOMInputSource.hpp>
+#include <xercesc/dom/DOMErrorHandler.hpp>
 
-#include <xsd/cxx/xml/string.hxx>
 #include <xsd/cxx/xml/elements.hxx>
 #include <xsd/cxx/xml/error-handler.hxx>
-#include <xsd/cxx/xml/bits/literals.hxx>
 
 #include <xsd/cxx/xml/dom/auto-ptr.hxx>
 
@@ -66,13 +68,6 @@ namespace xsd
           {
             return namespace__;
           }
-
-        public:
-          string_type
-          value () const;
-
-          void
-          value (const string_type&);
 
         public:
           string_type
@@ -178,70 +173,25 @@ namespace xsd
           string_type value_;
         };
 
+
+        //
+        //
+
         struct no_mapping {};
 
         template <typename C>
         std::basic_string<C>
-        ns_name (const element<C>& e, const std::basic_string<C>& n)
-        {
-          std::basic_string<C> p (prefix (n));
-
-          // 'xml' prefix requires special handling and Xerces folks refuse
-          // to handle this in DOM so I have to do it myself.
-          //
-          if (p == xml::bits::xml_prefix<C> ())
-            return xml::bits::xml_namespace<C> ();
-
-          const XMLCh* xns (e.dom_element ()->lookupNamespaceURI (
-                              p.empty () ? 0 : string (p).c_str ()));
-
-          if (xns == 0)
-            throw no_mapping ();
-
-          return transcode<C> (xns);
-        }
-
+        ns_name (const element<C>& e, const std::basic_string<C>& name);
 
         template <typename C>
         std::basic_string<C>
-        fq_name (const element<C>& e, const std::basic_string<C>& n)
-        {
-          std::basic_string<C> ns (ns_name (e, n));
-          std::basic_string<C> un (uq_name (n));
-
-          return ns.empty () ? un : (ns + C ('#') + un);
-        }
+        fq_name (const element<C>& e, const std::basic_string<C>& name);
 
         class no_prefix {};
 
         template <typename C>
         std::basic_string<C>
-        prefix (const std::basic_string<C>& ns, const xercesc::DOMElement& e)
-        {
-          string xns (ns);
-
-          const XMLCh* p (e.lookupNamespacePrefix (xns.c_str (), false));
-
-          if (p == 0)
-          {
-            if (e.isDefaultNamespace (xns.c_str ()))
-            {
-              return std::basic_string<C> ();
-            }
-            else
-            {
-              // 'xml' prefix requires special handling and Xerces folks
-              // refuse to handle this in DOM so I have to do it myself.
-              //
-              if (ns == xml::bits::xml_namespace<C> ())
-                return xml::bits::xml_prefix<C> ();
-
-              throw no_prefix ();
-            }
-          }
-
-          return transcode<C> (p);
-        }
+        prefix (const std::basic_string<C>& ns, const xercesc::DOMElement& e);
 
 
         // Parsing flags.

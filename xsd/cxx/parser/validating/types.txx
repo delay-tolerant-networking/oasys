@@ -1,10 +1,10 @@
 // file      : xsd/cxx/parser/validating/types.txx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <limits>
-#include <xsd/cxx/parser/istream.hxx>
+#include <xsd/cxx/parser/zc-istream.hxx>
 #include <xsd/cxx/parser/exceptions.hxx>
 
 namespace xsd
@@ -45,7 +45,7 @@ namespace xsd
           trim (str);
 
           short t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
 
           if (!(is >> t && is.exhausted () && t >= -128 && t <= 127))
           {
@@ -84,7 +84,7 @@ namespace xsd
           trim (str);
 
           unsigned short t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
 
           if (!(is >> t && is.exhausted () && t <= 255))
           {
@@ -123,7 +123,7 @@ namespace xsd
           trim (str);
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
 
           if (!(is >> t && is.exhausted ()))
           {
@@ -162,7 +162,7 @@ namespace xsd
           trim (str);
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
 
           if (!(is >> t && is.exhausted ()))
           {
@@ -201,7 +201,7 @@ namespace xsd
           trim (str);
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
 
           if (!(is >> t && is.exhausted ()))
           {
@@ -240,7 +240,7 @@ namespace xsd
           trim (str);
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
 
           if (!(is >> t && is.exhausted ()))
           {
@@ -279,7 +279,7 @@ namespace xsd
           trim (str);
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
 
           if (!(is >> t && is.exhausted ()))
           {
@@ -318,7 +318,7 @@ namespace xsd
           trim (str);
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
 
           if (!(is >> t && is.exhausted ()))
           {
@@ -403,7 +403,7 @@ namespace xsd
             return std::numeric_limits<type>::quiet_NaN ();
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
 
           if (!(is >> t && is.exhausted ()))
           {
@@ -451,7 +451,7 @@ namespace xsd
             return std::numeric_limits<type>::quiet_NaN ();
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
 
           if (!(is >> t && is.exhausted ()))
           {
@@ -490,7 +490,7 @@ namespace xsd
           trim (str);
 
           type t;
-          istream<C> is (str);
+          zc_istream<C> is (str);
 
           //@@ TODO: now we accept both fixed and scientific notations.
           //

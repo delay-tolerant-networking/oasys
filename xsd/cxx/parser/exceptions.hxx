@@ -1,6 +1,6 @@
 // file      : xsd/cxx/parser/exceptions.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_PARSER_EXCEPTIONS_HXX
@@ -46,13 +46,7 @@ namespace xsd
         error (const std::basic_string<C>& id,
                unsigned long line,
                unsigned long column,
-               const std::basic_string<C>& message)
-            : id_ (id),
-              line_ (line),
-              column_ (column),
-              message_ (message)
-        {
-        }
+               const std::basic_string<C>& message);
 
         const std::basic_string<C>&
         id () const
@@ -103,37 +97,27 @@ namespace xsd
       struct parsing: virtual exception<C>
       {
         virtual
-        ~parsing () throw ()
-        {
-        }
+        ~parsing () throw ();
 
-        parsing ()
-        {
-        }
+        parsing ();
 
-        parsing (const parser::errors<C>& errors)
-            : errors_ (errors)
-        {
-        }
+        parsing (const cxx::parser::errors<C>& errors);
 
-        const parser::errors<C>&
+        const cxx::parser::errors<C>&
         errors () const
         {
           return errors_;
         }
 
         virtual const char*
-        what () const throw ()
-        {
-          return "instance document parsing failed";
-        }
+        what () const throw ();
 
       protected:
         virtual void
         print (std::basic_ostream<C>&) const;
 
       private:
-        parser::errors<C> errors_;
+        cxx::parser::errors<C> errors_;
       };
 
       //
@@ -142,27 +126,15 @@ namespace xsd
       struct expected_element: virtual exception<C>
       {
         virtual
-        ~expected_element () throw ()
-        {
-        }
+        ~expected_element () throw ();
 
         expected_element (const std::basic_string<C>& expected_namespace,
-                          const std::basic_string<C>& expected_name)
-            : expected_namespace_ (expected_namespace),
-              expected_name_ (expected_name)
-        {
-        }
+                          const std::basic_string<C>& expected_name);
 
         expected_element (const std::basic_string<C>& expected_namespace,
                           const std::basic_string<C>& expected_name,
                           const std::basic_string<C>& encountered_namespace,
-                          const std::basic_string<C>& encountered_name)
-            : expected_namespace_ (expected_namespace),
-              expected_name_ (expected_name),
-              encountered_namespace_ (encountered_namespace),
-              encountered_name_ (encountered_name)
-        {
-        }
+                          const std::basic_string<C>& encountered_name);
 
         const std::basic_string<C>&
         expected_namespace () const
@@ -175,7 +147,6 @@ namespace xsd
         {
           return expected_name_;
         }
-
 
         // Encountered element namespace and name are empty if none
         // encountered.
@@ -193,10 +164,7 @@ namespace xsd
         }
 
         virtual const char*
-        what () const throw ()
-        {
-          return "expected element not encountered";
-        }
+        what () const throw ();
 
       protected:
         virtual void
@@ -217,16 +185,10 @@ namespace xsd
       struct unexpected_element: virtual exception<C>
       {
         virtual
-        ~unexpected_element () throw ()
-        {
-        }
+        ~unexpected_element () throw ();
 
         unexpected_element (const std::basic_string<C>& encountered_namespace,
-                            const std::basic_string<C>& encountered_name)
-            : encountered_namespace_ (encountered_namespace),
-              encountered_name_ (encountered_name)
-        {
-        }
+                            const std::basic_string<C>& encountered_name);
 
         const std::basic_string<C>&
         encountered_namespace () const
@@ -241,10 +203,7 @@ namespace xsd
         }
 
         virtual const char*
-        what () const throw ()
-        {
-          return "unexpected element encountered";
-        }
+        what () const throw ();
 
       protected:
         virtual void
@@ -262,16 +221,10 @@ namespace xsd
       struct expected_attribute: virtual exception<C>
       {
         virtual
-        ~expected_attribute () throw ()
-        {
-        }
+        ~expected_attribute () throw ();
 
         expected_attribute (const std::basic_string<C>& expected_namespace,
-                            const std::basic_string<C>& expected_name)
-            : expected_namespace_ (expected_namespace),
-              expected_name_ (expected_name)
-        {
-        }
+                            const std::basic_string<C>& expected_name);
 
         const std::basic_string<C>&
         expected_namespace () const
@@ -286,10 +239,7 @@ namespace xsd
         }
 
         virtual const char*
-        what () const throw ()
-        {
-          return "expected attribute not encountered";
-        }
+        what () const throw ();
 
       protected:
         virtual void
@@ -306,17 +256,12 @@ namespace xsd
       struct unexpected_attribute: virtual exception<C>
       {
         virtual
-        ~unexpected_attribute () throw ()
-        {
-        }
+        ~unexpected_attribute () throw ();
 
         unexpected_attribute (
           const std::basic_string<C>& encountered_namespace,
-          const std::basic_string<C>& encountered_name)
-            : encountered_namespace_ (encountered_namespace),
-              encountered_name_ (encountered_name)
-        {
-        }
+          const std::basic_string<C>& encountered_name);
+
 
         const std::basic_string<C>&
         encountered_namespace () const
@@ -331,10 +276,7 @@ namespace xsd
         }
 
         virtual const char*
-        what () const throw ()
-        {
-          return "unexpected attribute encountered";
-        }
+        what () const throw ();
 
       protected:
         virtual void
@@ -352,14 +294,9 @@ namespace xsd
       struct unexpected_characters: virtual exception<C>
       {
         virtual
-        ~unexpected_characters () throw ()
-        {
-        }
+        ~unexpected_characters () throw ();
 
-        unexpected_characters (const std::basic_string<C>& s)
-            : characters_ (s)
-        {
-        }
+        unexpected_characters (const std::basic_string<C>& s);
 
         const std::basic_string<C>&
         characters () const
@@ -368,10 +305,7 @@ namespace xsd
         }
 
         virtual const char*
-        what () const throw ()
-        {
-          return "unexpected characters encountered";
-        }
+        what () const throw ();
 
       protected:
         virtual void

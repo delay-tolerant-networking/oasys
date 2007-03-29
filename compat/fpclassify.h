@@ -22,7 +22,6 @@
  * Compatibility header for missing fpclassify. Thanks to Larry Pyatt
  * for the implementation.
  */
-#include "config.h"
 
 #ifdef HAVE_FPCLASSIFY
 #include <math.h>

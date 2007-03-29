@@ -1,6 +1,6 @@
 // file      : xsd/cxx/tree/ace-cdr-stream-insertion.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_ACE_CDR_STREAM_INSERTION_HXX
@@ -67,9 +67,7 @@ namespace xsd
       operator<< (ostream<ACE_OutputCDR>& s,
                   ostream<ACE_OutputCDR>::as_int8<X> x)
       {
-        // Cannot use static_cast here because of a potential sign loss.
-        //
-        ACE_CDR::Octet r (reinterpret_cast<ACE_CDR::Octet> (x.x_));
+        ACE_CDR::Octet r (static_cast<ACE_CDR::Octet> (x.x_));
 
         if (!s.impl ().write_octet (r))
           throw ace_cdr_stream_insertion ();
@@ -82,9 +80,7 @@ namespace xsd
       operator<< (ostream<ACE_OutputCDR>& s,
                   ostream<ACE_OutputCDR>::as_uint8<X> x)
       {
-        // Cannot use static_cast here because of a potential sign loss.
-        //
-        ACE_CDR::Octet r (reinterpret_cast<ACE_CDR::Octet> (x.x_));
+        ACE_CDR::Octet r (static_cast<ACE_CDR::Octet> (x.x_));
 
         if (!s.impl ().write_octet (r))
           throw ace_cdr_stream_insertion ();

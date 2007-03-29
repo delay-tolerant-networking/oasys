@@ -66,7 +66,7 @@ public:
 
         _Key     key_;
         _Val     val_;
-	int      pin_count_;
+        int      pin_count_;
         SpinLock lock_;
     };
 
@@ -116,49 +116,49 @@ public:
      */
     class ExternalHandle {
     public:
-	ExternalHandle() {}
+        ExternalHandle() {}
 
-	explicit ExternalHandle(Handle cache_handle)
-	    : cache_handle_(cache_handle) 
-	{
-	    cache_handle_.pin();
-	}
+        explicit ExternalHandle(Handle cache_handle)
+            : cache_handle_(cache_handle) 
+        {
+            cache_handle_.pin();
+        }
 
-	ExternalHandle(const ExternalHandle& other) 
-	    : cache_handle_(other.cache_handle_)
-	{
-	    cache_handle_.pin();
-	}
+        ExternalHandle(const ExternalHandle& other) 
+            : cache_handle_(other.cache_handle_)
+        {
+            cache_handle_.pin();
+        }
 
-	ExternalHandle& operator=(const ExternalHandle& other)
-	{
+        ExternalHandle& operator=(const ExternalHandle& other)
+        {
             if (&other == this)
             {
                 return *this;
             }
 
             Handle old_handle = cache_handle_;
-	    cache_handle_ = other.cache_handle_;
-	    cache_handle_.pin();
+            cache_handle_ = other.cache_handle_;
+            cache_handle_.pin();
 
-	    if (old_handle.valid())
-	    {
-		old_handle.unpin();
-	    }
+            if (old_handle.valid())
+            {
+                old_handle.unpin();
+            }
 
-	    return *this;
-	}
+            return *this;
+        }
 
-	~ExternalHandle() 
-	{ 
-	    if (cache_handle_.valid())
-	    {
-		cache_handle_.unpin(); 
-	    }
-	}
+        ~ExternalHandle() 
+        { 
+            if (cache_handle_.valid())
+            {
+                cache_handle_.unpin(); 
+            }
+        }
 
     private:
-	Handle cache_handle_;
+        Handle cache_handle_;
     };
     
     /*!
@@ -195,10 +195,10 @@ public:
         }
         
         cache_list_.move_to_back(i->second);
-	ScopeLock ll(&i->second->lock_, "Cache::get_and_pin");
+        ScopeLock ll(&i->second->lock_, "Cache::get_and_pin");
         if (pin) 
         {
-	    ++i->second->pin_count_;
+            ++i->second->pin_count_;
         }
         
         log_debug("get(%s): got entry pin_count=%d size=%zu",
@@ -240,8 +240,8 @@ public:
         typename CacheMap::iterator i = cache_map_.find(key);
         ASSERT(i != cache_map_.end());
         
-	ScopeLock ll(&i->second->lock_, "Cache::pin");
-	int count = ++i->second->pin_count_;
+        ScopeLock ll(&i->second->lock_, "Cache::pin");
+        int count = ++i->second->pin_count_;
         log_debug("pin(%s): pinned entry pin_count=%d size=%zu",
                   InlineFormatter<_Key>().format(key),
                   count,
@@ -257,7 +257,7 @@ public:
      */
     int pin(Handle handle)
     {
-	ScopeLock l(&handle.itr_->lock_, "Cache::pin");
+        ScopeLock l(&handle.itr_->lock_, "Cache::pin");
         int count = ++handle.itr_->pin_count_;
         log_debug("pin(%s): pinned entry pin_count=%d size=%zu",
                   InlineFormatter<_Key>().format(handle.itr_->key_),
@@ -279,7 +279,7 @@ public:
         typename CacheMap::iterator i = cache_map_.find(key);
         ASSERT(i != cache_map_.end());
 
-	ScopeLock ll(&i->second->lock_, "Cache::pin");
+        ScopeLock ll(&i->second->lock_, "Cache::pin");
         ASSERT(i->second->pin_count_ > 0);
 
         int count = --i->second->pin_count_;

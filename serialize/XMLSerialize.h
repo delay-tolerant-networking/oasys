@@ -57,6 +57,11 @@ public:
                  BufferCarrier<u_char>* carrier,
                  size_t*                lenp,
                  u_char                 terminator);
+    void process(const char*            name, 
+                 BufferCarrier<u_char>* carrier);
+    void process(const char*            name,
+                 BufferCarrier<u_char>* carrier,
+                 u_char                 terminator);
     void process(const char *name, std::string *s);
     void process(const char* name, const InAddrPtr& a);
 

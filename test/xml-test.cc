@@ -14,6 +14,10 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "util/UnitTest.h"
 #include "util/StringBuffer.h"
 #include "xml/XMLDocument.h"
@@ -102,7 +106,7 @@ bool test_parse(XMLParser* p, const std::string data)
     }
 
     int errno_; const char* strerror_;
-	
+        
     StringBuffer buf;
     doc.to_string(&buf, -1);
     CHECK_EQUALSTR(data.c_str(), buf.c_str());

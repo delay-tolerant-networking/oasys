@@ -45,6 +45,10 @@
  * SUCH DAMAGE.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 // demmer: we need _GNU_SOURCE for linux systems to pull in fpclassify
 #define _GNU_SOURCE
 #include "compat/fpclassify.h"

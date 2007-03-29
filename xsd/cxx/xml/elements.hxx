@@ -1,6 +1,6 @@
 // file      : xsd/cxx/xml/elements.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_XML_ELEMENTS_HXX
@@ -33,32 +33,12 @@ namespace xsd
         //
         void
         schema_location (const std::basic_string<C>& namespace_,
-                         const std::basic_string<C>& location)
-        {
-          if (namespace_.empty () || location.empty ())
-            throw argument ();
-
-          if (!schema_location_.empty ())
-            schema_location_ += C (' ');
-
-          schema_location_ += namespace_ + C (' ') + location;
-        }
-
+                         const std::basic_string<C>& location);
 
         // Add a location for a schema without target namespace.
         //
         void
-        no_namespace_schema_location (const std::basic_string<C>& location)
-        {
-          if (location.empty ())
-            throw argument ();
-
-          if (!no_namespace_schema_location_.empty ())
-            no_namespace_schema_location_ += C (' ');
-
-          no_namespace_schema_location_ += location;
-        }
-
+        no_namespace_schema_location (const std::basic_string<C>& location);
 
       public:
         const std::basic_string<C>&
@@ -84,32 +64,12 @@ namespace xsd
 
       template <typename C>
       std::basic_string<C>
-      prefix (const std::basic_string<C>& n)
-      {
-        std::size_t i (0);
-
-        while (i < n.length () && n[i] != ':')
-          ++i;
-
-        //std::wcerr << "prefix " << n << " "
-        //           << std::wstring (n, i == n.length () ? i : 0, i)
-        //           << std::endl;
-
-        return std::basic_string<C> (n, i == n.length () ? i : 0, i);
-      }
+      prefix (const std::basic_string<C>& n);
 
       template <typename C>
       std::basic_string<C>
-      uq_name (const std::basic_string<C>& n)
-      {
-        std::size_t i (0);
+      uq_name (const std::basic_string<C>& n);
 
-        while (i < n.length () && n[i] != ':')
-          ++i;
-
-        return std::basic_string<C> (
-          n.c_str () + (i == n.length () ? 0 : i + 1));
-      }
 
       //
       //
@@ -147,5 +107,7 @@ namespace xsd
     }
   }
 }
+
+#include <xsd/cxx/xml/elements.txx>
 
 #endif  // XSD_CXX_XML_ELEMENTS_HXX

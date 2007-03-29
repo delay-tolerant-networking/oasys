@@ -22,7 +22,6 @@
 #ifndef _OASYS_XERCES_XML_SERIALIZE_H_
 #define _OASYS_XERCES_XML_SERIALIZE_H_
 
-#include <config.h>
 #ifdef XERCES_C_ENABLED
 
 #include "XMLSerialize.h"

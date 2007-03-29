@@ -66,6 +66,9 @@
  * SUCH DAMAGE.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include <stdarg.h>
 #include <memory.h>

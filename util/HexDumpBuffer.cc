@@ -14,39 +14,48 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include <ctype.h>
+#include <string.h>
 #include "HexDumpBuffer.h"
+#include "StringBuffer.h"
 
 namespace oasys {
-
+    
+    
 void
+HexDumpBuffer::append(const u_char* data, size_t length)
+{
+    char* dest = tail_buf(length);
+    memcpy(dest, data, length);
+    incr_len(length);
+}
+
+std::string
 HexDumpBuffer::hexify()
 {
-    // make a copy of the current data
-    size_t len = length();
-    std::string contents(data(), len);
+    StringBuffer builder;
     char strbuf[16];
 
-    // rewind the string buffer backwards
-    trim(length());
-
     // generate the dump
-    u_char* bp = (u_char*)contents.data();
-    for (size_t i = 0; i < len; ++i, ++bp)
+    u_char* bp = (u_char*)raw_buf();
+    for (size_t i = 0; i < len(); ++i, ++bp)
     {
         // print the offset on each new line
         if (i % 16 == 0) {
-            appendf("%07x ", (u_int)i);
+            builder.appendf("%07x ", (u_int)i);
         }
         
         // otherwise print a space every two bytes (except the first)
         else if (i % 2 == 0) {
-            append(" ");
+            builder.append(" ");
         }
 
         // print the hex character
-        appendf("%02x", *bp);
+        builder.appendf("%02x", *bp);
         
         // tack on the ascii character if it's printable, '.' otherwise
         if (isalnum(*bp) || ispunct(*bp) || (*bp == ' ')) {
@@ -57,20 +66,21 @@ HexDumpBuffer::hexify()
         
         if (i % 16 == 15)
         {
-            appendf(" |  %.*s\n", 16, strbuf);
+            builder.appendf(" |  %.*s\n", 16, strbuf);
         }
     }
 
     // deal with the ending partial line
-    for (size_t i = len % 16; i < 16; ++i) {
+    for (size_t i = len() % 16; i < 16; ++i) {
         if (i % 2 == 0) {
-            append(" ");
+            builder.append(" ");
         }
 
-        append("  ");
+        builder.append("  ");
     }
 
-    appendf(" |  %.*s\n", (int)len % 16, strbuf);
+    builder.appendf(" |  %.*s\n", (int)len() % 16, strbuf);
+    return std::string(builder.c_str(), builder.length());
 }
 
 } // namespace oasys

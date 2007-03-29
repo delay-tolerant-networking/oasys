@@ -176,7 +176,7 @@ template<typename _Class>
 class SingletonRef {
 public:
     _Class* operator->() {
-	return Singleton<_Class>::instance();
+        return Singleton<_Class>::instance();
     }
 };
 

@@ -1,12 +1,16 @@
 // file      : xsd/cxx/xml/string.ixx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_XML_STRING_IXX
 #define XSD_CXX_XML_STRING_IXX
 
 #include <cassert>
+#include <cstring> // std::memcpy
+
+#include <xercesc/util/XMLString.hpp>
+#include <xsd/cxx/xml/std-memory-manager.hxx>
 
 // We sometimes need this functionality even if we are building for
 // wchar_t.
@@ -17,51 +21,104 @@ namespace xsd
   {
     namespace xml
     {
+#ifndef XSD_USE_LCP
+      namespace bits
+      {
+        // UTF-16 to/from UTF-8 transcoder.
+        //
+        template <typename C>
+        struct char_transcoder
+        {
+          static std::basic_string<C>
+          to (const XMLCh* s, std::size_t length);
+
+          static XMLCh*
+          from (const C* s, std::size_t length);
+
+        private:
+          static const unsigned char first_byte_mask_[5];
+        };
+      }
+#endif
+
       template <>
       inline std::basic_string<char>
-      transcode<char> (const XMLCh* s, std::size_t length)
+      transcode<char> (const XMLCh* s)
       {
         if (s == 0)
           return std::basic_string<char> ();
 
-        const XMLCh* src (s);
+#ifndef XSD_USE_LCP
+        return bits::char_transcoder<char>::to (
+          s, xercesc::XMLString::stringLen (s));
+#else
+        // Use Xerces-C++ local code page transcoding.
+        //
+        std_memory_manager mm;
+        auto_array<char> r (xercesc::XMLString::transcode (s, &mm));
+        return std::basic_string<char> (r.get ());
+#endif
+      }
 
-        if (length != 0)
-        {
-          // Know a better way? Let me know.
-          //
-          XMLCh* tmp = new XMLCh[length + 1];
-          memcpy (tmp, s, length * sizeof (XMLCh));
+      template <>
+      inline std::basic_string<char>
+      transcode<char> (const XMLCh* s, std::size_t len)
+      {
+        if (s == 0 || len == 0)
+          return std::basic_string<char> ();
 
-          tmp[length] = XMLCh (0);
+#ifndef XSD_USE_LCP
+        // Convert UTF-16 to UTF-8
+        //
+        return bits::char_transcoder<char>::to (s, len);
+#else
+        // Use Xerces-C++ local code page transcoding.
+        //
+        auto_array<XMLCh> tmp (new XMLCh[len + 1]);
+        std::memcpy (tmp.get (), s, len * sizeof (XMLCh));
+        tmp[len] = XMLCh (0);
 
-          src = tmp;
-        }
+        std_memory_manager mm;
+        auto_array<char> r (xercesc::XMLString::transcode (tmp.get (), &mm));
 
-        char* buf (xercesc::XMLString::transcode (s));
+        tmp.reset ();
 
-        if (src != s)
-          delete[] (src);
-
-        std::basic_string<char> r (buf);
-
-        xercesc::XMLString::release (&buf);
-
-        return r;
+        return std::basic_string<char> (r.get ());
+#endif
       }
 
       template <>
       inline XMLCh*
       transcode_to_xmlch (const char* s)
       {
-        return xercesc::XMLString::transcode (s);
+#ifndef XSD_USE_LCP
+        // Convert UTF-8 to UTF-16
+        //
+        return bits::char_transcoder<char>::from (
+          s, std::char_traits<char>::length (s));
+#else
+        // Use Xerces-C++ local code page transcoding.
+        //
+        std_memory_manager mm;
+        return xercesc::XMLString::transcode (s, &mm);
+#endif
       }
 
       template <>
       inline XMLCh*
       transcode_to_xmlch (const std::basic_string<char>& s)
       {
-        return xercesc::XMLString::transcode (s.c_str ());
+#ifndef XSD_USE_LCP
+        // Convert UTF-8 to UTF-16
+        //
+        return bits::char_transcoder<char>::from (
+          s.c_str (), s.length ());
+#else
+        // Use Xerces-C++ local code page transcoding.
+        //
+        std_memory_manager mm;
+        return xercesc::XMLString::transcode (s.c_str (), &mm);
+#endif
       }
     }
   }
@@ -90,75 +147,73 @@ namespace xsd
   {
     namespace xml
     {
+      namespace bits
+      {
+        template <typename W, std::size_t S>
+        struct wchar_transcoder;
+
+        // Specialization for 2-byte wchar_t (resulting encoding is UTF-16).
+        //
+        template <typename W>
+        struct wchar_transcoder<W, 2>
+        {
+          static std::basic_string<W>
+          to (const XMLCh* s, std::size_t length);
+
+          static XMLCh*
+          from (const W* s, std::size_t length);
+        };
+
+
+        // Specialization for 4-byte wchar_t (resulting encoding is UCS-4).
+        //
+        template <typename W>
+        struct wchar_transcoder<W, 4>
+        {
+          static std::basic_string<W>
+          to (const XMLCh* s, std::size_t length);
+
+          static XMLCh*
+          from (const W* s, std::size_t length);
+        };
+      }
 
       template <>
       inline std::basic_string<wchar_t>
-      transcode<wchar_t> (const XMLCh* s, std::size_t length)
+      transcode<wchar_t> (const XMLCh* s)
       {
         if (s == 0)
           return std::basic_string<wchar_t> ();
 
-        // std::wcerr << s << std::endl;
+        return bits::wchar_transcoder<wchar_t, sizeof (wchar_t)>::to (
+          s, xercesc::XMLString::stringLen (s));
+      }
 
-        std::size_t l (0);
+      template <>
+      inline std::basic_string<wchar_t>
+      transcode<wchar_t> (const XMLCh* s, std::size_t len)
+      {
+        if (s == 0 || len == 0)
+          return std::basic_string<wchar_t> ();
 
-        if (length)
-        {
-          for (; l < length; ++l)
-          {
-            if (s[l] == 0)
-              break;
-          }
-        }
-        else
-          l = xercesc::XMLString::stringLen (s);
-
-        std::basic_string<wchar_t> r (l, L'0');
-
-        for (std::size_t i (0); i <= l; ++s, ++i)
-        {
-          r[i] = *s;
-        }
-
-        return r;
+        return bits::wchar_transcoder<wchar_t, sizeof (wchar_t)>::to (
+          s, len);
       }
 
       template <>
       inline XMLCh*
       transcode_to_xmlch (const wchar_t* s)
       {
-        std::size_t l (std::char_traits<wchar_t>::length (s));
-
-        XMLCh* r (new XMLCh[l + 1]);
-        XMLCh* ir (r);
-
-        for (std::size_t i (0); i < l; ++ir, ++i)
-        {
-          *ir = static_cast<XMLCh>(s[i]);
-        }
-
-        *ir = XMLCh (0);
-
-        return r;
+        return bits::wchar_transcoder<wchar_t, sizeof (wchar_t)>::from (
+          s, std::char_traits<wchar_t>::length (s));
       }
 
       template <>
       inline XMLCh*
       transcode_to_xmlch (const std::basic_string<wchar_t>& s)
       {
-        std::size_t l (s.length ());
-
-        XMLCh* r (new XMLCh[l + 1]);
-        XMLCh* ir (r);
-
-        for (std::size_t i (0); i < l; ++ir, ++i)
-        {
-          *ir = static_cast<XMLCh>(s[i]);
-        }
-
-        *ir = XMLCh (0);
-
-        return r;
+        return bits::wchar_transcoder<wchar_t, sizeof (wchar_t)>::from (
+          s.c_str (), s.length ());
       }
     }
   }

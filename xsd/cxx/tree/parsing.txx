@@ -1,6 +1,6 @@
 // file      : xsd/cxx/tree/parsing.txx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <xsd/cxx/xml/string.hxx>        // xml::{string, transcode}
@@ -12,6 +12,7 @@
 #include <xsd/cxx/tree/elements.hxx>
 #include <xsd/cxx/tree/types.hxx>
 #include <xsd/cxx/tree/list.hxx>
+#include <xsd/cxx/tree/text.hxx>         // text_content
 
 namespace xsd
 {
@@ -122,7 +123,7 @@ namespace xsd
       list (const xercesc::DOMElement& e, flags f, type* c)
           : sequence<X> (flags (f & ~flags::keep_dom), c) // ambiguous
       {
-        init (xml::transcode<C> (e.getTextContent ()), &e);
+        init (text_content<C> (e), &e);
       }
 
       template <typename X, typename C>
@@ -190,7 +191,7 @@ namespace xsd
       list (const xercesc::DOMElement& e, flags f, type* c)
           : sequence<X> (flags (f & ~flags::keep_dom), c) // ambiguous
       {
-        init (xml::transcode<C> (e.getTextContent ()), &e);
+        init (text_content<C> (e), &e);
       }
 
       template <typename X, typename C>
@@ -255,7 +256,7 @@ namespace xsd
       string<C, B>::
       string (const xercesc::DOMElement& e, flags f, type* c)
           : B (e, f, c),
-            base_type (xml::transcode<C> (e.getTextContent ()))
+            base_type (text_content<C> (e))
       {
       }
 
@@ -558,7 +559,7 @@ namespace xsd
       uri<C, B>::
       uri (const xercesc::DOMElement& e, flags f, type* c)
           : B (e, f, c),
-            base_type (xml::transcode<C> (e.getTextContent ()))
+            base_type (text_content<C> (e))
       {
       }
 
@@ -588,7 +589,7 @@ namespace xsd
       qname (const xercesc::DOMElement& e, flags f, type* c)
           : B (e, f, c)
       {
-        std::basic_string<C> v (xml::transcode<C> (e.getTextContent ()));
+        std::basic_string<C> v (text_content<C> (e));
         ns_ = resolve (v, &e);
         name_ = xml::uq_name (v);
       }
@@ -651,7 +652,10 @@ namespace xsd
       base64_binary (const xercesc::DOMElement& e, flags f, type* c)
           : B (e, f, c)
       {
-        decode (e.getTextContent ());
+        // This implementation is not optimal.
+        //
+        std::basic_string<C> str (text_content<C> (e));
+        decode (xml::string (str).c_str ());
       }
 
       template <typename C, typename B>
@@ -681,7 +685,10 @@ namespace xsd
       hex_binary (const xercesc::DOMElement& e, flags f, type* c)
           : B (e, f, c)
       {
-        decode (e.getTextContent ());
+        // This implementation is not optimal.
+        //
+        std::basic_string<C> str (text_content<C> (e));
+        decode (xml::string (str).c_str ());
       }
 
       template <typename C, typename B>
@@ -710,7 +717,7 @@ namespace xsd
       date<C, B>::
       date (const xercesc::DOMElement& e, flags f, type* c)
           : B (e, f, c),
-            base_type (xml::transcode<C> (e.getTextContent ()))
+            base_type (text_content<C> (e))
       {
       }
 
@@ -739,7 +746,7 @@ namespace xsd
       date_time<C, B>::
       date_time (const xercesc::DOMElement& e, flags f, type* c)
           : B (e, f, c),
-            base_type (xml::transcode<C> (e.getTextContent ()))
+            base_type (text_content<C> (e))
       {
       }
 
@@ -768,7 +775,7 @@ namespace xsd
       duration<C, B>::
       duration (const xercesc::DOMElement& e, flags f, type* c)
           : B (e, f, c),
-            base_type (xml::transcode<C> (e.getTextContent ()))
+            base_type (text_content<C> (e))
       {
       }
 
@@ -797,7 +804,7 @@ namespace xsd
       day<C, B>::
       day (const xercesc::DOMElement& e, flags f, type* c)
           : B (e, f, c),
-            base_type (xml::transcode<C> (e.getTextContent ()))
+            base_type (text_content<C> (e))
       {
       }
 
@@ -826,7 +833,7 @@ namespace xsd
       month<C, B>::
       month (const xercesc::DOMElement& e, flags f, type* c)
           : B (e, f, c),
-            base_type (xml::transcode<C> (e.getTextContent ()))
+            base_type (text_content<C> (e))
       {
       }
 
@@ -855,7 +862,7 @@ namespace xsd
       month_day<C, B>::
       month_day (const xercesc::DOMElement& e, flags f, type* c)
           : B (e, f, c),
-            base_type (xml::transcode<C> (e.getTextContent ()))
+            base_type (text_content<C> (e))
       {
       }
 
@@ -884,7 +891,7 @@ namespace xsd
       year<C, B>::
       year (const xercesc::DOMElement& e, flags f, type* c)
           : B (e, f, c),
-            base_type (xml::transcode<C> (e.getTextContent ()))
+            base_type (text_content<C> (e))
       {
       }
 
@@ -913,7 +920,7 @@ namespace xsd
       year_month<C, B>::
       year_month (const xercesc::DOMElement& e, flags f, type* c)
           : B (e, f, c),
-            base_type (xml::transcode<C> (e.getTextContent ()))
+            base_type (text_content<C> (e))
       {
       }
 
@@ -942,7 +949,7 @@ namespace xsd
       time<C, B>::
       time (const xercesc::DOMElement& e, flags f, type* c)
           : B (e, f, c),
-            base_type (xml::transcode<C> (e.getTextContent ()))
+            base_type (text_content<C> (e))
       {
       }
 

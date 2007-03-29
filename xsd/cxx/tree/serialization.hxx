@@ -1,11 +1,12 @@
 // file      : xsd/cxx/tree/serialization.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_SERIALIZATION_HXX
 #define XSD_CXX_TREE_SERIALIZATION_HXX
 
+#include <limits> // std::numeric_limits
 #include <string>
 #include <sstream>
 
@@ -245,15 +246,19 @@ namespace XERCES_CPP_NAMESPACE
     a << os.str ();
   }
 
-  // Floating-point types. Note that if we are serializing in scientific
-  // notation, we need to use (precision + 1). That's how libstdc++
-  // works.
+  // Floating-point types. The formula for the number of decimla digits
+  // required is given in:
+  // http://www2.open-std.org/JTC1/SC22/WG21/docs/papers/2005/n1822.pdf
   //
   inline void
   operator<< (xercesc::DOMElement& e, float f)
   {
     std::basic_ostringstream<char> os;
-    os.precision (7);
+#ifdef XSD_FP_ALL_DIGITS
+    os.precision (2 + std::numeric_limits<float>::digits * 301/1000);
+#else
+    os.precision (std::numeric_limits<float>::digits10);
+#endif
     os << f;
     e << os.str ();
   }
@@ -262,7 +267,11 @@ namespace XERCES_CPP_NAMESPACE
   operator<< (xercesc::DOMAttr& a, float f)
   {
     std::basic_ostringstream<char> os;
-    os.precision (7);
+#ifdef XSD_FP_ALL_DIGITS
+    os.precision (2 + std::numeric_limits<float>::digits * 301/1000);
+#else
+    os.precision (std::numeric_limits<float>::digits10);
+#endif
     os << f;
     a << os.str ();
   }
@@ -271,7 +280,11 @@ namespace XERCES_CPP_NAMESPACE
   operator<< (xercesc::DOMElement& e, double d)
   {
     std::basic_ostringstream<char> os;
-    os.precision (13);
+#ifdef XSD_FP_ALL_DIGITS
+    os.precision (2 + std::numeric_limits<double>::digits * 301/1000);
+#else
+    os.precision (std::numeric_limits<double>::digits10);
+#endif
     os << d;
     e << os.str ();
   }
@@ -280,7 +293,11 @@ namespace XERCES_CPP_NAMESPACE
   operator<< (xercesc::DOMAttr& a, double d)
   {
     std::basic_ostringstream<char> os;
-    os.precision (13);
+#ifdef XSD_FP_ALL_DIGITS
+    os.precision (2 + std::numeric_limits<double>::digits * 301/1000);
+#else
+    os.precision (std::numeric_limits<double>::digits10);
+#endif
     os << d;
     a << os.str ();
   }
@@ -292,7 +309,11 @@ namespace XERCES_CPP_NAMESPACE
     // can not be in scientific notation.
     //
     std::basic_ostringstream<char> os;
-    os.precision (24);
+#ifdef XSD_FP_ALL_DIGITS
+    os.precision (2 + std::numeric_limits<long double>::digits * 301/1000);
+#else
+    os.precision (std::numeric_limits<long double>::digits10);
+#endif
     os << std::fixed << d;
     e << os.str ();
   }
@@ -304,7 +325,11 @@ namespace XERCES_CPP_NAMESPACE
     // can not be in scientific notation.
     //
     std::basic_ostringstream<char> os;
-    os.precision (24);
+#ifdef XSD_FP_ALL_DIGITS
+    os.precision (2 + std::numeric_limits<long double>::digits * 301/1000);
+#else
+    os.precision (std::numeric_limits<long double>::digits10);
+#endif
     os << std::fixed << d;
     a << os.str ();
   }
@@ -402,7 +427,15 @@ namespace xsd
       inline void
       operator<< (xsd::cxx::tree::list_stream<C>& ls, float f)
       {
-        std::streamsize p (ls.os_.precision (7));
+#ifdef XSD_FP_ALL_DIGITS
+        std::streamsize p (
+          ls.os_.precision (
+            2 + std::numeric_limits<float>::digits * 301/1000));
+#else
+        std::streamsize p (
+          ls.os_.precision (
+            std::numeric_limits<float>::digits10));
+#endif
         ls.os_ << f;
         ls.os_.precision (p);
       }
@@ -411,7 +444,15 @@ namespace xsd
       inline void
       operator<< (xsd::cxx::tree::list_stream<C>& ls, double d)
       {
-        std::streamsize p (ls.os_.precision (13));
+#ifdef XSD_FP_ALL_DIGITS
+        std::streamsize p (
+          ls.os_.precision (
+            2 + std::numeric_limits<double>::digits * 301/1000));
+#else
+        std::streamsize p (
+          ls.os_.precision (
+            std::numeric_limits<double>::digits10));
+#endif
         ls.os_ << d;
         ls.os_.precision (p);
       }
@@ -423,7 +464,16 @@ namespace xsd
         // xsd:decimal (which we currently map to long double)
         // can not be in scientific notation.
         //
-        std::streamsize p (ls.os_.precision (24));
+#ifdef XSD_FP_ALL_DIGITS
+        std::streamsize p (
+          ls.os_.precision (
+            2 + std::numeric_limits<long double>::digits * 301/1000));
+#else
+        std::streamsize p (
+          ls.os_.precision (
+            std::numeric_limits<long double>::digits10));
+#endif
+
         std::ios_base::fmtflags f (
           ls.os_.setf (std::ios_base::fixed, std::ios_base::floatfield));
 
@@ -901,10 +951,16 @@ namespace xsd
       operator<< (xercesc::DOMElement& e, const qname<C, B, uri, ncname>& x)
       {
         std::basic_ostringstream<C> os;
-        std::basic_string<C> p (bits::resolve_prefix (x.namespace_ (), e));
 
-        if (!p.empty ())
-          os << p << C (':');
+        const std::basic_string<C>& ns (x.namespace_ ());
+
+        if (!ns.empty ())
+        {
+          std::basic_string<C> p (bits::resolve_prefix (ns, e));
+
+          if (!p.empty ())
+            os << p << C (':');
+        }
 
         os << x.name ();
 
@@ -916,11 +972,17 @@ namespace xsd
       operator<< (xercesc::DOMAttr& a, const qname<C, B, uri, ncname>& x)
       {
         std::basic_ostringstream<C> os;
-        std::basic_string<C> p (
-          bits::resolve_prefix (x.namespace_ (), *a.getOwnerElement ()));
 
-        if (!p.empty ())
-          os << p << C (':');
+        const std::basic_string<C>& ns (x.namespace_ ());
+
+        if (!ns.empty ())
+        {
+          std::basic_string<C> p (
+            bits::resolve_prefix (ns, *a.getOwnerElement ()));
+
+          if (!p.empty ())
+            os << p << C (':');
+        }
 
         os << x.name ();
 
@@ -931,11 +993,15 @@ namespace xsd
       void
       operator<< (list_stream<C>& ls, const qname<C, B, uri, ncname>& x)
       {
-        std::basic_string<C> p (
-          bits::resolve_prefix (x.namespace_ (), ls.parent_));
+        const std::basic_string<C>& ns (x.namespace_ ());
 
-        if (!p.empty ())
-          ls.os_ << p << C (':');
+        if (!ns.empty ())
+        {
+          std::basic_string<C> p (bits::resolve_prefix (ns, ls.parent_));
+
+          if (!p.empty ())
+            ls.os_ << p << C (':');
+        }
 
         ls.os_ << x.name ();
       }

@@ -14,7 +14,9 @@
  *    limitations under the License.
  */
 
-
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 #include "version.h"
 
 const char* oasys_version = OASYS_VERSION_STRING;

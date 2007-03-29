@@ -1,6 +1,6 @@
 // file      : xsd/cxx/tree/elements.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_ELEMENTS_HXX
@@ -700,19 +700,11 @@ namespace xsd
         template <typename S>
         simple_type (istream<S>&, flags = 0, type* container = 0);
 
-        simple_type (const simple_type& other,
-                     flags f = 0,
-                     type* container = 0)
-            : B (other, f, container)
-        {
-        }
+        simple_type (const simple_type&, flags = 0, type* container = 0);
 
       public:
         virtual simple_type*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new simple_type (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
       };
 
 
@@ -828,10 +820,7 @@ namespace xsd
 
       public:
         virtual fundamental_base*
-        _clone (flags f = 0, type* container = 0) const
-        {
-          return new fundamental_base (*this, f, container);
-        }
+        _clone (flags = 0, type* container = 0) const;
 
       private:
         X x_;

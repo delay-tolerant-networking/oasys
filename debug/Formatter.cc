@@ -14,15 +14,13 @@
  *    limitations under the License.
  */
 
-
-#include "Formatter.h"
-using oasys::Formatter;
-
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 #include <stdarg.h>
 #include <memory.h>
-
-#include "config.h"
-#include "compat/fpclassify.h"
+#include "Formatter.h"
+#include "../compat/fpclassify.h"
 
 namespace oasys {
 
@@ -48,7 +46,7 @@ size_t formatter_format(void* p, char* str, size_t strsz)
     // leave space for the trailing null, but in case there are nested
     // calls to format, we need the real amount of space here, so bump
     // it up by one again since we're careful not to clobber
-    const Formatter* fmtobj = (const Formatter*)p;
-    Formatter::assert_valid(fmtobj);
+    const ::oasys::Formatter* fmtobj = (const ::oasys::Formatter*)p;
+    ::oasys::Formatter::assert_valid(fmtobj);
     return fmtobj->format(str, strsz + 1);
 }

@@ -87,6 +87,7 @@ SERIALIZE_SRCS :=				\
 	serialize/TextSerialize.cc		\
 	serialize/XMLSerialize.cc		\
 	serialize/XercesXMLSerialize.cc		\
+	serialize/StringPairSerialize.cc	\
 
 SMTP_SRCS :=                                    \
 	smtp/BasicSMTP.cc          		\
@@ -104,6 +105,13 @@ STORAGE_SRCS :=					\
 	storage/FileBackedObjectStream.cc	\
 	storage/FileSystemStore.cc		\
 	storage/MemoryStore.cc                  \
+	storage/DS.cc				\
+	storage/DataStore.cc			\
+	storage/DataStoreProxy.cc		\
+	storage/DataStoreServer.cc		\
+	storage/ExternalDurableTableIterator.cc	\
+	storage/ExternalDurableStore.cc		\
+	storage/ExternalDurableTableImpl.cc	\
 
 TCLCMD_SRCS :=					\
 	tclcmd/ConsoleCommand.cc		\
@@ -210,16 +218,19 @@ endif
 # Special override rules for objects that can't use the default build options
 #
 compat/xdr_int64_compat.o: compat/xdr_int64_compat.c
-	$(CC) $(CFLAGS_NOWARN) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS_NOWARN) -c $< -o $@
 
 debug/gdtoa-%.o: debug/gdtoa-%.c
-	$(CC) -I./debug $(DEBUG) $(PICFLAGS) -DINFNAN_CHECK -c $< -o $@
+	$(CC) -I./debug -DINFNAN_CHECK $(CPPFLAGS) $(CFLAGS_NOWARN) -c $< -o $@
+
+#debug/_ldtoa.o: debug/_ldtoa.c
+#	$(CC) $(CPPFLAGS) $(CFLAGS) -fno-strict-aliasing -c $< -o $@
 
 debug/vfprintf.o: debug/vfprintf.c
-	$(CC) $(CFLAGS_NOWARN) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS_NOWARN) -c $< -o $@
 
 tclcmd/tclreadline.o: tclcmd/tclreadline.c
-	$(CC) $(CFLAGS_NOWARN) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS_NOWARN) -c $< -o $@
 
 #
 # Include the Makefile for tests
@@ -248,7 +259,7 @@ libs: $(LIBFILES)
 #
 debug/arith-native.h: debug/gdtoa-arithchk.c
 	@mkdir -p debug
-	$(CC) $(DEBUG) $(OPTIMIZE) $(PICFLAGS) $< -o debug/arithchk
+	$(CC) $(CPPFLAGS) $(CFLAGS_NOWARN) $< -o debug/arithchk
 	debug/arithchk > $@
 	rm -f debug/arithchk
 
@@ -290,7 +301,7 @@ endif
 
 debug/Formatter.o:  debug/Formatter.cc debug/arith.h
 	@rm -f $@; mkdir -p $(@D)
-	$(CXX) $(CFLAGS) -I./debug -c $< -o $@
+	$(CXX) -I./debug $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 GENFILES += debug/arith.h debug/arith-native.h debug/arithchk
 
@@ -387,3 +398,25 @@ check:
 tag tags:
 	find . -name "*.cc" -o -name "*.h" | xargs ctags
 	find . -name "*.cc" -o -name "*.h" | xargs etags
+
+
+# the --cxx-prologue and --cxx-epilogue add a guard to the generated c++ code
+XSD_TOOL_ARGS := \
+	--generate-serialization \
+	--hxx-suffix .h \
+	--cxx-suffix .cc \
+	--root-element-all \
+	--namespace-map =dsmessage \
+	--cxx-prologue '\#include <config.h>' \
+	--cxx-prologue '\#if defined(XERCES_C_ENABLED) && defined(EXTERNAL_DS_ENABLED)' \
+	--cxx-epilogue '\#endif' \
+
+xsdbindings: storage/DS.xsd
+ifdef XSD_TOOL
+	$(XSD_TOOL) cxx-tree $(XSD_TOOL_ARGS) --output-dir `dirname $<` $<
+else
+	@echo "WARNING: configure was unable to find the xsd tool needed to"
+	@echo "         regenerate DS.h."
+	@echo "         Use the --with-xsd-tool=(name) option with configure"
+	@echo "         specify the location of this tool."
+endif

@@ -69,9 +69,9 @@
  * out of the read loop.
  */
 
-//#ifdef HAVE_CONFIG_H
-#   include "config.h"
-//#endif
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #if TCLREADLINE_ENABLED
 

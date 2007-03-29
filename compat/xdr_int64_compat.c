@@ -51,6 +51,10 @@
  * Mountain View, California  94043
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "xdr_int64_compat.h"
 
 #include <rpc/rpc.h>

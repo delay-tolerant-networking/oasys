@@ -1,6 +1,6 @@
 // file      : xsd/cxx/xml/dom/auto-ptr.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_XML_DOM_AUTO_PTR_HXX
@@ -75,9 +75,7 @@ namespace xsd
           operator= (auto_ptr& y)
           {
             if (x_ != y.x_)
-            {
               reset (y.release ());
-            }
 
             return *this;
           }
@@ -87,9 +85,7 @@ namespace xsd
           operator= (auto_ptr<Y>& y)
           {
             if (x_ != y.x_)
-            {
               reset (y.release ());
-            }
 
             return *this;
           }
@@ -98,9 +94,7 @@ namespace xsd
           operator= (auto_ptr_ref<X> r)
           {
             if (r.x_ != x_)
-            {
               reset (r.x_);
-            }
 
             return *this;
           }
@@ -155,9 +149,9 @@ namespace xsd
 
           // Conversion to bool.
           //
-          typedef X* (auto_ptr::*boolean_convertible)() const;
+          typedef X* (auto_ptr::*bool_convertible)() const;
 
-          operator boolean_convertible () const throw ()
+          operator bool_convertible () const throw ()
           {
             return x_ ? &auto_ptr<X>::operator-> : 0;
           }

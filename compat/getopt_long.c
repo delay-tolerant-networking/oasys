@@ -5,7 +5,9 @@
  * errors on non-BSD platforms.
  */
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #ifndef HAVE_GETOPT_LONG
 #define REPLACE_GETOPT

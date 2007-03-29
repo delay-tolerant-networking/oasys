@@ -44,11 +44,11 @@ public:
     public:
         Tx(FileBackedObject* backing_file, int flags);
 
-	/*!
-	 * Destructor commits the transaction if it already hasn't
-	 * been committed.
-	 */
-	~Tx();
+        /*!
+         * Destructor commits the transaction if it already hasn't
+         * been committed.
+         */
+        ~Tx();
         
         /*!
          * @return The FileObject that is going to be committed. const

@@ -12,36 +12,36 @@ public:
     LockGroup() {}
 
     LockGroup(LockGroup& other)
-	: locks_(other.locks_)
+        : locks_(other.locks_)
     {
-	other.locks_.clear();
+        other.locks_.clear();
     }
 
     ~LockGroup() 
     {
-	release();
+        release();
     }
 
     void add(Lock* lock) 
     { 
-	locks_.push_back(lock); 
+        locks_.push_back(lock); 
     }
 
     void release() 
     {
-	for (LockVector::iterator i = locks_.begin();
-	     i != locks_.end(); ++i)
-	{
-	    (*i)->unlock();
-	}
+        for (LockVector::iterator i = locks_.begin();
+             i != locks_.end(); ++i)
+        {
+            (*i)->unlock();
+        }
     }
 
     LockGroup& operator=(LockGroup& other) 
     {
-	locks_ = other.locks_;
-	other.locks_.clear();
+        locks_ = other.locks_;
+        other.locks_.clear();
 
-	return *this;
+        return *this;
     }
 
 private:

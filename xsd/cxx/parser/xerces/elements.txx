@@ -1,6 +1,6 @@
 // file      : xsd/cxx/parser/xerces/elements.txx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <istream>
@@ -1182,6 +1182,12 @@ namespace xsd
 
         // event_router
         //
+        template <typename C>
+        event_router<C>::
+        event_router (event_consumer<C>& consumer)
+            : consumer_ (consumer)
+        {
+        }
 
         template <typename C>
         void event_router<C>::

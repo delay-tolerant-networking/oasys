@@ -1,6 +1,6 @@
 // file      : xsd/cxx/tree/error-handler.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_ERROR_HANDLER_HXX
@@ -26,14 +26,8 @@ namespace xsd
         handle (const std::basic_string<C>& id,
                 unsigned long line,
                 unsigned long column,
-                severity s,
-                const std::basic_string<C>& message)
-        {
-          if (s == severity::error || s == severity::fatal)
-            errors_.push_back (error<C> (id, line, column, message));
-
-          return true;
-        }
+                severity,
+                const std::basic_string<C>& message);
 
         template <typename X>
         void
@@ -49,5 +43,7 @@ namespace xsd
     }
   }
 }
+
+#include <xsd/cxx/tree/error-handler.txx>
 
 #endif  // XSD_CXX_TREE_ERROR_HANDLER_HXX

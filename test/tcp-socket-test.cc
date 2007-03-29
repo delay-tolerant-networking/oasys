@@ -14,6 +14,9 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -77,7 +80,7 @@ public:
     void run()
     {
         while (1) {
-	    memset(inpkt_, 0, sizeof(inpkt_));
+            memset(inpkt_, 0, sizeof(inpkt_));
             int cc = read(inpkt_, sizeof(inpkt_));
             if (cc == 0) {
                 close(); // eof
@@ -124,7 +127,7 @@ main(int argc, const char** argv)
     }
     if (addr != inet_addr("10.0.0.1")) {
         log_err("/test", "error: gethostbyname 10.0.0.1 got %x, "
-			"not %x", (u_int32_t)addr,
+                        "not %x", (u_int32_t)addr,
                         (u_int32_t)inet_addr("10.0.0.1"));
     }
     
@@ -134,8 +137,8 @@ main(int argc, const char** argv)
     
     if (ntohl(addr) != INADDR_LOOPBACK) {
         log_err("/test", "error: gethostbyname(localhost) got %x, "
-			"not %x", (u_int32_t)addr,
-			(u_int32_t)INADDR_LOOPBACK);
+                        "not %x", (u_int32_t)addr,
+                        (u_int32_t)INADDR_LOOPBACK);
     }
 
     TestTcpServer* s = new TestTcpServer();

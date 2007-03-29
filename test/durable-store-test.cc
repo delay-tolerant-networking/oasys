@@ -20,6 +20,11 @@
 // berkeley-db-test or filesys-db-test, each of which define the
 // macros NEW_DS_IMPL() and sets up a handful of global parameters
 //
+
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <bitset>
 
 #include "util/UnitTest.h"
@@ -357,10 +362,10 @@ DECLARE_TEST(SingleTypeMultiObject) {
     
     for(int i=0; i<num_objs; ++i) {
         StaticStringBuffer<256> buf;
-	buf.appendf("data%d", i);
+        buf.appendf("data%d", i);
         StringShim data(buf.c_str());
         
-	CHECK(table->put(IntShim(i), &data, DS_CREATE | DS_EXCL) == 0);
+        CHECK(table->put(IntShim(i), &data, DS_CREATE | DS_EXCL) == 0);
     }
     CHECK((int)table->size() == num_objs);
     
@@ -381,12 +386,12 @@ DECLARE_TEST(SingleTypeMultiObject) {
 
     for(int i=0; i<num_objs; ++i) {
         StaticStringBuffer<256> buf;
-	StringShim* data = 0;
+        StringShim* data = 0;
 
         IntShim key(pa.map(i));
         buf.appendf("data%d", pa.map(i));
 
-	CHECK(table->get(key, &data) == 0);
+        CHECK(table->get(key, &data) == 0);
         CHECK_EQUALSTR(buf.c_str(), data->value().c_str());
         delete_z(data);
     }
@@ -411,10 +416,10 @@ DECLARE_TEST(SingleTypeIterator) {
     
     for(int i=0; i<num_objs; ++i) {
         StaticStringBuffer<256> buf;
-	buf.appendf("data%d", i);
+        buf.appendf("data%d", i);
         StringShim data(buf.c_str());
         
-	CHECK(table->put(IntShim(i), &data, DS_CREATE | DS_EXCL) == 0);
+        CHECK(table->put(IntShim(i), &data, DS_CREATE | DS_EXCL) == 0);
     }
 
     DurableIterator* iter = table->itr();

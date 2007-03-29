@@ -14,6 +14,10 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 static const char* INIT_COMMAND = 
 "#\n"
 "# This file is converted into a big C string during the build\n"

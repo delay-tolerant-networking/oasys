@@ -14,7 +14,9 @@
  *    limitations under the License.
  */
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include "TclCommand.h"
 #include "DebugCommand.h"
@@ -63,10 +65,10 @@ TclCommandInterp::do_init(char* argv0, bool no_default_cmds)
     // depend on it succeeding in case there's a strange tcl
     // installation
     if (Tcl_Init(interp_) != TCL_OK) {
-	StringBuffer err("initialization problem calling Tcl_Init: %s\n"
-			 "(this is not a fatal error, continuing initialization...)\n\n",
-			 interp_->result);
-	log_multiline(LOG_WARN, err.c_str());
+        StringBuffer err("initialization problem calling Tcl_Init: %s\n"
+                         "(this is not a fatal error, continuing initialization...)\n\n",
+                         interp_->result);
+        log_multiline(LOG_WARN, err.c_str());
     }
 
     // do auto registration of commands (if any)

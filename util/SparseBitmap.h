@@ -18,7 +18,6 @@
 #define _OASYS_SPARSE_BITMAP_H_
 
 #include <vector>
-#include "config.h"
 
 #include "../debug/DebugUtils.h"
 #include "../debug/Formatter.h"

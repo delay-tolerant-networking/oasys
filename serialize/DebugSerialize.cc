@@ -13,6 +13,11 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "DebugSerialize.h"
 
 namespace oasys {
@@ -69,24 +74,24 @@ DebugSerialize::process(const char* name, u_char* buf, u_int32_t len)
 //----------------------------------------------------------------------------
 void 
 DebugSerialize::process(const char*            name, 
-                   	BufferCarrier<u_char>* carrier)
+                        BufferCarrier<u_char>* carrier)
 {
     buf_.appendf("%s: binary addr=%p length=%zu\n", 
-	         name, carrier->buf(), carrier->len());
+                 name, carrier->buf(), carrier->len());
 }
 
 //----------------------------------------------------------------------------
 void 
 DebugSerialize::process(const char*            name,
-                     	BufferCarrier<u_char>* carrier,
-                     	u_char                 terminator)
+                        BufferCarrier<u_char>* carrier,
+                        u_char                 terminator)
 {
     size_t len = 0;
     while (carrier->buf()[len] != terminator)
-	++len;
+        ++len;
 
     buf_.appendf("%s: binary addr=%p length=%zu\n", 
-	         name, carrier->buf(), len);
+                 name, carrier->buf(), len);
 }
 
 //----------------------------------------------------------------------------

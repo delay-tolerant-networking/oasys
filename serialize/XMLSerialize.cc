@@ -19,10 +19,13 @@
  *    derived from this software without specific prior written permission.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "XMLSerialize.h"
 #include <io/NetUtils.h>
 
-#include <config.h>
 #ifdef XERCES_C_ENABLED
 #include <xercesc/util/Base64.hpp>
 #include <xercesc/util/XMLString.hpp>
@@ -150,6 +153,27 @@ XMLMarshal::process(const char*            name,
     {
         ++len;
     }
+    process(name, carrier, &len);
+}
+
+void 
+XMLMarshal::process(const char*            name,
+                    BufferCarrier<u_char>* carrier,
+                    u_char                 terminator)
+{
+    size_t len = 0;
+    while (carrier->buf()[len] != terminator)
+    {
+        ++len;
+    }
+    process(name, carrier, &len);
+}
+
+void 
+XMLMarshal::process(const char*            name,
+                    BufferCarrier<u_char>* carrier)
+{
+    size_t len = carrier->len();
     process(name, carrier, &len);
 }
 

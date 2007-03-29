@@ -1,6 +1,6 @@
 // file      : xsd/cxx/parser/validating/parser.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_PARSER_VALIDATING_PARSER_HXX
@@ -115,18 +115,70 @@ namespace xsd
         };
 
 
-        // @@ Not used in the generated code at moment.
+        //
         //
         template <typename C>
         struct simple_content: virtual empty_content<C>
         {
+          //
+          //
+          virtual void
+          _attribute (const ro_string<C>& ns,
+                      const ro_string<C>& name,
+                      const ro_string<C>& value);
+
+          virtual void
+          _characters (const ro_string<C>&);
+
+          //
+          //
+          virtual bool
+          _attribute_impl (const ro_string<C>&,
+                           const ro_string<C>&,
+                           const ro_string<C>&);
+
+          //
+          //
+          virtual void
+          _pre_impl ();
+
+          virtual void
+          _post_impl ();
+
+
+          // Implementation hooks.
+          //
+          virtual void
+          _pre_a_validate ();
+
+          virtual void
+          _post_a_validate ();
+
+
+          // Attribute validation: during phase one we are searching for
+          // matching attributes (Structures, section 3.4.4, clause 2.1).
+          // During phase two we are searching for attribute wildcards
+          // (section 3.4.4, clause 2.2). Both phases run across
+          // inheritance hierarchy from derived to base for extension
+          // only. Both functions return true if the match was found and
+          // validation has been performed.
+          //
+          virtual bool
+          _attribute_impl_phase_one (const ro_string<C>& ns,
+                                     const ro_string<C>& name,
+                                     const ro_string<C>& value);
+
+          virtual bool
+          _attribute_impl_phase_two (const ro_string<C>& ns,
+                                     const ro_string<C>& name,
+                                     const ro_string<C>& value);
         };
 
 
         //
         //
         template <typename C>
-        struct complex_content: virtual simple_content<C>
+        struct complex_content: virtual empty_content<C>
         {
           //
           //
@@ -181,17 +233,14 @@ namespace xsd
           // matching attributes (Structures, section 3.4.4, clause 2.1).
           // During phase two we are searching for attribute wildcards
           // (section 3.4.4, clause 2.2). Both phases run across
-          // inheritance hierarchy from derived to base for both extension
-          // and restriction. In case of restriction, the base is called
-          // with the valid argument set to true in order to allow the
-          // base to record attribute presence. Both functions return true
-          // if the match was found and validation has been performed.
+          // inheritance hierarchy from derived to base for extension
+          // only. Both functions return true if the match was found and
+          // validation has been performed.
           //
           virtual bool
           _attribute_impl_phase_one (const ro_string<C>& ns,
                                      const ro_string<C>& name,
-                                     const ro_string<C>& value,
-                                     bool valid);
+                                     const ro_string<C>& value);
 
           virtual bool
           _attribute_impl_phase_two (const ro_string<C>& ns,
@@ -201,10 +250,11 @@ namespace xsd
           struct state
           {
             state ()
-                : depth_ (0), parser_ (0)
+                : any_ (false), depth_ (0), parser_ (0)
             {
             }
 
+            bool any_;
             std::size_t depth_;
             parser_base<C>* parser_;
           };

@@ -29,15 +29,15 @@ namespace oasys {
  */
 struct StorageConfig {
     // General options that must be set (in the constructor)
-    std::string cmd_;		///< tcl command name for this instance
-    std::string type_;		///< storage type [berkeleydb/mysql/postgres]
-    std::string dbname_;	///< Database name (filename in berkeley db)
-    std::string dbdir_;		///< Path to the database files
+    std::string cmd_;           ///< tcl command name for this instance
+    std::string type_;          ///< storage type [berkeleydb/mysql/postgres/external]
+    std::string dbname_;        ///< Database name (filename in berkeley db)
+    std::string dbdir_;         ///< Path to the database files
 
     // Other general options
-    bool        init_;		///< Create new databases on init
-    bool        tidy_;		///< Prune out the database on init
-    int         tidy_wait_;	///< Seconds to wait before tidying
+    bool        init_;          ///< Create new databases on init
+    bool        tidy_;          ///< Prune out the database on init
+    int         tidy_wait_;     ///< Seconds to wait before tidying
     bool        leave_clean_file_;///< Leave a .ds_clean file on clean shutdown
 
     // Filesystem DB Specific options
@@ -49,13 +49,17 @@ struct StorageConfig {
     bool        db_log_;        ///< Use DB log subsystem
     bool        db_txn_;        ///< Use DB transaction
     int         db_max_tx_;     ///< Max # of active transactions (0 for default)
-    int		db_max_locks_;	///< Max # of active locks (0 for default)
-    int		db_max_lockers_;///< Max # of active locking threads (0 for default)
-    int		db_max_lockedobjs_;///< Max # of active locked objects (0 for default)
-    int		db_max_logregion_; ///< Logging region max (0 for default)
+    int         db_max_locks_;  ///< Max # of active locks (0 for default)
+    int         db_max_lockers_;///< Max # of active locking threads (0 for default)
+    int         db_max_lockedobjs_;///< Max # of active locked objects (0 for default)
+    int         db_max_logregion_; ///< Logging region max (0 for default)
     int         db_lockdetect_; ///< Frequency in msecs to check for deadlocks
                                 ///< (locking disabled if zero)
-    bool	db_sharefile_;	///< Share a single DB file (and a lock)
+    bool        db_sharefile_;  ///< Share a single DB file (and a lock)
+
+    // External data store specific options
+    u_int16_t   server_port_;   ///< server port to connect to (on localhost)
+    std::string schema_;        ///< xml schema for remote interface
 
     StorageConfig(
         const std::string& cmd,
@@ -84,7 +88,9 @@ struct StorageConfig {
         db_max_lockedobjs_(0),
         db_max_logregion_(0),
         db_lockdetect_(5000),
-        db_sharefile_(false)
+        db_sharefile_(false),
+
+        server_port_(0)
     {}
 };
 

@@ -17,8 +17,6 @@
 #ifndef _OASYS_RFCOMM_SERVER_H_
 #define _OASYS_RFCOMM_SERVER_H_
 
-#include "config.h"
-
 #ifdef OASYS_BLUETOOTH_ENABLED
 
 #include "BluetoothServer.h"

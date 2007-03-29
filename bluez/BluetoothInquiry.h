@@ -17,7 +17,6 @@
 #ifndef _OASYS_BT_INQUIRY_H_
 #define _OASYS_BT_INQUIRY_H_
 
-#include <config.h> 
 #ifdef OASYS_BLUETOOTH_ENABLED
 
 #include <bluetooth/bluetooth.h> // for bdaddr_t

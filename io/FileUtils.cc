@@ -14,6 +14,9 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include <errno.h>
 #include <sys/stat.h>
@@ -154,8 +157,8 @@ FileUtils::fast_copy(const char* src_filename, const char* dest_filename)
     do {
         cc = read(src_fd, buf, BUFSIZE);
 
-	int dd = write(dest_fd, buf, cc);
-	ASSERT(dd == cc);
+        int dd = write(dest_fd, buf, cc);
+        ASSERT(dd == cc);
     } while (cc > 0);
         
     /*
@@ -179,20 +182,20 @@ int
 FileUtils::StatFormat::format(char* buf, size_t len) const
 {
     return snprintf(buf, len, 
-	            "dev=%u mode=%4o nlink=%u "
-	            "uid=%u gid=%u type=%u "
-		    "size=%zu at=%u mt=%u "
-		    "ct=%u",
-		    static_cast<unsigned int>(stat_.st_dev),
-		    static_cast<unsigned int>(stat_.st_mode),
-		    static_cast<unsigned int>(stat_.st_nlink),
-		    static_cast<unsigned int>(stat_.st_uid),
-		    static_cast<unsigned int>(stat_.st_gid),
-		    static_cast<unsigned int>(stat_.st_rdev),
-		    static_cast<size_t>     (stat_.st_size),
-		    static_cast<unsigned int>(stat_.st_atime),
-		    static_cast<unsigned int>(stat_.st_mtime),
-		    static_cast<unsigned int>(stat_.st_ctime));
+                    "dev=%u mode=%4o nlink=%u "
+                    "uid=%u gid=%u type=%u "
+                    "size=%zu at=%u mt=%u "
+                    "ct=%u",
+                    static_cast<unsigned int>(stat_.st_dev),
+                    static_cast<unsigned int>(stat_.st_mode),
+                    static_cast<unsigned int>(stat_.st_nlink),
+                    static_cast<unsigned int>(stat_.st_uid),
+                    static_cast<unsigned int>(stat_.st_gid),
+                    static_cast<unsigned int>(stat_.st_rdev),
+                    static_cast<size_t>     (stat_.st_size),
+                    static_cast<unsigned int>(stat_.st_atime),
+                    static_cast<unsigned int>(stat_.st_mtime),
+                    static_cast<unsigned int>(stat_.st_ctime));
 }
 
 } // end namespace

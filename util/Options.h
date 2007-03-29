@@ -17,7 +17,6 @@
 #ifndef _OASYS_OPTIONS_H_
 #define _OASYS_OPTIONS_H_
 
-#include <config.h>
 #include <string>
 #include <vector>
 #include "../compat/inet_aton.h"

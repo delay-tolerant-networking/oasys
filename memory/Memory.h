@@ -17,8 +17,6 @@
 #ifndef _OASYS_MEMORY_H_
 #define _OASYS_MEMORY_H_
 
-#include "config.h"
-
 #ifdef OASYS_DEBUG_MEMORY_ENABLED
 
 #include <cstddef>
@@ -128,8 +126,8 @@ struct dbg_mem_t {
 class DbgMemInfo {
 public:
     enum {
-	NO_FLAGS   = 0,
-	USE_SIGNAL = 1,   // set up a signal handler for dumping memory information
+        NO_FLAGS   = 0,
+        USE_SIGNAL = 1,   // set up a signal handler for dumping memory information
     };
 
     
@@ -173,9 +171,9 @@ public:
      * Increment the memory info.
      */ 
     static inline dbg_mem_entry_t* inc(
-	void**    frames,
-	u_int32_t size
-	)
+        void**    frames,
+        u_int32_t size
+        )
     {
         dbg_mem_entry_t* entry = find(frames);
 
@@ -183,12 +181,12 @@ public:
             memcpy(entry->frames_, frames, sizeof(void*) * _DBG_MEM_FRAMES);
             entry->live_      = 1;
             entry->last_live_ = 0;
-	} else {
+        } else {
             ++(entry->live_);
         }
 
-	entry->size_ += size;
-	++entries_;
+        entry->size_ += size;
+        ++entries_;
 
         return entry;
     }
@@ -197,20 +195,20 @@ public:
      * Decrement the memory info.
      */ 
     static inline dbg_mem_entry_t* dec(dbg_mem_t* mem) {
-	void**    frames = mem->entry_->frames_;
-	u_int32_t size   = mem->size_;
+        void**    frames = mem->entry_->frames_;
+        u_int32_t size   = mem->size_;
 
         dbg_mem_entry_t* entry = find(frames);
         
         if(entry->frames_[0] == 0) {
-	    PANIC("Decrementing memory entry with no frame info");
+            PANIC("Decrementing memory entry with no frame info");
         } else {
             entry->live_ -= 1;
-	    entry->size_ -= size;
+            entry->size_ -= size;
 
-	    if(entry->live_ < 0) {
-		PANIC("Memory object live count < 0");
-	    }
+            if(entry->live_ < 0) {
+                PANIC("Memory object live count < 0");
+            }
         }
 
         return entry;

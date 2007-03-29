@@ -14,9 +14,11 @@
  *    limitations under the License.
  */
 
-
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 #include "DebugCommand.h"
-#include "memory/Memory.h"
+#include "../memory/Memory.h"
 
 namespace oasys {
 

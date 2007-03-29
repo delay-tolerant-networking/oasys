@@ -14,6 +14,10 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <cstdio>
 
 #include "../Log.h"
@@ -46,12 +50,12 @@ LogConfigParser::parse()
     {
         if (fgets(buf, sizeof(buf), fp) > 0) 
         {
-	    char *line = buf;
-	    char *logpath;
-	    char *level;
-	    char *rest;
+            char *line = buf;
+            char *logpath;
+            char *level;
+            char *rest;
 
-	    ++linenum;
+            ++linenum;
             logpath = line;
 
             // skip leading whitespace

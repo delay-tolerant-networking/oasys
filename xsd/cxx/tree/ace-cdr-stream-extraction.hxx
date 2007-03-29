@@ -1,6 +1,6 @@
 // file      : xsd/cxx/tree/ace-cdr-stream-extraction.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_ACE_CDR_STREAM_EXTRACTION_HXX
@@ -10,6 +10,8 @@
 #include <string>
 
 #include <ace/CDR_Stream.h>
+
+#include <xsd/cxx/auto-array.hxx>
 
 #include <xsd/cxx/tree/buffer.hxx>
 #include <xsd/cxx/tree/istream.hxx>
@@ -80,9 +82,7 @@ namespace xsd
         if (!s.impl ().read_octet (r))
           throw ace_cdr_stream_extraction ();
 
-        // Cannot use static_cast here because of a potential sign loss.
-        //
-        x.x_ = reinterpret_cast<X> (r);
+        x.x_ = static_cast<X> (r);
 
         return s;
       }
@@ -97,9 +97,7 @@ namespace xsd
         if (!s.impl ().read_octet (r))
           throw ace_cdr_stream_extraction ();
 
-        // Cannot use static_cast here because of a potential sign loss.
-        //
-        x.x_ = reinterpret_cast<X> (r);
+        x.x_ = static_cast<X> (r);
 
         return s;
       }
@@ -280,16 +278,9 @@ namespace xsd
         if (!s.impl ().read_string (r))
           throw ace_cdr_stream_extraction ();
 
-        try
-        {
-          x = r;
-          delete [] r;
-        }
-        catch (...)
-        {
-          delete [] r;
-          throw;
-        }
+        auto_array<ACE_CDR::Char> ar (r);
+
+        x = r;
 
         return s;
       }
@@ -302,16 +293,9 @@ namespace xsd
         if (!s.impl ().read_wstring (r))
           throw ace_cdr_stream_extraction ();
 
-        try
-        {
-          x = r;
-          delete [] r;
-        }
-        catch (...)
-        {
-          delete [] r;
-          throw;
-        }
+        auto_array<ACE_CDR::WChar> ar (r);
+
+        x = r;
 
         return s;
       }

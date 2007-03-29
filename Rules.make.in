@@ -1,6 +1,7 @@
 #
 # Rules.make: common makefile rules for oasys / DTN2
 #
+# @configure_input@
 
 #
 # Targets are "native", "arm" and "mips"
@@ -13,7 +14,27 @@ TARGET 		= @TARGET@
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 bindir		= @bindir@
+sbindir		= @sbindir@
+libexecdir	= @libexecdir@
+datarootdir	= @datarootdir@
+datadir		= @datadir@
+sysconfdir	= @sysconfdir@
+sharedstatedir	= @sharedstatedir@
+localstatedir	= @localstatedir@
+includedir	= @includedir@
+oldincludedir	= @oldincludedir@
+docdir		= @docdir@
+infodir		= @infodir@
+htmldir		= @htmldir@
+dvidir		= @dvidir@
+pdfdir		= @pdfdir@
+psdir		= @psdir@
 libdir		= @libdir@
+localedir	= @localedir@
+mandir		= @mandir@
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+
 CC		= @CC@
 CXX		= @CXX@
 AR		= @AR@
@@ -29,10 +50,12 @@ SHLIBS		= @SHLIBS@
 SHLIB_EXT	= @SHLIB_EXT@
 PICFLAGS        = @PICFLAGS@
 LFSDEFS         = @LFSDEFS@
-CPPFLAGS	= -I$(BUILDDIR) -I$(SRCDIR) @CPPFLAGS@
+CPPFLAGS	= -I$(BUILDDIR) -I$(SRCDIR) -DINSTALL_LOCALSTATEDIR='"$(localstatedir)"' -DINSTALL_SYSCONFDIR='"$(sysconfdir)"' @DEFS@ @LFSDEFS@ @CPPFLAGS@
 WARN		= -Wall -W -Wcast-align @OPTIMIZE_WARN@ -Werror
-CFLAGS_NOWARN	= $(CPPFLAGS) $(DEBUG) $(OPTIMIZE) $(PICFLAGS) $(LFSDEFS) $(DEPFLAGS) $(PROFILE)
-CFLAGS          = $(CFLAGS_NOWARN) $(WARN)
+CFLAGS_NOWARN	= $(DEBUG) $(OPTIMIZE) $(PICFLAGS) $(DEPFLAGS) $(PROFILE) @CFLAGS@
+CFLAGS          = $(WARN) $(CFLAGS_NOWARN)
+CXXFLAGS_NOWARN = $(DEBUG) $(OPTIMIZE) $(PICFLAGS) $(DEPFLAGS) $(PROFILE) @CXXFLAGS@
+CXXFLAGS        = $(WARN) $(CXXFLAGS_NOWARN)
 LIBS		= @LIBS@
 OASYS_LIBS	= @OASYS_LIBS@
 LDFLAGS		= @LDFLAGS@ @RPATH@
@@ -53,22 +76,22 @@ catchdefault:
 #
 %.o: %.cc
 	@rm -f $@; mkdir -p $(@D)
-	$(CXX) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 %.o: %.c
 	@rm -f $@; mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 #
 # Generate cpp output in .E files.
 #
 %.E: %.cc
 	@rm -f $@; mkdir -p $(@D)
-	$(CXX) $(CFLAGS) -c $< -E -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -E -o $@
 
 %.E: %.c
 	@rm -f $@; mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c $< -E -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -E -o $@
 
 #
 # Make stripped binaries from debug binaries

@@ -123,8 +123,8 @@ AC_DEFUN(AC_OASYS_FIND_EXPAT, [
                 #include <expat.h>
             ],
             [
-	        XML_Parser *parser;
-                parser = XML_ParserCreate(NULL);
+		XML_Parser parser;
+		parser = XML_ParserCreate(NULL);
             ]),
 
           [

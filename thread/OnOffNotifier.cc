@@ -14,6 +14,9 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include <errno.h>
 #include <unistd.h>
@@ -53,7 +56,7 @@ OnOffNotifier::OnOffNotifier(const char* logpath, bool quiet)
     
     for (int n = 0; n < 2; ++n) {
         if (IO::set_nonblocking(pipe_[n], true, quiet ? 0 : logpath_) != 0) 
-	{
+        {
             PANIC("error setting fd %d to nonblocking: %s",
                   pipe_[n], strerror(errno));
         }

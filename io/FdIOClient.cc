@@ -14,6 +14,9 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include "FdIOClient.h"
 #include "IO.h"
@@ -84,7 +87,7 @@ FdIOClient::timeout_read(char* bp, size_t len, int timeout_ms)
 
 int 
 FdIOClient::timeout_readv(const struct iovec* iov, int iovcnt,
-	          int timeout_ms)
+                  int timeout_ms)
 {
     return IO::timeout_readv(fd_, iov, iovcnt, timeout_ms,
                              get_notifier(), logpath_);

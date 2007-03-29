@@ -14,6 +14,10 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <algorithm>
 #include <errno.h>
 
@@ -50,7 +54,7 @@ BufferedInput::read_line(const char* nl, char** buf, int timeout)
         int cc = internal_read(buf_.fullbytes() + BufferedInput::READ_AHEAD,
                                timeout);
         
-	log_debug("readline: cc = %d", cc);
+        log_debug("readline: cc = %d", cc);
         if(cc <= 0)
         {
             log_debug("%s: read %s", 
@@ -81,7 +85,7 @@ BufferedInput::read_bytes(size_t len, char** buf, int timeout)
         // fill up the buffer (if possible)
         log_debug("read_bytes calling internal_read for %zu needed bytes",
                   (len - total));
-	int cc = internal_read(len, timeout);
+        int cc = internal_read(len, timeout);
         if (cc <= 0)
         {
             log_debug("%s: read %s", 
@@ -92,7 +96,7 @@ BufferedInput::read_bytes(size_t len, char** buf, int timeout)
         // the return from internal_read is the smaller of what we
         // asked for (i.e. len), and the buffer's fullbytes after the
         // read. therefore, it's suitable as the value for total
-	total = cc;
+        total = cc;
     }
 
     *buf = buf_.start();
@@ -249,9 +253,9 @@ BufferedInput::find_nl(const char* nl)
         {
             return offset - buf_.start();
         }
-	
-	offset++;
-	bytes_left--;
+        
+        offset++;
+        bytes_left--;
     }
 }
 
@@ -280,7 +284,7 @@ BufferedOutput::write(const char* bp, size_t len)
     
     if ((flush_limit_) > 0 && (buf_.fullbytes() > flush_limit_))
     {
-	flush();
+        flush();
     }
 
     return len;
@@ -309,7 +313,7 @@ BufferedOutput::vformat_buf(const char* fmt, va_list ap)
     buf_.fill(len);
     if ((flush_limit_) > 0 && (buf_.fullbytes() > flush_limit_))
     {
-	flush();
+        flush();
     }
 
     return len;
@@ -349,7 +353,7 @@ BufferedOutput::flush()
         int cc = client_->write(buf_.start(), buf_.fullbytes());
 
         if (cc < 0) 
-	{
+        {
             log_err("write error %s", strerror(errno));
 
             return cc;
@@ -371,8 +375,8 @@ BufferedOutput::flush()
                   buf_.start(), cc);
 #endif
 
-	buf_.consume(cc);
-	total += cc;
+        buf_.consume(cc);
+        total += cc;
     }
 
     return total;

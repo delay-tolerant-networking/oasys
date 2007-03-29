@@ -1,10 +1,16 @@
 // file      : xsd/cxx/xml/dom/elements.txx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <xercesc/util/XMLUniDefs.hpp> // chLatin_L, etc
 
+#include <xercesc/dom/DOMBuilder.hpp>
+#include <xercesc/dom/DOMImplementation.hpp>
+#include <xercesc/dom/DOMImplementationRegistry.hpp>
+
+#include <xsd/cxx/xml/string.hxx>
+#include <xsd/cxx/xml/bits/literals.hxx>
 #include <xsd/cxx/xml/dom/bits/error-handler-proxy.hxx>
 
 namespace xsd
@@ -17,6 +23,7 @@ namespace xsd
       {
         // element
         //
+
         template <typename C>
         element<C>::
         element (const xercesc::DOMElement& e)
@@ -77,33 +84,24 @@ namespace xsd
               name_ (name),
               namespace__ (ns)
         {
-          string_type p (prefix (ns, parent));
-
           xercesc::DOMDocument* doc (parent.getOwnerDocument ());
 
-          e_ = doc->createElementNS (
-            string (ns).c_str (),
-            string (p.empty ()
-                    ? name
-                    : p + string_type (1, ':') + name).c_str ());
+          if (!ns.empty ())
+          {
+            string_type p (prefix (ns, parent));
+
+            e_ = doc->createElementNS (
+              string (ns).c_str (),
+              string (p.empty ()
+                      ? name
+                      : p + string_type (1, ':') + name).c_str ());
+          }
+          else
+            e_ = doc->createElement (string (name).c_str ());
 
           parent.appendChild (e_);
 
           ce_ = e_;
-        }
-
-        template <typename C>
-        typename element<C>::string_type element<C>::
-        value () const
-        {
-          return transcode<C> (dom_element ().getTextContent ());
-        }
-
-        template <typename C>
-        void element<C>::
-        value (const string_type& v)
-        {
-          dom_element ().setTextContent (string (v).c_str ());
         }
 
         template <typename C>
@@ -200,15 +198,20 @@ namespace xsd
               namespace__ (ns),
               value_ ()
         {
-          string_type p (prefix (ns, parent));
-
           xercesc::DOMDocument* doc (parent.getOwnerDocument ());
 
-          a_ = doc->createAttributeNS (
-            string (ns).c_str (),
-            string (p.empty ()
-                    ? name
-                    : p + string_type (1, ':') + name).c_str ());
+          if (!ns.empty ())
+          {
+            string_type p (prefix (ns, parent));
+
+            a_ = doc->createAttributeNS (
+              string (ns).c_str (),
+              string (p.empty ()
+                      ? name
+                      : p + string_type (1, ':') + name).c_str ());
+          }
+          else
+            a_ = doc->createAttribute (string (name).c_str ());
 
           if (!v.empty ())
             value (v);
@@ -237,6 +240,70 @@ namespace xsd
         //
 
         template <typename C>
+        std::basic_string<C>
+        ns_name (const element<C>& e, const std::basic_string<C>& n)
+        {
+          std::basic_string<C> p (prefix (n));
+
+          // 'xml' prefix requires special handling and Xerces folks refuse
+          // to handle this in DOM so I have to do it myself.
+          //
+          if (p == xml::bits::xml_prefix<C> ())
+            return xml::bits::xml_namespace<C> ();
+
+          const XMLCh* xns (e.dom_element ()->lookupNamespaceURI (
+                              p.empty () ? 0 : string (p).c_str ()));
+
+          if (xns == 0)
+            throw no_mapping ();
+
+          return transcode<C> (xns);
+        }
+
+        template <typename C>
+        std::basic_string<C>
+        fq_name (const element<C>& e, const std::basic_string<C>& n)
+        {
+          std::basic_string<C> ns (ns_name (e, n));
+          std::basic_string<C> un (uq_name (n));
+
+          return ns.empty () ? un : (ns + C ('#') + un);
+        }
+
+        template <typename C>
+        std::basic_string<C>
+        prefix (const std::basic_string<C>& ns, const xercesc::DOMElement& e)
+        {
+          string xns (ns);
+
+          const XMLCh* p (e.lookupNamespacePrefix (xns.c_str (), false));
+
+          if (p == 0)
+          {
+            if (e.isDefaultNamespace (xns.c_str ()))
+            {
+              return std::basic_string<C> ();
+            }
+            else
+            {
+              // 'xml' prefix requires special handling and Xerces folks
+              // refuse to handle this in DOM so I have to do it myself.
+              //
+              if (ns == xml::bits::xml_namespace<C> ())
+                return xml::bits::xml_prefix<C> ();
+
+              throw no_prefix ();
+            }
+          }
+
+          return transcode<C> (p);
+        }
+
+
+        //
+        //
+
+        template <typename C>
         xml::dom::auto_ptr<xercesc::DOMDocument>
         parse (const xercesc::DOMInputSource& is,
                error_handler<C>& eh,
@@ -258,6 +325,7 @@ namespace xsd
           //
           using xercesc::DOMImplementationRegistry;
           using xercesc::DOMImplementationLS;
+          using xercesc::DOMImplementation;
           using xercesc::DOMDocument;
           using xercesc::DOMBuilder;
           using xercesc::XMLUni;
@@ -265,15 +333,14 @@ namespace xsd
 
           // Instantiate the DOM parser.
           //
-          const XMLCh gLS[] = {xercesc::chLatin_L,
-                               xercesc::chLatin_S,
-                               xercesc::chNull};
+          const XMLCh ls_id[] = {xercesc::chLatin_L,
+                                 xercesc::chLatin_S,
+                                 xercesc::chNull};
 
           // Get an implementation of the Load-Store (LS) interface.
           //
-          DOMImplementationLS* impl (
-            static_cast<DOMImplementationLS*>(
-              DOMImplementationRegistry::getDOMImplementation(gLS)));
+          DOMImplementation* impl (
+            DOMImplementationRegistry::getDOMImplementation (ls_id));
 
           // Create a DOMBuilder.
           //
@@ -384,6 +451,7 @@ namespace xsd
           //
           using xercesc::DOMImplementationRegistry;
           using xercesc::DOMImplementationLS;
+          using xercesc::DOMImplementation;
           using xercesc::DOMDocument;
           using xercesc::DOMBuilder;
           using xercesc::XMLUni;
@@ -391,15 +459,14 @@ namespace xsd
 
           // Instantiate the DOM parser.
           //
-          const XMLCh gLS[] = {xercesc::chLatin_L,
-                               xercesc::chLatin_S,
-                               xercesc::chNull};
+          const XMLCh ls_id[] = {xercesc::chLatin_L,
+                                 xercesc::chLatin_S,
+                                 xercesc::chNull};
 
           // Get an implementation of the Load-Store (LS) interface.
           //
-          DOMImplementationLS* impl (
-            static_cast<DOMImplementationLS*>(
-              DOMImplementationRegistry::getDOMImplementation(gLS)));
+          DOMImplementation* impl (
+            DOMImplementationRegistry::getDOMImplementation (ls_id));
 
           // Create a DOMBuilder.
           //

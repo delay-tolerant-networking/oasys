@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -22,9 +26,9 @@ FileBackedObjectStore::FileBackedObjectStore(const std::string& root)
     {
         log_info("Root directory %s not found, attempting to create.", 
                  root.c_str());
-	char cmd[256];
-	snprintf(cmd, 256, "mkdir -p %s", root.c_str());
-	system(cmd);
+        char cmd[256];
+        snprintf(cmd, 256, "mkdir -p %s", root.c_str());
+        system(cmd);
         
         err = stat(root_.c_str(), &dir_stat);
     }
@@ -99,24 +103,24 @@ FileBackedObjectStore::del_object(const std::string& key)
 //----------------------------------------------------------------------------
 int 
 FileBackedObjectStore::copy_object(const std::string& src,  
-				   const std::string& dest)
+                                   const std::string& dest)
 {
     std::string src_path, dest_path;
 
     if (! object_exists(src))
     {
-	log_debug("src %s doesn't exist, not copying", src.c_str());
-	return -1;
+        log_debug("src %s doesn't exist, not copying", src.c_str());
+        return -1;
     }
     
     if (object_exists(dest))
     {
-	log_debug("dest %s exists, not copying", dest.c_str());
-	return -1;
+        log_debug("dest %s exists, not copying", dest.c_str());
+        return -1;
     }
 
     int err = FileUtils::fast_copy(object_path(src).c_str(),
-				   object_path(dest).c_str());
+                                   object_path(dest).c_str());
     ASSERT(err != -1);
     return 0;
 }

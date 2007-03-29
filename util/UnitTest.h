@@ -328,8 +328,8 @@ void _name::add_tests()                                         \
 
 #define CHECK(x)                                                        \
     do { if (! (x)) {                                                   \
-	errno_ = errno;                                                 \
-	strerror_ = strerror(errno_);                                   \
+        errno_ = errno;                                                 \
+        strerror_ = strerror(errno_);                                   \
         ::oasys::Breaker::break_here();                                 \
         log_err_p("/test",                                              \
                     "CHECK FAILED (%s) at %s:%d",                       \
@@ -342,8 +342,8 @@ void _name::add_tests()                                         \
 
 #define CHECK_SYS(x)                                                    \
     do { if (! (x)) {                                                   \
-	errno_ = errno;                                                 \
-	strerror_ = strerror(errno_);                                   \
+        errno_ = errno;                                                 \
+        strerror_ = strerror(errno_);                                   \
         ::oasys::Breaker::break_here();                                 \
         log_err_p("/test",                                              \
                     "CHECK FAILED (%s) at %s:%d, errno=%s",             \
@@ -356,8 +356,8 @@ void _name::add_tests()                                         \
 
 #define CHECK_EQUAL(_a, _b)                                                     \
     do { int a = _a; int b = _b; if ((a) != (b)) {                              \
-	errno_ = errno;                                                         \
-	strerror_ = strerror(errno_);                                           \
+        errno_ = errno;                                                         \
+        strerror_ = strerror(errno_);                                           \
         ::oasys::Breaker::break_here();                                         \
         log_err_p("/test",                                                      \
                     "CHECK FAILED: '%s' (%d) != '%s' (%d) at %s:%d",             \
@@ -371,8 +371,8 @@ void _name::add_tests()                                         \
 
 #define CHECK_LT(_a, _b)                                                        \
     do { int a = _a; int b = _b; if (! (((a) < (b)))) {                         \
-	errno_ = errno;								\
-	strerror_ = strerror(errno_);						\
+        errno_ = errno;                                                         \
+        strerror_ = strerror(errno_);                                           \
         ::oasys::Breaker::break_here();                                         \
         log_err_p("/test",                                                      \
                     "CHECK FAILED: '%s' (%d) < '%s' (%d) at %s:%d",             \
@@ -386,8 +386,8 @@ void _name::add_tests()                                         \
 
 #define CHECK_GT(_a, _b)                                                        \
     do { int a = _a; int b = _b; if (! ((a) > (b))) {                           \
-	errno_ = errno;								\
-	strerror_ = strerror(errno_);						\
+        errno_ = errno;                                                         \
+        strerror_ = strerror(errno_);                                           \
         ::oasys::Breaker::break_here();                                         \
         log_err_p("/test",                                                      \
                     "CHECK FAILED: '%s' (%d) > '%s' (%d) at %s:%d",             \
@@ -401,8 +401,8 @@ void _name::add_tests()                                         \
 
 #define CHECK_LTU(_a, _b)                                                       \
     do { u_int a = _a; u_int b = _b; if (! ((a) <= (b))) {                      \
-	errno_ = errno;								\
-	strerror_ = strerror(errno_);						\
+        errno_ = errno;                                                         \
+        strerror_ = strerror(errno_);                                           \
         ::oasys::Breaker::break_here();                                         \
         log_err_p("/test",                                                      \
                     "CHECK FAILED: '%s' (%u) <= '%s' (%u) at %s:%u",            \
@@ -416,8 +416,8 @@ void _name::add_tests()                                         \
 
 #define CHECK_GTU(_a, _b)                                                       \
     do { u_int a = _a; u_int b = _b; if (! ((a) >= (b))) {                      \
-	errno_ = errno;								\
-	strerror_ = strerror(errno_);						\
+        errno_ = errno;                                                         \
+        strerror_ = strerror(errno_);                                           \
         ::oasys::Breaker::break_here();                                         \
         log_err_p("/test",                                                      \
                     "CHECK FAILED: '%s' (%u) >= '%s' (%u) at %s:%u",            \
@@ -431,8 +431,8 @@ void _name::add_tests()                                         \
 
 #define CHECK_EQUAL_U64(a, b)                                                           \
     do { if ((a) != (b)) {                                                              \
-	errno_ = errno;									\
-	strerror_ = strerror(errno_);							\
+        errno_ = errno;                                                                 \
+        strerror_ = strerror(errno_);                                                   \
         ::oasys::Breaker::break_here();                                                 \
         log_err_p("/test",                                                              \
                     "CHECK FAILED: '%s' (%llu) != '%s' (%llu) at %s:%d",                \
@@ -455,8 +455,8 @@ void _name::add_tests()                                         \
 #define CHECK_EQUALSTR(_a, _b)                                          \
     do { const char* a = _a; const char* b = _b;                        \
         if (strcmp((a), (b)) != 0) {                                    \
-	errno_ = errno;							\
-	strerror_ = strerror(errno_);					\
+        errno_ = errno;                                                 \
+        strerror_ = strerror(errno_);                                   \
         ::oasys::Breaker::break_here();                                 \
         log_err_p("/test",                                              \
                     "CHECK FAILED: '%s' != '%s' at %s:%d.",             \
@@ -490,8 +490,8 @@ void _name::add_tests()                                         \
 #define CHECK_EQUALSTRN(a, b, len)                                              \
     do { u_int print_len = (len > 32) ? 32 : len;                               \
          if (strncmp((const char*)(a), (const char*)(b), (len)) != 0) {         \
-	     errno_ = errno;							\
-	     strerror_ = strerror(errno_);					\
+             errno_ = errno;                                                    \
+             strerror_ = strerror(errno_);                                      \
              ::oasys::Breaker::break_here();                                    \
              log_err_p("/test",  "CHECK FAILED: "                               \
                          "'%s' (%.*s...) != '%s' (%.*s...) at %s:%d",           \

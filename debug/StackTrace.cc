@@ -14,8 +14,9 @@
  *    limitations under the License.
  */
 
-
-#include <config.h>
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include "StackTrace.h"
 #include <dlfcn.h>

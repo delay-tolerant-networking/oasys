@@ -39,9 +39,9 @@ class IOMonitor;
  * information, e.g. the number of bytes read.
  */
 enum IOTimeoutReturn_t {
-    IOEOF 	= 0,	///< eof
-    IOERROR 	= -1,	///< error
-    IOTIMEOUT 	= -2,   ///< timeout
+    IOEOF       = 0,    ///< eof
+    IOERROR     = -1,   ///< error
+    IOTIMEOUT   = -2,   ///< timeout
     IOINTR      = -3,   ///< interrupted by notifier
     IOAGAIN     = -4,   ///< non-blocking sock got EAGAIN
     IORATELIMIT = -5,   ///< rate limited socket has no space
@@ -211,11 +211,11 @@ struct IO {
      * @return total bytes in the iovec to be written
      */
     static size_t iovec_size(struct iovec* iov, int num) {
-	size_t size = 0;
-	for (int i=0; i<num; ++i) {
-	    size += iov[i].iov_len;
-	}
-	return size;
+        size_t size = 0;
+        for (int i=0; i<num; ++i) {
+            size += iov[i].iov_len;
+        }
+        return size;
     }
     
     
@@ -255,7 +255,7 @@ struct IO {
                       RwDataExtraArgs*      args,
                       const struct timeval* start_time,
                       Notifier*             intr, 
-		      bool                  ignore_eagain,
+                      bool                  ignore_eagain,
                       const char*           log);
     
     //! Do all function for iovec reading/writing

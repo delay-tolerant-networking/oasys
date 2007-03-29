@@ -1,6 +1,6 @@
 // file      : xsd/cxx/xml/dom/serialization.txx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <xercesc/dom/DOMWriter.hpp>
@@ -165,13 +165,16 @@ namespace xsd
             {
               if (i->second.name.empty ())
               {
-                no_namespace_schema_location +=
-                  no_namespace_schema_location.empty ()
-                  ? i->second.schema
-                  : space + i->second.schema;
+                if (!no_namespace_schema_location.empty ())
+                  no_namespace_schema_location += space;
+
+                no_namespace_schema_location += i->second.schema;
               }
               else
               {
+                if (!schema_location.empty ())
+                  schema_location += space;
+
                 schema_location += i->second.name + space + i->second.schema;
               }
             }
@@ -238,6 +241,8 @@ namespace xsd
           if (writer->canSetFeature (XMLUni::fgDOMWRTFormatPrettyPrint, true))
             writer->setFeature (XMLUni::fgDOMWRTFormatPrettyPrint, true);
 
+          // See if we need to write XML declaration.
+          //
           if ((flags & no_xml_declaration) &&
               writer->canSetFeature (XMLUni::fgDOMXMLDeclaration, false))
             writer->setFeature (XMLUni::fgDOMXMLDeclaration, false);

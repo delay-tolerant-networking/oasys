@@ -1,6 +1,6 @@
 // file      : xsd/cxx/parser/error-handler.hxx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_PARSER_ERROR_HANDLER_HXX
@@ -27,20 +27,10 @@ namespace xsd
                 unsigned long line,
                 unsigned long column,
                 severity s,
-                const std::basic_string<C>& message)
-        {
-          if (s == severity::error || s == severity::fatal)
-            errors_.push_back (error<C> (id, line, column, message));
-
-          return true;
-        }
+                const std::basic_string<C>& message);
 
         void
-        throw_if_failed () const
-        {
-          if (!errors_.empty ())
-            throw parsing<C> (errors_);
-        }
+        throw_if_failed () const;
 
       private:
         errors<C> errors_;
@@ -48,5 +38,7 @@ namespace xsd
     }
   }
 }
+
+#include <xsd/cxx/parser/error-handler.txx>
 
 #endif  // XSD_CXX_PARSER_ERROR_HANDLER_HXX

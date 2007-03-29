@@ -46,8 +46,8 @@ struct atomic_t {
 /**
  * Atomic addition function.
  *
- * @param i	integer value to add
- * @param v	pointer to current value
+ * @param i     integer value to add
+ * @param v     pointer to current value
  * 
  */
 static inline void
@@ -62,8 +62,8 @@ atomic_add(volatile atomic_t *v, u_int32_t i)
 /**
  * Atomic subtraction function.
  *
- * @param i	integer value to subtract
- * @param v	pointer to current value
+ * @param i     integer value to subtract
+ * @param v     pointer to current value
  
  */
 static inline void
@@ -78,7 +78,7 @@ atomic_sub(volatile atomic_t* v, u_int32_t i)
 /**
  * Atomic increment.
  *
- * @param v	pointer to current value
+ * @param v     pointer to current value
  */
 static inline void
 atomic_incr(volatile atomic_t* v)
@@ -92,7 +92,7 @@ atomic_incr(volatile atomic_t* v)
 /**
  * Atomic decrement.
  *
- * @param v	pointer to current value
+ * @param v     pointer to current value
  * 
  */ 
 static inline void
@@ -110,7 +110,7 @@ atomic_decr(volatile atomic_t* v)
  * @return true if the value zero after the decrement, false
  * otherwise.
  *
- * @param v	pointer to current value
+ * @param v     pointer to current value
  * 
  */ 
 static inline bool
@@ -130,20 +130,20 @@ atomic_decr_test(volatile atomic_t* v)
  * Atomic compare and swap. Stores the new value iff the current value
  * is the expected old value.
  *
- * @param v 	pointer to current value
- * @param o 	old value to compare against
- * @param n 	new value to store
+ * @param v     pointer to current value
+ * @param o     old value to compare against
+ * @param n     new value to store
  *
- * @return 	the value of v before the swap
+ * @return      the value of v before the swap
  */
 static inline u_int32_t
 atomic_cmpxchg32(volatile atomic_t* v, u_int32_t o, u_int32_t n)
 {
     __asm__ __volatile__(
-	LOCK "cmpxchgl %1, %2"
-	: "+a" (o)
-	: "r" (n), "m" (v->value)
-	: "memory");
+        LOCK "cmpxchgl %1, %2"
+        : "+a" (o)
+        : "r" (n), "m" (v->value)
+        : "memory");
     
     return o;
 }
@@ -154,7 +154,7 @@ atomic_cmpxchg32(volatile atomic_t* v, u_int32_t o, u_int32_t n)
  * store the value, so there is an extremely low chance that this will
  * never return.
  *
- * @param v 	pointer to current value
+ * @param v     pointer to current value
  */
 static inline u_int32_t
 atomic_incr_ret(volatile atomic_t* v)
@@ -184,8 +184,8 @@ atomic_incr_ret(volatile atomic_t* v)
  * store the value, so there is an extremely low chance that this will
  * never return.
  *
- * @param v 	pointer to current value
- * @param i 	integer to add
+ * @param v     pointer to current value
+ * @param i     integer to add
  */
 static inline u_int32_t
 atomic_add_ret(volatile atomic_t* v, u_int32_t i)

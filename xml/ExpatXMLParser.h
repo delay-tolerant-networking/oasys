@@ -17,8 +17,6 @@
 #ifndef _OASYS_EXPAT_XML_PARSER_H_
 #define _OASYS_EXPAT_XML_PARSER_H_
 
-#include "config.h"
-
 #ifdef LIBEXPAT_ENABLED
 
 #include <expat.h>

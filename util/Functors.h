@@ -31,7 +31,7 @@ struct CompFunctor {
     
     bool operator()(const _Class& other) const {
         const _Value& other_val = (other.*m_fcn_ptr_)();
-	return comparator_(value_, other_val);
+        return comparator_(value_, other_val);
     }
     
     _Value value_;

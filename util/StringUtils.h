@@ -292,6 +292,9 @@ bool_to_str(bool b);
 const char*
 str_if(bool b, const char* true_str, const char* false_str = "");
 
+//----------------------------------------------------------------------------
+typedef std::pair<std::string, std::string> StringPair;
+
 } // namespace oasys
 
 #endif /* _OASYS_STRING_UTILS_H_ */

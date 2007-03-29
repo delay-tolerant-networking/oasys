@@ -18,8 +18,6 @@
 #ifndef __BERKELEY_TABLE_STORE_H__
 #define __BERKELEY_TABLE_STORE_H__
 
-#include "config.h"
-
 #if LIBDB_ENABLED
 
 #include <map>

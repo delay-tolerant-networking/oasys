@@ -14,6 +14,9 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include "util/UnitTest.h"
 #include "serialize/Serialize.h"
@@ -78,7 +81,7 @@ public:
 };
  
 class MultiLeaf : public MultipleInherit, 
-		  public Obj {
+                  public Obj {
 public:
     static const int ID = 3;
     MultiLeaf(const Builder&) : Obj(ID) {}
@@ -169,9 +172,9 @@ DECLARE_TEST(TypeCollectionNotInGroup) {
 
 DECLARE_TEST(TypeCollectionNames) {
     CHECK_EQUALSTR(TypeCollectionInstance<TestC>::instance()->type_name(1),
-	           "TestC::Foo");
+                   "TestC::Foo");
     CHECK_EQUALSTR(TypeCollectionInstance<TestC>::instance()->type_name(2),
-	           "TestC::Bar");
+                   "TestC::Bar");
     
     return UNIT_TEST_PASSED;
 }
@@ -181,18 +184,18 @@ DECLARE_TEST(MultipleInheritance) {
     MultiLeaf* baz = reinterpret_cast<MultiLeaf*>(4);
 
     CHECK(TypeCollectionInstance<TestC>
-	    ::instance()->new_object(3, &obj) == 0);
+            ::instance()->new_object(3, &obj) == 0);
     CHECK_EQUALSTR(obj->name(), "MultiLeaf");
     printf("obj %p multileaf %p multi %p\n", obj, 
-	   dynamic_cast<MultiLeaf*>(obj), 
-	   static_cast<MultipleInherit*>(dynamic_cast<MultiLeaf*>(obj)));
+           dynamic_cast<MultiLeaf*>(obj), 
+           static_cast<MultipleInherit*>(dynamic_cast<MultiLeaf*>(obj)));
     CHECK(dynamic_cast<MultiLeaf*>(obj) != 0);
     CHECK(reinterpret_cast<void*>(dynamic_cast<MultiLeaf*>(obj)) != 
-	  reinterpret_cast<void*>(obj));
+          reinterpret_cast<void*>(obj));
     CHECK( (reinterpret_cast<u_int64_t>(obj) - 
-	    reinterpret_cast<u_int64_t>(dynamic_cast<MultiLeaf*>(obj)) + 4)
-	    ==
-	   (reinterpret_cast<u_int64_t>(static_cast<Obj*>(baz))) );
+            reinterpret_cast<u_int64_t>(dynamic_cast<MultiLeaf*>(obj)) + 4)
+            ==
+           (reinterpret_cast<u_int64_t>(static_cast<Obj*>(baz))) );
 
     return UNIT_TEST_PASSED;
 }

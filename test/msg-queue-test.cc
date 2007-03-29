@@ -14,6 +14,10 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "thread/Thread.h"
 #include "thread/MsgQueue.h"
 #include "util/UnitTest.h"
@@ -35,7 +39,7 @@ protected:
     }
 
     int test() {
-	int errno_; const char* strerror_; 
+        int errno_; const char* strerror_; 
         int prev = -1;
 
         for (int i = 0; i < count_; ++i) {

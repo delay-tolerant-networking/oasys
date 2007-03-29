@@ -17,8 +17,6 @@
 #ifndef _OASYS_INTTYPES_H_
 #define _OASYS_INTTYPES_H_
 
-#include "config.h"
-
 //----------------------------------------------------------------------------
 /*
  * Microsoft C/C++ integer types.
@@ -35,7 +33,7 @@ typedef unsigned __int16 uint16_t;
 typedef unsigned __int32 uint32_t;
 typedef unsigned __int64 uint64_t;
 
-#else
+#else /* __win32__ */
 /*
  * Unix integer types.
  */
@@ -63,7 +61,7 @@ typedef unsigned __int64 uint64_t;
 
 #endif /* HAVE_U_INT32_T */
 
-#endif
+#endif /* __win32__ */
 
 /**
  * On 64 bit platforms, a u_int64_t can't be formatted as %llu since

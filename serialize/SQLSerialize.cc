@@ -14,6 +14,10 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "SQLSerialize.h"
 #include "SQLImplementation.h"
 
@@ -76,7 +80,7 @@ void
 SQLInsert::end_action() 
 {
     if (query_.data()[query_.length() - 1] == ',') {
-	query_.data()[query_.length() - 1] = ')';
+        query_.data()[query_.length() - 1] = ')';
     }
 }
 
@@ -189,7 +193,7 @@ void
 SQLUpdate::end_action() 
 {
     if (query_.data()[query_.length() - 2] == ',') {
-	query_.data()[query_.length() - 2] =  ' ';
+        query_.data()[query_.length() - 2] =  ' ';
     }
 }
 
@@ -304,7 +308,7 @@ void
 SQLTableFormat::end_action() 
 {
     if (query_.data()[query_.length() - 1] == ',') {
-	query_.data()[query_.length() - 1] =  ')';
+        query_.data()[query_.length() - 1] =  ')';
     }
 }
 

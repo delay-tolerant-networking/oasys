@@ -18,7 +18,6 @@
 #ifndef __MEMORY_STORE_H__
 #define __MEMORY_STORE_H__
 
-#include "config.h"
 #include <map>
 
 #include "../debug/Logger.h"

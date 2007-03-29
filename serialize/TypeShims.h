@@ -38,7 +38,7 @@ public:
     
     // virtual from SerializableObject
     void serialize(SerializeAction* a) {
-	a->process(name_.c_str(), &value_);
+        a->process(name_.c_str(), &value_);
     }
 
     int32_t value() const { return value_; }
@@ -64,7 +64,7 @@ public:
     
     // virtual from SerializableObject
     void serialize(SerializeAction* a) {
-	a->process(name_.c_str(), &value_);
+        a->process(name_.c_str(), &value_);
     }
 
     u_int32_t value() const { return value_; }
@@ -95,7 +95,7 @@ public:
     
     // virtual from SerializableObject
     void serialize(SerializeAction* a) {
-	a->process(name_.c_str(), &str_);
+        a->process(name_.c_str(), &str_);
     }
 
     const std::string& value() const { return str_; }
@@ -113,11 +113,11 @@ without fixing.
 class NullStringShim : public Formatter, public SerializableObject {
 public:
     NullStringShim(const char* str, const char* name = "string") 
-	: name_(name), 
+        : name_(name), 
           str_(const_cast<char*>(str)),
           free_mem_(false)
     {
-	free_mem_ = (str == 0);
+        free_mem_ = (str == 0);
     }
 
     NullStringShim(const Builder&)
@@ -172,15 +172,15 @@ without fixing.
 class ByteBufShim : public Formatter, public SerializableObject {
 public:
     ByteBufShim(char* buf, size_t size)
-	: buf_(buf), size_(size), own_buf_(false) {}
+        : buf_(buf), size_(size), own_buf_(false) {}
 
     ByteBufShim(const Builder&) 
-	: buf_(0), size_(0), own_buf_(false) {}
+        : buf_(0), size_(0), own_buf_(false) {}
 
     ~ByteBufShim() {
-	if (buf_ != 0 && own_buf_) {
-	    free(buf_);
-	}
+        if (buf_ != 0 && own_buf_) {
+            free(buf_);
+        }
     }
 
     // virtual from Formatter

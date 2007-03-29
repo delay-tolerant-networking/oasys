@@ -1,6 +1,6 @@
 // file      : xsd/cxx/tree/elements.txx
 // author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2006 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2007 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <xercesc/util/XMLUniDefs.hpp>
@@ -24,6 +24,36 @@ namespace xsd
        xercesc::chLatin_n, xercesc::chLatin_o, xercesc::chLatin_d, // nod
        xercesc::chLatin_e, xercesc::chNull                         // e\0
       };
+
+
+      // simple_type
+      //
+      template <typename B>
+      simple_type<B>::
+      simple_type (const simple_type& other,
+                   flags f,
+                   type* container)
+          : B (other, f, container)
+      {
+      }
+
+      template <typename B>
+      simple_type<B>* simple_type<B>::
+      _clone (flags f, type* container) const
+      {
+        return new simple_type (*this, f, container);
+      }
+
+
+      // fundamental_base
+      //
+      template <typename X, typename C, typename B>
+      fundamental_base<X, C, B>* fundamental_base<X, C, B>::
+      _clone (flags f, type* container) const
+      {
+        return new fundamental_base (*this, f, container);
+      }
+
     }
   }
 }

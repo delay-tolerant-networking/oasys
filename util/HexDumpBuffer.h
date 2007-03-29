@@ -18,7 +18,9 @@
 #ifndef _OASYS_HEX_DUMP_BUFFER_H_
 #define _OASYS_HEX_DUMP_BUFFER_H_
 
-#include "StringBuffer.h"
+#include <string>
+
+#include "ExpandableBuffer.h"
 
 namespace oasys {
 
@@ -36,7 +38,7 @@ namespace oasys {
  * 00000030: 7320 6173 2068 6578 6164 6563 696d 616c  s as hexadecimal
  * 00000040: 2041 5343 4949 0a61 6e64 2070 7269 6e74   ASCII.and print
  */
-class HexDumpBuffer : public StringBuffer {
+class HexDumpBuffer : public ExpandableBuffer {
 public:
     /**
      * Constructor
@@ -44,14 +46,16 @@ public:
      * @param initsz the initial buffer size
      * @param initstr the initial buffer contents 
      */
-    HexDumpBuffer(size_t initsz = 256, const char* initstr = 0)
-        : StringBuffer(initsz, initstr) {}
+    HexDumpBuffer(size_t initsz = 256)
+        : ExpandableBuffer(initsz) {}
+    
+    void append(const u_char* data, size_t length);
 
     /**
      * Convert the internal buffer (accumulated into the StringBuffer)
      * into hex dump output format.
      */
-    void hexify();
+    std::string hexify();
 };
 
 } // namespace oasys

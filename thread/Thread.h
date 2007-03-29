@@ -18,8 +18,6 @@
 #ifndef _OASYS_THREAD_H_
 #define _OASYS_THREAD_H_
 
-#include "config.h"
-
 #include <sys/types.h>
 
 #ifdef __win32__
@@ -263,7 +261,7 @@ protected:
     static std::vector<Thread*> threads_in_barrier_;
 
     ThreadId_t thread_id_;
-    int        flags_;
+    volatile int	flags_;
     char       name_[64];
 
     /**

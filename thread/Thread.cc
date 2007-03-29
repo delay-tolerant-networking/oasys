@@ -14,10 +14,12 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include <errno.h>
 
-#include "config.h"
 #include "Thread.h"
 #include "SpinLock.h"
 
@@ -41,7 +43,7 @@ sigset_t             Thread::interrupt_sigset_;
 bool                 Thread::start_barrier_enabled_ = false;
 std::vector<Thread*> Thread::threads_in_barrier_;
 
-const int	     Thread::max_live_threads_;
+const int            Thread::max_live_threads_;
 Thread*              Thread::all_threads_[max_live_threads_];
 SpinLock             g_all_threads_lock_;
 SpinLock*            Thread::all_threads_lock_ = &g_all_threads_lock_;
@@ -89,7 +91,7 @@ Thread::id_equal(ThreadId_t a, ThreadId_t b)
 Thread::Thread(const char* name, int flags)
     : flags_(flags)
 {
-	setup_in_progress_ = true;
+        setup_in_progress_ = true;
     if ((flags & CREATE_JOINABLE) && (flags & DELETE_ON_EXIT)) {
         flags &= ~DELETE_ON_EXIT;
     }
@@ -187,11 +189,11 @@ Thread::start()
     // explicitly request for them to be joinable
     if (! (flags_ & CREATE_JOINABLE)) 
     {
-	pthread_detach(thread_id_);
+        pthread_detach(thread_id_);
     }
 
 #endif // __win32__
-	setup_in_progress_ = false;
+        setup_in_progress_ = false;
 }
 
 //----------------------------------------------------------------------------
@@ -359,10 +361,10 @@ Thread::thread_run(const char* thread_name, ThreadId_t thread_id)
     
     if (flags_ & DELETE_ON_EXIT) 
     {
-    	while(setup_in_progress_)
-    	{
-    		usleep(100000);
-    	}
+        while(setup_in_progress_)
+        {
+                usleep(100000);
+        }
         delete this;
     }
 

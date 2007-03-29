@@ -133,10 +133,10 @@ public:
      * @return the stringified type code.
      */
     const char* type_name(TypeCode_t typecode) {
-	if(dispatch_.find(typecode) == dispatch_.end()) {
-	    return "";
-	} 
-	return dispatch_[typecode]->name();
+        if(dispatch_.find(typecode) == dispatch_.end()) {
+            return "";
+        } 
+        return dispatch_[typecode]->name();
     }
 
     /*!

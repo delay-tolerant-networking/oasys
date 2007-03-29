@@ -14,6 +14,10 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <iostream>
 #include <debug/DebugUtils.h>
 #include <serialize/MarshalSerialize.h>
@@ -94,19 +98,19 @@ public:
         {
             BufferCarrier<u_char> bc;
 
-	    size_t size;
+            size_t size;
             action->process("const_buf", &bc);
             const_buf = bc.take_buf(&size);
-	    const_len = size;
+            const_len = size;
 
             action->process("nullterm_buf", &bc, 0);
             nullterm_buf = bc.take_buf(&size);
-	    nullterm_len = size;
-	    --nullterm_len;
+            nullterm_len = size;
+            --nullterm_len;
 
             action->process("null_buf", &bc);
             null_buf = bc.take_buf(&size);
-	    null_len = size;
+            null_len = size;
         }
         else
         {

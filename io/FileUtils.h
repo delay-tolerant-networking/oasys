@@ -58,12 +58,12 @@ public:
     static int fast_copy(const char* src_filename, const char* dest_filename);
 
     struct StatFormat : public Formatter {
-	StatFormat(const struct stat& stat)
-	    : stat_(stat) {}
+        StatFormat(const struct stat& stat)
+            : stat_(stat) {}
 
-	int format(char* buf, size_t len) const;
+        int format(char* buf, size_t len) const;
 
-	struct stat stat_;
+        struct stat stat_;
     };
 };
 

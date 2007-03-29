@@ -14,6 +14,9 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include "util/UnitTest.h"
 
@@ -38,10 +41,10 @@ DECLARE_TEST(InputTest) {
         while {[set line [gets $output]] != ""} {
             if [regexp ".*InputTest: .*foo" $line] {
                 return 0
-	    }
+            }
         }
-	
-	return -1
+        
+        return -1
     }
 #endif
 

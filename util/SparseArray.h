@@ -29,8 +29,8 @@ template<typename _Type> class SparseArray {
 public: 
     class Block {
     public:
-	size_t offset_;
-	size_t size_;
+        size_t offset_;
+        size_t size_;
         _Type* data_;
 
         Block(size_t offset = 0, size_t size = 0)
@@ -39,18 +39,18 @@ public:
             data_ = static_cast<_Type*>(calloc(size, sizeof(_Type)));
         }
         
-	struct BlockCompare {
-	    bool operator()(const Block& a, const Block& b) 
+        struct BlockCompare {
+            bool operator()(const Block& a, const Block& b) 
             {
-		return a.offset_ < b.offset_;
-	    }
-	};
+                return a.offset_ < b.offset_;
+            }
+        };
     };
     typedef std::list<Block> BlockList;
 
     ~SparseArray() 
     {
-	for (typename BlockList::iterator itr = blocks_.begin();
+        for (typename BlockList::iterator itr = blocks_.begin();
              itr != blocks_.end(); ++itr)
         {
             free(itr->data_);
@@ -64,7 +64,7 @@ public:
      */
     _Type operator[](size_t offset) const
     {
-	for (typename BlockList::const_iterator itr = blocks_.begin();
+        for (typename BlockList::const_iterator itr = blocks_.begin();
              itr != blocks_.end(); ++itr)
         {
             if (itr->offset_ <= offset &&
@@ -143,9 +143,9 @@ private:
         //                   |- new block -| case 1
         //   |-new block-|                   case 2
         //     |---- new block ----|         case 3
-	typename BlockList::iterator itr = blocks_.begin();
-	while (itr != blocks_.end())
-	{
+        typename BlockList::iterator itr = blocks_.begin();
+        while (itr != blocks_.end())
+        {
             // case 1: block occurs before, don't merge if bordering
             if (itr->offset_ + itr->size_ <= offset)
             {
@@ -176,7 +176,7 @@ private:
             }
 
             NOTREACHED;
-	}
+        }
 
         Block new_block;
         if (merge) 

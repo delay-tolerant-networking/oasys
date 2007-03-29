@@ -14,14 +14,17 @@
  *    limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "config.h"
-
 #include "DurableStore.h"
+#include "ExternalDurableStore.h"
 #include "BerkeleyDBStore.h"
 #include "FileSystemStore.h"
 #include "MemoryStore.h"
@@ -75,6 +78,14 @@ DurableStore::create_store(const StorageConfig& config,
     else if (config.type_ == "berkeleydb")
     {
         impl_ = new BerkeleyDBStore(logpath_);
+    }
+#endif
+
+#if defined(EXTERNAL_DS_ENABLED) && defined(XERCES_C_ENABLED)
+    // external data store
+    else if (config.type_ == "external")
+    {
+        impl_ = new ExternalDurableStore(logpath_);
     }
 #endif
 
