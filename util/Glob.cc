@@ -25,6 +25,9 @@ namespace oasys {
 bool
 Glob::fixed_glob(const char* pat, const char* str)
 {
+    if (*pat == '\0' && *str == '\0')
+        return true;
+    
     const int STACK_SIZE = 32;
     State stk[STACK_SIZE];
     int         stk_size = 1;
