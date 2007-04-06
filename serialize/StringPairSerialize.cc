@@ -160,16 +160,15 @@ StringPairSerialize::Marshal::process(const char* name, std::string* s)
 void 
 StringPairSerialize::Marshal::process(const char* name, u_char* bp, u_int32_t len)
 {
-    rep_->push_back(StringPair(string(name), string(reinterpret_cast<char*>(bp), len)));
+    
+    rep_->push_back(StringPair(string(name), hex2str(bp, len)));
 }
 
 void 
 StringPairSerialize::Marshal::process(const char* name, 
                                       BufferCarrier<unsigned char>* buf)
 {
-    rep_->push_back(StringPair(string(name), 
-			       string(reinterpret_cast<char *>(buf->buf()), 
-				      buf->len())));
+    rep_->push_back(StringPair(string(name), hex2str(buf->buf(), buf->len())));
 }
 
 void
@@ -437,18 +436,15 @@ StringPairSerialize::Unmarshal::process(const char* name, u_char* bp, u_int32_t 
     ASSERT(string(name) == rep_->at(idx_).first);
 
     string s = rep_->at(idx_).second.c_str();
+    size_t amt = (len < s.length() ? len : s.length());
+    str2hex(s, bp, amt);
     ++idx_;
-
-    // work around type-matching problem
-    memcpy(bp, s.data(), ((size_t) len < s.length() ? len : s.length()));
 
     if (log_) {
         std::string s;
-        hex2str(&s, bp, len < 16 ? len : 16);
         logf(log_, LOG_DEBUG, "<=bufc(%u: '%.*s')",
              len, (int)s.length(), s.data());
     }
-
 }
 
 void
@@ -460,12 +456,12 @@ StringPairSerialize::Unmarshal::process(const char* name,
 
     string s = rep_->at(idx_).second.c_str();
     int len = s.length();
-    ++idx_;
-
     u_char *buf = static_cast<u_char *>(malloc(sizeof(u_char) * len));
     ASSERT(buf != 0);
-    memcpy(buf, s.data(), len);
+    str2hex(s, buf, len);
     carrier->set_buf(buf, len, true);
+    
+    ++idx_;
 }
 
 void
@@ -478,13 +474,13 @@ StringPairSerialize::Unmarshal::process(const char* name,
 
     string s = rep_->at(idx_).second.c_str();
     int len = s.length();
-    ++idx_;
-
     u_char *buf = static_cast<u_char *>(malloc(sizeof(u_char) * (1 + len)));
     ASSERT(buf != 0);
-    memcpy(buf, s.data(), len);
+    str2hex(s, buf, len);
     buf[len] = terminator;
     carrier->set_buf(buf, len, true);
+
+    ++idx_;
 }
 
 } // namespace oasys
