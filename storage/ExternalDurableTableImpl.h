@@ -54,6 +54,7 @@ public:
     virtual DurableIterator* itr();
 private:
     ExternalDurableStore &owner_;
+    std::string keyname_;
     bool exists_;               /* does it exist or do we need to create it? */
 };
 } // oasys

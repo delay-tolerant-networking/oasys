@@ -2,7 +2,7 @@
  * 
  * Copyright 2007 BBN Technologies Corporation
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+* Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -481,20 +481,20 @@ int DataStoreProxy::ds_create(const string &dsname,
 /*!
  * ds_del: delete a data store
  */
-int DataStoreProxy::ds_delete(const string &dsname, 
-                              const credentials_t &cred)
+int DataStoreProxy::ds_del(const string &dsname, 
+                           const credentials_t &cred)
 {
     int ret;
-    ds_delete_request_type req(dsname);
+    ds_del_request_type req(dsname);
 
     req.user().set(cred.user);
     xml_schema::base64_binary pw(cred.password.data(), cred.password.length());
     req.password().set(pw);
     
     ds_request_type root("");
-    root.ds_delete().set(req);
+    root.ds_del().set(req);
 
-    EVAL(root, reply, ds_delete_reply);
+    EVAL(root, reply, ds_del_reply);
     return 0;
 }
 
@@ -571,7 +571,7 @@ int DataStoreProxy::ds_close(const string &handle)
 int DataStoreProxy::table_create(const string &handle,
                                  const string &tablename,
                                  const string &key,
-                                 const string &key_type,
+                                 const string &keytype,
                                  const vector<StringPair> &fieldinfo)
 {
     int ret;
@@ -580,7 +580,7 @@ int DataStoreProxy::table_create(const string &handle,
     ASSERT(handle == handle_);
 
     // create the base request
-    table_create_request_type req(handle, tablename, key, key_type);
+    table_create_request_type req(handle, tablename, key, keytype);
 
     // add the fields and their types
     for (vector<StringPair>::const_iterator info = fieldinfo.begin();
@@ -602,18 +602,18 @@ int DataStoreProxy::table_create(const string &handle,
 /*!
  * table_del: delete a named table and all of its elements
  */
-int DataStoreProxy::table_delete(const string &handle,
-                                 const string &tablename)
+int DataStoreProxy::table_del(const string &handle,
+                              const string &tablename)
 {
     int ret;
     if (!init_)
         return ERR_NOTOPEN;
     ASSERT(handle == handle_);
 
-    table_delete_request_type req(handle, tablename);
+    table_del_request_type req(handle, tablename);
     ds_request_type root("");
-    root.table_delete().set(req);
-    EVAL(root, reply, table_delete_reply);
+    root.table_del().set(req);
+    EVAL(root, reply, table_del_reply);
     return 0;
 }
 
@@ -622,6 +622,7 @@ int DataStoreProxy::table_delete(const string &handle,
  */
 int DataStoreProxy::table_keys(const string &handle,
                                const string &tablename,
+                               const string &keyname,
                                vector<string> &keys)
 {
     int ret;
@@ -631,7 +632,7 @@ int DataStoreProxy::table_keys(const string &handle,
 
     keys.empty();
 
-    table_keys_request_type req(handle, tablename);
+    table_keys_request_type req(handle, tablename, keyname);
     ds_request_type root("");
     root.table_keys().set(req);
 
@@ -651,8 +652,8 @@ int DataStoreProxy::table_keys(const string &handle,
  */
 int DataStoreProxy::table_stat(const string &handle,
                                const string &tablename,
-                               string &key,
-                               string &key_type,
+                               string &keyname,
+                               string &keytype,
                                vector<string> &fieldnames,
                                vector<string> &fieldtypes,
                                u_int32_t &count)
@@ -674,8 +675,8 @@ int DataStoreProxy::table_stat(const string &handle,
         fieldnames.push_back(info.field());
         fieldtypes.push_back(info.type());
     }
-    key = reply.key();
-    key_type = reply.key_type();
+    keyname = reply.keyname();
+    keytype = reply.keytype();
     count = reply.count();
     return 0;
 }
@@ -685,6 +686,7 @@ int DataStoreProxy::table_stat(const string &handle,
  */
 int DataStoreProxy::put(const string &handle,
                         const string &tablename, 
+                        const string &keyname,
                         const string &key,
                         const vector<StringPair> &fields)
 {
@@ -698,7 +700,7 @@ int DataStoreProxy::put(const string &handle,
         return ERR_INVALID;
 
     xml_schema::base64_binary k(key.data(), key.length());
-    put_request_type req(k, handle, tablename);
+    put_request_type req(k, handle, tablename, keyname);
 
     for (vector<StringPair>::const_iterator i = fields.begin();
          i != fields.end();
@@ -719,7 +721,8 @@ int DataStoreProxy::put(const string &handle,
  */
 int DataStoreProxy::get(const string &handle,
                         const string &tablename, 
-                        const string &keystr,
+                        const string &keyname,
+                        const string &keyval,
                         vector<StringPair> &fields)
 {
     int ret;
@@ -727,23 +730,18 @@ int DataStoreProxy::get(const string &handle,
         return ERR_NOTOPEN;
     ASSERT(handle == handle_);
 
-    xml_schema::base64_binary key(keystr.data(), keystr.length());
-    get_request_type req(key, handle, tablename);
+    xml_schema::base64_binary k(keyval.data(), keyval.length());
+    get_request_type req(k, handle, tablename, keyname);
     ds_request_type root("");
     root.get().set(req);
     EVAL(root, reply, get_reply);
 
-    get_reply_type::field::iterator f = reply.field().begin();
-    get_reply_type::value::iterator v = reply.value().begin();
-    
-    for ( ;
-          f != reply.field().end() && v != reply.value().end();
-          ++f, ++v) {
-        string value(v->data(), v->size());
-        fields.push_back(StringPair(*f, value));
+    for (get_reply_type::field::iterator f = reply.field().begin();
+         f != reply.field().end();
+         ++f) {
+        string value(f->value().data(), f->value().size());
+        fields.push_back(StringPair(f->field(), value));
     }
-    ASSERT(f == reply.field().end());
-    ASSERT(v == reply.value().end());
 
     return 0;
 }
@@ -754,18 +752,19 @@ int DataStoreProxy::get(const string &handle,
  */
 int DataStoreProxy::del(const string &handle,
                         const string &tablename, 
-                        const string &key)
+                        const string &keyname,
+                        const string &keyval)
 {
     int ret;
     if (!init_)
         return ERR_NOTOPEN;
     ASSERT(handle == handle_);
 
-    xml_schema::base64_binary k(key.data(), key.length());
-    delete_request_type req(k, handle, tablename);
+    xml_schema::base64_binary k(keyval.data(), keyval.length());
+    del_request_type req(k, handle, tablename, keyname);
     ds_request_type root("");
     root.del().set(req);
-    EVAL(root, reply, delete_reply);
+    EVAL(root, reply, del_reply);
     return 0;
 }
 
@@ -909,7 +908,7 @@ int DataStoreProxy::do_serialize(const SerializableObject &obj, string &str)
     u_char buf[need_size];
     Marshal marshaller(Serialize::CONTEXT_LOCAL, buf, need_size);
     marshaller.action(&obj);
-    str = string((char *)buf, need_size);
+    str = hex2str(buf, need_size); // XXX asymmetry -- this will bite me I'm sure
     return 0;
 }
 
@@ -945,36 +944,38 @@ int DataStoreProxy::do_unserialize(const vector<StringPair> &fields, Serializabl
 int DataStoreProxy::do_count(const string tablename, u_int32_t &count)
 {
     // ignore key, fieldnames, fieldtypes
-    string key, key_type;
+    string keyname, keytype;
     vector<string> fieldnames, fieldtypes;
-    return table_stat(handle_, tablename, key, key_type, fieldnames, 
+    return table_stat(handle_, tablename, keyname, keytype, fieldnames, 
                       fieldtypes, count);
 }
 
 int DataStoreProxy::do_del(const string &tablename,
+                           const std::string &keyname,
                            const SerializableObject &key)
 {
-    string key_str;
+    string keyval;
+    do_serialize(key, keyval);
 
-    do_serialize(key, key_str);
-    return del(handle_, tablename, key_str);
+    return del(handle_, tablename, keyname, keyval);
 }
 
 int DataStoreProxy::do_get(const string &tablename,
+                           const string &keyname,
                            const SerializableObject &key,
                            SerializableObject *data)
 {
     int ret;
-    string key_str;
+    string keyval;
 
     // always serialize the key to a single string
-    if ((ret = do_serialize(key, key_str)) != 0) {
+    if ((ret = do_serialize(key, keyval)) != 0) {
         return ret;
     }
 
     ASSERT(st_ != UNDEFINED);
     vector<StringPair> data_fields;
-    if ((ret = get(handle_, tablename, key_str, data_fields)) == 0 &&
+    if ((ret = get(handle_, tablename, keyname, keyval, data_fields)) == 0 &&
         data != 0) {
         if (st_ == PAIR) {
             ret = do_unserialize(data_fields[0].second, data);
@@ -987,47 +988,48 @@ int DataStoreProxy::do_get(const string &tablename,
 }
 
 int DataStoreProxy::do_put(const string &tablename,
+                           const string &keyname,
                            const SerializableObject &key,
                            const SerializableObject *data)
 {
     int ret;
     vector<StringPair> data_fields;
-    string key_string;
+    string keyval;
 
-    if ((ret = do_serialize(key, key_string)) != 0) {
+    if ((ret = do_serialize(key, keyval)) != 0) {
         return ret;
     }
     if (st_ == PAIR) {
-        string data_str;
-        if ((ret = do_serialize(*data, data_str)) != 0) {
+        string dataval;
+        if ((ret = do_serialize(*data, dataval)) != 0) {
             return ret;
         }
-        data_fields.push_back(StringPair(pair_data_field_name, data_str));
+        data_fields.push_back(StringPair(pair_data_field_name, dataval));
     } else {
         if ((ret = do_serialize(*data, data_fields)) != 0) {
             return ret;
         }
     }
-    return put(handle_, tablename, key_string, data_fields);
+    return put(handle_, tablename, keyname, keyval, data_fields);
 }
 
 int DataStoreProxy::do_table_create(const string &tablename,
+                                    const string &keyname,
                                     const SerializableObject &obj)
 {
     int ret;
-    string key = pair_key_field_name;
-    string key_type = "string";
+    string keytype = "string";
     vector<StringPair> fieldinfo;
 
     if (st_ == PAIR) {
-        fieldinfo.push_back(StringPair(pair_data_field_name, "string"));
+        fieldinfo.push_back(StringPair(keyname, "string"));
     } else {
         if ((ret = do_serialize(obj, fieldinfo, true)) != 0) {
             return ret;
         }
     }
 
-    return table_create(handle_, tablename, key, key_type, fieldinfo);
+    return table_create(handle_, tablename, keyname, keytype, fieldinfo);
 }
 
 #endif // EXTERNAL_DS_ENABLED && XERCES_C_ENABLED

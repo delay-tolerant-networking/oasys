@@ -318,11 +318,11 @@ int DataStoreServer::process(ds_request_type &req, ds_reply_type_p &reply)
     }
 
     // ds-delete
-    if (req.ds_delete().present()) {
+    if (req.ds_del().present()) {
         // copy in
         DataStore::credentials_t cred;
 
-        ds_delete_request_type &m = req.ds_delete().get();
+        ds_del_request_type &m = req.ds_del().get();
 
         if (m.user().present())
             cred.user = m.user().get();
@@ -332,17 +332,17 @@ int DataStoreServer::process(ds_request_type &req, ds_reply_type_p &reply)
         // XXX we don't pass keys yet
 
         // dispatch
-        if ((ret = ds_.ds_delete(m.ds(), cred)) != 0) {
+        if ((ret = ds_.ds_del(m.ds(), cred)) != 0) {
             ostringstream oss;
             oss << ret;
             reply->error(oss.str());
         }
 
         // copy out
-        ds_delete_reply_type r;
+        ds_del_reply_type r;
 
         // set
-        reply->ds_delete_reply().set(r);
+        reply->ds_del_reply().set(r);
 
         // return
         return 0;
@@ -449,7 +449,7 @@ int DataStoreServer::process(ds_request_type &req, ds_reply_type_p &reply)
         if ((ret = ds_.table_create(m.handle(),
                                     m.table(),
                                     m.key(),
-                                    m.key_type(),
+                                    m.keytype(),
                                     fieldinfo)) != 0) {
             ostringstream oss;
             oss << ret;
@@ -465,22 +465,22 @@ int DataStoreServer::process(ds_request_type &req, ds_reply_type_p &reply)
         // return
         return 0;
     }
-    if (req.table_delete().present()) {
+    if (req.table_del().present()) {
         // copy in
-        table_delete_request_type &m = req.table_delete().get();
+        table_del_request_type &m = req.table_del().get();
 
         // dispatch
-        if ((ret = ds_.table_delete(m.handle(), m.table())) != 0) {
+        if ((ret = ds_.table_del(m.handle(), m.table())) != 0) {
             ostringstream oss;
             oss << ret;
             reply->error(oss.str());
         }
 
         // copy out
-        table_delete_reply_type r;
+        table_del_reply_type r;
 
         // set
-        reply->table_delete_reply().set(r);
+        reply->table_del_reply().set(r);
 
         // return
         return 0;
@@ -533,7 +533,7 @@ int DataStoreServer::process(ds_request_type &req, ds_reply_type_p &reply)
 
         // dispatch
         vector<string> keys;
-        if ((ret = ds_.table_keys(m.handle(), m.table(), keys)) != 0) {
+        if ((ret = ds_.table_keys(m.handle(), m.table(), m.keyname(), keys)) != 0) {
             ostringstream oss;
             oss << ret;
             reply->error(oss.str());
@@ -570,7 +570,7 @@ int DataStoreServer::process(ds_request_type &req, ds_reply_type_p &reply)
         }
 
         // dispatch
-        if ((ret = ds_.put(m.handle(), m.table(), key, pairs)) != 0) {
+        if ((ret = ds_.put(m.handle(), m.table(), m.keyname(), key, pairs)) != 0) {
             ostringstream oss;
             oss << ret;
             reply->error(oss.str());
@@ -592,7 +592,7 @@ int DataStoreServer::process(ds_request_type &req, ds_reply_type_p &reply)
 
         // dispatch
         vector<StringPair> values;
-        if ((ret = ds_.get(m.handle(), m.table(), key, values)) != 0) {
+        if ((ret = ds_.get(m.handle(), m.table(), m.keyname(), key, values)) != 0) {
             ostringstream oss;
             oss << ret;
             reply->error(oss.str());
@@ -604,10 +604,9 @@ int DataStoreServer::process(ds_request_type &req, ds_reply_type_p &reply)
         for (vector<StringPair>::iterator i = values.begin();
              i != values.end();
              ++i) {
-            r.field().push_back(i->first);
-
-            string &value = i->second;
-            r.value().push_back(xml_schema::base64_binary(value.data(), value.length()));
+            xml_schema::base64_binary value(i->second.data(), i->second.length());
+            // yes, args backwards are they. sigh. 
+            r.field().push_back(fieldNameValue(value, i->first));
         }
 
         // set
@@ -618,21 +617,21 @@ int DataStoreServer::process(ds_request_type &req, ds_reply_type_p &reply)
     }
     if (req.del().present()) {
         // copy in
-        delete_request_type &m = req.del().get();
+        del_request_type &m = req.del().get();
         string key(m.key().data(), m.key().size());
 
         // dispatch
-        if ((ret = ds_.del(m.handle(), m.table(), key)) != 0) {
+        if ((ret = ds_.del(m.handle(), m.table(), m.keyname(), key)) != 0) {
             ostringstream oss;
             oss << ret;
             reply->error(oss.str());
         }
 
         // copy out
-        delete_reply_type r;
+        del_reply_type r;
 
         // set
-        reply->delete_reply().set(r);
+        reply->del_reply().set(r);
 
         // return
         return 0;

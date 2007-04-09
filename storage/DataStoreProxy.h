@@ -98,8 +98,8 @@ public:
      * IN credentials_t: credentials (TBD)
      * OUT ret: return code
      */
-    virtual int ds_delete(const std::string &dsname, 
-                          const credentials_t &cred);
+    virtual int ds_del(const std::string &dsname, 
+                       const credentials_t &cred);
 
     /*!
      * ds_open: open a data store
@@ -147,8 +147,8 @@ public:
      * table_del: delete a named table and all of its elements
      * IN const std::string tablename: name of table to delete
      */
-    virtual int table_delete(const std::string &handle,
-                             const std::string &tablename);
+    virtual int table_del(const std::string &handle,
+                          const std::string &tablename);
 
     /*!
      * table_keys
@@ -158,6 +158,7 @@ public:
      */
     virtual int table_keys(const std::string &handle,
                            const std::string &tablename,
+                           const std::string &keyname,
                            std::vector<std::string> &keys);
 
     /*!
@@ -181,6 +182,7 @@ public:
      */
     virtual int put(const std::string &handle,
                     const std::string &tablename, 
+                    const std::string &keyname,
                     const std::string &key,
                     const std::vector<StringPair> &fields);
 
@@ -192,7 +194,8 @@ public:
      */
     virtual int get(const std::string &handle,
                     const std::string &tablename, 
-                    const std::string &key,
+                    const std::string &keyname,
+                    const std::string &keyval,
                     std::vector<StringPair> &fields);
 
     /*!
@@ -202,7 +205,8 @@ public:
      */
     virtual int del(const std::string &handle,
                     const std::string &tablename, 
-                    const std::string &key);
+                    const std::string &keyname,
+                    const std::string &keyval);
 
     /*!
      * field_select: return 
@@ -246,6 +250,7 @@ public:
     // helper functions for durable tables, which defer to this object
     // put an element
     int do_put(const std::string &tablename, 
+               const std::string &keyname,
                const SerializableObject &key, 
                const SerializableObject *data);
 
@@ -253,11 +258,13 @@ public:
     // is not returned to the caller; this can be used to 
     // see if an object with that key already exists.
     int do_get(const std::string &tablename, 
+               const std::string &keyname,
                const SerializableObject &key, 
                SerializableObject *data);
 
     // delete an element
     int do_del(const std::string &tablename, 
+               const std::string &keyname,
                const SerializableObject &key);
 
     // get the number of elements
@@ -265,6 +272,7 @@ public:
 
     // create a table
     int do_table_create(const std::string &tablename, 
+                        const std::string &keyname,
                         const SerializableObject &obj);
 
 protected:
@@ -274,13 +282,13 @@ protected:
     std::string handle_;    /* handle to the open store */
 
     // helper functions for the do_* helper functions
-    int do_serialize(const SerializableObject &obj, std::string &str);
-    int do_serialize(const SerializableObject &obj, 
-                     std::vector<StringPair> &fields,
-                     bool get_schema = false);
-    int do_unserialize(const std::string &str, SerializableObject *obj);
-    int do_unserialize(const std::vector<StringPair> &fields, 
-                       SerializableObject *obj);
+    static int do_serialize(const SerializableObject &obj, std::string &str);
+    static int do_serialize(const SerializableObject &obj, 
+                            std::vector<StringPair> &fields,
+                            bool get_schema = false);
+    static int do_unserialize(const std::string &str, SerializableObject *obj);
+    static int do_unserialize(const std::vector<StringPair> &fields, 
+                              SerializableObject *obj);
         
 
 private:

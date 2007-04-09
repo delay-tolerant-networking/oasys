@@ -449,95 +449,95 @@ namespace dsmessage
   // 
 
 
-  // ds_delete_request_type
+  // ds_del_request_type
   // 
 
-  const ds_delete_request_type::password::container& ds_delete_request_type::
+  const ds_del_request_type::password::container& ds_del_request_type::
   password () const
   {
     return this->_xsd_password_;
   }
 
-  ds_delete_request_type::password::container& ds_delete_request_type::
+  ds_del_request_type::password::container& ds_del_request_type::
   password ()
   {
     return this->_xsd_password_;
   }
 
-  void ds_delete_request_type::
+  void ds_del_request_type::
   password (const password::type& password)
   {
     this->_xsd_password_.set (password);
   }
 
-  void ds_delete_request_type::
+  void ds_del_request_type::
   password (const password::container& password)
   {
     this->_xsd_password_ = password;
   }
 
-  void ds_delete_request_type::
+  void ds_del_request_type::
   password (::std::auto_ptr< password::type > password)
   {
     this->_xsd_password_.set (password);
   }
 
-  const ds_delete_request_type::ds::type& ds_delete_request_type::
+  const ds_del_request_type::ds::type& ds_del_request_type::
   ds () const
   {
     return this->_xsd_ds_.get ();
   }
 
-  ds_delete_request_type::ds::type& ds_delete_request_type::
+  ds_del_request_type::ds::type& ds_del_request_type::
   ds ()
   {
     return this->_xsd_ds_.get ();
   }
 
-  void ds_delete_request_type::
+  void ds_del_request_type::
   ds (const ds::type& ds)
   {
     this->_xsd_ds_.set (ds);
   }
 
-  void ds_delete_request_type::
+  void ds_del_request_type::
   ds (::std::auto_ptr< ds::type > ds)
   {
     this->_xsd_ds_.set (ds);
   }
 
-  const ds_delete_request_type::user::container& ds_delete_request_type::
+  const ds_del_request_type::user::container& ds_del_request_type::
   user () const
   {
     return this->_xsd_user_;
   }
 
-  ds_delete_request_type::user::container& ds_delete_request_type::
+  ds_del_request_type::user::container& ds_del_request_type::
   user ()
   {
     return this->_xsd_user_;
   }
 
-  void ds_delete_request_type::
+  void ds_del_request_type::
   user (const user::type& user)
   {
     this->_xsd_user_.set (user);
   }
 
-  void ds_delete_request_type::
+  void ds_del_request_type::
   user (const user::container& user)
   {
     this->_xsd_user_ = user;
   }
 
-  void ds_delete_request_type::
+  void ds_del_request_type::
   user (::std::auto_ptr< user::type > user)
   {
     this->_xsd_user_.set (user);
   }
 
 
-  // ds_delete_reply_type
+  // ds_del_reply_type
   // 
 
 
@@ -862,28 +862,28 @@ namespace dsmessage
     this->_xsd_key_.set (key);
   }
 
-  const table_create_request_type::key_type::type& table_create_request_type::
-  key_type () const
+  const table_create_request_type::keytype::type& table_create_request_type::
+  keytype () const
   {
-    return this->_xsd_key_type_.get ();
+    return this->_xsd_keytype_.get ();
   }
 
-  table_create_request_type::key_type::type& table_create_request_type::
-  key_type ()
+  table_create_request_type::keytype::type& table_create_request_type::
+  keytype ()
   {
-    return this->_xsd_key_type_.get ();
-  }
-
-  void table_create_request_type::
-  key_type (const key_type::type& key_type)
-  {
-    this->_xsd_key_type_.set (key_type);
+    return this->_xsd_keytype_.get ();
   }
 
   void table_create_request_type::
-  key_type (::std::auto_ptr< key_type::type > key_type)
+  keytype (const keytype::type& keytype)
   {
-    this->_xsd_key_type_.set (key_type);
+    this->_xsd_keytype_.set (keytype);
+  }
+
+  void table_create_request_type::
+  keytype (::std::auto_ptr< keytype::type > keytype)
+  {
+    this->_xsd_keytype_.set (keytype);
   }
 
 
@@ -891,59 +891,59 @@ namespace dsmessage
   // 
 
 
-  // table_delete_request_type
+  // table_del_request_type
   // 
 
-  const table_delete_request_type::handle::type& table_delete_request_type::
+  const table_del_request_type::handle::type& table_del_request_type::
   handle () const
   {
     return this->_xsd_handle_.get ();
   }
 
-  table_delete_request_type::handle::type& table_delete_request_type::
+  table_del_request_type::handle::type& table_del_request_type::
   handle ()
   {
     return this->_xsd_handle_.get ();
   }
 
-  void table_delete_request_type::
+  void table_del_request_type::
   handle (const handle::type& handle)
   {
     this->_xsd_handle_.set (handle);
   }
 
-  void table_delete_request_type::
+  void table_del_request_type::
   handle (::std::auto_ptr< handle::type > handle)
   {
     this->_xsd_handle_.set (handle);
   }
 
-  const table_delete_request_type::table::type& table_delete_request_type::
+  const table_del_request_type::table::type& table_del_request_type::
   table () const
   {
     return this->_xsd_table_.get ();
   }
 
-  table_delete_request_type::table::type& table_delete_request_type::
+  table_del_request_type::table::type& table_del_request_type::
   table ()
   {
     return this->_xsd_table_.get ();
   }
 
-  void table_delete_request_type::
+  void table_del_request_type::
   table (const table::type& table)
   {
     this->_xsd_table_.set (table);
   }
 
-  void table_delete_request_type::
+  void table_del_request_type::
   table (::std::auto_ptr< table::type > table)
   {
     this->_xsd_table_.set (table);
   }
 
 
-  // table_delete_reply_type
+  // table_del_reply_type
   // 
 
 
@@ -1020,52 +1020,52 @@ namespace dsmessage
     this->_xsd_field_ = field;
   }
 
-  const table_stat_reply_type::key::type& table_stat_reply_type::
-  key () const
+  const table_stat_reply_type::keyname::type& table_stat_reply_type::
+  keyname () const
   {
-    return this->_xsd_key_.get ();
+    return this->_xsd_keyname_.get ();
   }
 
-  table_stat_reply_type::key::type& table_stat_reply_type::
-  key ()
+  table_stat_reply_type::keyname::type& table_stat_reply_type::
+  keyname ()
   {
-    return this->_xsd_key_.get ();
-  }
-
-  void table_stat_reply_type::
-  key (const key::type& key)
-  {
-    this->_xsd_key_.set (key);
+    return this->_xsd_keyname_.get ();
   }
 
   void table_stat_reply_type::
-  key (::std::auto_ptr< key::type > key)
+  keyname (const keyname::type& keyname)
   {
-    this->_xsd_key_.set (key);
-  }
-
-  const table_stat_reply_type::key_type::type& table_stat_reply_type::
-  key_type () const
-  {
-    return this->_xsd_key_type_.get ();
-  }
-
-  table_stat_reply_type::key_type::type& table_stat_reply_type::
-  key_type ()
-  {
-    return this->_xsd_key_type_.get ();
+    this->_xsd_keyname_.set (keyname);
   }
 
   void table_stat_reply_type::
-  key_type (const key_type::type& key_type)
+  keyname (::std::auto_ptr< keyname::type > keyname)
   {
-    this->_xsd_key_type_.set (key_type);
+    this->_xsd_keyname_.set (keyname);
+  }
+
+  const table_stat_reply_type::keytype::type& table_stat_reply_type::
+  keytype () const
+  {
+    return this->_xsd_keytype_.get ();
+  }
+
+  table_stat_reply_type::keytype::type& table_stat_reply_type::
+  keytype ()
+  {
+    return this->_xsd_keytype_.get ();
   }
 
   void table_stat_reply_type::
-  key_type (::std::auto_ptr< key_type::type > key_type)
+  keytype (const keytype::type& keytype)
   {
-    this->_xsd_key_type_.set (key_type);
+    this->_xsd_keytype_.set (keytype);
+  }
+
+  void table_stat_reply_type::
+  keytype (::std::auto_ptr< keytype::type > keytype)
+  {
+    this->_xsd_keytype_.set (keytype);
   }
 
   const table_stat_reply_type::count::type& table_stat_reply_type::
@@ -1136,6 +1136,30 @@ namespace dsmessage
   table (::std::auto_ptr< table::type > table)
   {
     this->_xsd_table_.set (table);
+  }
+
+  const table_keys_request_type::keyname::type& table_keys_request_type::
+  keyname () const
+  {
+    return this->_xsd_keyname_.get ();
+  }
+
+  table_keys_request_type::keyname::type& table_keys_request_type::
+  keyname ()
+  {
+    return this->_xsd_keyname_.get ();
+  }
+
+  void table_keys_request_type::
+  keyname (const keyname::type& keyname)
+  {
+    this->_xsd_keyname_.set (keyname);
+  }
+
+  void table_keys_request_type::
+  keyname (::std::auto_ptr< keyname::type > keyname)
+  {
+    this->_xsd_keyname_.set (keyname);
   }
 
 
@@ -1254,6 +1278,30 @@ namespace dsmessage
     this->_xsd_table_.set (table);
   }
 
+  const put_request_type::keyname::type& put_request_type::
+  keyname () const
+  {
+    return this->_xsd_keyname_.get ();
+  }
+
+  put_request_type::keyname::type& put_request_type::
+  keyname ()
+  {
+    return this->_xsd_keyname_.get ();
+  }
+
+  void put_request_type::
+  keyname (const keyname::type& keyname)
+  {
+    this->_xsd_keyname_.set (keyname);
+  }
+
+  void put_request_type::
+  keyname (::std::auto_ptr< keyname::type > keyname)
+  {
+    this->_xsd_keyname_.set (keyname);
+  }
+
 
   // put_reply_type
   // 
@@ -1334,6 +1382,30 @@ namespace dsmessage
     this->_xsd_table_.set (table);
   }
 
+  const get_request_type::keyname::type& get_request_type::
+  keyname () const
+  {
+    return this->_xsd_keyname_.get ();
+  }
+
+  get_request_type::keyname::type& get_request_type::
+  keyname ()
+  {
+    return this->_xsd_keyname_.get ();
+  }
+
+  void get_request_type::
+  keyname (const keyname::type& keyname)
+  {
+    this->_xsd_keyname_.set (keyname);
+  }
+
+  void get_request_type::
+  keyname (::std::auto_ptr< keyname::type > keyname)
+  {
+    this->_xsd_keyname_.set (keyname);
+  }
+
 
   // get_reply_type
   // 
@@ -1356,102 +1428,108 @@ namespace dsmessage
     this->_xsd_field_ = field;
   }
 
-  const get_reply_type::value::container& get_reply_type::
-  value () const
-  {
-    return this->_xsd_value_;
-  }
 
-  get_reply_type::value::container& get_reply_type::
-  value ()
-  {
-    return this->_xsd_value_;
-  }
-
-  void get_reply_type::
-  value (const value::container& value)
-  {
-    this->_xsd_value_ = value;
-  }
-
-
-  // delete_request_type
+  // del_request_type
   // 
 
-  const delete_request_type::key::type& delete_request_type::
+  const del_request_type::key::type& del_request_type::
   key () const
   {
     return this->_xsd_key_.get ();
   }
 
-  delete_request_type::key::type& delete_request_type::
+  del_request_type::key::type& del_request_type::
   key ()
   {
     return this->_xsd_key_.get ();
   }
 
-  void delete_request_type::
+  void del_request_type::
   key (const key::type& key)
   {
     this->_xsd_key_.set (key);
   }
 
-  void delete_request_type::
+  void del_request_type::
   key (::std::auto_ptr< key::type > key)
   {
     this->_xsd_key_.set (key);
   }
 
-  const delete_request_type::handle::type& delete_request_type::
+  const del_request_type::handle::type& del_request_type::
   handle () const
   {
     return this->_xsd_handle_.get ();
   }
 
-  delete_request_type::handle::type& delete_request_type::
+  del_request_type::handle::type& del_request_type::
   handle ()
   {
     return this->_xsd_handle_.get ();
   }
 
-  void delete_request_type::
+  void del_request_type::
   handle (const handle::type& handle)
   {
     this->_xsd_handle_.set (handle);
   }
 
-  void delete_request_type::
+  void del_request_type::
   handle (::std::auto_ptr< handle::type > handle)
   {
     this->_xsd_handle_.set (handle);
   }
 
-  const delete_request_type::table::type& delete_request_type::
+  const del_request_type::table::type& del_request_type::
   table () const
   {
     return this->_xsd_table_.get ();
   }
 
-  delete_request_type::table::type& delete_request_type::
+  del_request_type::table::type& del_request_type::
   table ()
   {
     return this->_xsd_table_.get ();
   }
 
-  void delete_request_type::
+  void del_request_type::
   table (const table::type& table)
   {
     this->_xsd_table_.set (table);
   }
 
-  void delete_request_type::
+  void del_request_type::
   table (::std::auto_ptr< table::type > table)
   {
     this->_xsd_table_.set (table);
   }
 
+  const del_request_type::keyname::type& del_request_type::
+  keyname () const
+  {
+    return this->_xsd_keyname_.get ();
+  }
 
-  // delete_reply_type
+  del_request_type::keyname::type& del_request_type::
+  keyname ()
+  {
+    return this->_xsd_keyname_.get ();
+  }
+
+  void del_request_type::
+  keyname (const keyname::type& keyname)
+  {
+    this->_xsd_keyname_.set (keyname);
+  }
+
+  void del_request_type::
+  keyname (::std::auto_ptr< keyname::type > keyname)
+  {
+    this->_xsd_keyname_.set (keyname);
+  }
+
+
+  // del_reply_type
   // 
 
 
@@ -1739,6 +1817,134 @@ namespace dsmessage
   }
 
 
+  // trigger_request_type
+  // 
+
+  const trigger_request_type::expr::type& trigger_request_type::
+  expr () const
+  {
+    return this->_xsd_expr_.get ();
+  }
+
+  trigger_request_type::expr::type& trigger_request_type::
+  expr ()
+  {
+    return this->_xsd_expr_.get ();
+  }
+
+  void trigger_request_type::
+  expr (const expr::type& expr)
+  {
+    this->_xsd_expr_.set (expr);
+  }
+
+  void trigger_request_type::
+  expr (::std::auto_ptr< expr::type > expr)
+  {
+    this->_xsd_expr_.set (expr);
+  }
+
+  const trigger_request_type::handle::type& trigger_request_type::
+  handle () const
+  {
+    return this->_xsd_handle_.get ();
+  }
+
+  trigger_request_type::handle::type& trigger_request_type::
+  handle ()
+  {
+    return this->_xsd_handle_.get ();
+  }
+
+  void trigger_request_type::
+  handle (const handle::type& handle)
+  {
+    this->_xsd_handle_.set (handle);
+  }
+
+  void trigger_request_type::
+  handle (::std::auto_ptr< handle::type > handle)
+  {
+    this->_xsd_handle_.set (handle);
+  }
+
+  const trigger_request_type::language::type& trigger_request_type::
+  language () const
+  {
+    return this->_xsd_language_.get ();
+  }
+
+  trigger_request_type::language::type& trigger_request_type::
+  language ()
+  {
+    return this->_xsd_language_.get ();
+  }
+
+  void trigger_request_type::
+  language (const language::type& language)
+  {
+    this->_xsd_language_.set (language);
+  }
+
+  void trigger_request_type::
+  language (::std::auto_ptr< language::type > language)
+  {
+    this->_xsd_language_.set (language);
+  }
+
+
+  // trigger_reply_type
+  // 
+
+  const trigger_reply_type::value::type& trigger_reply_type::
+  value () const
+  {
+    return this->_xsd_value_.get ();
+  }
+
+  trigger_reply_type::value::type& trigger_reply_type::
+  value ()
+  {
+    return this->_xsd_value_.get ();
+  }
+
+  void trigger_reply_type::
+  value (const value::type& value)
+  {
+    this->_xsd_value_.set (value);
+  }
+
+  void trigger_reply_type::
+  value (::std::auto_ptr< value::type > value)
+  {
+    this->_xsd_value_.set (value);
+  }
+
+  const trigger_reply_type::language::type& trigger_reply_type::
+  language () const
+  {
+    return this->_xsd_language_.get ();
+  }
+
+  trigger_reply_type::language::type& trigger_reply_type::
+  language ()
+  {
+    return this->_xsd_language_.get ();
+  }
+
+  void trigger_reply_type::
+  language (const language::type& language)
+  {
+    this->_xsd_language_.set (language);
+  }
+
+  void trigger_reply_type::
+  language (::std::auto_ptr< language::type > language)
+  {
+    this->_xsd_language_.set (language);
+  }
+
+
   // ds_request_type
   // 
 
@@ -1802,34 +2008,34 @@ namespace dsmessage
     this->_xsd_ds_create_.set (ds_create);
   }
 
-  const ds_request_type::ds_delete::container& ds_request_type::
-  ds_delete () const
+  const ds_request_type::ds_del::container& ds_request_type::
+  ds_del () const
   {
-    return this->_xsd_ds_delete_;
+    return this->_xsd_ds_del_;
   }
 
-  ds_request_type::ds_delete::container& ds_request_type::
-  ds_delete ()
+  ds_request_type::ds_del::container& ds_request_type::
+  ds_del ()
   {
-    return this->_xsd_ds_delete_;
-  }
-
-  void ds_request_type::
-  ds_delete (const ds_delete::type& ds_delete)
-  {
-    this->_xsd_ds_delete_.set (ds_delete);
+    return this->_xsd_ds_del_;
   }
 
   void ds_request_type::
-  ds_delete (const ds_delete::container& ds_delete)
+  ds_del (const ds_del::type& ds_del)
   {
-    this->_xsd_ds_delete_ = ds_delete;
+    this->_xsd_ds_del_.set (ds_del);
   }
 
   void ds_request_type::
-  ds_delete (::std::auto_ptr< ds_delete::type > ds_delete)
+  ds_del (const ds_del::container& ds_del)
   {
-    this->_xsd_ds_delete_.set (ds_delete);
+    this->_xsd_ds_del_ = ds_del;
+  }
+
+  void ds_request_type::
+  ds_del (::std::auto_ptr< ds_del::type > ds_del)
+  {
+    this->_xsd_ds_del_.set (ds_del);
   }
 
   const ds_request_type::ds_open::container& ds_request_type::
@@ -1952,34 +2158,34 @@ namespace dsmessage
     this->_xsd_table_create_.set (table_create);
   }
 
-  const ds_request_type::table_delete::container& ds_request_type::
-  table_delete () const
+  const ds_request_type::table_del::container& ds_request_type::
+  table_del () const
   {
-    return this->_xsd_table_delete_;
+    return this->_xsd_table_del_;
   }
 
-  ds_request_type::table_delete::container& ds_request_type::
-  table_delete ()
+  ds_request_type::table_del::container& ds_request_type::
+  table_del ()
   {
-    return this->_xsd_table_delete_;
-  }
-
-  void ds_request_type::
-  table_delete (const table_delete::type& table_delete)
-  {
-    this->_xsd_table_delete_.set (table_delete);
+    return this->_xsd_table_del_;
   }
 
   void ds_request_type::
-  table_delete (const table_delete::container& table_delete)
+  table_del (const table_del::type& table_del)
   {
-    this->_xsd_table_delete_ = table_delete;
+    this->_xsd_table_del_.set (table_del);
   }
 
   void ds_request_type::
-  table_delete (::std::auto_ptr< table_delete::type > table_delete)
+  table_del (const table_del::container& table_del)
   {
-    this->_xsd_table_delete_.set (table_delete);
+    this->_xsd_table_del_ = table_del;
+  }
+
+  void ds_request_type::
+  table_del (::std::auto_ptr< table_del::type > table_del)
+  {
+    this->_xsd_table_del_.set (table_del);
   }
 
   const ds_request_type::table_stat::container& ds_request_type::
@@ -2310,34 +2516,34 @@ namespace dsmessage
     this->_xsd_ds_create_reply_.set (ds_create_reply);
   }
 
-  const ds_reply_type::ds_delete_reply::container& ds_reply_type::
-  ds_delete_reply () const
+  const ds_reply_type::ds_del_reply::container& ds_reply_type::
+  ds_del_reply () const
   {
-    return this->_xsd_ds_delete_reply_;
+    return this->_xsd_ds_del_reply_;
   }
 
-  ds_reply_type::ds_delete_reply::container& ds_reply_type::
-  ds_delete_reply ()
+  ds_reply_type::ds_del_reply::container& ds_reply_type::
+  ds_del_reply ()
   {
-    return this->_xsd_ds_delete_reply_;
-  }
-
-  void ds_reply_type::
-  ds_delete_reply (const ds_delete_reply::type& ds_delete_reply)
-  {
-    this->_xsd_ds_delete_reply_.set (ds_delete_reply);
+    return this->_xsd_ds_del_reply_;
   }
 
   void ds_reply_type::
-  ds_delete_reply (const ds_delete_reply::container& ds_delete_reply)
+  ds_del_reply (const ds_del_reply::type& ds_del_reply)
   {
-    this->_xsd_ds_delete_reply_ = ds_delete_reply;
+    this->_xsd_ds_del_reply_.set (ds_del_reply);
   }
 
   void ds_reply_type::
-  ds_delete_reply (::std::auto_ptr< ds_delete_reply::type > ds_delete_reply)
+  ds_del_reply (const ds_del_reply::container& ds_del_reply)
   {
-    this->_xsd_ds_delete_reply_.set (ds_delete_reply);
+    this->_xsd_ds_del_reply_ = ds_del_reply;
+  }
+
+  void ds_reply_type::
+  ds_del_reply (::std::auto_ptr< ds_del_reply::type > ds_del_reply)
+  {
+    this->_xsd_ds_del_reply_.set (ds_del_reply);
   }
 
   const ds_reply_type::ds_open_reply::container& ds_reply_type::
@@ -2460,34 +2666,34 @@ namespace dsmessage
     this->_xsd_table_create_reply_.set (table_create_reply);
   }
 
-  const ds_reply_type::table_delete_reply::container& ds_reply_type::
-  table_delete_reply () const
+  const ds_reply_type::table_del_reply::container& ds_reply_type::
+  table_del_reply () const
   {
-    return this->_xsd_table_delete_reply_;
+    return this->_xsd_table_del_reply_;
   }
 
-  ds_reply_type::table_delete_reply::container& ds_reply_type::
-  table_delete_reply ()
+  ds_reply_type::table_del_reply::container& ds_reply_type::
+  table_del_reply ()
   {
-    return this->_xsd_table_delete_reply_;
-  }
-
-  void ds_reply_type::
-  table_delete_reply (const table_delete_reply::type& table_delete_reply)
-  {
-    this->_xsd_table_delete_reply_.set (table_delete_reply);
+    return this->_xsd_table_del_reply_;
   }
 
   void ds_reply_type::
-  table_delete_reply (const table_delete_reply::container& table_delete_reply)
+  table_del_reply (const table_del_reply::type& table_del_reply)
   {
-    this->_xsd_table_delete_reply_ = table_delete_reply;
+    this->_xsd_table_del_reply_.set (table_del_reply);
   }
 
   void ds_reply_type::
-  table_delete_reply (::std::auto_ptr< table_delete_reply::type > table_delete_reply)
+  table_del_reply (const table_del_reply::container& table_del_reply)
   {
-    this->_xsd_table_delete_reply_.set (table_delete_reply);
+    this->_xsd_table_del_reply_ = table_del_reply;
+  }
+
+  void ds_reply_type::
+  table_del_reply (::std::auto_ptr< table_del_reply::type > table_del_reply)
+  {
+    this->_xsd_table_del_reply_.set (table_del_reply);
   }
 
   const ds_reply_type::table_stat_reply::container& ds_reply_type::
@@ -2610,34 +2816,34 @@ namespace dsmessage
     this->_xsd_get_reply_.set (get_reply);
   }
 
-  const ds_reply_type::delete_reply::container& ds_reply_type::
-  delete_reply () const
+  const ds_reply_type::del_reply::container& ds_reply_type::
+  del_reply () const
   {
-    return this->_xsd_delete_reply_;
+    return this->_xsd_del_reply_;
   }
 
-  ds_reply_type::delete_reply::container& ds_reply_type::
-  delete_reply ()
+  ds_reply_type::del_reply::container& ds_reply_type::
+  del_reply ()
   {
-    return this->_xsd_delete_reply_;
-  }
-
-  void ds_reply_type::
-  delete_reply (const delete_reply::type& delete_reply)
-  {
-    this->_xsd_delete_reply_.set (delete_reply);
+    return this->_xsd_del_reply_;
   }
 
   void ds_reply_type::
-  delete_reply (const delete_reply::container& delete_reply)
+  del_reply (const del_reply::type& del_reply)
   {
-    this->_xsd_delete_reply_ = delete_reply;
+    this->_xsd_del_reply_.set (del_reply);
   }
 
   void ds_reply_type::
-  delete_reply (::std::auto_ptr< delete_reply::type > delete_reply)
+  del_reply (const del_reply::container& del_reply)
   {
-    this->_xsd_delete_reply_.set (delete_reply);
+    this->_xsd_del_reply_ = del_reply;
+  }
+
+  void ds_reply_type::
+  del_reply (::std::auto_ptr< del_reply::type > del_reply)
+  {
+    this->_xsd_del_reply_.set (del_reply);
   }
 
   const ds_reply_type::select_reply::container& ds_reply_type::
@@ -3569,11 +3775,11 @@ namespace dsmessage
     return new ds_create_reply_type (*this, f, c);
   }
 
-  // ds_delete_request_type
+  // ds_del_request_type
   //
 
-  ds_delete_request_type::
-  ds_delete_request_type (const ds::type& _xsd_ds)
+  ds_del_request_type::
+  ds_del_request_type (const ds::type& _xsd_ds)
   : ::xml_schema::type (),
   _xsd_password_ (::xml_schema::flags (), this),
   _xsd_ds_ (_xsd_ds,
@@ -3583,27 +3789,27 @@ namespace dsmessage
   {
   }
 
-  ds_delete_request_type::
-  ds_delete_request_type (const ds_delete_request_type& _xsd_ds_delete_request_type,
-                          ::xml_schema::flags f,
-                          ::xml_schema::type* c)
-  : ::xml_schema::type (_xsd_ds_delete_request_type, f, c),
-  _xsd_password_ (_xsd_ds_delete_request_type._xsd_password_,
+  ds_del_request_type::
+  ds_del_request_type (const ds_del_request_type& _xsd_ds_del_request_type,
+                       ::xml_schema::flags f,
+                       ::xml_schema::type* c)
+  : ::xml_schema::type (_xsd_ds_del_request_type, f, c),
+  _xsd_password_ (_xsd_ds_del_request_type._xsd_password_,
                   f | ::xml_schema::flags::not_root,
                   this),
-  _xsd_ds_ (_xsd_ds_delete_request_type._xsd_ds_,
+  _xsd_ds_ (_xsd_ds_del_request_type._xsd_ds_,
             f | ::xml_schema::flags::not_root,
             this),
-  _xsd_user_ (_xsd_ds_delete_request_type._xsd_user_,
+  _xsd_user_ (_xsd_ds_del_request_type._xsd_user_,
               f | ::xml_schema::flags::not_root,
               this)
   {
   }
 
-  ds_delete_request_type::
-  ds_delete_request_type (const ::xercesc::DOMElement& e,
-                          ::xml_schema::flags f,
-                          ::xml_schema::type* c)
+  ds_del_request_type::
+  ds_del_request_type (const ::xercesc::DOMElement& e,
+                       ::xml_schema::flags f,
+                       ::xml_schema::type* c)
   : ::xml_schema::type (e, f, c),
   _xsd_password_ (f | ::xml_schema::flags::not_root, this),
   _xsd_ds_ (f | ::xml_schema::flags::not_root, this),
@@ -3612,7 +3818,7 @@ namespace dsmessage
     parse (e, f);
   }
 
-  void ds_delete_request_type::
+  void ds_del_request_type::
   parse (const ::xercesc::DOMElement& e, ::xml_schema::flags f)
   {
     ::xsd::cxx::xml::dom::parser< char > p (e);
@@ -3677,60 +3883,60 @@ namespace dsmessage
     }
   }
 
-  ds_delete_request_type* ds_delete_request_type::
+  ds_del_request_type* ds_del_request_type::
   _clone (::xml_schema::flags f,
           ::xml_schema::type* c) const
   {
-    return new ds_delete_request_type (*this, f, c);
+    return new ds_del_request_type (*this, f, c);
   }
 
-  // ds_delete_reply_type
+  // ds_del_reply_type
   //
 
-  ds_delete_reply_type::
-  ds_delete_reply_type ()
+  ds_del_reply_type::
+  ds_del_reply_type ()
   : ::xml_schema::type ()
   {
   }
 
-  ds_delete_reply_type::
-  ds_delete_reply_type (const ds_delete_reply_type& _xsd_ds_delete_reply_type,
-                        ::xml_schema::flags f,
-                        ::xml_schema::type* c)
-  : ::xml_schema::type (_xsd_ds_delete_reply_type, f, c)
+  ds_del_reply_type::
+  ds_del_reply_type (const ds_del_reply_type& _xsd_ds_del_reply_type,
+                     ::xml_schema::flags f,
+                     ::xml_schema::type* c)
+  : ::xml_schema::type (_xsd_ds_del_reply_type, f, c)
   {
   }
 
-  ds_delete_reply_type::
-  ds_delete_reply_type (const ::xercesc::DOMElement& e,
-                        ::xml_schema::flags f,
-                        ::xml_schema::type* c)
+  ds_del_reply_type::
+  ds_del_reply_type (const ::xercesc::DOMElement& e,
+                     ::xml_schema::flags f,
+                     ::xml_schema::type* c)
   : ::xml_schema::type (e, f, c)
   {
   }
 
-  ds_delete_reply_type::
-  ds_delete_reply_type (const ::xercesc::DOMAttr& a,
-                        ::xml_schema::flags f,
-                        ::xml_schema::type* c)
+  ds_del_reply_type::
+  ds_del_reply_type (const ::xercesc::DOMAttr& a,
+                     ::xml_schema::flags f,
+                     ::xml_schema::type* c)
   : ::xml_schema::type (a, f, c)
   {
   }
 
-  ds_delete_reply_type::
-  ds_delete_reply_type (const ::std::basic_string< char >& s,
-                        const ::xercesc::DOMElement* e,
-                        ::xml_schema::flags f,
-                        ::xml_schema::type* c)
+  ds_del_reply_type::
+  ds_del_reply_type (const ::std::basic_string< char >& s,
+                     const ::xercesc::DOMElement* e,
+                     ::xml_schema::flags f,
+                     ::xml_schema::type* c)
   : ::xml_schema::type (s, e, f, c)
   {
   }
 
-  ds_delete_reply_type* ds_delete_reply_type::
+  ds_del_reply_type* ds_del_reply_type::
   _clone (::xml_schema::flags f,
           ::xml_schema::type* c) const
   {
-    return new ds_delete_reply_type (*this, f, c);
+    return new ds_del_reply_type (*this, f, c);
   }
 
   // ds_open_request_type
@@ -4185,7 +4391,7 @@ namespace dsmessage
   table_create_request_type (const handle::type& _xsd_handle,
                              const table::type& _xsd_table,
                              const key::type& _xsd_key,
-                             const key_type::type& _xsd_key_type)
+                             const keytype::type& _xsd_keytype)
   : ::xml_schema::type (),
   _xsd_field_ (::xml_schema::flags (), this),
   _xsd_handle_ (_xsd_handle,
@@ -4197,9 +4403,9 @@ namespace dsmessage
   _xsd_key_ (_xsd_key,
              ::xml_schema::flags (),
              this),
-  _xsd_key_type_ (_xsd_key_type,
-                  ::xml_schema::flags (),
-                  this)
+  _xsd_keytype_ (_xsd_keytype,
+                 ::xml_schema::flags (),
+                 this)
   {
   }
 
@@ -4220,9 +4426,9 @@ namespace dsmessage
   _xsd_key_ (_xsd_table_create_request_type._xsd_key_,
              f | ::xml_schema::flags::not_root,
              this),
-  _xsd_key_type_ (_xsd_table_create_request_type._xsd_key_type_,
-                  f | ::xml_schema::flags::not_root,
-                  this)
+  _xsd_keytype_ (_xsd_table_create_request_type._xsd_keytype_,
+                 f | ::xml_schema::flags::not_root,
+                 this)
   {
   }
 
@@ -4235,7 +4441,7 @@ namespace dsmessage
   _xsd_handle_ (f | ::xml_schema::flags::not_root, this),
   _xsd_table_ (f | ::xml_schema::flags::not_root, this),
   _xsd_key_ (f | ::xml_schema::flags::not_root, this),
-  _xsd_key_type_ (f | ::xml_schema::flags::not_root, this)
+  _xsd_keytype_ (f | ::xml_schema::flags::not_root, this)
   {
     parse (e, f);
   }
@@ -4306,15 +4512,15 @@ namespace dsmessage
         continue;
       }
 
-      if (a.name () == "key-type" && a.namespace_ ().empty ())
+      if (a.name () == "keytype" && a.namespace_ ().empty ())
       {
-        ::std::auto_ptr< key_type::type > r (
-          key_type::traits::create (
+        ::std::auto_ptr< keytype::type > r (
+          keytype::traits::create (
             a.dom_attribute (),
             f | ::xml_schema::flags::not_root,
             this));
 
-        this->key_type (r);
+        this->keytype (r);
         continue;
       }
     }
@@ -4340,10 +4546,10 @@ namespace dsmessage
         "");
     }
 
-    if (!_xsd_key_type_.present ())
+    if (!_xsd_keytype_.present ())
     {
       throw ::xsd::cxx::tree::expected_attribute< char > (
-        "key-type",
+        "keytype",
         "");
     }
   }
@@ -4404,12 +4610,12 @@ namespace dsmessage
     return new table_create_reply_type (*this, f, c);
   }
 
-  // table_delete_request_type
+  // table_del_request_type
   //
 
-  table_delete_request_type::
-  table_delete_request_type (const handle::type& _xsd_handle,
-                             const table::type& _xsd_table)
+  table_del_request_type::
+  table_del_request_type (const handle::type& _xsd_handle,
+                          const table::type& _xsd_table)
   : ::xml_schema::type (),
   _xsd_handle_ (_xsd_handle,
                 ::xml_schema::flags (),
@@ -4420,24 +4626,24 @@ namespace dsmessage
   {
   }
 
-  table_delete_request_type::
-  table_delete_request_type (const table_delete_request_type& _xsd_table_delete_request_type,
-                             ::xml_schema::flags f,
-                             ::xml_schema::type* c)
-  : ::xml_schema::type (_xsd_table_delete_request_type, f, c),
-  _xsd_handle_ (_xsd_table_delete_request_type._xsd_handle_,
+  table_del_request_type::
+  table_del_request_type (const table_del_request_type& _xsd_table_del_request_type,
+                          ::xml_schema::flags f,
+                          ::xml_schema::type* c)
+  : ::xml_schema::type (_xsd_table_del_request_type, f, c),
+  _xsd_handle_ (_xsd_table_del_request_type._xsd_handle_,
                 f | ::xml_schema::flags::not_root,
                 this),
-  _xsd_table_ (_xsd_table_delete_request_type._xsd_table_,
+  _xsd_table_ (_xsd_table_del_request_type._xsd_table_,
                f | ::xml_schema::flags::not_root,
                this)
   {
   }
 
-  table_delete_request_type::
-  table_delete_request_type (const ::xercesc::DOMElement& e,
-                             ::xml_schema::flags f,
-                             ::xml_schema::type* c)
+  table_del_request_type::
+  table_del_request_type (const ::xercesc::DOMElement& e,
+                          ::xml_schema::flags f,
+                          ::xml_schema::type* c)
   : ::xml_schema::type (e, f, c),
   _xsd_handle_ (f | ::xml_schema::flags::not_root, this),
   _xsd_table_ (f | ::xml_schema::flags::not_root, this)
@@ -4445,7 +4651,7 @@ namespace dsmessage
     parse (e, f);
   }
 
-  void table_delete_request_type::
+  void table_del_request_type::
   parse (const ::xercesc::DOMElement& e, ::xml_schema::flags f)
   {
     ::xsd::cxx::xml::dom::parser< char > p (e);
@@ -4494,60 +4700,60 @@ namespace dsmessage
     }
   }
 
-  table_delete_request_type* table_delete_request_type::
+  table_del_request_type* table_del_request_type::
   _clone (::xml_schema::flags f,
           ::xml_schema::type* c) const
   {
-    return new table_delete_request_type (*this, f, c);
+    return new table_del_request_type (*this, f, c);
   }
 
-  // table_delete_reply_type
+  // table_del_reply_type
   //
 
-  table_delete_reply_type::
-  table_delete_reply_type ()
+  table_del_reply_type::
+  table_del_reply_type ()
   : ::xml_schema::type ()
   {
   }
 
-  table_delete_reply_type::
-  table_delete_reply_type (const table_delete_reply_type& _xsd_table_delete_reply_type,
-                           ::xml_schema::flags f,
-                           ::xml_schema::type* c)
-  : ::xml_schema::type (_xsd_table_delete_reply_type, f, c)
+  table_del_reply_type::
+  table_del_reply_type (const table_del_reply_type& _xsd_table_del_reply_type,
+                        ::xml_schema::flags f,
+                        ::xml_schema::type* c)
+  : ::xml_schema::type (_xsd_table_del_reply_type, f, c)
   {
   }
 
-  table_delete_reply_type::
-  table_delete_reply_type (const ::xercesc::DOMElement& e,
-                           ::xml_schema::flags f,
-                           ::xml_schema::type* c)
+  table_del_reply_type::
+  table_del_reply_type (const ::xercesc::DOMElement& e,
+                        ::xml_schema::flags f,
+                        ::xml_schema::type* c)
   : ::xml_schema::type (e, f, c)
   {
   }
 
-  table_delete_reply_type::
-  table_delete_reply_type (const ::xercesc::DOMAttr& a,
-                           ::xml_schema::flags f,
-                           ::xml_schema::type* c)
+  table_del_reply_type::
+  table_del_reply_type (const ::xercesc::DOMAttr& a,
+                        ::xml_schema::flags f,
+                        ::xml_schema::type* c)
   : ::xml_schema::type (a, f, c)
   {
   }
 
-  table_delete_reply_type::
-  table_delete_reply_type (const ::std::basic_string< char >& s,
-                           const ::xercesc::DOMElement* e,
-                           ::xml_schema::flags f,
-                           ::xml_schema::type* c)
+  table_del_reply_type::
+  table_del_reply_type (const ::std::basic_string< char >& s,
+                        const ::xercesc::DOMElement* e,
+                        ::xml_schema::flags f,
+                        ::xml_schema::type* c)
   : ::xml_schema::type (s, e, f, c)
   {
   }
 
-  table_delete_reply_type* table_delete_reply_type::
+  table_del_reply_type* table_del_reply_type::
   _clone (::xml_schema::flags f,
           ::xml_schema::type* c) const
   {
-    return new table_delete_reply_type (*this, f, c);
+    return new table_del_reply_type (*this, f, c);
   }
 
   // table_stat_request_type
@@ -4651,17 +4857,17 @@ namespace dsmessage
   //
 
   table_stat_reply_type::
-  table_stat_reply_type (const key::type& _xsd_key,
-                         const key_type::type& _xsd_key_type,
+  table_stat_reply_type (const keyname::type& _xsd_keyname,
+                         const keytype::type& _xsd_keytype,
                          const count::type& _xsd_count)
   : ::xml_schema::type (),
   _xsd_field_ (::xml_schema::flags (), this),
-  _xsd_key_ (_xsd_key,
-             ::xml_schema::flags (),
-             this),
-  _xsd_key_type_ (_xsd_key_type,
-                  ::xml_schema::flags (),
-                  this),
+  _xsd_keyname_ (_xsd_keyname,
+                 ::xml_schema::flags (),
+                 this),
+  _xsd_keytype_ (_xsd_keytype,
+                 ::xml_schema::flags (),
+                 this),
   _xsd_count_ (_xsd_count,
                ::xml_schema::flags (),
                this)
@@ -4676,12 +4882,12 @@ namespace dsmessage
   _xsd_field_ (_xsd_table_stat_reply_type._xsd_field_,
                f | ::xml_schema::flags::not_root,
                this),
-  _xsd_key_ (_xsd_table_stat_reply_type._xsd_key_,
-             f | ::xml_schema::flags::not_root,
-             this),
-  _xsd_key_type_ (_xsd_table_stat_reply_type._xsd_key_type_,
-                  f | ::xml_schema::flags::not_root,
-                  this),
+  _xsd_keyname_ (_xsd_table_stat_reply_type._xsd_keyname_,
+                 f | ::xml_schema::flags::not_root,
+                 this),
+  _xsd_keytype_ (_xsd_table_stat_reply_type._xsd_keytype_,
+                 f | ::xml_schema::flags::not_root,
+                 this),
   _xsd_count_ (_xsd_table_stat_reply_type._xsd_count_,
                f | ::xml_schema::flags::not_root,
                this)
@@ -4694,8 +4900,8 @@ namespace dsmessage
                          ::xml_schema::type* c)
   : ::xml_schema::type (e, f, c),
   _xsd_field_ (f | ::xml_schema::flags::not_root, this),
-  _xsd_key_ (f | ::xml_schema::flags::not_root, this),
-  _xsd_key_type_ (f | ::xml_schema::flags::not_root, this),
+  _xsd_keyname_ (f | ::xml_schema::flags::not_root, this),
+  _xsd_keytype_ (f | ::xml_schema::flags::not_root, this),
   _xsd_count_ (f | ::xml_schema::flags::not_root, this)
   {
     parse (e, f);
@@ -4731,27 +4937,27 @@ namespace dsmessage
     {
       const ::xsd::cxx::xml::dom::attribute< char > a (p.next_attribute ());
 
-      if (a.name () == "key" && a.namespace_ ().empty ())
+      if (a.name () == "keyname" && a.namespace_ ().empty ())
       {
-        ::std::auto_ptr< key::type > r (
-          key::traits::create (
+        ::std::auto_ptr< keyname::type > r (
+          keyname::traits::create (
             a.dom_attribute (),
             f | ::xml_schema::flags::not_root,
             this));
 
-        this->key (r);
+        this->keyname (r);
         continue;
       }
 
-      if (a.name () == "key-type" && a.namespace_ ().empty ())
+      if (a.name () == "keytype" && a.namespace_ ().empty ())
       {
-        ::std::auto_ptr< key_type::type > r (
-          key_type::traits::create (
+        ::std::auto_ptr< keytype::type > r (
+          keytype::traits::create (
             a.dom_attribute (),
             f | ::xml_schema::flags::not_root,
             this));
 
-        this->key_type (r);
+        this->keytype (r);
         continue;
       }
 
@@ -4766,17 +4972,17 @@ namespace dsmessage
       }
     }
 
-    if (!_xsd_key_.present ())
+    if (!_xsd_keyname_.present ())
     {
       throw ::xsd::cxx::tree::expected_attribute< char > (
-        "key",
+        "keyname",
         "");
     }
 
-    if (!_xsd_key_type_.present ())
+    if (!_xsd_keytype_.present ())
     {
       throw ::xsd::cxx::tree::expected_attribute< char > (
-        "key-type",
+        "keytype",
         "");
     }
 
@@ -4800,14 +5006,18 @@ namespace dsmessage
 
   table_keys_request_type::
   table_keys_request_type (const handle::type& _xsd_handle,
-                           const table::type& _xsd_table)
+                           const table::type& _xsd_table,
+                           const keyname::type& _xsd_keyname)
   : ::xml_schema::type (),
   _xsd_handle_ (_xsd_handle,
                 ::xml_schema::flags (),
                 this),
   _xsd_table_ (_xsd_table,
                ::xml_schema::flags (),
-               this)
+               this),
+  _xsd_keyname_ (_xsd_keyname,
+                 ::xml_schema::flags (),
+                 this)
   {
   }
 
@@ -4821,7 +5031,10 @@ namespace dsmessage
                 this),
   _xsd_table_ (_xsd_table_keys_request_type._xsd_table_,
                f | ::xml_schema::flags::not_root,
-               this)
+               this),
+  _xsd_keyname_ (_xsd_table_keys_request_type._xsd_keyname_,
+                 f | ::xml_schema::flags::not_root,
+                 this)
   {
   }
 
@@ -4831,7 +5044,8 @@ namespace dsmessage
                            ::xml_schema::type* c)
   : ::xml_schema::type (e, f, c),
   _xsd_handle_ (f | ::xml_schema::flags::not_root, this),
-  _xsd_table_ (f | ::xml_schema::flags::not_root, this)
+  _xsd_table_ (f | ::xml_schema::flags::not_root, this),
+  _xsd_keyname_ (f | ::xml_schema::flags::not_root, this)
   {
     parse (e, f);
   }
@@ -4868,6 +5082,18 @@ namespace dsmessage
         this->table (r);
         continue;
       }
+
+      if (a.name () == "keyname" && a.namespace_ ().empty ())
+      {
+        ::std::auto_ptr< keyname::type > r (
+          keyname::traits::create (
+            a.dom_attribute (),
+            f | ::xml_schema::flags::not_root,
+            this));
+
+        this->keyname (r);
+        continue;
+      }
     }
 
     if (!_xsd_handle_.present ())
@@ -4881,6 +5107,13 @@ namespace dsmessage
     {
       throw ::xsd::cxx::tree::expected_attribute< char > (
         "table",
+        "");
+    }
+
+    if (!_xsd_keyname_.present ())
+    {
+      throw ::xsd::cxx::tree::expected_attribute< char > (
+        "keyname",
         "");
     }
   }
@@ -4963,7 +5196,8 @@ namespace dsmessage
   put_request_type::
   put_request_type (const key::type& _xsd_key,
                     const handle::type& _xsd_handle,
-                    const table::type& _xsd_table)
+                    const table::type& _xsd_table,
+                    const keyname::type& _xsd_keyname)
   : ::xml_schema::type (),
   _xsd_key_ (_xsd_key,
              ::xml_schema::flags (),
@@ -4974,7 +5208,10 @@ namespace dsmessage
                 this),
   _xsd_table_ (_xsd_table,
                ::xml_schema::flags (),
-               this)
+               this),
+  _xsd_keyname_ (_xsd_keyname,
+                 ::xml_schema::flags (),
+                 this)
   {
   }
 
@@ -4994,7 +5231,10 @@ namespace dsmessage
                 this),
   _xsd_table_ (_xsd_put_request_type._xsd_table_,
                f | ::xml_schema::flags::not_root,
-               this)
+               this),
+  _xsd_keyname_ (_xsd_put_request_type._xsd_keyname_,
+                 f | ::xml_schema::flags::not_root,
+                 this)
   {
   }
 
@@ -5006,7 +5246,8 @@ namespace dsmessage
   _xsd_key_ (f | ::xml_schema::flags::not_root, this),
   _xsd_set_ (f | ::xml_schema::flags::not_root, this),
   _xsd_handle_ (f | ::xml_schema::flags::not_root, this),
-  _xsd_table_ (f | ::xml_schema::flags::not_root, this)
+  _xsd_table_ (f | ::xml_schema::flags::not_root, this),
+  _xsd_keyname_ (f | ::xml_schema::flags::not_root, this)
   {
     parse (e, f);
   }
@@ -5089,6 +5330,18 @@ namespace dsmessage
         this->table (r);
         continue;
       }
+
+      if (a.name () == "keyname" && a.namespace_ ().empty ())
+      {
+        ::std::auto_ptr< keyname::type > r (
+          keyname::traits::create (
+            a.dom_attribute (),
+            f | ::xml_schema::flags::not_root,
+            this));
+
+        this->keyname (r);
+        continue;
+      }
     }
 
     if (!_xsd_handle_.present ())
@@ -5102,6 +5355,13 @@ namespace dsmessage
     {
       throw ::xsd::cxx::tree::expected_attribute< char > (
         "table",
+        "");
+    }
+
+    if (!_xsd_keyname_.present ())
+    {
+      throw ::xsd::cxx::tree::expected_attribute< char > (
+        "keyname",
         "");
     }
   }
@@ -5168,7 +5428,8 @@ namespace dsmessage
   get_request_type::
   get_request_type (const key::type& _xsd_key,
                     const handle::type& _xsd_handle,
-                    const table::type& _xsd_table)
+                    const table::type& _xsd_table,
+                    const keyname::type& _xsd_keyname)
   : ::xml_schema::type (),
   _xsd_key_ (_xsd_key,
              ::xml_schema::flags (),
@@ -5178,7 +5439,10 @@ namespace dsmessage
                 this),
   _xsd_table_ (_xsd_table,
                ::xml_schema::flags (),
-               this)
+               this),
+  _xsd_keyname_ (_xsd_keyname,
+                 ::xml_schema::flags (),
+                 this)
   {
   }
 
@@ -5195,7 +5459,10 @@ namespace dsmessage
                 this),
   _xsd_table_ (_xsd_get_request_type._xsd_table_,
                f | ::xml_schema::flags::not_root,
-               this)
+               this),
+  _xsd_keyname_ (_xsd_get_request_type._xsd_keyname_,
+                 f | ::xml_schema::flags::not_root,
+                 this)
   {
   }
 
@@ -5206,7 +5473,8 @@ namespace dsmessage
   : ::xml_schema::type (e, f, c),
   _xsd_key_ (f | ::xml_schema::flags::not_root, this),
   _xsd_handle_ (f | ::xml_schema::flags::not_root, this),
-  _xsd_table_ (f | ::xml_schema::flags::not_root, this)
+  _xsd_table_ (f | ::xml_schema::flags::not_root, this),
+  _xsd_keyname_ (f | ::xml_schema::flags::not_root, this)
   {
     parse (e, f);
   }
@@ -5273,6 +5541,18 @@ namespace dsmessage
         this->table (r);
         continue;
       }
+
+      if (a.name () == "keyname" && a.namespace_ ().empty ())
+      {
+        ::std::auto_ptr< keyname::type > r (
+          keyname::traits::create (
+            a.dom_attribute (),
+            f | ::xml_schema::flags::not_root,
+            this));
+
+        this->keyname (r);
+        continue;
+      }
     }
 
     if (!_xsd_handle_.present ())
@@ -5286,6 +5566,13 @@ namespace dsmessage
     {
       throw ::xsd::cxx::tree::expected_attribute< char > (
         "table",
+        "");
+    }
+
+    if (!_xsd_keyname_.present ())
+    {
+      throw ::xsd::cxx::tree::expected_attribute< char > (
+        "keyname",
         "");
     }
   }
@@ -5303,8 +5590,7 @@ namespace dsmessage
   get_reply_type::
   get_reply_type ()
   : ::xml_schema::type (),
-  _xsd_field_ (::xml_schema::flags (), this),
-  _xsd_value_ (::xml_schema::flags (), this)
+  _xsd_field_ (::xml_schema::flags (), this)
   {
   }
 
@@ -5315,9 +5601,6 @@ namespace dsmessage
   : ::xml_schema::type (_xsd_get_reply_type, f, c),
   _xsd_field_ (_xsd_get_reply_type._xsd_field_,
                f | ::xml_schema::flags::not_root,
-               this),
-  _xsd_value_ (_xsd_get_reply_type._xsd_value_,
-               f | ::xml_schema::flags::not_root,
                this)
   {
   }
@@ -5327,8 +5610,7 @@ namespace dsmessage
                   ::xml_schema::flags f,
                   ::xml_schema::type* c)
   : ::xml_schema::type (e, f, c),
-  _xsd_field_ (f | ::xml_schema::flags::not_root, this),
-  _xsd_value_ (f | ::xml_schema::flags::not_root, this)
+  _xsd_field_ (f | ::xml_schema::flags::not_root, this)
   {
     parse (e, f);
   }
@@ -5357,22 +5639,6 @@ namespace dsmessage
           continue;
         }
       }
-
-      // value
-      //
-      {
-        if (e.name () == "value" && e.namespace_ ().empty ())
-        {
-          ::std::auto_ptr< value::type > r (
-            value::traits::create (
-              e.dom_element (),
-              f | ::xml_schema::flags::not_root,
-              this));
-
-          this->value ().push_back (r);
-          continue;
-        }
-      }
     }
   }
 
@@ -5383,13 +5649,14 @@ namespace dsmessage
     return new get_reply_type (*this, f, c);
   }
 
-  // delete_request_type
+  // del_request_type
   //
 
-  delete_request_type::
-  delete_request_type (const key::type& _xsd_key,
-                       const handle::type& _xsd_handle,
-                       const table::type& _xsd_table)
+  del_request_type::
+  del_request_type (const key::type& _xsd_key,
+                    const handle::type& _xsd_handle,
+                    const table::type& _xsd_table,
+                    const keyname::type& _xsd_keyname)
   : ::xml_schema::type (),
   _xsd_key_ (_xsd_key,
              ::xml_schema::flags (),
@@ -5399,40 +5666,47 @@ namespace dsmessage
                 this),
   _xsd_table_ (_xsd_table,
                ::xml_schema::flags (),
-               this)
+               this),
+  _xsd_keyname_ (_xsd_keyname,
+                 ::xml_schema::flags (),
+                 this)
   {
   }
 
-  delete_request_type::
-  delete_request_type (const delete_request_type& _xsd_delete_request_type,
-                       ::xml_schema::flags f,
-                       ::xml_schema::type* c)
-  : ::xml_schema::type (_xsd_delete_request_type, f, c),
-  _xsd_key_ (_xsd_delete_request_type._xsd_key_,
+  del_request_type::
+  del_request_type (const del_request_type& _xsd_del_request_type,
+                    ::xml_schema::flags f,
+                    ::xml_schema::type* c)
+  : ::xml_schema::type (_xsd_del_request_type, f, c),
+  _xsd_key_ (_xsd_del_request_type._xsd_key_,
              f | ::xml_schema::flags::not_root,
              this),
-  _xsd_handle_ (_xsd_delete_request_type._xsd_handle_,
+  _xsd_handle_ (_xsd_del_request_type._xsd_handle_,
                 f | ::xml_schema::flags::not_root,
                 this),
-  _xsd_table_ (_xsd_delete_request_type._xsd_table_,
+  _xsd_table_ (_xsd_del_request_type._xsd_table_,
                f | ::xml_schema::flags::not_root,
-               this)
+               this),
+  _xsd_keyname_ (_xsd_del_request_type._xsd_keyname_,
+                 f | ::xml_schema::flags::not_root,
+                 this)
   {
   }
 
-  delete_request_type::
-  delete_request_type (const ::xercesc::DOMElement& e,
-                       ::xml_schema::flags f,
-                       ::xml_schema::type* c)
+  del_request_type::
+  del_request_type (const ::xercesc::DOMElement& e,
+                    ::xml_schema::flags f,
+                    ::xml_schema::type* c)
   : ::xml_schema::type (e, f, c),
   _xsd_key_ (f | ::xml_schema::flags::not_root, this),
   _xsd_handle_ (f | ::xml_schema::flags::not_root, this),
-  _xsd_table_ (f | ::xml_schema::flags::not_root, this)
+  _xsd_table_ (f | ::xml_schema::flags::not_root, this),
+  _xsd_keyname_ (f | ::xml_schema::flags::not_root, this)
   {
     parse (e, f);
   }
 
-  void delete_request_type::
+  void del_request_type::
   parse (const ::xercesc::DOMElement& e, ::xml_schema::flags f)
   {
     ::xsd::cxx::xml::dom::parser< char > p (e);
@@ -5494,6 +5768,18 @@ namespace dsmessage
         this->table (r);
         continue;
       }
+
+      if (a.name () == "keyname" && a.namespace_ ().empty ())
+      {
+        ::std::auto_ptr< keyname::type > r (
+          keyname::traits::create (
+            a.dom_attribute (),
+            f | ::xml_schema::flags::not_root,
+            this));
+
+        this->keyname (r);
+        continue;
+      }
     }
 
     if (!_xsd_handle_.present ())
@@ -5509,62 +5795,69 @@ namespace dsmessage
         "table",
         "");
     }
+
+    if (!_xsd_keyname_.present ())
+    {
+      throw ::xsd::cxx::tree::expected_attribute< char > (
+        "keyname",
+        "");
+    }
   }
 
-  delete_request_type* delete_request_type::
+  del_request_type* del_request_type::
   _clone (::xml_schema::flags f,
           ::xml_schema::type* c) const
   {
-    return new delete_request_type (*this, f, c);
+    return new del_request_type (*this, f, c);
   }
 
-  // delete_reply_type
+  // del_reply_type
   //
 
-  delete_reply_type::
-  delete_reply_type ()
+  del_reply_type::
+  del_reply_type ()
   : ::xml_schema::type ()
   {
   }
 
-  delete_reply_type::
-  delete_reply_type (const delete_reply_type& _xsd_delete_reply_type,
-                     ::xml_schema::flags f,
-                     ::xml_schema::type* c)
-  : ::xml_schema::type (_xsd_delete_reply_type, f, c)
+  del_reply_type::
+  del_reply_type (const del_reply_type& _xsd_del_reply_type,
+                  ::xml_schema::flags f,
+                  ::xml_schema::type* c)
+  : ::xml_schema::type (_xsd_del_reply_type, f, c)
   {
   }
 
-  delete_reply_type::
-  delete_reply_type (const ::xercesc::DOMElement& e,
-                     ::xml_schema::flags f,
-                     ::xml_schema::type* c)
+  del_reply_type::
+  del_reply_type (const ::xercesc::DOMElement& e,
+                  ::xml_schema::flags f,
+                  ::xml_schema::type* c)
   : ::xml_schema::type (e, f, c)
   {
   }
 
-  delete_reply_type::
-  delete_reply_type (const ::xercesc::DOMAttr& a,
-                     ::xml_schema::flags f,
-                     ::xml_schema::type* c)
+  del_reply_type::
+  del_reply_type (const ::xercesc::DOMAttr& a,
+                  ::xml_schema::flags f,
+                  ::xml_schema::type* c)
   : ::xml_schema::type (a, f, c)
   {
   }
 
-  delete_reply_type::
-  delete_reply_type (const ::std::basic_string< char >& s,
-                     const ::xercesc::DOMElement* e,
-                     ::xml_schema::flags f,
-                     ::xml_schema::type* c)
+  del_reply_type::
+  del_reply_type (const ::std::basic_string< char >& s,
+                  const ::xercesc::DOMElement* e,
+                  ::xml_schema::flags f,
+                  ::xml_schema::type* c)
   : ::xml_schema::type (s, e, f, c)
   {
   }
 
-  delete_reply_type* delete_reply_type::
+  del_reply_type* del_reply_type::
   _clone (::xml_schema::flags f,
           ::xml_schema::type* c) const
   {
-    return new delete_reply_type (*this, f, c);
+    return new del_reply_type (*this, f, c);
   }
 
   // select_request_type
@@ -6099,6 +6392,249 @@ namespace dsmessage
     return new eval_reply_type (*this, f, c);
   }
 
+  // trigger_request_type
+  //
+
+  trigger_request_type::
+  trigger_request_type (const expr::type& _xsd_expr,
+                        const handle::type& _xsd_handle,
+                        const language::type& _xsd_language)
+  : ::xml_schema::type (),
+  _xsd_expr_ (_xsd_expr,
+              ::xml_schema::flags (),
+              this),
+  _xsd_handle_ (_xsd_handle,
+                ::xml_schema::flags (),
+                this),
+  _xsd_language_ (_xsd_language,
+                  ::xml_schema::flags (),
+                  this)
+  {
+  }
+
+  trigger_request_type::
+  trigger_request_type (const trigger_request_type& _xsd_trigger_request_type,
+                        ::xml_schema::flags f,
+                        ::xml_schema::type* c)
+  : ::xml_schema::type (_xsd_trigger_request_type, f, c),
+  _xsd_expr_ (_xsd_trigger_request_type._xsd_expr_,
+              f | ::xml_schema::flags::not_root,
+              this),
+  _xsd_handle_ (_xsd_trigger_request_type._xsd_handle_,
+                f | ::xml_schema::flags::not_root,
+                this),
+  _xsd_language_ (_xsd_trigger_request_type._xsd_language_,
+                  f | ::xml_schema::flags::not_root,
+                  this)
+  {
+  }
+
+  trigger_request_type::
+  trigger_request_type (const ::xercesc::DOMElement& e,
+                        ::xml_schema::flags f,
+                        ::xml_schema::type* c)
+  : ::xml_schema::type (e, f, c),
+  _xsd_expr_ (f | ::xml_schema::flags::not_root, this),
+  _xsd_handle_ (f | ::xml_schema::flags::not_root, this),
+  _xsd_language_ (f | ::xml_schema::flags::not_root, this)
+  {
+    parse (e, f);
+  }
+
+  void trigger_request_type::
+  parse (const ::xercesc::DOMElement& e, ::xml_schema::flags f)
+  {
+    ::xsd::cxx::xml::dom::parser< char > p (e);
+
+    while (p.more_elements ())
+    {
+      const ::xsd::cxx::xml::dom::element< char > e (p.next_element ());
+
+      // expr
+      //
+      {
+        if (e.name () == "expr" && e.namespace_ ().empty ())
+        {
+          ::std::auto_ptr< expr::type > r (
+            expr::traits::create (
+              e.dom_element (),
+              f | ::xml_schema::flags::not_root,
+              this));
+
+          if (_xsd_expr_.present ())
+            continue;
+          this->expr (r);
+          continue;
+        }
+      }
+    }
+
+    if (!_xsd_expr_.present ())
+    {
+      throw ::xsd::cxx::tree::expected_element< char > (
+        "expr",
+        "");
+    }
+
+    while (p.more_attributes ())
+    {
+      const ::xsd::cxx::xml::dom::attribute< char > a (p.next_attribute ());
+
+      if (a.name () == "handle" && a.namespace_ ().empty ())
+      {
+        ::std::auto_ptr< handle::type > r (
+          handle::traits::create (
+            a.dom_attribute (),
+            f | ::xml_schema::flags::not_root,
+            this));
+
+        this->handle (r);
+        continue;
+      }
+
+      if (a.name () == "language" && a.namespace_ ().empty ())
+      {
+        ::std::auto_ptr< language::type > r (
+          language::traits::create (
+            a.dom_attribute (),
+            f | ::xml_schema::flags::not_root,
+            this));
+
+        this->language (r);
+        continue;
+      }
+    }
+
+    if (!_xsd_handle_.present ())
+    {
+      throw ::xsd::cxx::tree::expected_attribute< char > (
+        "handle",
+        "");
+    }
+
+    if (!_xsd_language_.present ())
+    {
+      throw ::xsd::cxx::tree::expected_attribute< char > (
+        "language",
+        "");
+    }
+  }
+
+  trigger_request_type* trigger_request_type::
+  _clone (::xml_schema::flags f,
+          ::xml_schema::type* c) const
+  {
+    return new trigger_request_type (*this, f, c);
+  }
+
+  // trigger_reply_type
+  //
+
+  trigger_reply_type::
+  trigger_reply_type (const value::type& _xsd_value,
+                      const language::type& _xsd_language)
+  : ::xml_schema::type (),
+  _xsd_value_ (_xsd_value,
+               ::xml_schema::flags (),
+               this),
+  _xsd_language_ (_xsd_language,
+                  ::xml_schema::flags (),
+                  this)
+  {
+  }
+
+  trigger_reply_type::
+  trigger_reply_type (const trigger_reply_type& _xsd_trigger_reply_type,
+                      ::xml_schema::flags f,
+                      ::xml_schema::type* c)
+  : ::xml_schema::type (_xsd_trigger_reply_type, f, c),
+  _xsd_value_ (_xsd_trigger_reply_type._xsd_value_,
+               f | ::xml_schema::flags::not_root,
+               this),
+  _xsd_language_ (_xsd_trigger_reply_type._xsd_language_,
+                  f | ::xml_schema::flags::not_root,
+                  this)
+  {
+  }
+
+  trigger_reply_type::
+  trigger_reply_type (const ::xercesc::DOMElement& e,
+                      ::xml_schema::flags f,
+                      ::xml_schema::type* c)
+  : ::xml_schema::type (e, f, c),
+  _xsd_value_ (f | ::xml_schema::flags::not_root, this),
+  _xsd_language_ (f | ::xml_schema::flags::not_root, this)
+  {
+    parse (e, f);
+  }
+
+  void trigger_reply_type::
+  parse (const ::xercesc::DOMElement& e, ::xml_schema::flags f)
+  {
+    ::xsd::cxx::xml::dom::parser< char > p (e);
+
+    while (p.more_elements ())
+    {
+      const ::xsd::cxx::xml::dom::element< char > e (p.next_element ());
+
+      // value
+      //
+      {
+        if (e.name () == "value" && e.namespace_ ().empty ())
+        {
+          ::std::auto_ptr< value::type > r (
+            value::traits::create (
+              e.dom_element (),
+              f | ::xml_schema::flags::not_root,
+              this));
+
+          if (_xsd_value_.present ())
+            continue;
+          this->value (r);
+          continue;
+        }
+      }
+    }
+
+    if (!_xsd_value_.present ())
+    {
+      throw ::xsd::cxx::tree::expected_element< char > (
+        "value",
+        "");
+    }
+
+    while (p.more_attributes ())
+    {
+      const ::xsd::cxx::xml::dom::attribute< char > a (p.next_attribute ());
+
+      if (a.name () == "language" && a.namespace_ ().empty ())
+      {
+        ::std::auto_ptr< language::type > r (
+          language::traits::create (
+            a.dom_attribute (),
+            f | ::xml_schema::flags::not_root,
+            this));
+
+        this->language (r);
+        continue;
+      }
+    }
+
+    if (!_xsd_language_.present ())
+    {
+      throw ::xsd::cxx::tree::expected_attribute< char > (
+        "language",
+        "");
+    }
+  }
+
+  trigger_reply_type* trigger_reply_type::
+  _clone (::xml_schema::flags f,
+          ::xml_schema::type* c) const
+  {
+    return new trigger_reply_type (*this, f, c);
+  }
+
   // ds_request_type
   //
 
@@ -6107,12 +6643,12 @@ namespace dsmessage
   : ::xml_schema::type (),
   _xsd_ds_caps_ (::xml_schema::flags (), this),
   _xsd_ds_create_ (::xml_schema::flags (), this),
-  _xsd_ds_delete_ (::xml_schema::flags (), this),
+  _xsd_ds_del_ (::xml_schema::flags (), this),
   _xsd_ds_open_ (::xml_schema::flags (), this),
   _xsd_ds_stat_ (::xml_schema::flags (), this),
   _xsd_ds_close_ (::xml_schema::flags (), this),
   _xsd_table_create_ (::xml_schema::flags (), this),
-  _xsd_table_delete_ (::xml_schema::flags (), this),
+  _xsd_table_del_ (::xml_schema::flags (), this),
   _xsd_table_stat_ (::xml_schema::flags (), this),
   _xsd_table_keys_ (::xml_schema::flags (), this),
   _xsd_put_ (::xml_schema::flags (), this),
@@ -6138,9 +6674,9 @@ namespace dsmessage
   _xsd_ds_create_ (_xsd_ds_request_type._xsd_ds_create_,
                    f | ::xml_schema::flags::not_root,
                    this),
-  _xsd_ds_delete_ (_xsd_ds_request_type._xsd_ds_delete_,
-                   f | ::xml_schema::flags::not_root,
-                   this),
+  _xsd_ds_del_ (_xsd_ds_request_type._xsd_ds_del_,
+                f | ::xml_schema::flags::not_root,
+                this),
   _xsd_ds_open_ (_xsd_ds_request_type._xsd_ds_open_,
                  f | ::xml_schema::flags::not_root,
                  this),
@@ -6153,9 +6689,9 @@ namespace dsmessage
   _xsd_table_create_ (_xsd_ds_request_type._xsd_table_create_,
                       f | ::xml_schema::flags::not_root,
                       this),
-  _xsd_table_delete_ (_xsd_ds_request_type._xsd_table_delete_,
-                      f | ::xml_schema::flags::not_root,
-                      this),
+  _xsd_table_del_ (_xsd_ds_request_type._xsd_table_del_,
+                   f | ::xml_schema::flags::not_root,
+                   this),
   _xsd_table_stat_ (_xsd_ds_request_type._xsd_table_stat_,
                     f | ::xml_schema::flags::not_root,
                     this),
@@ -6193,12 +6729,12 @@ namespace dsmessage
   : ::xml_schema::type (e, f, c),
   _xsd_ds_caps_ (f | ::xml_schema::flags::not_root, this),
   _xsd_ds_create_ (f | ::xml_schema::flags::not_root, this),
-  _xsd_ds_delete_ (f | ::xml_schema::flags::not_root, this),
+  _xsd_ds_del_ (f | ::xml_schema::flags::not_root, this),
   _xsd_ds_open_ (f | ::xml_schema::flags::not_root, this),
   _xsd_ds_stat_ (f | ::xml_schema::flags::not_root, this),
   _xsd_ds_close_ (f | ::xml_schema::flags::not_root, this),
   _xsd_table_create_ (f | ::xml_schema::flags::not_root, this),
-  _xsd_table_delete_ (f | ::xml_schema::flags::not_root, this),
+  _xsd_table_del_ (f | ::xml_schema::flags::not_root, this),
   _xsd_table_stat_ (f | ::xml_schema::flags::not_root, this),
   _xsd_table_keys_ (f | ::xml_schema::flags::not_root, this),
   _xsd_put_ (f | ::xml_schema::flags::not_root, this),
@@ -6257,20 +6793,20 @@ namespace dsmessage
         }
       }
 
-      // ds_delete
+      // ds_del
       //
       {
-        if (e.name () == "ds-delete" && e.namespace_ ().empty ())
+        if (e.name () == "ds-del" && e.namespace_ ().empty ())
         {
-          ::std::auto_ptr< ds_delete::type > r (
-            ds_delete::traits::create (
+          ::std::auto_ptr< ds_del::type > r (
+            ds_del::traits::create (
               e.dom_element (),
               f | ::xml_schema::flags::not_root,
               this));
 
-          if (this->ds_delete ())
+          if (this->ds_del ())
             continue;
-          this->ds_delete (r);
+          this->ds_del (r);
           continue;
         }
       }
@@ -6347,20 +6883,20 @@ namespace dsmessage
         }
       }
 
-      // table_delete
+      // table_del
       //
       {
-        if (e.name () == "table-delete" && e.namespace_ ().empty ())
+        if (e.name () == "table-del" && e.namespace_ ().empty ())
         {
-          ::std::auto_ptr< table_delete::type > r (
-            table_delete::traits::create (
+          ::std::auto_ptr< table_del::type > r (
+            table_del::traits::create (
               e.dom_element (),
               f | ::xml_schema::flags::not_root,
               this));
 
-          if (this->table_delete ())
+          if (this->table_del ())
             continue;
-          this->table_delete (r);
+          this->table_del (r);
           continue;
         }
       }
@@ -6551,17 +7087,17 @@ namespace dsmessage
   : ::xml_schema::type (),
   _xsd_ds_caps_reply_ (::xml_schema::flags (), this),
   _xsd_ds_create_reply_ (::xml_schema::flags (), this),
-  _xsd_ds_delete_reply_ (::xml_schema::flags (), this),
+  _xsd_ds_del_reply_ (::xml_schema::flags (), this),
   _xsd_ds_open_reply_ (::xml_schema::flags (), this),
   _xsd_ds_stat_reply_ (::xml_schema::flags (), this),
   _xsd_ds_close_reply_ (::xml_schema::flags (), this),
   _xsd_table_create_reply_ (::xml_schema::flags (), this),
-  _xsd_table_delete_reply_ (::xml_schema::flags (), this),
+  _xsd_table_del_reply_ (::xml_schema::flags (), this),
   _xsd_table_stat_reply_ (::xml_schema::flags (), this),
   _xsd_table_keys_reply_ (::xml_schema::flags (), this),
   _xsd_put_reply_ (::xml_schema::flags (), this),
   _xsd_get_reply_ (::xml_schema::flags (), this),
-  _xsd_delete_reply_ (::xml_schema::flags (), this),
+  _xsd_del_reply_ (::xml_schema::flags (), this),
   _xsd_select_reply_ (::xml_schema::flags (), this),
   _xsd_eval_reply_ (::xml_schema::flags (), this),
   _xsd_trigger_reply_ (::xml_schema::flags (), this),
@@ -6585,9 +7121,9 @@ namespace dsmessage
   _xsd_ds_create_reply_ (_xsd_ds_reply_type._xsd_ds_create_reply_,
                          f | ::xml_schema::flags::not_root,
                          this),
-  _xsd_ds_delete_reply_ (_xsd_ds_reply_type._xsd_ds_delete_reply_,
-                         f | ::xml_schema::flags::not_root,
-                         this),
+  _xsd_ds_del_reply_ (_xsd_ds_reply_type._xsd_ds_del_reply_,
+                      f | ::xml_schema::flags::not_root,
+                      this),
   _xsd_ds_open_reply_ (_xsd_ds_reply_type._xsd_ds_open_reply_,
                        f | ::xml_schema::flags::not_root,
                        this),
@@ -6600,9 +7136,9 @@ namespace dsmessage
   _xsd_table_create_reply_ (_xsd_ds_reply_type._xsd_table_create_reply_,
                             f | ::xml_schema::flags::not_root,
                             this),
-  _xsd_table_delete_reply_ (_xsd_ds_reply_type._xsd_table_delete_reply_,
-                            f | ::xml_schema::flags::not_root,
-                            this),
+  _xsd_table_del_reply_ (_xsd_ds_reply_type._xsd_table_del_reply_,
+                         f | ::xml_schema::flags::not_root,
+                         this),
   _xsd_table_stat_reply_ (_xsd_ds_reply_type._xsd_table_stat_reply_,
                           f | ::xml_schema::flags::not_root,
                           this),
@@ -6615,9 +7151,9 @@ namespace dsmessage
   _xsd_get_reply_ (_xsd_ds_reply_type._xsd_get_reply_,
                    f | ::xml_schema::flags::not_root,
                    this),
-  _xsd_delete_reply_ (_xsd_ds_reply_type._xsd_delete_reply_,
-                      f | ::xml_schema::flags::not_root,
-                      this),
+  _xsd_del_reply_ (_xsd_ds_reply_type._xsd_del_reply_,
+                   f | ::xml_schema::flags::not_root,
+                   this),
   _xsd_select_reply_ (_xsd_ds_reply_type._xsd_select_reply_,
                       f | ::xml_schema::flags::not_root,
                       this),
@@ -6643,17 +7179,17 @@ namespace dsmessage
   : ::xml_schema::type (e, f, c),
   _xsd_ds_caps_reply_ (f | ::xml_schema::flags::not_root, this),
   _xsd_ds_create_reply_ (f | ::xml_schema::flags::not_root, this),
-  _xsd_ds_delete_reply_ (f | ::xml_schema::flags::not_root, this),
+  _xsd_ds_del_reply_ (f | ::xml_schema::flags::not_root, this),
   _xsd_ds_open_reply_ (f | ::xml_schema::flags::not_root, this),
   _xsd_ds_stat_reply_ (f | ::xml_schema::flags::not_root, this),
   _xsd_ds_close_reply_ (f | ::xml_schema::flags::not_root, this),
   _xsd_table_create_reply_ (f | ::xml_schema::flags::not_root, this),
-  _xsd_table_delete_reply_ (f | ::xml_schema::flags::not_root, this),
+  _xsd_table_del_reply_ (f | ::xml_schema::flags::not_root, this),
   _xsd_table_stat_reply_ (f | ::xml_schema::flags::not_root, this),
   _xsd_table_keys_reply_ (f | ::xml_schema::flags::not_root, this),
   _xsd_put_reply_ (f | ::xml_schema::flags::not_root, this),
   _xsd_get_reply_ (f | ::xml_schema::flags::not_root, this),
-  _xsd_delete_reply_ (f | ::xml_schema::flags::not_root, this),
+  _xsd_del_reply_ (f | ::xml_schema::flags::not_root, this),
   _xsd_select_reply_ (f | ::xml_schema::flags::not_root, this),
   _xsd_eval_reply_ (f | ::xml_schema::flags::not_root, this),
   _xsd_trigger_reply_ (f | ::xml_schema::flags::not_root, this),
@@ -6708,20 +7244,20 @@ namespace dsmessage
         }
       }
 
-      // ds_delete_reply
+      // ds_del_reply
       //
       {
-        if (e.name () == "ds-delete-reply" && e.namespace_ ().empty ())
+        if (e.name () == "ds-del-reply" && e.namespace_ ().empty ())
         {
-          ::std::auto_ptr< ds_delete_reply::type > r (
-            ds_delete_reply::traits::create (
+          ::std::auto_ptr< ds_del_reply::type > r (
+            ds_del_reply::traits::create (
               e.dom_element (),
               f | ::xml_schema::flags::not_root,
               this));
 
-          if (this->ds_delete_reply ())
+          if (this->ds_del_reply ())
             continue;
-          this->ds_delete_reply (r);
+          this->ds_del_reply (r);
           continue;
         }
       }
@@ -6798,20 +7334,20 @@ namespace dsmessage
         }
       }
 
-      // table_delete_reply
+      // table_del_reply
       //
       {
-        if (e.name () == "table-delete-reply" && e.namespace_ ().empty ())
+        if (e.name () == "table-del-reply" && e.namespace_ ().empty ())
         {
-          ::std::auto_ptr< table_delete_reply::type > r (
-            table_delete_reply::traits::create (
+          ::std::auto_ptr< table_del_reply::type > r (
+            table_del_reply::traits::create (
               e.dom_element (),
               f | ::xml_schema::flags::not_root,
               this));
 
-          if (this->table_delete_reply ())
+          if (this->table_del_reply ())
             continue;
-          this->table_delete_reply (r);
+          this->table_del_reply (r);
           continue;
         }
       }
@@ -6888,20 +7424,20 @@ namespace dsmessage
         }
       }
 
-      // delete_reply
+      // del_reply
       //
       {
-        if (e.name () == "delete-reply" && e.namespace_ ().empty ())
+        if (e.name () == "del-reply" && e.namespace_ ().empty ())
         {
-          ::std::auto_ptr< delete_reply::type > r (
-            delete_reply::traits::create (
+          ::std::auto_ptr< del_reply::type > r (
+            del_reply::traits::create (
               e.dom_element (),
               f | ::xml_schema::flags::not_root,
               this));
 
-          if (this->delete_reply ())
+          if (this->del_reply ())
             continue;
-          this->delete_reply (r);
+          this->del_reply (r);
           continue;
         }
       }
@@ -7718,7 +8254,7 @@ namespace dsmessage
 
   void
   operator<< (::xercesc::DOMElement& e,
-              const ds_delete_request_type& i)
+              const ds_del_request_type& i)
   {
     while (::xercesc::DOMNode* n = e.getFirstChild ())
       e.removeChild (n);
@@ -7753,7 +8289,7 @@ namespace dsmessage
 
   void
   operator<< (::xercesc::DOMElement& e,
-              const ds_delete_reply_type&)
+              const ds_del_reply_type&)
   {
     while (::xercesc::DOMNode* n = e.getFirstChild ())
       e.removeChild (n);
@@ -7761,13 +8297,13 @@ namespace dsmessage
 
   void
   operator<< (::xercesc::DOMAttr&,
-              const ds_delete_reply_type&)
+              const ds_del_reply_type&)
   {
   }
 
   void
   operator<< (::xsd::cxx::tree::list_stream< char >&,
-              const ds_delete_reply_type&)
+              const ds_del_reply_type&)
   {
   }
 
@@ -7949,10 +8485,10 @@ namespace dsmessage
 
     {
       ::xsd::cxx::xml::dom::attribute< char > a (
-        "key-type",
+        "keytype",
         e);
 
-      a.dom_attribute () << i.key_type ();
+      a.dom_attribute () << i.keytype ();
     }
   }
 
@@ -7978,7 +8514,7 @@ namespace dsmessage
 
   void
   operator<< (::xercesc::DOMElement& e,
-              const table_delete_request_type& i)
+              const table_del_request_type& i)
   {
     while (::xercesc::DOMNode* n = e.getFirstChild ())
       e.removeChild (n);
@@ -8002,7 +8538,7 @@ namespace dsmessage
 
   void
   operator<< (::xercesc::DOMElement& e,
-              const table_delete_reply_type&)
+              const table_del_reply_type&)
   {
     while (::xercesc::DOMNode* n = e.getFirstChild ())
       e.removeChild (n);
@@ -8010,13 +8546,13 @@ namespace dsmessage
 
   void
   operator<< (::xercesc::DOMAttr&,
-              const table_delete_reply_type&)
+              const table_del_reply_type&)
   {
   }
 
   void
   operator<< (::xsd::cxx::tree::list_stream< char >&,
-              const table_delete_reply_type&)
+              const table_del_reply_type&)
   {
   }
 
@@ -8065,18 +8601,18 @@ namespace dsmessage
 
     {
       ::xsd::cxx::xml::dom::attribute< char > a (
-        "key",
+        "keyname",
         e);
 
-      a.dom_attribute () << i.key ();
+      a.dom_attribute () << i.keyname ();
     }
 
     {
       ::xsd::cxx::xml::dom::attribute< char > a (
-        "key-type",
+        "keytype",
         e);
 
-      a.dom_attribute () << i.key_type ();
+      a.dom_attribute () << i.keytype ();
     }
 
     {
@@ -8109,6 +8645,14 @@ namespace dsmessage
         e);
 
       a.dom_attribute () << i.table ();
+    }
+
+    {
+      ::xsd::cxx::xml::dom::attribute< char > a (
+        "keyname",
+        e);
+
+      a.dom_attribute () << i.keyname ();
     }
   }
 
@@ -8173,6 +8717,14 @@ namespace dsmessage
 
       a.dom_attribute () << i.table ();
     }
+
+    {
+      ::xsd::cxx::xml::dom::attribute< char > a (
+        "keyname",
+        e);
+
+      a.dom_attribute () << i.keyname ();
+    }
   }
 
   void
@@ -8224,6 +8776,14 @@ namespace dsmessage
 
       a.dom_attribute () << i.table ();
     }
+
+    {
+      ::xsd::cxx::xml::dom::attribute< char > a (
+        "keyname",
+        e);
+
+      a.dom_attribute () << i.keyname ();
+    }
   }
 
   void
@@ -8244,23 +8804,11 @@ namespace dsmessage
         s.dom_element () << *b;
       }
     }
-
-    {
-      for (get_reply_type::value::const_iterator
-           b (i.value ().begin ()), n (i.value ().end ());
-           b != n; ++b)
-      {
-        ::xsd::cxx::xml::dom::element< char > s (
-          "value",
-          e);
-        s.dom_element () << *b;
-      }
-    }
   }
 
   void
   operator<< (::xercesc::DOMElement& e,
-              const delete_request_type& i)
+              const del_request_type& i)
   {
     while (::xercesc::DOMNode* n = e.getFirstChild ())
       e.removeChild (n);
@@ -8287,11 +8835,19 @@ namespace dsmessage
 
       a.dom_attribute () << i.table ();
     }
+
+    {
+      ::xsd::cxx::xml::dom::attribute< char > a (
+        "keyname",
+        e);
+
+      a.dom_attribute () << i.keyname ();
+    }
   }
 
   void
   operator<< (::xercesc::DOMElement& e,
-              const delete_reply_type&)
+              const del_reply_type&)
   {
     while (::xercesc::DOMNode* n = e.getFirstChild ())
       e.removeChild (n);
@@ -8299,13 +8855,13 @@ namespace dsmessage
 
   void
   operator<< (::xercesc::DOMAttr&,
-              const delete_reply_type&)
+              const del_reply_type&)
   {
   }
 
   void
   operator<< (::xsd::cxx::tree::list_stream< char >&,
-              const delete_reply_type&)
+              const del_reply_type&)
   {
   }
 
@@ -8462,6 +9018,60 @@ namespace dsmessage
 
   void
   operator<< (::xercesc::DOMElement& e,
+              const trigger_request_type& i)
+  {
+    while (::xercesc::DOMNode* n = e.getFirstChild ())
+      e.removeChild (n);
+
+    {
+      ::xsd::cxx::xml::dom::element< char > s (
+        "expr",
+        e);
+      s.dom_element () << i.expr ();
+    }
+
+    {
+      ::xsd::cxx::xml::dom::attribute< char > a (
+        "handle",
+        e);
+
+      a.dom_attribute () << i.handle ();
+    }
+
+    {
+      ::xsd::cxx::xml::dom::attribute< char > a (
+        "language",
+        e);
+
+      a.dom_attribute () << i.language ();
+    }
+  }
+
+  void
+  operator<< (::xercesc::DOMElement& e,
+              const trigger_reply_type& i)
+  {
+    while (::xercesc::DOMNode* n = e.getFirstChild ())
+      e.removeChild (n);
+
+    {
+      ::xsd::cxx::xml::dom::element< char > s (
+        "value",
+        e);
+      s.dom_element () << i.value ();
+    }
+
+    {
+      ::xsd::cxx::xml::dom::attribute< char > a (
+        "language",
+        e);
+
+      a.dom_attribute () << i.language ();
+    }
+  }
+
+  void
+  operator<< (::xercesc::DOMElement& e,
               const ds_request_type& i)
   {
     while (::xercesc::DOMNode* n = e.getFirstChild ())
@@ -8488,12 +9098,12 @@ namespace dsmessage
     }
 
     {
-      if (i.ds_delete ())
+      if (i.ds_del ())
       {
         ::xsd::cxx::xml::dom::element< char > s (
-          "ds-delete",
+          "ds-del",
           e);
-        s.dom_element () << *i.ds_delete ();
+        s.dom_element () << *i.ds_del ();
       }
     }
 
@@ -8538,12 +9148,12 @@ namespace dsmessage
     }
 
     {
-      if (i.table_delete ())
+      if (i.table_del ())
       {
         ::xsd::cxx::xml::dom::element< char > s (
-          "table-delete",
+          "table-del",
           e);
-        s.dom_element () << *i.table_delete ();
+        s.dom_element () << *i.table_del ();
       }
     }
 
@@ -8664,12 +9274,12 @@ namespace dsmessage
     }
 
     {
-      if (i.ds_delete_reply ())
+      if (i.ds_del_reply ())
       {
         ::xsd::cxx::xml::dom::element< char > s (
-          "ds-delete-reply",
+          "ds-del-reply",
           e);
-        s.dom_element () << *i.ds_delete_reply ();
+        s.dom_element () << *i.ds_del_reply ();
       }
     }
 
@@ -8714,12 +9324,12 @@ namespace dsmessage
     }
 
     {
-      if (i.table_delete_reply ())
+      if (i.table_del_reply ())
       {
         ::xsd::cxx::xml::dom::element< char > s (
-          "table-delete-reply",
+          "table-del-reply",
           e);
-        s.dom_element () << *i.table_delete_reply ();
+        s.dom_element () << *i.table_del_reply ();
       }
     }
 
@@ -8764,12 +9374,12 @@ namespace dsmessage
     }
 
     {
-      if (i.delete_reply ())
+      if (i.del_reply ())
       {
         ::xsd::cxx::xml::dom::element< char > s (
-          "delete-reply",
+          "del-reply",
           e);
-        s.dom_element () << *i.delete_reply ();
+        s.dom_element () << *i.del_reply ();
       }
     }
 

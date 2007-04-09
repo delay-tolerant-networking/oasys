@@ -46,17 +46,18 @@ public:
     };
 
     enum errorcodes_t {
+        ERR_NONE = 0,
         ERR_INTERNAL = 1,
-        ERR_BADHANDLE,
-        ERR_BADTABLE,
-        ERR_EXISTS,
-        ERR_CANTCREATE,
-        ERR_CANTDELETE,
-        ERR_CANTOPEN,
-        ERR_INVALID,
-        ERR_NOTFOUND,
-        ERR_NOTSUPPORTED,
-        ERR_NOTOPEN,
+        ERR_BADHANDLE = 2,
+        ERR_BADTABLE = 3,
+        ERR_EXISTS = 4,
+        ERR_CANTCREATE = 5,
+        ERR_CANTDELETE = 6,
+        ERR_CANTOPEN = 7,
+        ERR_INVALID = 8,
+        ERR_NOTFOUND = 9,
+        ERR_NOTSUPPORTED = 10,
+        ERR_NOTOPEN = 11,
     };
 
     /*!
@@ -117,13 +118,13 @@ public:
                           const credentials_t &cred) = 0;
 
     /*!
-     * ds_delete: delete a data store
+     * ds_del delete a data store
      * IN std::string name: name of data store
      * IN credentials_t: credentials (TBD)
      * OUT ret: return code
      */
-    virtual int ds_delete(const std::string &dsname, 
-                          const credentials_t &cred) = 0;
+    virtual int ds_del(const std::string &dsname, 
+                       const credentials_t &cred) = 0;
 
     /*!
      * ds_open: open a data store
@@ -166,12 +167,12 @@ public:
                              const std::vector<StringPair> &fieldinfo) = 0;
 
     /*!
-     * table_delete: delete a named table and all of its elements
+     * table_del: delete a named table and all of its elements
      * IN const std::string tablename: name of table to delete
      * OUT int ret: return code
      */
-    virtual int table_delete(const std::string &handle,
-                             const std::string &tablename) = 0;
+    virtual int table_del(const std::string &handle,
+                          const std::string &tablename) = 0;
 
     /*!
      * table_keys
@@ -182,6 +183,7 @@ public:
      */
     virtual int table_keys(const std::string &handle,
                            const std::string &tablename,
+                           const std::string &keyname,
                            std::vector<std::string> &keys) = 0;
 
 
@@ -211,6 +213,7 @@ public:
      */
     virtual int del(const std::string &handle,
                     const std::string &tablename, 
+                    const std::string &keyname,
                     const std::string &key) = 0;
 
     /*!
@@ -221,6 +224,7 @@ public:
      */
     virtual int put(const std::string &handle,
                     const std::string &tablename, 
+                    const std::string &keyname,
                     const std::string &key,
                     const std::vector<StringPair> &fields) = 0;
 
@@ -233,6 +237,7 @@ public:
      */
     virtual int get(const std::string &handle,
                     const std::string &tablename, 
+                    const std::string &keyname,
                     const std::string &key,
                     std::vector<StringPair> &fields) = 0;
 

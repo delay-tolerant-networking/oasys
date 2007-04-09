@@ -217,8 +217,8 @@ namespace dsmessage
   class ds_caps_reply_type;
   class ds_create_request_type;
   class ds_create_reply_type;
-  class ds_delete_request_type;
-  class ds_delete_reply_type;
+  class ds_del_request_type;
+  class ds_del_reply_type;
   class ds_open_request_type;
   class ds_open_reply_type;
   class ds_stat_request_type;
@@ -227,8 +227,8 @@ namespace dsmessage
   class ds_close_reply_type;
   class table_create_request_type;
   class table_create_reply_type;
-  class table_delete_request_type;
-  class table_delete_reply_type;
+  class table_del_request_type;
+  class table_del_reply_type;
   class table_stat_request_type;
   class table_stat_reply_type;
   class table_keys_request_type;
@@ -237,13 +237,15 @@ namespace dsmessage
   class put_reply_type;
   class get_request_type;
   class get_reply_type;
-  class delete_request_type;
-  class delete_reply_type;
+  class del_request_type;
+  class del_reply_type;
   class select_request_type;
   class rowType;
   class select_reply_type;
   class eval_request_type;
   class eval_reply_type;
+  class trigger_request_type;
+  class trigger_reply_type;
   class ds_request_type;
   class ds_reply_type;
 }
@@ -909,11 +911,11 @@ namespace dsmessage
             ::xml_schema::type* = 0) const;
   };
 
-  class ds_delete_request_type: public ::xml_schema::type
+  class ds_del_request_type: public ::xml_schema::type
   {
     public:
 
-    struct _xsd_ds_delete_request_type
+    struct _xsd_ds_del_request_type
     {
       typedef ::xml_schema::type base_;
     };
@@ -992,17 +994,17 @@ namespace dsmessage
     // Constructors.
     //
     public:
-    ds_delete_request_type (const ds::type&);
+    ds_del_request_type (const ds::type&);
 
-    ds_delete_request_type (const ::xercesc::DOMElement&,
-                            ::xml_schema::flags = 0,
-                            ::xml_schema::type* = 0);
+    ds_del_request_type (const ::xercesc::DOMElement&,
+                         ::xml_schema::flags = 0,
+                         ::xml_schema::type* = 0);
 
-    ds_delete_request_type (const ds_delete_request_type&,
-                            ::xml_schema::flags = 0,
-                            ::xml_schema::type* = 0);
+    ds_del_request_type (const ds_del_request_type&,
+                         ::xml_schema::flags = 0,
+                         ::xml_schema::type* = 0);
 
-    virtual ds_delete_request_type*
+    virtual ds_del_request_type*
     _clone (::xml_schema::flags = 0,
             ::xml_schema::type* = 0) const;
 
@@ -1017,11 +1019,11 @@ namespace dsmessage
     ::xsd::cxx::tree::optional< user::type > _xsd_user_;
   };
 
-  class ds_delete_reply_type: public ::xml_schema::type
+  class ds_del_reply_type: public ::xml_schema::type
   {
     public:
 
-    struct _xsd_ds_delete_reply_type
+    struct _xsd_ds_del_reply_type
     {
       typedef ::xml_schema::type base_;
     };
@@ -1029,26 +1031,26 @@ namespace dsmessage
     // Constructors.
     //
     public:
-    ds_delete_reply_type ();
+    ds_del_reply_type ();
 
-    ds_delete_reply_type (const ::xercesc::DOMElement&,
-                          ::xml_schema::flags = 0,
-                          ::xml_schema::type* = 0);
+    ds_del_reply_type (const ::xercesc::DOMElement&,
+                       ::xml_schema::flags = 0,
+                       ::xml_schema::type* = 0);
 
-    ds_delete_reply_type (const ::xercesc::DOMAttr&,
-                          ::xml_schema::flags = 0,
-                          ::xml_schema::type* = 0);
+    ds_del_reply_type (const ::xercesc::DOMAttr&,
+                       ::xml_schema::flags = 0,
+                       ::xml_schema::type* = 0);
 
-    ds_delete_reply_type (const ::std::basic_string< char >&,
-                          const ::xercesc::DOMElement*,
-                          ::xml_schema::flags = 0,
-                          ::xml_schema::type* = 0);
+    ds_del_reply_type (const ::std::basic_string< char >&,
+                       const ::xercesc::DOMElement*,
+                       ::xml_schema::flags = 0,
+                       ::xml_schema::type* = 0);
 
-    ds_delete_reply_type (const ds_delete_reply_type&,
-                          ::xml_schema::flags = 0,
-                          ::xml_schema::type* = 0);
+    ds_del_reply_type (const ds_del_reply_type&,
+                       ::xml_schema::flags = 0,
+                       ::xml_schema::type* = 0);
 
-    virtual ds_delete_reply_type*
+    virtual ds_del_reply_type*
     _clone (::xml_schema::flags = 0,
             ::xml_schema::type* = 0) const;
   };
@@ -1541,26 +1543,26 @@ namespace dsmessage
     void
     key (::std::auto_ptr< key::type >);
 
-    // key-type
+    // keytype
     // 
     public:
-    struct key_type
+    struct keytype
     {
       typedef ::xml_schema::string type;
       typedef ::xsd::cxx::tree::traits< type, char > traits;
     };
 
-    const key_type::type&
-    key_type () const;
+    const keytype::type&
+    keytype () const;
 
-    key_type::type&
-    key_type ();
-
-    void
-    key_type (const key_type::type&);
+    keytype::type&
+    keytype ();
 
     void
-    key_type (::std::auto_ptr< key_type::type >);
+    keytype (const keytype::type&);
+
+    void
+    keytype (::std::auto_ptr< keytype::type >);
 
     // Constructors.
     //
@@ -1568,7 +1570,7 @@ namespace dsmessage
     table_create_request_type (const handle::type&,
                                const table::type&,
                                const key::type&,
-                               const key_type::type&);
+                               const keytype::type&);
 
     table_create_request_type (const ::xercesc::DOMElement&,
                                ::xml_schema::flags = 0,
@@ -1592,7 +1594,7 @@ namespace dsmessage
     ::xsd::cxx::tree::one< handle::type > _xsd_handle_;
     ::xsd::cxx::tree::one< table::type > _xsd_table_;
     ::xsd::cxx::tree::one< key::type > _xsd_key_;
-    ::xsd::cxx::tree::one< key_type::type > _xsd_key_type_;
+    ::xsd::cxx::tree::one< keytype::type > _xsd_keytype_;
   };
 
   class table_create_reply_type: public ::xml_schema::type
@@ -1631,11 +1633,11 @@ namespace dsmessage
             ::xml_schema::type* = 0) const;
   };
 
-  class table_delete_request_type: public ::xml_schema::type
+  class table_del_request_type: public ::xml_schema::type
   {
     public:
 
-    struct _xsd_table_delete_request_type
+    struct _xsd_table_del_request_type
     {
       typedef ::xml_schema::type base_;
     };
@@ -1685,18 +1687,18 @@ namespace dsmessage
     // Constructors.
     //
     public:
-    table_delete_request_type (const handle::type&,
-                               const table::type&);
+    table_del_request_type (const handle::type&,
+                            const table::type&);
 
-    table_delete_request_type (const ::xercesc::DOMElement&,
-                               ::xml_schema::flags = 0,
-                               ::xml_schema::type* = 0);
+    table_del_request_type (const ::xercesc::DOMElement&,
+                            ::xml_schema::flags = 0,
+                            ::xml_schema::type* = 0);
 
-    table_delete_request_type (const table_delete_request_type&,
-                               ::xml_schema::flags = 0,
-                               ::xml_schema::type* = 0);
+    table_del_request_type (const table_del_request_type&,
+                            ::xml_schema::flags = 0,
+                            ::xml_schema::type* = 0);
 
-    virtual table_delete_request_type*
+    virtual table_del_request_type*
     _clone (::xml_schema::flags = 0,
             ::xml_schema::type* = 0) const;
 
@@ -1710,11 +1712,11 @@ namespace dsmessage
     ::xsd::cxx::tree::one< table::type > _xsd_table_;
   };
 
-  class table_delete_reply_type: public ::xml_schema::type
+  class table_del_reply_type: public ::xml_schema::type
   {
     public:
 
-    struct _xsd_table_delete_reply_type
+    struct _xsd_table_del_reply_type
     {
       typedef ::xml_schema::type base_;
     };
@@ -1722,26 +1724,26 @@ namespace dsmessage
     // Constructors.
     //
     public:
-    table_delete_reply_type ();
+    table_del_reply_type ();
 
-    table_delete_reply_type (const ::xercesc::DOMElement&,
-                             ::xml_schema::flags = 0,
-                             ::xml_schema::type* = 0);
+    table_del_reply_type (const ::xercesc::DOMElement&,
+                          ::xml_schema::flags = 0,
+                          ::xml_schema::type* = 0);
 
-    table_delete_reply_type (const ::xercesc::DOMAttr&,
-                             ::xml_schema::flags = 0,
-                             ::xml_schema::type* = 0);
+    table_del_reply_type (const ::xercesc::DOMAttr&,
+                          ::xml_schema::flags = 0,
+                          ::xml_schema::type* = 0);
 
-    table_delete_reply_type (const ::std::basic_string< char >&,
-                             const ::xercesc::DOMElement*,
-                             ::xml_schema::flags = 0,
-                             ::xml_schema::type* = 0);
+    table_del_reply_type (const ::std::basic_string< char >&,
+                          const ::xercesc::DOMElement*,
+                          ::xml_schema::flags = 0,
+                          ::xml_schema::type* = 0);
 
-    table_delete_reply_type (const table_delete_reply_type&,
-                             ::xml_schema::flags = 0,
-                             ::xml_schema::type* = 0);
+    table_del_reply_type (const table_del_reply_type&,
+                          ::xml_schema::flags = 0,
+                          ::xml_schema::type* = 0);
 
-    virtual table_delete_reply_type*
+    virtual table_del_reply_type*
     _clone (::xml_schema::flags = 0,
             ::xml_schema::type* = 0) const;
   };
@@ -1855,47 +1857,47 @@ namespace dsmessage
     void
     field (const field::container&);
 
-    // key
+    // keyname
     // 
     public:
-    struct key
+    struct keyname
     {
       typedef ::xml_schema::string type;
       typedef ::xsd::cxx::tree::traits< type, char > traits;
     };
 
-    const key::type&
-    key () const;
+    const keyname::type&
+    keyname () const;
 
-    key::type&
-    key ();
-
-    void
-    key (const key::type&);
+    keyname::type&
+    keyname ();
 
     void
-    key (::std::auto_ptr< key::type >);
+    keyname (const keyname::type&);
 
-    // key-type
+    void
+    keyname (::std::auto_ptr< keyname::type >);
+
+    // keytype
     // 
     public:
-    struct key_type
+    struct keytype
     {
       typedef ::xml_schema::string type;
       typedef ::xsd::cxx::tree::traits< type, char > traits;
     };
 
-    const key_type::type&
-    key_type () const;
+    const keytype::type&
+    keytype () const;
 
-    key_type::type&
-    key_type ();
-
-    void
-    key_type (const key_type::type&);
+    keytype::type&
+    keytype ();
 
     void
-    key_type (::std::auto_ptr< key_type::type >);
+    keytype (const keytype::type&);
+
+    void
+    keytype (::std::auto_ptr< keytype::type >);
 
     // count
     // 
@@ -1918,8 +1920,8 @@ namespace dsmessage
     // Constructors.
     //
     public:
-    table_stat_reply_type (const key::type&,
-                           const key_type::type&,
+    table_stat_reply_type (const keyname::type&,
+                           const keytype::type&,
                            const count::type&);
 
     table_stat_reply_type (const ::xercesc::DOMElement&,
@@ -1941,8 +1943,8 @@ namespace dsmessage
     parse (const ::xercesc::DOMElement&, ::xml_schema::flags);
 
     ::xsd::cxx::tree::sequence< field::type > _xsd_field_;
-    ::xsd::cxx::tree::one< key::type > _xsd_key_;
-    ::xsd::cxx::tree::one< key_type::type > _xsd_key_type_;
+    ::xsd::cxx::tree::one< keyname::type > _xsd_keyname_;
+    ::xsd::cxx::tree::one< keytype::type > _xsd_keytype_;
     ::xsd::cxx::tree::one< count::type > _xsd_count_;
   };
 
@@ -1997,11 +1999,33 @@ namespace dsmessage
     void
     table (::std::auto_ptr< table::type >);
 
+    // keyname
+    // 
+    public:
+    struct keyname
+    {
+      typedef ::xml_schema::string type;
+      typedef ::xsd::cxx::tree::traits< type, char > traits;
+    };
+
+    const keyname::type&
+    keyname () const;
+
+    keyname::type&
+    keyname ();
+
+    void
+    keyname (const keyname::type&);
+
+    void
+    keyname (::std::auto_ptr< keyname::type >);
+
     // Constructors.
     //
     public:
     table_keys_request_type (const handle::type&,
-                             const table::type&);
+                             const table::type&,
+                             const keyname::type&);
 
     table_keys_request_type (const ::xercesc::DOMElement&,
                              ::xml_schema::flags = 0,
@@ -2023,6 +2047,7 @@ namespace dsmessage
 
     ::xsd::cxx::tree::one< handle::type > _xsd_handle_;
     ::xsd::cxx::tree::one< table::type > _xsd_table_;
+    ::xsd::cxx::tree::one< keyname::type > _xsd_keyname_;
   };
 
   class table_keys_reply_type: public ::xml_schema::type
@@ -2174,12 +2199,34 @@ namespace dsmessage
     void
     table (::std::auto_ptr< table::type >);
 
+    // keyname
+    // 
+    public:
+    struct keyname
+    {
+      typedef ::xml_schema::string type;
+      typedef ::xsd::cxx::tree::traits< type, char > traits;
+    };
+
+    const keyname::type&
+    keyname () const;
+
+    keyname::type&
+    keyname ();
+
+    void
+    keyname (const keyname::type&);
+
+    void
+    keyname (::std::auto_ptr< keyname::type >);
+
     // Constructors.
     //
     public:
     put_request_type (const key::type&,
                       const handle::type&,
-                      const table::type&);
+                      const table::type&,
+                      const keyname::type&);
 
     put_request_type (const ::xercesc::DOMElement&,
                       ::xml_schema::flags = 0,
@@ -2203,6 +2250,7 @@ namespace dsmessage
     ::xsd::cxx::tree::sequence< set::type > _xsd_set_;
     ::xsd::cxx::tree::one< handle::type > _xsd_handle_;
     ::xsd::cxx::tree::one< table::type > _xsd_table_;
+    ::xsd::cxx::tree::one< keyname::type > _xsd_keyname_;
   };
 
   class put_reply_type: public ::xml_schema::type
@@ -2313,12 +2361,34 @@ namespace dsmessage
     void
     table (::std::auto_ptr< table::type >);
 
+    // keyname
+    // 
+    public:
+    struct keyname
+    {
+      typedef ::xml_schema::string type;
+      typedef ::xsd::cxx::tree::traits< type, char > traits;
+    };
+
+    const keyname::type&
+    keyname () const;
+
+    keyname::type&
+    keyname ();
+
+    void
+    keyname (const keyname::type&);
+
+    void
+    keyname (::std::auto_ptr< keyname::type >);
+
     // Constructors.
     //
     public:
     get_request_type (const key::type&,
                       const handle::type&,
-                      const table::type&);
+                      const table::type&,
+                      const keyname::type&);
 
     get_request_type (const ::xercesc::DOMElement&,
                       ::xml_schema::flags = 0,
@@ -2341,6 +2411,7 @@ namespace dsmessage
     ::xsd::cxx::tree::one< key::type > _xsd_key_;
     ::xsd::cxx::tree::one< handle::type > _xsd_handle_;
     ::xsd::cxx::tree::one< table::type > _xsd_table_;
+    ::xsd::cxx::tree::one< keyname::type > _xsd_keyname_;
   };
 
   class get_reply_type: public ::xml_schema::type
@@ -2357,7 +2428,7 @@ namespace dsmessage
     public:
     struct field
     {
-      typedef ::xml_schema::string type;
+      typedef ::dsmessage::fieldNameValue type;
       typedef ::xsd::cxx::tree::traits< type, char > traits;
       typedef ::xsd::cxx::tree::sequence< type > container;
       typedef container::iterator iterator;
@@ -2372,27 +2443,6 @@ namespace dsmessage
 
     void
     field (const field::container&);
-
-    // value
-    // 
-    public:
-    struct value
-    {
-      typedef ::xml_schema::base64_binary type;
-      typedef ::xsd::cxx::tree::traits< type, char > traits;
-      typedef ::xsd::cxx::tree::sequence< type > container;
-      typedef container::iterator iterator;
-      typedef container::const_iterator const_iterator;
-    };
-
-    const value::container&
-    value () const;
-
-    value::container&
-    value ();
-
-    void
-    value (const value::container&);
 
     // Constructors.
     //
@@ -2418,14 +2468,13 @@ namespace dsmessage
     parse (const ::xercesc::DOMElement&, ::xml_schema::flags);
 
     ::xsd::cxx::tree::sequence< field::type > _xsd_field_;
-    ::xsd::cxx::tree::sequence< value::type > _xsd_value_;
   };
 
-  class delete_request_type: public ::xml_schema::type
+  class del_request_type: public ::xml_schema::type
   {
     public:
 
-    struct _xsd_delete_request_type
+    struct _xsd_del_request_type
     {
       typedef ::xml_schema::type base_;
     };
@@ -2493,22 +2542,44 @@ namespace dsmessage
     void
     table (::std::auto_ptr< table::type >);
 
+    // keyname
+    // 
+    public:
+    struct keyname
+    {
+      typedef ::xml_schema::string type;
+      typedef ::xsd::cxx::tree::traits< type, char > traits;
+    };
+
+    const keyname::type&
+    keyname () const;
+
+    keyname::type&
+    keyname ();
+
+    void
+    keyname (const keyname::type&);
+
+    void
+    keyname (::std::auto_ptr< keyname::type >);
+
     // Constructors.
     //
     public:
-    delete_request_type (const key::type&,
-                         const handle::type&,
-                         const table::type&);
+    del_request_type (const key::type&,
+                      const handle::type&,
+                      const table::type&,
+                      const keyname::type&);
 
-    delete_request_type (const ::xercesc::DOMElement&,
-                         ::xml_schema::flags = 0,
-                         ::xml_schema::type* = 0);
+    del_request_type (const ::xercesc::DOMElement&,
+                      ::xml_schema::flags = 0,
+                      ::xml_schema::type* = 0);
 
-    delete_request_type (const delete_request_type&,
-                         ::xml_schema::flags = 0,
-                         ::xml_schema::type* = 0);
+    del_request_type (const del_request_type&,
+                      ::xml_schema::flags = 0,
+                      ::xml_schema::type* = 0);
 
-    virtual delete_request_type*
+    virtual del_request_type*
     _clone (::xml_schema::flags = 0,
             ::xml_schema::type* = 0) const;
 
@@ -2521,13 +2592,14 @@ namespace dsmessage
     ::xsd::cxx::tree::one< key::type > _xsd_key_;
     ::xsd::cxx::tree::one< handle::type > _xsd_handle_;
     ::xsd::cxx::tree::one< table::type > _xsd_table_;
+    ::xsd::cxx::tree::one< keyname::type > _xsd_keyname_;
   };
 
-  class delete_reply_type: public ::xml_schema::type
+  class del_reply_type: public ::xml_schema::type
   {
     public:
 
-    struct _xsd_delete_reply_type
+    struct _xsd_del_reply_type
     {
       typedef ::xml_schema::type base_;
     };
@@ -2535,26 +2607,26 @@ namespace dsmessage
     // Constructors.
     //
     public:
-    delete_reply_type ();
+    del_reply_type ();
 
-    delete_reply_type (const ::xercesc::DOMElement&,
-                       ::xml_schema::flags = 0,
-                       ::xml_schema::type* = 0);
+    del_reply_type (const ::xercesc::DOMElement&,
+                    ::xml_schema::flags = 0,
+                    ::xml_schema::type* = 0);
 
-    delete_reply_type (const ::xercesc::DOMAttr&,
-                       ::xml_schema::flags = 0,
-                       ::xml_schema::type* = 0);
+    del_reply_type (const ::xercesc::DOMAttr&,
+                    ::xml_schema::flags = 0,
+                    ::xml_schema::type* = 0);
 
-    delete_reply_type (const ::std::basic_string< char >&,
-                       const ::xercesc::DOMElement*,
-                       ::xml_schema::flags = 0,
-                       ::xml_schema::type* = 0);
+    del_reply_type (const ::std::basic_string< char >&,
+                    const ::xercesc::DOMElement*,
+                    ::xml_schema::flags = 0,
+                    ::xml_schema::type* = 0);
 
-    delete_reply_type (const delete_reply_type&,
-                       ::xml_schema::flags = 0,
-                       ::xml_schema::type* = 0);
+    del_reply_type (const del_reply_type&,
+                    ::xml_schema::flags = 0,
+                    ::xml_schema::type* = 0);
 
-    virtual delete_reply_type*
+    virtual del_reply_type*
     _clone (::xml_schema::flags = 0,
             ::xml_schema::type* = 0) const;
   };
@@ -2998,6 +3070,187 @@ namespace dsmessage
     ::xsd::cxx::tree::one< language::type > _xsd_language_;
   };
 
+  class trigger_request_type: public ::xml_schema::type
+  {
+    public:
+
+    struct _xsd_trigger_request_type
+    {
+      typedef ::xml_schema::type base_;
+    };
+
+    // expr
+    // 
+    public:
+    struct expr
+    {
+      typedef ::xml_schema::base64_binary type;
+      typedef ::xsd::cxx::tree::traits< type, char > traits;
+    };
+
+    const expr::type&
+    expr () const;
+
+    expr::type&
+    expr ();
+
+    void
+    expr (const expr::type&);
+
+    void
+    expr (::std::auto_ptr< expr::type >);
+
+    // handle
+    // 
+    public:
+    struct handle
+    {
+      typedef ::xml_schema::string type;
+      typedef ::xsd::cxx::tree::traits< type, char > traits;
+    };
+
+    const handle::type&
+    handle () const;
+
+    handle::type&
+    handle ();
+
+    void
+    handle (const handle::type&);
+
+    void
+    handle (::std::auto_ptr< handle::type >);
+
+    // language
+    // 
+    public:
+    struct language
+    {
+      typedef ::xml_schema::string type;
+      typedef ::xsd::cxx::tree::traits< type, char > traits;
+    };
+
+    const language::type&
+    language () const;
+
+    language::type&
+    language ();
+
+    void
+    language (const language::type&);
+
+    void
+    language (::std::auto_ptr< language::type >);
+
+    // Constructors.
+    //
+    public:
+    trigger_request_type (const expr::type&,
+                          const handle::type&,
+                          const language::type&);
+
+    trigger_request_type (const ::xercesc::DOMElement&,
+                          ::xml_schema::flags = 0,
+                          ::xml_schema::type* = 0);
+
+    trigger_request_type (const trigger_request_type&,
+                          ::xml_schema::flags = 0,
+                          ::xml_schema::type* = 0);
+
+    virtual trigger_request_type*
+    _clone (::xml_schema::flags = 0,
+            ::xml_schema::type* = 0) const;
+
+    // Implementation.
+    //
+    private:
+    void
+    parse (const ::xercesc::DOMElement&, ::xml_schema::flags);
+
+    ::xsd::cxx::tree::one< expr::type > _xsd_expr_;
+    ::xsd::cxx::tree::one< handle::type > _xsd_handle_;
+    ::xsd::cxx::tree::one< language::type > _xsd_language_;
+  };
+
+  class trigger_reply_type: public ::xml_schema::type
+  {
+    public:
+
+    struct _xsd_trigger_reply_type
+    {
+      typedef ::xml_schema::type base_;
+    };
+
+    // value
+    // 
+    public:
+    struct value
+    {
+      typedef ::xml_schema::base64_binary type;
+      typedef ::xsd::cxx::tree::traits< type, char > traits;
+    };
+
+    const value::type&
+    value () const;
+
+    value::type&
+    value ();
+
+    void
+    value (const value::type&);
+
+    void
+    value (::std::auto_ptr< value::type >);
+
+    // language
+    // 
+    public:
+    struct language
+    {
+      typedef ::xml_schema::string type;
+      typedef ::xsd::cxx::tree::traits< type, char > traits;
+    };
+
+    const language::type&
+    language () const;
+
+    language::type&
+    language ();
+
+    void
+    language (const language::type&);
+
+    void
+    language (::std::auto_ptr< language::type >);
+
+    // Constructors.
+    //
+    public:
+    trigger_reply_type (const value::type&,
+                        const language::type&);
+
+    trigger_reply_type (const ::xercesc::DOMElement&,
+                        ::xml_schema::flags = 0,
+                        ::xml_schema::type* = 0);
+
+    trigger_reply_type (const trigger_reply_type&,
+                        ::xml_schema::flags = 0,
+                        ::xml_schema::type* = 0);
+
+    virtual trigger_reply_type*
+    _clone (::xml_schema::flags = 0,
+            ::xml_schema::type* = 0) const;
+
+    // Implementation.
+    //
+    private:
+    void
+    parse (const ::xercesc::DOMElement&, ::xml_schema::flags);
+
+    ::xsd::cxx::tree::one< value::type > _xsd_value_;
+    ::xsd::cxx::tree::one< language::type > _xsd_language_;
+  };
+
   class ds_request_type: public ::xml_schema::type
   {
     public:
@@ -3057,30 +3310,30 @@ namespace dsmessage
     void
     ds_create (::std::auto_ptr< ds_create::type >);
 
-    // ds-delete
+    // ds-del
     // 
     public:
-    struct ds_delete
+    struct ds_del
     {
-      typedef ::dsmessage::ds_delete_request_type type;
+      typedef ::dsmessage::ds_del_request_type type;
       typedef ::xsd::cxx::tree::traits< type, char > traits;
       typedef ::xsd::cxx::tree::optional< type > container;
     };
 
-    const ds_delete::container&
-    ds_delete () const;
+    const ds_del::container&
+    ds_del () const;
 
-    ds_delete::container&
-    ds_delete ();
-
-    void
-    ds_delete (const ds_delete::type&);
+    ds_del::container&
+    ds_del ();
 
     void
-    ds_delete (const ds_delete::container&);
+    ds_del (const ds_del::type&);
 
     void
-    ds_delete (::std::auto_ptr< ds_delete::type >);
+    ds_del (const ds_del::container&);
+
+    void
+    ds_del (::std::auto_ptr< ds_del::type >);
 
     // ds-open
     // 
@@ -3182,30 +3435,30 @@ namespace dsmessage
     void
     table_create (::std::auto_ptr< table_create::type >);
 
-    // table-delete
+    // table-del
     // 
     public:
-    struct table_delete
+    struct table_del
     {
-      typedef ::dsmessage::table_delete_request_type type;
+      typedef ::dsmessage::table_del_request_type type;
       typedef ::xsd::cxx::tree::traits< type, char > traits;
       typedef ::xsd::cxx::tree::optional< type > container;
     };
 
-    const table_delete::container&
-    table_delete () const;
+    const table_del::container&
+    table_del () const;
 
-    table_delete::container&
-    table_delete ();
-
-    void
-    table_delete (const table_delete::type&);
+    table_del::container&
+    table_del ();
 
     void
-    table_delete (const table_delete::container&);
+    table_del (const table_del::type&);
 
     void
-    table_delete (::std::auto_ptr< table_delete::type >);
+    table_del (const table_del::container&);
+
+    void
+    table_del (::std::auto_ptr< table_del::type >);
 
     // table-stat
     // 
@@ -3312,7 +3565,7 @@ namespace dsmessage
     public:
     struct del
     {
-      typedef ::dsmessage::delete_request_type type;
+      typedef ::dsmessage::del_request_type type;
       typedef ::xsd::cxx::tree::traits< type, char > traits;
       typedef ::xsd::cxx::tree::optional< type > container;
     };
@@ -3387,7 +3640,7 @@ namespace dsmessage
     public:
     struct trigger
     {
-      typedef ::dsmessage::eval_request_type type;
+      typedef ::dsmessage::trigger_request_type type;
       typedef ::xsd::cxx::tree::traits< type, char > traits;
       typedef ::xsd::cxx::tree::optional< type > container;
     };
@@ -3453,12 +3706,12 @@ namespace dsmessage
 
     ::xsd::cxx::tree::optional< ds_caps::type > _xsd_ds_caps_;
     ::xsd::cxx::tree::optional< ds_create::type > _xsd_ds_create_;
-    ::xsd::cxx::tree::optional< ds_delete::type > _xsd_ds_delete_;
+    ::xsd::cxx::tree::optional< ds_del::type > _xsd_ds_del_;
     ::xsd::cxx::tree::optional< ds_open::type > _xsd_ds_open_;
     ::xsd::cxx::tree::optional< ds_stat::type > _xsd_ds_stat_;
     ::xsd::cxx::tree::optional< ds_close::type > _xsd_ds_close_;
     ::xsd::cxx::tree::optional< table_create::type > _xsd_table_create_;
-    ::xsd::cxx::tree::optional< table_delete::type > _xsd_table_delete_;
+    ::xsd::cxx::tree::optional< table_del::type > _xsd_table_del_;
     ::xsd::cxx::tree::optional< table_stat::type > _xsd_table_stat_;
     ::xsd::cxx::tree::optional< table_keys::type > _xsd_table_keys_;
     ::xsd::cxx::tree::optional< put::type > _xsd_put_;
@@ -3529,30 +3782,30 @@ namespace dsmessage
     void
     ds_create_reply (::std::auto_ptr< ds_create_reply::type >);
 
-    // ds-delete-reply
+    // ds-del-reply
     // 
     public:
-    struct ds_delete_reply
+    struct ds_del_reply
     {
-      typedef ::dsmessage::ds_delete_reply_type type;
+      typedef ::dsmessage::ds_del_reply_type type;
       typedef ::xsd::cxx::tree::traits< type, char > traits;
       typedef ::xsd::cxx::tree::optional< type > container;
     };
 
-    const ds_delete_reply::container&
-    ds_delete_reply () const;
+    const ds_del_reply::container&
+    ds_del_reply () const;
 
-    ds_delete_reply::container&
-    ds_delete_reply ();
-
-    void
-    ds_delete_reply (const ds_delete_reply::type&);
+    ds_del_reply::container&
+    ds_del_reply ();
 
     void
-    ds_delete_reply (const ds_delete_reply::container&);
+    ds_del_reply (const ds_del_reply::type&);
 
     void
-    ds_delete_reply (::std::auto_ptr< ds_delete_reply::type >);
+    ds_del_reply (const ds_del_reply::container&);
+
+    void
+    ds_del_reply (::std::auto_ptr< ds_del_reply::type >);
 
     // ds-open-reply
     // 
@@ -3654,30 +3907,30 @@ namespace dsmessage
     void
     table_create_reply (::std::auto_ptr< table_create_reply::type >);
 
-    // table-delete-reply
+    // table-del-reply
     // 
     public:
-    struct table_delete_reply
+    struct table_del_reply
     {
-      typedef ::dsmessage::table_delete_reply_type type;
+      typedef ::dsmessage::table_del_reply_type type;
       typedef ::xsd::cxx::tree::traits< type, char > traits;
       typedef ::xsd::cxx::tree::optional< type > container;
     };
 
-    const table_delete_reply::container&
-    table_delete_reply () const;
+    const table_del_reply::container&
+    table_del_reply () const;
 
-    table_delete_reply::container&
-    table_delete_reply ();
-
-    void
-    table_delete_reply (const table_delete_reply::type&);
+    table_del_reply::container&
+    table_del_reply ();
 
     void
-    table_delete_reply (const table_delete_reply::container&);
+    table_del_reply (const table_del_reply::type&);
 
     void
-    table_delete_reply (::std::auto_ptr< table_delete_reply::type >);
+    table_del_reply (const table_del_reply::container&);
+
+    void
+    table_del_reply (::std::auto_ptr< table_del_reply::type >);
 
     // table-stat-reply
     // 
@@ -3779,30 +4032,30 @@ namespace dsmessage
     void
     get_reply (::std::auto_ptr< get_reply::type >);
 
-    // delete-reply
+    // del-reply
     // 
     public:
-    struct delete_reply
+    struct del_reply
     {
-      typedef ::dsmessage::delete_reply_type type;
+      typedef ::dsmessage::del_reply_type type;
       typedef ::xsd::cxx::tree::traits< type, char > traits;
       typedef ::xsd::cxx::tree::optional< type > container;
     };
 
-    const delete_reply::container&
-    delete_reply () const;
+    const del_reply::container&
+    del_reply () const;
 
-    delete_reply::container&
-    delete_reply ();
-
-    void
-    delete_reply (const delete_reply::type&);
+    del_reply::container&
+    del_reply ();
 
     void
-    delete_reply (const delete_reply::container&);
+    del_reply (const del_reply::type&);
 
     void
-    delete_reply (::std::auto_ptr< delete_reply::type >);
+    del_reply (const del_reply::container&);
+
+    void
+    del_reply (::std::auto_ptr< del_reply::type >);
 
     // select-reply
     // 
@@ -3859,7 +4112,7 @@ namespace dsmessage
     public:
     struct trigger_reply
     {
-      typedef ::dsmessage::eval_reply_type type;
+      typedef ::dsmessage::trigger_reply_type type;
       typedef ::xsd::cxx::tree::traits< type, char > traits;
       typedef ::xsd::cxx::tree::optional< type > container;
     };
@@ -3947,17 +4200,17 @@ namespace dsmessage
 
     ::xsd::cxx::tree::optional< ds_caps_reply::type > _xsd_ds_caps_reply_;
     ::xsd::cxx::tree::optional< ds_create_reply::type > _xsd_ds_create_reply_;
-    ::xsd::cxx::tree::optional< ds_delete_reply::type > _xsd_ds_delete_reply_;
+    ::xsd::cxx::tree::optional< ds_del_reply::type > _xsd_ds_del_reply_;
     ::xsd::cxx::tree::optional< ds_open_reply::type > _xsd_ds_open_reply_;
     ::xsd::cxx::tree::optional< ds_stat_reply::type > _xsd_ds_stat_reply_;
     ::xsd::cxx::tree::optional< ds_close_reply::type > _xsd_ds_close_reply_;
     ::xsd::cxx::tree::optional< table_create_reply::type > _xsd_table_create_reply_;
-    ::xsd::cxx::tree::optional< table_delete_reply::type > _xsd_table_delete_reply_;
+    ::xsd::cxx::tree::optional< table_del_reply::type > _xsd_table_del_reply_;
     ::xsd::cxx::tree::optional< table_stat_reply::type > _xsd_table_stat_reply_;
     ::xsd::cxx::tree::optional< table_keys_reply::type > _xsd_table_keys_reply_;
     ::xsd::cxx::tree::optional< put_reply::type > _xsd_put_reply_;
     ::xsd::cxx::tree::optional< get_reply::type > _xsd_get_reply_;
-    ::xsd::cxx::tree::optional< delete_reply::type > _xsd_delete_reply_;
+    ::xsd::cxx::tree::optional< del_reply::type > _xsd_del_reply_;
     ::xsd::cxx::tree::optional< select_reply::type > _xsd_select_reply_;
     ::xsd::cxx::tree::optional< eval_reply::type > _xsd_eval_reply_;
     ::xsd::cxx::tree::optional< trigger_reply::type > _xsd_trigger_reply_;
@@ -4240,19 +4493,19 @@ namespace dsmessage
 
   void
   operator<< (::xercesc::DOMElement&,
-              const ds_delete_request_type&);
+              const ds_del_request_type&);
 
   void
   operator<< (::xercesc::DOMElement&,
-              const ds_delete_reply_type&);
+              const ds_del_reply_type&);
 
   void
   operator<< (::xercesc::DOMAttr&,
-              const ds_delete_reply_type&);
+              const ds_del_reply_type&);
 
   void
   operator<< (::xsd::cxx::tree::list_stream< char >&,
-              const ds_delete_reply_type&);
+              const ds_del_reply_type&);
 
   void
   operator<< (::xercesc::DOMElement&,
@@ -4304,19 +4557,19 @@ namespace dsmessage
 
   void
   operator<< (::xercesc::DOMElement&,
-              const table_delete_request_type&);
+              const table_del_request_type&);
 
   void
   operator<< (::xercesc::DOMElement&,
-              const table_delete_reply_type&);
+              const table_del_reply_type&);
 
   void
   operator<< (::xercesc::DOMAttr&,
-              const table_delete_reply_type&);
+              const table_del_reply_type&);
 
   void
   operator<< (::xsd::cxx::tree::list_stream< char >&,
-              const table_delete_reply_type&);
+              const table_del_reply_type&);
 
   void
   operator<< (::xercesc::DOMElement&,
@@ -4360,19 +4613,19 @@ namespace dsmessage
 
   void
   operator<< (::xercesc::DOMElement&,
-              const delete_request_type&);
+              const del_request_type&);
 
   void
   operator<< (::xercesc::DOMElement&,
-              const delete_reply_type&);
+              const del_reply_type&);
 
   void
   operator<< (::xercesc::DOMAttr&,
-              const delete_reply_type&);
+              const del_reply_type&);
 
   void
   operator<< (::xsd::cxx::tree::list_stream< char >&,
-              const delete_reply_type&);
+              const del_reply_type&);
 
   void
   operator<< (::xercesc::DOMElement&,
@@ -4393,6 +4646,14 @@ namespace dsmessage
   void
   operator<< (::xercesc::DOMElement&,
               const eval_reply_type&);
+
+  void
+  operator<< (::xercesc::DOMElement&,
+              const trigger_request_type&);
+
+  void
+  operator<< (::xercesc::DOMElement&,
+              const trigger_reply_type&);
 
   void
   operator<< (::xercesc::DOMElement&,

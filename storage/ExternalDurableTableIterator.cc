@@ -35,6 +35,7 @@ ExternalDurableTableIterator::ExternalDurableTableIterator(ExternalDurableTableI
     // iterator on a table they haven't put anything into yet
     ret = table_.owner_.proxy_->table_keys(table_.owner_.proxy_->handle_,
                                            table_.table_name_, 
+                                           DataStore::pair_key_field_name,
                                            keys_);
     cur_ = 0;
 }

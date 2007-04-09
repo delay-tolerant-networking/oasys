@@ -54,7 +54,7 @@
             <xs:enumeration value="integer"/>
             <xs:enumeration value="float"/>
             <xs:enumeration value="string"/>
-	    <xs:enumeration value="boolean"/>
+            <xs:enumeration value="boolean"/>
         </xs:restriction>
     </xs:simpleType>
 
@@ -64,9 +64,9 @@
     </xs:complexType>
 
     <xs:complexType name="fieldNameValue">
-	<xs:sequence>
-	    <xs:element name="value" type="xs:base64Binary"/>
-	</xs:sequence>
+        <xs:sequence>
+            <xs:element name="value" type="xs:base64Binary"/>
+        </xs:sequence>
         <xs:attribute name="field" type="xs:string" use="required"/>
     </xs:complexType>
 
@@ -101,9 +101,9 @@
             Create a named data store
         </xs:documentation></xs:annotation>
 
-	<xs:choice minOccurs="0" maxOccurs="1">
+        <xs:choice minOccurs="0" maxOccurs="1">
             <xs:element name="password" type="xs:base64Binary"/>
-	</xs:choice>
+        </xs:choice>
 
         <xs:attribute name="ds" type="xs:string" use="required"/>
         <xs:attribute name="clear" type="xs:boolean"/>
@@ -121,20 +121,20 @@
     
 <!-- **************** -->
 
-    <xs:complexType name="ds-delete-request-type">
+    <xs:complexType name="ds-del-request-type">
         <xs:annotation><xs:documentation xml:lang="en">
             Delete a named data storeDurableTableImpl **
         </xs:documentation></xs:annotation>
 
-	<xs:choice minOccurs="0" maxOccurs="1">
+        <xs:choice minOccurs="0" maxOccurs="1">
             <xs:element name="password" type="xs:base64Binary"/>
-	</xs:choice>
+        </xs:choice>
 
         <xs:attribute name="ds" type="xs:string" use="required"/>
         <xs:attribute name="user" type="xs:string"/>
     </xs:complexType>
 
-    <xs:complexType name="ds-delete-reply-type">
+    <xs:complexType name="ds-del-reply-type">
         <xs:annotation><xs:documentation xml:lang="en">
             Delete a named data store
         </xs:documentation></xs:annotation>
@@ -149,9 +149,9 @@
             username, and password. 
         </xs:documentation></xs:annotation>
 
-	<xs:choice minOccurs="0" maxOccurs="1">
+        <xs:choice minOccurs="0" maxOccurs="1">
             <xs:element name="password" type="xs:base64Binary"/>
-	</xs:choice>
+        </xs:choice>
 
         <xs:attribute name="ds" type="xs:string" use="required"/>
         <xs:attribute name="lease" type="xs:unsignedInt"/> <!-- XXX ignored -->
@@ -214,17 +214,17 @@
         </xs:documentation></xs:annotation>
 
         <!-- the name of the field that is used as the key -->
-	<xs:sequence>
-	    <!-- a list of fieldnames. No default values (yet).  -->
+        <xs:sequence>
+            <!-- a list of fieldnames. No default values (yet).  -->
             <xs:choice minOccurs="1" maxOccurs="unbounded">
                 <xs:element name="field" type="fieldInfoType"/>
             </xs:choice>
-	</xs:sequence>
+        </xs:sequence>
 
         <xs:attribute name="handle" type="xs:string" use="required"/>
         <xs:attribute name="table" type="xs:string" use="required"/>
-	<xs:attribute name="key" type="xs:string" use="required"/>
-	<xs:attribute name="key-type" type="xs:string" use="required"/>
+        <xs:attribute name="key" type="xs:string" use="required"/>
+        <xs:attribute name="keytype" type="xs:string" use="required"/>
 
     </xs:complexType>
 
@@ -236,7 +236,7 @@
 
 <!-- **************** -->
 
-    <xs:complexType name="table-delete-request-type">
+    <xs:complexType name="table-del-request-type">
         <xs:annotation><xs:documentation xml:lang="en">
             Delete a named table and all of its elements.
         </xs:documentation></xs:annotation>
@@ -246,7 +246,7 @@
     </xs:complexType>
 
 
-    <xs:complexType name="table-delete-reply-type">
+    <xs:complexType name="table-del-reply-type">
         <xs:annotation><xs:documentation xml:lang="en">
             Delete a named table and all of its elements.
         </xs:documentation></xs:annotation>
@@ -272,8 +272,8 @@
             <xs:element name="field" type="fieldInfoType"/>
         </xs:choice>
 
-	<xs:attribute name="key" type="xs:string" use="required"/>
-	<xs:attribute name="key-type" type="xs:string" use="required"/>
+        <xs:attribute name="keyname" type="xs:string" use="required"/>
+        <xs:attribute name="keytype" type="xs:string" use="required"/>
         <!-- number of elements in the table -->
         <xs:attribute name="count" type="xs:unsignedInt" use="required"/>
     </xs:complexType>
@@ -287,7 +287,9 @@
 
         <xs:attribute name="handle" type="xs:string" use="required"/>
         <xs:attribute name="table" type="xs:string" use="required"/>
+        <xs:attribute name="keyname" type="xs:string" use="required"/>
     </xs:complexType>
+
     <xs:complexType name="table-keys-reply-type">
         <xs:annotation><xs:documentation xml:lang="en">
             Retrieve the keys for this table from the data store
@@ -306,14 +308,15 @@
             Insert a row (multi-field element)
         </xs:documentation></xs:annotation>
 
-	<xs:sequence>
-	    <xs:element name="key" type="xs:base64Binary"/>
+        <xs:sequence>
+            <xs:element name="key" type="xs:base64Binary"/>
             <xs:choice minOccurs="1" maxOccurs="unbounded">
                 <xs:element name="set" type="fieldNameValue"/>
             </xs:choice>
-	</xs:sequence>
+        </xs:sequence>
         <xs:attribute name="handle" type="xs:string" use="required"/>
         <xs:attribute name="table" type="xs:string" use="required"/>
+        <xs:attribute name="keyname" type="xs:string" use="required"/>
     </xs:complexType>
 
     <xs:complexType name="put-reply-type">
@@ -330,13 +333,14 @@
             Retrieve an element from the data store
         </xs:documentation></xs:annotation>
 
-	<!-- the key itself -->
-	<xs:sequence>
+        <!-- the key itself -->
+        <xs:sequence>
             <xs:element name="key" type="xs:base64Binary"/>
-	</xs:sequence>
+        </xs:sequence>
 
         <xs:attribute name="handle" type="xs:string" use="required"/>
         <xs:attribute name="table" type="xs:string" use="required"/>
+        <xs:attribute name="keyname" type="xs:string" use="required"/>
 
     </xs:complexType>
 
@@ -346,30 +350,29 @@
         </xs:documentation></xs:annotation>
 
         <xs:sequence minOccurs="0" maxOccurs="unbounded">
-	    <xs:element name="field" type="xs:string"/>
-            <xs:element name="value" type="xs:base64Binary"/>
+            <xs:element name="field" type="fieldNameValue"/>
         </xs:sequence>
     </xs:complexType>
 
 
 <!-- **************** -->
 
-    <xs:complexType name="delete-request-type">
+    <xs:complexType name="del-request-type">
         <xs:annotation><xs:documentation xml:lang="en">
-            Delete a blob from the data store
+            Delete an element from the data store
         </xs:documentation></xs:annotation>
 
-	<!-- the key itself -->
-	<xs:sequence>
+        <!-- the key itself -->
+        <xs:sequence>
             <xs:element name="key" type="xs:base64Binary"/>
-	</xs:sequence>
+        </xs:sequence>
 
         <xs:attribute name="handle" type="xs:string" use="required"/>
         <xs:attribute name="table" type="xs:string" use="required"/>
-
+        <xs:attribute name="keyname" type="xs:string" use="required"/>
     </xs:complexType>
 
-    <xs:complexType name="delete-reply-type">
+    <xs:complexType name="del-reply-type">
         <xs:annotation><xs:documentation xml:lang="en">
             Delete an element from the data store
         </xs:documentation></xs:annotation>
@@ -403,9 +406,9 @@
     </xs:complexType>
 
     <xs:complexType name="rowType">
-	<xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
             <xs:element name="field" type="fieldNameValue"/>
-	</xs:choice>
+        </xs:choice>
     </xs:complexType>
 
     <xs:complexType name="select-reply-type">
@@ -416,7 +419,7 @@
         </xs:documentation></xs:annotation>
 
         <xs:choice minOccurs="0" maxOccurs="unbounded">
-	    <xs:element name="row" type="rowType"/>
+            <xs:element name="row" type="rowType"/>
         </xs:choice>
     </xs:complexType>
 
@@ -424,13 +427,13 @@
 
     <xs:complexType name="eval-request-type">
         <xs:annotation><xs:documentation xml:lang="en">
-            eval and trigger messages have an unstructured content,
+            eval messages have an unstructured content,
             and language attributes
         </xs:documentation></xs:annotation>
 
-	<xs:sequence>
+        <xs:sequence>
             <xs:element name="expr" type="xs:base64Binary"/>
-	</xs:sequence>
+        </xs:sequence>
 
         <xs:attribute name="handle" type="xs:string" use="required"/>
         <xs:attribute name="language" type="xs:string" use="required"/>
@@ -438,13 +441,40 @@
 
     <xs:complexType name="eval-reply-type">
         <xs:annotation><xs:documentation xml:lang="en">
-            eval and trigger messages have an unstructured content,
+            eval messages have an unstructured content,
             and language attributes
         </xs:documentation></xs:annotation>
 
-	<xs:sequence>
+        <xs:sequence>
             <xs:element name="value" type="xs:base64Binary"/>
-	</xs:sequence>
+        </xs:sequence>
+
+        <xs:attribute name="language" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="trigger-request-type">
+        <xs:annotation><xs:documentation xml:lang="en">
+            trigger messages have an unstructured content,
+            and language attributes
+        </xs:documentation></xs:annotation>
+
+        <xs:sequence>
+            <xs:element name="expr" type="xs:base64Binary"/>
+        </xs:sequence>
+
+        <xs:attribute name="handle" type="xs:string" use="required"/>
+        <xs:attribute name="language" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="trigger-reply-type">
+        <xs:annotation><xs:documentation xml:lang="en">
+            trigger messages have an unstructured content,
+            and language attributes
+        </xs:documentation></xs:annotation>
+
+        <xs:sequence>
+            <xs:element name="value" type="xs:base64Binary"/>
+        </xs:sequence>
 
         <xs:attribute name="language" type="xs:string" use="required"/>
     </xs:complexType>
@@ -452,63 +482,63 @@
 <!-- **************** top-level elements **************** -->
 
     <xs:complexType name="ds-request-type">
-	<xs:choice>
-	    <!-- ds ops -->
-	    <xs:element name="ds-caps" type="ds-caps-request-type"/>
-	    <xs:element name="ds-create" type="ds-create-request-type"/>
-	    <xs:element name="ds-delete" type="ds-delete-request-type"/>
-	    <xs:element name="ds-open" type="ds-open-request-type"/>
-	    <xs:element name="ds-stat" type="ds-stat-request-type"/>
-	    <xs:element name="ds-close" type="ds-close-request-type"/>
+        <xs:choice>
+            <!-- ds ops -->
+            <xs:element name="ds-caps" type="ds-caps-request-type"/>
+            <xs:element name="ds-create" type="ds-create-request-type"/>
+            <xs:element name="ds-del" type="ds-del-request-type"/>
+            <xs:element name="ds-open" type="ds-open-request-type"/>
+            <xs:element name="ds-stat" type="ds-stat-request-type"/>
+            <xs:element name="ds-close" type="ds-close-request-type"/>
 
-	    <!-- table ops -->
-	    <xs:element name="table-create" type="table-create-request-type"/>
-	    <xs:element name="table-delete" type="table-delete-request-type"/>
-	    <xs:element name="table-stat" type="table-stat-request-type"/>
-	    <xs:element name="table-keys" type="table-keys-request-type"/>
+            <!-- table ops -->
+            <xs:element name="table-create" type="table-create-request-type"/>
+            <xs:element name="table-del" type="table-del-request-type"/>
+            <xs:element name="table-stat" type="table-stat-request-type"/>
+            <xs:element name="table-keys" type="table-keys-request-type"/>
 
-	    <!-- element ops -->
-	    <xs:element name="put" type="put-request-type"/>
-	    <xs:element name="get" type="get-request-type"/>
-	    <xs:element name="del" type="delete-request-type"/>
-	    <xs:element name="select" type="select-request-type"/>
+            <!-- element ops -->
+            <xs:element name="put" type="put-request-type"/>
+            <xs:element name="get" type="get-request-type"/>
+            <xs:element name="del" type="del-request-type"/>
+            <xs:element name="select" type="select-request-type"/>
 
-	    <!-- advanced ops -->
-	    <xs:element name="eval" type="eval-request-type"/>
-	    <xs:element name="trigger" type="eval-request-type"/>
-	</xs:choice>
-	<xs:attribute name="cookie" type="xs:string" use="required"/>
+            <!-- advanced ops -->
+            <xs:element name="eval" type="eval-request-type"/>
+            <xs:element name="trigger" type="trigger-request-type"/>
+        </xs:choice>
+        <xs:attribute name="cookie" type="xs:string" use="required"/>
     </xs:complexType>
 
     <xs:complexType name="ds-reply-type">
-	<xs:choice>
-	    <!-- ds ops -->
-	    <xs:element name="ds-caps-reply" type="ds-caps-reply-type"/>
-	    <xs:element name="ds-create-reply" type="ds-create-reply-type"/>
-	    <xs:element name="ds-delete-reply" type="ds-delete-reply-type"/>
-	    <xs:element name="ds-open-reply" type="ds-open-reply-type"/>
-	    <xs:element name="ds-stat-reply" type="ds-stat-reply-type"/>
-	    <xs:element name="ds-close-reply" type="ds-close-reply-type"/>
+        <xs:choice>
+            <!-- ds ops -->
+            <xs:element name="ds-caps-reply" type="ds-caps-reply-type"/>
+            <xs:element name="ds-create-reply" type="ds-create-reply-type"/>
+            <xs:element name="ds-del-reply" type="ds-del-reply-type"/>
+            <xs:element name="ds-open-reply" type="ds-open-reply-type"/>
+            <xs:element name="ds-stat-reply" type="ds-stat-reply-type"/>
+            <xs:element name="ds-close-reply" type="ds-close-reply-type"/>
 
-	    <!-- table ops -->
-	    <xs:element name="table-create-reply" type="table-create-reply-type"/>
-	    <xs:element name="table-delete-reply" type="table-delete-reply-type"/>
-	    <xs:element name="table-stat-reply" type="table-stat-reply-type"/>
-	    <xs:element name="table-keys-reply" type="table-keys-reply-type"/>
+            <!-- table ops -->
+            <xs:element name="table-create-reply" type="table-create-reply-type"/>
+            <xs:element name="table-del-reply" type="table-del-reply-type"/>
+            <xs:element name="table-stat-reply" type="table-stat-reply-type"/>
+            <xs:element name="table-keys-reply" type="table-keys-reply-type"/>
 
-	    <!-- element ops -->
-	    <xs:element name="put-reply" type="put-reply-type"/>
-	    <xs:element name="get-reply" type="get-reply-type"/>
-	    <xs:element name="delete-reply" type="delete-reply-type"/>
-	    <xs:element name="select-reply" type="select-reply-type"/>
+            <!-- element ops -->
+            <xs:element name="put-reply" type="put-reply-type"/>
+            <xs:element name="get-reply" type="get-reply-type"/>
+            <xs:element name="del-reply" type="del-reply-type"/>
+            <xs:element name="select-reply" type="select-reply-type"/>
 
-	    <!-- advanced ops -->
-	    <xs:element name="eval-reply" type="eval-reply-type"/>
-	    <xs:element name="trigger-reply" type="eval-reply-type"/>
-	</xs:choice>
+            <!-- advanced ops -->
+            <xs:element name="eval-reply" type="eval-reply-type"/>
+            <xs:element name="trigger-reply" type="trigger-reply-type"/>
+        </xs:choice>
 
-	<xs:attribute name="cookie" type="xs:string" use="required"/>
-	<xs:attribute name="error" type="xs:string" use="required"/>
+        <xs:attribute name="cookie" type="xs:string" use="required"/>
+        <xs:attribute name="error" type="xs:string" use="required"/>
     </xs:complexType>
 
     <xs:element name="ds-request" type="ds-request-type"/>

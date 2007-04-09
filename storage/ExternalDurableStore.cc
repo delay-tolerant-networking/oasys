@@ -80,7 +80,7 @@ int ExternalDurableStore::get_table(DurableTableImpl **table,
     log_debug("looking up table %s", name.c_str());
 
     if (flags & oasys::DS_CREATE) {
-        ret = proxy_->table_delete(handle_, name);
+        ret = proxy_->table_del(handle_, name);
     } else {
         // see if the table exists
         ret = proxy_->table_stat(handle_, name, key, key_type, fieldnames,
@@ -95,7 +95,7 @@ int ExternalDurableStore::get_table(DurableTableImpl **table,
 int ExternalDurableStore::del_table(const std::string &name)
 {
     log_debug("deleting table %s", name.c_str());
-    return proxy_->table_delete(handle_, name);
+    return proxy_->table_del(handle_, name);
 }
 
 int ExternalDurableStore::get_table_names(StringVector *names)

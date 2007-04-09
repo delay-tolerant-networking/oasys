@@ -55,7 +55,9 @@ int ExternalDurableTableImpl::get(const SerializableObject &key,
         return DS_NOTFOUND;
     }
 
-    ret = owner_.proxy_->do_get(table_name_, key, data);
+    ret = owner_.proxy_->do_get(table_name_, 
+                                DataStore::pair_key_field_name, 
+                                key, data);
     if (ret == DataStore::ERR_NOTFOUND)
         return DS_NOTFOUND;
     else if (ret != 0)
@@ -73,7 +75,9 @@ int ExternalDurableTableImpl::put(const SerializableObject &key,
     // if the table doesn't exist yet, now we can create it because
     // we can get schema information
     if (!exists_) {
-        if (owner_.proxy_->do_table_create(table_name_, *data) != 0) {
+        if (owner_.proxy_->do_table_create(table_name_, 
+                                           DataStore::pair_key_field_name, 
+                                           *data) != 0) {
             // if we couldn't creat it, bail
             return DS_ERR;      // XXX
         }
@@ -82,10 +86,16 @@ int ExternalDurableTableImpl::put(const SerializableObject &key,
 
     // if !DS_CREATE, don't create new entries
     if ((flags & DS_CREATE) == 0) {
-        if (owner_.proxy_->do_get(table_name_, key, 0) != 0)
+        if (owner_.proxy_->do_get(table_name_, 
+                                  DataStore::pair_key_field_name, 
+                                  key, 
+                                  0) != 0)
             return DS_NOTFOUND;
     }
-    if (owner_.proxy_->do_put(table_name_, key, data) != 0)
+    if (owner_.proxy_->do_put(table_name_, 
+                              DataStore::pair_key_field_name, 
+                              key, 
+                              data) != 0)
         return DS_ERR;          // XXX
     return 0;
 }
@@ -98,7 +108,9 @@ int ExternalDurableTableImpl::del(const SerializableObject &key)
     }
 
     int ret;
-    ret = owner_.proxy_->do_del(table_name_, key);
+    ret = owner_.proxy_->do_del(table_name_, 
+                                DataStore::pair_key_field_name, 
+                                key);
     if (ret == DataStore::ERR_CANTDELETE || 
         ret == DataStore::ERR_NOTFOUND)
         return DS_NOTFOUND;
@@ -117,7 +129,7 @@ size_t ExternalDurableTableImpl::size() const
     }
 
     if (owner_.proxy_->do_count(table_name_, count) != 0)
-	count = 0;		// failed, say zero
+        count = 0;              // failed, say zero
     return count;
 }
 
