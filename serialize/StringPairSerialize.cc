@@ -301,63 +301,68 @@ StringPairSerialize::Unmarshal::~Unmarshal()
     // nothing...
 }
 
+// find this element name in the list
+size_t
+StringPairSerialize::Unmarshal::find(const char *name)
+{
+    string n = name;
+    size_t i;
+    for (i = 0; i < rep_->size(); ++i) {
+	if (rep_->at(i).first == n) {
+	    break;
+	}
+    }
+    return i;			// return after-the-end if not found
+}
+
 void
 StringPairSerialize::Unmarshal::process(const char *name, u_int64_t* i)
 {
-    ASSERT(idx_ < rep_->size());
-    ASSERT(string(name) == rep_->at(idx_).first);
+    size_t idx = find(name);
+    ASSERT(idx < rep_->size());
 
-    *i = atoll(rep_->at(idx_).second.c_str());
-    ++idx_;
-
+    *i = atoll(rep_->at(idx).second.c_str());
     if (log_) logf(log_, LOG_DEBUG, "<=int64(%llu)", *i);
 }
 
 void
 StringPairSerialize::Unmarshal::process(const char *name, u_int32_t* i)
 {
-    ASSERT(idx_ < rep_->size());
-    ASSERT(string(name) == rep_->at(idx_).first);
+    size_t idx = find(name);
+    ASSERT(idx < rep_->size());
 
-    *i = atoi(rep_->at(idx_).second.c_str());
-    ++idx_;
-
+    *i = atoi(rep_->at(idx).second.c_str());
     if (log_) logf(log_, LOG_DEBUG, "<=int32(%d)", *i);
 }
 
 void 
 StringPairSerialize::Unmarshal::process(const char *name, u_int16_t* i)
 {
-    ASSERT(idx_ < rep_->size());
-    ASSERT(string(name) == rep_->at(idx_).first);
+    size_t idx = find(name);
+    ASSERT(idx < rep_->size());
 
-    *i = atoi(rep_->at(idx_).second.c_str());
-    ++idx_;
-    
+    *i = atoi(rep_->at(idx).second.c_str());
     if (log_) logf(log_, LOG_DEBUG, "<=int16(%d)", *i);
 }
 
 void 
 StringPairSerialize::Unmarshal::process(const char *name, u_int8_t* i)
 {
-    ASSERT(idx_ < rep_->size());
-    ASSERT(string(name) == rep_->at(idx_).first);
+    size_t idx = find(name);
+    ASSERT(idx < rep_->size());
 
     // XXX????
-    *i = atoi(rep_->at(idx_).second.c_str());
-    ++idx_;
-    
+    *i = atoi(rep_->at(idx).second.c_str());
     if (log_) logf(log_, LOG_DEBUG, "<=int8(%d)", *i);
 }
 
 void
 StringPairSerialize::Unmarshal::process(const char *name, int32_t* i)
 {
-    ASSERT(idx_ < rep_->size());
-    ASSERT(string(name) == rep_->at(idx_).first);
+    size_t idx = find(name);
+    ASSERT(idx < rep_->size());
 
-    *i = atoi(rep_->at(idx_).second.c_str());
-    ++idx_;
+    *i = atoi(rep_->at(idx).second.c_str());
 
     if (log_) logf(log_, LOG_DEBUG, "<=int32(%d)", *i);
 }
@@ -365,36 +370,31 @@ StringPairSerialize::Unmarshal::process(const char *name, int32_t* i)
 void 
 StringPairSerialize::Unmarshal::process(const char *name, int16_t* i)
 {
-    ASSERT(idx_ < rep_->size());
-    ASSERT(string(name) == rep_->at(idx_).first);
+    size_t idx = find(name);
+    ASSERT(idx < rep_->size());
 
-    *i = atoi(rep_->at(idx_).second.c_str());
-    ++idx_;
-    
+    *i = atoi(rep_->at(idx).second.c_str());
     if (log_) logf(log_, LOG_DEBUG, "<=int16(%d)", *i);
 }
 
 void 
 StringPairSerialize::Unmarshal::process(const char *name, int8_t* i)
 {
-    ASSERT(idx_ < rep_->size());
-    ASSERT(string(name) == rep_->at(idx_).first);
+    size_t idx = find(name);
+    ASSERT(idx < rep_->size());
 
     // XXX????
-    *i = atoi(rep_->at(idx_).second.c_str());
-    ++idx_;
-    
+    *i = atoi(rep_->at(idx).second.c_str());
     if (log_) logf(log_, LOG_DEBUG, "<=int8(%d)", *i);
 }
 
 void 
 StringPairSerialize::Unmarshal::process(const char *name, bool* b)
 {
-    ASSERT(idx_ < rep_->size());
-    ASSERT(string(name) == rep_->at(idx_).first);
+    size_t idx = find(name);
+    ASSERT(idx < rep_->size());
 
-    const char* buf = rep_->at(idx_).second.c_str();
-    ++idx_;
+    const char* buf = rep_->at(idx).second.c_str();
 
     if (buf == NULL) return;
 
@@ -423,22 +423,21 @@ StringPairSerialize::Unmarshal::process(const char *name, bool* b)
 void 
 StringPairSerialize::Unmarshal::process(const char *name, std::string* s)
 {
-    ASSERT(idx_ < rep_->size());
-    ASSERT(string(name) == rep_->at(idx_).first);
-    *s = rep_->at(idx_).second.c_str();
-    ++idx_;
+    size_t idx = find(name);
+    ASSERT(idx < rep_->size());
+
+    *s = rep_->at(idx).second.c_str();
 }
 
 void 
 StringPairSerialize::Unmarshal::process(const char* name, u_char* bp, u_int32_t len)
 {
-    ASSERT(idx_ < rep_->size());
-    ASSERT(string(name) == rep_->at(idx_).first);
+    size_t idx = find(name);
+    ASSERT(idx < rep_->size());
 
-    string s = rep_->at(idx_).second.c_str();
+    string s = rep_->at(idx).second.c_str();
     size_t amt = (len < s.length() ? len : s.length());
     str2hex(s, bp, amt);
-    ++idx_;
 
     if (log_) {
         std::string s;
@@ -451,17 +450,15 @@ void
 StringPairSerialize::Unmarshal::process(const char* name, 
                                         BufferCarrier<unsigned char>* carrier)
 {
-    ASSERT(idx_ < rep_->size());
-    ASSERT(string(name) == rep_->at(idx_).first);
+    size_t idx = find(name);
+    ASSERT(idx < rep_->size());
 
-    string s = rep_->at(idx_).second.c_str();
+    string s = rep_->at(idx).second;
     int len = s.length();
     u_char *buf = static_cast<u_char *>(malloc(sizeof(u_char) * len));
     ASSERT(buf != 0);
     str2hex(s, buf, len);
     carrier->set_buf(buf, len, true);
-    
-    ++idx_;
 }
 
 void
@@ -469,18 +466,16 @@ StringPairSerialize::Unmarshal::process(const char* name,
                                         BufferCarrier<unsigned char>* carrier, 
                                         u_char terminator)
 {
-    ASSERT(idx_ < rep_->size());
-    ASSERT(string(name) == rep_->at(idx_).first);
+    size_t idx = find(name);
+    ASSERT(idx < rep_->size());
 
-    string s = rep_->at(idx_).second.c_str();
+    string s = rep_->at(idx).second;
     int len = s.length();
     u_char *buf = static_cast<u_char *>(malloc(sizeof(u_char) * (1 + len)));
     ASSERT(buf != 0);
     str2hex(s, buf, len);
     buf[len] = terminator;
     carrier->set_buf(buf, len, true);
-
-    ++idx_;
 }
 
 } // namespace oasys

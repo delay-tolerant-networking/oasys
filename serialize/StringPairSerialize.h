@@ -84,8 +84,7 @@ public:
     virtual void process(const char*, oasys::BufferCarrier<unsigned char>*, u_char);
 
 protected:
-    // current index into rep
-    std::vector<StringPair>::size_type idx_;
+    size_t find(const char *name);
 };
 
 class StringPairSerialize::Info: public StringPairSerialize {
