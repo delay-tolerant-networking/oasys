@@ -272,7 +272,7 @@ int DataStoreServer::process(ds_request_type &req, ds_reply_type_p &reply)
              i != languages.end(); 
              ++i)
         {
-            r.language().push_back(*i);
+            r.language().push_back(languageName(*i));
         }
 
         // set
@@ -605,7 +605,7 @@ int DataStoreServer::process(ds_request_type &req, ds_reply_type_p &reply)
              i != values.end();
              ++i) {
             xml_schema::base64_binary value(i->second.data(), i->second.length());
-            // yes, args backwards are they. sigh. 
+	    // yes, args backwards are they. sigh. 
             r.field().push_back(fieldNameValue(value, i->first));
         }
 

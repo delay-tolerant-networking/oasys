@@ -213,6 +213,8 @@ namespace dsmessage
   class fieldType;
   class fieldInfoType;
   class fieldNameValue;
+  class fieldName;
+  class languageName;
   class ds_caps_request_type;
   class ds_caps_reply_type;
   class ds_create_request_type;
@@ -587,6 +589,118 @@ namespace dsmessage
     ::xsd::cxx::tree::one< field::type > _xsd_field_;
   };
 
+  class fieldName: public ::xml_schema::type
+  {
+    public:
+
+    struct _xsd_fieldName
+    {
+      typedef ::xml_schema::type base_;
+    };
+
+    // field
+    // 
+    public:
+    struct field
+    {
+      typedef ::xml_schema::string type;
+      typedef ::xsd::cxx::tree::traits< type, char > traits;
+    };
+
+    const field::type&
+    field () const;
+
+    field::type&
+    field ();
+
+    void
+    field (const field::type&);
+
+    void
+    field (::std::auto_ptr< field::type >);
+
+    // Constructors.
+    //
+    public:
+    fieldName (const field::type&);
+
+    fieldName (const ::xercesc::DOMElement&,
+               ::xml_schema::flags = 0,
+               ::xml_schema::type* = 0);
+
+    fieldName (const fieldName&,
+               ::xml_schema::flags = 0,
+               ::xml_schema::type* = 0);
+
+    virtual fieldName*
+    _clone (::xml_schema::flags = 0,
+            ::xml_schema::type* = 0) const;
+
+    // Implementation.
+    //
+    private:
+    void
+    parse (const ::xercesc::DOMElement&, ::xml_schema::flags);
+
+    ::xsd::cxx::tree::one< field::type > _xsd_field_;
+  };
+
+  class languageName: public ::xml_schema::type
+  {
+    public:
+
+    struct _xsd_languageName
+    {
+      typedef ::xml_schema::type base_;
+    };
+
+    // language
+    // 
+    public:
+    struct language
+    {
+      typedef ::xml_schema::string type;
+      typedef ::xsd::cxx::tree::traits< type, char > traits;
+    };
+
+    const language::type&
+    language () const;
+
+    language::type&
+    language ();
+
+    void
+    language (const language::type&);
+
+    void
+    language (::std::auto_ptr< language::type >);
+
+    // Constructors.
+    //
+    public:
+    languageName (const language::type&);
+
+    languageName (const ::xercesc::DOMElement&,
+                  ::xml_schema::flags = 0,
+                  ::xml_schema::type* = 0);
+
+    languageName (const languageName&,
+                  ::xml_schema::flags = 0,
+                  ::xml_schema::type* = 0);
+
+    virtual languageName*
+    _clone (::xml_schema::flags = 0,
+            ::xml_schema::type* = 0) const;
+
+    // Implementation.
+    //
+    private:
+    void
+    parse (const ::xercesc::DOMElement&, ::xml_schema::flags);
+
+    ::xsd::cxx::tree::one< language::type > _xsd_language_;
+  };
+
   class ds_caps_request_type: public ::xml_schema::type
   {
     public:
@@ -637,7 +751,7 @@ namespace dsmessage
     public:
     struct language
     {
-      typedef ::xml_schema::string type;
+      typedef ::dsmessage::languageName type;
       typedef ::xsd::cxx::tree::traits< type, char > traits;
       typedef ::xsd::cxx::tree::sequence< type > container;
       typedef container::iterator iterator;
@@ -2645,7 +2759,7 @@ namespace dsmessage
     public:
     struct get
     {
-      typedef ::xml_schema::string type;
+      typedef ::dsmessage::fieldName type;
       typedef ::xsd::cxx::tree::traits< type, char > traits;
       typedef ::xsd::cxx::tree::sequence< type > container;
       typedef container::iterator iterator;
@@ -4458,6 +4572,14 @@ namespace dsmessage
   void
   operator<< (::xercesc::DOMElement&,
               const fieldNameValue&);
+
+  void
+  operator<< (::xercesc::DOMElement&,
+              const fieldName&);
+
+  void
+  operator<< (::xercesc::DOMElement&,
+              const languageName&);
 
   void
   operator<< (::xercesc::DOMElement&,

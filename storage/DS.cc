@@ -241,6 +241,62 @@ namespace dsmessage
   }
 
 
+  // fieldName
+  // 
+
+  const fieldName::field::type& fieldName::
+  field () const
+  {
+    return this->_xsd_field_.get ();
+  }
+
+  fieldName::field::type& fieldName::
+  field ()
+  {
+    return this->_xsd_field_.get ();
+  }
+
+  void fieldName::
+  field (const field::type& field)
+  {
+    this->_xsd_field_.set (field);
+  }
+
+  void fieldName::
+  field (::std::auto_ptr< field::type > field)
+  {
+    this->_xsd_field_.set (field);
+  }
+
+
+  // languageName
+  // 
+
+  const languageName::language::type& languageName::
+  language () const
+  {
+    return this->_xsd_language_.get ();
+  }
+
+  languageName::language::type& languageName::
+  language ()
+  {
+    return this->_xsd_language_.get ();
+  }
+
+  void languageName::
+  language (const language::type& language)
+  {
+    this->_xsd_language_.set (language);
+  }
+
+  void languageName::
+  language (::std::auto_ptr< language::type > language)
+  {
+    this->_xsd_language_.set (language);
+  }
+
+
   // ds_caps_request_type
   // 
 
@@ -3409,6 +3465,146 @@ namespace dsmessage
           ::xml_schema::type* c) const
   {
     return new fieldNameValue (*this, f, c);
+  }
+
+  // fieldName
+  //
+
+  fieldName::
+  fieldName (const field::type& _xsd_field)
+  : ::xml_schema::type (),
+  _xsd_field_ (_xsd_field,
+               ::xml_schema::flags (),
+               this)
+  {
+  }
+
+  fieldName::
+  fieldName (const fieldName& _xsd_fieldName,
+             ::xml_schema::flags f,
+             ::xml_schema::type* c)
+  : ::xml_schema::type (_xsd_fieldName, f, c),
+  _xsd_field_ (_xsd_fieldName._xsd_field_,
+               f | ::xml_schema::flags::not_root,
+               this)
+  {
+  }
+
+  fieldName::
+  fieldName (const ::xercesc::DOMElement& e,
+             ::xml_schema::flags f,
+             ::xml_schema::type* c)
+  : ::xml_schema::type (e, f, c),
+  _xsd_field_ (f | ::xml_schema::flags::not_root, this)
+  {
+    parse (e, f);
+  }
+
+  void fieldName::
+  parse (const ::xercesc::DOMElement& e, ::xml_schema::flags f)
+  {
+    ::xsd::cxx::xml::dom::parser< char > p (e);
+
+    while (p.more_attributes ())
+    {
+      const ::xsd::cxx::xml::dom::attribute< char > a (p.next_attribute ());
+
+      if (a.name () == "field" && a.namespace_ ().empty ())
+      {
+        ::std::auto_ptr< field::type > r (
+          field::traits::create (
+            a.dom_attribute (),
+            f | ::xml_schema::flags::not_root,
+            this));
+
+        this->field (r);
+        continue;
+      }
+    }
+
+    if (!_xsd_field_.present ())
+    {
+      throw ::xsd::cxx::tree::expected_attribute< char > (
+        "field",
+        "");
+    }
+  }
+
+  fieldName* fieldName::
+  _clone (::xml_schema::flags f,
+          ::xml_schema::type* c) const
+  {
+    return new fieldName (*this, f, c);
+  }
+
+  // languageName
+  //
+
+  languageName::
+  languageName (const language::type& _xsd_language)
+  : ::xml_schema::type (),
+  _xsd_language_ (_xsd_language,
+                  ::xml_schema::flags (),
+                  this)
+  {
+  }
+
+  languageName::
+  languageName (const languageName& _xsd_languageName,
+                ::xml_schema::flags f,
+                ::xml_schema::type* c)
+  : ::xml_schema::type (_xsd_languageName, f, c),
+  _xsd_language_ (_xsd_languageName._xsd_language_,
+                  f | ::xml_schema::flags::not_root,
+                  this)
+  {
+  }
+
+  languageName::
+  languageName (const ::xercesc::DOMElement& e,
+                ::xml_schema::flags f,
+                ::xml_schema::type* c)
+  : ::xml_schema::type (e, f, c),
+  _xsd_language_ (f | ::xml_schema::flags::not_root, this)
+  {
+    parse (e, f);
+  }
+
+  void languageName::
+  parse (const ::xercesc::DOMElement& e, ::xml_schema::flags f)
+  {
+    ::xsd::cxx::xml::dom::parser< char > p (e);
+
+    while (p.more_attributes ())
+    {
+      const ::xsd::cxx::xml::dom::attribute< char > a (p.next_attribute ());
+
+      if (a.name () == "language" && a.namespace_ ().empty ())
+      {
+        ::std::auto_ptr< language::type > r (
+          language::traits::create (
+            a.dom_attribute (),
+            f | ::xml_schema::flags::not_root,
+            this));
+
+        this->language (r);
+        continue;
+      }
+    }
+
+    if (!_xsd_language_.present ())
+    {
+      throw ::xsd::cxx::tree::expected_attribute< char > (
+        "language",
+        "");
+    }
+  }
+
+  languageName* languageName::
+  _clone (::xml_schema::flags f,
+          ::xml_schema::type* c) const
+  {
+    return new languageName (*this, f, c);
   }
 
   // ds_caps_request_type
@@ -8120,6 +8316,38 @@ namespace dsmessage
         e);
 
       a.dom_attribute () << i.field ();
+    }
+  }
+
+  void
+  operator<< (::xercesc::DOMElement& e,
+              const fieldName& i)
+  {
+    while (::xercesc::DOMNode* n = e.getFirstChild ())
+      e.removeChild (n);
+
+    {
+      ::xsd::cxx::xml::dom::attribute< char > a (
+        "field",
+        e);
+
+      a.dom_attribute () << i.field ();
+    }
+  }
+
+  void
+  operator<< (::xercesc::DOMElement& e,
+              const languageName& i)
+  {
+    while (::xercesc::DOMNode* n = e.getFirstChild ())
+      e.removeChild (n);
+
+    {
+      ::xsd::cxx::xml::dom::attribute< char > a (
+        "language",
+        e);
+
+      a.dom_attribute () << i.language ();
     }
   }
 

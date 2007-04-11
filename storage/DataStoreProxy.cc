@@ -449,7 +449,7 @@ int DataStoreProxy::ds_caps(vector<string> &languages,
     for (ds_caps_reply_type::language::const_iterator i(caps_repl.language().begin());
          i != caps_repl.language().end();
          ++i) {
-        languages.push_back(*i);
+        languages.push_back(i->language());
     }
     return 0;
 }
@@ -482,7 +482,7 @@ int DataStoreProxy::ds_create(const string &dsname,
  * ds_del: delete a data store
  */
 int DataStoreProxy::ds_del(const string &dsname, 
-                           const credentials_t &cred)
+			   const credentials_t &cred)
 {
     int ret;
     ds_del_request_type req(dsname);
@@ -603,7 +603,7 @@ int DataStoreProxy::table_create(const string &handle,
  * table_del: delete a named table and all of its elements
  */
 int DataStoreProxy::table_del(const string &handle,
-                              const string &tablename)
+			      const string &tablename)
 {
     int ret;
     if (!init_)
@@ -622,7 +622,7 @@ int DataStoreProxy::table_del(const string &handle,
  */
 int DataStoreProxy::table_keys(const string &handle,
                                const string &tablename,
-                               const string &keyname,
+			       const string &keyname,
                                vector<string> &keys)
 {
     int ret;
@@ -686,7 +686,7 @@ int DataStoreProxy::table_stat(const string &handle,
  */
 int DataStoreProxy::put(const string &handle,
                         const string &tablename, 
-                        const string &keyname,
+			const string &keyname,
                         const string &key,
                         const vector<StringPair> &fields)
 {
@@ -721,7 +721,7 @@ int DataStoreProxy::put(const string &handle,
  */
 int DataStoreProxy::get(const string &handle,
                         const string &tablename, 
-                        const string &keyname,
+			const string &keyname,
                         const string &keyval,
                         vector<StringPair> &fields)
 {
@@ -737,8 +737,8 @@ int DataStoreProxy::get(const string &handle,
     EVAL(root, reply, get_reply);
 
     for (get_reply_type::field::iterator f = reply.field().begin();
-         f != reply.field().end();
-         ++f) {
+	 f != reply.field().end();
+	 ++f) {
         string value(f->value().data(), f->value().size());
         fields.push_back(StringPair(f->field(), value));
     }
@@ -752,7 +752,7 @@ int DataStoreProxy::get(const string &handle,
  */
 int DataStoreProxy::del(const string &handle,
                         const string &tablename, 
-                        const string &keyname,
+			const string &keyname,
                         const string &keyval)
 {
     int ret;
@@ -792,7 +792,7 @@ int DataStoreProxy::select(const string &handle,
     for (vector<string>::const_iterator i = get_fields.begin();
          i != get_fields.end();
          ++i) {
-        req.get().push_back(*i);
+        req.get().push_back(fieldName(*i));
     }
 
     // constraints
@@ -951,7 +951,7 @@ int DataStoreProxy::do_count(const string tablename, u_int32_t &count)
 }
 
 int DataStoreProxy::do_del(const string &tablename,
-                           const std::string &keyname,
+			   const std::string &keyname,
                            const SerializableObject &key)
 {
     string keyval;
@@ -961,7 +961,7 @@ int DataStoreProxy::do_del(const string &tablename,
 }
 
 int DataStoreProxy::do_get(const string &tablename,
-                           const string &keyname,
+			   const string &keyname,
                            const SerializableObject &key,
                            SerializableObject *data)
 {
@@ -988,7 +988,7 @@ int DataStoreProxy::do_get(const string &tablename,
 }
 
 int DataStoreProxy::do_put(const string &tablename,
-                           const string &keyname,
+			   const string &keyname,
                            const SerializableObject &key,
                            const SerializableObject *data)
 {
@@ -1014,7 +1014,7 @@ int DataStoreProxy::do_put(const string &tablename,
 }
 
 int DataStoreProxy::do_table_create(const string &tablename,
-                                    const string &keyname,
+				    const string &keyname,
                                     const SerializableObject &obj)
 {
     int ret;
