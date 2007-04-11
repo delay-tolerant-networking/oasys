@@ -70,6 +70,14 @@
         <xs:attribute name="field" type="xs:string" use="required"/>
     </xs:complexType>
 
+    <xs:complexType name="fieldName">
+	<xs:attribute name="field" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="languageName">
+	<xs:attribute name="language" type="xs:string" use="required"/>
+    </xs:complexType>
+
 <!-- **************** datastore messages **************** -->
 
     <xs:complexType name="ds-caps-request-type">
@@ -87,7 +95,7 @@
         </xs:documentation></xs:annotation>
 
         <xs:choice minOccurs="0" maxOccurs="unbounded">
-            <xs:element name="language" type="xs:string"/>
+            <xs:element name="language" type="languageName"/>
         </xs:choice>
 
         <xs:attribute name="storetype" type="storeType" use="required"/>
@@ -350,7 +358,7 @@
         </xs:documentation></xs:annotation>
 
         <xs:sequence minOccurs="0" maxOccurs="unbounded">
-            <xs:element name="field" type="fieldNameValue"/>
+	    <xs:element name="field" type="fieldNameValue"/>
         </xs:sequence>
     </xs:complexType>
 
@@ -388,9 +396,9 @@
         </xs:documentation></xs:annotation>
 
         <xs:sequence>
-            <!-- any number of '<get>fieldname</get>' -->
+            <!-- any number of '<get field="fieldname" />' -->
             <xs:choice minOccurs="0" maxOccurs="unbounded">
-                <xs:element name="get" type="xs:string"/>
+                <xs:element name="get" type="fieldName"/>
             </xs:choice>
 
             <!-- any number of '<where field="fieldname">value</where>' -->
