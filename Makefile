@@ -325,17 +325,6 @@ doxygen:
 	doxygen doc/doxyfile
 
 #
-# Generate XML schema documentation
-# Requires:
-#     xsddoc-1.0 (http://xframe.sourceforge.net/xsddoc/)
-#     java
-#
-xsddoc:
-	mkdir -p doc/router-xsddoc
-	xsddoc -t "External Router Interface" -o doc/router-xsddoc -q \
-		daemon/router.xsd
-
-#
 # And a rule to make sure that configure has been run recently enough.
 #
 .PHONY: checkconfigure
