@@ -88,18 +88,18 @@ BINFILES += $(TESTS)
 #
 test/%test: test/%test.cc liboasys.a
 	@mkdir -p test
-	$(CXX) $< -o $@ $(CFLAGS) $(LDFLAGS) $(LIBS) liboasys.a $(OASYS_LIBS)
+	$(CXX) $< -o $@ $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) $(LIBS) liboasys.a $(OASYS_LIBS)
 
 test/%Test: test/%Test.cc liboasys.a
 	@mkdir -p test
-	$(CXX) $< -o $@ $(CFLAGS) $(LDFLAGS) $(LIBS) liboasys.a $(OASYS_LIBS)
+	$(CXX) $< -o $@ $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) $(LIBS) liboasys.a $(OASYS_LIBS)
 
 #
 # Override rules for stack-trace-test to disable the cast-align warnings
 #
 test/stack-trace-test: test/stack-trace-test.cc liboasys.a
 	@mkdir -p test
-	$(CXX) $< -o $@ $(CFLAGS) -Wno-cast-align \
+	$(CXX) $< -o $@ $(CPPFLAGS) $(CXXFLAGS) -Wno-cast-align \
 	   $(LDFLAGS) $(LIBS) liboasys.a $(OASYS_LIBS)
 
 #
