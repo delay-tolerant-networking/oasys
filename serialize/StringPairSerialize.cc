@@ -91,7 +91,7 @@ void
 StringPairSerialize::Marshal::process(const char* name, u_int64_t* i)
 {
     char buf[64];
-    snprintf(buf, sizeof(buf), "%llu", *i);
+    snprintf(buf, sizeof(buf), "%llu", U64FMT(*i));
     rep_->push_back(StringPair(string(name), string(buf)));
 }
 
@@ -322,7 +322,7 @@ StringPairSerialize::Unmarshal::process(const char *name, u_int64_t* i)
     ASSERT(idx < rep_->size());
 
     *i = atoll(rep_->at(idx).second.c_str());
-    if (log_) logf(log_, LOG_DEBUG, "<=int64(%llu)", *i);
+    if (log_) logf(log_, LOG_DEBUG, "<=int64(%llu)", U64FMT(*i));
 }
 
 void
