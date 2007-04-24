@@ -185,6 +185,14 @@ public:
              { return (uri_ < other.uri_); }
 
     /**
+     * Three-way lexographical comparison
+     */
+    int compare(const URI& other) const
+    {
+        return uri_.compare(other.uri_);
+    }
+
+    /**
      * Rebuild (and parse) the URI from the scheme and SSP components.
      *
      * @return true if the URI is valid, false if not.

@@ -23,27 +23,29 @@
 
 namespace oasys {
 
+static const char* URI_LOG = "/oasys/util/uri/";
+
 //----------------------------------------------------------------------
 uri_parse_err_t
 URI::parse()
 {
-    static const char* log = "/oasys/util/uri/";
+    (void)URI_LOG;
 
     clear(false);
 
     if (uri_.empty()) {
-        log_debug_p(log, "URI::parse: empty URI string");
+        log_debug_p(URI_LOG, "URI::parse: empty URI string");
         return (parse_err_ = URI_PARSE_NO_URI);
     }
 
     size_t scheme_len;
     if ((scheme_len = uri_.find(':')) == std::string::npos) {
-        log_debug_p(log, "URI::parse: no semicolon");
+        log_debug_p(URI_LOG, "URI::parse: no semicolon");
         return (parse_err_ = URI_PARSE_NO_SEP);
     }
 
     if (scheme_len == 0) {
-        log_debug_p(log, "URI::parse: empty scheme name");
+        log_debug_p(URI_LOG, "URI::parse: empty scheme name");
         return (parse_err_ = URI_PARSE_BAD_SCHEME);
     }
 
@@ -85,10 +87,8 @@ URI::parse()
 uri_parse_err_t
 URI::parse_generic_ssp()
 {
-    static const char* log = "/oasys/util/uri/";
-
     if (ssp_.empty()) {
-        log_debug_p(log, "URI::parse_generic_ssp: empty ssp");
+        log_debug_p(URI_LOG, "URI::parse_generic_ssp: empty ssp");
         return URI_PARSE_OK;
     }
 
@@ -159,8 +159,6 @@ URI::parse_generic_ssp()
 uri_parse_err_t
 URI::parse_authority()
 {
-    static const char* log = "/oasys/util/uri/";
-
     if (authority_.empty()) {
         return URI_PARSE_OK;
     }
@@ -185,7 +183,7 @@ URI::parse_authority()
         if (authority_.at(curr_pos) == '[') {
             host_end = authority_.find(']', curr_pos);
             if (host_end == std::string::npos) {
-                log_debug_p(log, "URI::parse_authority: "
+                log_debug_p(URI_LOG, "URI::parse_authority: "
                             "literal host component must end with ']'");
                 return URI_PARSE_BAD_IP_LITERAL;
             }
@@ -208,7 +206,7 @@ URI::parse_authority()
     // check for presence of port subcomponent
     if (curr_pos != authority_.length()) {
         if (authority_.at(curr_pos) != ':') {
-            log_debug_p(log, "URI::parse_authority: "
+            log_debug_p(URI_LOG, "URI::parse_authority: "
                         "semicolon expected prior to port");
             return URI_PARSE_BAD_PORT;
         }
@@ -251,12 +249,10 @@ URI::normalize()
 uri_parse_err_t
 URI::validate_scheme_name()
 {
-    static const char* log = "/oasys/util/uri/";
-
     std::string::iterator iter = scheme_.begin();
 
     if (!isalpha(*iter)) {
-        log_debug_p(log, "URI::validate_scheme_name: "
+        log_debug_p(URI_LOG, "URI::validate_scheme_name: "
                     "first character is not a letter %c", (*iter));
         return URI_PARSE_BAD_SCHEME;
     }
@@ -267,7 +263,7 @@ URI::validate_scheme_name()
         if (isalnum(c) || (c == '+') || (c == '-') || (c == '.'))
             continue;
 
-        log_debug_p(log, "URI::validate_scheme_name: "
+        log_debug_p(URI_LOG, "URI::validate_scheme_name: "
                     "invalid character in scheme name %c", c);
         return URI_PARSE_BAD_SCHEME;
     }
@@ -292,8 +288,6 @@ URI::normalize_scheme()
 uri_parse_err_t
 URI::validate_userinfo()
 {
-    static const char* log = "/oasys/util/uri/";
-
     if (userinfo_.empty()) {
         return URI_PARSE_OK;
     }
@@ -312,14 +306,14 @@ URI::validate_userinfo()
         // check for percent-encoded characters
         if (c == '%') {
             if (i + 2 >= (userinfo_.length() - 1)) {
-                log_debug_p(log, "URI::validate_userinfo: "
+                log_debug_p(URI_LOG, "URI::validate_userinfo: "
                             "invalid percent-encoded length in userinfo");
                 return URI_PARSE_BAD_PERCENT;
             }
 
             if (!is_hexdig(userinfo_.at(i + 1)) ||
                 !is_hexdig(userinfo_.at(i + 2))) {
-                log_debug_p(log, "URI::validate_userinfo: "
+                log_debug_p(URI_LOG, "URI::validate_userinfo: "
                             "invalid percent-encoding in userinfo");
                 return URI_PARSE_BAD_PERCENT;
             }
@@ -328,7 +322,7 @@ URI::validate_userinfo()
             continue;
         }
 
-        log_debug_p(log, "URI::validate_userinfo: "
+        log_debug_p(URI_LOG, "URI::validate_userinfo: "
                     "invalid character in userinfo %c", c);
         return URI_PARSE_BAD_USERINFO;
     }
@@ -340,8 +334,6 @@ URI::validate_userinfo()
 uri_parse_err_t
 URI::validate_host()
 {
-    static const char* log = "/oasys/util/uri/";
-
     if (host_.empty()) {
         return URI_PARSE_OK;
     }
@@ -365,14 +357,14 @@ URI::validate_host()
         // check for percent-encoded characters
         if (c == '%') {
             if (i + 2 >= host_.length()) {
-                log_debug_p(log, "URI::validate_host: "
+                log_debug_p(URI_LOG, "URI::validate_host: "
                             "invalid percent-encoded length in host");
                 return URI_PARSE_BAD_PERCENT; 
             }
 
             if (!is_hexdig(host_.at(i + 1)) ||
                 !is_hexdig(host_.at(i + 2))) {
-                log_debug_p(log, "URI::validate_host: "
+                log_debug_p(URI_LOG, "URI::validate_host: "
                             "invalid percent-encoding in host");
                 return URI_PARSE_BAD_PERCENT;
             }
@@ -381,7 +373,7 @@ URI::validate_host()
             continue;
         }
 
-        log_debug_p(log, "URI::validate_host: "
+        log_debug_p(URI_LOG, "URI::validate_host: "
                     "invalid character in host %c", c);
         return URI_PARSE_BAD_HOST;
     }
@@ -393,8 +385,6 @@ URI::validate_host()
 uri_parse_err_t
 URI::validate_port()
 {
-    static const char* log = "/oasys/util/uri/";
-
     if (port_.empty()) {
         return URI_PARSE_OK;
     }
@@ -406,7 +396,7 @@ URI::validate_port()
             continue;
         }
 
-        log_debug_p(log, "URI::validate_port: "
+        log_debug_p(URI_LOG, "URI::validate_port: "
                     "invalid character in port %c", c);
         return URI_PARSE_BAD_PORT;
     }
@@ -545,10 +535,8 @@ URI::decode_authority()
 uri_parse_err_t
 URI::validate_ip_literal(const std::string& host)
 {
-    static const char* log = "/oasys/util/uri/";
-
     if (host.empty()) {
-        log_debug_p(log, "URI::validate_ip_literal: empty host");
+        log_debug_p(URI_LOG, "URI::validate_ip_literal: empty host");
         return URI_PARSE_BAD_IP_LITERAL;
     }
 
@@ -558,7 +546,7 @@ URI::validate_ip_literal(const std::string& host)
         ++curr_pos; // skip version character
 
         if ((curr_pos == host.length()) || !is_hexdig(host.at(curr_pos))) {
-            log_debug_p(log, "URI::validate_ip_literal: "
+            log_debug_p(URI_LOG, "URI::validate_ip_literal: "
                         "hexidecimal version expected");
             return URI_PARSE_BAD_IP_LITERAL;
         }
@@ -571,14 +559,14 @@ URI::validate_ip_literal(const std::string& host)
         }
 
         if ((curr_pos == host.length()) || (host.at(curr_pos) != '.')) {
-            log_debug_p(log, "URI::validate_ip_literal: "
+            log_debug_p(URI_LOG, "URI::validate_ip_literal: "
                         "period character expected");
             return URI_PARSE_BAD_IP_LITERAL;
         }
         ++curr_pos; // skip period character
 
         if (curr_pos == host.length()) {
-            log_debug_p(log, "URI::validate_ip_literal: "
+            log_debug_p(URI_LOG, "URI::validate_ip_literal: "
                         "additional character expected");
             return URI_PARSE_BAD_IP_LITERAL;
         }
@@ -591,7 +579,7 @@ URI::validate_ip_literal(const std::string& host)
                 continue;
             }
 
-            log_debug_p(log, "URI::validate_ip_literal: "
+            log_debug_p(URI_LOG, "URI::validate_ip_literal: "
                         "invalid character in IP literal %c", c);
             return URI_PARSE_BAD_IP_LITERAL;
         }
@@ -619,7 +607,7 @@ URI::validate_ip_literal(const std::string& host)
         if (curr_pos == host.length()) {
             if (num_hexdig == 0) {
                 if (!prev_double_colon) {
-                    log_debug_p(log, "URI::validate_ip_literal: "
+                    log_debug_p(URI_LOG, "URI::validate_ip_literal: "
                                 "ip literal must not end in single colon");
                     return URI_PARSE_BAD_IPV6;
                 }
@@ -635,7 +623,7 @@ URI::validate_ip_literal(const std::string& host)
                 if (num_pieces == 1) {
                     if (((curr_pos + 1) == host.length()) ||
                         (host.at(curr_pos + 1) != ':')) {
-                        log_debug_p(log, "URI::validate_ip_literal: "
+                        log_debug_p(URI_LOG, "URI::validate_ip_literal: "
                                     "double colon or hexidecimal "
                                     "character expected");
                         return URI_PARSE_BAD_IPV6;
@@ -644,7 +632,7 @@ URI::validate_ip_literal(const std::string& host)
                 }
 
                 if (double_colon) {
-                    log_debug_p(log, "URI::validate_ip_literal: "
+                    log_debug_p(URI_LOG, "URI::validate_ip_literal: "
                                 "multiple double colon's not allowed");
                     return URI_PARSE_BAD_IPV6;
                 }
@@ -657,7 +645,7 @@ URI::validate_ip_literal(const std::string& host)
 
         } else if (host.at(curr_pos) == '.') {
             if (num_hexdig == 0) {
-                log_debug_p(log, "URI::validate_ip_literal: "
+                log_debug_p(URI_LOG, "URI::validate_ip_literal: "
                             "period must only follow decimal character");
                 return URI_PARSE_BAD_IPV6;
             }
@@ -665,7 +653,7 @@ URI::validate_ip_literal(const std::string& host)
             break;
 
         } else {
-            log_debug_p(log, "URI::validate_ip_literal: "
+            log_debug_p(URI_LOG, "URI::validate_ip_literal: "
                         "colon or period character expected");
             return URI_PARSE_BAD_IPV6;
         }
@@ -675,7 +663,7 @@ URI::validate_ip_literal(const std::string& host)
         if ((num_pieces <= 0) ||
             (double_colon && (num_pieces > 6)) ||
             (!double_colon && (num_pieces != 6))) {
-            log_debug_p(log, "URI::validate_ip_literal: "
+            log_debug_p(URI_LOG, "URI::validate_ip_literal: "
                         "invalid number of hexidecimal encoded pieces, "
                         "cannot read IPv4 address");
             return URI_PARSE_BAD_IPV6;
@@ -697,36 +685,36 @@ URI::validate_ip_literal(const std::string& host)
             digit[num_digit] = '\0';
 
             if (num_digit == 0) {
-                log_debug_p(log, "URI::validate_ip_literal: "
+                log_debug_p(URI_LOG, "URI::validate_ip_literal: "
                             "decimal character expected");
                 return URI_PARSE_BAD_IPV6;
             }
 
             if ((num_digit > 1) && (digit[0] == '0')) {
-                log_debug_p(log, "URI::validate_ip_literal: "
+                log_debug_p(URI_LOG, "URI::validate_ip_literal: "
                             "leading zeros not permitted");
                 return URI_PARSE_BAD_IPV6;
             }
 
             int num = atoi(digit);
             if ((num < 0) || (num > 255)) {
-                log_debug_p(log, "URI::validate_ip_literal: "
+                log_debug_p(URI_LOG, "URI::validate_ip_literal: "
                             "invalid decimal octet");
                 return URI_PARSE_BAD_IPV6;
             }
 
             if (++i == 4) {
                 if (curr_pos != host.length()) {
-                    log_debug_p(log, "URI::validate_ip_literal: "
+                    log_debug_p(URI_LOG, "URI::validate_ip_literal: "
                                 "end of host expected");
                     return URI_PARSE_BAD_IPV6;
                 }
                 break;
             }
 
-            if ((curr_pos == host.length()) || (host.at(curr_pos) != '.')) {
-                log_debug_p(log, "URI::validate_ip_literal: "
-                                 "period character expected");
+	    if ((curr_pos == host.length()) || (host.at(curr_pos) != '.')) {
+                log_debug_p(URI_LOG, "URI::validate_ip_literal: "
+                            "period character expected");
                 return URI_PARSE_BAD_IPV6;
             }
             ++curr_pos; // skip period character
@@ -740,7 +728,7 @@ URI::validate_ip_literal(const std::string& host)
     if ((num_pieces <= 0) ||
         (double_colon && (num_pieces > 8)) ||
         (!double_colon && (num_pieces != 8))) {
-        log_debug_p(log, "URI::validate_ip_literal: "
+        log_debug_p(URI_LOG, "URI::validate_ip_literal: "
                     "invalid number of hexidecimal encoded pieces %d",
                     num_pieces);
         return URI_PARSE_BAD_IPV6;
@@ -753,8 +741,6 @@ URI::validate_ip_literal(const std::string& host)
 uri_parse_err_t
 URI::validate_path()
 {
-    static const char* log = "/oasys/util/uri/";
-
     if (path_.empty()) {
         return URI_PARSE_OK;
     }
@@ -781,14 +767,14 @@ URI::validate_path()
         // check for percent-encoded characters
         if (c == '%') {
             if (i + 2 >= path_.length()) {
-                log_debug_p(log, "URI::validate_path: "
+                log_debug_p(URI_LOG, "URI::validate_path: "
                             "invalid percent-encoded length in path");
                 return URI_PARSE_BAD_PERCENT;
             }
 
             if (!is_hexdig(path_.at(i + 1)) ||
                 !is_hexdig(path_.at(i + 2))) {
-                log_debug_p(log, "URI::validate_path: "
+                log_debug_p(URI_LOG, "URI::validate_path: "
                             "invalid percent-encoding in path");
                 return URI_PARSE_BAD_PERCENT;
             }
@@ -797,7 +783,7 @@ URI::validate_path()
             continue;
         }
 
-        log_debug_p(log, "URI:validate_path: "
+        log_debug_p(URI_LOG, "URI:validate_path: "
                     "invalid character in path component %c", c);
         return URI_PARSE_BAD_PATH;
     }
@@ -933,8 +919,6 @@ URI::decode_path()
 uri_parse_err_t
 URI::validate_query()
 {
-    static const char* log = "/oasys/util/uri/";
-
     if (query_.empty()) {
         return URI_PARSE_OK;
     }
@@ -957,14 +941,14 @@ URI::validate_query()
         // check for percent-encoded characters
         if (c == '%') {
             if (i + 2 >= query_.length()) {
-                log_debug_p(log, "URI::validate_query: "
+                log_debug_p(URI_LOG, "URI::validate_query: "
                             "invalid percent-encoded length in query");
                 return URI_PARSE_BAD_PERCENT;
             }
 
             if (!is_hexdig(query_.at(i + 1)) ||
                 !is_hexdig(query_.at(i + 2))) {
-                log_debug_p(log, "URI::validate_query: "
+                log_debug_p(URI_LOG, "URI::validate_query: "
                             "invalid percent-encoding in query");
                 return URI_PARSE_BAD_PERCENT;
             }
@@ -973,7 +957,7 @@ URI::validate_query()
             continue;
         }
 
-        log_debug_p(log, "URI::validate_query: "
+        log_debug_p(URI_LOG, "URI::validate_query: "
                     "invalid character in query component %c", c);
         return URI_PARSE_BAD_QUERY;
     }
@@ -1045,8 +1029,6 @@ URI::decode_query()
 uri_parse_err_t
 URI::validate_fragment()
 {
-    static const char* log = "/oasys/util/uri/";
-
     if (fragment_.empty()) {
         return URI_PARSE_OK;
     }
@@ -1069,14 +1051,14 @@ URI::validate_fragment()
         // check for percent-encoded characters
         if (c == '%') {
             if (i + 2 >= fragment_.length()) {
-                log_debug_p(log, "URI::validate_fragment: "
+                log_debug_p(URI_LOG, "URI::validate_fragment: "
                             "invalid percent-encoded length in fragment");
                 return URI_PARSE_BAD_PERCENT;
             }
 
             if (!is_hexdig(fragment_.at(i + 1)) ||
                 !is_hexdig(fragment_.at(i + 2))) {
-                log_debug_p(log, "URI::validate_fragment: "
+                log_debug_p(URI_LOG, "URI::validate_fragment: "
                             "invalid percent-encoding in fragment");
                 return URI_PARSE_BAD_PERCENT;
             }
@@ -1085,7 +1067,7 @@ URI::validate_fragment()
             continue;
         }
 
-        log_debug_p(log, "URI::validate_fragment: "
+        log_debug_p(URI_LOG, "URI::validate_fragment: "
                     "invalid character in fragment component %c", c);
         return URI_PARSE_BAD_FRAGMENT;
     }
