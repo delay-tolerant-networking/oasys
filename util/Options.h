@@ -17,6 +17,10 @@
 #ifndef _OASYS_OPTIONS_H_
 #define _OASYS_OPTIONS_H_
 
+#ifndef HAVE_CONFIG_STATE
+#error "MUST INCLUDE config.h before including this file"
+#endif
+
 #include <string>
 #include <vector>
 #include "../compat/inet_aton.h"

@@ -14,9 +14,12 @@
  *    limitations under the License.
  */
 
-
 #ifndef _OASYS_THREAD_H_
 #define _OASYS_THREAD_H_
+
+#ifndef HAVE_CONFIG_STATE
+#error "MUST INCLUDE config.h before including this file"
+#endif
 
 #include <sys/types.h>
 

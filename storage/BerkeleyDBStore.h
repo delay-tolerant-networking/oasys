@@ -18,6 +18,10 @@
 #ifndef __BERKELEY_TABLE_STORE_H__
 #define __BERKELEY_TABLE_STORE_H__
 
+#ifndef HAVE_CONFIG_STATE
+#error "MUST INCLUDE config.h before including this file"
+#endif
+
 #if LIBDB_ENABLED
 
 #include <map>

@@ -22,6 +22,10 @@
 #ifndef _OASYS_XERCES_XML_SERIALIZE_H_
 #define _OASYS_XERCES_XML_SERIALIZE_H_
 
+#ifndef HAVE_CONFIG_STATE
+#error "MUST INCLUDE config.h before including this file"
+#endif
+
 #ifdef XERCES_C_ENABLED
 
 #include "XMLSerialize.h"

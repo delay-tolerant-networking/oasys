@@ -14,14 +14,18 @@
  *    limitations under the License.
  */
 
+#ifndef _INODE64_H_
+#define _INODE64_H_
+
+#ifndef HAVE_CONFIG_STATE
+#error "MUST INCLUDE config.h before including this file"
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 #include "../debug/DebugUtils.h"
-
-#ifndef _INODE64_H_
-#define _INODE64_H_
 
 namespace oasys {
 

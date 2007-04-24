@@ -17,6 +17,10 @@
 #ifndef _OASYS_MEMORY_H_
 #define _OASYS_MEMORY_H_
 
+#ifndef HAVE_CONFIG_STATE
+#error "MUST INCLUDE config.h before including this file"
+#endif
+
 #ifdef OASYS_DEBUG_MEMORY_ENABLED
 
 #include <cstddef>

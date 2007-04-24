@@ -18,6 +18,10 @@
 #ifndef _OASYS_FPCLASSIFY_H_
 #define _OASYS_FPCLASSIFY_H_
 
+#ifndef HAVE_CONFIG_STATE
+#error "MUST INCLUDE config.h before including this file"
+#endif
+
 /**
  * Compatibility header for missing fpclassify. Thanks to Larry Pyatt
  * for the implementation.

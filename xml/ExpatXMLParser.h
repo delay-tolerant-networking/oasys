@@ -17,6 +17,10 @@
 #ifndef _OASYS_EXPAT_XML_PARSER_H_
 #define _OASYS_EXPAT_XML_PARSER_H_
 
+#ifndef HAVE_CONFIG_STATE
+#error "MUST INCLUDE config.h before including this file"
+#endif
+
 #ifdef LIBEXPAT_ENABLED
 
 #include <expat.h>

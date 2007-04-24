@@ -17,6 +17,10 @@
 #ifndef _OASYS_INTTYPES_H_
 #define _OASYS_INTTYPES_H_
 
+#ifndef HAVE_CONFIG_STATE
+#error "MUST INCLUDE config.h before including this file"
+#endif
+
 //----------------------------------------------------------------------------
 /*
  * Microsoft C/C++ integer types.
@@ -56,7 +60,7 @@ typedef unsigned __int64 uint64_t;
 #define u_int16_t uint16_t
 #define u_int8_t  uint8_t
 #else
-#error need appropriate types for u_intxx_t verai
+#error need appropriate types for u_intxx_t
 #endif
 
 #endif /* HAVE_U_INT32_T */

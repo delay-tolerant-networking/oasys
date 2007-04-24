@@ -18,6 +18,10 @@
 #ifndef _OASYS_ATOMIC_H_
 #define _OASYS_ATOMIC_H_
 
+#ifndef HAVE_CONFIG_STATE
+#error "MUST INCLUDE config.h before including this file"
+#endif
+
 /**
  * Include the appropriate architecture-specific version of the atomic
  * functions here. Each defines an atomic_t structure with (at least)

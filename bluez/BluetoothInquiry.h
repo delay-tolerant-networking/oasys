@@ -17,6 +17,10 @@
 #ifndef _OASYS_BT_INQUIRY_H_
 #define _OASYS_BT_INQUIRY_H_
 
+#ifndef HAVE_CONFIG_STATE
+#error "MUST INCLUDE config.h before including this file"
+#endif
+
 #ifdef OASYS_BLUETOOTH_ENABLED
 
 #include <bluetooth/bluetooth.h> // for bdaddr_t

@@ -17,6 +17,10 @@
 #ifndef _OASYS_INET_ATON_H_
 #define _OASYS_INET_ATON_H_
 
+#ifndef HAVE_CONFIG_STATE
+#error "MUST INCLUDE config.h before including this file"
+#endif
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
