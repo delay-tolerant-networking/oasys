@@ -87,6 +87,13 @@ public:
     int exec_command(const char* command);
 
     /**
+     * Evaluate a command, given as an array of Tcl_Objs
+     *
+     * \return 0 if no error, -1 otherwise
+     */
+    int exec_command(int objc, Tcl_Obj** objv);
+
+    /**
      * Run a command interpreter over tcp sockets on the given port.
      */
     void command_server(const char* prompt, in_addr_t addr, u_int16_t port);

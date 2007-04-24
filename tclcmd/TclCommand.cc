@@ -190,6 +190,23 @@ TclCommandInterp::exec_command(const char* command)
     return err;
 }
 
+int
+TclCommandInterp::exec_command(int objc, Tcl_Obj** objv)
+{
+    int err;
+    ScopeLock l(lock_, "TclCommandInterp::exec_command");
+
+    err = Tcl_EvalObjv(interp_, objc, objv, TCL_EVAL_GLOBAL);
+    
+    if (err != TCL_OK) {
+        logf(LOG_ERR, "error: line %d: '%s':\n%s",
+             interp_->errorLine, Tcl_GetStringResult(interp_),
+             Tcl_GetVar(interp_, "errorInfo", TCL_GLOBAL_ONLY));
+    }
+    
+    return err;
+}
+
 void
 TclCommandInterp::command_server(const char* prompt,
                                  in_addr_t addr, u_int16_t port)
