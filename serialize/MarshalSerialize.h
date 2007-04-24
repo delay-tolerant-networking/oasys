@@ -147,7 +147,7 @@ public:
     }
 
     /** @return Measured size */
-    u_int32_t size() { return size_; }
+    size_t size() { return size_; }
 
     /// @{
     /// Static functions to simply return the serialized sizes. Called
@@ -179,7 +179,7 @@ public:
     /// @}
 
 private:
-    u_int32_t size_;
+    size_t size_;
 };
 
 //////////////////////////////////////////////////////////////////////////////
