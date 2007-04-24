@@ -24,15 +24,15 @@ namespace oasys {
 
 //----------------------------------------------------------------------
 TokenBucket::TokenBucket(const char* logpath,
-                         u_int32_t   depth,   /* in bits */
-                         u_int32_t   rate     /* in seconds */)
+                         u_int64_t   depth,   /* in bits */
+                         u_int64_t   rate     /* in seconds */)
     : Logger("TokenBucket", logpath),
       depth_(depth),
       rate_(rate),
       tokens_(depth) // initialize full
 {
-    log_debug("initialized token bucket with depth %u and rate %u",
-              depth_, rate_);
+    log_debug("initialized token bucket with depth %llu and rate %llu",
+              U64FMT(depth_), U64FMT(rate_));
     last_update_.get_time();
 }
 
@@ -43,22 +43,22 @@ TokenBucket::update()
     Time now;
     now.get_time();
 
-    if (tokens_ == depth_) {
+    if (tokens_ == (int64_t)depth_) {
         log_debug("update: bucket already full, nothing to update");
         last_update_ = now;
         return;
     }
 
     u_int32_t elapsed = (now - last_update_).in_milliseconds();
-    u_int32_t new_tokens = (rate_ * elapsed) / 1000;
+    u_int64_t new_tokens = (rate_ * elapsed) / 1000;
 
     if (new_tokens != 0) {
         if ((tokens_ + new_tokens) > depth_) {
             new_tokens = depth_ - tokens_;
         }
 
-        log_debug("update: filling %u/%u spent tokens after %u milliseconds",
-                  new_tokens, depth_ - tokens_, elapsed);
+        log_debug("update: filling %llu/%llu spent tokens after %u milliseconds",
+                  U64FMT(new_tokens), U64FMT(depth_ - tokens_), elapsed);
         tokens_ += new_tokens;
         last_update_ = now;
         
@@ -74,33 +74,58 @@ TokenBucket::update()
 
 //----------------------------------------------------------------------
 bool
-TokenBucket::drain(u_int32_t length)
+TokenBucket::drain(u_int64_t length, bool only_if_enough)
 {
     update();
 
-    if (length <= tokens_) {
-        log_debug("drain: draining %u/%u tokens from bucket",
-                  length, tokens_);
+    bool enough = (tokens_ < 0) ? false : (length <= (u_int64_t)tokens_);
+
+    log_debug("drain: draining %llu/%llu tokens from bucket",
+              U64FMT(length), U64FMT(tokens_));
+
+    if (enough || !only_if_enough) {
         tokens_ -= length;
-        return true;
-    } else {
-        log_debug("drain: not enough tokens (%u) to drain %u from bucket",
-                  tokens_, length);
-        return false;
     }
+
+    if (only_if_enough) {
+        ASSERT(tokens_ >= 0);
+    }
+    
+    return enough;
+}
+
+//----------------------------------------------------------------------
+bool
+TokenBucket::try_to_drain(u_int64_t length)
+{
+    return drain(length, true);
+}
+
+//----------------------------------------------------------------------
+u_int32_t
+TokenBucket::time_to_level(int64_t n)
+{
+    update();
+
+    int64_t need = 0;
+    if (n > tokens_) {
+        need = n - tokens_;
+    }
+    
+    u_int32_t t = (need * 1000) / rate_;
+    
+    log_debug("time_to_level(%lld): "
+              "%lld more tokens will arrive in %u msecs "
+              "(tokens %llu rate %llu)",
+              U64FMT(n), U64FMT(need), t, U64FMT(tokens_), U64FMT(rate_));
+    return t;
 }
 
 //----------------------------------------------------------------------
 u_int32_t
 TokenBucket::time_to_fill()
 {
-    update();
-    
-    u_int32_t t = ((depth_ - tokens_) * 1000) / rate_;
-
-    log_debug("time_to_fill: %u tokens will be full in %u msecs",
-              (depth_ - tokens_), t);
-    return t;
+    return time_to_level(depth_);
 }
 
 //----------------------------------------------------------------------

@@ -49,9 +49,9 @@ DECLARE_TEST(Fast) {
     CHECK_EQUAL(t.tokens(), 100);
     CHECK_EQUAL(t.time_to_fill(), 0);
     
-    // drain at a constant rate for a while
+    // try_to_drain at a constant rate for a while
     for (int i = 0; i < 1000; ++ i) {
-        CHECK(t.drain(10));
+        CHECK(t.try_to_drain(10));
         safe_usleep(10000);
     }
 
@@ -67,16 +67,16 @@ DECLARE_TEST(Fast) {
     CHECK_EQUAL(t.tokens(), 100);
     CHECK_EQUAL(t.time_to_fill(), 0);
     
-    // fully drain the bucket
-    CHECK(t.drain(100));
+    // fully try_to_drain the bucket
+    CHECK(t.try_to_drain(100));
     CHECK_EQUAL(t.tokens(), 0);
 
     // it should be able to catch up
     safe_usleep(10000);
-    CHECK(t.drain(10));
+    CHECK(t.try_to_drain(10));
 
     safe_usleep(1000);
-    CHECK(t.drain(1));
+    CHECK(t.try_to_drain(1));
 
     // fully empty the bucket
     safe_usleep(0);
@@ -90,10 +90,10 @@ DECLARE_TEST(Fast) {
     int total    = 0;
     for (int i = 0; i < (nsecs * (1000 / interval)); ++i) {
         safe_usleep(interval * 1000);
-        while (t.drain(10)) {
+        while (t.try_to_drain(10)) {
             total += 10;
         }
-        while (t.drain(1)) {
+        while (t.try_to_drain(1)) {
             total ++;
         }
     }
@@ -110,13 +110,13 @@ DECLARE_TEST(Slow) {
     // 1 token per second
     TokenBucket t("/test/tokenbucket", 1, 1);
     CHECK_EQUAL(t.tokens(), 1);
-    CHECK(t.drain(1));
+    CHECK(t.try_to_drain(1));
     CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 1);
-    CHECK(! t.drain(1));
+    CHECK(! t.try_to_drain(1));
     
     // fully empty the bucket
     safe_usleep(0);
-    CHECK(t.drain(t.tokens()));
+    CHECK(t.try_to_drain(t.tokens()));
     CHECK_EQUAL(t.tokens(), 0);
     
     // now spend a few seconds hammering on the bucket, making sure we
@@ -126,7 +126,7 @@ DECLARE_TEST(Slow) {
     int total    = 0;
     for (int i = 0; i < (nsecs * (1000 / interval)); ++i) {
         safe_usleep(interval * 1000);
-        if (t.drain(1)) {
+        if (t.try_to_drain(1)) {
             ++total;
         }
     }
@@ -135,7 +135,7 @@ DECLARE_TEST(Slow) {
 
     // and one more for good measure
     safe_usleep(1010000);
-    CHECK(t.drain(1));
+    CHECK(t.try_to_drain(1));
 
     return UNIT_TEST_PASSED;
 }
@@ -147,7 +147,7 @@ DECLARE_TEST(TimeToFill) {
 
     CHECK_EQUAL(t.time_to_fill(), 0);
 
-    CHECK(t.drain(5000));
+    CHECK(t.try_to_drain(5000));
     CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 5);
 
     safe_usleep(1000000);
@@ -156,9 +156,17 @@ DECLARE_TEST(TimeToFill) {
     safe_usleep(1000000);
     CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 3);
 
-    CHECK(t.drain(1000));
+    CHECK(t.try_to_drain(1000));
     CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 4);
+    safe_usleep(5000000);
 
+    CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 0);
+    CHECK_EQUAL(t.tokens(), 10000);
+
+    DO(t.drain(20000));
+    CHECK_EQUAL(t.tokens(), -10000);
+    CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 20);
+    
     DO(t.set_rate(100000));
     safe_usleep(0);
     DO(t.empty());
