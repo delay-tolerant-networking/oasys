@@ -103,6 +103,19 @@ public:
     }
 };
 
+class ConcurrentTimer : public Timer {
+public:
+    ConcurrentTimer(std::vector<ConcurrentTimer*>* completed)
+        : completed_(completed) {}
+
+    void timeout(const timeval& now) {
+        (void)now;
+        completed_->push_back(this);
+    }
+    
+    std::vector<ConcurrentTimer*>* completed_;
+};
+
 DECLARE_TEST(Init) {
     OneShotTimer startup;
     TimerSystem::create();
@@ -201,6 +214,29 @@ DECLARE_TEST(Many) {
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(Concurrent) {
+    struct timeval when;
+    ::gettimeofday(&when, 0);
+    when.tv_sec += 5;
+
+    int N = 100;
+
+    std::vector<ConcurrentTimer*> timers_, completed_;
+    for (int i = 0; i < N; ++i) {
+        ConcurrentTimer* t = new ConcurrentTimer(&completed_);
+        timers_.push_back(t);
+        t->schedule_at(&when);
+    }
+
+    sleep(6);
+    
+    CHECK_EQUAL(timers_.size(), completed_.size());
+    for (int i = 0; i < N; ++i) {
+        CHECK(timers_[i] == completed_[i]);
+    }
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TESTER(TimerTest) {
     ADD_TEST(Init);
     ADD_TEST(OneSec);
@@ -208,6 +244,7 @@ DECLARE_TESTER(TimerTest) {
     ADD_TEST(HalfSec);
     ADD_TEST(Simultaneous);
     ADD_TEST(Many);
+    ADD_TEST(Concurrent);
 }
 
 DECLARE_TEST_FILE(TimerTest, "timer test");

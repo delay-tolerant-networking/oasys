@@ -18,6 +18,10 @@
 #ifndef OASYS_TIMER_H
 #define OASYS_TIMER_H
 
+#ifndef HAVE_CONFIG_STATE
+#error "MUST INCLUDE config.h before including this file"
+#endif
+
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -140,6 +144,7 @@ private:
     SpinLock*  system_lock_;
     OnOffNotifier notifier_;
     TimerQueue timers_;
+    u_int32_t   seqno_;       ///< seqno used to break ties
 
     TimerSystem();
     virtual ~TimerSystem();
@@ -236,6 +241,7 @@ protected:
     cancel_flags_t cancel_flags_; ///< Should we keep the timer around
                                   ///< or delete it when the cancelled
                                   ///< timer bubbles to the top
+    u_int32_t      seqno_;        ///< seqno used to break ties
 };
 
 /**
@@ -244,7 +250,9 @@ protected:
 bool
 TimerCompare::operator()(Timer* a, Timer* b)
 {
-    return TIMEVAL_GT(a->when_, b->when_);
+    if (TIMEVAL_GT(a->when_, b->when_)) return true;
+    if (TIMEVAL_LT(a->when_, b->when_)) return false;
+    return a->seqno_ > b->seqno_;
 }
 
 /**

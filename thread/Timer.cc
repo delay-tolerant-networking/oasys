@@ -38,7 +38,8 @@ TimerSystem::TimerSystem()
     : Logger("TimerSystem", "/timer"),
       system_lock_(new SpinLock()),
       notifier_(logpath_),
-      timers_()
+      timers_(),
+      seqno_(0)
 {
     memset(handlers_, 0, sizeof(handlers_));
     memset(signals_, 0, sizeof(signals_));
@@ -61,7 +62,7 @@ void
 TimerSystem::schedule_at(struct timeval *when, Timer* timer)
 {
     ScopeLock l(system_lock_, "TimerSystem::schedule_at");
-    
+
     struct timeval now;
     
     if (when == 0) {
@@ -88,6 +89,8 @@ TimerSystem::schedule_at(struct timeval *when, Timer* timer)
     
     timer->pending_ = 1;
     timer->cancelled_ = 0;
+    timer->seqno_ = seqno_++;
+    
     timers_.push(timer);
 
     notifier_.signal();
@@ -227,18 +230,42 @@ TimerSystem::run_expired_timers()
 
         Timer* next_timer = timers_.top();
         if (TIMEVAL_LT(now, next_timer->when_)) {
-            int diff_ms = TIMEVAL_DIFF_MSEC(next_timer->when_, now);
-            ASSERT(diff_ms >= 0);
+            int diff_ms;
+
+            // XXX/demmer it's possible that the next timer is too far
+            // in the future to be expressable in milliseconds, so we
+            // just max it out
+            if (next_timer->when_.tv_sec - now.tv_sec < (INT_MAX / 1000)) {
+                diff_ms = TIMEVAL_DIFF_MSEC(next_timer->when_, now);
+            } else {
+                log_debug("diff millisecond overflow: "
+                          "next timer due at %u.%u, now %u.%u",
+                          (u_int)next_timer->when_.tv_sec,
+                          (u_int)next_timer->when_.tv_usec,
+                          (u_int)now.tv_sec,
+                          (u_int)now.tv_usec);
+                
+                diff_ms = INT_MAX;
+            }
+
+            ASSERTF(diff_ms >= 0,
+                    "next timer due at %u.%u, now %u.%u, diff %d",
+                    (u_int)next_timer->when_.tv_sec,
+                    (u_int)next_timer->when_.tv_usec,
+                    (u_int)now.tv_sec,
+                    (u_int)now.tv_usec,
+                    diff_ms);
             
             // there's a chance that we're within a millisecond of the
             // time to pop, but still not at the right time. in this
             // case case we don't return 0, but fall through to pop
-            // the timer
+            // the timer after adjusting the "current time"
             if (diff_ms != 0) {
                 log_debug("new timeout %d", diff_ms);
                 return diff_ms;
             } else {
                 log_debug("sub-millisecond difference found, falling through");
+                now = next_timer->when_;
             }
         }
         pop_timer(now);
