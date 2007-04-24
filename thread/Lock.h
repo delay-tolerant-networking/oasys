@@ -269,6 +269,26 @@ protected:
     bool  use_lock_;
 };
 
+/*!
+ * ScopeLock without the initial locking.
+ */
+class ScopeUnlock {
+public:
+    ScopeUnlock(Lock* lock)
+        : lock_(lock)
+    {
+        ASSERT(lock_->is_locked_by_me());
+    }
+
+    ~ScopeUnlock()
+    {
+        lock_->unlock();
+    }
+    
+private:
+    Lock* lock_;
+};
+
 } // namespace oasys
 
 #endif /* LOCK_h */
