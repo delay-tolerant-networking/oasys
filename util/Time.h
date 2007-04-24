@@ -35,6 +35,8 @@ struct Time {
         cleanup();
     }
 
+    Time(double d);
+
     //! Return a Time structure containing the current time
     static Time now()
     {
@@ -47,17 +49,17 @@ struct Time {
     void get_time();
     
     //! @return Time in seconds as a floating point number
-    double in_seconds();
+    double in_seconds() const;
 
     //! @return Time in microseconds
-    u_int32_t in_microseconds();
+    u_int32_t in_microseconds() const;
     
     //! @return Time in milliseconds
-    u_int32_t in_milliseconds();
+    u_int32_t in_milliseconds() const;
 
     //! @return Milliseconds elapsed between this timer and the
     // current time.
-    u_int32_t elapsed_ms();
+    u_int32_t elapsed_ms() const;
 
     //! @{ Standard operators
     Time operator+(const Time& t)  const;

@@ -18,6 +18,8 @@
 #  include <config.h>
 #endif
 
+#include <math.h>
+
 #include "Time.h"
 
 #if defined(_WIN32)
@@ -32,6 +34,19 @@
 #endif
 
 namespace oasys {
+
+//----------------------------------------------------------------------
+Time::Time(double d)
+{
+    sec_  = static_cast<u_int32_t>(floor(d));
+
+    // we add a fraction of a microsecond before converting to prevent
+    // the microseconds part from being 999999 in some cases of
+    // conversion to and from the integer values
+    usec_ = static_cast<u_int32_t>((d - floor(d) + 0.0000001) * 1000000);
+
+    cleanup();
+}
 
 //----------------------------------------------------------------------------
 void
@@ -76,7 +91,7 @@ Time::get_time()
 
 //----------------------------------------------------------------------------
 double 
-Time::in_seconds()
+Time::in_seconds() const
 {
     return static_cast<double>(sec_) + 
         static_cast<double>(usec_)/1000000;
@@ -84,21 +99,21 @@ Time::in_seconds()
 
 //----------------------------------------------------------------------------
 u_int32_t
-Time::in_microseconds()
+Time::in_microseconds() const
 {
     return sec_ * 1000000 + usec_;
 }
     
 //----------------------------------------------------------------------------
 u_int32_t
-Time::in_milliseconds()
+Time::in_milliseconds() const
 {
     return sec_ * 1000 + usec_/1000;
 }
 
 //----------------------------------------------------------------------
 u_int32_t
-Time::elapsed_ms()
+Time::elapsed_ms() const
 {
     Time t;
     t.get_time();
