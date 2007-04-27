@@ -110,8 +110,8 @@ public:
     }
 
     /**
-     * PLEASE DON'T USE THIS AS THIS CLEARLY BREAKS THE SINGLETON
-     * CONTRACT.
+     * PLEASE DON'T USE THIS UNLESS YOU REALLY KNOW WHAT YOU'RE DOING,
+     * AS THIS CLEARLY BREAKS THE SINGLETON CONTRACT.
      *
      * Used if you really want to be able to replace the instance
      * (i.e. if it's not acting as a true singleton).
@@ -158,6 +158,16 @@ public:
         instance_ = instance;
     }
     
+    /**
+     * PLEASE DON'T USE THIS UNLESS YOU REALLY KNOW WHAT YOU'RE DOING,
+     * AS THIS CLEARLY BREAKS THE SINGLETON CONTRACT.
+     *
+     * Used if you really want to be able to replace the instance
+     * (i.e. if it's not acting as a true singleton).
+     */
+    static void force_set_instance(_Class* instance) {
+        instance_ = instance;
+    }
 protected:
     static _Class* instance_;
 };
