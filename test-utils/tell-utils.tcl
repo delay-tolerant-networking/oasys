@@ -150,12 +150,13 @@ namespace eval tell {
 	    
 	    return $result
 	} else {
+	    set info "tell error:\n$result"
 	    set eol [string first "\n" $result]
-	    set info  [string range $result $eol end]
 	    if {$result == ""} {
 		set result "(no additional information)"
-	    }
-	    set result "tell error: '$result'"
+	    } else {
+                set result [string range $result 0 [expr $eol - 1]]
+            }
 	    error $result $info
 	}
     }
