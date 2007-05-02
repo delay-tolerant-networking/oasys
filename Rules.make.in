@@ -33,7 +33,6 @@ libdir		= @libdir@
 localedir	= @localedir@
 mandir		= @mandir@
 srcdir		= @srcdir@
-VPATH		= @srcdir@
 
 CC		= @CC@
 CXX		= @CXX@
