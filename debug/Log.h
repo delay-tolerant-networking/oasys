@@ -91,6 +91,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <iostream> /* see http://mailman.dtnrg.org/pipermail/dtn-users/2007-January/000448.html */
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
