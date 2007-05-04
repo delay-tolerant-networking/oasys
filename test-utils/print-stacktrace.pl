@@ -124,7 +124,7 @@ sub findFunctionAddr2Line {
     local($file, $addr, $eip) = @_;
     local($first, $second);
     if (! open(ADDR2LINEOUT, "addr2line --demangle --functions -e $file $addr|")) {
-	die "open: can't fork: $!\n";
+	die "open: can't fork addr2line: $!\n";
     }
     $first = <ADDR2LINEOUT>;
     $second = <ADDR2LINEOUT>;
