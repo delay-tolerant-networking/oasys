@@ -33,6 +33,8 @@
 
 #endif
 
+#include "debug/DebugUtils.h"
+
 namespace oasys {
 
 //----------------------------------------------------------------------
@@ -125,7 +127,9 @@ Time::elapsed_ms() const
 Time
 Time::operator+(const Time& t) const
 {
-    return Time(t.sec_ + sec_, t.usec_ + usec_);
+    Time ret(t.sec_ + sec_, t.usec_ + usec_);
+    ASSERT(ret >= t); // check overflow
+    return ret;
 }
 
 //----------------------------------------------------------------------------
@@ -135,6 +139,7 @@ Time::operator+=(const Time& t)
     sec_  += t.sec_;
     usec_ += t.usec_;
     cleanup();
+    ASSERT(*this >= t); // check overflow
     return *this;
 }
 
@@ -143,6 +148,8 @@ Time&
 Time::operator-=(const Time& t)
 {
     // a precondition for this fn to be correct is (*this >= t)
+    ASSERT(*this >= t);
+    
     if (usec_ < t.usec_) {
         usec_ += 1000000;
         sec_  -= 1;
@@ -158,6 +165,8 @@ Time
 Time::operator-(const Time& t) const
 {
     // a precondition for this fn to be correct is (*this >= t)
+    ASSERT(*this >= t);
+    
     Time t2(*this);
     t2 -= t;
     return t2;
@@ -200,6 +209,34 @@ Time::operator>=(const Time& t) const
     return (*this == t) || (*this > t);
 }
  
+//----------------------------------------------------------------------
+void
+Time::add_seconds(u_int32_t secs)
+{
+    ASSERT(sec_ + secs >= secs); // check overflow
+    sec_ += secs;
+}
+
+//----------------------------------------------------------------------
+void
+Time::add_milliseconds(u_int32_t msecs)
+{
+    sec_  += msecs / 1000;
+    usec_ += (msecs % 1000) * 1000;
+    cleanup();
+    ASSERT(in_milliseconds() >= msecs); // check overflow
+}
+        
+//----------------------------------------------------------------------
+void
+Time::add_microseconds(u_int32_t usecs)
+{
+    sec_  += usecs / 1000000;
+    usec_ += usecs % 1000000;
+    cleanup();
+    ASSERT(in_microseconds() >= usecs); // check overflow
+}
+
 //----------------------------------------------------------------------------
 void
 Time::cleanup()

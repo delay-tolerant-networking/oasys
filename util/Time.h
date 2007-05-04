@@ -76,6 +76,12 @@ struct Time {
 
     // Use default operator=
 
+    //! @{ Add various time units.
+    void add_seconds(u_int32_t secs);
+    void add_milliseconds(u_int32_t msecs);
+    void add_microseconds(u_int32_t usecs);
+    //! @}
+
     //! Cleanup the usec field wrt. sec
     void cleanup();
 };
