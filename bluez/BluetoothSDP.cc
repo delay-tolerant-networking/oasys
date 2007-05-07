@@ -111,7 +111,7 @@ is_dtn_router(bdaddr_t remote)
         // pull out name, desc, provider of this record
         sdp_data_t *d = sdp_data_get(record,SDP_ATTR_SVCNAME_PRIMARY);
         if(d)
-            remote_eid_.assign(d->val.str,d->unitSize);
+            remote_eid_.assign(d->val.str,strlen(d->val.str));
 
         // success returns 0
         sdp_list_t *proto; 
