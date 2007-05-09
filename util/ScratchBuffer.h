@@ -96,6 +96,23 @@ public:
         ASSERT(using_malloc() == other.using_malloc());
     }
 
+    //! We need to implement the assignment operator for the benefit of
+    //! vector operations; otherwise buf_ gets assigned to other.buf_
+    //! which is incorrect
+    ScratchBuffer& operator=(ScratchBuffer& other)
+    {
+        if (&other == this)
+        {
+            return *this;
+        }
+        
+        reserve(other.buf_len_);
+        memcpy(buf_, other.buf_, other.buf_len_);
+        len_ = other.len_;
+
+        return *this;
+    }
+
     //! The destructor clears the buf_ pointer if pointing at the
     //! static segment so ExpandableBuffer doesn't try to delete it
     virtual ~ScratchBuffer() {
