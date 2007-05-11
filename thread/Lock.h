@@ -35,11 +35,13 @@ public:
     /**
      * Default Lock constructor.
      */
-    Lock() : Logger("Lock", "/lock"),
-             lock_count_(0),
-             lock_holder_(0),
-             lock_holder_name_(0), 
-             scope_lock_count_(0) 
+    Lock(const char* lock_class) 
+        : Logger("Lock", "/lock"),
+          lock_count_(0),
+          lock_holder_(0),
+          lock_holder_name_(0), 
+          class_(lock_class),
+          scope_lock_count_(0) 
     {}
 
     /**
@@ -97,6 +99,22 @@ public:
             pthread_equal(lock_holder_, Thread::current());
     }
 
+    /**
+     * Name of the current holder of the lock.
+     */
+    const char* lock_holder_name() 
+    {
+        return lock_holder_name_;
+    }
+
+    /**
+     * Class of the lock.
+     */
+    const char* lock_class()
+    {
+        return class_;
+    }
+
 protected:
     friend class ScopeLock;
     friend class ScopeLockIf;
@@ -125,6 +143,11 @@ protected:
      * from which lock has been held.
      */ 
     const char* lock_holder_name_;
+
+    /*!
+     * The class of the lock. Defaults to generic.
+     */
+    const char* class_;
 
     /**
      * Stores a count of the number of ScopeLocks holding the lock.

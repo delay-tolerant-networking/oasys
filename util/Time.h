@@ -18,6 +18,7 @@
 #define __TIME_H__
 
 #include "../compat/inttypes.h"
+#include "../debug/Log.h"
 
 namespace oasys {
 
@@ -84,6 +85,22 @@ struct Time {
 
     //! Cleanup the usec field wrt. sec
     void cleanup();
+};
+
+/*!
+ * Print a debug message of the time elapsed between creation and
+ * destruction.
+ */
+class TimeScope {
+public:
+    TimeScope(log_level_t level, const char* path, const char* comment);
+    ~TimeScope();
+
+private:
+    Time start_;
+    log_level_t level_;
+    const char* path_;
+    const char* comment_;
 };
 
 } // namespace oasys

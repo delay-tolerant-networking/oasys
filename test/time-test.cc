@@ -1,5 +1,5 @@
 /*
- *    Copyright 2004-2006 Intel Corporation
+ *    Copyright 2007 Intel Corporation
  * 
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -18,32 +18,21 @@
 #  include <config.h>
 #endif
 
+#include <stdio.h>
 #include <unistd.h>
-#include <debug/DebugUtils.h>
-#include <debug/Log.h>
-#include <thread/Thread.h>
+#include <util/Time.h>
 
-#define THREADS_TO_CREATE 10
+#include "debug/Log.h"
+#include "util/UnitTest.h"
 
 using namespace oasys;
 
-class MyThread : public Thread {
-public:
-    MyThread() : Thread("MyThread", DELETE_ON_EXIT) {}
-protected:
-    void run() {}
-};
-
-int
-main()
-{
-    Log::init(LOG_DEBUG);
-
-    for(int j=0; j<1000; ++j) {
-        for(int i=0; i<THREADS_TO_CREATE; ++i) {
-            MyThread* t = new MyThread();
-            t->start();
-        }
-        ::sleep(1);
-    }
+DECLARE_TEST(Init) {
+    return UNIT_TEST_PASSED;
 }
+
+DECLARE_TESTER(TimeTest) {
+    ADD_TEST(Init);
+}
+
+DECLARE_TEST_FILE(TimerTest, "timer test");

@@ -86,6 +86,24 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
         AC_DEFINE_UNQUOTED(OASYS_DEBUG_MEMORY_ENABLED, 1,
                        [whether oasys memory debugging is enabled])
     fi
+
+    dnl
+    dnl Handle --enable-debug-locking[=yes|no]
+    dnl --disable-debug-locking
+    dnl
+    AC_ARG_ENABLE(debug_locking,
+                  AC_HELP_STRING([--disable-debug-locking],
+                                 [disable lock debugging]),
+                  [debug_locking=$enableval],
+                  [debug_locking=$debug])
+    
+    AC_MSG_CHECKING([whether to compile with lock debugging (default $debug)])
+    AC_MSG_RESULT($debug_locking)
+    
+    if test $debug_locking = yes ; then
+        AC_DEFINE_UNQUOTED(OASYS_DEBUG_LOCKING_ENABLED, 1,
+                       [whether oasys lock debugging is enabled])
+    fi
     
     dnl
     dnl Handle --enable-optimize[=yes|no]

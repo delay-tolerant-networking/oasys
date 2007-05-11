@@ -25,14 +25,20 @@
 #include <synch.h>
 #endif
 
-#include "debug/DebugUtils.h"
-#include "debug/Log.h"
+#include "../debug/DebugUtils.h"
+#include "../debug/Log.h"
+#include "../thread/LockDebugger.h"
+
 #include "Mutex.h"
 
 namespace oasys {
 
-Mutex::Mutex(const char* logbase, lock_type_t type, bool keep_quiet)
-    : type_(type), 
+Mutex::Mutex(const char* logbase,
+             lock_type_t type,
+             bool        keep_quiet,
+             const char* classname)
+    : Lock(classname),
+      type_(type), 
       keep_quiet_(keep_quiet)
 {
     logpathf("%s/lock", logbase);
@@ -81,6 +87,10 @@ Mutex::lock(const char* lock_user)
 {
     int err = pthread_mutex_lock(&mutex_);
 
+#if OASYS_DEBUG_LOCKING_ENABLED
+    Thread::lock_debugger()->add_lock(this);
+#endif
+
     if (err != 0) {
         PANIC("error in pthread_mutex_lock: %s", strerror(errno));
     }
@@ -107,6 +117,10 @@ Mutex::unlock()
     }
     
     int err = pthread_mutex_unlock(&mutex_);
+
+#if OASYS_DEBUG_LOCKING_ENABLED
+    Thread::lock_debugger()->remove_lock(this);
+#endif
     
     if (err != 0) {
         PANIC("error in pthread_mutex_unlock: %s", strerror(errno));
@@ -131,6 +145,10 @@ Mutex::try_lock(const char* lock_user)
     } else if (err != 0) {
         PANIC("error in pthread_mutex_trylock: %s", strerror(errno));
     }
+
+#if OASYS_DEBUG_LOCKING_ENABLED
+    Thread::lock_debugger()->add_lock(this);
+#endif
 
     ++lock_count_.value;
     if ((keep_quiet_ == false) && (logpath_[0] != 0))

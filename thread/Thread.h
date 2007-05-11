@@ -41,6 +41,8 @@
 #include <vector>
 
 #include "../debug/DebugUtils.h"
+#include "../thread/LockDebugger.h"
+#include "../thread/TLS.h"
 
 namespace oasys {
 
@@ -243,7 +245,13 @@ public:
      * current() is the currently executing thread id.
      */
     ThreadId_t thread_id() { return thread_id_; }
-    
+
+#if OASYS_DEBUG_LOCKING_ENABLED
+    static LockDebugger* lock_debugger() { 
+        return lock_debugger_.get(); 
+    }
+#endif
+
 protected:
 #ifdef __win32__
     //! Declare a current Thread* in thread local storage
@@ -251,8 +259,9 @@ protected:
     HANDLE join_event_;
 #endif // __win32__
 
+    static bool     globals_inited_;
+    
 #ifndef __win32__
-    static bool     signals_inited_;
     static sigset_t interrupt_sigset_;
 #endif    
 
@@ -262,6 +271,11 @@ protected:
 
     static bool                 start_barrier_enabled_;
     static std::vector<Thread*> threads_in_barrier_;
+
+#if OASYS_DEBUG_LOCKING_ENABLED
+    // Locking debugging thread - local to each thread
+    static TLS<LockDebugger> lock_debugger_;
+#endif
 
     ThreadId_t thread_id_;
     volatile int	flags_;

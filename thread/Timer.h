@@ -174,14 +174,20 @@ private:
  */
 class Timer {
 public:
-    Timer()
+    /// Enum type for cancel flags related to memory management
+    typedef enum {
+        NO_DELETE = 0,
+        DELETE_ON_CANCEL = 1
+    } cancel_flags_t;
+
+    Timer(cancel_flags_t cancel_flags = DELETE_ON_CANCEL)
         : pending_(false),
           cancelled_(false),
-          cancel_flags_(DELETE_ON_CANCEL)
-    {
-    }
+          cancel_flags_(cancel_flags)
+    {}
     
-    virtual ~Timer() {
+    virtual ~Timer() 
+    {
         /*
          * The only time a timer should be deleted is after it fires,
          * so assert as such.
@@ -228,12 +234,6 @@ public:
 protected:
     friend class TimerSystem;
     friend class TimerCompare;
-
-    /// Enum type for cancel flags related to memory management
-    typedef enum {
-        NO_DELETE = 0,
-        DELETE_ON_CANCEL = 1
-    } cancel_flags_t;
     
     struct timeval when_;	  ///< When the timer should fire
     bool           pending_;	  ///< Is the timer currently pending

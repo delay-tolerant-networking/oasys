@@ -125,6 +125,7 @@ TCLCMD_SRCS :=					\
 
 THREAD_SRCS :=					\
 	thread/Atomic-mutex.cc			\
+	thread/LockDebugger.cc			\
 	thread/Mutex.cc				\
 	thread/NoLock.cc			\
 	thread/Notifier.cc			\

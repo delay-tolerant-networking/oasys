@@ -19,7 +19,9 @@
 #endif
 
 #include "SpinLock.h"
+
 #include "../debug/StackTrace.h"
+#include "../thread/LockDebugger.h"
 
 namespace oasys {
 
@@ -34,6 +36,11 @@ SpinLock::lock(const char* lock_user)
 {
     if (is_locked_by_me()) {
         lock_count_.value++;
+
+#if OASYS_DEBUG_LOCKING_ENABLED
+        Thread::lock_debugger()->add_lock(this);
+#endif
+
         return 0;
     }
 
@@ -64,6 +71,10 @@ SpinLock::lock(const char* lock_user)
     lock_holder_      = Thread::current();
     lock_holder_name_ = lock_user;
 
+#if OASYS_DEBUG_LOCKING_ENABLED
+    Thread::lock_debugger()->add_lock(this);
+#endif
+
     return 0;
 };
 
@@ -74,8 +85,17 @@ SpinLock::unlock()
 
     if (lock_count_.value > 1) {
         lock_count_.value--;
+
+#if OASYS_DEBUG_LOCKING_ENABLED
+        Thread::lock_debugger()->remove_lock(this);
+#endif
+
         return 0;
     }
+
+#if OASYS_DEBUG_LOCKING_ENABLED
+    Thread::lock_debugger()->remove_lock(this);
+#endif
 
     lock_holder_      = 0;
     lock_holder_name_ = 0;
@@ -102,15 +122,21 @@ SpinLock::try_lock(const char* lock_user)
 
     int got_lock = atomic_cmpxchg32(&lock_count_, 0, 1);
     
-    if (got_lock) {
+    if (got_lock) 
+    {
         ASSERT(lock_holder_ == 0);
 
         lock_holder_      = Thread::current();
         lock_holder_name_ = lock_user;
+
+#ifdef OASYS_DEBUG_LOCKING_ENABLED
+        Thread::lock_debugger()->add_lock(this);
+#endif
         
-        return 0; // success
-        
-    } else {
+        return 0; // success        
+    } 
+    else 
+    {
         return 1; // already locked
     }
 };

@@ -33,10 +33,11 @@
 
 namespace oasys {
 
+bool                 Thread::globals_inited_ = false;
+
 #ifdef __win32__
 __declspec(thread) Thread* Thread::current_thread_ = 0;
 #else
-bool                 Thread::signals_inited_ = false;
 sigset_t             Thread::interrupt_sigset_;
 #endif
 
@@ -47,6 +48,11 @@ const int            Thread::max_live_threads_;
 Thread*              Thread::all_threads_[max_live_threads_];
 SpinLock             g_all_threads_lock_;
 SpinLock*            Thread::all_threads_lock_ = &g_all_threads_lock_;
+
+#if OASYS_DEBUG_LOCKING_ENABLED
+TLS<LockDebugger>        Thread::lock_debugger_;
+template<> pthread_key_t TLS<LockDebugger>::key_ = 0;
+#endif
 
 //----------------------------------------------------------------------------
 void
@@ -122,19 +128,23 @@ Thread::~Thread()
 void
 Thread::start()
 {
-#ifndef __win32__
-
-    // if this is the first thread, set up signals
-    if (!signals_inited_) 
+    // if this is the first thread, set up signals and lock debugging
+    if (!globals_inited_) 
     {
+#ifndef __win32__
         sigemptyset(&interrupt_sigset_);
         sigaddset(&interrupt_sigset_, INTERRUPT_SIG);
         signal(INTERRUPT_SIG, interrupt_signal);
         siginterrupt(INTERRUPT_SIG, 1);
-        signals_inited_ = true;
-    }
-
 #endif
+
+#ifdef OASYS_DEBUG_LOCKING_ENABLED
+        TLS<LockDebugger>::init();
+        TLS<LockDebugger>::set(new LockDebugger());
+#endif
+        
+        globals_inited_ = true;
+    }
 
     // check if the creation barrier is enabled
     if (start_barrier_enabled_) 
@@ -280,8 +290,14 @@ Thread::pre_thread_run(void* t)
 #endif
 
     ThreadId_t thread_id = Thread::current();
-    thr->thread_run(thr->name_, thread_id);
 
+#if OASYS_DEBUG_LOCKING_ENABLED
+    // Set the thread local debugger
+    lock_debugger_.set(new LockDebugger());
+#endif
+
+    thr->thread_run(thr->name_, thread_id);
+    
     return 0;
 }
 

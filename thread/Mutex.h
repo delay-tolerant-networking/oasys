@@ -43,7 +43,9 @@ public:
     /// Creates a mutex. By default, we create a TYPE_RECURSIVE.
     Mutex(const char* logbase,
           lock_type_t type = TYPE_RECURSIVE,
-          bool keep_quiet = false);
+          bool keep_quiet = false,
+          const char* classname = "GENERIC");
+
     ~Mutex();
 
     //! @{ Virtual from Lock

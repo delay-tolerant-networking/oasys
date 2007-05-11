@@ -32,6 +32,10 @@ AC_DEFUN(AC_OASYS_SYSTEM_LIBRARIES, [
       AC_MSG_ERROR([can't find required library function (pthread_create)]))
     AC_CHECK_FUNC(pthread_yield, [], [AC_SEARCH_LIBS(sched_yield, rt, [],
       AC_MSG_ERROR([can't find required library function (pthread_yield or sched_yield)]))])
+    AC_SEARCH_LIBS(pthread_setspecific, pthread, 
+                   AC_DEFINE_UNQUOTED(HAVE_PTHREAD_SETSPECIFIC, 1, 
+                                      [whether pthread_setspecific is defined]), 
+                   [])
     AC_SEARCH_LIBS(socket, socket, [],
       AC_MSG_ERROR([can't find required library function (socket)]))
     AC_SEARCH_LIBS(gethostbyname, nsl, [],

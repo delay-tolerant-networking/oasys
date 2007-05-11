@@ -248,6 +248,20 @@ Time::cleanup()
     }
 }
 
+//----------------------------------------------------------------------------
+TimeScope::TimeScope(log_level_t level, const char* path, const char* comment)
+    : level_(level), path_(path), comment_(comment)
+{
+    start_.get_time();
+}
+
+//----------------------------------------------------------------------------
+TimeScope::~TimeScope()
+{
+    logf(path_, level_, "%s took %u milliseconds", 
+         comment_, start_.elapsed_ms());
+}
+
 } // namespace oasys
 
 #if 0

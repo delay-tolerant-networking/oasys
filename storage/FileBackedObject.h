@@ -88,7 +88,7 @@ public:
     TxHandle start_tx(int flags = KEEP_OPEN);
     
     /*!
-     * Return the stats maintained by the file system.
+     * @param stat_buf Stats maintained by the file system.
      */
     void get_stats(struct stat* stat_buf) const;
 

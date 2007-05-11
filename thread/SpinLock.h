@@ -30,7 +30,9 @@ class SpinLock : public Lock {
 public:
 
 public:
-    SpinLock() : Lock(), lock_waiters_(0) {}
+    SpinLock(const char* classname = "GENERIC") 
+        : Lock(classname), lock_waiters_(0) {}
+
     virtual ~SpinLock() {}
 
     /// @{
