@@ -247,7 +247,8 @@ public:
     ThreadId_t thread_id() { return thread_id_; }
 
 #if OASYS_DEBUG_LOCKING_ENABLED
-    static LockDebugger* lock_debugger() { 
+    static LockDebugger* lock_debugger() {
+        init_globals();
         return lock_debugger_.get(); 
     }
 #endif
@@ -306,6 +307,11 @@ protected:
      * called in the new Thread context.
      */
     virtual void run() = 0;
+
+    /**
+     * Initialize globals.
+     */
+    static void init_globals();
 };
 
 //---------------------------------------------------------------------------

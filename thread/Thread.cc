@@ -124,11 +124,10 @@ Thread::~Thread()
 #endif //__win32__    
 }
 
-//----------------------------------------------------------------------------
+//----------------------------------------------------------------------
 void
-Thread::start()
+Thread::init_globals()
 {
-    // if this is the first thread, set up signals and lock debugging
     if (!globals_inited_) 
     {
 #ifndef __win32__
@@ -145,7 +144,13 @@ Thread::start()
         
         globals_inited_ = true;
     }
+}
 
+//----------------------------------------------------------------------------
+void
+Thread::start()
+{
+    init_globals();
     // check if the creation barrier is enabled
     if (start_barrier_enabled_) 
     {
