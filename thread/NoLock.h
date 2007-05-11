@@ -33,6 +33,7 @@ namespace oasys {
  */
 class NoLock : public Lock {
 public:
+    NoLock() : Lock("") {}
     int lock(const char* lock_user);
     int unlock();
     int try_lock(const char* lock_user);
