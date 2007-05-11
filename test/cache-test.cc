@@ -164,41 +164,45 @@ struct Params {
     ThreadCache* cache_;
 };
 
-void* cache_worker(void* param)
-{
-    Params* p = static_cast<Params*>(param);
-
-    for (int i = 0; i<p->iterations_; ++i)
+class WorkerThread : public Thread {
+public:
+    WorkerThread() : Thread("WorkerThread", CREATE_JOINABLE) {}
+    void set_params(Params* params) { params_ = params; }
+    
+    void run()
     {
-        int cache_elem = random() % p->max_elements_;
-        // pin and unpin entries in the cache randomly
-        int j = 1;
-        int val;
-        ThreadCache::Handle handle;
-
-        p->cache_->get_and_pin(cache_elem, &val, &handle);
-        do 
+        for (int i = 0; i < params_->iterations_; ++i)
         {
-            if ( (random() % 10) > 6)
-            {
-                handle.pin();
-                ++j;
-            }
-            else
-            {
-                handle.unpin();
-                --j;
-            }
-        } while (j>0);
+            int cache_elem = random() % params_->max_elements_;
+            // pin and unpin entries in the cache randomly
+            int j = 1;
+            int val;
+            ThreadCache::Handle handle;
 
-        if (i%10000 == 0)
-        {
-            log_notice_p("/test", "mark itr=%d, cache_elem=%d", i, cache_elem);
+            params_->cache_->get_and_pin(cache_elem, &val, &handle);
+            do 
+            {
+                if ( (random() % 10) > 6)
+                {
+                    handle.pin();
+                    ++j;
+                }
+                else
+                {
+                    handle.unpin();
+                    --j;
+                }
+            } while (j>0);
+
+            if (i%10000 == 0)
+            {
+                log_notice_p("/test", "mark itr=%d, cache_elem=%d", i, cache_elem);
+            }
         }
     }
 
-    return NULL;
-}
+    Params* params_;
+};
 
 DECLARE_TEST(Test2) {
     // Multithreading threading test
@@ -218,15 +222,16 @@ DECLARE_TEST(Test2) {
     struct timeval begin;
     gettimeofday(&begin, NULL);
 
-    pthread_t thread[10];
+    WorkerThread thread[10];
     for (int i=0; i<10; ++i)
     {
-        pthread_create(&thread[i], NULL, cache_worker, &p);
+        thread[i].set_params(&p);
+        thread[i].start();
     }
 
     for (int i=0; i<10; ++i)
     {
-        pthread_join(thread[i], NULL);
+        thread[i].join();
     }
 
     struct timeval end;
