@@ -100,6 +100,14 @@ FileBackedObject::start_tx(int flags)
     
 //----------------------------------------------------------------------------
 void 
+FileBackedObject::set_flags(int flags)
+{
+    flags_ = flags;
+    close();
+}
+
+//----------------------------------------------------------------------------
+void 
 FileBackedObject::get_stats(struct stat* stat_buf) const
 {
     int err = stat(filename_.c_str(), stat_buf);
@@ -192,6 +200,20 @@ FileBackedObject::write_bytes(size_t offset, const u_char* buf, size_t length)
 }
 
 //----------------------------------------------------------------------------
+size_t 
+FileBackedObject::append_bytes(const u_char* buf, size_t length)
+{
+    off_t off = lseek(fd_, 0, SEEK_END);
+    if (off == -1 && size() == 0)
+    {
+        off = 0;
+    }
+    cur_offset_ = static_cast<size_t>(off);
+
+    return write_bytes(cur_offset_, buf, length);
+}
+
+//----------------------------------------------------------------------------
 void 
 FileBackedObject::truncate(size_t size)
 {
@@ -209,14 +231,35 @@ FileBackedObject::truncate(size_t size)
 
 //----------------------------------------------------------------------------
 int
-FileBackedObject::serialize(const SerializableObject* obj)
+FileBackedObject::serialize(const SerializableObject* obj, int offset)
 {
     oasys::ScopeLock l(&lock_, "FileBackedObject::serialize");
 
-    FileBackedObjectOutStream stream(this);
+    int old_flags = flags_;
+    set_flags(flags_ | KEEP_OPEN);
+    open();
+    
+    size_t abs_offset = size() + offset;
+    
+    if (abs_offset != cur_offset_)
+    {
+        off_t off = lseek(fd_, static_cast<off_t>(abs_offset), SEEK_SET);
+        if (off == -1 && size() == 0)
+        {
+            off = 0;
+        }
+        cur_offset_ = static_cast<size_t>(off);
+    }    
+    
+    FileBackedObjectOutStream stream(this, cur_offset_);
     StreamSerialize serial(&stream, Serialize::CONTEXT_LOCAL);
-
-    return serial.action(obj);
+    
+    int ret = serial.action(obj);
+    
+    set_flags(old_flags);
+    close();
+    
+    return ret;
 }
 
 //----------------------------------------------------------------------------

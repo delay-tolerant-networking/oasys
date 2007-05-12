@@ -88,6 +88,11 @@ public:
     TxHandle start_tx(int flags = KEEP_OPEN);
     
     /*!
+     * Set the flags of the file.
+     */
+    void set_flags(int flags);
+    
+    /*!
      * @param stat_buf Stats maintained by the file system.
      */
     void get_stats(struct stat* stat_buf) const;
@@ -116,6 +121,13 @@ public:
     size_t write_bytes(size_t offset, const u_char* buf, size_t length);
 
     /*!
+     * Append bytes to the file.
+     *
+     * @return Number of bytes written.
+     */
+    size_t append_bytes(const u_char* buf, size_t length);
+    
+    /*!
      * Make the file size.
      */
     void truncate(size_t size);
@@ -126,9 +138,10 @@ public:
     const std::string& filename() const { return filename_; }
 
     /*!
+     * @param offset negative values mean start at the end.
      * @return Error code from StreamSerialize.
      */
-    int serialize(const SerializableObject* obj);
+    int serialize(const SerializableObject* obj, int offset = 0);
 
     /*!
      * @return Error code from StreamUnserialize.
