@@ -36,6 +36,8 @@
 ##
 
 use English;
+use Term::ANSIColor qw(:constants);
+
 select(STDOUT); $OUTPUT_AUTOFLUSH = 1; # make unbuffered
 
 #default object file
@@ -45,6 +47,7 @@ chop($OS = `uname`);
 
 ## Parse the command line arguments
 $inputFormat = 'oneline';  # default format
+$outputFormat = 'oneline';
 
 while (@ARGV) {
     last unless $ARGV[0] =~ /^-/;
@@ -72,6 +75,8 @@ while (@ARGV) {
     ## -h for usage
     } elsif ($ARGV[0] eq "-h") {
 	&usage;
+    } elsif ($ARGV[0] eq "-m") {
+	$outputFormat = 'multiline';
     ## Unknown args are fatal
     } else {
 	print "Unknown option $ARGV[0]\n";
@@ -94,27 +99,32 @@ $ct = 0;
 
 printf "Generating backtrace for object file $objectFile (offset %#08x)\n", $libOffset;
 
-while (@BACKTRACE) {
-    $traceLine = shift @BACKTRACE;
-    chop $traceLine;
-    
-    next if ($traceLine eq "");
 
-    if ($inputFormat eq 'perline') {
-	# If old, eip-per-line format	
+# If old, eip-per-line format	
+if ($inputFormat eq 'perline') {
+    while (@BACKTRACE) {
+	$traceLine = shift @BACKTRACE;
+	chop $traceLine;
+	next if ($traceLine eq "");
 	($bs, $eip) = split(/=/, $traceLine, 2);
 	&findFunction($eip);
-    } elsif ($inputFormat eq 'oneline') {
-	# Else, the one line of eips format 
-	@eips = split(' ', $traceLine);
-	foreach $eip (@eips) {
-	    next if ($eip =~ /Backtrace/);
-#	    &findFunction("0x" . "$eip");
-	    &findFunction("$eip");
-	}
-    } else {
-	die "unknown inputformat $inputformat\n";
+    } 
+} elsif ($inputFormat eq 'oneline') {
+    $eips = "";
+    while (@BACKTRACE) {
+	$traceLine = shift @BACKTRACE;
+	chomp $traceLine;
+	next if ($traceLine eq "");
+	$eips = $eips . $traceLine;
+
     }
+    @eips = split(' ', $eips);
+    foreach $eip (@eips) {
+	next if ($eip =~ /Backtrace/);
+	&findFunction("$eip");
+    }
+} else {
+    die "unknown inputformat $inputformat\n";
 }
 
 # Given an EIP, find the name of the corresponding function and file
@@ -133,7 +143,31 @@ sub findFunctionAddr2Line {
     if (! close(ADDR2LINEOUT)) {
 	die "close: couldn't run addr2line, try with -noaddr2line\n";
     }
-    printf "$eip in $first:$second\n";
+
+    if ($eip eq "STACK" || $eip eq "TRACE:") {
+	return;
+    }
+    
+    if ($outputFormat eq "oneline") {
+	print "$eip in $first:$second\n";
+    } else {
+	$eip = sprintf("%10s", $eip);
+	print BOLD, $eip, RESET;
+# 	$first =~ /([^(]+)\(([^)]*)\)/;
+# 	$fcnName = $1;
+# 	$fcnArgs = $2;
+	print " $first\n", RESET;
+	$cwd = `pwd`;
+	chomp $cwd;
+	$second =~ s=${cwd}/==;
+	if (! ($second eq "??:0")) {
+	    if ($second =~ s/(.+):(\d+)/+\2 \1/) {
+		print "         emacsclient -n $second\n";
+	    } else {
+		print "             $second\n";
+	    }
+	}
+    }
 }
 
 sub findFunction {
