@@ -43,6 +43,8 @@ if [catch {
 
 namespace eval run {
 
+set cleanup_handler ""
+    
 proc dbg { msg } {
     global opt
     if {$opt(verbose) > 0} {
@@ -57,6 +59,17 @@ proc shift { l } {
 
 proc arg0 { l } {
     return [lindex $l 0]
+}
+
+proc make_rundir_prefix {} {
+    set names [list alpha bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar papa quebec romeo sierra tango uniform victor whiskey xray yankee zulu]
+    foreach n $names {
+	if {! [file exists "$n"]} {
+	    return "$n"
+	}
+    }
+
+    return [pid]
 }
 
 proc usage {} {
@@ -110,7 +123,8 @@ proc init {argv} {
     set opt(no_logs)       0
     set opt(no_cores)      0
     set opt(pause)         0
-    set opt(rundir_prefix) "/tmp/run-[pid]"
+    set opt(rundir_prefix_name) [make_rundir_prefix]
+    set opt(rundir_prefix) "/tmp/run-$opt(rundir_prefix_name)"
     set opt(local_rundir)  0
     set opt(strip)         0
     set opt(verbose)       0
@@ -721,6 +735,11 @@ proc cleanup {} {
 	    continue
 	}
 	
+	if {$run::cleanup_handler != ""} {
+	    dbg "% running cleanup_handler=$run::cleanup_handler"
+	    eval "$run::cleanup_handler $hostname $run::dirs($i)"
+	}	
+
 	if [info exist run::dirs($i)] {
 	    dbg "% removing $hostname:$i:$run::dirs($i)"
 	    catch { run_cmd $hostname /bin/rm -r $run::dirs($i) }
