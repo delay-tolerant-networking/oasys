@@ -25,6 +25,32 @@
 namespace oasys {
 
 //----------------------------------------------------------------------------
+class Int8Shim : public Formatter, public SerializableObject {
+public:
+    Int8Shim(int8_t value = 0, const char* name = "int")
+        : name_(name), value_(value) {}
+    Int8Shim(const Builder&) {}
+
+    // virtual from Formatter
+    int format(char* buf, size_t sz) const {
+        return snprintf(buf, sz, "%d", static_cast<int>(value_));
+    }
+    
+    // virtual from SerializableObject
+    void serialize(SerializeAction* a) {
+        a->process(name_.c_str(), &value_);
+    }
+
+    int8_t value() const { return value_; }
+    void assign(int8_t value) { value_ = value; }
+
+    
+private:
+    std::string name_;
+    int8_t     value_;
+};
+
+//----------------------------------------------------------------------------
 class IntShim : public Formatter, public SerializableObject {
 public:
     IntShim(int32_t value = 0, const char* name = "int")
