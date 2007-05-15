@@ -65,8 +65,8 @@ private:
     static pthread_key_t key_;
 };
 
-#endif /* HAVE_PTHREAD_SETSPECIFIC */
-
 } // namespace oasys
+
+#endif /* HAVE_PTHREAD_SETSPECIFIC */
 
 #endif /* __TLS_H__ */
