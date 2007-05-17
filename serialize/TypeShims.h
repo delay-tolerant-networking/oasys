@@ -258,28 +258,36 @@ private:
  */
 template<typename _SerializablePrefix, typename _SerializableObject>
 struct PrefixAdapter : public SerializableObject {
-    PrefixAdapter(_SerializablePrefix* prefix,
-                  _SerializableObject* obj)
+    PrefixAdapter(const _SerializablePrefix& prefix,
+                  const _SerializableObject& obj)
         : prefix_(prefix),
           obj_(obj)
     {}
     
     void serialize(SerializeAction* a) 
     {
-        a->process("prefix", prefix_);
-        a->process("obj",    obj_);
+        a->process("prefix", &prefix_);
+        a->process("obj",    &obj_);
     }
 
-    _SerializablePrefix* prefix_;
-    _SerializableObject* obj_;
+    _SerializablePrefix prefix_;
+    _SerializableObject obj_;
 };
 
-template<typename _SerializablePrefix, typename _SerializableObject>
-PrefixAdapter<_SerializablePrefix, _SerializableObject>
-prefix_adapter(_SerializablePrefix* prefix,
-               _SerializableObject* obj)
+template
+<
+    typename _SerializablePrefix, 
+    typename _SerializableObject
+>
+PrefixAdapter
+<
+    _SerializablePrefix, 
+    _SerializableObject
+>
+prefix_adapter(const _SerializablePrefix& prefix,
+               const _SerializableObject& obj)
 {
-    return PrefixAdapter<_SerializablePrefix,
+    return PrefixAdapter<_SerializablePrefix, 
                          _SerializableObject>(prefix, obj);
 }
 
