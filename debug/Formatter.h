@@ -23,6 +23,7 @@
 
 #include "DebugDumpBuf.h"
 #include "DebugUtils.h"
+#include "StackTrace.h"
 
 namespace oasys {
 
@@ -73,7 +74,7 @@ public:
      * situation where each base class has virtual functions,
      * Formatter _must_ be the first class in the inheritance chain.
      */
-    static inline void assert_valid(const Formatter* obj);
+    static inline int assert_valid(const Formatter* obj);
 
     /**
      * Print out to a statically allocated buffer which can be called
@@ -99,15 +100,27 @@ public:
 
 void __log_assert(bool x, const char* what, const char* file, int line);
 
-inline void
+inline int
 Formatter::assert_valid(const Formatter* obj)
 {
     (void)obj; // avoid unused variable warning
+
 #ifndef NDEBUG
-    __log_assert(obj->format_magic_ == FORMAT_MAGIC,
-                 "Formatter object invalid -- maybe need a cast to Formatter*",
-                 __FILE__, __LINE__);
+    // Making the program barf is too extreme for Formatter, which is
+    // usually just used in logging output.
+    if (obj->format_magic_ != FORMAT_MAGIC) 
+    {
+        fprintf(stderr, 
+                "Formatter object invalid -- maybe need a cast "
+                "to Formatter.");
+        StackTrace::print_current_trace(false);
+        oasys_break();
+
+        return 0;
+    }
 #endif
+
+    return 1;
 }
 
 } // namespace oasys

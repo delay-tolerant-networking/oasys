@@ -47,6 +47,12 @@ size_t formatter_format(void* p, char* str, size_t strsz)
     // calls to format, we need the real amount of space here, so bump
     // it up by one again since we're careful not to clobber
     const ::oasys::Formatter* fmtobj = (const ::oasys::Formatter*)p;
-    ::oasys::Formatter::assert_valid(fmtobj);
-    return fmtobj->format(str, strsz + 1);
+    if (::oasys::Formatter::assert_valid(fmtobj))
+    {
+        return fmtobj->format(str, strsz + 1);
+    }
+    else
+    {
+        return 0;
+    }
 }
