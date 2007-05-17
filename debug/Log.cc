@@ -49,9 +49,11 @@ namespace oasys {
 void
 __log_assert(bool x, const char* what, const char* file, int line)
 {
-    if (! (x)) {
+    if (! (x)) 
+    {
         fprintf(stderr, "LOGGING ASSERTION FAILED (%s) at %s:%d\n",
                 what, file, line);
+        oasys_break();
         abort();
     }
 }
