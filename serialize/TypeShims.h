@@ -258,6 +258,8 @@ private:
  */
 template<typename _SerializablePrefix, typename _SerializableObject>
 struct PrefixAdapter : public SerializableObject {
+    PrefixAdapter() {}
+
     PrefixAdapter(const _SerializablePrefix& prefix,
                   const _SerializableObject& obj)
         : prefix_(prefix),
