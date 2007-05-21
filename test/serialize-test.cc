@@ -442,12 +442,12 @@ DECLARE_TEST(PrefixAdapterTest) {
     KeyObj_1 key(true);
     int prefix = 1000;
     
-    CHECK_EQUALSTR(key_maker(prefix_adapter(&prefix, &key)).c_str(),
+    CHECK_EQUALSTR(key_maker(prefix_adapter(prefix, key)).c_str(),
                    "1000 51966 this is a string end 61453 true 12345test");
     
     prefix = 2001;
     LimitObj obj(true);
-    CHECK_EQUALSTR(key_maker(prefix_adapter(&prefix, &obj), 
+    CHECK_EQUALSTR(key_maker(prefix_adapter(prefix, obj), 
                              StringSerialize::INCLUDE_NAME).c_str(),
                    "prefix 2001 uzero 0 szero 0 one 1 "
                    "negone 4294967295 umax 4294967295 smax 2147483647")    
