@@ -11,6 +11,8 @@ namespace oasys {
  */
 class CheckedLogWriter {
 public:
+    typedef size_t Handle;
+
     /*!
      * Interpret the object as a checked log and write to it.
      */
@@ -18,9 +20,17 @@ public:
 
     /*!
      * Write a single record to the log file. This does _not_ force
-     * the log file to disk. 
+     * the log file to disk.
+     *
+     * @return handle to the record for later manipulation.
      */
-    void write_record(SerializableObject* contents);
+    Handle write_record(SerializableObject* contents);
+
+    /*!
+     * Write that the record has been committed so does not need to be
+     * replayed.
+     */
+    void commit(Handle h);
 
     /*!
      * For all log files written thus far to the disk.
