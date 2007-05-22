@@ -330,8 +330,8 @@ public:
         {
             if (cache_map_.size() == 0)
             {
-                PANIC("Putting object into cache of size greater than "
-                      "entire cache limits!");
+                log_err("Putting object into cache of size greater than "
+                        "entire cache limits!");
             }
             
             if (! evict_last()) 
@@ -485,6 +485,20 @@ private:
         }
         
         return true;
+    }
+
+    /*!
+     * Iterate over the elements of the cache. Useful for debugging,
+     * diagnostics.
+     */
+    template<typename _Iterator>
+    void iterate(_Iterator* itr)
+    {
+        for (typename CacheList::const_iterator i = cache_list_.begin();
+             i != cache_list_.end(); ++i)
+        {
+            itr->process(*i);
+        }
     }
 };
 
