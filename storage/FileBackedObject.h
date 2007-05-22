@@ -27,8 +27,9 @@ public:
      * Parameters to the FileBackedObject
      */
     enum {
-        KEEP_OPEN = 1 << 0,     // keep the fd open while FileBackedObject exists.
-        UNLINKED  = 1 << 8,     // status bit for unlinked file
+        KEEP_OPEN  = 1 << 0,  // keep the fd open while FileBackedObject exists.
+        INIT_BLANK = 1 << 1,  // start off with a blank file in a TX
+        UNLINKED   = 1 << 8,  // status bit for unlinked file
     };
     
     /*! 

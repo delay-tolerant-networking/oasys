@@ -27,10 +27,20 @@ FileBackedObject::Tx::Tx(FileBackedObject* backing_file, int flags)
     logpathf("/store/file-backed/tx/%s", original_file_->filename().c_str());
 
     std::string tx_filename = original_file_->filename() + ".tx";
-    int err = FileUtils::fast_copy(original_file_->filename().c_str(), 
-                                   tx_filename.c_str());
-    ASSERT(err == 0);
 
+    if (flags & FileBackedObject::INIT_BLANK)
+    {
+        int fd = ::open(tx_filename.c_str(), 
+                        O_WRONLY | O_CREAT | O_EXCL,
+                        S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        ::close(fd);
+    }
+    else
+    {
+        int err = FileUtils::fast_copy(original_file_->filename().c_str(), 
+                                       tx_filename.c_str());
+        ASSERT(err == 0);
+    }
     tx_file_ = new FileBackedObject(tx_filename, flags);
 
     log_debug("tx started");
