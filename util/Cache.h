@@ -420,6 +420,20 @@ public:
     }
 
     /*!
+     * Iterate over the elements of the cache. Useful for debugging,
+     * diagnostics.
+     */
+    template<typename _Iterator>
+    void iterate(_Iterator* itr) const
+    {
+        for (typename CacheList::const_iterator i = cache_list_.begin();
+             i != cache_list_.end(); ++i)
+        {
+            itr->process(*i);
+        }
+    }
+
+    /*!
      * @return Helper object.
      */
     _CacheHelper* get_helper() { return &helper_; }
@@ -485,20 +499,6 @@ private:
         }
         
         return true;
-    }
-
-    /*!
-     * Iterate over the elements of the cache. Useful for debugging,
-     * diagnostics.
-     */
-    template<typename _Iterator>
-    void iterate(_Iterator* itr)
-    {
-        for (typename CacheList::const_iterator i = cache_list_.begin();
-             i != cache_list_.end(); ++i)
-        {
-            itr->process(*i);
-        }
     }
 };
 
