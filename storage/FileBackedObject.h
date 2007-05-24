@@ -79,6 +79,14 @@ public:
     typedef std::auto_ptr<Tx> TxHandle;
 
     /*!
+     * Opens file on construction.
+     *
+     * @param filename Name of the backing file.
+     * @param flags    Flags for behavior (see above).
+     */
+    FileBackedObject(const std::string& filename, int flags);    
+
+    /*!
      * Closes file on destruction.
      */
     ~FileBackedObject();
@@ -134,6 +142,11 @@ public:
     void truncate(size_t size);
 
     /*!
+     * FSync the data in fd.
+     */
+    void fsync_data();
+
+    /*!
      * @return Name of the backing file for the object.
      */
     const std::string& filename() const { return filename_; }
@@ -162,14 +175,6 @@ private:
     mutable size_t cur_offset_;
 
     /*!
-     * Opens file on construction.
-     *
-     * @param filename Name of the backing file.
-     * @param flags    Flags for behavior (see above).
-     */
-    FileBackedObject(const std::string& filename, int flags);
-    
-    /*!
      * Open the file if needed and according to the flags.
      */
     void open() const;
@@ -183,11 +188,6 @@ private:
      * Delete the file from the filesystem.
      */
     void unlink();
-
-    /*!
-     * FSync the data in fd.
-     */
-    void fsync_data();
     
     /*!
      * Reload the fd from the file.

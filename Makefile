@@ -98,6 +98,7 @@ SMTP_SRCS :=                                    \
 
 STORAGE_SRCS :=					\
 	storage/BerkeleyDBStore.cc		\
+	storage/CheckedLog.cc			\
 	storage/DurableStore.cc                 \
 	storage/DurableStoreImpl.cc		\
 	storage/FileBackedObject.cc		\

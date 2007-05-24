@@ -1,6 +1,9 @@
 #ifndef __CHECKEDLOG_H__
 #define __CHECKEDLOG_H__
 
+#include "../storage/FileBackedObject.h"
+#include "../util/ExpandableBuffer.h"
+
 namespace oasys {
 
 /*!
@@ -11,7 +14,7 @@ namespace oasys {
  */
 class CheckedLogWriter {
 public:
-    typedef size_t Handle;
+     typedef size_t Handle;
 
     /*!
      * Interpret the object as a checked log and write to it.
@@ -19,18 +22,23 @@ public:
     CheckedLogWriter(FileBackedObject* obj);
 
     /*!
+     * Close fd on destroy.
+     */
+    ~CheckedLogWriter();
+
+    /*!
      * Write a single record to the log file. This does _not_ force
      * the log file to disk.
      *
      * @return handle to the record for later manipulation.
      */
-    Handle write_record(SerializableObject* contents);
+    Handle write_record(const u_char* buf, size_t len);
 
     /*!
-     * Write that the record has been committed so does not need to be
+     * Write that the record can be ignored so does not need to be
      * replayed.
      */
-    void commit(Handle h);
+    void ignore(Handle h);
 
     /*!
      * For all log files written thus far to the disk.
@@ -48,8 +56,9 @@ class CheckedLogReader {
 public:
     enum {
         NO_ERR  = 0,
-        EOF     = -1,
+        END     = -1,
         BAD_CRC = -2,
+        IGNORE  = -3,
     };
 
     /*!
@@ -58,14 +67,21 @@ public:
     CheckedLogReader(FileBackedObject* obj);
 
     /*!
+     * Close the file.
+     */
+    ~CheckedLogReader();
+
+    /*!
      * Read a record from the log.
      *
      * @return 0 on no error, see enum above.
      */
-    int read_record(SerializableObject* obj);
+    int read_record(ExpandableBuffer* buf);
 
 private:
     FileBackedObject* obj_;
+    
+    size_t cur_offset_;
 };
 
 } // namespace oasys

@@ -213,6 +213,8 @@ FileBackedObject::write_bytes(size_t offset, const u_char* buf, size_t length)
 size_t 
 FileBackedObject::append_bytes(const u_char* buf, size_t length)
 {
+    open();
+
     off_t off = lseek(fd_, 0, SEEK_END);
     if (off == -1 && size() == 0)
     {
@@ -237,6 +239,18 @@ FileBackedObject::truncate(size_t size)
     ASSERT(err == 0);
 
     close();
+}
+
+//----------------------------------------------------------------------------
+void 
+FileBackedObject::fsync_data()
+{
+    oasys::ScopeLock l(&lock_, "FileBackedObject::fsync_data");
+#ifdef HAVE_FDATASYNC
+    fdatasync(fd_);
+#else
+    fsync(fd_);
+#endif
 }
 
 //----------------------------------------------------------------------------
@@ -352,18 +366,6 @@ FileBackedObject::unlink()
     
     filename_ = "/INVALID_FILE";
     flags_ |= UNLINKED;
-}
-
-//----------------------------------------------------------------------------
-void 
-FileBackedObject::fsync_data()
-{
-    oasys::ScopeLock l(&lock_, "FileBackedObject::fsync_data");
-#ifdef HAVE_FDATASYNC
-    fdatasync(fd_);
-#else
-    fsync(fd_);
-#endif
 }
 
 //----------------------------------------------------------------------------
