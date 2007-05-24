@@ -136,10 +136,11 @@ CRC32::update(
     }
 }
 
-CRC32::CRC_t
+const CRC32::CRC_t&
 CRC32::value()
 {
-    return crc_ ^ CRCXOROT;
+    crc_finished_ = crc_ ^ CRCXOROT;
+    return crc_finished_;
 }
 
 CRC32::CRC_t

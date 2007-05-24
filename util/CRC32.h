@@ -38,13 +38,14 @@ public:
     }
     /** @} */
 
-    CRC_t value();
-    void  reset();
+    const CRC_t& value();
+    void reset();
 
     static CRC_t from_bytes(u_char* buf);
 
 private:
     CRC_t crc_;
+    CRC_t crc_finished_;
 };
 }; // namespace oasys
 
