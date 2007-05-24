@@ -55,6 +55,8 @@ DECLARE_TEST(WriteTest) {
 
 DECLARE_TEST(ReadTest) {
     FileBackedObject obj("check-log-test.fbo", 0);
+    obj.truncate(obj.size() - 2);
+
     CheckedLogReader rd(&obj);
 
     int ret;
@@ -69,11 +71,7 @@ DECLARE_TEST(ReadTest) {
     CHECK(memcmp(buf.raw_buf(), str[1], strlen(str[1])) == 0);
 
     ret = rd.read_record(&buf);
-    CHECK(ret == 0);
-    CHECK(memcmp(buf.raw_buf(), str[2], strlen(str[2])) == 0);
-
-    ret = rd.read_record(&buf);
-    CHECK(ret == CheckedLogReader::END);
+    CHECK(ret == CheckedLogReader::BAD_CRC);
 
     return UNIT_TEST_PASSED;
 }

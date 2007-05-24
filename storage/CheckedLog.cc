@@ -118,6 +118,13 @@ CheckedLogReader::read_record(ExpandableBuffer* buf)
 
     size_t len = (len_buf[0] << 24) | (len_buf[1] << 16) | 
                  (len_buf[2] << 8) | len_buf[3];
+
+    // sanity check so we don't run out of memory due to corruption
+    if (len > obj_->size())
+    {
+        return BAD_CRC;
+    }
+    
     buf->reserve(len);
     cc = obj_->read_bytes(cur_offset_, 
                           reinterpret_cast<u_char*>(buf->raw_buf()),
