@@ -36,8 +36,15 @@ proc after_forever {} {
 proc event_loop {} {
     global event_loop_wait
     after_forever
-    set event_loop_wait 0
-    vwait event_loop_wait
+
+    set event_loop_wait 1
+    while {$event_loop_wait} {
+	after 1000 { 
+	    global event_loop_wait
+	    if {$event_loop_wait} { set event_loop_wait 1 }
+	}
+	vwait event_loop_wait
+    }
     command_log notice "exiting event loop"
 }
 
@@ -50,7 +57,7 @@ proc do_nothing {} {
 proc exit_event_loop {} {
     global forever_timer event_loop_wait stdin
     command_log notice "kicking event loop to exit"
-    set event_loop_wait 1
+    set event_loop_wait 0
     if [catch {
 	::tclreadline::readline eof
     } err] {

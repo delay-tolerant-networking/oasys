@@ -1,24 +1,20 @@
-/*
- *    Copyright 2004-2006 Intel Corporation
- * 
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- * 
- *        http://www.apache.org/licenses/LICENSE-2.0
- * 
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
-
-#ifdef HAVE_CONFIG_H
-#  include <config.h>
-#endif
-
 static const char* INIT_COMMAND = 
+"#\n"
+"#    Copyright 2004-2006 Intel Corporation\n"
+"# \n"
+"#    Licensed under the Apache License, Version 2.0 (the \"License\");\n"
+"#    you may not use this file except in compliance with the License.\n"
+"#    You may obtain a copy of the License at\n"
+"# \n"
+"#        http://www.apache.org/licenses/LICENSE-2.0\n"
+"# \n"
+"#    Unless required by applicable law or agreed to in writing, software\n"
+"#    distributed under the License is distributed on an \"AS IS\" BASIS,\n"
+"#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n"
+"#    See the License for the specific language governing permissions and\n"
+"#    limitations under the License.\n"
+"#\n"
+"\n"
 "#\n"
 "# This file is converted into a big C string during the build\n"
 "# process and evaluated in the command interpreter at startup\n"
@@ -41,8 +37,15 @@ static const char* INIT_COMMAND =
 "proc event_loop {} {\n"
 "    global event_loop_wait\n"
 "    after_forever\n"
-"    set event_loop_wait 0\n"
-"    vwait event_loop_wait\n"
+"\n"
+"    set event_loop_wait 1\n"
+"    while {$event_loop_wait} {\n"
+"	after 1000 { \n"
+"	    global event_loop_wait\n"
+"	    if {$event_loop_wait} { set event_loop_wait 1 }\n"
+"	}\n"
+"	vwait event_loop_wait\n"
+"    }\n"
 "    command_log notice \"exiting event loop\"\n"
 "}\n"
 "\n"
@@ -55,7 +58,7 @@ static const char* INIT_COMMAND =
 "proc exit_event_loop {} {\n"
 "    global forever_timer event_loop_wait stdin\n"
 "    command_log notice \"kicking event loop to exit\"\n"
-"    set event_loop_wait 1\n"
+"    set event_loop_wait 0\n"
 "    if [catch {\n"
 "	::tclreadline::readline eof\n"
 "    } err] {\n"
