@@ -62,12 +62,15 @@ proc arg0 { l } {
 }
 
 proc make_rundir_prefix {} {
-    set names [list alpha bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar papa quebec romeo sierra tango uniform victor whiskey xray yankee zulu]
-    foreach n $names {
-	if {! [file exists "$n"]} {
-	    return "$n"
-	}
-    }
+    # XXX/demmer commented this out since it doesn't do the right
+    # thing when sharing machines
+    
+#     set names [list alpha bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar papa quebec romeo sierra tango uniform victor whiskey xray yankee zulu]
+#     foreach n $names {
+# 	if {! [file exists "$n"]} {
+# 	    return "$n"
+# 	}
+#     }
 
     return [pid]
 }
