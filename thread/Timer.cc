@@ -39,7 +39,8 @@ TimerSystem::TimerSystem()
       system_lock_(new SpinLock()),
       notifier_(logpath_),
       timers_(),
-      seqno_(0)
+      seqno_(0),
+      num_cancelled_(0)
 {
     memset(handlers_, 0, sizeof(handlers_));
     memset(signals_, 0, sizeof(signals_));
@@ -130,11 +131,19 @@ TimerSystem::cancel(Timer* timer)
     // the top, we don't bother with it. This makes rescheduling a
     // single timer instance tricky...
     if (timer->pending_) {
+        num_cancelled_++;
         timer->cancelled_ = true;
         return true;
     }
     
     return false;
+}
+
+//----------------------------------------------------------------------
+size_t
+TimerSystem::num_pending_timers()
+{
+    return timers_.size() - num_cancelled_;
 }
 
 //----------------------------------------------------------------------
@@ -184,6 +193,8 @@ TimerSystem::pop_timer(const struct timeval& now)
         log_debug("popping cancelled timer %p at %u.%u", next_timer,
                   (u_int)now.tv_sec, (u_int)now.tv_usec);
         next_timer->cancelled_ = 0;
+        ASSERT(num_cancelled_ > 0);
+        num_cancelled_--;
         
         if (next_timer->cancel_flags_ == Timer::DELETE_ON_CANCEL) {
             log_debug("deleting cancelled timer %p at %u.%u", next_timer,

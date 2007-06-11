@@ -128,6 +128,11 @@ public:
      */
     OnOffNotifier* notifier() { return &notifier_; }
 
+    /**
+     * Return a count of the number of pending timers.
+     */
+    size_t num_pending_timers();
+
 private:
     friend class Singleton<TimerSystem>;
     typedef std::priority_queue<Timer*, 
@@ -145,6 +150,7 @@ private:
     OnOffNotifier notifier_;
     TimerQueue timers_;
     u_int32_t   seqno_;       ///< seqno used to break ties
+    size_t      num_cancelled_; ///< needed for accurate pending_timer count
 
     TimerSystem();
     virtual ~TimerSystem();
