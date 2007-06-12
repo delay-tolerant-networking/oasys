@@ -453,8 +453,8 @@ void _name::add_tests()                                         \
     } } while(0)
 
 #define CHECK_EQUALSTR(_a, _b)                                          \
-    do { const char* a = _a; const char* b = _b;                        \
-        if (strcmp((a), (b)) != 0) {                                    \
+    do { const std::string a(_a); const std::string b(_b);              \
+        if (a != b) {                                                   \
         errno_ = errno;                                                 \
         strerror_ = strerror(errno_);                                   \
         ::oasys::Breaker::break_here();                                 \
@@ -462,29 +462,30 @@ void _name::add_tests()                                         \
                     "CHECK FAILED: '%s' != '%s' at %s:%d.",             \
                     #_a, #_b, __FILE__, __LINE__);                      \
         log_err_p("/test", "Contents of %s (length %zu): ",             \
-                  #_a, strlen(a));                                      \
-        oasys::PrettyPrintBuf buf_a(a, strlen(a));                      \
+                  #_a, a.length());                                     \
+        oasys::PrettyPrintBuf buf_a(a.c_str(), a.length());             \
         std::string s;                                                  \
         bool done;                                                      \
         do {                                                            \
             done = buf_a.next_str(&s);                                  \
-            log_err_p("/test", s.c_str());                              \
+            log_err_p("/test", "%s", s.c_str());                        \
         } while (!done);                                                \
                                                                         \
         log_err_p("/test", "Contents of %s (length %zu): ",             \
-                  #_b, strlen(b));                                      \
-        oasys::PrettyPrintBuf buf_b(b, strlen(b));                      \
+                  #_b, b.length());                                     \
+        oasys::PrettyPrintBuf buf_b(b.c_str(), b.length());             \
                                                                         \
         do {                                                            \
             done = buf_b.next_str(&s);                                  \
-            log_err_p("/test", s.c_str());                              \
+            log_err_p("/test", "%s", s.c_str());                        \
         } while (!done);                                                \
                                                                         \
         return oasys::UNIT_TEST_FAILED;                                 \
     } else {                                                            \
         log_notice_p("/test",                                           \
                     "CHECK '%s' (%s) == '%s' (%s) at %s:%d",            \
-                    #_a, (a), #_b, (b), __FILE__, __LINE__);            \
+                     #_a, (a.c_str()), #_b, (b.c_str()),                \
+                     __FILE__, __LINE__);                               \
     } } while(0);
 
 #define CHECK_EQUALSTRN(a, b, len)                                              \
