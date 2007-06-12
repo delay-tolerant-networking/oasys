@@ -517,14 +517,14 @@ URI::decode_authority()
 
             c = userinfo.at(p + 1);
             if (isalpha(c) && islower(c)) {
-                decoded_userinfo.append(1, toupper(c));
+                decoded_userinfo.append(1, static_cast<char>(toupper(c)));
             } else {
                 decoded_userinfo.append(1, c);
             }
                 
             c = userinfo.at(p + 2);
             if (isalpha(c) && islower(c)) {
-                decoded_userinfo.append(1, toupper(c));
+                decoded_userinfo.append(1, static_cast<char>(toupper(c)));
             } else {
                 decoded_userinfo.append(1, c);
             }
@@ -569,14 +569,14 @@ URI::decode_authority()
 
             c = host.at(p + 1);
             if (isalpha(c) && islower(c)) {
-                decoded_host.append(1, toupper(c));
+                decoded_host.append(1, static_cast<char>(toupper(c)));
             } else {
                 decoded_host.append(1, c);
             }
                 
             c = host.at(p + 2);
             if (isalpha(c) && islower(c)) {
-                decoded_host.append(1, toupper(c));
+                decoded_host.append(1, static_cast<char>(toupper(c)));
             } else {
                 decoded_host.append(1, c);
             }
@@ -975,14 +975,14 @@ URI::decode_path()
 
             c = path.at(p + 1);
             if (isalpha(c) && islower(c)) {
-                decoded_path.append(1, toupper(c));
+                decoded_path.append(1, static_cast<char>(toupper(c)));
             } else {
                 decoded_path.append(1, c);
             }
                 
             c = path.at(p + 2);
             if (isalpha(c) && islower(c)) {
-                decoded_path.append(1, toupper(c));
+                decoded_path.append(1, static_cast<char>(toupper(c)));
             } else {
                 decoded_path.append(1, c);
             }
@@ -1093,14 +1093,14 @@ URI::decode_query()
 
             c = query.at(p + 1);
             if (isalpha(c) && islower(c)) {
-                decoded_query.append(1, toupper(c));
+                decoded_query.append(1, static_cast<char>(toupper(c)));
             } else {
                 decoded_query.append(1, c);
             }
                 
             c = query.at(p + 2);
             if (isalpha(c) && islower(c)) {
-                decoded_query.append(1, toupper(c));
+                decoded_query.append(1, static_cast<char>(toupper(c)));
             } else {
                 decoded_query.append(1, c);
             }
@@ -1213,14 +1213,14 @@ URI::decode_fragment()
 
             c = fragment.at(p + 1);
             if (isalpha(c) && islower(c)) {
-                decoded_fragment.append(1, toupper(c));
+                decoded_fragment.append(1, static_cast<char>(toupper(c)));
             } else {
                 decoded_fragment.append(1, c);
             }
                 
             c = fragment.at(p + 2);
             if (isalpha(c) && islower(c)) {
-                decoded_fragment.append(1, toupper(c));
+                decoded_fragment.append(1, static_cast<char>(toupper(c)));
             } else {
                 decoded_fragment.append(1, c);
             }
