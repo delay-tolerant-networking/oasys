@@ -26,7 +26,6 @@ namespace oasys {
 typedef enum uri_parse_err_t {
     URI_PARSE_OK,             /* valid URI */
     URI_PARSE_NO_URI,         /* no URI in object */
-    URI_PARSE_NOT_PARSED,     /* URI not parsed yet */
     URI_PARSE_NO_SEP,         /* missing seperator char ':' */
     URI_PARSE_BAD_PERCENT,    /* invalid percent-encoded character */
     URI_PARSE_BAD_IP_LITERAL, /* invalid IP-literal encoding */
@@ -49,25 +48,22 @@ public:
     /**
      * Default constructor.
      */
-    URI(): port_include_(false), port_num_(0),
-           parse_err_(URI_PARSE_NO_URI),
-           validate_(true), normalize_(true) {}
+    URI() : port_num_(0),
+            parse_err_(URI_PARSE_NO_URI),
+            validate_(true),
+            normalize_(true) {}
 
     /**
-     * Constructs a URI from the given std::string.
+     * Constructs a URI from the given string.
      */
-    URI(const std::string& uri, bool validate = true):
-        uri_(uri), port_include_(false), port_num_(0),
-        validate_(validate), normalize_(true)
-        { reset_parsing_status(); }
-
-    /**
-     * Constructs a URI from the given character string.
-     */
-    URI(const char* uri, bool validate = true):
-        uri_(uri), port_include_(false), port_num_(0),
-        validate_(validate), normalize_(true)
-        { reset_parsing_status(); }
+    URI(const std::string& uri, bool validate = true, bool normalize = true):
+        uri_(uri),
+        port_num_(0),
+        validate_(validate),
+        normalize_(normalize)
+    {
+        parse();
+    }
 
     /**
      * Deep copy constructor.
@@ -84,7 +80,6 @@ public:
         userinfo_(uri.userinfo_),
         host_(uri.host_),
         port_(uri.port_),
-        port_include_(uri.port_include_),
         port_num_(uri.port_num_),
         parse_err_(uri.parse_err_),
         validate_(uri.validate_),
@@ -96,93 +91,83 @@ public:
     ~URI() {}
 
     /**
-     * Parse the internal URI into its components, validate the URI
-     * (if flagged to do so), and normalize the URI (if flagged to
-     * do so).
-     *
-     * @return status code
-     */
-    uri_parse_err_t parse();
-
-    /**
      * Set the URI to be the given std::string.
      */
     void assign(const std::string& str) {
-             clear();
-             uri_.assign(str);
-             reset_parsing_status();
+        clear();
+        uri_.assign(str);
+        parse();
     }
 
     /**
      * Set the URI to be the given character string.
      */
     void assign(const char* str, size_t len) {
-             clear();
-             uri_.assign(str, len);
-             reset_parsing_status();
+        clear();
+        uri_.assign(str, len);
+        parse();
     }
 
     /**
      * Set the URI to be the same as the given URI.
      */
     void assign(const URI& other) {
-             clear();
+        clear();
 
-             uri_          = other.uri_;
-             scheme_       = other.scheme_;
-             ssp_          = other.ssp_;
-             authority_    = other.authority_;
-             path_         = other.path_;
-             query_        = other.query_;
-             fragment_     = other.fragment_;
-             userinfo_     = other.userinfo_;
-             host_         = other.host_;
-             port_         = other.port_;
-             port_include_ = other.port_include_;
-             port_num_     = other.port_num_;
-             parse_err_    = other.parse_err_;
-             validate_     = other.validate_;
-             normalize_    = other.normalize_;
+        uri_          = other.uri_;
+        scheme_       = other.scheme_;
+        ssp_          = other.ssp_;
+        authority_    = other.authority_;
+        path_         = other.path_;
+        query_        = other.query_;
+        fragment_     = other.fragment_;
+        userinfo_     = other.userinfo_;
+        host_         = other.host_;
+        port_         = other.port_;
+        port_num_     = other.port_num_;
+        parse_err_    = other.parse_err_;
+        validate_     = other.validate_;
+        normalize_    = other.normalize_;
     }
 
     /**
      * Clear the URI components, and main URI string if not flagged otherwise.
      */
     void clear(bool clear_uri = true) {
-             if (clear_uri)
-                 uri_.erase();
-             reset_parsing_status();
-
-             scheme_.erase();
-             ssp_.erase();
-             authority_.erase();
-             path_.erase();
-             query_.erase();
-             fragment_.erase();
-             userinfo_.erase();
-             host_.erase();
-             port_.erase();
-             port_include_ = false;
-             port_num_ = true;
+        if (clear_uri) {
+            uri_.erase();
+        }
+        parse_err_ = URI_PARSE_NO_URI;
+        
+        scheme_.clear();
+        ssp_.clear();
+        authority_.clear();
+        path_.clear();
+        query_.clear();
+        fragment_.clear();
+        userinfo_.clear();
+        host_.clear();
+        port_.clear();
+        port_num_ = 0;
     }
 
     /**
      * Operator overload for equality operator.
      */
     bool operator==(const URI& other) const
-             { return (uri_ == other.uri_); }
+    { return (uri_ == other.uri_); }
 
     /**
      * Operator overload for inequality operator.
      */
     bool operator!=(const URI& other) const
-             { return (uri_ != other.uri_); }
+    { return (uri_ != other.uri_); }
 
     /**
      * Operator overload for less-than operator.
      */
     bool operator<(const URI& other) const
-             { return (uri_ < other.uri_); }
+    { return (uri_ < other.uri_); }
 
     /**
      * Three-way lexographical comparison
@@ -193,20 +178,14 @@ public:
     }
 
     /**
-     * Rebuild (and parse) the URI from the scheme and SSP components.
-     *
-     * @return true if the URI is valid, false if not.
-     */
-    uri_parse_err_t format() {
-        uri_ = scheme_ + ":" + ssp_;
-        return parse();
-    }
-
-    /**
-     * Virtual from SerializableObject.
+     * Virtual from SerializableObject. Note that it is the
+     * responsibility of a containing class to call parse() after
+     * unserialization.
      */
     void serialize(SerializeAction* a)
-             { a->process("uri", &uri_); }
+    {
+        a->process("uri", &uri_);
+    }
 
     /**
      * Set validate and normalize flags.
@@ -214,38 +193,65 @@ public:
     void set_validate(bool validate = true)   { validate_ = validate; }
     void set_normalize(bool normalize = true) { normalize_ = normalize; }
 
+    /// @{ Accessors
+    uri_parse_err_t   parse_status() const { return parse_err_; }
+    bool              valid()        const { return (parse_err_ == URI_PARSE_OK); }
+    const std::string& uri()         const { return uri_; }
+    const char*       c_str()        const { return uri_.c_str(); }
+    const std::string scheme()       const { return uri_.substr(scheme_.offset_,
+                                                                scheme_.length_); }
+    const std::string ssp()          const { return uri_.substr(ssp_.offset_,
+                                                                ssp_.length_); }
+    const std::string authority()    const { return uri_.substr(authority_.offset_,
+                                                                authority_.length_); }
+    const std::string userinfo()     const { return uri_.substr(userinfo_.offset_,
+                                                                userinfo_.length_); }
+    const std::string host()         const { return uri_.substr(host_.offset_,
+                                                                host_.length_); }
+    const std::string port()         const { return uri_.substr(port_.offset_,
+                                                                port_.length_); }
+    const std::string path()         const { return uri_.substr(path_.offset_,
+                                                                path_.length_); }
+    const std::string query()        const { return uri_.substr(query_.offset_,
+                                                                query_.length_); }
+    const std::string fragment()     const { return uri_.substr(fragment_.offset_,
+                                                                fragment_.length_); }
+    unsigned int      port_num()     const { return port_num_; }
+    /// @}
+
+    /// @{ Setters
+    void set_scheme(const std::string& scheme);
+    void set_ssp(const std::string& ssp);
+    void set_authority(const std::string& authority);
+    void set_userinfo(const std::string& userinfo);
+    void set_host(const std::string& host);
+    void set_port(const std::string& port);
+    void set_path(const std::string& path);
+    void set_query(const std::string& query);
+    void set_fragment(const std::string& fragment);
+    /// @}
+
     /**
-     * Accessors
+     * Return the value for the specified parameter of the query
+     * string or "" if there is no such parameter.
+     *
+     * e.g. for scheme://authority/path?foo=bar;bar=baz
+     *      query_value("foo") -> "bar"
+     *      query_value("bar") -> "baz"
+     *      query_value("baz") -> ""
      */
-    bool valid() const
-             { return (parse_err_ == URI_PARSE_OK); }
-    bool parsed() const
-             { return ((parse_err_ != URI_PARSE_NO_URI) &&
-                       (parse_err_ != URI_PARSE_NOT_PARSED)); }
-
-    uri_parse_err_t    parse_status() const { return parse_err_; }
-
-    bool               validate()     const { return validate_; }
-    bool               normalize()    const { return normalize_; }
-
-    const std::string& uri()          const { return uri_; }
-    const std::string& scheme()       const { return scheme_; }
-    const std::string& ssp()          const { return ssp_; }
-    std::string*       ssp_ptr()            { return &ssp_; }
-
-    const std::string& authority()    const { return authority_; }
-    const std::string& userinfo()     const { return userinfo_; }
-    const std::string& host()         const { return host_; }
-    const std::string& port()         const { return port_; }
-    const std::string& path()         const { return path_; }
-    const std::string& query()        const { return query_; }
-    const std::string& fragment()     const { return fragment_; }
-
-    unsigned int       port_num()     const { return port_num_; }
-
-    const char*        c_str()        const { return uri_.c_str(); }
+    const std::string query_value(const std::string& param) const;
 
 private:
+    /**
+     * Parse the internal URI into its components, validate the URI
+     * (if flagged to do so), and normalize the URI (if flagged to
+     * do so).
+     *
+     * @return status code
+     */
+    uri_parse_err_t parse();
+    
     /**
      * Parse URI scheme-specific parts (SSP) based on generic rules
      * defined in RFC 3986.
@@ -260,14 +266,15 @@ private:
      *
      * @return status code
      */
-    uri_parse_err_t validate_scheme_name();
-    uri_parse_err_t validate_userinfo();
-    uri_parse_err_t validate_host();
-    uri_parse_err_t validate_port();
-    uri_parse_err_t validate_path();
-    uri_parse_err_t validate_query();
-    uri_parse_err_t validate_fragment();
-    uri_parse_err_t validate_ip_literal(const std::string& host);
+    uri_parse_err_t validate();
+    uri_parse_err_t validate_scheme_name() const;
+    uri_parse_err_t validate_userinfo() const;
+    uri_parse_err_t validate_host() const;
+    uri_parse_err_t validate_port() const;
+    uri_parse_err_t validate_path() const;
+    uri_parse_err_t validate_query() const;
+    uri_parse_err_t validate_fragment() const;
+    uri_parse_err_t validate_ip_literal(const std::string& host) const;
  
     /**
      * Normalize the URI to the standard format as described in RFC 3986
@@ -300,56 +307,62 @@ private:
      * @return true if the character is an "unreserved" character as
      * defined by RFC 3986, false if not.
      */
-    bool is_unreserved(char c);
+    static bool is_unreserved(char c);
 
     /**
      * @return true if the character is a "sub-delims" character as
      * defined by RFC 3986, false if not.
      */
-    bool is_sub_delim(char c);
+    static bool is_sub_delim(char c);
 
     /**
      * @return true if the character is a hexidecimal character, false if not.
      */
-    bool is_hexdig(char c);
+    static bool is_hexdig(char c);
 
-    /**
-     * Reset the parsing status based on existence of URI string.
-     */ 
-    void reset_parsing_status() {
-             if (uri_.empty()) {
-                 parse_err_ = URI_PARSE_NO_URI;
-             } else {
-                 parse_err_ = URI_PARSE_NOT_PARSED;
-             }
-    }
-
-    /**
-     * Data Members
+    /*
+     * Data Members. For efficiency's sake, and to make inspection via
+     * gdb simpler, we store a single std::string buffer containing
+     * the whole URI and offset/length pairs for the subcomponents.
      */
-    std::string     uri_;          // URI string
+    
+    struct Component {
+        Component() : offset_(0), length_(0) {}
 
-    std::string     scheme_;       // scheme component (not including ':')
-    std::string     ssp_;          // scheme-specific part (SSP) components
+        void clear()
+        {
+            offset_ = 0;
+            length_ = 0;
+        }
 
-    std::string     authority_;    // authority component
-    std::string     path_;         // path component
-    std::string     query_;        // query component
-    std::string     fragment_;     // fragment component
+        void adjust_offset(int diff);
+        void adjust_length(int diff);
 
-    std::string     userinfo_;     // userinfo subcomponent of authority
-    std::string     host_;         // host subcomponent of authority
-    std::string     port_;         // port subcomponent of authority
+        size_t offset_;
+        size_t length_;
+    };
+    
+    std::string uri_;          // URI string
 
-    bool            port_include_; // port separator ':' included
-    unsigned int    port_num_;     // port as integer; 0 if no port
+    Component   scheme_;       // scheme component (not including ':')
+    Component   ssp_;          // scheme-specific part (SSP) components
+    Component   authority_;    // authority component
+    Component   path_;         // path component
+    Component   query_;        // query component
+    Component   fragment_;     // fragment component
+    Component   userinfo_;     // userinfo subcomponent of authority
+    Component   host_;         // host subcomponent of authority
+    Component   port_;         // port subcomponent of authority
+    
+    unsigned int    port_num_; // port as integer; 0 if no port
 
-    uri_parse_err_t parse_err_;    // parsing status
+    uri_parse_err_t parse_err_;// parsing status
 
-    bool            validate_;     // true if URI is to be validated
-    bool            normalize_;    // true if URI is to be normalized
+    bool            validate_; // true if URI is to be validated
+    bool            normalize_;// true if URI is to be normalized
 };
 
 } // namespace oasys
 
 #endif /* _OASYS_URI_H_ */
+

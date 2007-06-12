@@ -49,13 +49,10 @@ URI::parse()
         return (parse_err_ = URI_PARSE_BAD_SCHEME);
     }
 
-    scheme_.assign(uri_, 0, scheme_len);
-
-    size_t ssp_start = scheme_len + 1; // skip semicolon
-    size_t ssp_len   = uri_.length() - ssp_start;
-    if (ssp_len > 0) {
-        ssp_.assign(uri_, ssp_start, ssp_len);
-    }
+    scheme_.offset_ = 0;
+    scheme_.length_ = scheme_len;
+    ssp_.offset_    = scheme_len + 1; // skip colon
+    ssp_.length_    = uri_.length() - ssp_.offset_;
 
     uri_parse_err_t err;
     if (((err = parse_generic_ssp()) != URI_PARSE_OK) ||
@@ -63,21 +60,19 @@ URI::parse()
         return (parse_err_ = err);
     }
 
+    // need to store the fact that the parsing phase has completed
+    // since the validation part may end up needing to call one of the
+    // setter functions
+    parse_err_ = URI_PARSE_OK;
+    
     if (validate_) {
-        uri_parse_err_t err;
-        if (((err = validate_scheme_name()) != URI_PARSE_OK) ||
-            ((err = validate_userinfo()) != URI_PARSE_OK) ||
-            ((err = validate_host()) != URI_PARSE_OK) ||
-            ((err = validate_port()) != URI_PARSE_OK) ||
-            ((err = validate_path()) != URI_PARSE_OK) ||
-            ((err = validate_query()) != URI_PARSE_OK) ||
-            ((err = validate_fragment()) != URI_PARSE_OK)) {
+        if ((err = validate()) != URI_PARSE_OK) {
             return (parse_err_ = err);
         }
+    }
 
-        if (normalize_) {
-            normalize();
-        }
+    if (normalize_) {
+        normalize();
     }
 
     return (parse_err_ = URI_PARSE_OK);
@@ -87,101 +82,137 @@ URI::parse()
 uri_parse_err_t
 URI::parse_generic_ssp()
 {
-    if (ssp_.empty()) {
+    if (ssp_.length_ == 0) {
         log_debug_p(URI_LOG, "URI::parse_generic_ssp: empty ssp");
+
+        // make sure all the components also reflect the empty ssp
+        // (i.e. they need a correct offset_ and 0 length)
+        authority_ = path_ = query_ = fragment_ = ssp_;
+        userinfo_ = host_ = port_ = ssp_;
         return URI_PARSE_OK;
     }
 
-    size_t curr_pos = 0;
+    size_t curr_pos = ssp_.offset_;
 
     // check for presence of authority component
-    if ((ssp_.length() >= 2) && (ssp_.substr(0,2) == "//")) {
-        size_t authority_end = ssp_.find_first_of("/?#", 2);
+    if ((ssp_.length_ >= 2) &&
+        (uri_.at(curr_pos) == '/') && (uri_.at(curr_pos + 1) == '/'))
+    {
+        size_t authority_end = uri_.find_first_of("/?#", curr_pos + 2);
         if (authority_end == std::string::npos) {
-            authority_end = ssp_.length();
+            authority_end = uri_.length();
         }
 
         size_t authority_start = curr_pos;
         size_t authority_len   = authority_end - authority_start;
         ASSERT(authority_len > 0);
 
-        authority_.assign(ssp_, authority_start, authority_len);
-        curr_pos = authority_end;
+        authority_.offset_ = authority_start;
+        authority_.length_ = authority_len;
+        
+        curr_pos = authority_end;        
+    } else {
+        authority_.offset_ = curr_pos;
+        authority_.length_ = 0;
     }
 
     // path component is required (although it may be empty)
-    if (curr_pos != ssp_.length()) {
-        size_t path_end = ssp_.find_first_of("?#", curr_pos);
+    if (curr_pos != uri_.length()) {
+        size_t path_end = uri_.find_first_of("?#", curr_pos);
         if (path_end == std::string::npos) {
-            path_end = ssp_.length();
+            path_end = uri_.length();
         }
 
         size_t path_start = curr_pos;
         size_t path_len   = path_end - path_start;
-        if (path_len > 0) {
-            path_.assign(ssp_, path_start, path_len);
-        }
+
+        path_.offset_ = path_start;
+        path_.length_ = path_len;
 
         curr_pos = path_end;
+    } else {
+        path_.offset_ = curr_pos;
+        path_.length_ = 0;
     }
-
+    
     // check for presence of query component
-    if ((curr_pos != ssp_.length()) && (ssp_.at(curr_pos) == '?')) {
-        size_t query_end = ssp_.find('#', curr_pos);
+    if ((curr_pos != uri_.length()) && (uri_.at(curr_pos) == '?')) {
+        size_t query_end = uri_.find('#', curr_pos);
         if (query_end == std::string::npos) {
-            query_end = ssp_.length();
+            query_end = uri_.length();
         }
 
         size_t query_start = curr_pos;
         size_t query_len   = query_end - query_start;
         ASSERT(query_len > 0);
 
-        query_.assign(ssp_, query_start, query_len);
+        query_.offset_ = query_start;
+        query_.length_ = query_len;
         curr_pos = query_end;
+    } else {
+        query_.offset_ = curr_pos;
+        query_.length_ = 0;
     }
 
     // check for presence of fragment component
-    if ((curr_pos != ssp_.length()) && (ssp_.at(curr_pos) == '#')) {
+    if ((curr_pos != uri_.length()) && (uri_.at(curr_pos) == '#')) {
         size_t fragment_start = curr_pos;
-        size_t fragment_len   = ssp_.length() - fragment_start;
+        size_t fragment_len   = uri_.length() - fragment_start;
         ASSERT(fragment_len > 0);
         
-        fragment_.assign(ssp_, fragment_start, fragment_len);
-        curr_pos = ssp_.length();
+        fragment_.offset_ = fragment_start;
+        fragment_.length_ = fragment_len;
+        curr_pos = uri_.length();
+    } else {
+        fragment_.offset_ = curr_pos;
+        fragment_.length_ = 0;
     }
 
-    ASSERT(curr_pos == ssp_.length());
+    ASSERT(curr_pos == uri_.length());
 
     return URI_PARSE_OK;
 }
-
+ 
 //----------------------------------------------------------------------
 uri_parse_err_t
 URI::parse_authority()
 {
-    if (authority_.empty()) {
+    if (authority_.length_ == 0) {
+        // make sure the offset and length is properly set for the
+        // subcomponents
+        userinfo_ = host_ = port_ = authority_;
         return URI_PARSE_OK;
     }
 
-    ASSERT(authority_.length() >= 2);
-    ASSERT(authority_.substr(0, 2) == "//");
+    // XXX/demmer this and some other parse/validate routines could be
+    // more efficient by not necessarily requiring the local temporary
+    // var but instead working with the uri_ string directly
+    const std::string& authority = this->authority();
+    
+    ASSERT(authority.length() >= 2);
+    ASSERT(authority.substr(0, 2) == "//");
 
     size_t curr_pos = 2; // skip initial "//" characters
 
     // check for presence of user information subcomponent
-    size_t userinfo_end = authority_.find('@', curr_pos);
+    size_t userinfo_end = authority.find('@', curr_pos);
     if (userinfo_end != std::string::npos) {
         size_t userinfo_len = (userinfo_end + 1) - curr_pos; // includes '@'
-        userinfo_.assign(authority_, curr_pos, userinfo_len);
+        
+        userinfo_.offset_ = authority_.offset_ + curr_pos;
+        userinfo_.length_ = userinfo_len;
 
         curr_pos = userinfo_end + 1; // skip the @ character
+    } else {
+        userinfo_.offset_ = authority_.offset_ + curr_pos;
+        userinfo_.length_ = 0;
     }
 
     // host subcomponent is required (although it may be empty)
-    if (curr_pos != authority_.length()) {
+    if (curr_pos != authority.length()) {
         size_t host_end;
-        if (authority_.at(curr_pos) == '[') {
-            host_end = authority_.find(']', curr_pos);
+        if (authority.at(curr_pos) == '[') {
+            host_end = authority.find(']', curr_pos);
             if (host_end == std::string::npos) {
                 log_debug_p(URI_LOG, "URI::parse_authority: "
                             "literal host component must end with ']'");
@@ -189,40 +220,69 @@ URI::parse_authority()
             }
             host_end++; // include '[' character
         } else {
-            host_end = authority_.find(':', curr_pos);
+            host_end = authority.find(':', curr_pos);
             if (host_end == std::string::npos) {
-                host_end = authority_.length();
+                host_end = authority.length();
             }
         }
 
         size_t host_len = host_end - curr_pos;
-        if (host_len > 0) {
-            host_.assign(authority_, curr_pos, host_len);
-        }
+        host_.offset_ = authority_.offset_ + curr_pos;
+        host_.length_ = host_len;
 
         curr_pos = host_end;
+    } else {
+        host_.offset_ = authority_.offset_ + curr_pos;
+        host_.length_ = 0;
     }
 
     // check for presence of port subcomponent
-    if (curr_pos != authority_.length()) {
-        if (authority_.at(curr_pos) != ':') {
+    if (curr_pos != authority.length()) {
+        if (authority.at(curr_pos) != ':') {
             log_debug_p(URI_LOG, "URI::parse_authority: "
                         "semicolon expected prior to port");
             return URI_PARSE_BAD_PORT;
         }
-        port_include_ = true;
         
         size_t port_start = curr_pos + 1; // skip ':' character
-        size_t port_len   = authority_.length() - port_start;
+        size_t port_len   = authority.length() - port_start;
+
+        port_.offset_ = authority_.offset_ + port_start;
+        port_.length_ = port_len;
+        
         if (port_len > 0) {
-            port_.assign(authority_, port_start, port_len);
+            // assign port_num here, though the validity of the string
+            // isn't checked until validate_port
+            port_num_ = atoi(port().c_str());
         }
 
-        curr_pos = authority_.length();
+        curr_pos = authority.length();
+    } else {
+        port_.offset_ = authority_.offset_ + curr_pos;
+        port_.length_ = 0;
     }
 
-    ASSERT(curr_pos == authority_.length());
+    ASSERT(curr_pos == authority.length());
 
+    return URI_PARSE_OK;
+}
+
+//----------------------------------------------------------------------
+uri_parse_err_t
+URI::validate()
+{
+    ASSERT(validate_);
+    
+    uri_parse_err_t err;
+    if (((err = validate_scheme_name()) != URI_PARSE_OK) ||
+        ((err = validate_userinfo()) != URI_PARSE_OK) ||
+        ((err = validate_host()) != URI_PARSE_OK) ||
+        ((err = validate_port()) != URI_PARSE_OK) ||
+        ((err = validate_path()) != URI_PARSE_OK) ||
+        ((err = validate_query()) != URI_PARSE_OK) ||
+        ((err = validate_fragment()) != URI_PARSE_OK)) {
+        return (parse_err_ = err);
+    }
     return URI_PARSE_OK;
 }
 
@@ -238,18 +298,17 @@ URI::normalize()
     normalize_query();
     normalize_fragment();
 
-    ssp_ = authority_ + path_ + query_ + fragment_;
-    uri_ = scheme_ + ":" + ssp_;
-
     log_debug_p("/oasys/util/uri/", "URI::normalize: "
                 "normalized URI %s", uri_.c_str());
 }
 
 //----------------------------------------------------------------------
 uri_parse_err_t
-URI::validate_scheme_name()
+URI::validate_scheme_name() const
 {
-    std::string::iterator iter = scheme_.begin();
+    const std::string& scheme = this->scheme();
+    
+    std::string::const_iterator iter = scheme.begin();
 
     if (!isalpha(*iter)) {
         log_debug_p(URI_LOG, "URI::validate_scheme_name: "
@@ -258,7 +317,7 @@ URI::validate_scheme_name()
     }
     ++iter;
 
-    for(; iter != scheme_.end(); ++iter) {
+    for(; iter != scheme.end(); ++iter) {
         char c = *iter;
         if (isalnum(c) || (c == '+') || (c == '-') || (c == '.'))
             continue;
@@ -276,27 +335,29 @@ void
 URI::normalize_scheme()
 {
     // alpha characters should be lowercase within the scheme name
-    for (unsigned int i = 0; i < scheme_.length(); ++i) {
-        char c = scheme_.at(i);
+    for (unsigned int i = 0; i < scheme_.length_; ++i) {
+        char c = uri_.at(scheme_.offset_ + i);
         if (isalpha(c) && isupper(c)) {
-            scheme_.replace(i, 1, 1, tolower(c));
+            uri_.replace(scheme_.offset_ + i, 1, 1, tolower(c));
         }
     }
 }
 
 //----------------------------------------------------------------------
 uri_parse_err_t
-URI::validate_userinfo()
+URI::validate_userinfo() const
 {
-    if (userinfo_.empty()) {
+    if (userinfo_.length_ == 0) {
         return URI_PARSE_OK;
     }
 
-    ASSERT(userinfo_.at(userinfo_.length() - 1) == '@');
+    const std::string& userinfo = this->userinfo();
+
+    ASSERT(userinfo.at(userinfo.length() - 1) == '@');
 
     // check for valid characters
-    for (unsigned int i = 0; i < (userinfo_.length() - 1); ++i) {
-        char c = userinfo_.at(i);
+    for (unsigned int i = 0; i < (userinfo.length() - 1); ++i) {
+        char c = userinfo.at(i);
         if (is_unreserved(c) ||
             is_sub_delim(c)  ||
             (c == ':')) {
@@ -305,14 +366,14 @@ URI::validate_userinfo()
 
         // check for percent-encoded characters
         if (c == '%') {
-            if (i + 2 >= (userinfo_.length() - 1)) {
+            if (i + 2 >= (userinfo.length() - 1)) {
                 log_debug_p(URI_LOG, "URI::validate_userinfo: "
                             "invalid percent-encoded length in userinfo");
                 return URI_PARSE_BAD_PERCENT;
             }
 
-            if (!is_hexdig(userinfo_.at(i + 1)) ||
-                !is_hexdig(userinfo_.at(i + 2))) {
+            if (!is_hexdig(userinfo.at(i + 1)) ||
+                !is_hexdig(userinfo.at(i + 2))) {
                 log_debug_p(URI_LOG, "URI::validate_userinfo: "
                             "invalid percent-encoding in userinfo");
                 return URI_PARSE_BAD_PERCENT;
@@ -332,23 +393,23 @@ URI::validate_userinfo()
 
 //----------------------------------------------------------------------
 uri_parse_err_t
-URI::validate_host()
+URI::validate_host() const
 {
-    if (host_.empty()) {
+    std::string host = this->host();
+    
+    if (host.empty()) {
         return URI_PARSE_OK;
     }
 
     // check for IP-literal
-    if (host_.at(0) == '[') {
-        ASSERT(host_.at(host_.length() - 1) == ']');
-
-        std::string host(host_, 1, (host_.length() - 2));
-        return validate_ip_literal(host);
+    if (host.at(0) == '[') {
+        ASSERT(host.at(host.length() - 1) == ']');
+        return validate_ip_literal(host.substr(1, host.length() - 2));
     }
 
     // check for valid characters
-    for (unsigned int i = 0; i < host_.length(); ++i) {
-        char c = host_.at(i);
+    for (unsigned int i = 0; i < host.length(); ++i) {
+        char c = host.at(i);
         if (is_unreserved(c) ||
             is_sub_delim(c)) {
             continue;
@@ -356,14 +417,14 @@ URI::validate_host()
 
         // check for percent-encoded characters
         if (c == '%') {
-            if (i + 2 >= host_.length()) {
+            if (i + 2 >= host.length()) {
                 log_debug_p(URI_LOG, "URI::validate_host: "
                             "invalid percent-encoded length in host");
                 return URI_PARSE_BAD_PERCENT; 
             }
 
-            if (!is_hexdig(host_.at(i + 1)) ||
-                !is_hexdig(host_.at(i + 2))) {
+            if (!is_hexdig(host.at(i + 1)) ||
+                !is_hexdig(host.at(i + 2))) {
                 log_debug_p(URI_LOG, "URI::validate_host: "
                             "invalid percent-encoding in host");
                 return URI_PARSE_BAD_PERCENT;
@@ -383,15 +444,17 @@ URI::validate_host()
 
 //----------------------------------------------------------------------
 uri_parse_err_t
-URI::validate_port()
+URI::validate_port() const
 {
-    if (port_.empty()) {
+    if (port_.length_ == 0) {
         return URI_PARSE_OK;
     }
+    
+    const std::string& port = this->port();
 
     // check for valid characters
-    for (unsigned int i = 0; i < port_.length(); ++i) {
-        char c = port_.at(i);
+    for (unsigned int i = 0; i < port.length(); ++i) {
+        char c = port.at(i);
         if (isdigit(c)) {
             continue;
         }
@@ -400,8 +463,6 @@ URI::validate_port()
                     "invalid character in port %c", c);
         return URI_PARSE_BAD_PORT;
     }
-
-    port_num_ = atoi(port_.c_str());
 
     return URI_PARSE_OK;
 }
@@ -413,8 +474,8 @@ URI::normalize_authority()
     decode_authority();
 
     // alpha characters should be lowercase within the host subcomponent
-    for (unsigned int i = 0; i < host_.length(); ++i) {
-        char c = host_.at(i);
+    for (unsigned int i = 0; i < host_.length_; ++i) {
+        char c = uri_.at(host_.offset_ + i);
 
         if (c == '%') { 
             i += 2;
@@ -422,15 +483,7 @@ URI::normalize_authority()
         }
         
         if (isalpha(c) && isupper(c)) {
-            host_.replace(i, 1, 1, tolower(c));
-        }
-    }
-
-    if (!authority_.empty()) {
-        if (port_include_) {
-            authority_ = "//" + userinfo_ + host_ + ":" + port_;
-        } else {
-            authority_ = "//" + userinfo_ + host_;
+            uri_.replace(host_.offset_ + i, 1, 1, tolower(c));
         }
     }
 }
@@ -439,102 +492,116 @@ URI::normalize_authority()
 void
 URI::decode_authority()
 {
-
     // decode percent-encoded characters within userinfo subcomponent 
     size_t p = 0, curr_pos = 0;
+    const std::string& userinfo = this->userinfo();
     std::string decoded_userinfo;
-    while ((p < userinfo_.length()) &&
-          ((p = userinfo_.find('%', p)) != std::string::npos)) {
+    while ((p < userinfo.length()) &&
+          ((p = userinfo.find('%', p)) != std::string::npos)) {
 
-        ASSERT((p + 2) < userinfo_.length());
-        std::string hex_string = userinfo_.substr(p + 1, 2);
+        ASSERT((p + 2) < userinfo.length());
+        std::string hex_string = userinfo.substr(p + 1, 2);
 
         int hex_value;
         sscanf(hex_string.c_str(), "%x", &hex_value);
         char c = (char)hex_value;
-
+        
+        decoded_userinfo.append(userinfo, curr_pos, p - curr_pos);
+        
         // skip "unallowed" characters
         if (!is_unreserved(c) &&
             !is_sub_delim(c)  && 
             (c != ':')) {
 
-            c = userinfo_.at(p + 1);
+            decoded_userinfo.append(1, '%');
+
+            c = userinfo.at(p + 1);
             if (isalpha(c) && islower(c)) {
-                userinfo_.replace(p + 1, 1, 1, toupper(c));
-            }
-            c = userinfo_.at(p + 2);
-            if (isalpha(c) && islower(c)) {
-                userinfo_.replace(p + 2, 1, 1, toupper(c));
+                decoded_userinfo.append(1, toupper(c));
+            } else {
+                decoded_userinfo.append(1, c);
             }
                 
-            p += 3;
-            continue;
+            c = userinfo.at(p + 2);
+            if (isalpha(c) && islower(c)) {
+                decoded_userinfo.append(1, toupper(c));
+            } else {
+                decoded_userinfo.append(1, c);
+            }
+            
+        } else {
+            // change "allowed" characters from hex value to alpha character
+            decoded_userinfo.append(1, c);
         }
-
-        // change "allowed" characters from hex value to alpha character
-        decoded_userinfo.append(userinfo_, curr_pos, p - curr_pos);
-        decoded_userinfo.append(1, c);
 
         p += 3;
         curr_pos = p;
     }
 
     if (!decoded_userinfo.empty()) {
-        ASSERT(curr_pos <= userinfo_.length());
-        decoded_userinfo.append(userinfo_, curr_pos,
-                                userinfo_.length() - curr_pos);
-        userinfo_ = decoded_userinfo;
-    }
+        ASSERT(curr_pos <= userinfo.length());
+        decoded_userinfo.append(userinfo, curr_pos,
+                                userinfo.length() - curr_pos);
+        set_userinfo(decoded_userinfo);
+    }   
 
     // decode percent-encoded characters within host subcomponent 
     p = 0; curr_pos = 0;
+    const std::string& host = this->host();
     std::string decoded_host;
-    while ((p < host_.length()) &&
-          ((p = host_.find('%', p)) != std::string::npos)) {
+    while ((p < host.length()) &&
+          ((p = host.find('%', p)) != std::string::npos)) {
 
-        ASSERT((p + 2) < host_.length());
-        std::string hex_string = host_.substr(p + 1, 2);
+        ASSERT((p + 2) < host.length());
+        std::string hex_string = host.substr(p + 1, 2);
 
         int hex_value;
         sscanf(hex_string.c_str(), "%x", &hex_value);
         char c = (char)hex_value;
         
+        decoded_host.append(host, curr_pos, p - curr_pos);
+        
         // skip "unallowed" characters
         if (!is_unreserved(c) &&
             !is_sub_delim(c)) {
 
-            c = host_.at(p + 1);
+            decoded_host.append(1, '%');
+
+            c = host.at(p + 1);
             if (isalpha(c) && islower(c)) {
-                host_.replace(p + 1, 1, 1, toupper(c));
-            }
-            c = host_.at(p + 2);
-            if (isalpha(c) && islower(c)) {
-                host_.replace(p + 2, 1, 1, toupper(c));
+                decoded_host.append(1, toupper(c));
+            } else {
+                decoded_host.append(1, c);
             }
                 
-            p += 3;
-            continue;
+            c = host.at(p + 2);
+            if (isalpha(c) && islower(c)) {
+                decoded_host.append(1, toupper(c));
+            } else {
+                decoded_host.append(1, c);
+            }
+        } else {
+            // change "allowed" characters from hex value to alpha character
+            decoded_host.append(1, c);
         }
-
-        // change "allowed" characters from hex value to alpha character
-        decoded_host.append(host_, curr_pos, p - curr_pos);
-        decoded_host.append(1, c);
 
         p += 3;
         curr_pos = p;
     }
 
     if (!decoded_host.empty()) {
-        ASSERT(curr_pos <= host_.length());
-        decoded_host.append(host_, curr_pos, host_.length() - curr_pos);
-        host_ = decoded_host;
+        ASSERT(curr_pos <= host.length());
+        decoded_host.append(host, curr_pos, host.length() - curr_pos);
+        set_host(decoded_host);
     }
 }
 
 //----------------------------------------------------------------------
 uri_parse_err_t
-URI::validate_ip_literal(const std::string& host)
+URI::validate_ip_literal(const std::string& host) const
 {
+    // XXX/demmer this should move into another utility function in NetUtils
+    // or something like that.
     if (host.empty()) {
         log_debug_p(URI_LOG, "URI::validate_ip_literal: empty host");
         return URI_PARSE_BAD_IP_LITERAL;
@@ -739,23 +806,25 @@ URI::validate_ip_literal(const std::string& host)
 
 //----------------------------------------------------------------------
 uri_parse_err_t
-URI::validate_path()
+URI::validate_path() const
 {
-    if (path_.empty()) {
+    if (path_.length_ == 0) {
         return URI_PARSE_OK;
     }
+    
+    const std::string& path = this->path();
 
-    if (!authority_.empty()) {
-        ASSERT(path_.at(0) == '/');
+    if (!authority_.length_ == 0) {
+        ASSERT(path.at(0) == '/');
     }
 
-    if (authority_.empty() && (path_.length() >= 2)) {
-        ASSERT(path_.substr(0, 2) != "//");
+    if (authority_.length_ == 0 && (path.length() >= 2)) {
+        ASSERT(path.substr(0, 2) != "//");
     }
 
     // check for valid characters
-    for (unsigned int i = 0; i < path_.length(); ++i) {
-        char c = path_.at(i);
+    for (unsigned int i = 0; i < path.length(); ++i) {
+        char c = path.at(i);
         if (is_unreserved(c) ||
             is_sub_delim(c)  ||
             (c == '/')       ||
@@ -766,14 +835,14 @@ URI::validate_path()
 
         // check for percent-encoded characters
         if (c == '%') {
-            if (i + 2 >= path_.length()) {
+            if (i + 2 >= path.length()) {
                 log_debug_p(URI_LOG, "URI::validate_path: "
                             "invalid percent-encoded length in path");
                 return URI_PARSE_BAD_PERCENT;
             }
 
-            if (!is_hexdig(path_.at(i + 1)) ||
-                !is_hexdig(path_.at(i + 2))) {
+            if (!is_hexdig(path.at(i + 1)) ||
+                !is_hexdig(path.at(i + 2))) {
                 log_debug_p(URI_LOG, "URI::validate_path: "
                             "invalid percent-encoding in path");
                 return URI_PARSE_BAD_PERCENT;
@@ -797,38 +866,42 @@ URI::normalize_path()
 {
     decode_path();
 
+    std::string path = this->path();
+
     // resolve '.' and '..' path segments
+    bool modified = false;
 
     size_t checkpoint = 0, dot_segment;
-    while ((dot_segment = path_.find("./", checkpoint)) != std::string::npos) {
-
-        if ((dot_segment == 0) || (path_.at(dot_segment - 1) == '/')) {
-            path_.erase(dot_segment, 2);
+    while ((dot_segment = path.find("./", checkpoint)) != std::string::npos) {
+        modified = true;
+        
+        if ((dot_segment == 0) || (path.at(dot_segment - 1) == '/')) {
+            path.erase(dot_segment, 2);
             continue;
         }
 
         ASSERT(dot_segment >= 1);
-        if (path_.at(dot_segment - 1) == '.') {
+        if (path.at(dot_segment - 1) == '.') {
             if (dot_segment == 1) {
-                path_.erase(dot_segment - 1, 3);
+                path.erase(dot_segment - 1, 3);
                 continue;
             }
 
             ASSERT(dot_segment >= 2);
-            if (path_.at(dot_segment - 2) == '/') {
+            if (path.at(dot_segment - 2) == '/') {
                 if (dot_segment == 2) {
-                    path_.erase(dot_segment - 1, 3);
+                    path.erase(dot_segment - 1, 3);
                     continue;
                 }
 
                 ASSERT(dot_segment >= 3);
-                size_t prev_seg = path_.find_last_of('/', dot_segment - 3);
+                size_t prev_seg = path.find_last_of('/', dot_segment - 3);
                 if (prev_seg == std::string::npos) {
                     prev_seg = 0;
                 }
 
                 size_t erase_length = (dot_segment + 1) - prev_seg;
-                path_.erase(prev_seg, erase_length);
+                path.erase(prev_seg, erase_length);
                 checkpoint = prev_seg;
                 continue;
             }
@@ -837,30 +910,38 @@ URI::normalize_path()
         checkpoint = dot_segment + 2;
     }
 
-    if ((path_.length() == 1) && (path_.at(0) == '.')) {
-        path_.erase(0, 1);
+    if ((path.length() == 1) && (path.at(0) == '.')) {
+        modified = true;
+        path.erase(0, 1);
 
-    } else if ((path_.length() == 2) && (path_.substr(0, 2) == "..")) {
-        path_.erase(0, 2);
+    } else if ((path.length() == 2) && (path.substr(0, 2) == "..")) {
+        modified = true;
+        path.erase(0, 2);
 
-    } else if ((path_.length() >= 2) &&
-               (path_.substr(path_.length() - 2, 2) == "/.")) {
-        path_.erase(path_.length() - 1, 1);
+    } else if ((path.length() >= 2) &&
+               (path.substr(path.length() - 2, 2) == "/.")) {
+        modified = true;
+        path.erase(path.length() - 1, 1);
 
-    } else if ((path_.length() >= 3) &&
-               (path_.substr(path_.length() - 3, 3) == "/..")) {
-        if (path_.length() == 3) {
-            path_.erase(path_.length() - 2, 2);
+    } else if ((path.length() >= 3) &&
+               (path.substr(path.length() - 3, 3) == "/..")) {
+        modified = true;
+        if (path.length() == 3) {
+            path.erase(path.length() - 2, 2);
         } else {
-            size_t prev_seg = path_.find_last_of('/', path_.length() - 4);
+            size_t prev_seg = path.find_last_of('/', path.length() - 4);
             if (prev_seg == std::string::npos) {
                 prev_seg = 0;
             }
 
-            size_t erase_length = path_.length() - prev_seg;
-            path_.erase(prev_seg, erase_length);
-            path_.append(1, '/');
+            size_t erase_length = path.length() - prev_seg;
+            path.erase(prev_seg, erase_length);
+            path.append(1, '/');
         }
+    }
+    
+    if (modified) {
+        set_path(path);
     }
 }
 
@@ -868,67 +949,75 @@ URI::normalize_path()
 void
 URI::decode_path()
 {
+    const std::string& path = this->path();
     std::string decoded_path;
 
     size_t p = 0, curr_pos = 0;
-    while ((p < path_.length()) &&
-          ((p = path_.find('%', p)) != std::string::npos)) {
+    while ((p < path.length()) &&
+          ((p = path.find('%', p)) != std::string::npos)) {
 
-        ASSERT((p + 2) < path_.length());
-        std::string hex_string = path_.substr(p + 1, 2);
+        ASSERT((p + 2) < path.length());
+        std::string hex_string = path.substr(p + 1, 2);
 
         int hex_value;
         sscanf(hex_string.c_str(), "%x", &hex_value);
         char c = (char)hex_value;
 
+        decoded_path.append(path, curr_pos, p - curr_pos);
+        
         // skip "unallowed" character
         if (!is_unreserved(c) &&
             !is_sub_delim(c)  && 
             (c != ':')        && 
             (c != '@')) {
 
-            c = path_.at(p + 1);
+            decoded_path.append(1, '%');
+
+            c = path.at(p + 1);
             if (isalpha(c) && islower(c)) {
-                path_.replace(p + 1, 1, 1, toupper(c));
-            }
-            c = path_.at(p + 2);
-            if (isalpha(c) && islower(c)) {
-                path_.replace(p + 2, 1, 1, toupper(c));
+                decoded_path.append(1, toupper(c));
+            } else {
+                decoded_path.append(1, c);
             }
                 
-            p += 3;
-            continue;
-        }
+            c = path.at(p + 2);
+            if (isalpha(c) && islower(c)) {
+                decoded_path.append(1, toupper(c));
+            } else {
+                decoded_path.append(1, c);
+            }
 
-        // change "allowed" character from hex value to alpha character
-        decoded_path.append(path_, curr_pos, p - curr_pos);
-        decoded_path.append(1, c);
+        } else {
+            // change "allowed" character from hex value to alpha character
+            decoded_path.append(1, c);
+        }
 
         p += 3;
         curr_pos = p;
     }
 
     if (!decoded_path.empty()) {
-        ASSERT(curr_pos <= path_.length());
-        decoded_path.append(path_, curr_pos, path_.length() - curr_pos);
-        path_ = decoded_path;
+        ASSERT(curr_pos <= path.length());
+        decoded_path.append(path, curr_pos, path.length() - curr_pos);
+        set_path(decoded_path);
     }
 }
 
 //----------------------------------------------------------------------
 uri_parse_err_t
-URI::validate_query()
+URI::validate_query() const
 {
-    if (query_.empty()) {
+    if (query_.length_ == 0) {
         return URI_PARSE_OK;
     }
 
-    ASSERT(query_.at(0) == '?');
+    const std::string& query = this->query();
+    ASSERT(query.at(0) == '?');
 
     // check for valid characters
     unsigned int i = 1; // skip initial question mark character
-    for ( ; i < query_.length(); ++i) {
-        char c = query_.at(i);
+    for ( ; i < query.length(); ++i) {
+        char c = query.at(i);
         if (is_unreserved(c) ||
             is_sub_delim(c)  ||
             (c == ':')       ||
@@ -940,14 +1029,14 @@ URI::validate_query()
 
         // check for percent-encoded characters
         if (c == '%') {
-            if (i + 2 >= query_.length()) {
+            if (i + 2 >= query.length()) {
                 log_debug_p(URI_LOG, "URI::validate_query: "
                             "invalid percent-encoded length in query");
                 return URI_PARSE_BAD_PERCENT;
             }
 
-            if (!is_hexdig(query_.at(i + 1)) ||
-                !is_hexdig(query_.at(i + 2))) {
+            if (!is_hexdig(query.at(i + 1)) ||
+                !is_hexdig(query.at(i + 2))) {
                 log_debug_p(URI_LOG, "URI::validate_query: "
                             "invalid percent-encoding in query");
                 return URI_PARSE_BAD_PERCENT;
@@ -976,19 +1065,22 @@ URI::normalize_query()
 void
 URI::decode_query()
 {
+    const std::string& query = this->query();
     std::string decoded_query;
 
     size_t p = 0, curr_pos = 0;
-    while ((p < query_.length()) &&
-          ((p = query_.find('%', p)) != std::string::npos)) {
+    while ((p < query.length()) &&
+          ((p = query.find('%', p)) != std::string::npos)) {
 
-        ASSERT((p + 2) < query_.length());
-        std::string hex_string = query_.substr(p + 1, 2);
+        ASSERT((p + 2) < query.length());
+        std::string hex_string = query.substr(p + 1, 2);
 
         int hex_value;
         sscanf(hex_string.c_str(), "%x", &hex_value);
         char c = (char)hex_value;
 
+        decoded_query.append(query, curr_pos, p - curr_pos);
+        
         // skip "unallowed" character
         if (!is_unreserved(c) &&
             !is_sub_delim(c)  && 
@@ -997,48 +1089,54 @@ URI::decode_query()
             (c != '/')        && 
             (c != '?')) {
 
-            c = query_.at(p + 1);
+            decoded_query.append(1, '%');
+
+            c = query.at(p + 1);
             if (isalpha(c) && islower(c)) {
-                query_.replace(p + 1, 1, 1, toupper(c));
-            }
-            c = query_.at(p + 2);
-            if (isalpha(c) && islower(c)) {
-                query_.replace(p + 2, 1, 1, toupper(c));
+                decoded_query.append(1, toupper(c));
+            } else {
+                decoded_query.append(1, c);
             }
                 
-            p += 3;
-            continue;
+            c = query.at(p + 2);
+            if (isalpha(c) && islower(c)) {
+                decoded_query.append(1, toupper(c));
+            } else {
+                decoded_query.append(1, c);
+            }
+            
+        } else {
+            // change "allowed" character from hex value to alpha character
+            decoded_query.append(1, c);
         }
-
-        // change "allowed" character from hex value to alpha character
-        decoded_query.append(query_, curr_pos, p - curr_pos);
-        decoded_query.append(1, c);
 
         p += 3;
         curr_pos = p;
     }
 
     if (!decoded_query.empty()) {
-        ASSERT(curr_pos <= query_.length());
-        decoded_query.append(query_, curr_pos, query_.length() - curr_pos);
-        query_ = decoded_query;
+        ASSERT(curr_pos <= query.length());
+        decoded_query.append(query, curr_pos, query.length() - curr_pos);
+        set_query(decoded_query);
     }
 }
 
 //----------------------------------------------------------------------
 uri_parse_err_t
-URI::validate_fragment()
+URI::validate_fragment() const
 {
-    if (fragment_.empty()) {
+    if (fragment_.length_ == 0) {
         return URI_PARSE_OK;
     }
 
-    ASSERT(fragment_.at(0) == '#');
+    const std::string& fragment = this->fragment();
+
+    ASSERT(fragment.at(0) == '#');
 
     // check for valid characters
     unsigned int i = 1; // skip initial number character    
-    for ( ; i < fragment_.length(); ++i) {
-        char c = fragment_.at(i);
+    for ( ; i < fragment.length(); ++i) {
+        char c = fragment.at(i);
         if (is_unreserved(c) ||
             is_sub_delim(c)  ||
             (c == ':')       ||
@@ -1050,14 +1148,14 @@ URI::validate_fragment()
 
         // check for percent-encoded characters
         if (c == '%') {
-            if (i + 2 >= fragment_.length()) {
+            if (i + 2 >= fragment.length()) {
                 log_debug_p(URI_LOG, "URI::validate_fragment: "
                             "invalid percent-encoded length in fragment");
                 return URI_PARSE_BAD_PERCENT;
             }
 
-            if (!is_hexdig(fragment_.at(i + 1)) ||
-                !is_hexdig(fragment_.at(i + 2))) {
+            if (!is_hexdig(fragment.at(i + 1)) ||
+                !is_hexdig(fragment.at(i + 2))) {
                 log_debug_p(URI_LOG, "URI::validate_fragment: "
                             "invalid percent-encoding in fragment");
                 return URI_PARSE_BAD_PERCENT;
@@ -1086,19 +1184,23 @@ URI::normalize_fragment()
 void
 URI::decode_fragment()
 {
+    const std::string& fragment = this->fragment();
+    
     std::string decoded_fragment;
 
     size_t p = 0, curr_pos = 0;
-    while ((p < fragment_.length()) &&
-          ((p = fragment_.find('%', p)) != std::string::npos)) {
+    while ((p < fragment.length()) &&
+          ((p = fragment.find('%', p)) != std::string::npos)) {
 
-        ASSERT((p + 2) < fragment_.length());
-        std::string hex_string = fragment_.substr(p + 1, 2);
+        ASSERT((p + 2) < fragment.length());
+        std::string hex_string = fragment.substr(p + 1, 2);
 
         int hex_value;
         sscanf(hex_string.c_str(), "%x", &hex_value);
         char c = (char)hex_value;
 
+        decoded_fragment.append(fragment, curr_pos, p - curr_pos);
+        
         // skip unallowed character
         if (!is_unreserved(c) &&
             !is_sub_delim(c)  && 
@@ -1107,32 +1209,36 @@ URI::decode_fragment()
             (c != '/')        && 
             (c != '?')) {
 
-            c = fragment_.at(p + 1);
+            decoded_fragment.append(1, '%');
+
+            c = fragment.at(p + 1);
             if (isalpha(c) && islower(c)) {
-                fragment_.replace(p + 1, 1, 1, toupper(c));
-            }
-            c = fragment_.at(p + 2);
-            if (isalpha(c) && islower(c)) {
-                fragment_.replace(p + 2, 1, 1, toupper(c));
+                decoded_fragment.append(1, toupper(c));
+            } else {
+                decoded_fragment.append(1, c);
             }
                 
-            p += 3;
-            continue;
+            c = fragment.at(p + 2);
+            if (isalpha(c) && islower(c)) {
+                decoded_fragment.append(1, toupper(c));
+            } else {
+                decoded_fragment.append(1, c);
+            }
+            
+        } else {
+            // change "allowed" character from hex value to alpha character
+            decoded_fragment.append(1, c);
         }
-
-        // change "allowed" character from hex value to alpha character
-        decoded_fragment.append(fragment_, curr_pos, p - curr_pos);
-        decoded_fragment.append(1, c);
 
         p += 3;
         curr_pos = p;
     }
 
     if (!decoded_fragment.empty()) {
-        ASSERT(curr_pos <= fragment_.length());
-        decoded_fragment.append(fragment_, curr_pos,
-                                fragment_.length() - curr_pos);
-        fragment_ = decoded_fragment;
+        ASSERT(curr_pos <= fragment.length());
+        decoded_fragment.append(fragment, curr_pos,
+                                fragment.length() - curr_pos);
+        set_fragment(decoded_fragment);
     }
 }
 
@@ -1175,6 +1281,263 @@ URI::is_hexdig(char c)
             (c == 'd') || (c == 'D') ||
             (c == 'e') || (c == 'E') ||
             (c == 'f') || (c == 'F'));
+}
+
+//----------------------------------------------------------------------
+inline void
+URI::Component::adjust_offset(int diff)
+{
+    if (offset_ == 0)
+        return;
+
+    if (diff > 0) {
+        offset_ += diff;
+    } else {
+        ASSERT(offset_ >= (size_t)-diff);
+        offset_ -= static_cast<size_t>(-diff);
+    }
+}
+
+//----------------------------------------------------------------------
+inline void
+URI::Component::adjust_length(int diff)
+{
+    if (diff > 0) {
+        length_ += diff;
+    } else {
+        ASSERT(length_ >= (size_t)-diff);
+        length_ -= static_cast<size_t>(-diff);
+    }
+}
+
+//----------------------------------------------------------------------
+void
+URI::set_scheme(const std::string& scheme)
+{
+    ASSERT(parse_err_ == URI_PARSE_OK);
+    
+    uri_.replace(scheme_.offset_, scheme_.length_, scheme);
+    
+    int diff = scheme.length() - scheme_.length_;
+    if (diff != 0) {
+        scheme_.adjust_length(diff);
+        
+        ssp_.adjust_offset(diff);
+        authority_.adjust_offset(diff);
+        userinfo_.adjust_offset(diff);
+        host_.adjust_offset(diff);
+        port_.adjust_offset(diff);
+        path_.adjust_offset(diff);
+        query_.adjust_offset(diff);
+        fragment_.adjust_offset(diff);
+    }
+}
+
+//----------------------------------------------------------------------
+void
+URI::set_ssp(const std::string& ssp)
+{
+    ASSERT(parse_err_ == URI_PARSE_OK);
+    
+    // just reparse the whole thing 
+    uri_.replace(ssp_.offset_, ssp_.length_, ssp);
+    parse();
+}
+
+//----------------------------------------------------------------------
+void
+URI::set_authority(const std::string& authority)
+{
+    ASSERT(parse_err_ == URI_PARSE_OK);
+    
+    uri_.replace(authority_.offset_, authority_.length_, authority);
+    
+    int diff = authority.length() - authority_.length_;
+    
+    if (diff != 0) {
+        ssp_.adjust_length(diff);
+        authority_.adjust_length(diff);
+        
+        path_.adjust_offset(diff);
+        query_.adjust_offset(diff);
+        fragment_.adjust_offset(diff);
+    }
+
+    parse_authority();
+}
+
+//----------------------------------------------------------------------
+void
+URI::set_userinfo(const std::string& userinfo)
+{
+    ASSERT(parse_err_ == URI_PARSE_OK);
+    
+    uri_.replace(userinfo_.offset_, userinfo_.length_, userinfo);
+    
+    int diff = userinfo.length() - userinfo_.length_;
+    
+    if (diff != 0) {
+        ssp_.adjust_length(diff);
+        authority_.adjust_length(diff);
+        userinfo_.adjust_length(diff);
+        
+        host_.adjust_offset(diff);
+        port_.adjust_offset(diff);
+        path_.adjust_offset(diff);
+        query_.adjust_offset(diff);
+        fragment_.adjust_offset(diff);
+    }
+}
+
+//----------------------------------------------------------------------
+void
+URI::set_host(const std::string& host)
+{
+    ASSERT(parse_err_ == URI_PARSE_OK);
+    
+    uri_.replace(host_.offset_, host_.length_, host);
+    
+    int diff = host.length() - host_.length_;
+    
+    if (diff != 0) {
+        ssp_.adjust_length(diff);
+        authority_.adjust_length(diff);
+        host_.adjust_length(diff);
+        
+        port_.adjust_offset(diff);
+        path_.adjust_offset(diff);
+        query_.adjust_offset(diff);
+        fragment_.adjust_offset(diff);
+    }
+}
+
+//----------------------------------------------------------------------
+void
+URI::set_port(const std::string& port)
+{
+    ASSERT(parse_err_ == URI_PARSE_OK);
+    
+    // XXX/demmer this will not clear the port if it was previously
+    // set since it doesn't remove the : character from the uri
+    
+    uri_.replace(port_.offset_, port_.length_, port);
+    
+    int diff = port.length() - port_.length_;
+    
+    if (diff != 0) {
+        ssp_.adjust_length(diff);
+        authority_.adjust_length(diff);
+        port_.adjust_length(diff);
+                
+        path_.adjust_offset(diff);
+        query_.adjust_offset(diff);
+        fragment_.adjust_offset(diff);
+    }
+    
+    port_num_ = atoi(port.c_str());
+}
+
+//----------------------------------------------------------------------
+void
+URI::set_path(const std::string& path)
+{
+    ASSERT(parse_err_ == URI_PARSE_OK);
+    
+    uri_.replace(path_.offset_, path_.length_, path);
+    
+    int diff = path.length() - path_.length_;
+    
+    if (diff != 0) {
+        ssp_.adjust_length(diff);
+        path_.adjust_length(diff);
+        
+        query_.adjust_offset(diff);
+        fragment_.adjust_offset(diff);
+    }
+}
+
+//----------------------------------------------------------------------
+void
+URI::set_query(const std::string& query)
+{
+    ASSERT(parse_err_ == URI_PARSE_OK);
+    
+    uri_.replace(query_.offset_, query_.length_, query);
+    
+    int diff = query.length() - query_.length_;
+    
+    if (diff != 0) {
+        ssp_.adjust_length(diff);
+        query_.adjust_length(diff);
+
+        fragment_.adjust_offset(diff);
+    }
+}
+
+//----------------------------------------------------------------------
+void
+URI::set_fragment(const std::string& fragment)
+{
+    ASSERT(parse_err_ == URI_PARSE_OK);
+    
+    uri_.replace(fragment_.offset_, fragment_.length_, fragment);
+    
+    int diff = fragment.length() - fragment_.length_;
+    
+    if (diff != 0) {
+        ssp_.adjust_length(diff);
+        fragment_.adjust_length(diff);
+    }
+}
+
+//----------------------------------------------------------------------
+const std::string
+URI::query_value(const std::string& param) const
+{
+    ASSERT(parse_err_ == URI_PARSE_OK);
+    
+    if (query_.length_ == 0) {
+        return "";
+    }
+
+    ASSERT(uri_.at(query_.offset_) == '?');
+    size_t curr_pos = query_.offset_;
+    while (curr_pos != std::string::npos &&
+           curr_pos < query_.offset_ + query_.length_)
+    {
+        size_t param_start = curr_pos + 1;
+        size_t param_end = uri_.find('=', param_start);
+
+        if (param_end == std::string::npos) { 
+            return "";
+        }
+        
+        if (param_end > query_.offset_ + query_.length_) {
+            return "";
+        }
+        size_t param_length = param_end - param_start;
+
+        // check whether this parameter matches the one we're looking for
+        if (uri_.compare(param_start, param_length, param) != 0) {
+            curr_pos = uri_.find_first_of(";", param_start);
+            continue;
+        }
+
+        // make sure there's a value
+        if (uri_.at(param_end) != '=') {
+            return "";
+        }
+
+        size_t value_start = param_end + 1;
+        size_t value_end = uri_.find_first_of(";#", value_start);
+        if (value_end == std::string::npos) {
+            value_end = uri_.length();
+        }
+        std::string ret = uri_.substr(value_start, value_end - value_start);
+        return uri_.substr(value_start, value_end - value_start);
+    }
+
+    return "";
 }
 
 } // namespace oasys

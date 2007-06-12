@@ -51,6 +51,7 @@ TESTS += \
 	token-bucket-test			\
 	type-collection-test		        \
 	updatable-priority-queue-test		\
+	uri-test				\
 	util-test				\
 	xml-test				\
 
