@@ -202,11 +202,6 @@ public:
     static void shutdown();
     
     /**
-     *  Sets the time to print for the logging 
-     */
-    virtual void getlogtime(struct timeval* tv);
-    
-    /**
      * Core logging function that is the guts of the implementation of
      * other variants. Returns the number of bytes written, i.e. zero
      * if the log line was suppressed.

@@ -36,6 +36,7 @@
 #include "thread/Timer.h"
 #include "util/StringBuffer.h"
 #include "util/Glob.h"
+#include "util/Time.h"
 
 /**
  * Namespace for the oasys library of system support classes.
@@ -486,13 +487,6 @@ Log::log_level(const char *path)
     }
 }
 
-void
-Log::getlogtime(struct timeval* tv)
-{
-    // by default, we just use the current time of day
-    ::gettimeofday(tv, 0);
-}
-
 size_t
 Log::gen_prefix(char* buf, size_t buflen, 
                 const char* path, log_level_t level,
@@ -521,20 +515,9 @@ Log::gen_prefix(char* buf, size_t buflen,
     ptr += len;
     
     if (output_flags_ & OUTPUT_TIME) {
-        struct timeval tv;
-        getlogtime(&tv);
-        /*if (output_flags_ & OUTPUT_WALLTIME) {
-            struct tm walltime;
-            gmtime_r((const time_t*)&tv.tv_sec, &walltime);
-            len = snprintf(ptr, buflen, 
-                           "%02d:%02d:%02d.%03ld ",
-                           walltime.tm_hour, walltime.tm_min,
-                           walltime.tm_sec, (long)tv.tv_usec / 1000);
-        } else {*/
-            len = snprintf(ptr, buflen, 
-                           "%ld.%06ld ",
-                           (long)tv.tv_sec, (long)tv.tv_usec);
-        //}
+        Time t;
+        t.get_time();
+        len = snprintf(ptr, buflen, "%u.%06u ", t.sec_, t.usec_);
         
         buflen -= len;
         ptr += len;
