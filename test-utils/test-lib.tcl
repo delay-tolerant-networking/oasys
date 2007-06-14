@@ -56,6 +56,7 @@ namespace eval conf {
 namespace eval test {
     set run_actions  ""
     set exit_actions ""
+    set error_actions  ""
     set cleanup_actions ""
     set testname     ""
 
@@ -63,6 +64,12 @@ namespace eval test {
     proc script { actions } {
 	global test::run_actions
 	set test::run_actions $actions
+    }
+
+    # Script actions to be run if there was an error in the test script
+    proc error_script { actions } {
+	global test::error_actions
+	set test::error_actions $actions
     }
 
     # Script to run after the test is done
@@ -81,31 +88,75 @@ namespace eval test {
     proc run_script {} {
 	global test::run_actions opt
 	if {$opt(dry_run)} {
-	    return
+	    return 0
 	}
-	uplevel \#0 $test::run_actions
+
+        if [catch {
+            uplevel \#0 $test::run_actions
+        } err] {
+            global errorInfo
+            puts "error in test [test::name]: $errorInfo"
+            run_error_script
+            return -1
+        }
+        return 0
     }
 
     # Run the exit script actions
     proc run_exit_script {} {
 	global test::exit_actions opt
 	if {$opt(dry_run)} {
-	    return
+	    return 0
 	}
 	if {$test::exit_actions != ""} {
-	    uplevel \#0 $test::exit_actions
+            if [catch {
+                uplevel \#0 $test::exit_actions
+            } err] {
+                global errorInfo
+                puts "error: $errorInfo"
+                return -1
+            }
 	}
+
+        return 0
+    }
+
+    # Run the error script actions
+    proc run_error_script {} {
+	global test::error_actions opt
+	if {$opt(dry_run)} {
+	    return 0
+	}
+
+        if {$test::error_actions != ""} {
+            if [catch {
+                uplevel \#0 $test::error_actions
+            } err] {
+                global errorInfo
+                puts "error: $errorInfo"
+                return -1
+            }
+        }
+
+        return 0
     }
 
     # Run the cleanup script actions
     proc run_cleanup_script {} {
 	global test::cleanup_actions opt
 	if {$opt(dry_run)} {
-	    return
+	    return 0
 	}
 	if {$test::cleanup_actions != ""} {
-	    uplevel \#0 $test::cleanup_actions
+            if [catch {
+                uplevel \#0 $test::cleanup_actions
+            } err] {
+                global errorInfo
+                puts "error: $errorInfo"
+                return -1
+            }
 	}
+        return 0
     }
 
     # Set test name
