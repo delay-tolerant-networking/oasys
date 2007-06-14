@@ -27,6 +27,7 @@ COMPAT_SRCS :=					\
 	compat/getopt_long.c			\
 	compat/inet_aton.c			\
 	compat/editline_compat.c		\
+	compat/rpc_compat.c			\
 	compat/xdr_int64_compat.c		\
 
 DEBUG_SRCS :=					\

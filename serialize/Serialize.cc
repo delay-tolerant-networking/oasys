@@ -147,7 +147,11 @@ SerializeAction::process(const char*          name,
 void 
 SerializeAction::process(const char* name, const InAddrPtr& a)
 {
+#ifdef __CYGWIN__
+    process(name, (u_int32_t*)(a.addr()));
+#else
     process(name, static_cast<u_int32_t*>(a.addr()));
+#endif
 }
 
 //----------------------------------------------------------------------

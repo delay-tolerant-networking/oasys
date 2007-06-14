@@ -17,7 +17,7 @@
 #ifndef _XDRUTILS_H_
 #define _XDRUTILS_H_
 
-#include <rpc/rpc.h>
+#include "../compat/rpc.h"
 
 namespace oasys {
 
