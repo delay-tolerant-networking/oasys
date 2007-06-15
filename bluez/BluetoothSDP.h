@@ -59,7 +59,7 @@ class BluetoothServiceDiscoveryClient : public Logger
 {
 public:
     BluetoothServiceDiscoveryClient(const char*
-                                    logpath="/dtn/cl/bt/sdp/client");
+                                    logpath="/dtn/disc/bt/sdp/client");
     virtual ~BluetoothServiceDiscoveryClient();
 
     bool is_dtn_router(bdaddr_t remote);
