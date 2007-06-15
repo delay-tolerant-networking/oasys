@@ -274,7 +274,9 @@ IPSocket::configure()
 
         // set up remote address for multicast options struct
         mcast_request.imr_multiaddr.s_addr = remote_addr_;
-        mcast_request.imr_interface.s_addr = INADDR_ANY;
+
+        // set up local address for multicast options struct
+        mcast_request.imr_interface.s_addr = local_addr_;
 
         // pass struct into setsockopt
         if (::setsockopt(fd_, IPPROTO_IP, IP_ADD_MEMBERSHIP,
@@ -290,6 +292,18 @@ IPSocket::configure()
                 < 0) {
             logf(LOG_WARN, "error setting multicast ttl: %s",
                            strerror(errno));
+        }
+
+        // restrict outbound multicast to named interface
+        // (INADDR_ANY means outbound on all interaces)
+        struct in_addr which;
+        memset(&which,0,sizeof(struct in_addr));
+        which.s_addr = local_addr_;
+        if (::setsockopt(fd_, IPPROTO_IP, IP_MULTICAST_IF, &which,
+                    sizeof(which)) < 0)
+        {
+            logf(LOG_WARN, "error setting outbound multicast interface: %s",
+                    intoa(local_addr_));
         }
     }
 
