@@ -259,7 +259,11 @@ register_service(const char *service_name)
     sess_ = sdp_connect(&local_addr_, /* bind to specified adapter */
                         BDADDR_LOCAL, /* connect to local server */
                         SDP_RETRY_IF_BUSY);
-    err = sdp_record_register(sess_,record,0);
+    if (sess_ != NULL)
+        err = sdp_record_register(sess_,record,0);
+    else
+        log_err("Failed to connect to SDP service: %s (%d)",
+                strerror(errno),errno);
 
     // cleanup
     sdp_data_free(channel);
