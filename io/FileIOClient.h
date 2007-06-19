@@ -69,6 +69,9 @@ public:
     const char* path() { return path_.c_str(); }
 
     /// Path accessor
+    const std::string& path_str() { return path_; }
+
+    /// Path accessor
     size_t path_len() { return path_.length(); }
 
 protected:
