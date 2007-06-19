@@ -725,8 +725,14 @@ Log::log_multiline(const char* path, log_level_t level,
         msg = end + 1;
 
         if (iov_cnt == iov_total) {
-            PANIC("XXX/demmer implement dynamic_iov for > 64 lines");
-            (void)dynamic_iov;
+            dynamic_iov = (iovec*)realloc(dynamic_iov,
+                                          sizeof(iovec) * iov_total * 2);
+            if (iov == static_iov) {
+                memcpy(dynamic_iov, static_iov, sizeof(iovec) * iov_total);
+            }
+
+            iov = dynamic_iov;
+            iov_total = iov_total * 2;
         }
     }
     
