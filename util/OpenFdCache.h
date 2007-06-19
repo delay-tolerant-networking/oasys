@@ -191,6 +191,8 @@ public:
             return;
         }
 
+        ASSERT(i->second->pin_count_ == 0);
+
         _CloseFcn::close(i->second->fd_);
         log_debug("Closed %d size=%u", i->second->fd_, (u_int)open_fds_map_.size());
 
