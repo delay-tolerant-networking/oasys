@@ -8,8 +8,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/errno.h>
 
 #include "../debug/DebugUtils.h"
+#include "../io/FileIOClient.h"
 #include "../io/FileUtils.h"
 
 #include "../serialize/Serialize.h"
@@ -225,6 +227,79 @@ FileBackedObject::append_bytes(const u_char* buf, size_t length)
     return write_bytes(cur_offset_, buf, length);
 }
 
+//----------------------------------------------------------------------
+bool
+FileBackedObject::replace_with_file(const std::string& filename)
+{
+    oasys::ScopeLock l(&lock_, "FileBackedObject::replace_with_file");
+
+    std::string old_filename = filename_;
+    unlink();
+    ASSERT(fd_ == -1); // unlink also closes
+
+    int err = ::link(filename.c_str(), old_filename.c_str());
+    if (err == 0) {
+        // unlink() clobbered the filename and the flags
+        filename_ = old_filename;
+        flags_   &= ~UNLINKED;
+     
+        log_debug_p("/st/filebacked",
+                    "replace_with_file: successfully created link from %s -> %s",
+                  old_filename.c_str(), filename.c_str());
+        return true;
+    }
+
+    // XXX/demmer this would be much simpler if FileBackedObject used
+    // a FileIOClient underneath...
+    err = errno;
+    if (err == EXDEV) {
+        log_debug_p("/st/filebacked",
+                    "replace_with_file: link failed: %s", strerror(err));
+        
+        oasys::FileIOClient src;
+        int fd = src.open(filename.c_str(), O_RDONLY, &err);
+        if (fd < 0) {
+            log_err_p("/st/filebacked",
+                      "error opening file '%s' for reading: %s",
+                      filename.c_str(), strerror(err));
+            return false;
+        }
+        
+        oasys::FileIOClient dst;
+        int fd2 = dst.open(old_filename.c_str(),
+                           O_WRONLY | O_CREAT | O_EXCL,
+                           S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH,
+                           &err);
+        if (fd2 < 0) {
+            log_err_p("/st/filebacked",
+                      "error opening file '%s' for reading: %s",
+                      old_filename.c_str(), strerror(err));
+            return false;
+        }
+        
+        src.copy_contents(&dst);
+        src.close();
+        dst.close();
+        
+        // unlink() clobbered the filename and the flags
+        filename_ = old_filename;
+        flags_   &= ~UNLINKED;
+
+        log_debug_p("/st/filebacked",
+                    "replace_with_file: successfully copied %s -> %s",
+                    old_filename.c_str(), filename.c_str());
+        return true;
+    }
+
+    log_err_p("/st/filebacked",
+              "error linking to path '%s': %s",
+              filename.c_str(), strerror(err));
+
+    // XXX/demmer the state of the file is messed up at this point
+    return false;
+}
+    
+
 //----------------------------------------------------------------------------
 void 
 FileBackedObject::truncate(size_t size)
@@ -352,7 +427,9 @@ FileBackedObject::close() const
 void
 FileBackedObject::unlink()
 {
-    oasys::ScopeLock l(&lock_, "FileBackedObject::close");
+    // XXX/demmer seems better for unlink to just unlink and not close
+    // so we can use these for temporary files
+    oasys::ScopeLock l(&lock_, "FileBackedObject::unlink");
 
     if (fd_ != 0)
     {

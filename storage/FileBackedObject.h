@@ -135,6 +135,12 @@ public:
      * @return Number of bytes written.
      */
     size_t append_bytes(const u_char* buf, size_t length);
+
+    /**
+     * Replace the underlying file with a hard link to the given path
+     * or a copy of the file contents if a link can't be created.
+     */
+    bool replace_with_file(const std::string& filename);
     
     /*!
      * Make the file size.
