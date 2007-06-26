@@ -167,4 +167,12 @@ namespace eval test {
 	}
 	return $test::testname
     }
+
+    proc CHECK {pred {error_msg ""}} {
+	if {! [eval $pred]} {
+	    error "ERROR: \"$pred\" failed"
+	} else {
+	    puts "CHECK: \"$pred\" passed"
+	}
+    }
 }
