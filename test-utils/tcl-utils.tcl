@@ -77,13 +77,21 @@ proc struct { name structlist } {
     }
 }
 
-proc struct2list { name } {
+proc struct->list { name } {
     set l {}
     foreach { key } [uplevel set "$name._meta_"] {
 	lappend l $key [uplevel set "$name.$key"]
     }
     
     return $l
+}
+
+proc k->v {key alist} {
+    foreach {k v} $alist {
+	if [string equal $key $k] {
+	    return $v
+	}
+    }
 }
 
 # unit test for struct
