@@ -86,12 +86,14 @@ proc struct->list { name } {
     return $l
 }
 
-proc k->v {key alist} {
+proc k->v {key alist {empty ""}} {
     foreach {k v} $alist {
 	if [string equal $key $k] {
 	    return $v
 	}
     }
+
+    return $empty
 }
 
 # unit test for struct
