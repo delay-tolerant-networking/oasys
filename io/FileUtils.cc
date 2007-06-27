@@ -192,7 +192,7 @@ FileUtils::StatFormat::format(char* buf, size_t len) const
                     static_cast<unsigned int>(stat_.st_uid),
                     static_cast<unsigned int>(stat_.st_gid),
                     static_cast<unsigned int>(stat_.st_rdev),
-                    static_cast<size_t>     (stat_.st_size),
+                    static_cast<size_t>      (stat_.st_size),
                     static_cast<unsigned int>(stat_.st_atime),
                     static_cast<unsigned int>(stat_.st_mtime),
                     static_cast<unsigned int>(stat_.st_ctime));
