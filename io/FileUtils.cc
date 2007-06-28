@@ -182,10 +182,10 @@ int
 FileUtils::StatFormat::format(char* buf, size_t len) const
 {
     return snprintf(buf, len, 
-                    "dev=%u mode=%4o nlink=%u "
-                    "uid=%u gid=%u type=%u "
-                    "size=%zu at=%u mt=%u "
-                    "ct=%u",
+                    "dev %u mode %4o nlink %u "
+                    "uid %u gid %u type %u "
+                    "size %zu at %u mt %u "
+                    "ct %u",
                     static_cast<unsigned int>(stat_.st_dev),
                     static_cast<unsigned int>(stat_.st_mode),
                     static_cast<unsigned int>(stat_.st_nlink),
