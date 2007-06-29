@@ -17,23 +17,21 @@
 #ifndef _OASYS_COMPAT_RPC_H_
 #define _OASYS_COMPAT_RPC_H_
 
-/*
- * Include the rpc headers forcing them to be extern "C".
- */
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/*
+ * Include the rpc headers forcing them to be extern "C".
+ */
 #include <rpc/rpc.h>
-#ifdef __cplusplus
-}
-#endif
 
 #ifdef __CYGWIN__
 // Cygwin's xdr.h file is k&r, so we need to make the declarations
 // more specific here to avoid errors when compiling with g++ instead
 // of gcc.
 
-extern "C" void oasys_xdrmem_create(XDR *__xdrs, __const caddr_t __addr,
+void oasys_xdrmem_create(XDR *__xdrs, __const caddr_t __addr,
                                     u_int __size, enum xdr_op __xop);
 #define xdrmem_create oasys_xdrmem_create
 
@@ -55,5 +53,8 @@ typedef int (*xdr_putlong_t)(XDR *, long *);
 
 #endif
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _OASYS_COMPAT_RPC_H_ */
