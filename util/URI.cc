@@ -26,6 +26,17 @@ namespace oasys {
 static const char* URI_LOG = "/oasys/util/uri/";
 
 //----------------------------------------------------------------------
+void
+URI::serialize(SerializeAction* a)
+{
+    a->process("uri", &uri_);
+
+    if (a->action_code() == oasys::Serialize::UNMARSHAL) {
+        parse();
+    }
+}
+
+//----------------------------------------------------------------------
 uri_parse_err_t
 URI::parse()
 {

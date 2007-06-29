@@ -178,14 +178,9 @@ public:
     }
 
     /**
-     * Virtual from SerializableObject. Note that it is the
-     * responsibility of a containing class to call parse() after
-     * unserialization.
+     * Virtual from SerializableObject. 
      */
-    void serialize(SerializeAction* a)
-    {
-        a->process("uri", &uri_);
-    }
+    void serialize(SerializeAction* a);
 
     /**
      * Set validate and normalize flags.
