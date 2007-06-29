@@ -16,6 +16,8 @@
 #ifndef __ITERATORS_H__
 #define __ITERATORS_H__
 
+#include "../debug/DebugUtils.h"
+
 namespace oasys {
 
 /*! 
@@ -110,10 +112,6 @@ public:
         {
             ++b_cur_;
         }
-        else
-        {
-//            PANIC("CombinedIterator: ++ off end of iteration");
-        }
 
         return *this;
     }
@@ -124,12 +122,11 @@ public:
         {
             return *a_cur_;
         }
-        
         if (b_cur_ != b_end_)
         {
             return *b_cur_;
         }
-//        PANIC("CombinedIterator: deref off end of iteration");
+        PANIC("CombinedIterator: deref off end of iteration");
     }
     
     /*!
@@ -178,6 +175,7 @@ public:
     {
         ++cur_;
         find_next();
+        return *this;
     }
     
     Ret operator*() const
@@ -196,7 +194,7 @@ private:
      */
     void find_next() 
     {
-        while(! predicate_(*cur_) && cur_ != end_)
+        while(cur_ != end_ && ! predicate_(*cur_))
         {
             ++cur_;
         }
