@@ -26,6 +26,7 @@ TESTS += \
 	filesys-db-test				\
 	functor-test				\
 	io-basic-test				\
+	iterator-test				\
 	log-test				\
 	marshal-test				\
 	memory-store-test			\
