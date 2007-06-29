@@ -19,6 +19,8 @@
 #endif
 
 #include <debug/DebugUtils.h>
+#include <serialize/MarshalSerialize.h>
+#include <util/ScratchBuffer.h>
 #include <util/UnitTest.h>
 #include <util/URI.h>
 
@@ -68,6 +70,8 @@ do {                                            \
 #define CHECK_COMPONENTS(_uri1, _str)           \
 do {                                            \
     URI _uri2(_str);                            \
+    CHECK_EQUAL(_uri1.parse_status(),           \
+                _uri2.parse_status());          \
     CHECK_EQUALSTR(_uri1.uri(), _str);          \
     CHECK_EQUALSTR(_uri1.scheme(),              \
                    _uri2.scheme());             \
@@ -540,6 +544,39 @@ DECLARE_TEST(QueryValue) {
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(Serialize) {
+    ScratchBuffer<u_char*, 256> buf;
+    {
+        URI uri("scheme:ssp");
+        URI uri2;
+        MarshalCopy::copy(&buf, &uri, &uri2);
+        CHECK_COMPONENTS(uri2, uri.uri());
+    }
+
+    {
+        URI uri("scheme://user@host:99/path?q=a#fragment");
+        URI uri2;
+        MarshalCopy::copy(&buf, &uri, &uri2);
+        CHECK_COMPONENTS(uri2, uri.uri());
+    }
+
+    {
+        URI uri("bogus");
+        URI uri2;
+        MarshalCopy::copy(&buf, &uri, &uri2);
+        CHECK_COMPONENTS(uri2, uri.uri());
+    }
+
+    {
+        URI uri;
+        URI uri2;
+        MarshalCopy::copy(&buf, &uri, &uri2);
+        CHECK_COMPONENTS(uri2, uri.uri());
+    }
+
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TESTER(URITester) {
     ADD_TEST(BasicParse);
     ADD_TEST(Accessors);
@@ -551,6 +588,7 @@ DECLARE_TESTER(URITester) {
     ADD_TEST(IPLiteralValidate);
     ADD_TEST(Normalize);
     ADD_TEST(QueryValue);
+    ADD_TEST(Serialize);
 } 
 
 DECLARE_TEST_FILE(URITester, "uri test");
