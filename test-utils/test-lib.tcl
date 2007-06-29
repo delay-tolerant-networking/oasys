@@ -175,4 +175,28 @@ namespace eval test {
 	    puts "CHECK: \"$pred\" passed"
 	}
     }
+
+    # Store the time when the script was parsed in a global variable
+    # so it can be used for the elapsed proc
+    set starttime [clock seconds]
+    
+    # Return the number of seconds since the test started
+    proc elapsed {} {
+        global test::starttime
+        
+        return [expr [clock seconds] - $test::starttime]
+    }
+    
+    # Return the number of seconds since the last interval call
+    proc interval_elapsed {} {
+        global test::intervaltime
+        
+        if {![info exists intervaltime]} {
+            set intervaltime 0
+        }
+        set last $intervaltime
+        set intervaltime [clock seconds]
+        return [expr $intervaltime - $last]
+    }
+    
 }
