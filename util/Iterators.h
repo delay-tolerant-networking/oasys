@@ -29,7 +29,12 @@ public:
     CountIterator() {}
     CountIterator(Ret begin, Ret end)
         : cur_(begin), end_(end) 
-    {}
+    {
+        if (cur_ > end_)
+        {
+            cur_ = end_;
+        }
+    }
     
     // Use default assignment, copy
     
