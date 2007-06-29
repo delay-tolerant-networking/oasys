@@ -59,7 +59,8 @@ public:
 
     // virtual from Formatter
     int format(char* buf, size_t sz) const {
-        return snprintf(buf, sz, "%d", value_);
+        // cast is needed for Cygwin since an int32_t is a long int
+        return snprintf(buf, sz, "%d", static_cast<int>(value_));
     }
     
     // virtual from SerializableObject
