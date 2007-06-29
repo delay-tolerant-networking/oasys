@@ -159,13 +159,22 @@ private:
 template<typename Itr, typename Ret, typename Pred>
 class PredicateIterator {
 public:
-    PredicateIterator(Itr begin, Itr end, Pred& predicate)
+    PredicateIterator(Itr begin, Itr end, Pred predicate)
         : cur_(begin), end_(end), predicate_(predicate)
     {
         find_next();
     }
     
     // Use default assignment, copy
+
+    bool operator==(const PredicateIterator& other) const
+    {
+        return cur_ == other.cur_;        
+    }
+    bool operator!=(const PredicateIterator& other) const
+    {
+        return ! operator==(other);
+    }
 
     bool operator==(const Itr& other) const
     {
@@ -189,9 +198,9 @@ public:
     }
     
 private:
-    Itr   cur_;
-    Itr   end_;
-    Pred& predicate_;
+    Itr  cur_;
+    Itr  end_;
+    Pred predicate_;
 
     /*!
      * Advance the pointer if needed to the next item satisfying the
