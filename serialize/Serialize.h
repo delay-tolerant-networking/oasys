@@ -291,6 +291,15 @@ public:
     virtual void process(const char* name, char* bp, u_int32_t len);
     /// @}
 
+#ifdef __CYGWIN__
+    /*!
+     * For some reason, Cygwin can't decide if an int should be signed
+     * or unsigned so we need this adapter shim to disambiguate.
+     */
+    virtual void process(const char* name, int* i);
+#endif
+
+
     //! @{ syntactic sugar for char buffers
     virtual void process(const char*          name, 
                          BufferCarrier<char>* carrier);

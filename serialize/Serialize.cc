@@ -112,6 +112,15 @@ SerializeAction::process(const char* name, char* bp, u_int32_t len)
     process(name, (u_char*)bp, len);
 }
 
+//----------------------------------------------------------------------
+#ifdef __CYGWIN__
+void
+SerializeAction::process(const char* name, int* i)
+{
+    process(name, (int32_t*)i);
+}
+#endif
+
 //----------------------------------------------------------------------------    
 void 
 SerializeAction::process(const char*          name, 
