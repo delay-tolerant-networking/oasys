@@ -248,7 +248,6 @@ public:
 
 #if OASYS_DEBUG_LOCKING_ENABLED
     static LockDebugger* lock_debugger() {
-        init_globals();
         return lock_debugger_.get(); 
     }
 #endif
@@ -309,9 +308,9 @@ protected:
     virtual void run() = 0;
 
     /**
-     * Initialize globals.
+     * Helper class needed to boostrap initialize the thread system.
      */
-    static void init_globals();
+    friend class GlobalThreadInit;
 };
 
 //---------------------------------------------------------------------------

@@ -33,7 +33,11 @@
 
 namespace oasys {
 
-bool                 Thread::globals_inited_ = false;
+struct GlobalThreadInit {
+    GlobalThreadInit();
+};
+
+GlobalThreadInit g;
 
 #ifdef __win32__
 __declspec(thread) Thread* Thread::current_thread_ = 0;
@@ -125,32 +129,25 @@ Thread::~Thread()
 }
 
 //----------------------------------------------------------------------
-void
-Thread::init_globals()
+GlobalThreadInit::GlobalThreadInit()
 {
-    if (!globals_inited_) 
-    {
 #ifndef __win32__
-        sigemptyset(&interrupt_sigset_);
-        sigaddset(&interrupt_sigset_, INTERRUPT_SIG);
-        signal(INTERRUPT_SIG, interrupt_signal);
-        siginterrupt(INTERRUPT_SIG, 1);
+    sigemptyset(&Thread::interrupt_sigset_);
+    sigaddset(&Thread::interrupt_sigset_, Thread::INTERRUPT_SIG);
+    signal(Thread::INTERRUPT_SIG, Thread::interrupt_signal);
+    siginterrupt(Thread::INTERRUPT_SIG, 1);
 #endif
 
 #ifdef OASYS_DEBUG_LOCKING_ENABLED
-        TLS<LockDebugger>::init();
-        TLS<LockDebugger>::set(new LockDebugger());
+    TLS<LockDebugger>::init();
+    TLS<LockDebugger>::set(new LockDebugger());
 #endif
-        
-        globals_inited_ = true;
-    }
 }
 
 //----------------------------------------------------------------------------
 void
 Thread::start()
 {
-    init_globals();
     // check if the creation barrier is enabled
     if (start_barrier_enabled_) 
     {
