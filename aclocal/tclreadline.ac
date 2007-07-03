@@ -51,10 +51,14 @@ AC_DEFUN(AC_OASYS_CONFIG_TCLREADLINE, [
     dnl
     dnl Now check for an installation of libreadline.
     dnl
-    AC_SEARCH_LIBS(readline, 
-                   readline, 
-		   [TCLREADLINE_ENABLED=1],
-		   [TCLREADLINE_ENABLED=0])
+    if test `uname -o` = 'Cygwin' ; then
+        TCLREADLINE_ENABLED=0
+    else 
+        AC_SEARCH_LIBS(readline, 
+                       readline, 
+	    	       [TCLREADLINE_ENABLED=1],
+	    	       [TCLREADLINE_ENABLED=0])
+    fi
 
     dnl
     dnl Find out if we're using the BSD libedit implementation of 

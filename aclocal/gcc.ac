@@ -204,7 +204,7 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
        ac_save_LDFLAGS=$LDFLAGS
        ac_save_CFLAGS=$CFLAGS
        picflags="-fPIC -DPIC"
-       CFLAGS="$picflags $ac_save_CFLAGS"
+       CFLAGS="$picflags $ac_save_CFLAGS -Werror"
        AC_MSG_CHECKING([whether the compiler supports -fPIC])
        AC_COMPILE_IFELSE([int myfunc() {return 0;}], [pic=yes], [pic=no])
        AC_MSG_RESULT($pic)
