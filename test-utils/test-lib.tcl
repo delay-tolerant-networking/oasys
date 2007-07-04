@@ -168,11 +168,46 @@ namespace eval test {
 	return $test::testname
     }
 
+    # Identity function
+    proc as_string {args} { 
+	return $args
+    }
+
+    # Evaluates predicate and prints out the appropriate error message
+    # if the evaluation is false.
     proc CHECK {pred {error_msg ""}} {
-	if {! [eval $pred]} {
-	    error "ERROR: \"$pred\" failed"
+	set res [uplevel 1 $pred]
+	set pred_str [uplevel 1 test::as_string $pred]
+
+	if {$res} {
+	    puts "CHECK: $pred_str passed"
 	} else {
-	    puts "CHECK: \"$pred\" passed"
+	    error "ERROR: $pred_str failed $error_msg"
+	}
+    }
+
+    # Evaluates predicate and prints out the appropriate error message
+    # if the evaluation is true.
+    proc CHECK! {pred {error_msg ""}} {
+	set res [uplevel 1 $pred]
+	set pred_str [uplevel 1 test::as_string $pred]
+
+	if {$res} {
+	    error "ERROR: $pred_str failed $error_msg"
+	} else {
+	    puts "CHECK!: $pred_str passed"
+	}
+    }
+
+    # Evaluates the predicate and checks for equality
+    proc CHECK_EQ {pred val {error_msg ""}} {
+	set res [uplevel 1 $pred]
+	set pred_str [uplevel 1 test::as_string $pred]
+
+	if {$res == $val} {
+	    puts "CHECK_EQ: $pred_str == $val passed"
+	} else {
+	    error "ERROR: $pred_str != val $error_msg"
 	}
     }
 
