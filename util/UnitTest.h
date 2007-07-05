@@ -164,7 +164,7 @@ public:
             }
             else
             {
-                fprintf(stderr, "unknown unit test argument '%s',",
+                fprintf(stderr, "error: unknown unit test argument '%s'\n",
                         argv[0]);
                 exit(1);
             }
