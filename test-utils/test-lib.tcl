@@ -179,8 +179,9 @@ namespace eval test {
 		puts "ERROR: unrecognized option \"$var\""
 		exit 1
 	    }	    
+
 	    set val [lindex $opt(opts) [incr i]]
-	    uplevel set $varname $val
+	    uplevel set $var $val
 	}
 
 	foreach {var def} $vardesc {
@@ -230,7 +231,19 @@ namespace eval test {
 	if {$res == $val} {
 	    puts "CHECK_EQ: $pred_str == $val passed"
 	} else {
-	    error "ERROR: $pred_str != val $error_msg"
+	    error "ERROR: $pred_str, $res != $val $error_msg"
+	}
+    }
+
+    # Evaluates the predicate and checks for nequality
+    proc CHECK_NEQ {pred val {error_msg ""}} {
+	set res [uplevel 1 $pred]
+	set pred_str [uplevel 1 test::as_string $pred]
+
+	if {$res != $val} {
+	    puts "CHECK_EQ: $pred_str, $res != $val passed"
+	} else {
+	    error "ERROR: $pred_str == $val $error_msg"
 	}
     }
 
