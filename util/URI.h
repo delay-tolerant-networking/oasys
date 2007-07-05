@@ -152,6 +152,11 @@ public:
     }
 
     /**
+     * Determines if the given URI is contained within this URI.
+     */
+    bool subsume(const URI& other);
+
+    /**
      * Operator overload for equality operator.
      */
     bool operator==(const URI& other) const

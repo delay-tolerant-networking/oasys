@@ -1255,6 +1255,32 @@ URI::decode_fragment()
 
 //----------------------------------------------------------------------
 bool
+URI::subsume(const URI& other)
+{
+    // both URIs must be valid
+    if (!valid() || !other.valid()) {
+        return false;
+    }
+
+    // determine if this URI contains (from the start) the other URI
+    if (uri_.find(other.uri_, 0) != 0) {
+        return false;
+    }
+    ASSERT(uri_.length() >= other.uri_.length());
+
+    // check for proper delimiter
+    if (uri_.length() > other.uri_.length()) {
+        char c = uri_.at(other.uri_.length());
+        if ((c != '/') || (c != '?') || (c != '#')) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+//----------------------------------------------------------------------
+bool
 URI::is_unreserved(char c)
 {
     return (isalnum(c) ||
