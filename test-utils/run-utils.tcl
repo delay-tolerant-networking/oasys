@@ -414,7 +414,8 @@ proc run {id exec_name exec_opts confname conf exec_env {exec_file ""}} {
     }
 
     dbg "* Generating scripts for $exec_name for $hostname:$id"
-    generate_script $id $exec_name $exec_file $exec_opts $confname $conf $exec_env
+    generate_script $id $exec_name $exec_file $exec_opts \
+	$confname $conf $exec_env
 
     set run::dirs($id) [dist::get_rundir $hostname $id]
     set script "$run::dirs($id)/run-$exec_name.sh"
@@ -471,7 +472,7 @@ proc run {id exec_name exec_opts confname conf exec_env {exec_file ""}} {
 }
 
 #
-# Add the pid for a given program that damonizes itself to the
+# Add the pid for a given program that daemonizes itself to the
 # one contained in the given run directory file
 #
 proc add_pid {id pid_filename} {
