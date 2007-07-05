@@ -41,9 +41,11 @@ fork_to_die(const char* how) {
     log_always_p("/test", "flamebox-ignore ign3 fatal handler dumping core");
     log_always_p("/test", "flamebox-ignore ign4 PANIC at .*stack-trace-test.cc");
     
+    setenv("STACK_TRACE_TEST", how, 1);
+
     snprintf(cmd, sizeof(cmd),
-             "%s %s 2>&1 | %s -o %s",
-             executable, how, expand_stacktrace, executable);
+             "%s 2>&1 | %s -o %s",
+             executable, expand_stacktrace, executable);
     int ok = system(cmd);
     
     log_always_p("/test", "flamebox-ignore-cancel ign1");
@@ -73,8 +75,6 @@ die(const char* how)
     lim.rlim_max = 0;
     setrlimit(RLIMIT_CORE, &lim);
 
-    setenv("STACK_TRACE_TEST", how, 1);
-    
     if (!strcmp(how, "SIGSEGV")) {
         int *ptr = 0;
         int a = *ptr;
@@ -192,6 +192,8 @@ main(int argc, const char** argv)
         oasys::Log::init(oasys::LOG_INFO);
         oasys::FatalSignals::init(argv[0]);
         a(testname);
+        fprintf(stderr, "error: die(%s) did not die\n", testname);
+        exit(1);
     }
 
     Tester t("stack-trace-test");
