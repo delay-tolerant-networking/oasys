@@ -168,6 +168,29 @@ namespace eval test {
 	return $test::testname
     }
 
+    # Parse args in a simple way
+    proc get_args {vardesc} {
+	global opt
+	for {set i 0} {$i < [llength $opt(opts)]} {incr i} {
+	    set var [string trimleft [lindex $opt(opts) $i] -]
+	    set varname [k->v $var $vardesc]
+	    
+	    if {$varname == ""} {
+		puts "ERROR: unrecognized option \"$var\""
+		exit 1
+	    }	    
+	    set val [lindex $opt(opts) [incr i]]
+	    uplevel set $varname $val
+	}
+
+	foreach {var def} $vardesc {
+	    if {! [uplevel info exists $var]} {
+		uplevel set $var $def
+	    }
+	    puts "* option $var=[uplevel set $var]"
+	}
+    }
+
     # Identity function
     proc as_string {args} { 
 	return $args
