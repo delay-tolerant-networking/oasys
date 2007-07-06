@@ -577,6 +577,36 @@ DECLARE_TEST(Serialize) {
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(Subsume) {
+    CHECK(URI("scheme:ssp").subsume(URI("scheme:ssp")));
+    CHECK(! URI("scheme:ssp2").subsume(URI("scheme:ssp")));
+    CHECK(! URI("scheme:ssp").subsume(URI("scheme:ssp2")));
+
+    CHECK(URI("scheme://host/path").subsume(URI("scheme://host/")));
+    CHECK(URI("scheme://host/path").subsume(URI("scheme://host")));
+
+    CHECK(URI("scheme://host").subsume(URI("scheme://host")));
+    CHECK(URI("scheme://host/").subsume(URI("scheme://host")));
+    CHECK(! URI("scheme://host").subsume(URI("scheme://host/")));
+
+    CHECK(URI("scheme://host/a/b").subsume(URI("scheme://host")));
+    CHECK(URI("scheme://host/a/b").subsume(URI("scheme://host/")));
+    CHECK(URI("scheme://host/a/b").subsume(URI("scheme://host/a")));
+    CHECK(URI("scheme://host/a/b").subsume(URI("scheme://host/a/")));
+    CHECK(URI("scheme://host/a/b").subsume(URI("scheme://host/a/b")));
+
+    CHECK(URI("scheme://host/?query").subsume(URI("scheme://host")));
+    CHECK(URI("scheme://host/#frag").subsume(URI("scheme://host")));
+
+    CHECK(! URI("scheme://host/?query").subsume(URI("scheme://host/p")));
+    CHECK(! URI("scheme://host/#frag").subsume(URI("scheme://host/p")));
+    
+    CHECK(URI("scheme://host/path?query").subsume(URI("scheme://host/path")));
+    CHECK(URI("scheme://host/path#frag").subsume(URI("scheme://host/path")));
+
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TESTER(URITester) {
     ADD_TEST(BasicParse);
     ADD_TEST(Accessors);
@@ -589,6 +619,7 @@ DECLARE_TESTER(URITester) {
     ADD_TEST(Normalize);
     ADD_TEST(QueryValue);
     ADD_TEST(Serialize);
+    ADD_TEST(Subsume);
 } 
 
 DECLARE_TEST_FILE(URITester, "uri test");

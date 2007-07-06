@@ -1268,14 +1268,23 @@ URI::subsume(const URI& other)
     }
     ASSERT(uri_.length() >= other.uri_.length());
 
-    // check for proper delimiter
-    if (uri_.length() > other.uri_.length()) {
+    // if they're not equal, check for proper delimiter, which must be
+    // a path, query, or fragment boundary
+    if (uri_.length() > other.uri_.length())
+    {
         char c = uri_.at(other.uri_.length());
-        if ((c != '/') || (c != '?') || (c != '#')) {
-            return false;
+        if ((c == '/') || (c == '?') || (c == '#')) {
+            return true;
         }
-    }
 
+        c = uri_.at(other.uri_.length() - 1);
+        if ((c == '/') || (c == '?') || (c == '#')) {
+            return true;
+        }
+
+        return false;
+    }
+    
     return true;
 }
 
