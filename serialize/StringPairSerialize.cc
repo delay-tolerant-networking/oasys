@@ -123,7 +123,7 @@ void
 StringPairSerialize::Marshal::process(const char* name, int32_t* i)
 {
     char buf[32];
-    snprintf(buf, sizeof(buf), "%d", *i);
+    snprintf(buf, sizeof(buf), "%d", static_cast<int>(*i));
     rep_->push_back(StringPair(string(name), string(buf)));
 }
 
@@ -364,7 +364,7 @@ StringPairSerialize::Unmarshal::process(const char *name, int32_t* i)
 
     *i = atoi(rep_->at(idx).second.c_str());
 
-    if (log_) logf(log_, LOG_DEBUG, "<=int32(%d)", *i);
+    if (log_) logf(log_, LOG_DEBUG, "<=int32(%d)", static_cast<int>(*i));
 }
 
 void 
