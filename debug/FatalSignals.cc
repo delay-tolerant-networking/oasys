@@ -39,23 +39,28 @@ void
 FatalSignals::init(const char* appname)
 {
     appname_ = appname;
+
+#ifndef __CYGWIN__
     signal(SIGSEGV, FatalSignals::handler);
     signal(SIGBUS,  FatalSignals::handler);
     signal(SIGILL,  FatalSignals::handler);
     signal(SIGFPE,  FatalSignals::handler);
     signal(SIGABRT, FatalSignals::handler);
     signal(SIGQUIT, FatalSignals::handler);
+#endif
 }
 
 void
 FatalSignals::cancel()
 {
+#ifndef __CYGWIN
     signal(SIGSEGV, SIG_DFL);
     signal(SIGBUS,  SIG_DFL);
     signal(SIGILL,  SIG_DFL);
     signal(SIGFPE,  SIG_DFL);
     signal(SIGABRT, SIG_DFL);
     signal(SIGQUIT, SIG_DFL);
+#endif
 }
 
 void
@@ -103,6 +108,7 @@ FatalSignals::handler(int sig)
         if (! in_abort_handler_) {
             in_abort_handler_ = true;
 
+#ifndef __CYGWIN__
             Thread** ids = Thread::all_threads_;
             for (int i = 0; i < Thread::max_live_threads_; ++i) {
 
@@ -117,6 +123,7 @@ FatalSignals::handler(int sig)
                     sleep(1);
                 }
             }
+#endif
             
             fprintf(stderr, "fatal handler dumping core\n");
             signal(sig, SIG_DFL);
@@ -124,6 +131,11 @@ FatalSignals::handler(int sig)
         }
     } else {
         signal(sig, SIG_DFL);
+
+        // Cygwin doesn't redeliver the signal automatically
+#ifdef __CYGWIN__
+        kill(getpid(), sig);
+#endif
     }
 }
 
