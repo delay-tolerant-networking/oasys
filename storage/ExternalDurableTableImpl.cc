@@ -76,7 +76,7 @@ int ExternalDurableTableImpl::put(const SerializableObject &key,
     // we can get schema information
     if (!exists_) {
         if (owner_.proxy_->do_table_create(table_name_, 
-                                           DataStore::pair_key_field_name, 
+                                           DataStore::pair_data_field_name, 
                                            *data) != 0) {
             // if we couldn't creat it, bail
             return DS_ERR;      // XXX
