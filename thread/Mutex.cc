@@ -43,9 +43,10 @@ Mutex::Mutex(const char* logbase,
 {
     logpathf("%s/lock", logbase);
 
-#ifndef __CYGWIN__
     // Set up the type attribute
     pthread_mutexattr_t attrs;
+    memset(&attrs, 0, sizeof(attrs));
+    
     if (pthread_mutexattr_init(&attrs) != 0) {
         PANIC("fatal error in pthread_mutexattr_init: %s", strerror(errno));
     }
@@ -67,6 +68,7 @@ Mutex::Mutex(const char* logbase,
         PANIC("fatal error in pthread_mutexattr_settype: %s", strerror(errno));
     }
 
+    memset(&mutex_, 0, sizeof(mutex_));
     if (pthread_mutex_init(&mutex_, &attrs) != 0) {
         PANIC("fatal error in pthread_mutex_init: %s", strerror(errno));
     }
@@ -74,13 +76,6 @@ Mutex::Mutex(const char* logbase,
     if (pthread_mutexattr_destroy(&attrs) != 0) {
         PANIC("fatal error in pthread_mutexattr_destroy: %s", strerror(errno));
     }
-
-#else
-    if (pthread_mutex_init(&mutex_, NULL) != 0) {
-        PANIC("fatal error in pthread_mutex_init: %s", strerror(errno));
-    }
-#endif
-    
 }
 
 Mutex::~Mutex()
