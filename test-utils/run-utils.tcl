@@ -442,7 +442,7 @@ proc run {id exec_name exec_opts confname conf exec_env {exec_file ""}} {
 	    set run::xterm($id) 1
 	}
 	"1 0" {
-	    set cmd "sh $script < /dev/null"
+	    set cmd "bash $script < /dev/null"
 	    set run::xterm($id) 0
 	}
 	"0 0" {
