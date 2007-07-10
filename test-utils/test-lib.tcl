@@ -229,9 +229,9 @@ namespace eval test {
 	set pred_str [uplevel 1 test::as_string $pred]
 
 	if {$res == $val} {
-	    puts "CHECK_EQ: $pred_str == $val passed"
+	    puts "CHECK_EQ: \"$pred_str\" == \"$val passed\""
 	} else {
-	    error "ERROR: $pred_str, $res != $val $error_msg"
+	    error "ERROR: $pred_str, \"$res\" != \"$val\" $error_msg"
 	}
     }
 
@@ -241,9 +241,9 @@ namespace eval test {
 	set pred_str [uplevel 1 test::as_string $pred]
 
 	if {$res != $val} {
-	    puts "CHECK_EQ: $pred_str, $res != $val passed"
+	    puts "CHECK_EQ: $pred_str, \"$res\" != \"$val\" passed"
 	} else {
-	    error "ERROR: $pred_str == $val $error_msg"
+	    error "ERROR: \"$pred_str\" == \"$val\" $error_msg"
 	}
     }
 
