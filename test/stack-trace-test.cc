@@ -40,6 +40,8 @@ fork_to_die(const char* how) {
     log_always_p("/test", "flamebox-ignore ign2 STACK TRACE");
     log_always_p("/test", "flamebox-ignore ign3 fatal handler dumping core");
     log_always_p("/test", "flamebox-ignore ign4 PANIC at .*stack-trace-test.cc");
+    log_always_p("/test", "flamebox-ignore ign5 Segmentation fault");
+    log_always_p("/test", "flamebox-ignore ign6 Aborted");
     
     setenv("STACK_TRACE_TEST", how, 1);
 
@@ -52,6 +54,8 @@ fork_to_die(const char* how) {
     log_always_p("/test", "flamebox-ignore-cancel ign2");;
     log_always_p("/test", "flamebox-ignore-cancel ign3");;
     log_always_p("/test", "flamebox-ignore-cancel ign4");;
+    log_always_p("/test", "flamebox-ignore-cancel ign5");;
+    log_always_p("/test", "flamebox-ignore-cancel ign6");;
 
     return (ok == 0);
 }
