@@ -153,7 +153,7 @@ StringBuffer::vappendf(const char* fmt, size_t* lenp, va_list ap)
     if (buf_->nfree() < (*lenp + 1))
     {
         ASSERT(buf_->buf_len() != 0);
-        buf_->reserve(std::max(*lenp + 1, buf_->buf_len() * 2));
+        buf_->reserve(std::max(length() + *lenp + 1, buf_->buf_len() * 2));
         ASSERT(buf_->nfree() >= (*lenp + 1));
     }
 

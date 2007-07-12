@@ -236,6 +236,41 @@ DECLARE_TEST(StringBuffer3) {
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(StringBuffer4) {
+    StringBuffer str(11);
+    char scratch[1100];
+
+    for (int i = 0; i < 100; ++i) {
+        sprintf(&scratch[10 * i], "........%03d", (i+1) * 10);
+    }
+    
+    // append with enough space doesn't change the buffer size
+    CHECK_EQUAL(str.expandable_buf()->buf_len(), 11);
+    CHECK_EQUAL(str.expandable_buf()->nfree(), 11);
+    str.appendf("%.*s", 10, scratch);
+    CHECK_EQUAL(str.length(), 10);
+    CHECK_EQUALSTRN(str.c_str(), scratch, str.length());
+    CHECK_EQUAL(str.expandable_buf()->buf_len(), 11);
+    CHECK_EQUAL(str.expandable_buf()->nfree(), 1);
+
+    // check that it doubles when we try to append any more
+    str.appendf("%.*s", 1, scratch + str.length());
+    CHECK_EQUAL(str.length(), 11);
+    CHECK_EQUALSTRN(str.c_str(), scratch, str.length());
+    CHECK_EQUAL(str.expandable_buf()->buf_len(), 22);
+    CHECK_EQUAL(str.expandable_buf()->nfree(), 11);
+
+    // check that it allocates just enough to fill an append that's
+    // larger than 2x the buffer
+    str.appendf("%.*s", 100, scratch + str.length());
+    CHECK_EQUAL(str.length(), 111);
+    CHECK_EQUALSTRN(str.c_str(), scratch, str.length());
+    CHECK_EQUAL(str.expandable_buf()->buf_len(), 112);
+    CHECK_EQUAL(str.expandable_buf()->nfree(), 1);
+    
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TESTER(Test) {    
     ADD_TEST(ExpandableBuffer1);
     ADD_TEST(ExpandableBuffer2);
@@ -246,6 +281,7 @@ DECLARE_TESTER(Test) {
     ADD_TEST(StringBuffer1);
     ADD_TEST(StringBuffer2);
     ADD_TEST(StringBuffer3);
+    ADD_TEST(StringBuffer4);
 }
 
 DECLARE_TEST_FILE(Test, "buffer test");
