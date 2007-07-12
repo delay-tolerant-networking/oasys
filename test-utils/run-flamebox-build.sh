@@ -78,7 +78,12 @@ fi
 eval echodo $srcdir/configure -C $config_opts
 
 MAKEFLAGS="-k"
-nprocs=`cat /proc/cpuinfo | grep processor | wc -l`
+if [ -f /proc/cpuinfo ] ; then
+    nprocs=`cat /proc/cpuinfo | grep processor | wc -l`
+else
+    nprocs=1
+fi
+
 if [ $nprocs -gt 1 ]; then
     MAKEFLAGS="$MAKEFLAGS -j $nprocs"
 fi
