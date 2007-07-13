@@ -249,7 +249,6 @@ StaticTypedDurableTable::put(
     ASSERT(this->cache_ == 0); // XXX/bowei - don't support caches for now
     int ret = this->impl_->put(key, TypeCollection::UNKNOWN_TYPE, 
                                data, flags);
-    ASSERT(ret == DS_OK);
 
     return ret;
 }
