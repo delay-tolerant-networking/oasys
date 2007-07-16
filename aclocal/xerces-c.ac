@@ -60,7 +60,7 @@ AC_DEFUN(AC_OASYS_CONFIG_XERCES, [
     ac_save_LDFLAGS="$LDFLAGS"
     ac_save_LIBS="$LIBS"
 
-    AC_MSG_CHECKING([whether xerces-c (>= v2.7.0) was found])
+    AC_MSG_CHECKING([whether xerces-c (>= v2.6.0) was found])
     AC_CACHE_VAL(oasys_cv_path_xerces_c,
     [
         for ac_xerces_inst_dir in $ac_xerces_inst_dirs; do
@@ -79,7 +79,7 @@ AC_DEFUN(AC_OASYS_CONFIG_XERCES, [
                         ],
     
                         [
-                            #if _XERCES_VERSION >= 20700
+                            #if _XERCES_VERSION >= 20600
 
                             xercesc::XMLPlatformUtils::Initialize();
                             {
