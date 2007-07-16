@@ -125,7 +125,6 @@ AC_CACHE_SAVE
 # Checks for dependent third-party libraries
 # -------------------------------------------------------------------------
 AC_OASYS_CONFIG_TCL
-AC_OASYS_CONFIG_STORAGE
 AC_OASYS_CONFIG_GOOGLE_PERFTOOLS
 AC_OASYS_CONFIG_BLUEZ
 AC_OASYS_CONFIG_EXPAT
@@ -133,6 +132,7 @@ AC_OASYS_CONFIG_XERCES
 AC_OASYS_CONFIG_TCLREADLINE
 AC_OASYS_CONFIG_ZLIB
 AC_OASYS_CONFIG_XSD
+AC_OASYS_CONFIG_STORAGE
 
 # -------------------------------------------------------------------------
 # Output
