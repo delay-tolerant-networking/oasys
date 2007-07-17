@@ -122,7 +122,7 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
     OPTIMIZE=
     OPTIMIZE_WARN=
     if test $optimize = yes ; then
-        OPTIMIZE=-O2
+        OPTIMIZE="-O2 -fno-strict-aliasing"
         OPTIMIZE_WARN=-Wuninitialized
     fi
     AC_SUBST(OPTIMIZE)
@@ -271,6 +271,23 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
         TARGET=native
     fi
     AC_SUBST(TARGET)
+
+    dnl
+    dnl Add options to add extra compilation flags
+    dnl
+    EXTRA_CFLAGS=""
+    AC_ARG_WITH(extra-cflags,
+        AC_HELP_STRING([--with-extra-cflags=?],
+	 	       [additional options to pass to the compiler]),
+                       EXTRA_CFLAGS=$withval)
+    AC_SUBST(EXTRA_CFLAGS)
+
+    EXTRA_LDFLAGS=""
+    AC_ARG_WITH(extra-ldflags,
+        AC_HELP_STRING([--with-extra-ldflags=?],
+	 	       [additional options to pass to the linker]),
+                       EXTRA_LDFLAGS=$withval)
+    AC_SUBST(EXTRA_LDFLAGS)
 ])
 
 
