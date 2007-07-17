@@ -124,7 +124,7 @@ __ldtoa(long double *ld, int mode, int ndigits, int *decpt, int *sign,
 		abort();
 	}
 
-	ret = gdtoa(&fpi, be, (ULong *)bits, &kind, mode, ndigits, decpt, rve);
+	ret = gdtoa(&fpi, be, (ULong *)(void*)bits, &kind, mode, ndigits, decpt, rve);
 	if (*decpt == -32768)
 		*decpt = INT_MAX;
 	return ret;
