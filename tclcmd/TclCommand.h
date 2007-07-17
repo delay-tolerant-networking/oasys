@@ -66,7 +66,9 @@ public:
     /**
      * Initialize the interpreter instance.
      */
-    static int init(char* objv0, bool no_default_cmds = false);
+    static int init(char* objv0,
+                    const char* logpath = "/command",
+                    bool no_default_cmds = false);
 
     /**
      * Shut down the interpreter.
@@ -220,9 +222,9 @@ public:
     
 protected:
     /**
-     * Constructor (does nothing)
+     * Constructor (does nothing except pass along the logpath)
      */
-    TclCommandInterp();
+    TclCommandInterp(const char* logpath);
 
     /**
      * Do all of the actual initialization.
@@ -233,6 +235,12 @@ protected:
      * Destructor to clean up and finalize.
      */
     ~TclCommandInterp();
+
+    /**
+     * Helper proc to propagate the logpath_ to the event and command
+     * loop procedures.
+     */
+    void set_command_logpath();
     
     Lock* lock_;			///< Lock for command execution
     Tcl_Interp* interp_;		///< Tcl interpreter

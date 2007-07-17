@@ -66,12 +66,18 @@ proc exit_event_loop {} {
 }
 
 #
+# Global var containing the command log path
+#
+set command_logpath "/command"
+
+#
 # Wrapper proc to handle the fact that we may or may not have a log
 # procedure defined
 #
 proc command_log {level string} {
+    global command_logpath
     if {[info commands log] != ""} {
-        log /command $level $string
+        log $command_logpath $level $string
     } else {
         puts $string
     }
@@ -137,7 +143,10 @@ proc command_process {input output} {
     # trim and evaluate the command
     set command($input) [string trim $command($input)]
     set cmd_error 0
+
+    command_log debug "executing command $command($input)"
     if {[catch {uplevel \#0 $command($input)} result]} {
+        command_log debug "error result is $result"
 	if {$result == "exit_command"} {
 	    if {$input == "stdin"} {
 		set event_loop_wait 1
@@ -150,6 +159,7 @@ proc command_process {input output} {
 	set result "error: $result\nwhile executing\n$errorInfo"
 	set cmd_error 1
     }
+    command_log debug "result is $result"
     set command($input) ""
 
     if {$tell_encode($output)} {
@@ -309,7 +319,7 @@ proc command_connection {chan host port} {
     set command_info($chan) "$host:$port"
     set command($chan)      ""
     set tell_encode($chan)  0
-    log /command debug "new command connection $chan from $host:$port"
+    command_log debug "new command connection $chan from $host:$port"
     fileevent $chan readable "command_process $chan $chan"
 
     puts -nonewline $chan $command_prompt

@@ -45,10 +45,12 @@ TclCommandList*   TclCommandInterp::auto_reg_ = NULL;
 
 #include "command-init-tcl.c"
 
-TclCommandInterp::TclCommandInterp()
-    : Logger("TclCommandInterp", "/command")
+//----------------------------------------------------------------------
+TclCommandInterp::TclCommandInterp(const char* logpath)
+    : Logger("TclCommandInterp", logpath)
 {}
 
+//----------------------------------------------------------------------
 int
 TclCommandInterp::do_init(char* argv0, bool no_default_cmds)
 {
@@ -104,6 +106,7 @@ TclCommandInterp::do_init(char* argv0, bool no_default_cmds)
     return TCL_OK;
 }
 
+//----------------------------------------------------------------------
 TclCommandInterp::~TclCommandInterp()
 {
     log_notice("shutting down interpreter");
@@ -126,6 +129,7 @@ TclCommandInterp::~TclCommandInterp()
     delete lock_;
 }
 
+//----------------------------------------------------------------------
 void
 TclCommandInterp::shutdown()
 {
@@ -133,15 +137,19 @@ TclCommandInterp::shutdown()
     instance_ = NULL;
 }
 
+//----------------------------------------------------------------------
 int
-TclCommandInterp::init(char* argv0, bool no_default_cmds)
+TclCommandInterp::init(char* argv0,
+                       const char* logpath,
+                       bool no_default_cmds)
 {
     ASSERT(instance_ == NULL);
-    instance_ = new TclCommandInterp();
+    instance_ = new TclCommandInterp(logpath);
     
     return instance_->do_init(argv0, no_default_cmds);
 }
 
+//----------------------------------------------------------------------
 int
 TclCommandInterp::exec_file(const char* file)
 {
@@ -161,6 +169,7 @@ TclCommandInterp::exec_file(const char* file)
     return err;    
 }
 
+//----------------------------------------------------------------------
 int
 TclCommandInterp::exec_command(const char* command)
 {
@@ -190,6 +199,7 @@ TclCommandInterp::exec_command(const char* command)
     return err;
 }
 
+//----------------------------------------------------------------------
 int
 TclCommandInterp::exec_command(int objc, Tcl_Obj** objv)
 {
@@ -207,10 +217,23 @@ TclCommandInterp::exec_command(int objc, Tcl_Obj** objv)
     return err;
 }
 
+//----------------------------------------------------------------------
+void
+TclCommandInterp::set_command_logpath()
+{
+    StringBuffer cmd("set command_logpath %s", logpath());
+    if (Tcl_Eval(interp_, const_cast<char*>(cmd.c_str())) != TCL_OK) {
+        log_err("tcl error setting command_logpath: \"%s\"",
+                interp_->result);
+    }
+}
+
+//----------------------------------------------------------------------
 void
 TclCommandInterp::command_server(const char* prompt,
                                  in_addr_t addr, u_int16_t port)
 {
+    set_command_logpath();
     log_debug("starting command server on %s:%d", intoa(addr), port);
     StringBuffer cmd("command_server \"%s\" %s %d", prompt, intoa(addr), port);
     
@@ -220,9 +243,11 @@ TclCommandInterp::command_server(const char* prompt,
     }
 }
 
+//----------------------------------------------------------------------
 void
 TclCommandInterp::command_loop(const char* prompt)
 {
+    set_command_logpath();
     StringBuffer cmd("command_loop \"%s\"", prompt);
 
 #if TCLREADLINE_ENABLED
@@ -234,14 +259,17 @@ TclCommandInterp::command_loop(const char* prompt)
     }
 }
 
+//----------------------------------------------------------------------
 void
 TclCommandInterp::event_loop()
 {
+    set_command_logpath();
     if (Tcl_Eval(interp_, "event_loop") != TCL_OK) {
         log_err("tcl error in event_loop: \"%s\"", interp_->result);
     }
 }
 
+//----------------------------------------------------------------------
 void
 TclCommandInterp::exit_event_loop()
 {
@@ -250,10 +278,14 @@ TclCommandInterp::exit_event_loop()
     }
 }
 
+//----------------------------------------------------------------------
 void
 TclCommandInterp::reg(TclCommand *command)
 {
     ScopeLock l(lock_, "TclCommandInterp::reg");
+
+    // use our logpath as the base for the command's log path
+    command->logpathf("%s/%s", logpath(), command->name());
     
     command->logf(LOG_DEBUG, "%s command registering", command->name());
 
@@ -272,6 +304,7 @@ TclCommandInterp::reg(TclCommand *command)
     commands_.push_front(command);
 }
 
+//----------------------------------------------------------------------
 bool
 TclCommandInterp::lookup(const char* command, TclCommand** commandp)
 {
@@ -297,6 +330,7 @@ TclCommandInterp::lookup(const char* command, TclCommand** commandp)
     return true;
 }
 
+//----------------------------------------------------------------------
 void
 TclCommandInterp::auto_reg(TclCommand *command)
 {
@@ -312,6 +346,7 @@ TclCommandInterp::auto_reg(TclCommand *command)
     auto_reg_->push_back(command);
 }
 
+//----------------------------------------------------------------------
 void
 TclCommandInterp::reg_atexit(void(*fn)(void*), void* data)
 {
@@ -319,6 +354,7 @@ TclCommandInterp::reg_atexit(void(*fn)(void*), void* data)
     Tcl_CreateExitHandler(fn, data);
 }
 
+//----------------------------------------------------------------------
 Tcl_Channel
 TclCommandInterp::register_file_channel(ClientData fd, int readOrWrite)
 {
@@ -334,6 +370,7 @@ TclCommandInterp::register_file_channel(ClientData fd, int readOrWrite)
     return channel;
 }
     
+//----------------------------------------------------------------------
 int 
 TclCommandInterp::tcl_cmd(ClientData client_data, Tcl_Interp* interp,
                           int objc, Tcl_Obj* const* objv)
@@ -358,24 +395,28 @@ TclCommandInterp::tcl_cmd(ClientData client_data, Tcl_Interp* interp,
     return command->exec(objc, (Tcl_Obj**)objv, interp);
 }
 
+//----------------------------------------------------------------------
 void
 TclCommandInterp::set_result(const char* result)
 {
     Tcl_SetResult(interp_, (char*)result, TCL_VOLATILE);
 }
 
+//----------------------------------------------------------------------
 void
 TclCommandInterp::set_objresult(Tcl_Obj* obj)
 {
     Tcl_SetObjResult(interp_, obj);
 }
 
+//----------------------------------------------------------------------
 void
 TclCommandInterp::append_result(const char* result)
 {
     Tcl_AppendResult(interp_, (char*)result, NULL);
 }
 
+//----------------------------------------------------------------------
 void
 TclCommandInterp::resultf(const char* fmt, ...)
 {
@@ -384,6 +425,7 @@ TclCommandInterp::resultf(const char* fmt, ...)
     set_result(buf.c_str());
 }
 
+//----------------------------------------------------------------------
 void
 TclCommandInterp::append_resultf(const char* fmt, ...)
 {
@@ -392,6 +434,7 @@ TclCommandInterp::append_resultf(const char* fmt, ...)
     append_result(buf.c_str());
 }
 
+//----------------------------------------------------------------------
 void
 TclCommandInterp::wrong_num_args(int argc, const char** argv, int parsed,
                                  int min, int max)
@@ -414,6 +457,7 @@ TclCommandInterp::wrong_num_args(int argc, const char** argv, int parsed,
     }
 }
 
+//----------------------------------------------------------------------
 void
 TclCommandInterp::wrong_num_args(int objc, Tcl_Obj** objv, int parsed,
                                  int min, int max)
@@ -425,6 +469,7 @@ TclCommandInterp::wrong_num_args(int objc, Tcl_Obj** objv, int parsed,
     wrong_num_args(objc, (const char**)argv, parsed, min, max);
 }
 
+//----------------------------------------------------------------------
 const char*
 TclCommandInterp::get_result()
 {
@@ -449,6 +494,7 @@ TclCommand::TclCommand(const char* name, const char* theNamespace)
     name_ += name;
 }
 
+//----------------------------------------------------------------------
 TclCommand::~TclCommand()
 {
     BindingTable::iterator iter;
@@ -458,6 +504,7 @@ TclCommand::~TclCommand()
     bindings_.clear();
 }
 
+//----------------------------------------------------------------------
 int
 TclCommand::exec(int objc, Tcl_Obj** objv, Tcl_Interp* interp)
 {
@@ -472,6 +519,7 @@ TclCommand::exec(int objc, Tcl_Obj** objv, Tcl_Interp* interp)
     return exec(objc, (const char**) argv, interp);
 }
 
+//----------------------------------------------------------------------
 int
 TclCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
 {
@@ -482,6 +530,7 @@ TclCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
     return TCL_ERROR;
 }
 
+//----------------------------------------------------------------------
 void
 TclCommand::resultf(const char* fmt, ...)
 {
@@ -490,6 +539,7 @@ TclCommand::resultf(const char* fmt, ...)
     TclCommandInterp::instance()->set_result(buf.c_str());
 }
 
+//----------------------------------------------------------------------
 void
 TclCommand::append_resultf(const char* fmt, ...)
 {
@@ -498,7 +548,7 @@ TclCommand::append_resultf(const char* fmt, ...)
     TclCommandInterp::instance()->append_result(buf.c_str());
 }
 
-
+//----------------------------------------------------------------------
 int
 TclCommand::cmd_info(Tcl_Interp* interp)
 {
@@ -516,6 +566,7 @@ TclCommand::cmd_info(Tcl_Interp* interp)
     return TCL_OK;
 }
 
+//----------------------------------------------------------------------
 int
 TclCommand::cmd_set(int objc, Tcl_Obj** objv, Tcl_Interp* interp)
 {
@@ -560,6 +611,7 @@ TclCommand::cmd_set(int objc, Tcl_Obj** objv, Tcl_Interp* interp)
     return TCL_OK;
 }
 
+//----------------------------------------------------------------------
 void
 TclCommand::bind_var(Opt* opt)
 {
@@ -582,6 +634,7 @@ TclCommand::bind_var(Opt* opt)
     add_to_help(subcmd.c_str(), opt->desc_);
 }
 
+//----------------------------------------------------------------------
 void
 TclCommand::unbind(const char* name)
 {
