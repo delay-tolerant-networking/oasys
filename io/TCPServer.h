@@ -57,13 +57,18 @@ public:
  */
 class TCPServerThread : public TCPServer, public Thread {
 public:
-    TCPServerThread(const char* name, const char* logbase = "/oasys/tcpserver",
-                    int flags = 0, int accept_timeout = -1)
-        : TCPServer(logbase), Thread(name, flags),
-          accept_timeout_(accept_timeout)
-    {
-    }
-    
+    /**
+     * Constructor initializes but doesn't start the thread.
+     */
+    TCPServerThread(const char* name,
+                    const char* logbase = "/oasys/tcpserver",
+                    int         flags = 0);
+
+    /**
+     * Destructor stops the thread.
+     */
+    virtual ~TCPServerThread();
+
     /**
      * Virtual callback hook that gets called when new connections
      * arrive.
@@ -82,6 +87,12 @@ public:
     void run();
 
     /**
+     * Stop the thread by posting on the notifier, which causes it to
+     * wake up from poll and then exit.
+     */
+    void stop();
+
+    /**
      * @brief Bind to an address, open the port for listening and
      * start the thread.
      *
@@ -92,13 +103,6 @@ public:
      * @return -1 on error, 0 otherwise.
      */
     int bind_listen_start(in_addr_t local_addr, u_int16_t local_port);
-
-protected:
-    /// If not -1, then call timeout_accept in the main loop. This
-    /// gives a caller a (rough) way to stop the thread by calling
-    /// set_should_stop() and then waiting for the accept call to
-    /// timeout, at which point the bit will be checked.
-    int accept_timeout_;
 };
 
 } // namespace oasys

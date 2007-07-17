@@ -31,12 +31,14 @@
 
 namespace oasys {
 
+//----------------------------------------------------------------------
 TCPServer::TCPServer(const char* logbase)
     : IPSocket(SOCK_STREAM, logbase)
 {
     params_.reuseaddr_ = 1;
 }
 
+//----------------------------------------------------------------------
 int
 TCPServer::listen()
 {
@@ -52,6 +54,7 @@ TCPServer::listen()
     return 0;
 }
     
+//----------------------------------------------------------------------
 int
 TCPServer::accept(int *fd, in_addr_t *addr, u_int16_t *port)
 {
@@ -77,6 +80,7 @@ TCPServer::accept(int *fd, in_addr_t *addr, u_int16_t *port)
     return 0;
 }
 
+//----------------------------------------------------------------------
 int
 TCPServer::timeout_accept(int *fd, in_addr_t *addr, u_int16_t *port,
                           int timeout_ms)
@@ -97,6 +101,24 @@ TCPServer::timeout_accept(int *fd, in_addr_t *addr, u_int16_t *port,
     return 0; 
 }
 
+//----------------------------------------------------------------------
+TCPServerThread::TCPServerThread(const char* name,
+                                 const char* logbase,
+                                 int         flags)
+    : TCPServer(logbase), Thread(name, flags)
+{
+    // assign the notifier to be used for interrupt in the
+    // IOHandlerBase
+    set_notifier(new Notifier(logpath()));
+}
+
+//----------------------------------------------------------------------
+TCPServerThread::~TCPServerThread()
+{
+    stop();
+}
+
+//----------------------------------------------------------------------
 void
 TCPServerThread::run()
 {
@@ -104,22 +126,33 @@ TCPServerThread::run()
     in_addr_t addr;
     u_int16_t port;
 
+    log_debug("server thread %p running", this);
+
     while (1) {
         // check if someone has told us to quit by setting the
-        // should_stop flag. if so, we're all done.
+        // should_stop flag. if so, we're all done
         if (should_stop())
             break;
+
+        // now call poll() to wait forever for a new connection to
+        // accept or an indication that we should stop
+        short revents = 0;
+        int ret = IO::poll_single(TCPServer::fd(), POLLIN, &revents, -1,
+                                  get_notifier(), logpath());
         
-        // check the accept_timeout parameter to see if we should
-        // block or poll when calling accept
-        int ret;
-        if (accept_timeout_ == -1) {
-            ret = accept(&fd, &addr, &port);
-        } else {
-            ret = timeout_accept(&fd, &addr, &port, accept_timeout_);
-            if (ret == IOTIMEOUT)
-                continue;
+        if (ret == IOINTR) {
+            ASSERT(should_stop());
+            break;
         }
+
+        if (ret <= 0) {
+            logf(LOG_ERR, "error %d in poll(): %d %s",
+                 ret, errno, strerror(errno));
+            close();
+            break;
+        }
+                
+        ret = accept(&fd, &addr, &port);
 
         if (ret != 0) {
             if (errno == EINTR)
@@ -136,8 +169,32 @@ TCPServerThread::run()
 
         accepted(fd, addr, port);
     }
+
+    log_debug("server thread %p exiting", this);
 }
 
+//----------------------------------------------------------------------
+void
+TCPServerThread::stop()
+{
+    set_should_stop();
+    
+    if (! is_stopped()) {
+        interrupt_from_io();
+
+        // wait for 10 seconds (i.e. 20 sleep periods)
+        for (int i = 0; i < 20; ++i) {
+            if (is_stopped())
+                return;
+            
+            usleep(500000);
+        }
+        
+        log_err("tcp server thread didn't die after 10 seconds");
+    }
+}
+
+//----------------------------------------------------------------------
 int
 TCPServerThread::bind_listen_start(in_addr_t local_addr,
                                    u_int16_t local_port)

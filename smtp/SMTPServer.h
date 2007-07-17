@@ -35,8 +35,7 @@ class SMTPServer : public oasys::TCPServerThread {
 public:
     SMTPServer(const SMTP::Config& config,
                SMTPHandlerFactory* handler_factory,
-               Notifier*           session_done = NULL,
-               int                 accept_timeout = -1);
+               Notifier*           session_done = NULL);
 
 private:
     void accepted(int fd, in_addr_t addr, u_int16_t port);

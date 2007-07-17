@@ -136,19 +136,15 @@ Notifier* session_done;
 
 DECLARE_TEST(StartServer) {
     session_done = new Notifier("SessionDone");
-    server = new SMTPServer(config, &f, session_done, 500);
-    server->start();
+    server = new SMTPServer(config, &f, session_done);
 
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(StopServer) {
-    server->set_should_stop();
-    while (! server->is_stopped()) {
-        usleep(200);
-    }
-
-    server->close();
+    server->stop();
+    delete server;
+    server = 0;
 
     return UNIT_TEST_PASSED;
 }
