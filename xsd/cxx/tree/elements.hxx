@@ -546,6 +546,7 @@ namespace xsd
           dom_attribute_info (xercesc::DOMAttr& a, type& n, flags f)
               : a_ (a)
           {
+            (void)f;
             assert (f & flags::not_root);
             assert (f & flags::keep_dom);
 
