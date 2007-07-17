@@ -10182,7 +10182,7 @@ echo "$as_me: error: can't find usable postgres library" >&2;}
     ac_eds='no'
     # Check whether --enable-eds was given.
 if test "${enable_eds+set}" = set; then
-  enableval=$enable_eds; ac_eds=$withval
+  enableval=$enable_eds; ac_eds=$enableval
 fi
 
                 if test "$ac_eds" = no; then
