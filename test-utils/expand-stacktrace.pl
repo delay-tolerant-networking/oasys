@@ -23,16 +23,24 @@ select(STDOUT); $OUTPUT_AUTOFLUSH = 1; # make unbuffered
 
 $dir = $0;
 $dir =~ s|/[^/]+$||;
-
 $print_stacktrace = "$dir/print-stacktrace.pl";
+
+$OS = `uname -s`;
+chomp($OS);
 
 while (<STDIN>) {
     if (m/STACK TRACE: /) {
 	s/STACK TRACE: //;
 	print "** STACK TRACE **\n\n";
-	open(PRINTER, "| $print_stacktrace " . join(' ', @ARGV));
- 	print PRINTER $_;
- 	close(PRINTER);
+
+	if ($OS eq "Darwin") {
+	    print $_;
+	    print "\n";
+	} else {
+	    open(PRINTER, "| $print_stacktrace " . join(' ', @ARGV));
+	    print PRINTER $_;
+	    close(PRINTER);
+	}
     } else {
 	print "$_"
     }
