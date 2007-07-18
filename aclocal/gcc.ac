@@ -273,6 +273,13 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
     AC_SUBST(TARGET)
 
     dnl
+    dnl Set the build system in a variable so it's usable by
+    dnl Makefiles and other scripts
+    dnl
+    BUILD_SYSTEM=`uname -s || echo UNKNOWN | sed 's/CYGWIN.*/CYGWIN/'`
+    AC_SUBST(BUILD_SYSTEM)
+
+    dnl
     dnl Add options to add extra compilation flags
     dnl
     EXTRA_CFLAGS=""

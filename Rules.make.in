@@ -9,6 +9,11 @@
 TARGET 		= @TARGET@
 
 #
+# Name of the build system
+#
+BUILD_SYSTEM	= @BUILD_SYSTEM@
+
+#
 # Common settings extracted from the configure script
 #
 prefix		= @prefix@

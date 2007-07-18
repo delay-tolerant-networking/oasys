@@ -49,9 +49,9 @@ AC_DEFUN(AC_OASYS_CONFIG_TCLREADLINE, [
     fi
 
     dnl
-    dnl Now check for an installation of libreadline.
+    dnl Now check for an installation of libreadline (except on Cygwin)
     dnl
-    if test `uname -s | sed 's/CYGWIN.*/CYGWIN/'` = 'CYGWIN' ; then
+    if test $BUILD_SYSTEM = 'CYGWIN' ; then
         TCLREADLINE_ENABLED=0
     else 
         AC_SEARCH_LIBS(readline, 
