@@ -80,7 +80,7 @@ die(const char* how)
     setrlimit(RLIMIT_CORE, &lim);
 
     if (!strcmp(how, "SIGSEGV")) {
-        int *ptr = 0;
+        int *ptr = (int*)0xffffffff;
         int a = *ptr;
         printf("a: %d\n", a);
     }
