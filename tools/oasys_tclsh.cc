@@ -27,7 +27,7 @@ int
 main(int argc, char* const argv[])
 {
     Log::init();
-    if (oasys::TclCommandInterp::init(argv[0]) != 0)
+    if (oasys::TclCommandInterp::init(argv[0], "/oasys_tclsh") != 0)
     {
         fprintf(stderr, "can't init TCL\n");
         exit(1);
