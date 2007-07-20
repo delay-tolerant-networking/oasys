@@ -173,7 +173,7 @@ XML_SRCS :=					\
 	xml/XMLObject.cc			\
 
 SRCS := \
-	version.c				\
+	oasys-version.c				\
 	$(COMPAT_SRCS) 				\
 	$(DEBUG_SRCS) 				\
 	$(IO_SRCS) 				\
@@ -190,7 +190,7 @@ SRCS := \
 OBJS := $(SRCS:.cc=.o)
 OBJS := $(OBJS:.c=.o)
 
-COMPAT_OBJS := $(COMPAT_SRCS:.c=.o) version.o
+COMPAT_OBJS := $(COMPAT_SRCS:.c=.o) oasys-version.o
 
 ALLSRCS := $(SRCS)
 
@@ -320,6 +320,23 @@ tclcmd/command-init-tcl.c: $(SRCDIR)/tclcmd/command-init.tcl
 		 sed 's|^|"|g' | \
 		 sed "s|$$|\\\\n\"|g" >> $@;
 	echo ";">> $@
+
+#
+# Rules for the version files
+#
+oasys-version.o: oasys-version.c
+oasys-version.c: oasys-version.h
+oasys-version.h: oasys-version.h.in oasys-version.dat
+	tools/subst-version oasys-version.dat < 
+	   $(SRCDIR)/oasys-version.h.in > oasys-version.h
+
+vpath oasys-version.h.in $(SRCDIR)
+vpath oasys-version.h    $(SRCDIR)
+vpath oasys-version.c    $(SRCDIR)
+vpath oasys-version.dat  $(SRCDIR)
+
+bump-version:
+	cd $(SRCDIR) && tools/bump-version oasys-version.dat
 
 #
 # Rule to generate the doxygen documentation

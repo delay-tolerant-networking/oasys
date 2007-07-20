@@ -21,8 +21,8 @@
 #        made to this file or to any of the files in aclocal
 
 AC_PREREQ(2.57)
-AC_INIT([oasys], [1.1.0])
-AC_CONFIG_SRCDIR([version.h])
+AC_INIT(oasys)
+AC_CONFIG_SRCDIR([oasys-version.h])
 AC_CONFIG_HEADER([config.h])
 
 #  Stick a comment in the generated file so people know what to do.
