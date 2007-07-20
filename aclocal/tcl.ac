@@ -70,9 +70,14 @@ AC_DEFUN(AC_OASYS_CONFIG_TCL, [
         OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_tcl_h"
     fi
 
+    TCL_LDFLAGS=
     if test ! x"$oasys_cv_path_tcl_lib" = x"/usr/lib" ; then
         OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_tcl_lib"
+	TCL_LDFLAGS=-L$oasys_cv_path_tcl_lib
     fi
+
+    TCL_LDFLAGS="$TCL_LDFLAGS -l$oasys_cv_lib_tcl"
+    AC_SUBST(TCL_LDFLAGS)
 
     OASYS_LIBS="$OASYS_LIBS -l$oasys_cv_lib_tcl"
 ])

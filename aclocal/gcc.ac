@@ -239,7 +239,7 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
 		 AC_LINK_IFELSE([void myfunc() {}], [rpath=yes], [rpath=no])
 		 AC_MSG_RESULT($rpath)
 		 if [[ $rpath = yes ]] ; then
-		     RPATH="-Wl,-rpath=. -Wl,-rpath=\$(prefix)/lib"
+		     RPATH="-L. -Wl,-rpath=. -Wl,-rpath=\$(prefix)/lib"
 		 fi
                  break
              fi
