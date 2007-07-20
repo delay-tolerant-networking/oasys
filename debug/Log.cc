@@ -658,6 +658,8 @@ Log::vlogf(const char* path, log_level_t level,
                (buf[i] >= 32 && buf[i] <= 126));
     }
 #endif
+
+    int save_errno = errno;
     
     // do the write, making sure to drain the buffer. since stdout was
     // set to nonblocking, the spin lock prevents other threads from
@@ -669,6 +671,8 @@ Log::vlogf(const char* path, log_level_t level,
     ASSERTF(ret == (int)buflen,
             "unexpected return from IO::writeall (got %d, expected %zu): %s",
             ret, buflen, strerror(errno));
+
+    errno = save_errno;
     
     return buflen;
 };
@@ -736,6 +740,8 @@ Log::log_multiline(const char* path, log_level_t level,
         }
     }
     
+    int save_errno = errno;
+    
     // do the write, making sure to drain the buffer. since stdout was
     // set to nonblocking, the spin lock prevents other threads from
     // jumping in here
@@ -746,6 +752,8 @@ Log::log_multiline(const char* path, log_level_t level,
     ASSERTF(ret == (int)total_len,
             "unexpected return from IO::writevall (got %d, expected %zu): %s",
             ret, total_len, strerror(errno));
+
+    errno = save_errno;
     
     return ret;
 }

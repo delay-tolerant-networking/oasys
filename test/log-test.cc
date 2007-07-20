@@ -459,6 +459,25 @@ DECLARE_TEST(ReparseTest) {
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(ErrnoTest) {
+    errno = EINVAL;
+    CHECK_EQUAL(errno, EINVAL);
+    log_always_p("/test/", "testing log doesn't stomp on errno");
+    CHECK_EQUAL(errno, EINVAL);
+
+    int err = open("/somenonexistentfile", O_RDONLY, 0);
+    CHECK_EQUAL(err, -1);
+    CHECK_EQUAL(errno, ENOENT);
+    log_always_p("/test/", "testing log doesn't stomp on errno");
+    CHECK_EQUAL(errno, ENOENT);
+    
+    log_multiline("/test/", LOG_ALWAYS,
+                  "testing log_multiline\ndoesn't stomp on errno\n");
+    CHECK_EQUAL(errno, ENOENT);
+    
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TEST(Fini) {
     CHECK(f1->unlink() == 0);
     CHECK(f2->unlink() == 0);
@@ -477,6 +496,7 @@ DECLARE_TESTER(LogTest) {
     ADD_TEST(LoggerTest);
     ADD_TEST(FormatterTest);
     ADD_TEST(ReparseTest);
+    ADD_TEST(ErrnoTest);
     ADD_TEST(Fini);
 #endif
 }
