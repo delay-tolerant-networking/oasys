@@ -138,7 +138,7 @@ AC_OASYS_CONFIG_STORAGE
 # Output
 # -------------------------------------------------------------------------
 CPPFLAGS="$OASYS_CPPFLAGS $CPPFLAGS"
-LDFLAGS="$OASYS_LDFLAGS $LDFLAGS"
+LDFLAGS="-L. $OASYS_LDFLAGS $LDFLAGS"
 AC_SUBST([OASYS_LIBS])
 
 AC_CONFIG_FILES([Rules.make])

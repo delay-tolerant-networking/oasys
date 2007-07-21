@@ -23,7 +23,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-#
+
 ## --------------------- ##
 ## M4sh Initialization.  ##
 ## --------------------- ##
@@ -3290,7 +3290,7 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
 		 { echo "$as_me:$LINENO: result: $rpath" >&5
 echo "${ECHO_T}$rpath" >&6; }
 		 if [ $rpath = yes ] ; then
-		     RPATH="-L. -Wl,-rpath=. -Wl,-rpath=\$(prefix)/lib"
+		     RPATH="-Wl,-rpath=. -Wl,-rpath=\$(prefix)/lib"
 		 fi
                  break
              fi
@@ -10216,7 +10216,7 @@ _ACEOF
 # Output
 # -------------------------------------------------------------------------
 CPPFLAGS="$OASYS_CPPFLAGS $CPPFLAGS"
-LDFLAGS="$OASYS_LDFLAGS $LDFLAGS"
+LDFLAGS="-L. $OASYS_LDFLAGS $LDFLAGS"
 
 
 ac_config_files="$ac_config_files Rules.make"
