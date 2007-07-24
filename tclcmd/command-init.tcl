@@ -79,7 +79,12 @@ proc command_log {level string} {
     if {[info commands log] != ""} {
         log $command_logpath $level $string
     } else {
-        puts $string
+        # hard-coded level filter
+        switch -- $level {
+            notice - warn - error - crit {
+                puts $string
+            }
+        }
     }
 }
 
