@@ -30,6 +30,7 @@ App::App(const char* classname,
     : Logger(classname, name),
       name_(name),
       version_(version),
+      extra_usage_(""),
       random_seed_(0),
       random_seed_set_(false),
       print_version_(false),
@@ -46,7 +47,7 @@ App::App(const char* classname,
 
 //----------------------------------------------------------------------
 void
-App::init_app(int argc, char* const argv[], const char* extra_usage)
+App::init_app(int argc, char* const argv[])
 {
 #ifdef OASYS_DEBUG_MEMORY_ENABLED
     DbgMemInfo::init();
@@ -54,7 +55,7 @@ App::init_app(int argc, char* const argv[], const char* extra_usage)
     
     fill_options();
     
-    int remainder = opts_.getopt(argv[0], argc, argv, extra_usage);
+    int remainder = opts_.getopt(argv[0], argc, argv, extra_usage_.c_str());
     
     if (print_version_) 
     {
@@ -80,8 +81,7 @@ App::validate_options(int argc, char* const argv[], int remainder)
     if (remainder != argc) 
     {
         fprintf(stderr, "invalid argument '%s'\n", argv[remainder]);
-        opts_.usage(name_.c_str());
-        exit(1);
+        print_usage_and_exit();
     }
 }
 

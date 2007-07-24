@@ -48,8 +48,7 @@ public:
     /**
      * Main app initialization hook.
      */
-    void init_app(int argc, char* const argv[],
-                  const char* extra_usage = "");
+    void init_app(int argc, char* const argv[]);
 
     /**
      * Virtual callback to provide app-specific options in the opts_
@@ -84,6 +83,24 @@ protected:
     void fill_default_options(int flags);
 
     /**
+     * Hook used by subclasses to append extra help information to the
+     * usage output to describe arguments that are not parsed by getopt.
+     */
+    void set_extra_usage(const std::string& usage)
+    {
+        extra_usage_ = usage;
+    }
+
+    /**
+     * Print usage information and exit.
+     */
+    void print_usage_and_exit()
+    {
+        opts_.usage(name_.c_str(), extra_usage_.c_str());
+        exit(1);
+    }
+
+    /**
      * When daemonized, notifies the parent of the exit status. In
      * either case, exits with the given status.
      */
@@ -93,6 +110,7 @@ protected:
     Getopt                opts_;
     std::string           name_;
     std::string           version_;
+    std::string           extra_usage_;
     
     int                   random_seed_;
     bool                  random_seed_set_;
