@@ -537,6 +537,9 @@ proc check_pid {hostname pid} {
 proc wait_for_pid_exit {id pid {timeout 30000}} {
     global net::host
     do_until "waiting for PID $pid to exit" $timeout {
+	# We need to do this to garbage collect zombies from exec
+	catch { tell_tier_test $id exec "" }
+
 	if {![check_pid $net::host($id) $pid]} {
 	    return
 	}
