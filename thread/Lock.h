@@ -50,10 +50,14 @@ public:
      */
     virtual ~Lock()
     {
-        if (is_locked()) {
+        /* XXX/bowei -- This really should be nothing. */
+        /*
+        if (is_locked()) 
+        {
             ASSERT(is_locked_by_me());
             ASSERT(scope_lock_count_ == 0);
         }
+        */
     }
     
     /**
