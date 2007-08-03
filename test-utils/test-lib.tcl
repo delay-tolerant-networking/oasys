@@ -173,6 +173,15 @@ namespace eval test {
 	global opt
 	for {set i 0} {$i < [llength $opt(opts)]} {incr i} {
 	    set var [string trimleft [lindex $opt(opts) $i] -]
+	    if {$var == "help"} {
+		puts ""
+		puts "Script options:"
+		foreach {varname defval} $vardesc {
+		    puts "    $varname, default is $defval"
+		}
+		exit 0
+	    }
+
 	    set varname [k->v $var $vardesc]
 	    
 	    if {$varname == ""} {
