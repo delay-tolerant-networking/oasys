@@ -201,6 +201,7 @@ TOOLS	:= \
 	tools/md5chunks				\
 	tools/oasys_tclsh			\
 	tools/zsize				\
+	test-utils/proc-watcher			\
 
 all: checkconfigure prebuild libs $(TOOLS)
 
