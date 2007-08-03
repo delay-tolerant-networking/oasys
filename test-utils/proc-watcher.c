@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #include <signal.h>
 
@@ -14,7 +15,7 @@ pid_t child_pid;
 void
 alarm_handler(int sig)
 {
-    // nothing
+    (void)sig;
     fprintf(stderr, "Timeout waiting for child....\n");
     kill(child_pid, SIGINT);
     usleep(1000000);
@@ -94,8 +95,7 @@ main(int argc, char* argv[])
                     fprintf(stderr, "Program timed out, killing\n");
                 break;
                 default:
-                    fprintf(stderr, "Error in read: %s", 
-                            strerror(errno));
+                    fprintf(stderr, "Error in read: %s", strerror(errno));
                     exit(1);
                 }
             }
@@ -106,4 +106,6 @@ main(int argc, char* argv[])
             write(1, readbuf, cc);
         }
     }
+    
+    return 0;
 }
