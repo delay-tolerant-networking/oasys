@@ -389,6 +389,9 @@ tools/oasys_tclsh: tools/oasys_tclsh.o $(LIBFILES)
 tools/zsize: tools/zsize.o $(LIBFILES)
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(LIBS)
 
+test-utils/proc-watcher: test-utils/proc-watcher.o
+	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS)
+
 .PHONY: cpps
 cpps: $(CPPS)
 
