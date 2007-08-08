@@ -29,6 +29,9 @@ LogCommand::LogCommand()
     bind_var(new StringOpt("logfile", &Log::instance()->logfile_,
                            "file", "The pathname to the logfile."));
 
+    bind_var(new StringOpt("debug_file", &Log::instance()->debug_path_,
+                           "file", "The pathname to the log rules file."));
+
     add_to_help("<path> <level> <string>", 
                 "Log message string with path, level");
     add_to_help("prefix <prefix>", "Set logging prefix");
