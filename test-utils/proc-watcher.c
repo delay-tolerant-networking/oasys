@@ -7,8 +7,10 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <signal.h>
 
+int verbose = 0;
 int timeout; // seconds
 pid_t child_pid;
 
@@ -16,11 +18,37 @@ void
 alarm_handler(int sig)
 {
     (void)sig;
-    fprintf(stderr, "Timeout waiting for child....\n");
+    if (verbose)
+    {
+        fprintf(stderr, "ERROR: Timeout (%d seconds) waiting for child...\n", 
+                timeout);
+    }
+
     kill(child_pid, SIGINT);
     usleep(1000000);
     kill(child_pid, SIGTERM);
     exit(1);
+}
+
+void
+child_handler(int sig)
+{
+    int status;
+    (void) sig;
+
+    wait(&status);
+    if (verbose) 
+    {
+        if (status == 0)
+        {
+            fprintf(stdout, "Child exited normally...\n", status);
+        }
+        else
+        {
+            fprintf(stderr, "WARNING: Child exited with non-zero exit code = %d\n", status);
+        }
+    }
+    exit(status);
 }
 
 int
@@ -32,7 +60,7 @@ main(int argc, char* argv[])
     int child_stdout[2];
 
     if (argc < 3) {
-	printf("Usage: %s <timeout> command...\n\n", argv[0]);
+	printf("Usage: %s [-v] <timeout> command...\n\n", argv[0]);
 	printf("Process Watcher - Execs a process and watches the stdout\n"
 	       "of the program. If there is a period of inactivity, the\n"
 	       "watcher will kill the child and itself and return an error.\n");
@@ -41,13 +69,19 @@ main(int argc, char* argv[])
     }
 
     argc--; argv++;
+    if (strcmp(argv[0], "-v") == 0)
+    {
+        verbose = 1;
+        argc--; argv++;
+    }
+
     timeout = atoi(argv[0]);
     argc--; argv++;
     child_program = argv[0];
     argc--; argv++;
 
     if (argc > 254) {
-	fprintf(stderr, "Warning: too many arguments, truncating...\n");
+	fprintf(stderr, "WARNING: too many arguments, truncating...\n");
 	argc = 254;
     }
 
@@ -59,18 +93,28 @@ main(int argc, char* argv[])
 
     pipe(child_stdout);
     
+    // setup signal handlers
+    signal(SIGALRM, alarm_handler);
+    signal(SIGCHLD, child_handler);
+
     child_pid = fork();
     if (child_pid == 0)
     {
+        signal(SIGALRM, SIG_DFL);
+        signal(SIGCHLD, SIG_DFL);
+
         // Attach child stdout to the pipe
         close(1);
         close(child_stdout[0]);
         dup2(child_stdout[1], 1);
-        fprintf(stderr, "%s %s %s\n",  
-                child_program, child_argv[0], child_argv[1]);
+        if (verbose)
+        {
+            fprintf(stderr, "Executing %s...\n",  child_program);
+        }
         err = execv(child_program, child_argv);
-        if (err != 0) {
-            fprintf(stderr, "Couldn't execute %s\n", child_program);
+        if (err != 0) 
+        {
+            fprintf(stderr, "ERROR: can't execute \"%s\"\n", child_program);
             exit(1);
         }
     }
@@ -80,6 +124,7 @@ main(int argc, char* argv[])
         int cc;
 
         signal(SIGALRM, alarm_handler);
+        signal(SIGCHLD, child_handler);
 
         // read from the child, setting a timeout
         alarm(timeout);
@@ -92,10 +137,10 @@ main(int argc, char* argv[])
             {
                 switch (errno) {
                 case EINTR:
-                    fprintf(stderr, "Program timed out, killing\n");
+                    fprintf(stderr, "ERROR: Program timed out, killing...\n");
                 break;
                 default:
-                    fprintf(stderr, "Error in read: %s", strerror(errno));
+                    fprintf(stderr, "ERROR: Can't read from child: %s", strerror(errno));
                     exit(1);
                 }
             }
