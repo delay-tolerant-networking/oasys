@@ -41,7 +41,7 @@ child_handler(int sig)
     {
         if (status == 0)
         {
-            fprintf(stdout, "Child exited normally...\n", status);
+            fprintf(stdout, "Child exited normally...\n");
         }
         else
         {
