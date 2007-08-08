@@ -129,7 +129,7 @@ echodep:
 #
 # Some rules for cleaning object files
 #
-clean: $(SUBDIRS) objclean depclean genclean libclean binclean
+clean: $(SUBDIRS) objclean depclean genclean libclean binclean $(CLEAN_OTHER)
 
 .PHONY: $(SUBDIRS)
 $(SUBDIRS):
