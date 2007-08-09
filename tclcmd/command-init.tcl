@@ -59,7 +59,7 @@ proc exit_event_loop {} {
     command_log notice "kicking event loop to exit"
     set event_loop_wait 0
     if [catch {
-	::tclreadline::readline eof
+	::oasys_tclreadline::readline eof
     } err] {
     }
     after 0 do_nothing
@@ -220,13 +220,13 @@ proc command_loop {prompt} {
     }
 
     if [catch {
-	package require tclreadline
-	tclreadline::readline initialize ""
-	tclreadline::readline eofchar "error exit_command"
+	package require oasys_tclreadline
+	oasys_tclreadline::readline initialize ""
+	oasys_tclreadline::readline eofchar "error exit_command"
 	tclreadline_loop
 	
     } err] {
-	command_log info "can't load tclreadline: $err"
+	command_log info "can't load oasys_tclreadline: $err"
 	command_log info "fall back to simple command loop"
 	simple_command_loop $prompt
     }
@@ -254,8 +254,8 @@ proc tclreadline_completer {text start end line} {
 proc tclreadline_loop {} {
     global event_loop_wait
     
-    tclreadline::readline builtincompleter 0
-    tclreadline::readline customcompleter tclreadline_completer
+    oasys_tclreadline::readline builtincompleter 0
+    oasys_tclreadline::readline customcompleter tclreadline_completer
     
     uplevel \#0 {
 	while {1} {
@@ -270,10 +270,10 @@ proc tclreadline_loop {} {
 	    }
 
 	    if {[catch {
-		set LINE [::tclreadline::readline read $command_prompt]
-		while {![::tclreadline::readline complete $LINE]} {
+		set LINE [::oasys_tclreadline::readline read $command_prompt]
+		while {![::oasys_tclreadline::readline complete $LINE]} {
 		    append LINE "\n"
-		    append LINE [tclreadline::readline read ${prompt2}]
+		    append LINE [oasys_tclreadline::readline read ${prompt2}]
 		}
 		
 	    } errorMsg]} {
@@ -303,11 +303,11 @@ proc tclreadline_loop {} {
 		    puts $result
 		}
 		set result ""
-	    } ::tclreadline::errorMsg] {
-		if {$::tclreadline::errorMsg == "exit_command"} {
+	    } ::oasys_tclreadline::errorMsg] {
+		if {$::oasys_tclreadline::errorMsg == "exit_command"} {
 		    break
 		}
-		puts stderr $::tclreadline::errorMsg
+		puts stderr $::oasys_tclreadline::errorMsg
 		puts stderr [list while evaluating $LINE]
 	    }
 	}

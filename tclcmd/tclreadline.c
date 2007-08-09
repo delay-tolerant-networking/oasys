@@ -623,37 +623,37 @@ int
 Tclreadline_Init(Tcl_Interp *interp)
 {
     int status;
-    Tcl_CreateCommand(interp, "::tclreadline::readline", TclReadlineCmd,
+    Tcl_CreateCommand(interp, "::oasys_tclreadline::readline", TclReadlineCmd,
 	(ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
     tclrl_interp = interp;
-    if (TCL_OK != (status = Tcl_LinkVar(interp, "::tclreadline::historyLength",
+    if (TCL_OK != (status = Tcl_LinkVar(interp, "::oasys_tclreadline::historyLength",
 		(char*) &tclrl_history_length, TCL_LINK_INT)))
 	return status;
 
-    if (TCL_OK != (status = Tcl_LinkVar(interp, "::tclreadline::library",
+    if (TCL_OK != (status = Tcl_LinkVar(interp, "::oasys_tclreadline::library",
 		(char*) &TCLRL_LIBRARY, TCL_LINK_STRING | TCL_LINK_READ_ONLY)))
 	return status;
-    if (TCL_OK != (status = Tcl_LinkVar(interp, "::tclreadline::version",
+    if (TCL_OK != (status = Tcl_LinkVar(interp, "::oasys_tclreadline::version",
 		(char*) &TCLRL_VERSION, TCL_LINK_STRING | TCL_LINK_READ_ONLY)))
 	return status;
-    if (TCL_OK != (status = Tcl_LinkVar(interp, "::tclreadline::patchLevel",
+    if (TCL_OK != (status = Tcl_LinkVar(interp, "::oasys_tclreadline::patchLevel",
 		(char*) &TCLRL_PATCHLEVEL, TCL_LINK_STRING | TCL_LINK_READ_ONLY)))
 	return status;
-    if (TCL_OK != (status = Tcl_LinkVar(interp, "::tclreadline::license",
+    if (TCL_OK != (status = Tcl_LinkVar(interp, "::oasys_tclreadline::license",
 		(char*) &tclrl_license, TCL_LINK_STRING | TCL_LINK_READ_ONLY)))
 	return status;
 
-    if (TCL_OK != (status = Tcl_LinkVar(interp, "tclreadline_library",
+    if (TCL_OK != (status = Tcl_LinkVar(interp, "oasys_tclreadline_library",
 		(char*) &TCLRL_LIBRARY, TCL_LINK_STRING | TCL_LINK_READ_ONLY)))
 	return status;
-    if (TCL_OK != (status = Tcl_LinkVar(interp, "tclreadline_version",
+    if (TCL_OK != (status = Tcl_LinkVar(interp, "oasys_tclreadline_version",
 		(char*) &TCLRL_VERSION, TCL_LINK_STRING | TCL_LINK_READ_ONLY)))
 	return status;
-    if (TCL_OK != (status = Tcl_LinkVar(interp, "tclreadline_patchLevel",
+    if (TCL_OK != (status = Tcl_LinkVar(interp, "oasys_tclreadline_patchLevel",
 		(char*) &TCLRL_PATCHLEVEL, TCL_LINK_STRING | TCL_LINK_READ_ONLY)))
 	return status;
 
-    return Tcl_PkgProvide(interp, "tclreadline", TCLRL_VERSION);
+    return Tcl_PkgProvide(interp, "oasys_tclreadline", TCLRL_VERSION);
 }
 
 static int
