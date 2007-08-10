@@ -252,6 +252,7 @@ include Rules.make
 LIBFILES := liboasys.a liboasyscompat.a
 ifeq ($(SHLIBS),yes)
 LIBFILES += liboasys.$(SHLIB_EXT) liboasyscompat.$(SHLIB_EXT)
+LIBFILES += test-utils/libtclgettimeofday.$(SHLIB_EXT)
 endif
 
 .PHONY: libs
@@ -378,6 +379,11 @@ liboasyscompat.a: $(COMPAT_OBJS)
 liboasyscompat.$(SHLIB_EXT): $(COMPAT_OBJS)
 	rm -f $@
 	$(CXX) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(LIBS) -o $@
+
+test-utils/libtclgettimeofday.$(SHLIB_EXT): test-utils/tclgettimeofday.c
+	rm -f $@
+	$(CC) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(LIBS) $(OASYS_LIBS) -o $@
+
 
 # Rules for linking tools
 tools/md5chunks: tools/md5chunks.o $(LIBFILES)

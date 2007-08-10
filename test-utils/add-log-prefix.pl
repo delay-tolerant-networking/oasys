@@ -1,7 +1,6 @@
 #!/usr/bin/perl
-
 #
-#    Copyright 2005-2006 Intel Corporation
+#    Copyright 2007 Intel Corporation
 # 
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -19,27 +18,13 @@
 use English;
 select(STDOUT); $OUTPUT_AUTOFLUSH = 1; # make unbuffered
 
-$dir = $0;
-$dir =~ s|/[^/]+$||;
-$print_stacktrace = "$dir/print-stacktrace.pl";
-
-$OS = `uname -s`;
-chomp($OS);
+$prefix = $ARGV[0];
 
 while (<STDIN>) {
-    if (m/STACK TRACE: /) {
-	s/STACK TRACE: //;
-	print "** STACK TRACE **\n\n";
-
-	if ($OS eq "Darwin") {
-	    print $_;
-	    print "\n";
-	} else {
-	    open(PRINTER, "| $print_stacktrace " . join(' ', @ARGV));
-	    print PRINTER $_;
-	    close(PRINTER);
-	}
+    if (m/^\[\d\d\d\d\d\d\d\d\d\d.\d\d\d\d\d\d/) {
+	s/^\[/[$prefix /;
+	print $_;
     } else {
-	print "$prefix$_"
+	print "$prefix: $_";
     }
 }

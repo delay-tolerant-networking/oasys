@@ -54,8 +54,6 @@ proc get_rundir {hostname id} {
 # @param manifest_list List of manifest files
 # @param subst         A list of mappings to be done in the 
 #                      manifests, e.g. { exe stripped }
-# @param strip         Strip ELF executables to save transmission time
-# @param verbose       Print out what is happening
 #
 # Manifest file format list of tuples:
 #
@@ -63,7 +61,7 @@ proc get_rundir {hostname id} {
 # { D remote-directory }
 #
 
-proc create {manifest subst strip verbose} {
+proc create {manifest subst} {
     global env opt
     # Somehow these /tmp/distrun.tcl dirs seem to leak if they're
     # uniquified by pid, so instead we just use the username
@@ -75,13 +73,13 @@ proc create {manifest subst strip verbose} {
     set tmpdir "/tmp/distrun.tcl-$env(USER)"
 
     if [file exists $tmpdir] {
-	puts "WARNING: $tmpdir leaked from previous test!!"
+	testlog "WARNING: $tmpdir leaked from previous test!!"
 	exec rm -rf $tmpdir
     }
     
     exec mkdir $tmpdir
 
-    if {$verbose} { puts "% constructing file list" }
+    dbg "% constructing file list"
     foreach entry $manifest {
 	set type [lindex $entry 0]
 	switch $type {
@@ -94,16 +92,12 @@ proc create {manifest subst strip verbose} {
 		if [string length $dir] {
 		    exec mkdir -p "$tmpdir/$dir"
 		}
-		if {$verbose} {
-		    puts "% $src -> $tmpdir/$dst"
-		}
+                dbg "% $src -> $tmpdir/$dst"
 		exec cp "$src" "$tmpdir/$dst"
 
-		if { $strip && [file executable $tmpdir/$dst] } {
+		if { $opt(strip) && [file executable $tmpdir/$dst] } {
 		    # This should be safe, strip bails if it's not an exe
-		    if {$verbose} { 
-			puts "% stripping $tmpdir/$dst"
-		    }
+                    dbg "% stripping $tmpdir/$dst"
 		    catch { exec strip "$tmpdir/$dst" }
 		}
 	    }
@@ -111,7 +105,7 @@ proc create {manifest subst strip verbose} {
 	    "D" {
 		set new_dir [lindex $entry 1]
 		foreach {k v} $subst { regsub $k $dst $v dst }
-		if {$verbose} { puts "% making $tmpdir/$new_dir" }
+		dbg "% making $tmpdir/$new_dir"
 		exec mkdir -p "$tmpdir/$new_dir"
 	    }
 	    
@@ -129,38 +123,33 @@ proc create {manifest subst strip verbose} {
 # @param node_list     List of destination node ids
 # @param subst         A list of mappings to be done in the 
 #                      manifests, e.g. { exe stripped }
-# @param strip         Strip executables in the distribution
-# @param verbose       Print out what is happening
 #
     
-proc files {manifest_list node_list subst strip {verbose 0}} {
+proc files {manifest_list node_list subst} {
     global ::dist::distdirs ::dist::cleanup_handler opt
     global net::host
 
-    set distdir [dist::create $manifest_list $subst $strip $verbose]
-    set dist::distdirs(-1) $distdir
+    set distdir [dist::create $manifest_list $subst]
 
     if {$opt(dry_run)} {
 	return
     }
 
-    if {$verbose} {
-	puts "% copying files" 
-    }
+    dbg "% copying files" 
 	    
     foreach id $node_list {
 	set hostname $net::host($id)
 	set targetdir [get_rundir $hostname $id]
 	set dist::distdirs($id) $targetdir
 
-	if {$verbose} { puts "% $distdir -> $hostname:$targetdir" }
+	dbg "% $distdir -> $hostname:$targetdir"
 
 	if {$dist::cleanup_handler != ""} {
 	    
-	    if {$verbose} { puts "% calling cleanup_handler $cleanup_handler" }
+	    dbg "% calling cleanup_handler $cleanup_handler"
 	    $dist::cleanup_handler $hostname $targetdir
 	} else {
-	    if {$verbose} { puts "% no cleanup handler set" }
+	    dbg "% no cleanup handler set"
 
 	}
 	
@@ -173,7 +162,7 @@ proc files {manifest_list node_list subst strip {verbose 0}} {
 	}
     }
 
-    if {$verbose} { puts "% removing $distdir" }
+    dbg "% removing $distdir" 
     exec rm -rf $distdir
 }
 

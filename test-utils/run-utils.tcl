@@ -29,7 +29,7 @@ if [catch {
     # Trap SIGINT
     signal trap SIGINT { 
 	set opt(leave_crap) 0
-	puts "* Caught SIGINT, cleaning up"
+	testlog "Caught SIGINT, cleaning up"
 	run::cleanup
 	if {[info commands real_exit] != ""} {
 	    real_exit
@@ -38,20 +38,20 @@ if [catch {
 	}
     }
 } err] {
-    puts "* error setting up signal handler: $err"
+    testlog error "error setting up signal handler: $err"
+}
+
+proc dbg { msg } {
+    global opt
+    if {$opt(verbose) > 0} {
+        testlog debug $msg
+    }
 }
 
 namespace eval run {
 
 set cleanup_handler ""
     
-proc dbg { msg } {
-    global opt
-    if {$opt(verbose) > 0} {
-	puts $msg
-    }
-}
-
 proc shift { l } {
     upvar $l xx
     set xx [lrange $xx 1 end]
@@ -222,7 +222,7 @@ proc init {argv} {
 	exit 1
     }
 
-    puts "* Reading net definition file $opt(net)"
+    testlog "Reading net definition file $opt(net)"
     import $opt(net)
 
     if {$opt(local_rundir) && ($opt(net) != "localhost")} {
@@ -236,14 +236,14 @@ proc init {argv} {
     }
     
     if {$num_nodes_override != 0} {
-	puts "* Setting num_nodes to $num_nodes_override"
+	testlog "Setting num_nodes to $num_nodes_override"
 	net::num_nodes $num_nodes_override
     }
 
     #
     # Check and output the random number seed
     #
-    puts "* Using random number generator seed $opt(seed)"
+    testlog "Using random number generator seed $opt(seed)"
     expr srand($opt(seed))
 
     #
@@ -258,27 +258,26 @@ proc init {argv} {
 	}
     }
     
-    puts "* Reading test script $test_script"
+    testlog "Reading test script $test_script"
     uplevel \#0 source $test_script
 
     if { $opt(dry_run) } {
-	puts "* Generating script files"
+	testlog "Generating script files"
     } else {
-	puts "* Distributing files"
+	testlog "Distributing files"
     }
 
-    dist::files $manifest::manifest [net::nodelist] \
-	$manifest::subst $opt(strip) $opt(verbose)
+    dist::files $manifest::manifest [net::nodelist] $manifest::subst
 
     if {$opt(dry_run)} {
-	puts "* Configurations:"
+	testlog "Configurations:"
 	global conf::conf
 	foreach c [lsort [array names conf::conf]] {
 	    puts "** configuration file: $c"
 	    puts "$conf::conf($c)"
 	}
 	
-	puts "* Defined nodes:"
+	testlog "Defined nodes:"
 	global net::host net::portbase
 	foreach id [net::nodelist] {
 	    set ports [lsort -unique -increasing $net::used_ports($id)]
@@ -426,7 +425,7 @@ proc run {id exec_name exec_opts confname conf exec_env {exec_file ""}} {
 	set geometry ""
     }
 
-    puts "* Running $exec_name on $hostname:$id"
+    testlog "Running $exec_name on $hostname:$id"
 
     # XXX/demmer get rid of the run::xterm useless vars
     
@@ -562,7 +561,7 @@ proc wait_for_programs {{timeout 5000}} {
     global net::host run::pids
     set num_alive 0
 
-    puts "* Waiting for spawned programs to exit"
+    testlog "Waiting for spawned programs to exit"
 
     foreach signal {none TERM KILL} {
 	set start [clock clicks -milliseconds]
@@ -585,9 +584,9 @@ proc wait_for_programs {{timeout 5000}} {
 		    if {[check_pid $hostname $pid]} {
 			dbg "% $hostname:$i pid $pid still alive"
 			if {$signal != "none"} {
-			    puts "* ERROR: pid $pid on host $hostname:$i\
+			    testlog "ERROR: pid $pid on host $hostname:$i\
 				    still alive"
-			    puts "* ERROR: sending $signal signal"
+			    testlog "ERROR: sending $signal signal"
 			    kill_pid $i $pid $signal
 			}
 			lappend livepids $pid
@@ -597,9 +596,9 @@ proc wait_for_programs {{timeout 5000}} {
 		}
 
 		if {[llength $livepids] == 0} {
-		    puts "    $hostname:$i -- all processes finished"
+		    testlog "    $hostname:$i -- all processes finished"
 		} else {
-		    puts "    $hostname:$i -- [llength livepids] pid(s)\
+		    testlog "    $hostname:$i -- [llength livepids] pid(s)\
 			    still alive ($livepids)"
 		    set run::pids($i) $livepids
 		    incr num_alive [llength $livepids]
@@ -607,7 +606,7 @@ proc wait_for_programs {{timeout 5000}} {
 	    }
 	    
 	    if {$num_alive == 0} {
-		puts "* All programs done"
+		testlog "All programs done"
 		return
 	    }
 
@@ -643,7 +642,7 @@ proc collect_logs {} {
 
     if {($opt(no_logs) && $opt(no_cores)) || $opt(dry_run)} { return }
 
-    puts "* Collecting logs/cores into $opt(logdir)"
+    testlog "Collecting logs/cores into $opt(logdir)"
     if {! [file isdirectory $opt(logdir)]} {
 	set opt(logdir) ""
     }
@@ -671,6 +670,11 @@ proc collect_logs {} {
         }
 
 	foreach l $logs {
+            set name [file rootname [file tail $l]]
+            set exec_name [manifest::rfile $name]
+
+            set prefix "$i-$name"
+            
             if [catch {
                 set contents [run_cmd $hostname cat $l]
                 set contents [string trim $contents]
@@ -679,13 +683,14 @@ proc collect_logs {} {
             }
 	    
 	    if {[string length $contents] != 0} {
-		set exec_name [manifest::rfile [file rootname [file tail $l]]]
 		if {$exec_name == ""} {
-		    puts "warning: no reverse manifest for [file rootname $l]"
+		    testlog "warning: no reverse manifest for [file rootname $l]"
 		} else {
-		    set expand [import_find expand-stacktrace.pl]
+		    set expand    [import_find expand-stacktrace.pl]
+		    set addprefix [import_find add-log-prefix.pl]
+                    
 		    set contents [run_cmd $hostname cat $l | \
-			    $expand -o $exec_name]
+			    $expand -o $exec_name | $addprefix $prefix]
 		}
 
 		dbg "% got $hostname:$i [file tail $l]:"
@@ -734,7 +739,7 @@ proc cleanup {} {
 
     if {$opt(leave_crap) || $opt(dry_run)} { return }
 
-    puts "* Getting rid of run files"
+    testlog "Getting rid of run files"
     foreach i [net::nodelist] {
 	set hostname $net::host($i)
 

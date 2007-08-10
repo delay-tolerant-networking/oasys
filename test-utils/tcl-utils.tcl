@@ -43,6 +43,7 @@ proc do_until {what timeout script} {
 # Rename the after proc to real_after so we can still run tcl events
 # in the background during the 'after $N' syntax
 #
+
 rename after real_after
 
 proc after {args} {
@@ -57,6 +58,9 @@ proc after {args} {
     }
 }
 
+#
+# Grab gethostbyname from Tclx
+#
 proc gethostbyname {host} {
     if {![catch {package require Tclx} err]} {
 	return [lindex [host_info addresses $host] 0]
@@ -64,6 +68,43 @@ proc gethostbyname {host} {
 
     # XXX/demmer do something else
     error "no gethostbyname implementation available (install Tclx)"
+}
+
+
+#
+# Try to load the tclgettimeofday implementation from the test import path
+#
+foreach dir $import::path {
+    set library [file join $dir libtclgettimeofday[info sharedlibextension]]
+    if {[file exists $library]} {
+        load $library
+        break
+    }
+}
+
+#
+# If we can't find it, then all we can do is have seconds
+#
+if {[info commands gettimeofday] == ""} {
+    proc gettimeofday {} {
+        return [clock seconds].000000
+    }
+}
+
+#
+# Simple proc for test output to match the loging output
+#
+proc testlog {args} {
+    if {[llength $args] == 2} {
+        set level [lindex $args 0]
+        set msg   [lindex $args 1]
+    } elseif {[llength $args] == 1} {
+        set level always
+        set msg   [lindex $args 0]
+    } else {
+        error "testlog <level?> message"
+    }
+    puts "\[test [gettimeofday] /test-script $level\] $msg"
 }
 
 # Cute implementation of structs. Convert to a list to pass between
