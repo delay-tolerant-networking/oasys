@@ -382,7 +382,7 @@ liboasyscompat.$(SHLIB_EXT): $(COMPAT_OBJS)
 
 test-utils/libtclgettimeofday.$(SHLIB_EXT): test-utils/tclgettimeofday.c
 	rm -f $@
-	$(CC) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(LIBS) $(OASYS_LIBS) -o $@
+	$(CC) $(CFLAGS) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(LIBS) $(OASYS_LIBS) -o $@
 
 
 # Rules for linking tools

@@ -22,6 +22,7 @@ int
 Tclgettimeofday(ClientData cd, Tcl_Interp* interp,
                 int argc, CONST char *argv[])
 {
+    (void)cd; (void)argc; (void)argv;
     struct timeval tv;
     gettimeofday(&tv, 0);
     char buf[64];
