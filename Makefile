@@ -381,7 +381,7 @@ liboasyscompat.$(SHLIB_EXT): $(COMPAT_OBJS)
 	$(CXX) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(LIBS) -o $@
 
 test-utils/libtclgettimeofday.$(SHLIB_EXT): test-utils/tclgettimeofday.c
-	rm -f $@
+	@rm -f $@; mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(LIBS) $(OASYS_LIBS) -o $@
 
 
