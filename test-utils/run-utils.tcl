@@ -286,6 +286,35 @@ proc init {argv} {
     }
 }
 
+# Handle test options set with --opts, putting them in an array called
+# 'testopt', not to be confused with the 'opt' array that's used by
+# the test launch script.
+#
+# This relies on the fact that test options begin with "-" to decipher
+# which ones are test options and which are values for the options.
+proc parse_test_opts {} {
+    global opt testopt
+    set optlist $opt(opts)
+    while {[llength $optlist] > 0} {
+        set var [arg0 $optlist]
+        shift optlist
+        
+        if {[string index $var] != "-"} {
+            error "test options must begin with -"
+        }
+        
+        set val [arg0 $optlist]
+        if {$val == "" || [string index $val] == "-"} {
+            # val is really the next var
+            set val 1
+        } else {
+            shift optlist
+        }
+        
+        set testopt($var) $val
+    }
+}
+
 proc process_template {template var_array} {
     upvar $var_array ar
 
