@@ -33,7 +33,7 @@ namespace oasys {
 class FileIOClient : public FdIOClient {
 public:
     /// Basic constructor, leaves both path and fd unset
-    FileIOClient();
+    FileIOClient(const char* logpath = "/oasys/io/FileIOClient");
     virtual ~FileIOClient();
 
     ///@{

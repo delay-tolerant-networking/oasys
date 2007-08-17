@@ -25,8 +25,8 @@
 namespace oasys {
 
 //----------------------------------------------------------------------
-FileIOClient::FileIOClient()
-    : FdIOClient(-1)
+FileIOClient::FileIOClient(const char* logpath)
+    : FdIOClient(-1, NULL, logpath)
 {
 }
 

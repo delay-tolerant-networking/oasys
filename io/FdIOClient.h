@@ -31,7 +31,8 @@ class FdIOClient : public IOClient, public Logger {
 public:
     //! @param fd File descriptor to interact with
     //! @param intr Optional notifier to use to interrupt blocked I/O
-    FdIOClient(int fd, Notifier* intr = 0);
+    FdIOClient(int fd, Notifier* intr = 0,
+               const char* logpath   = "/oasys/io/FdIOClient");
 
     //! Explicitly set the file descriptor
     void set_fd(int fd) { fd_ = fd; }
