@@ -60,6 +60,7 @@ IO_SRCS :=					\
 	io/RateLimitedSocket.cc			\
 	io/TCPClient.cc				\
 	io/TCPServer.cc				\
+	io/TTY.cc				\
 	io/UDPClient.cc				\
 
 BLUEZ_SRCS :=					\
