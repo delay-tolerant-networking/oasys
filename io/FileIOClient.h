@@ -38,15 +38,15 @@ public:
 
     ///@{
     /// System call wrappers
-    int open(const char* path, int flags, int* errnop = 0);
-    int open(const char* path, int flags, mode_t mode, int* errnop = 0);
-    int close();
-    int unlink();
-    int lseek(off_t offset, int whence);
-    int truncate(off_t length);
-    int mkstemp(char* temp);
-    int stat(struct stat* buf);
-    int lstat(struct stat* buf);
+    virtual int open(const char* path, int flags, int* errnop = 0);
+    virtual int open(const char* path, int flags, mode_t mode, int* errnop = 0);
+    virtual int close();
+    virtual int unlink();
+    virtual int lseek(off_t offset, int whence);
+    virtual int truncate(off_t length);
+    virtual int mkstemp(char* temp);
+    virtual int stat(struct stat* buf);
+    virtual int lstat(struct stat* buf);
     ///@}
 
     /// Copy the contents of the current file to the given destination
