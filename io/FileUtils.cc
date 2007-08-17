@@ -43,9 +43,12 @@ FileUtils::readable(const char* path, const char* log)
         return false;
     }
 
-    if (!S_ISREG(st.st_mode)) {
+    if (!S_ISREG(st.st_mode) &&
+        !S_ISBLK(st.st_mode) &&
+        !S_ISCHR(st.st_mode))
+    {
         logf(log, LOG_DEBUG,
-             "FileUtils::readable(%s): not a regular file", path);
+             "FileUtils::readable(%s): not a regular file or device", path);
         return false;
     }
 
