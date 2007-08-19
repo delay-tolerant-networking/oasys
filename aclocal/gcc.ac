@@ -19,20 +19,32 @@ dnl GCC options
 dnl
 AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
     dnl
-    dnl Handle --with-cc=CC
+    dnl Handle --with-cc=CC and --with-cxx=CXX
     dnl
     ac_with_cc=$CC
     AC_ARG_WITH(cc,
         AC_HELP_STRING([--with-cc=CC],
     		   [name (or path) of the C compiler to use]),
                        ac_with_cc=$withval)
+
+    ac_with_cxx=$CXX
+    AC_ARG_WITH(cxx,
+        AC_HELP_STRING([--with-cxx=CXX],
+    		   [name (or path) of the C++ compiler to use]),
+                       ac_with_cxx=$withval)
     
     if test "x$ac_with_cc" = "x" ; then
         ac_try_cc="gcc gcc-4.0 gcc-3.4 gcc-3.3 gcc-3.2 gcc-2.96 gcc296 gcc-2.95 gcc295"
         ac_try_cxx="g++ g++-4.0 g++-3.4 g++-3.3 g++-3.2 g++-2.96 g++296 g++-2.95 g++295"
     else
         ac_try_cc=$ac_with_cc
-        ac_try_cxx=`echo $ac_with_cc | sed 's/cc/++/'`
+
+	if test x"$ac_with_cxx" = x ; then
+            ac_try_cxx=`echo $ac_with_cc | sed 's/cc/++/'`
+	    AC_MSG_NOTICE([inferring C++ compiler '$ac_try_cxx' from C compiler setting])
+	else
+	    ac_try_cxx=$ac_with_cxx
+	fi
 
 	CC=$ac_try_cc
 	CXX=$ac_try_cxx
