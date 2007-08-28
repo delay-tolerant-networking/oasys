@@ -150,4 +150,10 @@ FdIOClient::set_nonblocking(bool nonblocking)
     return IO::set_nonblocking(fd_, nonblocking, logpath_);
 }
 
+void
+FdIOClient::sync()
+{
+    fsync(fd_);
+}
+
 } // namespace oasys

@@ -2,114 +2,93 @@
 #include <config.h>
 #endif
 
-#include "CheckedLog.h"
+#include "../util/ExpandableBuffer.h"
 #include "../util/CRC32.h"
 #include "../storage/FileBackedObject.h"
+
+#include "CheckedLog.h"
 
 namespace oasys {
 
 //----------------------------------------------------------------------------
-CheckedLogWriter::CheckedLogWriter(FileBackedObject* obj)
-    : obj_(obj)
+CheckedLogWriter::CheckedLogWriter(FdIOClient* fd)
+    : fd_(fd)
 {
-    obj_->set_flags(FileBackedObject::KEEP_OPEN);
+    lseek(fd_->fd(), 0, SEEK_END);
 }
 
 //----------------------------------------------------------------------------
-CheckedLogWriter::~CheckedLogWriter()
+void
+CheckedLogWriter::write_record(const char* buf, size_t len)
 {
-    obj_->set_flags(0);
-}
-
-//----------------------------------------------------------------------------
-CheckedLogWriter::Handle
-CheckedLogWriter::write_record(const u_char* buf, size_t len)
-{
-    u_char ignore = '*';
+    char ignore = '*';
     CRC32 crc;
     
-    u_char len_buf[4];
+    char len_buf[4];
     len_buf[0] = (len >> 24) & 0xFF;
     len_buf[1] = (len >> 16) & 0xFF;
     len_buf[2] = (len >> 8)  & 0xFF;
     len_buf[3] = len         & 0xFF;
 
-    size_t handle = obj_->size();
     crc.update(len_buf, 4);
     crc.update(buf, len);
 
-    u_char crc_buf[4];
+    char crc_buf[4];
     crc_buf[0] = (crc.value() >> 24) & 0xFF;
     crc_buf[1] = (crc.value() >> 16) & 0xFF;
     crc_buf[2] = (crc.value() >> 8)  & 0xFF;
     crc_buf[3] = crc.value()         & 0xFF;
 
-    obj_->append_bytes(&ignore, 1);
-    obj_->append_bytes(crc_buf, 4);
-    obj_->append_bytes(len_buf, 4);
-    obj_->append_bytes(buf, len);
-
-    return handle;
-}
-
-//----------------------------------------------------------------------------
-void
-CheckedLogWriter::ignore(Handle h)
-{
-    u_char ignore = '!';
-    obj_->write_bytes(h, &ignore, 1);
-    obj_->fsync_data();
+    fd_->write(&ignore, 1);
+    fd_->write(crc_buf, 4);
+    fd_->write(len_buf, 4);
+    fd_->write(buf, len);
 }
 
 //----------------------------------------------------------------------------
 void 
 CheckedLogWriter::force()
 {
-    obj_->fsync_data();
+    fd_->sync();
 }
 
 //----------------------------------------------------------------------------
-CheckedLogReader::CheckedLogReader(FileBackedObject* obj)
-    : obj_(obj),
+CheckedLogReader::CheckedLogReader(FdIOClient* fd)
+    : fd_(fd),
       cur_offset_(0)
-{
-    obj_->set_flags(FileBackedObject::KEEP_OPEN);
-}
-
-//----------------------------------------------------------------------------
-CheckedLogReader::~CheckedLogReader()
-{
-    obj_->set_flags(0);
-}
+{}
 
 //----------------------------------------------------------------------------
 int 
 CheckedLogReader::read_record(ExpandableBuffer* buf)
 {
-    if (cur_offset_ == obj_->size())
+    struct stat stat_buf;
+
+    fstat(fd_->fd(), &stat_buf);
+    if (cur_offset_ == stat_buf.st_size)
     {
         return END;
     }
     
-    u_char ignore;
-    u_char crc_buf[sizeof(CRC32::CRC_t)];
-    u_char len_buf[sizeof(size_t)];
+    char ignore;
+    char crc_buf[sizeof(CRC32::CRC_t)];
+    char len_buf[sizeof(size_t)];
     
-    int cc = obj_->read_bytes(cur_offset_, &ignore, 1);
+    int cc = fd_->read(&ignore, 1);
     if (cc != 1)
     {
         return BAD_CRC;
     }
     ++cur_offset_;
 
-    cc = obj_->read_bytes(cur_offset_, crc_buf, sizeof(CRC32::CRC_t));
+    cc = fd_->read(crc_buf, sizeof(CRC32::CRC_t));
     if (cc != sizeof(CRC32::CRC_t))
     {
         return BAD_CRC;
     }
     cur_offset_ += sizeof(CRC32::CRC_t);
 
-    cc = obj_->read_bytes(cur_offset_, len_buf, sizeof(size_t));
+    cc = fd_->read(len_buf, sizeof(size_t));
     if (cc != sizeof(size_t))
     {
         return BAD_CRC;
@@ -120,15 +99,13 @@ CheckedLogReader::read_record(ExpandableBuffer* buf)
                  (len_buf[2] << 8) | len_buf[3];
 
     // sanity check so we don't run out of memory due to corruption
-    if (len > obj_->size())
+    if (len > stat_buf.st_size - cur_offset_)
     {
         return BAD_CRC;
     }
     
     buf->reserve(len);
-    cc = obj_->read_bytes(cur_offset_, 
-                          reinterpret_cast<u_char*>(buf->raw_buf()),
-                          len);
+    cc = fd_->read(buf->raw_buf(), len);
     cur_offset_ += cc;
 
     if (cc != static_cast<int>(len))
@@ -138,13 +115,12 @@ CheckedLogReader::read_record(ExpandableBuffer* buf)
 
     CRC32 crc;
     crc.update(len_buf, 4);
-    crc.update(reinterpret_cast<u_char*>(buf->raw_buf()), len);
+    crc.update(buf->raw_buf(), len);
     
-    if (crc.value() != CRC32::from_bytes(crc_buf))
+    if (crc.value() != CRC32::from_bytes(reinterpret_cast<u_char*>(crc_buf)))
     {
         return BAD_CRC;
-    }
-    
+    }    
     return (ignore == '!') ? IGNORE : 0;
 }
 

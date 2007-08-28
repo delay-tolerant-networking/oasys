@@ -69,6 +69,11 @@ public:
     virtual int set_nonblocking(bool nonblocking);
     //! @}
 
+    /*!
+     * Call to fsync.
+     */
+    void sync();
+
 protected:
     int       fd_;
 };

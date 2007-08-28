@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+#include "util/ExpandableBuffer.h"
 #include "util/UnitTest.h"
 #include "storage/FileBackedObject.h"
 #include "storage/CheckedLog.h"
@@ -37,25 +38,29 @@ DECLARE_TEST(WriteTest) {
     system("rm -f check-log-test.fbo");
     system("touch check-log-test.fbo");
     
-    FileBackedObject obj("check-log-test.fbo", 0);
+    int fd = open("check-log-test.fbo", 
+                  O_WRONLY | O_APPEND | O_CREAT, S_IRWXU);
+    FdIOClient obj(fd);
+
     CheckedLogWriter wr(&obj);
-
-    CheckedLogWriter::Handle h;
-
-    wr.write_record(reinterpret_cast<const u_char*>(str[0]), 
-                    strlen(str[0]));
-    h = wr.write_record(reinterpret_cast<const u_char*>(str[1]), 
-                        strlen(str[1]));
-    wr.write_record(reinterpret_cast<const u_char*>(str[2]), 
-                    strlen(str[2]));
-    wr.ignore(h);
+    
+    wr.write_record(str[0], strlen(str[0]));
+    wr.write_record(str[1], strlen(str[1]));
+    wr.write_record(str[2], strlen(str[2]));
+    close(fd);
 
     return UNIT_TEST_PASSED;
 }
 
 DECLARE_TEST(ReadTest) {
-    FileBackedObject obj("check-log-test.fbo", 0);
-    obj.truncate(obj.size() - 2);
+
+    int fd = open("check-log-test.fbo", O_RDWR | O_CREAT, S_IRWXU);
+    FdIOClient obj(fd);
+
+    struct stat stat_buf;
+    fstat(fd, &stat_buf);
+    
+    ftruncate(fd, stat_buf.st_size - 2);
 
     CheckedLogReader rd(&obj);
 
@@ -67,7 +72,6 @@ DECLARE_TEST(ReadTest) {
     CHECK(memcmp(buf.raw_buf(), str[0], strlen(str[0])) == 0);
 
     ret = rd.read_record(&buf);
-    CHECK(ret == CheckedLogReader::IGNORE);
     CHECK(memcmp(buf.raw_buf(), str[1], strlen(str[1])) == 0);
 
     ret = rd.read_record(&buf);
@@ -76,9 +80,16 @@ DECLARE_TEST(ReadTest) {
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(Cleanup) {
+    system("rm check-log-test.fbo");
+
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TESTER(Test) {
     ADD_TEST(WriteTest);
     ADD_TEST(ReadTest);
+    ADD_TEST(Cleanup);
 }
 
 DECLARE_TEST_FILE(Test, "checked log test");

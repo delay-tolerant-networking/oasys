@@ -1,10 +1,11 @@
 #ifndef __CHECKEDLOG_H__
 #define __CHECKEDLOG_H__
 
-#include "../storage/FileBackedObject.h"
-#include "../util/ExpandableBuffer.h"
+#include "../io/FdIOClient.h"
 
 namespace oasys {
+
+class FdIOClient;
 
 /*!
  * A CRC protected log to guard against short writes.
@@ -14,17 +15,10 @@ namespace oasys {
  */
 class CheckedLogWriter {
 public:
-     typedef size_t Handle;
-
     /*!
      * Interpret the object as a checked log and write to it.
      */
-    CheckedLogWriter(FileBackedObject* obj);
-
-    /*!
-     * Close fd on destroy.
-     */
-    ~CheckedLogWriter();
+    CheckedLogWriter(FdIOClient* fd);
 
     /*!
      * Write a single record to the log file. This does _not_ force
@@ -32,13 +26,7 @@ public:
      *
      * @return handle to the record for later manipulation.
      */
-    Handle write_record(const u_char* buf, size_t len);
-
-    /*!
-     * Write that the record can be ignored so does not need to be
-     * replayed.
-     */
-    void ignore(Handle h);
+    void write_record(const char* buf, size_t len);
 
     /*!
      * For all log files written thus far to the disk.
@@ -46,7 +34,7 @@ public:
     void force();
 
 private:
-    FileBackedObject* obj_;
+    FdIOClient* fd_;
 };
 
 /*!
@@ -64,12 +52,7 @@ public:
     /*!
      * Interpret the object as a checked log and write to it.
      */
-    CheckedLogReader(FileBackedObject* obj);
-
-    /*!
-     * Close the file.
-     */
-    ~CheckedLogReader();
+    CheckedLogReader(FdIOClient* fd);
 
     /*!
      * Read a record from the log.
@@ -79,7 +62,7 @@ public:
     int read_record(ExpandableBuffer* buf);
 
 private:
-    FileBackedObject* obj_;
+    FdIOClient* fd_;
     
     size_t cur_offset_;
 };
