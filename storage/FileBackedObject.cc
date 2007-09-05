@@ -91,6 +91,28 @@ FileBackedObject::Tx::abort()
 }
 
 //----------------------------------------------------------------------------
+FileBackedObject::OpenScope::OpenScope(FileBackedObject* obj)
+    : obj_(obj)
+{
+    oasys::ScopeLock l(&obj_->lock_, "FileBackedObject::OpenScope()");
+    ++obj_->open_count_;
+
+    obj_->open();
+}
+
+//----------------------------------------------------------------------------
+FileBackedObject::OpenScope::~OpenScope()
+{
+    oasys::ScopeLock l(&obj_->lock_, "FileBackedObject::OpenScope()");
+    --obj_->open_count_;
+
+    if (obj_->open_count_ == 0)
+    {
+        obj_->close();
+    }
+}
+
+//----------------------------------------------------------------------------
 FileBackedObject::~FileBackedObject()
 {
     oasys::ScopeLock l(&lock_, "FileBackedObject::~Destructor");
@@ -332,12 +354,10 @@ FileBackedObject::fsync_data()
 int
 FileBackedObject::serialize(const SerializableObject* obj, int offset)
 {
-    oasys::ScopeLock l(&lock_, "FileBackedObject::serialize");
+    ScopeLock l(&lock_, "FileBackedObject::serialize");
+    OpenScope o(this);
 
-    int old_flags = flags_;
-    set_flags(flags_ | KEEP_OPEN);
     open();
-    
     size_t abs_offset = size() + offset;
     
     if (abs_offset != cur_offset_)
@@ -352,11 +372,7 @@ FileBackedObject::serialize(const SerializableObject* obj, int offset)
     
     FileBackedObjectOutStream stream(this, cur_offset_);
     StreamSerialize serial(&stream, Serialize::CONTEXT_LOCAL);
-    
     int ret = serial.action(obj);
-    
-    set_flags(old_flags);
-    close();
     
     return ret;
 }
@@ -380,12 +396,7 @@ FileBackedObject::FileBackedObject(const std::string& filename,
       fd_(-1),
       flags_(flags),
       lock_("/st/filebacked/lock")
-{
-    if (flags_ & KEEP_OPEN)
-    {
-        open();
-    }
-}
+{}
 
 //----------------------------------------------------------------------------
 void
@@ -412,7 +423,7 @@ FileBackedObject::close() const
 {
     oasys::ScopeLock l(&lock_, "FileBackedObject::close");
 
-    if (fd_ == -1 || flags_ & KEEP_OPEN)
+    if (fd_ == -1 || open_count_ > 0)
     {
         return;
     }

@@ -20,14 +20,16 @@ typedef std::auto_ptr<FileBackedObject> FileBackedObjectHandle;
 class FileBackedObject {
 public:
     class Tx;
+    class OpenScope;
+    
     friend class FileBackedObject::Tx;
+    friend class FileBackedObject::OpenScope;
     friend class FileBackedObjectStore;
     
     /*!
      * Parameters to the FileBackedObject
      */
     enum {
-        KEEP_OPEN  = 1 << 0,  // keep the fd open while FileBackedObject exists.
         INIT_BLANK = 1 << 1,  // start off with a blank file in a TX
         UNLINKED   = 1 << 8,  // status bit for unlinked file
     };
@@ -72,7 +74,20 @@ public:
         FileBackedObject* original_file_;
         FileBackedObject* tx_file_;
     };
-
+    
+    /*!
+     * Use open scope if you want to keep a FileBackedObject fd open
+     * for the duration of the scope for performance.
+     */
+    class OpenScope {
+    public:
+        OpenScope(FileBackedObject* obj);
+        ~OpenScope();
+        
+    private:
+        FileBackedObject* obj_;
+    };
+    
     /*!
      * Use TxHandle to manage the Tx.
      */
@@ -94,7 +109,7 @@ public:
     /*!
      * @return A new transaction on the file.
      */
-    TxHandle start_tx(int flags = KEEP_OPEN);
+    TxHandle start_tx(int flags);
     
     /*!
      * Set the flags of the file.
@@ -179,7 +194,8 @@ private:
      * Offset into the file, maintained to optimize out a call to seek.
      */
     mutable size_t cur_offset_;
-
+    mutable int    open_count_;
+    
     /*!
      * Open the file if needed and according to the flags.
      */
