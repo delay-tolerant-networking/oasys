@@ -103,6 +103,31 @@ private:
     const char* comment_;
 };
 
+/*!
+ * Useful for timing a section which takes too short of a time with
+ * each invocation but aggregately is slow.
+ */
+class TimeSection {
+public:
+    struct Scope {
+        Scope(TimeSection* section);
+        ~Scope();
+        
+        Time         start_;
+        TimeSection* section_;
+    };
+    friend class Scope;
+
+    TimeSection();
+    
+    int ms() { return ms_; }
+    int invoked() { return invoked_; }
+    
+private:
+    int ms_;
+    int invoked_;
+};
+
 } // namespace oasys
 
 #endif /* __TIME_H__ */

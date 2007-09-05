@@ -262,6 +262,25 @@ TimeScope::~TimeScope()
          comment_, start_.elapsed_ms());
 }
 
+//----------------------------------------------------------------------------
+TimeSection::Scope::Scope(TimeSection* section)
+    : section_(section)
+{
+    start_.get_time();
+}
+
+//----------------------------------------------------------------------------
+TimeSection::Scope::~Scope()
+{
+    section_->ms_ += start_.elapsed_ms();
+    ++section_->invoked_;
+}
+
+//----------------------------------------------------------------------------
+TimeSection::TimeSection()
+    : ms_(0), invoked_(0)
+{}
+
 } // namespace oasys
 
 #if 0
