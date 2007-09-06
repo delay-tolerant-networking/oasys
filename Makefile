@@ -330,7 +330,7 @@ tclcmd/command-init-tcl.c: $(SRCDIR)/tclcmd/command-init.tcl
 oasys-version.o: oasys-version.c
 oasys-version.c: oasys-version.h
 oasys-version.h: oasys-version.h.in oasys-version.dat
-	tools/subst-version oasys-version.dat < 
+	tools/subst-version oasys-version.dat <  \
 	   $(SRCDIR)/oasys-version.h.in > oasys-version.h
 
 vpath oasys-version.h.in $(SRCDIR)
