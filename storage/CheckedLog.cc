@@ -65,7 +65,7 @@ CheckedLogReader::read_record(ExpandableBuffer* buf)
     struct stat stat_buf;
 
     fstat(fd_->fd(), &stat_buf);
-    if (cur_offset_ == stat_buf.st_size)
+    if (static_cast<size_t>(cur_offset_) == stat_buf.st_size)
     {
         return END;
     }
