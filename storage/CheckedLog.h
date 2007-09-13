@@ -64,7 +64,7 @@ public:
 private:
     FdIOClient* fd_;
     
-    size_t cur_offset_;
+    off_t cur_offset_;
 };
 
 } // namespace oasys

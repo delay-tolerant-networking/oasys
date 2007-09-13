@@ -65,7 +65,7 @@ CheckedLogReader::read_record(ExpandableBuffer* buf)
     struct stat stat_buf;
 
     fstat(fd_->fd(), &stat_buf);
-    if (static_cast<size_t>(cur_offset_) == stat_buf.st_size)
+    if (cur_offset_ == stat_buf.st_size)
     {
         return END;
     }
@@ -95,8 +95,8 @@ CheckedLogReader::read_record(ExpandableBuffer* buf)
     }
     cur_offset_ += 4;
 
-    size_t len = (len_buf[0] << 24) | (len_buf[1] << 16) | 
-                 (len_buf[2] << 8) | len_buf[3];
+    off_t len = (len_buf[0] << 24) | (len_buf[1] << 16) | 
+                (len_buf[2] << 8) | len_buf[3];
 
     // sanity check so we don't run out of memory due to corruption
     if (len > stat_buf.st_size - cur_offset_)
