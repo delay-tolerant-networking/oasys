@@ -47,7 +47,7 @@ public:
 
     /// Deletes all of the files from a given directory
     /// @return 0 on success, errno otherwise
-    static int rm_all_from_dir(const char* path);
+    static int rm_all_from_dir(const char* path, bool recursive = false);
     
     /*!
      * Copy a file as fast as possible to dest.

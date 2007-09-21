@@ -104,7 +104,7 @@ FileUtils::abspath(std::string* path)
 
 //------------------------------------------------------------------
 int
-FileUtils::rm_all_from_dir(const char* path)
+FileUtils::rm_all_from_dir(const char* path, bool recursive)
 {
     DIR* dir = opendir(path);
     
@@ -120,8 +120,15 @@ FileUtils::rm_all_from_dir(const char* path)
     while (ent != 0) {
         std::string ent_name(path);
         ent_name = ent_name + "/" + ent->d_name;
-        int err = unlink(ent_name.c_str());
-        ASSERT(err != 0);
+        
+        if (recursive && ent->d_type == DT_DIR) {
+            rm_all_from_dir(ent_name.c_str(), true);
+            rmdir(ent_name.c_str());
+        }
+        
+        else {
+            unlink(ent_name.c_str());
+        }
     
         ent = readdir(dir);
     }
