@@ -30,13 +30,7 @@ COMPAT_SRCS :=					\
 	compat/rpc_compat.c			\
 	compat/xdr_int64_compat.c		\
 
-DEBUG_SRCS :=					\
-	debug/DebugUtils.cc			\
-	debug/DebugDumpBuf.cc			\
-	debug/FatalSignals.cc			\
-	debug/Formatter.cc			\
-	debug/Log.cc				\
-	debug/StackTrace.cc			\
+DEBUG_ARITH_H_SRCS :=				\
 	debug/gdtoa-dmisc.c			\
 	debug/gdtoa-dtoa.c			\
 	debug/gdtoa-gdtoa.c			\
@@ -45,6 +39,15 @@ DEBUG_SRCS :=					\
 	debug/_hdtoa.c				\
 	debug/_ldtoa.c				\
 	debug/vfprintf.c			\
+
+DEBUG_SRCS :=					\
+	debug/DebugUtils.cc			\
+	debug/DebugDumpBuf.cc			\
+	debug/FatalSignals.cc			\
+	debug/Formatter.cc			\
+	debug/Log.cc				\
+	debug/StackTrace.cc			\
+	$(DEBUG_ARITH_H_SRCS)			\
 
 IO_SRCS :=					\
 	io/BufferedIO.cc			\
@@ -204,11 +207,14 @@ TOOLS	:= \
 	tools/zsize				\
 	test-utils/proc-watcher			\
 
-all: checkconfigure prebuild libs $(TOOLS)
+all: checkconfigure libs $(TOOLS)
 
-# need to generate files first
-.PHONY: prebuild
-prebuild: debug/arith.h
+# dependency necessary to ensure debug/arith.h is generated before any
+# file depending on it is compiled.  Simply adding debug/arith.h as
+# the first dependency of 'all' is not enough because make could be
+# run with the -j option.
+#
+$(DEBUG_ARITH_H_SRCS:.c=.o) : debug/arith.h
 
 #
 # If srcdir/builddir aren't set by some other makefile, 
