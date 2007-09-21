@@ -19,7 +19,7 @@ CheckedLogWriter::CheckedLogWriter(FdIOClient* fd)
 
 //----------------------------------------------------------------------------
 void
-CheckedLogWriter::write_record(const char* buf, size_t len)
+CheckedLogWriter::write_record(const char* buf, u_int32_t len)
 {
     char ignore = '*';
     CRC32 crc;
@@ -72,7 +72,7 @@ CheckedLogReader::read_record(ExpandableBuffer* buf)
     
     char ignore;
     char crc_buf[sizeof(CRC32::CRC_t)];
-    char len_buf[sizeof(size_t)];
+    char len_buf[sizeof(u_int32_t)];
     
     int cc = fd_->read(&ignore, 1);
     if (cc != 1)
@@ -88,8 +88,8 @@ CheckedLogReader::read_record(ExpandableBuffer* buf)
     }
     cur_offset_ += sizeof(CRC32::CRC_t);
 
-    cc = fd_->read(len_buf, sizeof(size_t));
-    if (cc != sizeof(size_t))
+    cc = fd_->read(len_buf, sizeof(u_int32_t));
+    if (cc != sizeof(u_int32_t))
     {
         return BAD_CRC;
     }

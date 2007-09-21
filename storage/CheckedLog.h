@@ -26,7 +26,7 @@ public:
      *
      * @return handle to the record for later manipulation.
      */
-    void write_record(const char* buf, size_t len);
+    void write_record(const char* buf, u_int32_t len);
 
     /*!
      * For all log files written thus far to the disk.
