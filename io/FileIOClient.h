@@ -60,7 +60,7 @@ public:
     }
 
     /// Reopen a previously opened path
-    int reopen(int flags);
+    int reopen(int flags, int mode = 0);
 
     /// Check if the file descriptor is open
     bool is_open() { return fd_ != -1; }

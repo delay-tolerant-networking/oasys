@@ -66,10 +66,10 @@ FileIOClient::close()
 
 //----------------------------------------------------------------------
 int
-FileIOClient::reopen(int flags)
+FileIOClient::reopen(int flags, int mode)
 {
     ASSERT(path_.length() != 0);
-    fd_ = IO::open(path_.c_str(), flags, NULL, logpath_);
+    fd_ = IO::open(path_.c_str(), flags, mode, NULL, logpath_);
     return fd_;
 }
 
