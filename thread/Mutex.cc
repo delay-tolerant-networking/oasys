@@ -144,7 +144,7 @@ Mutex::try_lock(const char* lock_user)
         if ((keep_quiet_ == false) && (logpath_[0] != 0)) {
             log_debug("try_lock busy");
         }
-        return EBUSY;
+        return 1;
     } else if (err != 0) {
         PANIC("error in pthread_mutex_trylock: %s", strerror(errno));
     }
@@ -158,7 +158,7 @@ Mutex::try_lock(const char* lock_user)
         log_debug("try_lock locked (count %u)", lock_count_.value);
     lock_holder_      = Thread::current();
     lock_holder_name_ = lock_user;
-    return err;
+    return 0;
 }
 
 
