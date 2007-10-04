@@ -117,7 +117,16 @@ FileUtils::rm_all_from_dir(const char* path, bool recursive)
         return errno;
     }
     
+    std::string dot(".");
+    std::string dotdot("..");
+
     while (ent != 0) {
+        // skip the directories . and ..
+        if (dot == ent->d_name || dotdot == ent->d_name) {
+            ent = readdir(dir);
+            continue;
+        }
+
         std::string ent_name(path);
         ent_name = ent_name + "/" + ent->d_name;
         
