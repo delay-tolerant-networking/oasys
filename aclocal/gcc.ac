@@ -14,10 +14,11 @@ dnl    See the License for the specific language governing permissions and
 dnl    limitations under the License.
 dnl
 
+
 dnl
-dnl GCC options
+dnl Figure out which version of gcc/g++ to use.
 dnl
-AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
+AC_DEFUN(AC_OASYS_CONFIG_GCC_VERSION, [
     dnl
     dnl Handle --with-cc=CC and --with-cxx=CXX
     dnl
@@ -34,8 +35,8 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
                        ac_with_cxx=$withval)
     
     if test "x$ac_with_cc" = "x" ; then
-        ac_try_cc="gcc gcc-4.0 gcc-3.4 gcc-3.3 gcc-3.2 gcc-2.96 gcc296 gcc-2.95 gcc295"
-        ac_try_cxx="g++ g++-4.0 g++-3.4 g++-3.3 g++-3.2 g++-2.96 g++296 g++-2.95 g++295"
+        ac_try_cc="gcc gcc-4.1 gcc-4.0 gcc-3.4 gcc-3.3"
+        ac_try_cxx="g++ g++-4.0 g++-4.0 g++-3.4 g++-3.3"
     else
         ac_try_cc=$ac_with_cc
 
@@ -51,6 +52,88 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
     fi
 
     dnl
+    dnl Check that the compiler specified works
+    dnl
+    AC_MSG_CHECKING([for a C compiler (trying $ac_try_cc)])
+    AC_MSG_RESULT([])
+    AC_PROG_CC($ac_try_cc)
+    
+    AC_MSG_CHECKING([for a C++ compiler (trying $ac_try_cxx)])
+    AC_MSG_RESULT([])
+    AC_PROG_CXX($ac_try_cxx)
+
+    dnl
+    dnl Apparently AC_PROG_CXX isn't enough to actually test the c++
+    dnl compiler...
+    dnl
+    AC_MSG_CHECKING([whether the C++ compiler works])
+    AC_LANG_PUSH(C++)
+    AC_LINK_IFELSE(AC_LANG_PROGRAM([/*nothing*/],[/*nothing*/]),
+		   AC_MSG_RESULT(yes),
+		   AC_MSG_RESULT(no) 
+		   AC_MSG_FAILURE(C++ compiler does not work))
+    AC_LANG_POP(C++)
+    
+    dnl 
+    dnl We want the C preprocessor as well
+    dnl    
+    AC_PROG_CPP
+
+    dnl
+    dnl Figure out the version and set version-specific options
+    dnl
+    AC_CACHE_CHECK(for the version of the GNU C compiler, oasys_cv_prog_gccver, [
+      oasys_cv_prog_gccver=`$CC --version | head -1`
+      oasys_cv_prog_gccver=`echo $oasys_cv_prog_gccver | sed 's/.*gcc.*(GCC) //'`
+      oasys_cv_prog_gccver=`echo $oasys_cv_prog_gccver | sed 's/ .*//'`
+    ])      
+
+    AC_CACHE_CHECK(for the version of the GNU C++ compiler, oasys_cv_prog_gxxver, [
+      oasys_cv_prog_gxxver=`$CXX --version | head -1`
+      oasys_cv_prog_gxxver=`echo $oasys_cv_prog_gxxver | sed 's/.*g++.*(GCC) //'`
+      oasys_cv_prog_gxxver=`echo $oasys_cv_prog_gxxver | sed 's/ .*//'`
+    ])
+
+    if test $oasys_cv_prog_gccver != $oasys_cv_prog_gxxver ; then
+        echo "*** "
+	echo "*** warning: C compiler version $oasys_cv_prog_gccver doesn't equal"
+	echo "***          C++ compiler version $oasys_cv_prog_gxxver"
+        echo "*** "
+    fi
+
+    # 
+    # Set version-specific compiler options
+    #
+    case "$oasys_cv_prog_gccver" in
+        #
+        # for gcc 2.9.X and 3.1, the auto-dependency features don't work, and 
+        # _GNU_SOURCE isn't defined, so do both those things here
+        #
+        3.1*|2.9*)
+            OASYS_CPPFLAGS="$OASYS_CPPFLAGS -D_GNU_SOURCE"
+	    DEPFLAGS=""
+            echo "*** "
+	    echo "*** warning: using old compiler $cc version $oasys_cv_prog_gccver,"
+	    echo "***          automatic dependency generation will not work"
+            echo "*** "
+	    ;;
+	#
+	# For 3.2 and beyond, use auto-dependency flags. 
+	# Note that for m4 to output a '$' requires the '@S|@' heinosity below.
+	#
+	3.*|4.*)
+	    DEPFLAGS=['-MMD -MP -MT "@S|@*.o @S|@*.E @S|@*.po"']
+	    ;;
+	#
+	# Otherwise bail
+	#
+        *)
+	    echo "error: unsupported compiler version $oasys_cv_prog_gccver"
+	    exit  1
+	    ;;
+    esac
+
+    dnl
     dnl Look for the appropriate ar and ranlib tools for this build
     dnl
     AC_CHECK_TOOL(AR, ar)
@@ -59,7 +142,12 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
     if test -z "$AR" ; then
        AC_MSG_ERROR([can't find a working ar tool])
     fi
+])
 
+dnl
+dnl GCC options
+dnl
+AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
     dnl
     dnl Handle --enable-debug[=yes|no]
     dnl 	   --disable-debug
@@ -270,28 +358,6 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
     fi # ! $static = yes
 
     dnl
-    dnl Handle the various autoconf options for cross compilation that 
-    dnl set either --target or (better?) both --build and --host.
-    dnl
-    if test ! -z "$host_alias" ; then
-        TARGET=$host_alias
-    elif test ! -z "$target_alias" ; then
-        TARGET=$target_alias
-    elif test ! -z "$target" ; then
-        TARGET=$target
-    else
-        TARGET=native
-    fi
-    AC_SUBST(TARGET)
-
-    dnl
-    dnl Set the build system in a variable so it's usable by
-    dnl Makefiles and other scripts
-    dnl
-    BUILD_SYSTEM=`uname -s || echo UNKNOWN | sed 's/CYGWIN.*/CYGWIN/'`
-    AC_SUBST(BUILD_SYSTEM)
-
-    dnl
     dnl Add options to add extra compilation flags
     dnl
     EXTRA_CFLAGS=""
@@ -307,65 +373,6 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
 	 	       [additional options to pass to the linker]),
                        EXTRA_LDFLAGS=$withval)
     AC_SUBST(EXTRA_LDFLAGS)
-])
-
-
-dnl
-dnl Figure out which version of gcc/g++ to use.
-dnl
-AC_DEFUN(AC_OASYS_CONFIG_GCC, [
-    dnl
-    dnl Check that the compiler specified works
-    dnl
-    AC_MSG_CHECKING([for a C compiler (trying $ac_try_cc)])
-    AC_MSG_RESULT([])
-    AC_PROG_CC($ac_try_cc)
-    AC_MSG_CHECKING([for a C++ compiler (trying $ac_try_cxx)])
-    AC_MSG_RESULT([])
-    AC_PROG_CXX($ac_try_cxx)
-    AC_PROG_CPP
-    AC_PROG_GCC_TRADITIONAL
-
-    dnl
-    dnl Figure out the version and set version-specific options
-    dnl
-    AC_CACHE_CHECK(for the version of the gcc compiler, oasys_cv_prog_gccver, [
-      oasys_cv_prog_gccver=`$CC --version | head -1`
-      oasys_cv_prog_gccver=`echo $oasys_cv_prog_gccver | sed 's/.*gcc.*(GCC) //'`
-      oasys_cv_prog_gccver=`echo $oasys_cv_prog_gccver | sed 's/ .*//'`
-    ])      
-
-    # 
-    # Set version-specific compiler options
-    #
-    case "$oasys_cv_prog_gccver" in
-        #
-        # for gcc 2.9.X and 3.1, the auto-dependency features don't work, and 
-        # _GNU_SOURCE isn't defined, so do both those things here
-        #
-        3.1*|2.9*)
-            OASYS_CPPFLAGS="$OASYS_CPPFLAGS -D_GNU_SOURCE"
-	    DEPFLAGS=""
-            echo "*** "
-	    echo "*** warning: using old compiler $cc version $oasys_cv_prog_gccver,"
-	    echo "***          automatic dependency generation will not work"
-            echo "*** "
-	    ;;
-	#
-	# For 3.2 and beyond, use auto-dependency flags. 
-	# Note that for m4 to output a '$' requires the '@S|@' heinosity below.
-	#
-	3.*|4.*)
-	    DEPFLAGS=['-MMD -MP -MT "@S|@*.o @S|@*.E @S|@*.po"']
-	    ;;
-	#
-	# Otherwise bail
-	#
-        *)
-	    echo "error: unsupported compiler version $oasys_cv_prog_gccver"
-	    exit  1
-	    ;;
-    esac
 
     AC_CACHE_CHECK([whether gcc accepts -Wno-long-double (Apple OSX only)],
 	           oasys_cv_prog_gcc_w_no_long_double, [
@@ -390,4 +397,34 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC, [
     fi
 
     AC_SUBST(DEPFLAGS)
+])
+
+dnl
+dnl Configure gcc
+dnl
+AC_DEFUN(AC_OASYS_CONFIG_GCC, [
+    dnl
+    dnl Handle the various autoconf options for cross compilation that 
+    dnl set either --target or (better?) both --build and --host.
+    dnl
+    if test ! -z "$host_alias" ; then
+        TARGET=$host_alias
+    elif test ! -z "$target_alias" ; then
+        TARGET=$target_alias
+    elif test ! -z "$target" ; then
+        TARGET=$target
+    else
+        TARGET=native
+    fi
+    AC_SUBST(TARGET)
+
+    AC_OASYS_CONFIG_GCC_VERSION
+    AC_OASYS_CONFIG_GCC_OPTS
+
+    dnl
+    dnl Set the build system in a variable so it's usable by
+    dnl Makefiles and other scripts
+    dnl
+    BUILD_SYSTEM=`uname -s || echo UNKNOWN | sed 's/CYGWIN.*/CYGWIN/'`
+    AC_SUBST(BUILD_SYSTEM)
 ])
