@@ -79,21 +79,21 @@ AC_DEFUN(AC_OASYS_CONFIG_DB, [
     dnl which case we force it to redo the checks (i.e. ignore the
     dnl cached values)
     dnl
-    if test "$ac_dbdir" = yes -a ! x$oasys_cv_path_db_h = x ; then
-        echo "checking for Berkeley DB installation... (cached) $oasys_cv_path_db_h/db.h, $oasys_cv_path_db_lib -l$oasys_cv_lib_db"
+    if test "$ac_dbdir" = yes -a ! x$oasys_cv_db_incpath = x ; then
+        echo "checking for Berkeley DB installation... (cached) -I$oasys_cv_db_incpath -L$oasys_cv_db_libpath -l$oasys_cv_db_lib"
     else
         AC_OASYS_FIND_DB
+    fi # no cache
+ 
+    if test ! $oasys_cv_db_incpath = /usr/include ; then
+        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_db_incpath"
     fi
 
-    if test ! $oasys_cv_path_db_h = /usr/include ; then
-        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_db_h"
+    if test ! $oasys_cv_db_libpath = /usr/lib ; then
+        OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_db_libpath"
     fi
 
-    if test ! $oasys_cv_path_db_lib = /usr/lib ; then
-        OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_db_lib"
-    fi
-
-    OASYS_LIBS="$OASYS_LIBS -l$oasys_cv_lib_db"
+    OASYS_LIBS="$OASYS_LIBS -l$oasys_cv_db_lib"
 
     fi # LIBDB_ENABLED
 ])
@@ -102,9 +102,9 @@ dnl
 dnl Find db
 dnl
 AC_DEFUN(AC_OASYS_FIND_DB, [
-    oasys_cv_path_db_h=
-    oasys_cv_path_db_lib=
-    oasys_cv_lib_db=
+    oasys_cv_db_incpath=
+    oasys_cv_db_libpath=
+    oasys_cv_db_lib=
 
     ac_save_CPPFLAGS="$CPPFLAGS"
     ac_save_LDFLAGS="$LDFLAGS"
@@ -115,28 +115,38 @@ AC_DEFUN(AC_OASYS_FIND_DB, [
     ac_dbver_major=`echo $ac_dbver | cut -d . -f1`
     ac_dbver_minor=`echo $ac_dbver | cut -d . -f2`
 
+    dnl
+    dnl For each version, we look in /usr, /usr/local, and /usr/local/BerkeleyDB.XX
+    dnl making sure that the resulting include and lib paths must match.
+    dnl
     if test "$ac_dbdir" = system -o \
             "$ac_dbdir" = yes -o \
             "$ac_dbdir" = "" ; 
     then
-        ac_dbincdirs="/usr/include"
-        ac_dbincdirs="$ac_dbincdirs /usr/include/db$ac_dbver"
-	ac_dbincdirs="$ac_dbincdirs /usr/local/include/db$ac_dbver"
-	ac_dbincdirs="$ac_dbincdirs /usr/local/include/db$ac_dbver_major"
-	ac_dbincdirs="$ac_dbincdirs /usr/local/include/db$ac_dbver_major$ac_dbver_minor"
-        ac_dbincdirs="$ac_dbincdirs /usr/local/BerkeleyDB.$ac_dbver/include"
-
-        ac_dblibdirs="/usr/lib"
-	ac_dblibdirs="$ac_dblibdirs /usr/local/lib"
-	ac_dblibdirs="$ac_dblibdirs /usr/local/lib/db$ac_dbver"
-	ac_dblibdirs="$ac_dblibdirs /usr/local/lib/db$ac_dbver_major$ac_dbver_minor"
-        ac_dblibdirs="$ac_dblibdirs /usr/local/BerkeleyDB.$ac_dbver/lib"
+	ac_dbdirs="/usr /usr/local /usr/local/BerkeleyDB.$ac_dbver"
     else
-        ac_dbincdirs="$ac_dbdir/include"
-        ac_dblibdirs="$ac_dbdir/lib"
+	ac_dbdirs="$ac_dbdir"
     fi
 
-    for ac_dbincdir in $ac_dbincdirs; do
+    for dir in $ac_dbdirs; do
+        ac_dbincdirs="$dir/include"
+        ac_dblibdirs="$dir/lib"
+
+	dnl
+	dnl Need to also check variations in /usr/local/include/dbXXX
+	dnl
+	if test $dir = /usr/local ; then
+ 	    ac_dbincdirs="$ac_dbincdirs /usr/local/include/db$ac_dbver"
+ 	    ac_dbincdirs="$ac_dbincdirs /usr/local/include/db$ac_dbver_major"
+ 	    ac_dbincdirs="$ac_dbincdirs /usr/local/include/db$ac_dbver_major$ac_dbver_minor"
+
+ 	    ac_dblibdirs="$ac_dblibdirs /usr/local/lib/db$ac_dbver"
+ 	    ac_dblibdirs="$ac_dblibdirs /usr/local/lib/db$ac_dbver_major"
+ 	    ac_dblibdirs="$ac_dblibdirs /usr/local/lib/db$ac_dbver_major$ac_dbver_minor"
+	fi
+
+	for ac_dbincdir in $ac_dbincdirs ; do
+
 	CPPFLAGS="$ac_save_CPPFLAGS -I$ac_dbincdir"
 	LDFLAGS="$ac_save_LDFLAGS"
 	LIBS="$ac_save_LIBS"
@@ -167,43 +177,45 @@ AC_DEFUN(AC_OASYS_FIND_DB, [
               AC_MSG_RESULT([no])
 	      continue
           ])
-
-      for ac_dblibdir in $ac_dblibdirs; do
-      for ac_dblib    in db-$ac_dbver; do
-
-	LDFLAGS="$ac_save_LDFLAGS -L$ac_dblibdir"
-	if test x"$STATIC" = x"extlibs" ; then
-		LIBS="-Wl,-Bstatic -l$ac_dblib -Wl,-Bdynamic $ac_save_LIBS"
-	else
-		LIBS="-l$ac_dblib $ac_save_LIBS"
-	fi
-
-        AC_MSG_CHECKING([for Berkeley DB library in $ac_dblibdir, -l$ac_dblib])
-	AC_LINK_IFELSE(
-	  AC_LANG_PROGRAM(
-	    [
-                #include <db.h>
-            ],
-            
+	
+          for ac_dblibdir in $ac_dblibdirs; do
+          for ac_dblib    in db-$ac_dbver; do
+  
+          LDFLAGS="$ac_save_LDFLAGS -L$ac_dblibdir"
+          if test x"$STATIC" = x"extlibs" ; then
+                  LIBS="-Wl,-Bstatic -l$ac_dblib -Wl,-Bdynamic $ac_save_LIBS"
+          else
+                  LIBS="-l$ac_dblib $ac_save_LIBS"
+          fi
+  
+          AC_MSG_CHECKING([for Berkeley DB library in $ac_dblibdir, -l$ac_dblib])
+          AC_LINK_IFELSE(
+            AC_LANG_PROGRAM(
+              [
+                  #include <db.h>
+              ],
+              
+              [
+                  DB *db;
+                  db_create(&db, NULL, 0);
+              ]),
+  
             [
-	        DB *db;
-                db_create(&db, NULL, 0);
-            ]),
+                AC_MSG_RESULT([yes])
+                oasys_cv_db_incpath=$ac_dbincdir
+                oasys_cv_db_libpath=$ac_dblibdir
+                oasys_cv_db_lib=$ac_dblib
+                break 5
+            ],
+            [
+                AC_MSG_RESULT([no])
+            ])
 
-          [
-              AC_MSG_RESULT([yes])
-              oasys_cv_path_db_h=$ac_dbincdir
-              oasys_cv_path_db_lib=$ac_dblibdir
-              oasys_cv_lib_db=$ac_dblib
-              break 4
-          ],
-          [
-              AC_MSG_RESULT([no])
-          ])
-    done
-    done
-    done
-    done
+          done # foreach ac_dblib
+          done # foreach ac_dblibdir
+        done # foreach ac_dbincdir
+    done # foreach ac_dbdir
+    done # foreach ac_dbver
 
     AC_DEFINE_UNQUOTED(BERKELEY_DB_VERSION, $ac_dbver, 
         [configured version of berkeley db])
@@ -212,7 +224,7 @@ AC_DEFUN(AC_OASYS_FIND_DB, [
     LDFLAGS="$ac_save_LDFLAGS"
     LIBS="$ac_save_LIBS"
 
-    if test x$oasys_cv_path_db_h = x ; then
+    if test x$oasys_cv_db_incpath = x ; then
         AC_OASYS_DB_HELP
         AC_MSG_ERROR([can't find usable Berkeley DB installation])
     fi
