@@ -707,6 +707,7 @@ SET_MAKE
 GREP
 EGREP
 LFSDEFS
+PYTHON
 TCL_LDFLAGS
 XSD_TOOL
 OASYS_LIBS
@@ -725,7 +726,8 @@ CPPFLAGS
 CXX
 CXXFLAGS
 CCC
-CPP'
+CPP
+PYTHON'
 
 
 # Initialize some variables set by options.
@@ -1321,6 +1323,7 @@ Optional Packages:
   --with-extra-ldflags=?  additional options to pass to the linker
   --with-file-offset-bits=N
                           value for _FILE_OFFSET_BITS (default 64)
+  --with-python=PYTHON    absolute path name of Python executable
   --with-tcl=DIR          location of a tcl installation (default system)
   --with-tcldir=DIR       same as --with-tcl
   --with-tclver=VERSION   tcl version to use (default 8.4 or 8.3)
@@ -1351,6 +1354,7 @@ Some influential environment variables:
   CXX         C++ compiler command
   CXXFLAGS    C++ compiler flags
   CPP         C preprocessor
+  PYTHON
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -6772,6 +6776,81 @@ rm -f confcache
 # Checks for dependent third-party libraries
 # -------------------------------------------------------------------------
 
+
+
+    if test -z "$PYTHON"
+  then
+    { echo "$as_me:$LINENO: checking for --with-python" >&5
+echo $ECHO_N "checking for --with-python... $ECHO_C" >&6; }
+
+# Check whether --with-python was given.
+if test "${with_python+set}" = set; then
+  withval=$with_python;  if test "$withval" != "yes"
+                  then
+                    PYTHON="$withval"
+                    { echo "$as_me:$LINENO: result: $withval" >&5
+echo "${ECHO_T}$withval" >&6; }
+                  else
+                    { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+                  fi
+
+else
+   { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+
+fi
+
+  fi
+
+    if test -z "$PYTHON"
+  then
+    # Extract the first word of "python", so it can be a program name with args.
+set dummy python; ac_word=$2
+{ echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
+if test "${ac_cv_path_PYTHON+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PYTHON in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PYTHON="$PYTHON" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_PYTHON="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_PYTHON" && ac_cv_path_PYTHON="python"
+  ;;
+esac
+fi
+PYTHON=$ac_cv_path_PYTHON
+if test -n "$PYTHON"; then
+  { echo "$as_me:$LINENO: result: $PYTHON" >&5
+echo "${ECHO_T}$PYTHON" >&6; }
+else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+fi
+
+
+  fi
+
+
+
+
     ac_tclvers='8.4 8.3'
     ac_tcldir='system'
 
@@ -10300,6 +10379,7 @@ SET_MAKE!$SET_MAKE$ac_delim
 GREP!$GREP$ac_delim
 EGREP!$EGREP$ac_delim
 LFSDEFS!$LFSDEFS$ac_delim
+PYTHON!$PYTHON$ac_delim
 TCL_LDFLAGS!$TCL_LDFLAGS$ac_delim
 XSD_TOOL!$XSD_TOOL$ac_delim
 OASYS_LIBS!$OASYS_LIBS$ac_delim
@@ -10308,7 +10388,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 81; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 82; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

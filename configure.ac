@@ -123,6 +123,7 @@ AC_CACHE_SAVE
 # -------------------------------------------------------------------------
 # Checks for dependent third-party libraries
 # -------------------------------------------------------------------------
+AX_WITH_PYTHON
 AC_OASYS_CONFIG_TCL
 AC_OASYS_CONFIG_GOOGLE_PERFTOOLS
 AC_OASYS_CONFIG_BLUEZ
