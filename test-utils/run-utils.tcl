@@ -580,6 +580,13 @@ proc wait_for_pid_exit {id pid {timeout 30000}} {
 #
 proc kill_pid {id pid signal} {
     global net::host
+
+    # no suicide...
+    if {$net::host($id) == "localhost" && $pid == [pid]} {
+        testlog "ERROR: tried to kill myself (pid $pid)!!!"
+        return ""
+    }
+    
     return [catch {run_cmd $net::host($id) kill -s $signal $pid} err]
 }
 
