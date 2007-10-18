@@ -27,7 +27,7 @@ if [ ! -x $expand_stacktrace ]; then
 fi
 
 if [ x$1 = x"-vg" ]; then
-    VALGRIND="valgrind --leak-check=full "
+    VALGRIND="valgrind -v --leak-check=full --show-reachable=yes"
 else
     VALGRIND=""
 fi
