@@ -107,6 +107,7 @@ DECLARE_TEST(SmtpPipe) {
     SMTPHandlerThread* t =
         new SMTPHandlerThread(new TestSMTPHandler(), pipe1[0], pipe2[1],
                               SMTP::DEFAULT_CONFIG, &done);
+    t->clear_flag(Thread::DELETE_ON_EXIT);
     t->start();
 
     SMTPFdClient c(pipe2[0], pipe1[1]);
@@ -123,6 +124,8 @@ DECLARE_TEST(SmtpPipe) {
     while (! t->is_stopped()) {
         usleep(200);
     }
+
+    delete t;
 
     close(pipe1[0]);
     close(pipe2[1]);
