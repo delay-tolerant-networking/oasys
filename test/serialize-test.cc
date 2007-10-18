@@ -304,6 +304,23 @@ struct KeyObj_1 : public SerializableObject {
         }
     }
 
+    KeyObj_1(const KeyObj_1& other)
+        : SerializableObject(other)
+    {
+        number_ = other.number_;
+        short_  = other.short_;
+        bool_   = other.bool_;
+        str_    = other.str_;
+        c_str_  = strdup(other.c_str_);
+    }
+
+    virtual ~KeyObj_1() {
+        if (c_str_) {
+            free(c_str_);
+            c_str_ = 0;
+        }
+    }
+
     void serialize(SerializeAction* action) {
         action->process("number", &number_);
         action->process("str",    &str_);        
