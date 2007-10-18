@@ -162,6 +162,8 @@ FileBackedObjectStore::get_object_names(std::vector<std::string>* names)
             }
         }
     } while(dirent != 0);
+
+    closedir(dir);
 }
 
 //----------------------------------------------------------------------------
