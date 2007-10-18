@@ -62,6 +62,15 @@ OptParser::parse_opt(const char* opt_str, size_t len, bool* invalid_value)
     } else {
         val_str = opt_str + opt_len + 1;
 	val_len = len - (opt_len + 1);
+
+        // regardless of what the option is, if there's no value
+        // supplied it's invalid
+        if (val_len == 0) {
+            if (invalid_value) {
+                *invalid_value = true;
+            }
+            return false;
+        }
     }
     
     int nopts = allopts_.size(); 
@@ -71,7 +80,7 @@ OptParser::parse_opt(const char* opt_str, size_t len, bool* invalid_value)
         
         if (strncmp(opt_str, opt->longopt_, opt_len) == 0)
         {
-            if (opt->needval_ && (val_str == NULL)) {
+            if (opt->needval_ && val_str == NULL) {
                 if (invalid_value) {
                     *invalid_value = true;
                 }
