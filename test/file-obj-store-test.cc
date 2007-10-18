@@ -42,6 +42,11 @@ DECLARE_TEST(Init) {
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(Fini) {
+    delete g_store;
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TEST(StoreTest) {
     CHECK(! g_store->object_exists("test1"));
     CHECK(g_store->new_object("test1") == 0);
@@ -175,6 +180,7 @@ DECLARE_TESTER(Test) {
     ADD_TEST(TXTest);
     ADD_TEST(StreamTest);
     ADD_TEST(AllNamesTest);
+    ADD_TEST(Fini);
 }
 
 DECLARE_TEST_FILE(Test, "sample test");
