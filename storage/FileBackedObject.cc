@@ -113,6 +113,17 @@ FileBackedObject::OpenScope::~OpenScope()
 }
 
 //----------------------------------------------------------------------------
+FileBackedObject::FileBackedObject(const std::string& filename, 
+                                   int flags)
+    : filename_(filename),
+      fd_(-1),
+      flags_(flags),
+      lock_("/st/filebacked/lock"),
+      open_count_(0)
+{
+}
+
+//----------------------------------------------------------------------------
 FileBackedObject::~FileBackedObject()
 {
     oasys::ScopeLock l(&lock_, "FileBackedObject::~Destructor");
@@ -388,15 +399,6 @@ FileBackedObject::unserialize(SerializableObject* obj)
 
     return serial.action(obj);
 }
-
-//----------------------------------------------------------------------------
-FileBackedObject::FileBackedObject(const std::string& filename, 
-                                   int flags)
-    : filename_(filename),
-      fd_(-1),
-      flags_(flags),
-      lock_("/st/filebacked/lock")
-{}
 
 //----------------------------------------------------------------------------
 void
