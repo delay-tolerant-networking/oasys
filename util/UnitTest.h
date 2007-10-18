@@ -110,7 +110,14 @@ public:
         progname_(0), in_tcl_(false)
     {}
 
-    virtual ~UnitTester() {}
+    virtual ~UnitTester()
+    {
+        for (UnitTestList::iterator i=tests_.begin(); 
+             i != tests_.end(); ++i) 
+        {
+            delete *i;
+        }
+    }
     
     void init(int argc, const char* argv[], bool init_log)
     {
@@ -233,7 +240,6 @@ public:
         } else {
             print_results();
         }
-
         return 0;
     }
 
@@ -459,7 +465,7 @@ void _name::add_tests()                                         \
         strerror_ = strerror(errno_);                                   \
         ::oasys::Breaker::break_here();                                 \
         log_err_p("/test",                                              \
-                    "CHECK FAILED: '%s' != '%s' at %s:%d.",             \
+                    "CHECK FAILED: '%s' != '%s' at %s:%d",              \
                     #_a, #_b, __FILE__, __LINE__);                      \
         log_err_p("/test", "Contents of %s (length %zu): ",             \
                   #_a, a.length());                                     \
