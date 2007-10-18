@@ -30,8 +30,8 @@ public:
     {}
 
     /*!
-     * @param owned True iff you are passing ownership of the buffer
-     * to this class.
+     * @param pass_ownership True iff you are passing ownership of the
+     * buffer to this class.
      */
     BufferCarrier(_Type* buf, size_t len, bool pass_ownership)
         : buf_(buf), 
