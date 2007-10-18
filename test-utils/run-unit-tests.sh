@@ -17,7 +17,6 @@
 #
 
 
-
 OASYS_TEST_UTILS_DIR=`echo $0 | sed 's|[^/]*$||'`
 export OASYS_TEST_UTILS_DIR
 
@@ -25,6 +24,12 @@ expand_stacktrace=$OASYS_TEST_UTILS_DIR/expand-stacktrace.pl
 if [ ! -x $expand_stacktrace ]; then
     echo "* WARNING: $expand_stacktrace not executable"
     expand_stacktrace=
+fi
+
+if [ x$1 = x"-vg" ]; then
+    VALGRIND="valgrind --leak-check=full "
+else
+    VALGRIND=""
 fi
 
 run_and_wait() {
@@ -35,9 +40,9 @@ run_and_wait() {
     echo "***"
 
     if [ x$expand_stacktrace = x ] ; then
-        ./$prog &
+        $VALGRIND ./$prog &
     else
-        ./$prog 2>&1 | $expand_stacktrace -o $prog &
+        $VALGRIND ./$prog 2>&1 | $expand_stacktrace -o $prog &
     fi
     pid=$!
 
