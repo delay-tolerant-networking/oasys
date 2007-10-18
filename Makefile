@@ -30,16 +30,6 @@ COMPAT_SRCS :=					\
 	compat/rpc_compat.c			\
 	compat/xdr_int64_compat.c		\
 
-DEBUG_ARITH_H_SRCS :=				\
-	debug/gdtoa-dmisc.c			\
-	debug/gdtoa-dtoa.c			\
-	debug/gdtoa-gdtoa.c			\
-	debug/gdtoa-gmisc.c			\
-	debug/gdtoa-misc.c			\
-	debug/_hdtoa.c				\
-	debug/_ldtoa.c				\
-	debug/vfprintf.c			\
-
 DEBUG_SRCS :=					\
 	debug/DebugUtils.cc			\
 	debug/DebugDumpBuf.cc			\
@@ -47,7 +37,7 @@ DEBUG_SRCS :=					\
 	debug/Formatter.cc			\
 	debug/Log.cc				\
 	debug/StackTrace.cc			\
-	$(DEBUG_ARITH_H_SRCS)			\
+	debug/vfprintf.c			\
 
 IO_SRCS :=					\
 	io/BufferedIO.cc			\
@@ -209,13 +199,6 @@ TOOLS	:= \
 
 all: checkconfigure libs $(TOOLS)
 
-# dependency necessary to ensure debug/arith.h is generated before any
-# file depending on it is compiled.  Simply adding debug/arith.h as
-# the first dependency of 'all' is not enough because make could be
-# run with the -j option.
-#
-$(DEBUG_ARITH_H_SRCS:.c=.o) : debug/arith.h
-
 #
 # If srcdir/builddir aren't set by some other makefile, 
 # then default to .
@@ -230,12 +213,6 @@ endif
 #
 compat/xdr_int64_compat.o: compat/xdr_int64_compat.c
 	$(CC) $(CPPFLAGS) $(CFLAGS_NOWARN) -c $< -o $@
-
-debug/gdtoa-%.o: debug/gdtoa-%.c
-	$(CC) -I./debug -DINFNAN_CHECK $(CPPFLAGS) $(CFLAGS_NOWARN) -c $< -o $@
-
-#debug/_ldtoa.o: debug/_ldtoa.c
-#	$(CC) $(CPPFLAGS) $(CFLAGS) -fno-strict-aliasing -c $< -o $@
 
 debug/vfprintf.o: debug/vfprintf.c
 	$(CC) $(CPPFLAGS) $(CFLAGS_NOWARN) -c $< -o $@
@@ -264,58 +241,6 @@ endif
 
 .PHONY: libs
 libs: $(LIBFILES)
-
-#
-# Need special rules for the gdtoa sources adapted from the source
-# distribution.
-#
-debug/arith-native.h: debug/gdtoa-arithchk.c
-	@mkdir -p debug
-	$(CC) $(CPPFLAGS) $(CFLAGS_NOWARN) $< -o debug/arithchk
-	debug/arithchk > $@
-	rm -f debug/arithchk
-
-#
-# If this is a native build (the default), then we build
-# arith-native.h by running arithchk and copy it into arith.h
-#
-debug/arith.h: 
-ifeq ($(TARGET),native)
-	@mkdir -p debug
-	$(MAKE) debug/arith-native.h
-	@echo "copying debug/arith-native.h -> debug/arith.h"
-	cp debug/arith-native.h debug/arith.h
-
-#
-# For a cross-compile build, look for debug/arith-$(TARGET).h. If
-# that's not there, then try chopping everything after a '-' from
-# $(TARGET) and trying again. This way, a target of 'arm-linux' will
-# still find debug/arith-arm.h.
-#
-else
-	@mkdir -p debug
-	@t=$(TARGET); t2=`echo $(TARGET) | sed 's/-.*//'`;  \
-        if test -f $(SRCDIR)/debug/arith-$$t.h ; then \
-	    echo "copying $(SRCDIR)/debug/arith-$$t.h -> debug/arith.h" ; \
-            cp $(SRCDIR)/debug/arith-$$t.h debug/arith.h; \
-        elif test -f $(SRCDIR)/debug/arith-$$t2.h ; then \
-	    echo "copying $(SRCDIR)/debug/arith-$$t2.h -> debug/arith.h" ; \
-            cp $(SRCDIR)/debug/arith-$$t2.h debug/arith.h; \
-	else \
-	    echo "ERROR: can't find appropriate arith.h for cross-compiled target" ; \
-	    echo "(tried debug/arith-$$t.h and debug/arith-$$t2.h)" ; \
-	    echo "" ; \
-	    echo "Try compiling and running debug/arithchk on the target machine" ; \
-	    echo "and put the result in debug/arith-$$t.h". ; \
-	    exit 1 ; \
-	fi
-endif
-
-debug/Formatter.o:  debug/Formatter.cc debug/arith.h
-	@rm -f $@; mkdir -p $(@D)
-	$(CXX) -I./debug $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
-
-GENFILES += debug/arith.h debug/arith-native.h debug/arithchk
 
 #
 # And a special rule to build the command-init-tcl.c file from command.tcl

@@ -200,7 +200,7 @@ FormatterTest::format(char* buf, size_t sz) const
     int x = 100;
     char* s = "fox";
     double d = 0.5;
-    int ret = snprintf(buf, sz, "my own %d %s %g", x, s, d);
+    int ret = log_snprintf(buf, sz, "my own %d %s %g", x, s, d);
     return ret;
 }
 
@@ -233,7 +233,7 @@ int
 RecursiveTest::format(char* buf, size_t sz) const
 {
     RecursiveTest r(level_ + 1);
-    return snprintf(buf, sz, "%d *%p", level_, &r);
+    return log_snprintf(buf, sz, "%d *%p", level_, &r);
 }
 
 class RecursiveBoundsTest : public Formatter {
@@ -245,7 +245,7 @@ int
 RecursiveBoundsTest::format(char* buf, size_t sz) const
 {
     BoundsTest b(10);
-    return snprintf(buf, sz, "recurse: *%p", &b);
+    return log_snprintf(buf, sz, "recurse: *%p", &b);
 }
 
 class TruncateTest : public Formatter {
@@ -292,10 +292,10 @@ class MultiFormatter : public SomethingVirtual,
                        public Logger
 {
 public:
-    MultiFormatter() : Logger("MultiFormatter", "/test/multiformatter") {}
+    MultiFormatter() : Logger("MultiFormatter", "/testmultiformatter") {}
     
     int format(char* buf, size_t sz) const {
-        return snprintf(buf, sz, "i'm a multiformatter %p logpath %p",
+        return log_snprintf(buf, sz, "i'm a multiformatter %p logpath %p",
                         this, &logpath_);
     }
     
@@ -349,7 +349,7 @@ class LoggerThread : public Thread, public Logger {
 public:
     LoggerThread(int threadid)
         : Thread("LoggerThread", CREATE_JOINABLE),
-          Logger("LoggerThread", "/test/logger-thread")
+          Logger("LoggerThread", "/testlogger-thread")
     {
         logpathf("/log-test/thread/%d", threadid);
     }
@@ -462,19 +462,60 @@ DECLARE_TEST(ReparseTest) {
 DECLARE_TEST(ErrnoTest) {
     errno = EINVAL;
     CHECK_EQUAL(errno, EINVAL);
-    log_always_p("/test/", "testing log doesn't stomp on errno");
+    log_always_p("/test", "testing log doesn't stomp on errno");
     CHECK_EQUAL(errno, EINVAL);
 
     int err = open("/somenonexistentfile", O_RDONLY, 0);
     CHECK_EQUAL(err, -1);
     CHECK_EQUAL(errno, ENOENT);
-    log_always_p("/test/", "testing log doesn't stomp on errno");
+    log_always_p("/test", "testing log doesn't stomp on errno");
     CHECK_EQUAL(errno, ENOENT);
     
-    log_multiline("/test/", LOG_ALWAYS,
+    log_multiline("/test", LOG_ALWAYS,
                   "testing log_multiline\ndoesn't stomp on errno\n");
     CHECK_EQUAL(errno, ENOENT);
     
+    return UNIT_TEST_PASSED;
+}
+
+#define FPTEST(_fmt, _val)                                              \
+    snprintf(sys_sprintf_buf, sizeof(sys_sprintf_buf), _fmt, _val);     \
+    log_snprintf(log_sprintf_buf, sizeof(log_sprintf_buf), _fmt, _val); \
+    log_always_p("/test", "testing %" _fmt " " #_val ": " _fmt,        \
+                 _val);                                                 \
+    CHECK_EQUALSTR(log_sprintf_buf, sys_sprintf_buf);
+
+DECLARE_TEST(FloatingPointTest) {
+    char sys_sprintf_buf[1024];
+    char log_sprintf_buf[1024];
+
+    FPTEST("%a", 0.0);
+    FPTEST("%e", 0.0);
+    FPTEST("%f", 0.0);
+    FPTEST("%g", 0.0);
+    FPTEST("%f", 123.0);
+    FPTEST("%f", 0.123);
+    FPTEST("%f", 123.123);
+    FPTEST("%03f", 1.1);
+    FPTEST("%3f", 1.1);
+    FPTEST("%.3f", 1.1);
+    FPTEST("%3.3f", 1.1);
+    FPTEST("%3f", 123456.123456);
+    FPTEST("%.3f", 123456.123456);
+    FPTEST("%3.3f", 123456.123456);
+    FPTEST("%a", 123456.123456);
+    FPTEST("%e", 123456.123456);
+    FPTEST("%g", 123456.123456);
+
+    // do some length tests
+    for (int i = 0; i < 23; ++i) {
+        memset(sys_sprintf_buf, 0, sizeof(sys_sprintf_buf));
+        memset(log_sprintf_buf, 0, sizeof(log_sprintf_buf));
+        snprintf(sys_sprintf_buf, i, "%f %f", 123.456, 789.0);
+        log_snprintf(log_sprintf_buf, i, "%f %f", 123.456, 789.0);
+        CHECK_EQUALSTR(sys_sprintf_buf, log_sprintf_buf);
+    }
+
     return UNIT_TEST_PASSED;
 }
 
@@ -483,6 +524,9 @@ DECLARE_TEST(Fini) {
     CHECK(f2->unlink() == 0);
 
     log_notice_p("/test", "flamebox-ignore-cancel logs");
+
+    delete f1;
+    delete f2;
 
     return UNIT_TEST_PASSED;
 }
@@ -497,6 +541,7 @@ DECLARE_TESTER(LogTest) {
     ADD_TEST(FormatterTest);
     ADD_TEST(ReparseTest);
     ADD_TEST(ErrnoTest);
+    ADD_TEST(FloatingPointTest);
     ADD_TEST(Fini);
 #endif
 }

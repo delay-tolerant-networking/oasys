@@ -616,7 +616,7 @@ Log::vlogf(const char* path, log_level_t level,
     ptr += len;
     
     // generate the log string
-    len = vsnprintf(ptr, buflen, fmt, ap);
+    len = log_vsnprintf(ptr, buflen, fmt, ap);
 
     if (len >= buflen) {
         // handle truncated lines -- note that the last char in the

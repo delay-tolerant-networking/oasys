@@ -1,7 +1,7 @@
 /**
  * @file
  *
- * The bulk of this file was pulled in from the FreeBSD 6.1 distribution,
+ * The bulk of this file was pulled in from the FreeBSD 6.2 distribution,
  * in /usr/src/lib/libc/stdio/vfprintf.c since that's the function
  * that performs the real work of format string processing.
  *
@@ -45,10 +45,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -66,6 +62,7 @@
  * SUCH DAMAGE.
  */
 
+#ifdef __FORMATTER__
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -75,7 +72,7 @@
 
 #include "config.h"
 #include "compat/fpclassify.h"
-
+#endif
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
@@ -85,8 +82,11 @@ static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 #include <sys/cdefs.h>
 #endif
 
+#ifdef __FORMATTER__
 #define __FBSDID(x)
-__FBSDID("$FreeBSD: src/lib/libc/stdio/vfprintf.c,v 1.69 2005/04/16 22:36:51 das Exp $");
+#endif
+
+__FBSDID("$FreeBSD: src/lib/libc/stdio/vfprintf.c,v 1.77 2007/05/08 03:08:28 das Exp $");
 
 /*
  * Actual printf innards.
@@ -94,72 +94,33 @@ __FBSDID("$FreeBSD: src/lib/libc/stdio/vfprintf.c,v 1.69 2005/04/16 22:36:51 das
  * This code is large and complicated...
  */
 
-#ifndef __FORMATTER__
 #include "namespace.h"
-#endif
 #include <sys/types.h>
 
 #include <ctype.h>
 #include <limits.h>
 #include <locale.h>
 #include <stddef.h>
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
+#ifndef __FORMATTER__
+#include <printf.h>
+#endif
 
 #include <stdarg.h>
-
-#ifndef __FORMATTER__
 #include "un-namespace.h"
 
 #include "libc_private.h"
 #include "local.h"
 #include "fvwrite.h"
 
-#else
-
-extern size_t formatter_format(void* fmtobj, char* str, size_t strsz);
-
-/*
- * Formatter I/O descriptors for __sfvwrite().
- */
-struct __siov {
-	void	*iov_base;
-	size_t	iov_len;
-};
-struct __suio {
-	struct	__siov *uio_iov;
-	int	uio_iovcnt;
-	int	uio_resid;
-
-};
-#endif  // __FORMATTER__
-
-#ifndef INTMAX_MAX
-
-#include <limits.h>
-
-#if   defined(LLONG_MAX)
-#define INTMAX_MAX LLONG_MAX
-#elif defined(LONG_LONG_MAX)
-#define INTMAX_MAX LONG_LONG_MAX
-#else
-#define INTMAX_MAX INT_MAX
-#endif 
-
-#endif // INTMAX_MAX
-
 #ifdef __FORMATTER__
+extern size_t formatter_format(void* fmtobj, char* str, size_t strsz);
 #define reallocf realloc
-#endif
-
-#ifndef __THROW
-#define __THROW
-#endif
+#endif  // __FORMATTER__
 
 union arg {
 	int	intarg;
@@ -432,9 +393,9 @@ __ujtoa(uintmax_t val, char *endp, int base, int octzero, const char *xdigs,
 
 /*
  * Convert a wide character string argument for the %ls format to a multibyte
- * string representation. ``prec'' specifies the maximum number of bytes
- * to output. If ``prec'' is greater than or equal to zero, we can't assume
- * that the wide char. string ends in a null character.
+ * string representation. If not -1, prec specifies the maximum number of
+ * bytes to output, and also means that we can't assume that the wide char.
+ * string ends is null-terminated.
  */
 static char *
 __wcsconv(wchar_t *wcsarg, int prec)
@@ -443,53 +404,49 @@ __wcsconv(wchar_t *wcsarg, int prec)
 	mbstate_t mbs;
 	char buf[MB_LEN_MAX];
 	wchar_t *p;
-	char *convbuf, *mbp;
+	char *convbuf;
 	size_t clen, nbytes;
 
-	/*
-	 * Determine the number of bytes to output and allocate space for
-	 * the output.
-	 */
-	if (prec >= 0) {
-		nbytes = 0;
-		p = wcsarg;
-		mbs = initial;
-		for (;;) {
-			clen = wcrtomb(buf, *p++, &mbs);
-			if (clen == 0 || clen == (size_t)-1 ||
-			    nbytes + clen > prec)
-				break;
-			nbytes += clen;
-		}
-	} else {
+	/* Allocate space for the maximum number of bytes we could output. */
+	if (prec < 0) {
 		p = wcsarg;
 		mbs = initial;
 		nbytes = wcsrtombs(NULL, (const wchar_t **)&p, 0, &mbs);
 		if (nbytes == (size_t)-1)
 			return (NULL);
+	} else {
+		/*
+		 * Optimisation: if the output precision is small enough,
+		 * just allocate enough memory for the maximum instead of
+		 * scanning the string.
+		 */
+		if (prec < 128)
+			nbytes = prec;
+		else {
+			nbytes = 0;
+			p = wcsarg;
+			mbs = initial;
+			for (;;) {
+				clen = wcrtomb(buf, *p++, &mbs);
+				if (clen == 0 || clen == (size_t)-1 ||
+				    nbytes + clen > prec)
+					break;
+				nbytes += clen;
+			}
+		}
 	}
 	if ((convbuf = malloc(nbytes + 1)) == NULL)
 		return (NULL);
 
-	/*
-	 * Fill the output buffer with the multibyte representations of as
-	 * many wide characters as will fit.
-	 */
-	mbp = convbuf;
+	/* Fill the output buffer. */
 	p = wcsarg;
 	mbs = initial;
-	while (mbp - convbuf < nbytes) {
-		clen = wcrtomb(mbp, *p++, &mbs);
-		if (clen == 0 || clen == (size_t)-1)
-			break;
-		mbp += clen;
-	}
-	if (clen == (size_t)-1) {
+	if ((nbytes = wcsrtombs(convbuf, (const wchar_t **)&p,
+	    nbytes, &mbs)) == (size_t)-1) {
 		free(convbuf);
 		return (NULL);
 	}
-	*mbp = '\0';
-
+	convbuf[nbytes] = '\0';
 	return (convbuf);
 }
 
@@ -510,43 +467,24 @@ vfprintf(FILE * __restrict fp, const char * __restrict fmt0, va_list ap)
 }
 #endif // __FORMATTER__
 
+#ifndef __FORMATTER__
 #ifndef NO_FLOATING_POINT
 
-#ifndef __FORMATTER__
 #define	dtoa		__dtoa
 #define	freedtoa	__freedtoa
-#endif // __FORMATTER__
 
 #include <float.h>
 #include <math.h>
-
 #include "floatio.h"
-
-// // /*
-// //  * (copied from floatio.h)
-// //  */
-// // /*
-// //  * MAXEXPDIG is the maximum number of decimal digits needed to store a
-// //  * floating point exponent in the largest supported format.  It should
-// //  * be ceil(log10(LDBL_MAX_10_EXP)) or, if hexadecimal floating point
-// //  * conversions are supported, ceil(log10(LDBL_MAX_EXP)).  But since it
-// //  * is presently never greater than 5 in practice, we fudge it.
-// //  */
-// // #define	MAXEXPDIG	6
-// // #if LDBL_MAX_EXP > 999999
-// // #error "floating point buffers too small"
-// #endif /* __FORMATTER__ */
-
-// static char *__ldtoa(long double *, int, int, int *, int *, char **);
-// #endif
-
 #include "gdtoa.h"
 
 #define	DEFPREC		6
 
 static int exponent(char *, int, int);
 
+#endif /* !__FORMATTER__ */
 #endif /* !NO_FLOATING_POINT */
+
 
 /*
  * The size of the buffer we use as scratch space for integer
@@ -582,7 +520,7 @@ static int exponent(char *, int, int);
  */
 int
 //__vfprintf(FILE *fp, const char *fmt0, va_list ap)
-vsnprintf(char *str, size_t strsz, const char *fmt0, va_list ap)
+log_vsnprintf(char *str, size_t strsz, const char *fmt0, va_list ap)
 {
 	char *fmt;		/* format string */
 	int ch;			/* character from fmt */
@@ -598,6 +536,11 @@ vsnprintf(char *str, size_t strsz, const char *fmt0, va_list ap)
 	char sign;		/* sign prefix (' ', '+', '-', or \0) */
 	char thousands_sep;	/* locale specific thousands separator */
 	const char *grouping;	/* locale specific numeric grouping rules */
+#ifndef __FORMATTER__
+	if (__use_xprintf == 0 && getenv("USE_XPRINTF"))
+		__use_xprintf = 1;
+	if (__use_xprintf > 0)
+		return (__xvprintf(fp, fmt0, ap));
 #ifndef NO_FLOATING_POINT
 	/*
 	 * We can decompose the printed representation of floating
@@ -630,6 +573,7 @@ vsnprintf(char *str, size_t strsz, const char *fmt0, va_list ap)
 	int nseps;		/* number of group separators with ' */
 	int nrepeats;		/* number of repeats of the last group */
 #endif
+#endif /* ! __FORMATTER__ */
 	u_long	ulval;		/* integer arguments %[diouxX] */
 	uintmax_t ujval;	/* %j, %ll, %q, %t, %z integers */
 	int base;		/* base for [diouxX] conversion */
@@ -784,10 +728,13 @@ vsnprintf(char *str, size_t strsz, const char *fmt0, va_list ap)
 	thousands_sep = '\0';
 	grouping = NULL;
 	convbuf = NULL;
+#ifndef __FORMATTER__
 #ifndef NO_FLOATING_POINT
 	dtoaresult = NULL;
 	decimal_point = localeconv()->decimal_point;
 #endif
+#endif // __FORMATTER__
+	
 #ifndef __FORMATTER__
 	/* sorry, fprintf(read_only_file, "") returns EOF, not 0 */
 	if (prepwrite(fp) != 0)
@@ -996,6 +943,44 @@ reswitch:	switch (ch) {
 			}
 			base = 10;
 			goto number;
+
+#ifdef __FORMATTER__
+		case 'a': case 'A': 
+		case 'e': case 'E': 
+		case 'f': case 'F': 
+		case 'g': case 'G': 
+                    
+			// demmer: for the various floating point
+			// conversions, we handle them by recursively
+			// calling the system-supplied snprintf.
+			//
+			// be careful to add one to strsz since we
+			// subtracted one above
+			buf[0] = '%';
+			if (prec == -1) {
+				buf[1] = ch;
+				buf[2] = '\0';
+				sz = snprintf(str, strsz + 1, buf,
+					      GETARG(double));
+			} else {
+				buf[1] = '.';
+				buf[2] = '*';
+				buf[3] = ch;
+				buf[4] = '\0';
+				sz = snprintf(str, strsz + 1, buf,
+					      prec, GETARG(double));
+			}
+
+			if (sz < strsz) {
+				str += sz;
+				strsz -= sz;
+			} else {
+				str += strsz;
+				strsz = 0;
+			}
+			ret += sz;
+			continue;
+#else
 #ifndef NO_FLOATING_POINT
 		case 'a':
 		case 'A':
@@ -1073,6 +1058,7 @@ fp_common:
 				} else
 					cp = (ch >= 'a') ? "inf" : "INF";
 				size = 3;
+				flags &= ~ZEROPAD;
 				break;
 			}
 			flags |= FPT;
@@ -1130,6 +1116,7 @@ fp_common:
 			}
 			break;
 #endif /* !NO_FLOATING_POINT */
+#endif /* !__FORMATTER__ */
 		case 'n':
 			/*
 			 * Assignment-like behavior is specified if the
@@ -1169,10 +1156,11 @@ fp_common:
 			 * the pointer as one of type Formatter* and
 			 * call formatter_format(fmtobj).
 			 *      -- NOT ANSI
+			 *
+			 * Note that checking for ret > 0 ensures that
+			 * the %p was not first in the format string,
+			 * so accessing str[-1] is safe.
 			 */
-
-                    // XXX/bowei - FIXME: this could cause a buffer
-                    // underflow if someone does vsnprintf("%p").
 			if (ret > 0 && str[-1] == '*') {
 				str--;
 				strsz++;
@@ -1369,7 +1357,8 @@ number:			if ((dprec = prec) >= 0)
 		PAD(dprec - size, zeroes);
 
 		/* the string or number proper */
-#ifndef NO_FLOATING_POINT
+//#ifndef NO_FLOATING_POINT
+#if !defined(NO_FLOATING_POINT) && !defined(__FORMATTER__)
 		if ((flags & FPT) == 0) {
 			PRINT(cp, size);
 		} else {	/* glue together f_p fragments */
@@ -1433,16 +1422,18 @@ done:
 	FLUSH();
 error:
 	va_end(orgap);
+#ifndef __FORMATTER__
 #ifndef NO_FLOATING_POINT
 	if (dtoaresult != NULL)
 		freedtoa(dtoaresult);
 #endif
+#endif // __FORMATTER__
 	if (convbuf != NULL)
 		free(convbuf);
 #ifndef __FORMATTER__
 	if (__sferror(fp))
 		ret = EOF;
-#endif
+#endif // __FORMATTER__
 	if ((argtable != NULL) && (argtable != statargtable))
 		free (argtable);
 
@@ -1455,21 +1446,23 @@ error:
 	/* NOTREACHED */
 }
 
+#ifdef __FORMATTER__
 /*
  * demmer: add an implementation of snprintf as well.
  */
 int
-snprintf(char *str, size_t strsz, const char *fmt, ...)
+log_snprintf(char *str, size_t strsz, const char *fmt, ...)
 {
 	va_list ap;
 	int ret;
 
 	va_start(ap, fmt);
-	ret = vsnprintf(str, strsz, fmt, ap);
+	ret = log_vsnprintf(str, strsz, fmt, ap);
 	va_end(ap);
 
 	return ret;
 }
+#endif
 
 /*
  * Find all arguments when a positional parameter is encountered.  Returns a
@@ -1759,11 +1752,11 @@ done:
 		    case T_SIZET:
 			(*argtable) [n].sizearg = va_arg (ap, size_t);
 			break;
-#ifndef __FORMATTER__
+//#ifndef __FORMATTER__
 		    case TP_SIZET:
-			(*argtable) [n].psizearg = va_arg (ap, ssize_t *);
+			(*argtable) [n].psizearg = va_arg (ap, size_t *);
 			break;
-#endif
+//#endif
 		    case T_INTMAXT:
 			(*argtable) [n].intmaxarg = va_arg (ap, intmax_t);
 			break;
@@ -1773,14 +1766,16 @@ done:
 		    case TP_INTMAXT:
 			(*argtable) [n].pintmaxarg = va_arg (ap, intmax_t *);
 			break;
-#ifndef NO_FLOATING_POINT
 		    case T_DOUBLE:
+#ifndef NO_FLOATING_POINT
 			(*argtable) [n].doublearg = va_arg (ap, double);
+#endif
 			break;
 		    case T_LONG_DOUBLE:
+#ifndef NO_FLOATING_POINT
 			(*argtable) [n].longdoublearg = va_arg (ap, long double);
-			break;
 #endif
+			break;
 		    case TP_CHAR:
 			(*argtable) [n].pchararg = va_arg (ap, char *);
 			break;
@@ -1830,6 +1825,7 @@ __grow_type_table (int nextarg, enum typeid **typetable, int *tablesize)
 }
 
 
+#ifndef __FORMATTER__
 #ifndef NO_FLOATING_POINT
 
 static int
@@ -1868,3 +1864,4 @@ exponent(char *p0, int exp, int fmtch)
 	return (p - p0);
 }
 #endif /* !NO_FLOATING_POINT */
+#endif /* !__FORMATTER__ */

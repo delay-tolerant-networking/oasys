@@ -79,7 +79,7 @@ StringAppender::appendf(const char* fmt, ...)
 size_t 
 StringAppender::vappendf(const char* fmt, va_list ap)
 {
-    size_t ret = vsnprintf(cur_, remaining_, fmt, ap);
+    size_t ret = log_vsnprintf(cur_, remaining_, fmt, ap);
 
     desired_ += ret;
 

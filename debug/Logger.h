@@ -178,7 +178,7 @@ Logger::Logger(const char* classname, const char* fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    vsnprintf(logpath_, sizeof(logpath_), fmt, ap);
+    log_vsnprintf(logpath_, sizeof(logpath_), fmt, ap);
     va_end(ap);
     baselen_ = strlen(logpath_);
 }
@@ -189,7 +189,7 @@ Logger::logpathf(const char* fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    vsnprintf(logpath_, sizeof(logpath_), fmt, ap);
+    log_vsnprintf(logpath_, sizeof(logpath_), fmt, ap);
     va_end(ap);
 }
 
@@ -199,7 +199,7 @@ Logger::logpath_appendf(const char* fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    vsnprintf(&logpath_[baselen_], sizeof(logpath_) - baselen_, fmt, ap);
+    log_vsnprintf(&logpath_[baselen_], sizeof(logpath_) - baselen_, fmt, ap);
     va_end(ap);
 }
 

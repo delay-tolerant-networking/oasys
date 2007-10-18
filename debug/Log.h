@@ -156,6 +156,10 @@ inline log_level_t str2level(const char *level)
 
 void __log_assert(bool x, const char* what, const char* file, int line);
 
+// From vfprintf.c
+extern "C" int log_vsnprintf(char *str, size_t strsz, const char *fmt0, va_list ap);
+extern "C" int log_snprintf(char *str, size_t strsz, const char *fmt, ...);
+
 class SpinLock;
 class StringBuffer;
 

@@ -300,13 +300,13 @@ int
 BufferedOutput::vformat_buf(const char* fmt, va_list ap)
 {
     int nfree = buf_.tailbytes();
-    int len   = vsnprintf(buf_.end(), nfree, fmt, ap);
+    int len   = log_vsnprintf(buf_.end(), nfree, fmt, ap);
 
     ASSERT(len != -1);
     if (len >= nfree) {
         buf_.reserve(len);
         nfree = len;
-        len = vsnprintf(buf_.end(), nfree, fmt, ap);
+        len = log_vsnprintf(buf_.end(), nfree, fmt, ap);
         ASSERT(len <= nfree);
     }
     

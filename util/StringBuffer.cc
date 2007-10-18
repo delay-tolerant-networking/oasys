@@ -157,7 +157,7 @@ StringBuffer::vappendf(const char* fmt, size_t* lenp, va_list ap)
         ASSERT(buf_->nfree() >= (*lenp + 1));
     }
 
-    int ret = vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
+    int ret = log_vsnprintf(buf_->end(), buf_->nfree(), fmt, ap);
 
     // Note that we don't support old glibc implementations that
     // return -1 from vsnprintf when the output is truncated, but
