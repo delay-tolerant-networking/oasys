@@ -131,9 +131,8 @@ SerializeAction::process(const char*          name,
     process(name, &uc);
     BufferCarrier<char>::convert(carrier, uc);
 
-    // Take the buffer away from the temporary
-    size_t len;
-    uc.take_buf(&len);
+    // Clear the temporary
+    uc.reset();
 }
 
 //----------------------------------------------------------------------------    
@@ -147,9 +146,7 @@ SerializeAction::process(const char*          name,
     process(name, &uc, static_cast<u_char>(terminator));
     BufferCarrier<char>::convert(carrier, uc);
 
-    // Take the buffer away from the temporary
-    size_t len;
-    uc.take_buf(&len);
+    uc.reset();
 }
 
 //----------------------------------------------------------------------
