@@ -4,8 +4,5 @@
 
 #include "AList.h"
 
-namespace tier {
-
-
-
-} // namespace tier
+namespace oasys {
+} // namespace oasys
