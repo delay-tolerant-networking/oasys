@@ -17,10 +17,10 @@
 #ifndef _OASYS_VERSION_H_
 #define _OASYS_VERSION_H_
 
-#define OASYS_VERSION_MAJOR	1
-#define OASYS_VERSION_MINOR	1
-#define OASYS_VERSION_PATCH	0
-#define OASYS_VERSION_STRING	"OASYS Library version 1.1.0"
+#define OASYS_VERSION_MAJOR	%MAJOR%
+#define OASYS_VERSION_MINOR	%MINOR%
+#define OASYS_VERSION_PATCH	%PATCH%
+#define OASYS_VERSION_STRING	"OASYS Library version %MAJOR%.%MINOR%.%PATCH%"
 
 extern const char* oasys_version;
 
