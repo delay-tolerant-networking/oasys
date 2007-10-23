@@ -32,7 +32,7 @@
 
 // Begin prologue.
 //
-#include <config.h>
+#include <oasys-config.h>
 #if defined(XERCES_C_ENABLED) && defined(EXTERNAL_DS_ENABLED)
 //
 // End prologue.

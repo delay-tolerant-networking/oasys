@@ -23,7 +23,7 @@ THIS SOFTWARE.
 ****************************************************************/
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#  include <oasys-config.h>
 #endif
 
 /* Try to deduce arith.h from arithmetic properties. */

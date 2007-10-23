@@ -18,7 +18,7 @@
 #ifndef OASYS_TIMER_H
 #define OASYS_TIMER_H
 
-#ifndef HAVE_CONFIG_STATE
+#ifndef OASYS_CONFIG_STATE
 #error "MUST INCLUDE config.h before including this file"
 #endif
 

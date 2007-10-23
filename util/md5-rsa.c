@@ -24,7 +24,7 @@ documentation and/or software.
  */
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#  include <oasys-config.h>
 #endif
 
 //#include "global.h"

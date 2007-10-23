@@ -46,7 +46,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#  include <oasys-config.h>
 #endif
 
 // demmer: we need _GNU_SOURCE for linux systems to pull in fpclassify

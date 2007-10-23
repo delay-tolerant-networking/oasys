@@ -19,7 +19,7 @@
 
 #include <pthread.h>
 
-#ifndef HAVE_CONFIG_STATE
+#ifndef OASYS_CONFIG_STATE
 #error "MUST INCLUDE config.h before including this file"
 #endif
 

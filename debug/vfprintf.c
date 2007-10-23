@@ -64,13 +64,13 @@
 
 #ifdef __FORMATTER__
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#  include <oasys-config.h>
 #endif
 
 #include <stdarg.h>
 #include <memory.h>
 
-#include "config.h"
+#include "oasys-config.h"
 #include "compat/fpclassify.h"
 #endif
 

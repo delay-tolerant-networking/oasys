@@ -6,7 +6,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#  include <oasys-config.h>
 #endif
 
 #ifndef HAVE_GETOPT_LONG

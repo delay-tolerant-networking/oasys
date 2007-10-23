@@ -23,7 +23,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-#
+
 ## --------------------- ##
 ## M4sh Initialization.  ##
 ## --------------------- ##
@@ -1796,7 +1796,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-ac_config_headers="$ac_config_headers config.h"
+ac_config_headers="$ac_config_headers oasys-config.h"
 
 
 #  Stick a comment in the generated file so people know what to do.
@@ -1806,7 +1806,7 @@ ac_config_headers="$ac_config_headers config.h"
 
 
 cat >>confdefs.h <<\_ACEOF
-#define HAVE_CONFIG_STATE 1
+#define OASYS_CONFIG_STATE 1
 _ACEOF
 
 
@@ -10245,7 +10245,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
-    "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
+    "oasys-config.h") CONFIG_HEADERS="$CONFIG_HEADERS oasys-config.h" ;;
     "Rules.make") CONFIG_FILES="$CONFIG_FILES Rules.make" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile:Makefile-Builddir.in" ;;
 

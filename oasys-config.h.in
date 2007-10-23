@@ -1,4 +1,4 @@
-/* config.h.in.  Generated from configure.ac by autoheader.  */
+/* oasys-config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* configured version of berkeley db */
 #undef BERKELEY_DB_VERSION
@@ -14,9 +14,6 @@
 
 /* Define to 1 if you have the <bluetooth/bluetooth.h> header file. */
 #undef HAVE_BLUETOOTH_BLUETOOTH_H
-
-/* always defined so code can ensure that config.h is properly included */
-#undef HAVE_CONFIG_STATE
 
 /* Define to 1 if you have the <err.h> header file. */
 #undef HAVE_ERR_H
@@ -119,6 +116,9 @@
 
 /* whether bluetooth support is enabled */
 #undef OASYS_BLUETOOTH_ENABLED
+
+/* defined so code can ensure that oasys-config.h is properly included */
+#undef OASYS_CONFIG_STATE
 
 /* whether oasys lock debugging is enabled */
 #undef OASYS_DEBUG_LOCKING_ENABLED

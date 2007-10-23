@@ -15,7 +15,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#  include <oasys-config.h>
 #endif
 
 #ifdef __win32__

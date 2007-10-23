@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-#include <config.h>
+#include <oasys-config.h>
 #include <signal.h>
 
 #include "App.h"

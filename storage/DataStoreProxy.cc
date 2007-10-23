@@ -15,7 +15,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#  include <oasys-config.h>
 #endif
 
 #if defined(EXTERNAL_DS_ENABLED) && defined(XERCES_C_ENABLED)

@@ -18,7 +18,7 @@
 #ifndef _OASYS_ATOMIC_H_
 #define _OASYS_ATOMIC_H_
 
-#ifndef HAVE_CONFIG_STATE
+#ifndef OASYS_CONFIG_STATE
 #error "MUST INCLUDE config.h before including this file"
 #endif
 
