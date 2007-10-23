@@ -31,10 +31,10 @@ echo "build-configure: building aclocal.m4..."
 rm -f aclocal.m4
 cat aclocal/*.ac > aclocal.m4
 
-echo "build-configure: running autoheader to build config.h.in..."
-rm -f config.h config.h.in
+echo "build-configure: running autoheader to build oasys-config.h.in..."
+rm -f oasys-config.h oasys-config.h.in
 autoheader
-chmod 444 config.h.in
+chmod 444 oasys-config.h.in
 
 echo "build-configure: running autoconf to build configure..."
 rm -f configure
