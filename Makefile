@@ -233,9 +233,9 @@ include Rules.make
 #
 # Based on configuration options, select the libraries to build
 #
-LIBFILES := liboasys.a liboasyscompat.a
+LIBFILES := lib/liboasys.a lib/liboasyscompat.a
 ifeq ($(SHLIBS),yes)
-LIBFILES += liboasys.$(SHLIB_EXT) liboasyscompat.$(SHLIB_EXT)
+LIBFILES += lib/liboasys.$(SHLIB_EXT) lib/liboasyscompat.$(SHLIB_EXT)
 LIBFILES += test-utils/libtclgettimeofday.$(SHLIB_EXT)
 endif
 
@@ -269,6 +269,8 @@ vpath oasys-version.h    $(SRCDIR)
 vpath oasys-version.c    $(SRCDIR)
 vpath oasys-version.dat  $(SRCDIR)
 
+VER := $(shell $(SRCDIR)/tools/extract-version $(SRCDIR)/oasys-version.dat version)
+
 bump-version:
 	cd $(SRCDIR) && tools/bump-version oasys-version.dat
 
@@ -294,38 +296,46 @@ $(SRCDIR)/Rules.make.in:
 	@echo error -- Makefile did not set SRCDIR properly
 	@exit 1
 
-liboasys.a: $(OBJS)
-	rm -f $@
+lib/liboasys-$(VER).a: $(OBJS)
+	@rm -f $@; mkdir -p $(@D)
 	$(AR) ruc $@ $^
 	$(RANLIB) $@ || true
 
-liboasys.$(SHLIB_EXT): $(OBJS)
-	rm -f $@
+lib/liboasys-$(VER).$(SHLIB_EXT): $(OBJS)
+	@rm -f $@; mkdir -p $(@D)
 	$(CXX) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(LIBS) $(OASYS_LIBS) -o $@
 
-liboasyscompat.a: $(COMPAT_OBJS)
-	rm -f $@
+lib/liboasyscompat-$(VER).a: $(COMPAT_OBJS)
+	@rm -f $@; mkdir -p $(@D)
 	$(AR) ruc $@ $^
 	$(RANLIB) $@ || true
 
-liboasyscompat.$(SHLIB_EXT): $(COMPAT_OBJS)
-	rm -f $@
+lib/liboasyscompat-$(VER).$(SHLIB_EXT): $(COMPAT_OBJS)
+	@rm -f $@; mkdir -p $(@D)
 	$(CXX) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(LIBS) -o $@
 
 test-utils/libtclgettimeofday.$(SHLIB_EXT): test-utils/tclgettimeofday.c
 	@rm -f $@; mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(LIBS) $(OASYS_LIBS) -o $@
 
+# Rules for symlinks
+lib/%.a: lib/%-$(VER).a
+	rm -f $@
+	cd `dirname $@` && ln -s `basename $<` `basename $@`
+
+lib/%.$(SHLIB_EXT): lib/%-$(VER).$(SHLIB_EXT)
+	rm -f $@
+	cd `dirname $@` && ln -s `basename $<` `basename $@`
 
 # Rules for linking tools
 tools/md5chunks: tools/md5chunks.o $(LIBFILES)
-	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(LIBS)
+	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L./lib -loasys-$(VER) $(LIBS)
 
 tools/oasys_tclsh: tools/oasys_tclsh.o $(LIBFILES)
-	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(OASYS_LIBS) $(LIBS)
+	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L./lib -loasys-$(VER) $(OASYS_LIBS) $(LIBS)
 
 tools/zsize: tools/zsize.o $(LIBFILES)
-	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L. -loasys $(LIBS)
+	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L./lib -loasys-$(VER) $(LIBS)
 
 test-utils/proc-watcher: test-utils/proc-watcher.o
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS)
