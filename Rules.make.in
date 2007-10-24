@@ -4,17 +4,13 @@
 # @configure_input@
 
 #
-# Targets are "native", "arm" and "mips"
-# 
+# Identifiers for cross-compilation
+#
 TARGET 		= @TARGET@
-
-#
-# Name of the build system
-#
 BUILD_SYSTEM	= @BUILD_SYSTEM@
 
 #
-# Common settings extracted from the configure script
+# Installation settings from the configure script
 #
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
@@ -39,37 +35,42 @@ localedir	= @localedir@
 mandir		= @mandir@
 srcdir		= @srcdir@
 
+#
+# Oasys directory substitutions
+#
+OASYS_INCDIR   = @OASYS_INCDIR@
+OASYS_LIBDIR   = @OASYS_LIBDIR@
+OASYS_ETCDIR   = @OASYS_ETCDIR@
+OASYS_VERSION  = @OASYS_VERSION@
+
+#
+# Include system settings
+#
+include $(OASYS_ETCDIR)/System.make
+
+#
+# Compiler flags
+#
 CC		= @CC@
 CXX		= @CXX@
-AR		= @AR@
-RANLIB		= @RANLIB@
 DEPFLAGS	= @DEPFLAGS@
 DEBUG 		= @DEBUG@
-INSTALL 	= @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@
-INSTALL_DATA 	= @INSTALL_DATA@
-PYTHON		= @PYTHON@
-PYTHON_BUILD_EXT= @PYTHON_BUILD_EXT@
 OPTIMIZE	= @OPTIMIZE@
 PROFILE         = @PROFILE@
 SHLIBS		= @SHLIBS@
 SHLIB_EXT	= @SHLIB_EXT@
 PICFLAGS        = @PICFLAGS@
-LFSDEFS         = @LFSDEFS@
 EXTRA_CFLAGS	= @EXTRA_CFLAGS@
 EXTRA_LDFLAGS	= @EXTRA_LDFLAGS@
-CPPFLAGS	= -I$(BUILDDIR) -I$(SRCDIR) @DEFS@ @LFSDEFS@ @CPPFLAGS@
+CPPFLAGS	= -I$(BUILDDIR) -I$(SRCDIR) @CPPFLAGS@ $(CPPFLAGS_SYS) -I$(OASYS_INCDIR)
 WARN		= -Wall -W -Wcast-align @OPTIMIZE_WARN@
 CFLAGS_NOWARN	= $(DEBUG) $(OPTIMIZE) $(PICFLAGS) $(DEPFLAGS) $(PROFILE) @CFLAGS@
 CFLAGS          = $(WARN) $(CFLAGS_NOWARN) $(EXTRA_CFLAGS)
 CXXFLAGS_NOWARN = $(DEBUG) $(OPTIMIZE) $(PICFLAGS) $(DEPFLAGS) $(PROFILE) @CXXFLAGS@
 CXXFLAGS        = $(WARN) $(CXXFLAGS_NOWARN) $(EXTRA_CFLAGS)
-LIBS		= @LIBS@
-OASYS_LIBS	= @OASYS_LIBS@
-LDFLAGS		= @LDFLAGS@ @RPATH@ $(EXTRA_LDFLAGS)
-LDFLAGS_SHLIB	= @LDFLAGS_SHLIB@
-TCL_LDFLAGS	= @TCL_LDFLAGS@
-XSD_TOOL	= @XSD_TOOL@
+LDFLAGS         = $(LDFLAGS_SYS) $(EXTRA_LDFLAGS)
+OASYS_LDFLAGS   = -L$(OASYS_LIBDIR) -loasys-$(OASYS_VERSION)
+OASYS_COMPAT_LDFLAGS = -L$(OASYS_LIBDIR) -loasyscompat-$(OASYS_VERSION)
 
 #
 # Add a phony rule to make sure this isn't included before the default
@@ -167,7 +168,6 @@ binclean:
 		rm -f $(BINFILES)
 
 .PHONY: distclean
-CFGFILES := Rules.make config.h config.cache
 distclean: clean
 	@echo "removing configure generated files: $(CFGFILES)..."
 	@test -z "$(CFGFILES)" || rm -f $(CFGFILES)

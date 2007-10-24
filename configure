@@ -708,9 +708,14 @@ GREP
 EGREP
 LFSDEFS
 PYTHON
+PYTHON_BUILD_EXT
 TCL_LDFLAGS
 XSD_TOOL
 OASYS_LIBS
+OASYS_INCDIR
+OASYS_LIBDIR
+OASYS_ETCDIR
+OASYS_VERSION
 SUBDIR
 LIBOBJS
 LTLIBOBJS'
@@ -1795,8 +1800,8 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-
 ac_config_headers="$ac_config_headers oasys-config.h"
+
 
 
 #  Stick a comment in the generated file so people know what to do.
@@ -6851,6 +6856,56 @@ fi
 
 
 
+
+    if test ! -z "$PYTHON" ; then
+
+    { echo "$as_me:$LINENO: checking whether python distutils can build an extension module" >&5
+echo $ECHO_N "checking whether python distutils can build an extension module... $ECHO_C" >&6; }
+
+    cat > conftest.c <<_ACEOF
+
+#include <Python.h>
+
+int main(int argc, char** argv)
+{
+    Py_InitModule("conftest", NULL);
+}
+
+_ACEOF
+
+    cat > conftest.py <<_ACEOF
+
+from distutils.core import setup, Extension
+setup(name='conftest',
+      version='1.0',
+      ext_modules=[Extension('_conftest', ['conftest.c'])]
+      )
+
+_ACEOF
+
+     # Current versions of autoconf access config.log
+     # through file descriptor 5, so use it here to
+     # redirect output from the build operation.
+     _ACCMD="$PYTHON conftest.py build -b conftest_build"
+     echo "$as_me:$LINENO: running $_ACCMD... output:" >&5
+     $_ACCMD >&5 2>&5
+     ac_python_build=$?
+
+     if test $ac_python_build = 0 ; then
+     	{ echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+	PYTHON_BUILD_EXT=yes
+
+     else
+        { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+     fi
+
+     rm -rf conftest_build conftest.py conftest.c
+
+     fi # PYTHON != ""
+
+
     ac_tclvers='8.4 8.3'
     ac_tcldir='system'
 
@@ -9683,7 +9738,29 @@ CPPFLAGS="$OASYS_CPPFLAGS $CPPFLAGS"
 LDFLAGS="-L. $OASYS_LDFLAGS $LDFLAGS"
 
 
+OASYS_INCDIR=.
+OASYS_LIBDIR=./lib
+OASYS_ETCDIR=.
+
+    #
+    # XXX/demmer is there a better way to make the paths absolute??
+    #
+    OASYS_INCDIR=`cd $OASYS_INCDIR && pwd`
+    OASYS_LIBDIR=`cd $OASYS_LIBDIR && pwd`
+    OASYS_ETCDIR=`cd $OASYS_ETCDIR && pwd`
+
+    OASYS_VERSION=`$OASYS_ETCDIR/tools/extract-version $OASYS_ETCDIR/oasys-version.dat version`
+
+
+
+
+
+
+
+
 ac_config_files="$ac_config_files Rules.make"
+
+ac_config_files="$ac_config_files System.make"
 
 
 if test ! $SRCDIR = `pwd` ; then
@@ -10247,6 +10324,7 @@ do
   case $ac_config_target in
     "oasys-config.h") CONFIG_HEADERS="$CONFIG_HEADERS oasys-config.h" ;;
     "Rules.make") CONFIG_FILES="$CONFIG_FILES Rules.make" ;;
+    "System.make") CONFIG_FILES="$CONFIG_FILES System.make" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile:Makefile-Builddir.in" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
@@ -10385,15 +10463,20 @@ GREP!$GREP$ac_delim
 EGREP!$EGREP$ac_delim
 LFSDEFS!$LFSDEFS$ac_delim
 PYTHON!$PYTHON$ac_delim
+PYTHON_BUILD_EXT!$PYTHON_BUILD_EXT$ac_delim
 TCL_LDFLAGS!$TCL_LDFLAGS$ac_delim
 XSD_TOOL!$XSD_TOOL$ac_delim
 OASYS_LIBS!$OASYS_LIBS$ac_delim
+OASYS_INCDIR!$OASYS_INCDIR$ac_delim
+OASYS_LIBDIR!$OASYS_LIBDIR$ac_delim
+OASYS_ETCDIR!$OASYS_ETCDIR$ac_delim
+OASYS_VERSION!$OASYS_VERSION$ac_delim
 SUBDIR!$SUBDIR$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 82; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 87; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
