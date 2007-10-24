@@ -291,6 +291,11 @@ Rules.make: $(SRCDIR)/Rules.make.in $(SRCDIR)/configure
 	(echo "$@ is out of date, need to rerun configure" && \
 	exit 1)
 
+#
+# Make sure the clean rule knows about which files need cleaning
+#
+CFGFILES := Rules.make oasys-config.h config.cache
+
 $(SRCDIR)/Rules.make.in:
 	@echo SRCDIR: $(SRCDIR)
 	@echo error -- Makefile did not set SRCDIR properly
@@ -339,6 +344,63 @@ tools/zsize: tools/zsize.o $(LIBFILES)
 
 test-utils/proc-watcher: test-utils/proc-watcher.o
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS)
+
+#
+# Installation rules
+#
+.PHONY: install
+install: installdirs installbin installinclude installlib installdata
+
+INCDIRS := compat debug io bluez debug memory serialize \
+	   smtp storage tclcmd thread util xml 
+
+installdirs:
+	for dir in $(bindir) $(libdir) \
+		   $(datadir)/oasys/aclocal $(datadir)/oasys/tools ; do \
+	[ -d $(DESTDIR)$$dir ] || \
+	    (mkdir -p $(DESTDIR)$$dir; chmod 755 $(DESTDIR)$$dir) \
+        done
+
+	for subdir in $(INCDIRS) ; do \
+        dir=$(includedir)/oasys/$$subdir ; \
+	[ -d $(DESTDIR)$$dir ] || \
+	    (mkdir -p $(DESTDIR)$$dir; chmod 755 $(DESTDIR)$$dir) \
+        done
+
+installbin: installdirs
+	for prog in tools/oasys_tclsh ; do \
+	    ($(INSTALL_PROGRAM) $$prog $(DESTDIR)$(bindir)) ; \
+	done
+
+installinclude: installdirs
+	for f in *.h */*.h */*.tcc ; do \
+	    ($(INSTALL_PROGRAM) -c $$f $(DESTDIR)$(includedir)/oasys/$$f) ; \
+	done
+
+installlib: installdirs
+	[ x$(SHLIBS) = x ] || \
+	for lib in lib/liboasys-$(OASYS_VERSION).$(SHLIB_EXT) \
+	           lib/liboasyscompat-$(OASYS_VERSION).$(SHLIB_EXT) ; do \
+	    ($(INSTALL_PROGRAM) $$lib $(DESTDIR)$(libdir)) ; \
+	done
+
+	for lib in liboasys liboasyscompat ; do \
+		(cd $(DESTDIR)$(libdir) && rm -f $$lib.$(SHLIB_EXT) && \
+		 ln -s $$lib-$(OASYS_VERSION).$(SHLIB_EXT) $$lib.$(SHLIB_EXT)) \
+	done
+
+installdata: installdirs
+	for f in Rules.make.in System.make oasys-version.dat ; do \
+	    ($(INSTALL_PROGRAM) $$f $(DESTDIR)$(datadir)/oasys) ; \
+        done
+
+	for f in aclocal/* ; do \
+	    ($(INSTALL_PROGRAM) $$f $(DESTDIR)$(datadir)/oasys/aclocal) ; \
+	done
+
+	for f in tools/* ; do \
+	    ($(INSTALL_PROGRAM) $$f $(DESTDIR)$(datadir)/oasys/tools) ; \
+	done
 
 .PHONY: cpps
 cpps: $(CPPS)
