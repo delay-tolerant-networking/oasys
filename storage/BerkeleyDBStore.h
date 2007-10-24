@@ -19,7 +19,7 @@
 #define __BERKELEY_TABLE_STORE_H__
 
 #ifndef OASYS_CONFIG_STATE
-#error "MUST INCLUDE config.h before including this file"
+#error "MUST INCLUDE oasys-config.h before including this file"
 #endif
 
 #if LIBDB_ENABLED

@@ -18,7 +18,7 @@
 #define _OASYS_BT_SERVER_H_
 
 #ifndef OASYS_CONFIG_STATE
-#error "MUST INCLUDE config.h before including this file"
+#error "MUST INCLUDE oasys-config.h before including this file"
 #endif
 
 #ifdef OASYS_BLUETOOTH_ENABLED

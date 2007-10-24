@@ -19,7 +19,7 @@
 #define OASYS_TIMER_H
 
 #ifndef OASYS_CONFIG_STATE
-#error "MUST INCLUDE config.h before including this file"
+#error "MUST INCLUDE oasys-config.h before including this file"
 #endif
 
 #include <errno.h>
