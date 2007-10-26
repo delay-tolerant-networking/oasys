@@ -89,21 +89,21 @@ BINFILES += $(TESTS)
 #
 # default rule for tests
 #
-test/%test: test/%test.cc liboasys.a
+test/%test: test/%test.cc lib/liboasys.a
 	@mkdir -p test
-	$(CXX) $< -o $@ $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) $(LIBS) liboasys.a $(OASYS_LIBS)
+	$(CXX) $< -o $@ $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) $(LIBS) lib/liboasys.a $(OASYS_LIBS)
 
-test/%Test: test/%Test.cc liboasys.a
+test/%Test: test/%Test.cc lib/liboasys.a
 	@mkdir -p test
-	$(CXX) $< -o $@ $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) $(LIBS) liboasys.a $(OASYS_LIBS)
+	$(CXX) $< -o $@ $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) $(LIBS) lib/liboasys.a $(OASYS_LIBS)
 
 #
 # Override rules for stack-trace-test to disable the cast-align warnings
 #
-test/stack-trace-test: test/stack-trace-test.cc liboasys.a
+test/stack-trace-test: test/stack-trace-test.cc lib/liboasys.a
 	@mkdir -p test
 	$(CXX) $< -o $@ $(CPPFLAGS) $(CXXFLAGS) -Wno-cast-align \
-	   $(LDFLAGS) $(LIBS) liboasys.a $(OASYS_LIBS)
+	   $(LDFLAGS) $(LIBS) lib/liboasys.a $(OASYS_LIBS)
 
 #
 # special rules for the smtp support scripts used in cases where
