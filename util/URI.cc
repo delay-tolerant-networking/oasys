@@ -1255,7 +1255,7 @@ URI::decode_fragment()
 
 //----------------------------------------------------------------------
 bool
-URI::subsume(const URI& other)
+URI::subsume(const URI& other) const
 {
     // both URIs must be valid
     if (!valid() || !other.valid()) {
