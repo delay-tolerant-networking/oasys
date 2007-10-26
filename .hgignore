@@ -13,6 +13,7 @@ autom4te.cache
 *.o
 *.a
 *.dylib
+test/*-test
 test-utils/proc-watcher
 tools/md5chunks
 tools/oasys_tclsh
