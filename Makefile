@@ -194,8 +194,8 @@ CPPS := $(CPPS:.c=.E)
 TOOLS	:= \
 	tools/md5chunks				\
 	tools/oasys_tclsh			\
+	tools/proc-watcher			\
 	tools/zsize				\
-	test-utils/proc-watcher			\
 
 all: checkconfigure libs $(TOOLS)
 
@@ -236,7 +236,6 @@ include Rules.make
 LIBFILES := lib/liboasys.a lib/liboasyscompat.a
 ifeq ($(SHLIBS),yes)
 LIBFILES += lib/liboasys.$(SHLIB_EXT) lib/liboasyscompat.$(SHLIB_EXT)
-LIBFILES += test-utils/libtclgettimeofday.$(SHLIB_EXT)
 endif
 
 .PHONY: libs
@@ -319,10 +318,6 @@ lib/liboasyscompat-$(VER).$(SHLIB_EXT): $(COMPAT_OBJS)
 	@rm -f $@; mkdir -p $(@D)
 	$(CXX) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(LIBS) -o $@
 
-test-utils/libtclgettimeofday.$(SHLIB_EXT): test-utils/tclgettimeofday.c
-	@rm -f $@; mkdir -p $(@D)
-	$(CC) $(CPPFLAGS) $(CFLAGS) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(LIBS) $(OASYS_LIBS) -o $@
-
 # Rules for symlinks
 lib/%.a: lib/%-$(VER).a
 	rm -f $@
@@ -339,11 +334,11 @@ tools/md5chunks: tools/md5chunks.o $(LIBFILES)
 tools/oasys_tclsh: tools/oasys_tclsh.o $(LIBFILES)
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L./lib -loasys-$(VER) $(OASYS_LIBS) $(LIBS)
 
+tools/proc-watcher: tools/proc-watcher.o
+	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS)
+
 tools/zsize: tools/zsize.o $(LIBFILES)
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L./lib -loasys-$(VER) $(LIBS)
-
-test-utils/proc-watcher: test-utils/proc-watcher.o
-	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS)
 
 #
 # Installation rules

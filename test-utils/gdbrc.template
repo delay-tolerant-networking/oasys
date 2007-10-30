@@ -1,6 +1,0 @@
-source ~/.gdbinit
-set args %exec_opts%
-handle SIGPIPE nostop
-%gdb_extra%
-%gdb_test_extra%
-run

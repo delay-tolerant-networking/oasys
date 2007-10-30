@@ -16,7 +16,7 @@ autom4te.cache
 *.dylib
 *.so
 test/*-test
-test-utils/proc-watcher
 tools/md5chunks
 tools/oasys_tclsh
+tools/proc-watcher
 tools/zsize
