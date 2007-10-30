@@ -2,6 +2,7 @@ syntax: glob
 
 .glimpse_*
 Rules.make
+System.make
 oasys-config.h
 autoscan.log
 config.cache
