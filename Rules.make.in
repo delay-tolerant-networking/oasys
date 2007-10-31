@@ -60,9 +60,8 @@ CXXFLAGS_NOWARN	= $(DEBUG) $(OPTIMIZE) $(PICFLAGS) $(DEPFLAGS) $(PROFILE) \
 	          $(DEFS) $(SYS_CFLAGS) $(INCFLAGS) $(EXTLIB_CFLAGS) $(EXTRA_CFLAGS)
 CXXFLAGS        = $(CFLAGS_NOWARN) $(WARN) 
 LDFLAGS         = -L. $(EXTRA_LDFLAGS)
-OASYS_LDFLAGS   = $(LDFLAGS) $(EXTLIB_LDFLAGS) -L$(OASYS_LIBDIR) \
-	          -Wl,-Bstatic -loasys-$(OASYS_VERSION) -Wl,-Bdynamic
-OASYS_COMPAT_LDFLAGS = -L$(OASYS_LIBDIR) -Wl,-Bstatic -loasyscompat-$(OASYS_VERSION) -Wl,-Bdynamic
+OASYS_LDFLAGS   = $(OASYS_LIBDIR)/liboasys-$(OASYS_VERSION).a $(LDFLAGS) $(EXTLIB_LDFLAGS) 
+OASYS_COMPAT_LDFLAGS = $(OASYS_LIBDIR)/liboasyscompat-$(OASYS_VERSION).a
 
 #
 # Add a phony rule to make sure this isn't included before the default
