@@ -34,12 +34,10 @@ cat aclocal/*.ac > aclocal.m4
 echo "build-configure: running autoheader to build oasys-config.h.in..."
 rm -f oasys-config.h oasys-config.h.in
 autoheader
-chmod 444 oasys-config.h.in
 
 echo "build-configure: running autoconf to build configure..."
 rm -f configure
 autoconf
-chmod 555 configure
 
 echo "build-configure: purging configure cache..."
 rm -rf autom4te.cache
