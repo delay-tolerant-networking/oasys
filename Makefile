@@ -25,9 +25,11 @@
 COMPAT_SRCS :=					\
 	compat/getopt_long.c			\
 	compat/inet_aton.c			\
-	compat/editline_compat.c		\
 	compat/rpc_compat.c			\
 	compat/xdr_int64_compat.c		\
+
+COMPAT_EXTLIB_SRCS :=				\
+	compat/editline_compat.c		\
 
 DEBUG_SRCS :=					\
 	debug/DebugUtils.cc			\
@@ -168,6 +170,7 @@ XML_SRCS :=					\
 SRCS := \
 	oasys-version.c				\
 	$(COMPAT_SRCS) 				\
+	$(COMPAT_EXTLIB_SRCS)			\
 	$(DEBUG_SRCS) 				\
 	$(IO_SRCS) 				\
 	$(BLUEZ_SRCS) 				\
@@ -309,7 +312,7 @@ lib/liboasys-$(OASYS_VERSION).a: $(OBJS)
 
 lib/liboasys-$(OASYS_VERSION).$(SHLIB_EXT): $(OBJS)
 	@rm -f $@; mkdir -p $(@D)
-	$(CXX) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(EXT_LDFLAGS) -o $@
+	$(CXX) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(EXTLIB_LDFLAGS) -o $@
 
 lib/liboasyscompat-$(OASYS_VERSION).a: $(COMPAT_OBJS)
 	@rm -f $@; mkdir -p $(@D)
