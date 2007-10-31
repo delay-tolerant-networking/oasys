@@ -19,7 +19,7 @@ dnl Autoconf support for configuring whether Zlib is available
 dnl on the system
 dnl
 
-AC_DEFUN(AC_OASYS_CONFIG_ZLIB, [
+AC_DEFUN(AC_CONFIG_ZLIB, [
 
     AC_ARG_WITH(zlib,
       [AC_HELP_STRING([--with-zlib],
@@ -38,7 +38,9 @@ AC_DEFUN(AC_OASYS_CONFIG_ZLIB, [
         dnl
         dnl Look for the compress() function in libz
         dnl
+        AC_EXTLIB_PREPARE
         AC_SEARCH_LIBS(compress, z, ac_has_libz="yes") 
+        AC_EXTLIB_SAVE
 
         dnl
         dnl Print out whether or not we found the libraries

@@ -18,7 +18,7 @@ dnl
 dnl Autoconf support for finding Berkeley DB
 dnl
 
-AC_DEFUN(AC_OASYS_DB_HELP, [
+AC_DEFUN(AC_DB_HELP, [
 cat <<EOF
 
 Configure error with Berkeley DB...
@@ -48,7 +48,7 @@ EOF
 dnl
 dnl Main macro for finding a usable db installation 
 dnl
-AC_DEFUN(AC_OASYS_CONFIG_DB, [
+AC_DEFUN(AC_CONFIG_DB, [
     ac_dbvers='4.5 4.4 4.3 4.2'
     ac_dbdir='yes'
 
@@ -82,18 +82,18 @@ AC_DEFUN(AC_OASYS_CONFIG_DB, [
     if test "$ac_dbdir" = yes -a ! x$oasys_cv_db_incpath = x ; then
         echo "checking for Berkeley DB installation... (cached) -I$oasys_cv_db_incpath -L$oasys_cv_db_libpath -l$oasys_cv_db_lib"
     else
-        AC_OASYS_FIND_DB
+        AC_FIND_DB
     fi # no cache
  
     if test ! $oasys_cv_db_incpath = /usr/include ; then
-        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_db_incpath"
+        EXTLIB_CFLAGS="$EXTLIB_CFLAGS -I$oasys_cv_db_incpath"
     fi
 
     if test ! $oasys_cv_db_libpath = /usr/lib ; then
-        OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_db_libpath"
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -L$oasys_cv_db_libpath"
     fi
 
-    OASYS_LIBS="$OASYS_LIBS -l$oasys_cv_db_lib"
+    EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -l$oasys_cv_db_lib"
 
     fi # LIBDB_ENABLED
 ])
@@ -101,7 +101,7 @@ AC_DEFUN(AC_OASYS_CONFIG_DB, [
 dnl
 dnl Find db
 dnl
-AC_DEFUN(AC_OASYS_FIND_DB, [
+AC_DEFUN(AC_FIND_DB, [
     oasys_cv_db_incpath=
     oasys_cv_db_libpath=
     oasys_cv_db_lib=
@@ -225,7 +225,7 @@ AC_DEFUN(AC_OASYS_FIND_DB, [
     LIBS="$ac_save_LIBS"
 
     if test x$oasys_cv_db_incpath = x ; then
-        AC_OASYS_DB_HELP
+        AC_DB_HELP
         AC_MSG_ERROR([can't find usable Berkeley DB installation])
     fi
 ])

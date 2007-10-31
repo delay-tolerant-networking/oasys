@@ -21,7 +21,7 @@ dnl
 dnl
 dnl Main macro for finding a usable mysql installation 
 dnl
-AC_DEFUN(AC_OASYS_CONFIG_MYSQL, [
+AC_DEFUN(AC_CONFIG_MYSQL, [
     ac_mysqldir='no'
 
     AC_ARG_WITH(mysql,
@@ -76,17 +76,17 @@ AC_DEFUN(AC_OASYS_CONFIG_MYSQL, [
     fi
 
     if test ! $oasys_cv_path_mysql_h = /usr/include ; then
-        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_mysql_h"
+        EXTLIB_CFLAGS="$EXTLIB_CFLAGS -I$oasys_cv_path_mysql_h"
     fi
 
     if test ! $oasys_cv_path_mysql_lib = /usr/lib ; then
-        OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_mysql_lib"
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -L$oasys_cv_path_mysql_lib"
     fi
 
     if test "$ac_mysqldaemon" = "no" ; then
-        OASYS_LIBS="$OASYS_LIBS -lmysqlclient"
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -lmysqlclient"
     else
-        OASYS_LIBS="$OASYS_LIBS -lmysqld"
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -lmysqld"
     fi
     
     fi # MYSQL_ENABLED

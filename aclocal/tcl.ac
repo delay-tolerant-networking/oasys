@@ -21,7 +21,7 @@ dnl
 dnl
 dnl Main macro for finding a usable tcl installation 
 dnl
-AC_DEFUN(AC_OASYS_CONFIG_TCL, [
+AC_DEFUN(AC_CONFIG_TCL, [
     ac_tclvers='8.4 8.3'
     ac_tcldir='system'
 
@@ -50,10 +50,12 @@ AC_DEFUN(AC_OASYS_CONFIG_TCL, [
     dnl
     dnl Tcl requires other libraries
     dnl
+    AC_EXTLIB_PREPARE
     AC_SEARCH_LIBS(pow, m, [],
       AC_MSG_ERROR([can't find required library function (pow)]))
     AC_SEARCH_LIBS(dlopen, dl, [],
       AC_MSG_ERROR([can't find required library function (dlopen)]))
+    AC_EXTLIB_SAVE
 
     dnl
     dnl First check if we have a cached value, unless the user
@@ -63,29 +65,30 @@ AC_DEFUN(AC_OASYS_CONFIG_TCL, [
     if test $ac_tcldir = system -a ! x$oasys_cv_path_tcl_h = x ; then
         echo "checking for tcl installation... (cached) $oasys_cv_path_tcl_h/tcl.h, $oasys_cv_path_tcl_lib -l$oasys_cv_lib_tcl"
     else
-        AC_OASYS_FIND_TCL
+        AC_FIND_TCL
     fi
-        
+
+    TCL_CFLAGS=        
     if test ! $oasys_cv_path_tcl_h = /usr/include ; then
-        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_tcl_h"
+	TCL_CFLAGS=-I$oasys_cv_path_tcl_h
+        EXTLIB_CFLAGS="$EXTLIB_CFLAGS $TCL_CFLAGS"
     fi
 
     TCL_LDFLAGS=
     if test ! x"$oasys_cv_path_tcl_lib" = x"/usr/lib" ; then
-        OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_tcl_lib"
-	TCL_LDFLAGS=-L$oasys_cv_path_tcl_lib
+	TCL_LDFLAGS="-L$oasys_cv_path_tcl_lib -l$oasys_cv_lib_tcl"
+    else
+	TCL_LDFLAGS=-l$oasys_cv_lib_tcl
     fi
 
-    TCL_LDFLAGS="$TCL_LDFLAGS -l$oasys_cv_lib_tcl"
+    EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS $TCL_LDFLAGS"
     AC_SUBST(TCL_LDFLAGS)
-
-    OASYS_LIBS="$OASYS_LIBS -l$oasys_cv_lib_tcl"
 ])
 
 dnl
 dnl Find tcl
 dnl
-AC_DEFUN(AC_OASYS_FIND_TCL, [
+AC_DEFUN(AC_FIND_TCL, [
     oasys_cv_path_tcl_h=
 
     ac_save_CPPFLAGS="$CPPFLAGS"
@@ -149,7 +152,6 @@ AC_DEFUN(AC_OASYS_FIND_TCL, [
       for ac_tcllibdir in $ac_tcllibdirs; do
       for ac_tcllib in tcl$ac_tclver tcl$ac_tclver_major$ac_tclver_minor tcl; do
 
-        #AC_MSG_CHECKING([for tcl library in $ac_tcllibdir, -l$ac_tcllib])
 	LDFLAGS="$ac_save_LDFLAGS -L$ac_tcllibdir"
     	if test x"$STATIC" = x"extlibs" ; then
 		LIBS="-Wl,-Bstatic -l$ac_tcllib -Wl,-Bdynamic -ldl -lm $ac_save_LIBS"

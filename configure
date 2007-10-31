@@ -23,7 +23,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-
+#
 ## --------------------- ##
 ## M4sh Initialization.  ##
 ## --------------------- ##
@@ -684,6 +684,7 @@ CXX
 CXXFLAGS
 ac_ct_CXX
 CPP
+DEPFLAGS
 AR
 RANLIB
 DEBUG
@@ -698,7 +699,6 @@ RPATH
 LDFLAGS_SHLIB
 EXTRA_CFLAGS
 EXTRA_LDFLAGS
-DEPFLAGS
 BUILD_SYSTEM
 AWK
 INSTALL_PROGRAM
@@ -707,12 +707,14 @@ INSTALL_DATA
 SET_MAKE
 GREP
 EGREP
-LFSDEFS
+SYS_CFLAGS
 PYTHON
 PYTHON_BUILD_EXT
 TCL_LDFLAGS
 XSD_TOOL
-OASYS_LIBS
+EXTLIB_CFLAGS
+EXTLIB_LDFLAGS
+INCFLAGS
 OASYS_INCDIR
 OASYS_LIBDIR
 OASYS_ETCDIR
@@ -1851,19 +1853,6 @@ BUILDDIR=$builddir
 # -------------------------------------------------------------------------
 # Pull in the checks for gcc and system dependencies
 # -------------------------------------------------------------------------
-
-######################################################################
-# rhansen@bbn.com:  workaround to disable autoconf's default -O2,
-# since -O2 enables warnings that don't show up with -O0.  If the
-# flags are empty, AC_PROG_CC and AC_PROG_CXX will set the flags to
-# "-O2 -g", otherwise they are left alone.  We need the flags to be
-# set to "-g" if empty, otherwise left alone.
-
-# back up CFLAGS and CXXFLAGS
-oasys_save_CFLAGS="$CFLAGS"
-oasys_save_CXXFLAGS="$CXXFLAGS"
-
-# these macros directly or indirectly call AC_PROG_CC and AC_PROG_CXX
 
 
 
@@ -3350,7 +3339,7 @@ echo "${ECHO_T}$oasys_cv_prog_gxxver" >&6; }
         # _GNU_SOURCE isn't defined, so do both those things here
         #
         3.1*|2.9*)
-            OASYS_CPPFLAGS="$OASYS_CPPFLAGS -D_GNU_SOURCE"
+            CFLAGS="$CFLAGS -D_GNU_SOURCE"
 	    DEPFLAGS=""
             echo "*** "
 	    echo "*** warning: using old compiler $cc version $oasys_cv_prog_gccver,"
@@ -3362,7 +3351,7 @@ echo "${ECHO_T}$oasys_cv_prog_gxxver" >&6; }
 	# Note that for m4 to output a '$' requires the '$' heinosity below.
 	#
 	3.*|4.*)
-	    DEPFLAGS='-MMD -MP -MT "$*.o $*.E $*.po"'
+	    DEPFLAGS='-MMD -MP -MT "$*.o $*.E"'
 	    ;;
 	#
 	# Otherwise bail
@@ -3372,6 +3361,7 @@ echo "${ECHO_T}$oasys_cv_prog_gxxver" >&6; }
 	    exit  1
 	    ;;
     esac
+
 
                 if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}ar", so it can be a program name with args.
@@ -3590,7 +3580,7 @@ echo "${ECHO_T}$debug" >&6; }
     if test $debug = yes ; then
         DEBUG="-g -fno-inline"
     else
-        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -DNDEBUG"
+        DEBUG="-DNDEBUG"
     fi
 
 
@@ -3677,7 +3667,6 @@ echo "${ECHO_T}$profile" >&6; }
     if test $profile = yes ; then
         PROFILE="-pg"
     fi
-
 
 
                     # Check whether --enable-static was given.
@@ -3914,7 +3903,6 @@ if test "${oasys_cv_prog_gcc_w_no_long_double+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
 
-        CPPFLAGS_save=$CPPFLAGS
         CPPFLAGS="$CPPFLAGS -Wno-long-double"
 	cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -3971,30 +3959,12 @@ fi
 echo "${ECHO_T}$oasys_cv_prog_gcc_w_no_long_double" >&6; }
 
     if test $oasys_cv_prog_gcc_w_no_long_double = yes ; then
-        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -Wno-long-double"
+        CPPFLAGS="$CPPFLAGS -Wno-long-double"
     fi
-
-
 
 
                     BUILD_SYSTEM=`uname -s || echo UNKNOWN | sed 's/CYGWIN.*/CYGWIN/'`
 
-
-
-# now that AC_PROG_CC and AC_PROG_CXX are done, we know whether we're
-# using GCC.  If we're not using GCC, then leave the flags alone.  If
-# we are using GCC, and the flags were empty before, then we know that
-# the flags now contain "-O2 -g" so the flags should have "-O2"
-# removed.  If the user specified flags, then leave the flags alone.
-if test "x$GCC" = "xyes" -a -z "$oasys_save_CFLAGS" ; then
-   CFLAGS="-g"
-fi
-if test "x$GXX" = "xyes" -a -z "$oasys_save_CXXFLAGS" ; then
-   CXXFLAGS="-g"
-fi
-
-# done with default -O2 workaround
-######################################################################
 
 ac_aux_dir=
 for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
@@ -4025,6 +3995,239 @@ fi
 ac_config_guess="$SHELL $ac_aux_dir/config.guess"  # Please don't use this var.
 ac_config_sub="$SHELL $ac_aux_dir/config.sub"  # Please don't use this var.
 ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
+
+
+
+{ echo "$as_me:$LINENO: checking for grep that handles long lines and -e" >&5
+echo $ECHO_N "checking for grep that handles long lines and -e... $ECHO_C" >&6; }
+if test "${ac_cv_path_GREP+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  # Extract the first word of "grep ggrep" to use in msg output
+if test -z "$GREP"; then
+set dummy grep ggrep; ac_prog_name=$2
+if test "${ac_cv_path_GREP+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_path_GREP_found=false
+# Loop through the user's path and test for each of PROGNAME-LIST
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH$PATH_SEPARATOR/usr/xpg4/bin
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_prog in grep ggrep; do
+  for ac_exec_ext in '' $ac_executable_extensions; do
+    ac_path_GREP="$as_dir/$ac_prog$ac_exec_ext"
+    { test -f "$ac_path_GREP" && $as_test_x "$ac_path_GREP"; } || continue
+    # Check for GNU ac_path_GREP and select it if it is found.
+  # Check for GNU $ac_path_GREP
+case `"$ac_path_GREP" --version 2>&1` in
+*GNU*)
+  ac_cv_path_GREP="$ac_path_GREP" ac_path_GREP_found=:;;
+*)
+  ac_count=0
+  echo $ECHO_N "0123456789$ECHO_C" >"conftest.in"
+  while :
+  do
+    cat "conftest.in" "conftest.in" >"conftest.tmp"
+    mv "conftest.tmp" "conftest.in"
+    cp "conftest.in" "conftest.nl"
+    echo 'GREP' >> "conftest.nl"
+    "$ac_path_GREP" -e 'GREP$' -e '-(cannot match)-' < "conftest.nl" >"conftest.out" 2>/dev/null || break
+    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
+    ac_count=`expr $ac_count + 1`
+    if test $ac_count -gt ${ac_path_GREP_max-0}; then
+      # Best one so far, save it but keep looking for a better one
+      ac_cv_path_GREP="$ac_path_GREP"
+      ac_path_GREP_max=$ac_count
+    fi
+    # 10*(2^10) chars as input seems more than enough
+    test $ac_count -gt 10 && break
+  done
+  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
+esac
+
+
+    $ac_path_GREP_found && break 3
+  done
+done
+
+done
+IFS=$as_save_IFS
+
+
+fi
+
+GREP="$ac_cv_path_GREP"
+if test -z "$GREP"; then
+  { { echo "$as_me:$LINENO: error: no acceptable $ac_prog_name could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" >&5
+echo "$as_me: error: no acceptable $ac_prog_name could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+else
+  ac_cv_path_GREP=$GREP
+fi
+
+
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_path_GREP" >&5
+echo "${ECHO_T}$ac_cv_path_GREP" >&6; }
+ GREP="$ac_cv_path_GREP"
+
+
+{ echo "$as_me:$LINENO: checking for egrep" >&5
+echo $ECHO_N "checking for egrep... $ECHO_C" >&6; }
+if test "${ac_cv_path_EGREP+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if echo a | $GREP -E '(a|b)' >/dev/null 2>&1
+   then ac_cv_path_EGREP="$GREP -E"
+   else
+     # Extract the first word of "egrep" to use in msg output
+if test -z "$EGREP"; then
+set dummy egrep; ac_prog_name=$2
+if test "${ac_cv_path_EGREP+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_path_EGREP_found=false
+# Loop through the user's path and test for each of PROGNAME-LIST
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH$PATH_SEPARATOR/usr/xpg4/bin
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_prog in egrep; do
+  for ac_exec_ext in '' $ac_executable_extensions; do
+    ac_path_EGREP="$as_dir/$ac_prog$ac_exec_ext"
+    { test -f "$ac_path_EGREP" && $as_test_x "$ac_path_EGREP"; } || continue
+    # Check for GNU ac_path_EGREP and select it if it is found.
+  # Check for GNU $ac_path_EGREP
+case `"$ac_path_EGREP" --version 2>&1` in
+*GNU*)
+  ac_cv_path_EGREP="$ac_path_EGREP" ac_path_EGREP_found=:;;
+*)
+  ac_count=0
+  echo $ECHO_N "0123456789$ECHO_C" >"conftest.in"
+  while :
+  do
+    cat "conftest.in" "conftest.in" >"conftest.tmp"
+    mv "conftest.tmp" "conftest.in"
+    cp "conftest.in" "conftest.nl"
+    echo 'EGREP' >> "conftest.nl"
+    "$ac_path_EGREP" 'EGREP$' < "conftest.nl" >"conftest.out" 2>/dev/null || break
+    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
+    ac_count=`expr $ac_count + 1`
+    if test $ac_count -gt ${ac_path_EGREP_max-0}; then
+      # Best one so far, save it but keep looking for a better one
+      ac_cv_path_EGREP="$ac_path_EGREP"
+      ac_path_EGREP_max=$ac_count
+    fi
+    # 10*(2^10) chars as input seems more than enough
+    test $ac_count -gt 10 && break
+  done
+  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
+esac
+
+
+    $ac_path_EGREP_found && break 3
+  done
+done
+
+done
+IFS=$as_save_IFS
+
+
+fi
+
+EGREP="$ac_cv_path_EGREP"
+if test -z "$EGREP"; then
+  { { echo "$as_me:$LINENO: error: no acceptable $ac_prog_name could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" >&5
+echo "$as_me: error: no acceptable $ac_prog_name could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+else
+  ac_cv_path_EGREP=$EGREP
+fi
+
+
+   fi
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_path_EGREP" >&5
+echo "${ECHO_T}$ac_cv_path_EGREP" >&6; }
+ EGREP="$ac_cv_path_EGREP"
+
+
+# On IRIX 5.3, sys/types and inttypes.h are conflicting.
+
+
+
+
+
+
+
+
+
+for ac_header in sys/types.h sys/stat.h stdlib.h string.h memory.h strings.h \
+		  inttypes.h stdint.h unistd.h
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+{ echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6; }
+if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+
+#include <$ac_header>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  eval "$as_ac_Header=yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	eval "$as_ac_Header=no"
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+ac_res=`eval echo '${'$as_ac_Header'}'`
+	       { echo "$as_me:$LINENO: result: $ac_res" >&5
+echo "${ECHO_T}$ac_res" >&6; }
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
 
 
 
@@ -4278,6 +4481,16 @@ fi
 
 
 
+
+    ac_extlib_save_CFLAGS=$CFLAGS
+    ac_extlib_save_LDFLAGS=$LDFLAGS
+    ac_extlib_save_LIBS=$LIBS
+
+    CFLAGS=
+    LDFLAGS=
+    LIBS=
+
+
     { echo "$as_me:$LINENO: checking for library containing pthread_create" >&5
 echo $ECHO_N "checking for library containing pthread_create... $ECHO_C" >&6; }
 if test "${ac_cv_search_pthread_create+set}" = set; then
@@ -4364,6 +4577,7 @@ else
 echo "$as_me: error: can't find required library function (pthread_create)" >&2;}
    { (exit 1); exit 1; }; }
 fi
+
 
     { echo "$as_me:$LINENO: checking for pthread_yield" >&5
 echo $ECHO_N "checking for pthread_yield... $ECHO_C" >&6; }
@@ -4538,6 +4752,7 @@ fi
 
 fi
 
+
     { echo "$as_me:$LINENO: checking for library containing pthread_setspecific" >&5
 echo $ECHO_N "checking for library containing pthread_setspecific... $ECHO_C" >&6; }
 if test "${ac_cv_search_pthread_setspecific+set}" = set; then
@@ -4624,6 +4839,7 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 fi
+
 
     { echo "$as_me:$LINENO: checking for library containing socket" >&5
 echo $ECHO_N "checking for library containing socket... $ECHO_C" >&6; }
@@ -4712,6 +4928,7 @@ echo "$as_me: error: can't find required library function (socket)" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
+
     { echo "$as_me:$LINENO: checking for library containing gethostbyname" >&5
 echo $ECHO_N "checking for library containing gethostbyname... $ECHO_C" >&6; }
 if test "${ac_cv_search_gethostbyname+set}" = set; then
@@ -4798,6 +5015,7 @@ else
 echo "$as_me: error: can't find required library function (gethostbyname)" >&2;}
    { (exit 1); exit 1; }; }
 fi
+
 
     { echo "$as_me:$LINENO: checking for library containing xdr_int" >&5
 echo $ECHO_N "checking for library containing xdr_int... $ECHO_C" >&6; }
@@ -4888,235 +5106,21 @@ fi
 
 
 
-{ echo "$as_me:$LINENO: checking for grep that handles long lines and -e" >&5
-echo $ECHO_N "checking for grep that handles long lines and -e... $ECHO_C" >&6; }
-if test "${ac_cv_path_GREP+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  # Extract the first word of "grep ggrep" to use in msg output
-if test -z "$GREP"; then
-set dummy grep ggrep; ac_prog_name=$2
-if test "${ac_cv_path_GREP+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_path_GREP_found=false
-# Loop through the user's path and test for each of PROGNAME-LIST
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH$PATH_SEPARATOR/usr/xpg4/bin
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_prog in grep ggrep; do
-  for ac_exec_ext in '' $ac_executable_extensions; do
-    ac_path_GREP="$as_dir/$ac_prog$ac_exec_ext"
-    { test -f "$ac_path_GREP" && $as_test_x "$ac_path_GREP"; } || continue
-    # Check for GNU ac_path_GREP and select it if it is found.
-  # Check for GNU $ac_path_GREP
-case `"$ac_path_GREP" --version 2>&1` in
-*GNU*)
-  ac_cv_path_GREP="$ac_path_GREP" ac_path_GREP_found=:;;
-*)
-  ac_count=0
-  echo $ECHO_N "0123456789$ECHO_C" >"conftest.in"
-  while :
-  do
-    cat "conftest.in" "conftest.in" >"conftest.tmp"
-    mv "conftest.tmp" "conftest.in"
-    cp "conftest.in" "conftest.nl"
-    echo 'GREP' >> "conftest.nl"
-    "$ac_path_GREP" -e 'GREP$' -e '-(cannot match)-' < "conftest.nl" >"conftest.out" 2>/dev/null || break
-    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
-    ac_count=`expr $ac_count + 1`
-    if test $ac_count -gt ${ac_path_GREP_max-0}; then
-      # Best one so far, save it but keep looking for a better one
-      ac_cv_path_GREP="$ac_path_GREP"
-      ac_path_GREP_max=$ac_count
+    if test ! "$CFLAGS" = "" ; then
+        EXTLIB_CFLAGS="$EXTLIB_CFLAGS $CFLAGS"
     fi
-    # 10*(2^10) chars as input seems more than enough
-    test $ac_count -gt 10 && break
-  done
-  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
-esac
 
-
-    $ac_path_GREP_found && break 3
-  done
-done
-
-done
-IFS=$as_save_IFS
-
-
-fi
-
-GREP="$ac_cv_path_GREP"
-if test -z "$GREP"; then
-  { { echo "$as_me:$LINENO: error: no acceptable $ac_prog_name could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" >&5
-echo "$as_me: error: no acceptable $ac_prog_name could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-else
-  ac_cv_path_GREP=$GREP
-fi
-
-
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_path_GREP" >&5
-echo "${ECHO_T}$ac_cv_path_GREP" >&6; }
- GREP="$ac_cv_path_GREP"
-
-
-{ echo "$as_me:$LINENO: checking for egrep" >&5
-echo $ECHO_N "checking for egrep... $ECHO_C" >&6; }
-if test "${ac_cv_path_EGREP+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if echo a | $GREP -E '(a|b)' >/dev/null 2>&1
-   then ac_cv_path_EGREP="$GREP -E"
-   else
-     # Extract the first word of "egrep" to use in msg output
-if test -z "$EGREP"; then
-set dummy egrep; ac_prog_name=$2
-if test "${ac_cv_path_EGREP+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_path_EGREP_found=false
-# Loop through the user's path and test for each of PROGNAME-LIST
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH$PATH_SEPARATOR/usr/xpg4/bin
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_prog in egrep; do
-  for ac_exec_ext in '' $ac_executable_extensions; do
-    ac_path_EGREP="$as_dir/$ac_prog$ac_exec_ext"
-    { test -f "$ac_path_EGREP" && $as_test_x "$ac_path_EGREP"; } || continue
-    # Check for GNU ac_path_EGREP and select it if it is found.
-  # Check for GNU $ac_path_EGREP
-case `"$ac_path_EGREP" --version 2>&1` in
-*GNU*)
-  ac_cv_path_EGREP="$ac_path_EGREP" ac_path_EGREP_found=:;;
-*)
-  ac_count=0
-  echo $ECHO_N "0123456789$ECHO_C" >"conftest.in"
-  while :
-  do
-    cat "conftest.in" "conftest.in" >"conftest.tmp"
-    mv "conftest.tmp" "conftest.in"
-    cp "conftest.in" "conftest.nl"
-    echo 'EGREP' >> "conftest.nl"
-    "$ac_path_EGREP" 'EGREP$' < "conftest.nl" >"conftest.out" 2>/dev/null || break
-    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
-    ac_count=`expr $ac_count + 1`
-    if test $ac_count -gt ${ac_path_EGREP_max-0}; then
-      # Best one so far, save it but keep looking for a better one
-      ac_cv_path_EGREP="$ac_path_EGREP"
-      ac_path_EGREP_max=$ac_count
+    if test ! "$LDFLAGS" = "" ; then
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS $LDFLAGS"
     fi
-    # 10*(2^10) chars as input seems more than enough
-    test $ac_count -gt 10 && break
-  done
-  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
-esac
 
+    if test ! "$LIBS" = "" ; then
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS $LIBS"
+    fi
 
-    $ac_path_EGREP_found && break 3
-  done
-done
-
-done
-IFS=$as_save_IFS
-
-
-fi
-
-EGREP="$ac_cv_path_EGREP"
-if test -z "$EGREP"; then
-  { { echo "$as_me:$LINENO: error: no acceptable $ac_prog_name could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" >&5
-echo "$as_me: error: no acceptable $ac_prog_name could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-else
-  ac_cv_path_EGREP=$EGREP
-fi
-
-
-   fi
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_path_EGREP" >&5
-echo "${ECHO_T}$ac_cv_path_EGREP" >&6; }
- EGREP="$ac_cv_path_EGREP"
-
-
-# On IRIX 5.3, sys/types and inttypes.h are conflicting.
-
-
-
-
-
-
-
-
-
-for ac_header in sys/types.h sys/stat.h stdlib.h string.h memory.h strings.h \
-		  inttypes.h stdint.h unistd.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-{ echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6; }
-if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-$ac_includes_default
-
-#include <$ac_header>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (ac_try="$ac_compile"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_compile") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest.$ac_objext; then
-  eval "$as_ac_Header=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	eval "$as_ac_Header=no"
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-ac_res=`eval echo '${'$as_ac_Header'}'`
-	       { echo "$as_me:$LINENO: result: $ac_res" >&5
-echo "${ECHO_T}$ac_res" >&6; }
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
+    CFLAGS=$ac_extlib_save_CFLAGS
+    LDFLAGS=$ac_extlib_save_LDFLAGS
+    LIBS=$ac_extlib_save_LIBS
 
 
 
@@ -5752,13 +5756,13 @@ fi
     { echo "$as_me:$LINENO: result: $ac_file_offset_bits" >&5
 echo "${ECHO_T}$ac_file_offset_bits" >&6; }
     if test $ac_file_offset_bits = 64 ; then
-        LFSDEFS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+        SYS_CFLAGS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
     else
-        LFSDEFS="-D_FILE_OFFSET_BITS=$ac_file_offset_bits"
+        SYS_CFLAGS="-D_FILE_OFFSET_BITS=$ac_file_offset_bits"
     fi
 
     oasys_ac_cppflags_save="$CPPFLAGS"
-    CPPFLAGS="$LFSDEFS $CPPFLAGS"
+    CPPFLAGS="$SYS_CFLAGS $CPPFLAGS"
     { echo "$as_me:$LINENO: checking for off_t" >&5
 echo $ECHO_N "checking for off_t... $ECHO_C" >&6; }
 if test "${ac_cv_type_off_t+set}" = set; then
@@ -6473,79 +6477,7 @@ fi
 
 
 
-
-    # This is most likely not the best "autoconfy" way of doing this...
-    { echo "$as_me:$LINENO: checking whether math.h defines fpclassify" >&5
-echo $ECHO_N "checking whether math.h defines fpclassify... $ECHO_C" >&6; }
-
-    if test "${oasys_cv_func_fpclassify+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-
-      oasys_cv_func_fpclassify=0
-      cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-        #define _GNU_SOURCE 1
-        #include <math.h>
-        #ifndef fpclassify
-        #error no fpclassify
-        #endif
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (ac_try="$ac_compile"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_compile") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest.$ac_objext; then
-  oasys_cv_func_fpclassify=1
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-
-
-    if test $oasys_cv_func_fpclassify = 1 ; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_FPCLASSIFY
-_ACEOF
-
-      { echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6; }
-    else
-      { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-    fi
-
+    # XXX/demmer get rid of me
 
 
 
@@ -6647,6 +6579,7 @@ _ACEOF
 
 fi
 done
+
 
 
 
@@ -6938,7 +6871,16 @@ echo "$as_me: error: cannot configure without tcl" >&2;}
    { (exit 1); exit 1; }; }
     fi
 
-                { echo "$as_me:$LINENO: checking for library containing pow" >&5
+
+    ac_extlib_save_CFLAGS=$CFLAGS
+    ac_extlib_save_LDFLAGS=$LDFLAGS
+    ac_extlib_save_LIBS=$LIBS
+
+    CFLAGS=
+    LDFLAGS=
+    LIBS=
+
+    { echo "$as_me:$LINENO: checking for library containing pow" >&5
 echo $ECHO_N "checking for library containing pow... $ECHO_C" >&6; }
 if test "${ac_cv_search_pow+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -7113,6 +7055,23 @@ echo "$as_me: error: can't find required library function (dlopen)" >&2;}
 fi
 
 
+    if test ! "$CFLAGS" = "" ; then
+        EXTLIB_CFLAGS="$EXTLIB_CFLAGS $CFLAGS"
+    fi
+
+    if test ! "$LDFLAGS" = "" ; then
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS $LDFLAGS"
+    fi
+
+    if test ! "$LIBS" = "" ; then
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS $LIBS"
+    fi
+
+    CFLAGS=$ac_extlib_save_CFLAGS
+    LDFLAGS=$ac_extlib_save_LDFLAGS
+    LIBS=$ac_extlib_save_LIBS
+
+
                         if test $ac_tcldir = system -a ! x$oasys_cv_path_tcl_h = x ; then
         echo "checking for tcl installation... (cached) $oasys_cv_path_tcl_h/tcl.h, $oasys_cv_path_tcl_lib -l$oasys_cv_lib_tcl"
     else
@@ -7214,7 +7173,6 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       for ac_tcllibdir in $ac_tcllibdirs; do
       for ac_tcllib in tcl$ac_tclver tcl$ac_tclver_major$ac_tclver_minor tcl; do
 
-        #AC_MSG_CHECKING([for tcl library in $ac_tcllibdir, -l$ac_tcllib])
 	LDFLAGS="$ac_save_LDFLAGS -L$ac_tcllibdir"
     	if test x"$STATIC" = x"extlibs" ; then
 		LIBS="-Wl,-Bstatic -l$ac_tcllib -Wl,-Bdynamic -ldl -lm $ac_save_LIBS"
@@ -7311,20 +7269,21 @@ echo "$as_me: error: can't find usable tcl.h" >&2;}
 
     fi
 
+    TCL_CFLAGS=
     if test ! $oasys_cv_path_tcl_h = /usr/include ; then
-        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_tcl_h"
+	TCL_CFLAGS=-I$oasys_cv_path_tcl_h
+        EXTLIB_CFLAGS="$EXTLIB_CFLAGS $TCL_CFLAGS"
     fi
 
     TCL_LDFLAGS=
     if test ! x"$oasys_cv_path_tcl_lib" = x"/usr/lib" ; then
-        OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_tcl_lib"
-	TCL_LDFLAGS=-L$oasys_cv_path_tcl_lib
+	TCL_LDFLAGS="-L$oasys_cv_path_tcl_lib -l$oasys_cv_lib_tcl"
+    else
+	TCL_LDFLAGS=-l$oasys_cv_lib_tcl
     fi
 
-    TCL_LDFLAGS="$TCL_LDFLAGS -l$oasys_cv_lib_tcl"
+    EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS $TCL_LDFLAGS"
 
-
-    OASYS_LIBS="$OASYS_LIBS -l$oasys_cv_lib_tcl"
 
 
 
@@ -7577,14 +7536,14 @@ echo "$as_me: error: can't find usable google perftools library" >&2;}
     fi
 
     if test ! $oasys_cv_path_google_perf_h = /usr/include ; then
-        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_google_perf_h"
+        EXTLIB_CFLAGS="$EXTLIB_CFLAGS -I$oasys_cv_path_google_perf_h"
     fi
 
     if test ! $oasys_cv_path_google_perf_lib = /usr/lib ; then
-        OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_google_perf_lib"
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -L$oasys_cv_path_google_perf_lib"
     fi
 
-    OASYS_LIBS="$OASYS_LIBS -Wl,-Bstatic -lprofiler -Wl,-Bdynamic"
+    EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -Wl,-Bstatic -lprofiler -Wl,-Bdynamic"
 
     fi # GOOGLE_PERF_ENABLED
 
@@ -7613,7 +7572,16 @@ echo "${ECHO_T}no" >&6; }
         { echo "$as_me:$LINENO: result: $ac_use_bluez" >&5
 echo "${ECHO_T}$ac_use_bluez" >&6; }
 
-                                { echo "$as_me:$LINENO: checking for library containing baswap" >&5
+
+    ac_extlib_save_CFLAGS=$CFLAGS
+    ac_extlib_save_LDFLAGS=$LDFLAGS
+    ac_extlib_save_LIBS=$LIBS
+
+    CFLAGS=
+    LDFLAGS=
+    LIBS=
+
+        { echo "$as_me:$LINENO: checking for library containing baswap" >&5
 echo $ECHO_N "checking for library containing baswap... $ECHO_C" >&6; }
 if test "${ac_cv_search_baswap+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -7695,6 +7663,23 @@ if test "$ac_res" != no; then
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
   ac_has_libbluetooth="yes"
 fi
+
+
+    if test ! "$CFLAGS" = "" ; then
+        EXTLIB_CFLAGS="$EXTLIB_CFLAGS $CFLAGS"
+    fi
+
+    if test ! "$LDFLAGS" = "" ; then
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS $LDFLAGS"
+    fi
+
+    if test ! "$LIBS" = "" ; then
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS $LIBS"
+    fi
+
+    CFLAGS=$ac_extlib_save_CFLAGS
+    LDFLAGS=$ac_extlib_save_LDFLAGS
+    LIBS=$ac_extlib_save_LIBS
 
 
 
@@ -8022,14 +8007,14 @@ _ACEOF
 
 
         if test ! $oasys_cv_path_expat_h = /usr/include ; then
-           OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_expat_h"
+           EXTLIB_CFLAGS="$EXTLIB_CFLAGS -I$oasys_cv_path_expat_h"
         fi
 
         if test ! $oasys_cv_path_expat_lib = /usr/lib ; then
-            OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_expat_lib"
+            EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -L$oasys_cv_path_expat_lib"
         fi
 
-        OASYS_LIBS="$OASYS_LIBS -l$oasys_cv_lib_expat"
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -l$oasys_cv_lib_expat"
     else
         LIBEXPAT_ENABLED=0
     fi
@@ -8180,10 +8165,10 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
         if test ! "$oasys_cv_path_xerces_c" = /usr ; then
-            OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_xerces_c/include"
-            OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_xerces_c/lib"
+            EXTLIB_CFLAGS="$EXTLIB_CFLAGS -I$oasys_cv_path_xerces_c/include"
+            EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -L$oasys_cv_path_xerces_c/lib"
         fi
-        OASYS_LIBS="$OASYS_LIBS -lxerces-c"
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -lxerces-c"
     fi
 
     fi
@@ -8219,6 +8204,15 @@ echo "${ECHO_T}yes" >&6; }
                 if test $BUILD_SYSTEM = 'CYGWIN' ; then
         TCLREADLINE_ENABLED=0
     else
+
+    ac_extlib_save_CFLAGS=$CFLAGS
+    ac_extlib_save_LDFLAGS=$LDFLAGS
+    ac_extlib_save_LIBS=$LIBS
+
+    CFLAGS=
+    LDFLAGS=
+    LIBS=
+
         { echo "$as_me:$LINENO: checking for library containing readline" >&5
 echo $ECHO_N "checking for library containing readline... $ECHO_C" >&6; }
 if test "${ac_cv_search_readline+set}" = set; then
@@ -8303,6 +8297,23 @@ if test "$ac_res" != no; then
 else
   TCLREADLINE_ENABLED=0
 fi
+
+
+    if test ! "$CFLAGS" = "" ; then
+        EXTLIB_CFLAGS="$EXTLIB_CFLAGS $CFLAGS"
+    fi
+
+    if test ! "$LDFLAGS" = "" ; then
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS $LDFLAGS"
+    fi
+
+    if test ! "$LIBS" = "" ; then
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS $LIBS"
+    fi
+
+    CFLAGS=$ac_extlib_save_CFLAGS
+    LDFLAGS=$ac_extlib_save_LDFLAGS
+    LIBS=$ac_extlib_save_LIBS
 
     fi
 
@@ -8414,7 +8425,16 @@ echo "${ECHO_T}no" >&6; }
         { echo "$as_me:$LINENO: result: $ac_use_zlib" >&5
 echo "${ECHO_T}$ac_use_zlib" >&6; }
 
-                                { echo "$as_me:$LINENO: checking for library containing compress" >&5
+
+    ac_extlib_save_CFLAGS=$CFLAGS
+    ac_extlib_save_LDFLAGS=$LDFLAGS
+    ac_extlib_save_LIBS=$LIBS
+
+    CFLAGS=
+    LDFLAGS=
+    LIBS=
+
+        { echo "$as_me:$LINENO: checking for library containing compress" >&5
 echo $ECHO_N "checking for library containing compress... $ECHO_C" >&6; }
 if test "${ac_cv_search_compress+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -8496,6 +8516,23 @@ if test "$ac_res" != no; then
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
   ac_has_libz="yes"
 fi
+
+
+    if test ! "$CFLAGS" = "" ; then
+        EXTLIB_CFLAGS="$EXTLIB_CFLAGS $CFLAGS"
+    fi
+
+    if test ! "$LDFLAGS" = "" ; then
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS $LDFLAGS"
+    fi
+
+    if test ! "$LIBS" = "" ; then
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS $LIBS"
+    fi
+
+    CFLAGS=$ac_extlib_save_CFLAGS
+    LDFLAGS=$ac_extlib_save_LDFLAGS
+    LIBS=$ac_extlib_save_LIBS
 
 
                                 { echo "$as_me:$LINENO: checking whether zlib support was found" >&5
@@ -8897,14 +8934,14 @@ echo "$as_me: error: can't find usable Berkeley DB installation" >&2;}
     fi # no cache
 
     if test ! $oasys_cv_db_incpath = /usr/include ; then
-        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_db_incpath"
+        EXTLIB_CFLAGS="$EXTLIB_CFLAGS -I$oasys_cv_db_incpath"
     fi
 
     if test ! $oasys_cv_db_libpath = /usr/lib ; then
-        OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_db_libpath"
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -L$oasys_cv_db_libpath"
     fi
 
-    OASYS_LIBS="$OASYS_LIBS -l$oasys_cv_db_lib"
+    EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -l$oasys_cv_db_lib"
 
     fi # LIBDB_ENABLED
 
@@ -9482,17 +9519,17 @@ echo "$as_me: error: can't find usable mysql library" >&2;}
     fi
 
     if test ! $oasys_cv_path_mysql_h = /usr/include ; then
-        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_mysql_h"
+        EXTLIB_CFLAGS="$EXTLIB_CFLAGS -I$oasys_cv_path_mysql_h"
     fi
 
     if test ! $oasys_cv_path_mysql_lib = /usr/lib ; then
-        OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_mysql_lib"
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -L$oasys_cv_path_mysql_lib"
     fi
 
     if test "$ac_mysqldaemon" = "no" ; then
-        OASYS_LIBS="$OASYS_LIBS -lmysqlclient"
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -lmysqlclient"
     else
-        OASYS_LIBS="$OASYS_LIBS -lmysqld"
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -lmysqld"
     fi
 
     fi # MYSQL_ENABLED
@@ -9689,14 +9726,14 @@ echo "$as_me: error: can't find usable postgres library" >&2;}
     fi
 
     if test ! $oasys_cv_path_postgres_h = /usr/include ; then
-        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_postgres_h"
+        EXTLIB_CFLAGS="$EXTLIB_CFLAGS -I$oasys_cv_path_postgres_h"
     fi
 
     if test ! $oasys_cv_path_postgres_lib = /usr/lib ; then
-        OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_postgres_lib"
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -L$oasys_cv_path_postgres_lib"
     fi
 
-    OASYS_LIBS="$OASYS_LIBS -lpq"
+    EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -lpq"
 
     fi # POSTGRES_ENABLED
 
@@ -9736,13 +9773,21 @@ _ACEOF
 # -------------------------------------------------------------------------
 # Output
 # -------------------------------------------------------------------------
-CPPFLAGS="$OASYS_CPPFLAGS $CPPFLAGS"
-LDFLAGS="-L. $OASYS_LDFLAGS $LDFLAGS"
 
 
-OASYS_INCDIR=.
-OASYS_LIBDIR=./lib
-OASYS_ETCDIR=.
+
+
+OASYS_INCDIR=$SRCDIR
+
+OASYS_LIBDIR=$BUILDDIR/lib
+mkdir -p $OASYS_LIBDIR
+
+OASYS_ETCDIR=$SRCDIR
+
+INCFLAGS="-I\$(SRCDIR)/ext"
+
+
+
 
     #
     # XXX/demmer is there a better way to make the paths absolute??
@@ -10440,6 +10485,7 @@ CXX!$CXX$ac_delim
 CXXFLAGS!$CXXFLAGS$ac_delim
 ac_ct_CXX!$ac_ct_CXX$ac_delim
 CPP!$CPP$ac_delim
+DEPFLAGS!$DEPFLAGS$ac_delim
 AR!$AR$ac_delim
 RANLIB!$RANLIB$ac_delim
 DEBUG!$DEBUG$ac_delim
@@ -10454,7 +10500,6 @@ RPATH!$RPATH$ac_delim
 LDFLAGS_SHLIB!$LDFLAGS_SHLIB$ac_delim
 EXTRA_CFLAGS!$EXTRA_CFLAGS$ac_delim
 EXTRA_LDFLAGS!$EXTRA_LDFLAGS$ac_delim
-DEPFLAGS!$DEPFLAGS$ac_delim
 BUILD_SYSTEM!$BUILD_SYSTEM$ac_delim
 AWK!$AWK$ac_delim
 INSTALL_PROGRAM!$INSTALL_PROGRAM$ac_delim
@@ -10463,12 +10508,14 @@ INSTALL_DATA!$INSTALL_DATA$ac_delim
 SET_MAKE!$SET_MAKE$ac_delim
 GREP!$GREP$ac_delim
 EGREP!$EGREP$ac_delim
-LFSDEFS!$LFSDEFS$ac_delim
+SYS_CFLAGS!$SYS_CFLAGS$ac_delim
 PYTHON!$PYTHON$ac_delim
 PYTHON_BUILD_EXT!$PYTHON_BUILD_EXT$ac_delim
 TCL_LDFLAGS!$TCL_LDFLAGS$ac_delim
 XSD_TOOL!$XSD_TOOL$ac_delim
-OASYS_LIBS!$OASYS_LIBS$ac_delim
+EXTLIB_CFLAGS!$EXTLIB_CFLAGS$ac_delim
+EXTLIB_LDFLAGS!$EXTLIB_LDFLAGS$ac_delim
+INCFLAGS!$INCFLAGS$ac_delim
 OASYS_INCDIR!$OASYS_INCDIR$ac_delim
 OASYS_LIBDIR!$OASYS_LIBDIR$ac_delim
 OASYS_ETCDIR!$OASYS_ETCDIR$ac_delim
@@ -10478,7 +10525,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 87; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 89; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

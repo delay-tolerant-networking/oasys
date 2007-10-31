@@ -21,7 +21,7 @@ dnl
 dnl
 dnl Main macro for finding a usable db installation 
 dnl
-AC_DEFUN(AC_OASYS_CONFIG_TCLREADLINE, [
+AC_DEFUN(AC_CONFIG_TCLREADLINE, [
     AC_ARG_WITH(tclreadline,
         AC_HELP_STRING([--with-tclreadline],
     		   [enable or disable tclreadline (default try)]),
@@ -54,10 +54,12 @@ AC_DEFUN(AC_OASYS_CONFIG_TCLREADLINE, [
     if test $BUILD_SYSTEM = 'CYGWIN' ; then
         TCLREADLINE_ENABLED=0
     else 
+        AC_EXTLIB_PREPARE
         AC_SEARCH_LIBS(readline, 
                        readline, 
 	    	       [TCLREADLINE_ENABLED=1],
 	    	       [TCLREADLINE_ENABLED=0])
+        AC_EXTLIB_SAVE
     fi
 
     dnl

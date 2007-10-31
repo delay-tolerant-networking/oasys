@@ -19,7 +19,7 @@ dnl Autoconf support for configuring whether Apple's Bonjour stack is
 dnl available on the system
 dnl
 
-AC_DEFUN(AC_OASYS_CONFIG_BONJOUR, [
+AC_DEFUN(AC_CONFIG_BONJOUR, [
 
     AC_ARG_WITH(bonjour,
       [AC_HELP_STRING([--with-bonjour],
@@ -39,8 +39,10 @@ AC_DEFUN(AC_OASYS_CONFIG_BONJOUR, [
         AC_MSG_RESULT($ac_use_bonjour)
 	
 	dnl look for the library and the header
-        AC_SEARCH_LIBS(DNSServiceRegister, dns_sd, ac_has_bonjour_lib=yes)
+	AC_EXTLIB_PREPARE
         AC_CHECK_HEADERS([dns_sd.h], ac_has_bonjour_h=yes)
+        AC_SEARCH_LIBS(DNSServiceRegister, dns_sd, ac_has_bonjour_lib=yes)
+	AC_EXTLIB_SAVE
 
 	dnl print the result
         AC_MSG_CHECKING([whether bonjour support was found])

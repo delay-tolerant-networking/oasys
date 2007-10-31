@@ -79,41 +79,8 @@ AC_SUBST([BUILDDIR])
 # -------------------------------------------------------------------------
 # Pull in the checks for gcc and system dependencies
 # -------------------------------------------------------------------------
-
-######################################################################
-# rhansen@bbn.com:  workaround to disable autoconf's default -O2,
-# since -O2 enables warnings that don't show up with -O0.  If the
-# flags are empty, AC_PROG_CC and AC_PROG_CXX will set the flags to
-# "-O2 -g", otherwise they are left alone.  We need the flags to be
-# set to "-g" if empty, otherwise left alone.
-
-# back up CFLAGS and CXXFLAGS
-oasys_save_CFLAGS="$CFLAGS"
-oasys_save_CXXFLAGS="$CXXFLAGS"
-
-# these macros directly or indirectly call AC_PROG_CC and AC_PROG_CXX
 AC_OASYS_CONFIG_GCC
-
-# now that AC_PROG_CC and AC_PROG_CXX are done, we know whether we're
-# using GCC.  If we're not using GCC, then leave the flags alone.  If
-# we are using GCC, and the flags were empty before, then we know that
-# the flags now contain "-O2 -g" so the flags should have "-O2"
-# removed.  If the user specified flags, then leave the flags alone.
-if test "x$GCC" = "xyes" -a -z "$oasys_save_CFLAGS" ; then
-   CFLAGS="-g"
-fi
-if test "x$GXX" = "xyes" -a -z "$oasys_save_CXXFLAGS" ; then
-   CXXFLAGS="-g"
-fi
-
-# done with default -O2 workaround
-######################################################################
-
-AC_OASYS_SYSTEM_PROGRAMS
-AC_OASYS_SYSTEM_LIBRARIES
-AC_OASYS_SYSTEM_HEADERS
-AC_OASYS_SYSTEM_TYPES
-AC_OASYS_SYSTEM_FUNCTIONS
+AC_OASYS_CONFIG_SYSTEM
 AC_OASYS_CONFIG_ATOMIC
 
 # -------------------------------------------------------------------------
@@ -126,26 +93,34 @@ AC_CACHE_SAVE
 # -------------------------------------------------------------------------
 AX_WITH_PYTHON
 AC_PYTHON_BUILD_EXT
-AC_OASYS_CONFIG_TCL
-AC_OASYS_CONFIG_GOOGLE_PERFTOOLS
-AC_OASYS_CONFIG_BLUEZ
-AC_OASYS_CONFIG_EXPAT
-AC_OASYS_CONFIG_XERCES
-AC_OASYS_CONFIG_TCLREADLINE
-AC_OASYS_CONFIG_ZLIB
-AC_OASYS_CONFIG_XSD
-AC_OASYS_CONFIG_STORAGE
+AC_CONFIG_TCL
+AC_CONFIG_GOOGLE_PERFTOOLS
+AC_CONFIG_BLUEZ
+AC_CONFIG_EXPAT
+AC_CONFIG_XERCES
+AC_CONFIG_TCLREADLINE
+AC_CONFIG_ZLIB
+AC_CONFIG_XSD
+AC_CONFIG_STORAGE
 
 # -------------------------------------------------------------------------
 # Output
 # -------------------------------------------------------------------------
-CPPFLAGS="$OASYS_CPPFLAGS $CPPFLAGS"
-LDFLAGS="-L. $OASYS_LDFLAGS $LDFLAGS"
-AC_SUBST(OASYS_LIBS)
 
-OASYS_INCDIR=.
-OASYS_LIBDIR=./lib
-OASYS_ETCDIR=.
+AC_SUBST(EXTLIB_CFLAGS)
+AC_SUBST(EXTLIB_LDFLAGS)
+
+OASYS_INCDIR=$SRCDIR
+
+OASYS_LIBDIR=$BUILDDIR/lib
+mkdir -p $OASYS_LIBDIR
+
+OASYS_ETCDIR=$SRCDIR
+
+INCFLAGS="-I\$(SRCDIR)/ext"
+
+AC_SUBST(INCFLAGS)
+
 AC_OASYS_SUBST_CONFIG
 
 AC_CONFIG_FILES([Rules.make])

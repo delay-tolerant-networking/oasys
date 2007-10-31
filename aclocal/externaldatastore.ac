@@ -2,7 +2,7 @@ dnl
 dnl Autoconf support for external data store
 dnl
 
-AC_DEFUN(AC_OASYS_CONFIG_EXTERNAL_DS, [
+AC_DEFUN(AC_CONFIG_EXTERNAL_DS, [
     ac_eds='no'
     AC_ARG_ENABLE(eds,
         AC_HELP_STRING([--enable-eds],

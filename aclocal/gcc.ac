@@ -110,7 +110,7 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_VERSION, [
         # _GNU_SOURCE isn't defined, so do both those things here
         #
         3.1*|2.9*)
-            OASYS_CPPFLAGS="$OASYS_CPPFLAGS -D_GNU_SOURCE"
+            CFLAGS="$CFLAGS -D_GNU_SOURCE"
 	    DEPFLAGS=""
             echo "*** "
 	    echo "*** warning: using old compiler $cc version $oasys_cv_prog_gccver,"
@@ -122,7 +122,7 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_VERSION, [
 	# Note that for m4 to output a '$' requires the '@S|@' heinosity below.
 	#
 	3.*|4.*)
-	    DEPFLAGS=['-MMD -MP -MT "@S|@*.o @S|@*.E @S|@*.po"']
+	    DEPFLAGS=['-MMD -MP -MT "@S|@*.o @S|@*.E"']
 	    ;;
 	#
 	# Otherwise bail
@@ -132,6 +132,7 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_VERSION, [
 	    exit  1
 	    ;;
     esac
+    AC_SUBST(DEPFLAGS)
 
     dnl
     dnl Look for the appropriate ar and ranlib tools for this build
@@ -165,7 +166,7 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
     if test $debug = yes ; then 
         DEBUG="-g -fno-inline"
     else
-        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -DNDEBUG"
+        DEBUG="-DNDEBUG"
     fi
     AC_SUBST(DEBUG)
 	
@@ -244,7 +245,6 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
     if test $profile = yes ; then
         PROFILE="-pg"   
     fi
-    
     AC_SUBST(PROFILE)
 
     dnl
@@ -376,7 +376,6 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
 
     AC_CACHE_CHECK([whether gcc accepts -Wno-long-double (Apple OSX only)],
 	           oasys_cv_prog_gcc_w_no_long_double, [
-        CPPFLAGS_save=$CPPFLAGS
         CPPFLAGS="$CPPFLAGS -Wno-long-double"
 	AC_LINK_IFELSE(
 	  AC_LANG_PROGRAM(
@@ -393,10 +392,8 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
     ])
 
     if test $oasys_cv_prog_gcc_w_no_long_double = yes ; then
-        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -Wno-long-double"
+        CPPFLAGS="$CPPFLAGS -Wno-long-double"
     fi
-
-    AC_SUBST(DEPFLAGS)
 ])
 
 dnl

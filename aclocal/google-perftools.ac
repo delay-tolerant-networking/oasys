@@ -18,7 +18,7 @@ dnl
 dnl Autoconf support for linking with google's performace code
 dnl
 
-AC_DEFUN(AC_OASYS_CONFIG_GOOGLE_PERFTOOLS, [
+AC_DEFUN(AC_CONFIG_GOOGLE_PERFTOOLS, [
 
     ac_google_perfdir='no'
     AC_ARG_WITH(google-perftools,
@@ -71,14 +71,14 @@ AC_DEFUN(AC_OASYS_CONFIG_GOOGLE_PERFTOOLS, [
     fi
 
     if test ! $oasys_cv_path_google_perf_h = /usr/include ; then
-        OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_google_perf_h"
+        EXTLIB_CFLAGS="$EXTLIB_CFLAGS -I$oasys_cv_path_google_perf_h"
     fi
 
     if test ! $oasys_cv_path_google_perf_lib = /usr/lib ; then
-        OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_google_perf_lib"
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -L$oasys_cv_path_google_perf_lib"
     fi
     
-    OASYS_LIBS="$OASYS_LIBS -Wl,-Bstatic -lprofiler -Wl,-Bdynamic"
+    EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -Wl,-Bstatic -lprofiler -Wl,-Bdynamic"
     
     fi # GOOGLE_PERF_ENABLED
 ])

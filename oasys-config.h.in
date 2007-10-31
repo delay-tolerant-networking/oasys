@@ -24,9 +24,6 @@
 /* Define to 1 if you have the `fdatasync' function. */
 #undef HAVE_FDATASYNC
 
-/* Whether math.h defines fpclassify */
-#undef HAVE_FPCLASSIFY
-
 /* Define to 1 if you have the `getaddrinfo' function. */
 #undef HAVE_GETADDRINFO
 

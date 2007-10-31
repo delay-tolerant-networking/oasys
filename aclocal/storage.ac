@@ -19,11 +19,11 @@ dnl Autoconf support for configuring the various storage options
 dnl that really just dispatches to the other macros
 dnl
 
-AC_DEFUN(AC_OASYS_CONFIG_STORAGE, [
-    AC_OASYS_CONFIG_DB
-    AC_OASYS_CONFIG_MYSQL
-    AC_OASYS_CONFIG_POSTGRES
-    AC_OASYS_CONFIG_EXTERNAL_DS
+AC_DEFUN(AC_CONFIG_STORAGE, [
+    AC_CONFIG_DB
+    AC_CONFIG_MYSQL
+    AC_CONFIG_POSTGRES
+    AC_CONFIG_EXTERNAL_DS
 
     dnl
     dnl Figure out if at least one sql option is enabled.

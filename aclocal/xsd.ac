@@ -16,7 +16,7 @@ dnl
 dnl Autoconf support for finding xsd
 dnl
 
-AC_DEFUN(AC_OASYS_CONFIG_XSD, [
+AC_DEFUN(AC_CONFIG_XSD, [
     dnl
     dnl Handle --with-xsd-tool=xsd
     dnl

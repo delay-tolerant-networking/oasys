@@ -23,7 +23,6 @@
 #
 
 COMPAT_SRCS :=					\
-	compat/fpclassify.c			\
 	compat/getopt_long.c			\
 	compat/inet_aton.c			\
 	compat/editline_compat.c		\
@@ -234,7 +233,12 @@ include Rules.make
 # Based on configuration options, select the libraries to build
 #
 LIBFILES := lib/liboasys.a lib/liboasyscompat.a
+LIBFILES += lib/liboasys-$(OASYS_VERSION).a
+LIBFILES += lib/liboasyscompat-$(OASYS_VERSION).a
+
 ifeq ($(SHLIBS),yes)
+LIBFILES += lib/liboasys-$(OASYS_VERSION).$(SHLIB_EXT) 
+LIBFILES += lib/liboasyscompat-$(OASYS_VERSION).$(SHLIB_EXT)
 LIBFILES += lib/liboasys.$(SHLIB_EXT) lib/liboasyscompat.$(SHLIB_EXT)
 endif
 
@@ -268,8 +272,6 @@ vpath oasys-version.h    $(SRCDIR)
 vpath oasys-version.c    $(SRCDIR)
 vpath oasys-version.dat  $(SRCDIR)
 
-VER := $(shell $(SRCDIR)/tools/extract-version $(SRCDIR)/oasys-version.dat version)
-
 bump-version:
 	cd $(SRCDIR) && tools/bump-version oasys-version.dat
 
@@ -300,45 +302,45 @@ $(SRCDIR)/Rules.make.in:
 	@echo error -- Makefile did not set SRCDIR properly
 	@exit 1
 
-lib/liboasys-$(VER).a: $(OBJS)
+lib/liboasys-$(OASYS_VERSION).a: $(OBJS)
 	@rm -f $@; mkdir -p $(@D)
 	$(AR) ruc $@ $^
 	$(RANLIB) $@ || true
 
-lib/liboasys-$(VER).$(SHLIB_EXT): $(OBJS)
+lib/liboasys-$(OASYS_VERSION).$(SHLIB_EXT): $(OBJS)
 	@rm -f $@; mkdir -p $(@D)
-	$(CXX) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(LIBS) $(OASYS_LIBS) -o $@
+	$(CXX) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(EXT_LDFLAGS) -o $@
 
-lib/liboasyscompat-$(VER).a: $(COMPAT_OBJS)
+lib/liboasyscompat-$(OASYS_VERSION).a: $(COMPAT_OBJS)
 	@rm -f $@; mkdir -p $(@D)
 	$(AR) ruc $@ $^
 	$(RANLIB) $@ || true
 
-lib/liboasyscompat-$(VER).$(SHLIB_EXT): $(COMPAT_OBJS)
+lib/liboasyscompat-$(OASYS_VERSION).$(SHLIB_EXT): $(COMPAT_OBJS)
 	@rm -f $@; mkdir -p $(@D)
-	$(CXX) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) $(LIBS) -o $@
+	$(CXX) $^ $(LDFLAGS_SHLIB) $(LDFLAGS) -o $@
 
 # Rules for symlinks
-lib/%.a: lib/%-$(VER).a
+lib/%.a: lib/%-$(OASYS_VERSION).a
 	rm -f $@
 	cd `dirname $@` && ln -s `basename $<` `basename $@`
 
-lib/%.$(SHLIB_EXT): lib/%-$(VER).$(SHLIB_EXT)
+lib/%.$(SHLIB_EXT): lib/%-$(OASYS_VERSION).$(SHLIB_EXT)
 	rm -f $@
 	cd `dirname $@` && ln -s `basename $<` `basename $@`
 
 # Rules for linking tools
 tools/md5chunks: tools/md5chunks.o $(LIBFILES)
-	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L./lib -loasys-$(VER) $(LIBS)
+	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) $(OASYS_LDFLAGS)
 
 tools/oasys_tclsh: tools/oasys_tclsh.o $(LIBFILES)
-	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L./lib -loasys-$(VER) $(OASYS_LIBS) $(LIBS)
+	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) $(OASYS_LDFLAGS)
 
 tools/proc-watcher: tools/proc-watcher.o
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS)
 
 tools/zsize: tools/zsize.o $(LIBFILES)
-	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) -L./lib -loasys-$(VER) $(LIBS)
+	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) $(OASYS_LDFLAGS)
 
 #
 # Installation rules

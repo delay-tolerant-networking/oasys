@@ -19,7 +19,7 @@ dnl Autoconf support for configuring whether BlueZ bluetooth is available
 dnl on the system
 dnl
 
-AC_DEFUN(AC_OASYS_CONFIG_BLUEZ, [
+AC_DEFUN(AC_CONFIG_BLUEZ, [
 
     AC_ARG_WITH(bluez,
       [AC_HELP_STRING([--with-bluez],
@@ -37,12 +37,13 @@ AC_DEFUN(AC_OASYS_CONFIG_BLUEZ, [
 
     else
         AC_MSG_RESULT($ac_use_bluez)
-
+	
         dnl
         dnl Look for the baswap() function in libbluetooth
         dnl
-        AC_SEARCH_LIBS(baswap, bluetooth,
-          ac_has_libbluetooth="yes") 
+	AC_EXTLIB_PREPARE
+        AC_SEARCH_LIBS(baswap, bluetooth, ac_has_libbluetooth="yes") 
+	AC_EXTLIB_SAVE
 
         dnl
         dnl Locate standard Bluetooth header file

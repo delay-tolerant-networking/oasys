@@ -23,7 +23,7 @@ dnl
 dnl Autoconf support for finding xerces-c
 dnl
 
-AC_DEFUN(AC_OASYS_CONFIG_XERCES, [
+AC_DEFUN(AC_CONFIG_XERCES, [
     dnl
     dnl Handle --with-xerces-c=DIR
     dnl
@@ -117,10 +117,10 @@ AC_DEFUN(AC_OASYS_CONFIG_XERCES, [
         XERCES_C_ENABLED=1
         AC_DEFINE(XERCES_C_ENABLED, 1, [whether xerces support is enabled])
         if test ! "$oasys_cv_path_xerces_c" = /usr ; then
-            OASYS_CPPFLAGS="$OASYS_CPPFLAGS -I$oasys_cv_path_xerces_c/include"
-            OASYS_LDFLAGS="$OASYS_LDFLAGS -L$oasys_cv_path_xerces_c/lib"
+            EXTLIB_CFLAGS="$EXTLIB_CFLAGS -I$oasys_cv_path_xerces_c/include"
+            EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -L$oasys_cv_path_xerces_c/lib"
         fi
-        OASYS_LIBS="$OASYS_LIBS -lxerces-c"
+        EXTLIB_LDFLAGS="$EXTLIB_LDFLAGS -lxerces-c"
     fi
 
     fi

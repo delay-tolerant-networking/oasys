@@ -28,20 +28,29 @@ dnl -------------------------------------------------------------------------
 dnl Checks for system libraries
 dnl -------------------------------------------------------------------------
 AC_DEFUN(AC_OASYS_SYSTEM_LIBRARIES, [
+    AC_EXTLIB_PREPARE
+
     AC_SEARCH_LIBS(pthread_create, pthread, [], 
       AC_MSG_ERROR([can't find required library function (pthread_create)]))
+
     AC_CHECK_FUNC(pthread_yield, [], [AC_SEARCH_LIBS(sched_yield, rt, [],
       AC_MSG_ERROR([can't find required library function (pthread_yield or sched_yield)]))])
+
     AC_SEARCH_LIBS(pthread_setspecific, pthread, 
                    AC_DEFINE_UNQUOTED(HAVE_PTHREAD_SETSPECIFIC, 1, 
                                       [whether pthread_setspecific is defined]), 
                    [])
+
     AC_SEARCH_LIBS(socket, socket, [],
       AC_MSG_ERROR([can't find required library function (socket)]))
+
     AC_SEARCH_LIBS(gethostbyname, nsl, [],
       AC_MSG_ERROR([can't find required library function (gethostbyname)]))
+
     AC_SEARCH_LIBS(xdr_int, rpc, [],
       AC_MSG_ERROR([can't find required library function (xdr_int)]))
+
+    AC_EXTLIB_SAVE
 ])
 
 dnl -------------------------------------------------------------------------
@@ -68,13 +77,13 @@ AC_DEFUN(AC_OASYS_SYSTEM_TYPES, [
 		       ac_file_offset_bits=$withval)
     AC_MSG_RESULT($ac_file_offset_bits)
     if test $ac_file_offset_bits = 64 ; then
-        LFSDEFS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+        SYS_CFLAGS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
     else 
-        LFSDEFS="-D_FILE_OFFSET_BITS=$ac_file_offset_bits"
+        SYS_CFLAGS="-D_FILE_OFFSET_BITS=$ac_file_offset_bits"
     fi
-    AC_SUBST(LFSDEFS)
+    AC_SUBST(SYS_CFLAGS)
     oasys_ac_cppflags_save="$CPPFLAGS"
-    CPPFLAGS="$LFSDEFS $CPPFLAGS"
+    CPPFLAGS="$SYS_CFLAGS $CPPFLAGS"
     AC_CHECK_SIZEOF(off_t)
     CPPFLAGS="$oasys_ac_cppflags_save"
     AC_TYPE_SIGNAL
@@ -88,6 +97,18 @@ dnl -------------------------------------------------------------------------
 dnl Checks for library functions.
 dnl -------------------------------------------------------------------------
 AC_DEFUN(AC_OASYS_SYSTEM_FUNCTIONS, [
-    AC_OASYS_FUNC_FPCLASSIFY
+    # XXX/demmer get rid of me
     AC_CHECK_FUNCS([fdatasync getaddrinfo gethostbyname gethostbyname_r getopt_long inet_aton inet_pton pthread_yield sched_yield])
 ])                                
+
+dnl -------------------------------------------------------------------------
+dnl Check all the system requirements
+dnl -------------------------------------------------------------------------
+AC_DEFUN(AC_OASYS_CONFIG_SYSTEM, [
+    AC_OASYS_SYSTEM_PROGRAMS
+    AC_OASYS_SYSTEM_LIBRARIES
+    AC_OASYS_SYSTEM_HEADERS
+    AC_OASYS_SYSTEM_TYPES
+    AC_OASYS_SYSTEM_FUNCTIONS
+])
+

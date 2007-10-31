@@ -1,9 +1,11 @@
 #
-# System.make: settings extracted from the oasys configure script that
-# are common to the local system installation
+# System.make: settings extracted from the oasys configuration
 #
 # @configure_input@
 
+#
+# Programs
+#
 AR		= @AR@
 RANLIB		= @RANLIB@
 DEPFLAGS	= @DEPFLAGS@
@@ -12,11 +14,23 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA 	= @INSTALL_DATA@
 PYTHON		= @PYTHON@
 PYTHON_BUILD_EXT= @PYTHON_BUILD_EXT@
-CPPFLAGS_SYS  	= @DEFS@ @LFSDEFS@ @CPPFLAGS@
-LIBS		= @LIBS@
-OASYS_LIBS	= @OASYS_LIBS@
-LDFLAGS_SYS	= @LDFLAGS@ @RPATH@ 
-LDFLAGS_SHLIB	= @LDFLAGS_SHLIB@
-LFSDEFS         = @LFSDEFS@
-TCL_LDFLAGS	= @TCL_LDFLAGS@
 XSD_TOOL	= @XSD_TOOL@
+
+#
+# System-wide compilation flags
+#
+SYS_CFLAGS      = @SYS_CFLAGS@
+DEPFLAGS	= @DEPFLAGS@
+PICFLAGS        = @PICFLAGS@
+LDFLAGS_SHLIB	= @LDFLAGS_SHLIB@
+
+#
+# Compilation flags for the oasys-dependent external libraries
+#
+EXTLIB_CFLAGS   = @EXTLIB_CFLAGS@
+EXTLIB_LDFLAGS  = @EXTLIB_LDFLAGS@
+
+#
+# Library-specific compilation flags
+TCL_LDFLAGS     = @TCL_LDFLAGS@
+
