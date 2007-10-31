@@ -20,7 +20,6 @@
 #include <stdarg.h>
 #include <memory.h>
 #include "Formatter.h"
-#include "../compat/fpclassify.h"
 
 namespace oasys {
 

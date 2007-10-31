@@ -71,7 +71,6 @@
 #include <memory.h>
 
 #include "oasys-config.h"
-#include "compat/fpclassify.h"
 #endif
 
 #if defined(LIBC_SCCS) && !defined(lint)
