@@ -132,3 +132,6 @@ if test ! $SRCDIR = `pwd` ; then
 fi
 
 AC_OUTPUT
+
+make buildopts
+
