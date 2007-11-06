@@ -107,18 +107,28 @@ AC_CONFIG_STORAGE
 # Output
 # -------------------------------------------------------------------------
 
-AC_SUBST(EXTLIB_CFLAGS)
-AC_SUBST(EXTLIB_LDFLAGS)
+dnl
+dnl To put the extlib flags settings in System.make, not
+dnl Rules.make, change the name for the substituted variable.
+dnl
+dnl That way other projects that use oasys' Rules.make can 
+dnl use EXTLIB_CFLAGS and EXTLIB_LDFLAGS for their own dependencies.
+dnl
+SYS_EXTLIB_CFLAGS=$EXTLIB_CFLAGS
+SYS_EXTLIB_LDFLAGS=$EXTLIB_LDFLAGS
+EXTLIB_CFLAGS=
+EXTLIB_LDFLAGS=
 
+dnl
+dnl Set the oasys locations to properly set up Rules.make
+dnl
 OASYS_INCDIR=$SRCDIR
-
 OASYS_LIBDIR=$BUILDDIR/lib
-mkdir -p $OASYS_LIBDIR
-
 OASYS_ETCDIR=$SRCDIR
 
-INCFLAGS="-I\$(SRCDIR)/ext"
+mkdir -p $OASYS_LIBDIR
 
+INCFLAGS="-I\$(SRCDIR)/ext"
 AC_SUBST(INCFLAGS)
 
 AC_OASYS_SUBST_CONFIG

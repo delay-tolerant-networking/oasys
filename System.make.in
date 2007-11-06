@@ -17,18 +17,12 @@ PYTHON_BUILD_EXT= @PYTHON_BUILD_EXT@
 XSD_TOOL	= @XSD_TOOL@
 
 #
-# System-wide compilation flags
+# System-wide compilation flags including the oasys-dependent external
+# libraries.
 #
-SYS_CFLAGS      = @SYS_CFLAGS@
-DEPFLAGS	= @DEPFLAGS@
-PICFLAGS        = @PICFLAGS@
-LDFLAGS_SHLIB	= @LDFLAGS_SHLIB@
-
-#
-# Compilation flags for the oasys-dependent external libraries
-#
-EXTLIB_CFLAGS   = @EXTLIB_CFLAGS@
-EXTLIB_LDFLAGS  = @EXTLIB_LDFLAGS@
+SYS_CFLAGS          = @SYS_CFLAGS@
+SYS_EXTLIB_CFLAGS   = @SYS_EXTLIB_CFLAGS@
+SYS_EXTLIB_LDFLAGS  = @SYS_EXTLIB_LDFLAGS@
 
 #
 # Library-specific compilation flags
