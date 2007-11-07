@@ -312,6 +312,59 @@ UInt8Opt::get(StringBuffer* buf)
 }
 
 //----------------------------------------------------------------------
+SizeOpt::SizeOpt(const char* opt, u_int* valp,
+                 const char* valdesc, const char* desc, bool* setp)
+    : Opt(0, opt, valp, setp, true, valdesc, desc)
+{
+}
+
+//----------------------------------------------------------------------
+SizeOpt::SizeOpt(char shortopt, const char* longopt, u_int* valp,
+                 const char* valdesc, const char* desc, bool* setp)
+    : Opt(shortopt, longopt, valp, setp, true, valdesc, desc)
+{
+}
+
+//----------------------------------------------------------------------
+int
+SizeOpt::set(const char* val, size_t len)
+{
+    u_int newval;
+    char* endptr = 0;
+
+    newval = strtoul(val, &endptr, 0);
+
+    if (endptr != (val + len))
+    {
+        if ((endptr + 1) != (val + len))
+            return -1;
+
+        switch (*endptr) {
+        case 'B': break;
+        case 'K': newval *= 1024; break;
+        case 'M': newval *= 1024*1024; break;
+        case 'G': newval *= 1024*1024*1024; break;
+        default:
+            return -1;
+        }
+    }
+            
+    *((u_int*)valp_) = newval;
+    
+    if (setp_)
+        *setp_ = true;
+    
+    return 0;
+}
+
+//----------------------------------------------------------------------
+void
+SizeOpt::get(StringBuffer* buf)
+{
+    buf->appendf("%u", *(u_int*)valp_);
+}
+
+//----------------------------------------------------------------------
 DoubleOpt::DoubleOpt(const char* opt, double* valp,
                      const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)

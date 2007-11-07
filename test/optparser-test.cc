@@ -33,6 +33,7 @@ int port 	= 10;
 int xyz 	= 50;
 double f 	= 10.5;
 u_int64_t u64   = 123456789123456789ULL;
+u_int size      = 1024;
 std::string name("name");
 
 OptParser p;
@@ -44,6 +45,7 @@ DECLARE_TEST(Init) {
     p.addopt(new DoubleOpt("f", &f, "<f>", "f"));
     p.addopt(new UInt64Opt("u64", &u64, "<u64>", "u64"));
     p.addopt(new StringOpt("name", &name, "<name>", "app name"));
+    p.addopt(new SizeOpt("size", &size, "<size>", "size"));
 
     return UNIT_TEST_PASSED;
 }
@@ -58,6 +60,7 @@ DECLARE_TEST(ValidArgString) {
     CHECK_EQUALSTR(name.c_str(), "name");
     CHECK_EQUAL(xyz, 50);
     CHECK_EQUAL_U64(u64, 123456789123456789ULL);
+    CHECK_EQUAL(size, 1024);
     CHECK(f == 10.5);
     
     CHECK(p.parse("test port=100 name=mike xyz=10 f=100.4 u64=9876543219876545321",
@@ -106,6 +109,24 @@ DECLARE_TEST(ValidArgString) {
 
     CHECK(p.parse("f=.10"));
     CHECK(f == .10);
+
+    CHECK(p.parse("size=100"));
+    CHECK(size == 100);
+
+    CHECK(p.parse("size=128B"));
+    CHECK(size == 128);
+
+    CHECK(p.parse("size=1K"));
+    CHECK(size == 1024);
+    
+    CHECK(p.parse("size=3M"));
+    CHECK(size == 3145728);
+
+    CHECK(p.parse("size=1G"));
+    CHECK(size == 1073741824);
+
+    CHECK(p.parse("size=2G"));
+    CHECK(size == 2147483648UL);
     
     return UNIT_TEST_PASSED;
 }
@@ -124,6 +145,13 @@ DECLARE_TEST(InvalidArgStr) {
 
     CHECK(p.parse("f", &invalid) == false);
     CHECK(p.parse("f=", &invalid) == false);
+
+    CHECK(p.parse("size=100X") == false);
+    CHECK(p.parse("size=") == false);
+    CHECK(p.parse("size=100b") == false);
+    CHECK(p.parse("size=100m") == false);
+    CHECK(p.parse("size=100k") == false);
+    CHECK(p.parse("size=100g") == false);
 
     return UNIT_TEST_PASSED;
 }
