@@ -325,7 +325,7 @@ public:
      * @param setp    optional pointer to indicate whether or not
                       the option was set
      */
-    SizeOpt(const char* opt, u_int* valp,
+    SizeOpt(const char* opt, u_int64_t* valp,
             const char* valdesc = "", const char* desc = "",
             bool* setp = NULL);
     
@@ -341,7 +341,7 @@ public:
      * @param setp      optional pointer to indicate whether or not
                         the option was set
      */
-    SizeOpt(char shortopt, const char* longopt, u_int* valp,
+    SizeOpt(char shortopt, const char* longopt, u_int64_t* valp,
             const char* valdesc = "", const char* desc = "",
             bool* setp = NULL);
     

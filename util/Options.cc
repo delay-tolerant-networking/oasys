@@ -312,14 +312,14 @@ UInt8Opt::get(StringBuffer* buf)
 }
 
 //----------------------------------------------------------------------
-SizeOpt::SizeOpt(const char* opt, u_int* valp,
+SizeOpt::SizeOpt(const char* opt, u_int64_t* valp,
                  const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)
 {
 }
 
 //----------------------------------------------------------------------
-SizeOpt::SizeOpt(char shortopt, const char* longopt, u_int* valp,
+SizeOpt::SizeOpt(char shortopt, const char* longopt, u_int64_t* valp,
                  const char* valdesc, const char* desc, bool* setp)
     : Opt(shortopt, longopt, valp, setp, true, valdesc, desc)
 {
@@ -329,10 +329,10 @@ SizeOpt::SizeOpt(char shortopt, const char* longopt, u_int* valp,
 int
 SizeOpt::set(const char* val, size_t len)
 {
-    u_int newval;
+    u_int64_t newval;
     char* endptr = 0;
 
-    newval = strtoul(val, &endptr, 0);
+    newval = strtoull(val, &endptr, 0);
 
     if (endptr != (val + len))
     {
@@ -349,7 +349,7 @@ SizeOpt::set(const char* val, size_t len)
         }
     }
             
-    *((u_int*)valp_) = newval;
+    *((u_int64_t*)valp_) = newval;
     
     if (setp_)
         *setp_ = true;

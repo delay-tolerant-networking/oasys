@@ -33,7 +33,7 @@ int port 	= 10;
 int xyz 	= 50;
 double f 	= 10.5;
 u_int64_t u64   = 123456789123456789ULL;
-u_int size      = 1024;
+u_int64_t size  = 1024;
 std::string name("name");
 
 OptParser p;
@@ -126,7 +126,10 @@ DECLARE_TEST(ValidArgString) {
     CHECK(size == 1073741824);
 
     CHECK(p.parse("size=2G"));
-    CHECK(size == 2147483648UL);
+    CHECK(size == 2147483648ULL);
+    
+    CHECK(p.parse("size=10G"));
+    CHECK(size == 10737418240ULL);
     
     return UNIT_TEST_PASSED;
 }
