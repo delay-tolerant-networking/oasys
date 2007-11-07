@@ -116,7 +116,8 @@ OptParser::parse(const char* args, const char** invalidp)
         }
 
         if (parse_opt(opt, opt_len) == false) {
-            *invalidp = opt;
+            if (invalidp)
+                *invalidp = opt;
             return false;
         }
 
