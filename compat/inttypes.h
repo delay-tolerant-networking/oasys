@@ -68,9 +68,11 @@ typedef unsigned __int64 uint64_t;
 #endif /* __win32__ */
 
 /**
- * On 64 bit platforms, a u_int64_t can't be formatted as %llu since
- * it's not a long long int. This macro adds a cast where needed.
+ * On 64 bit platforms, int64_t and u_int64_t can't be formatted as
+ * %ll/%llu since they're not long long ints. This macro adds a cast
+ * to make everything uniform.
  */
+#define I64FMT(x) static_cast<long long int>(x)
 #define U64FMT(x) static_cast<long long unsigned int>(x)
 
 #endif /* _OASYS_INTTYPES_H_ */
