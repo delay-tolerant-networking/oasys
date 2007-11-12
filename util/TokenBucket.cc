@@ -57,8 +57,8 @@ TokenBucket::update()
             new_tokens = depth_ - tokens_;
         }
 
-        log_debug("update: filling %llu/%llu spent tokens after %u milliseconds",
-                  U64FMT(new_tokens), U64FMT(depth_ - tokens_), elapsed);
+        log_debug("update: filling %llu/%lld spent tokens after %u milliseconds",
+                  U64FMT(new_tokens), I64FMT(depth_ - tokens_), elapsed);
         tokens_ += new_tokens;
         last_update_ = now;
         
@@ -80,8 +80,8 @@ TokenBucket::drain(u_int64_t length, bool only_if_enough)
 
     bool enough = (tokens_ < 0) ? false : (length <= (u_int64_t)tokens_);
 
-    log_debug("drain: draining %llu/%llu tokens from bucket",
-              U64FMT(length), U64FMT(tokens_));
+    log_debug("drain: draining %llu/%lld tokens from bucket",
+              U64FMT(length), I64FMT(tokens_));
 
     if (enough || !only_if_enough) {
         tokens_ -= length;
@@ -116,8 +116,8 @@ TokenBucket::time_to_level(int64_t n)
     
     log_debug("time_to_level(%lld): "
               "%lld more tokens will arrive in %u msecs "
-              "(tokens %llu rate %llu)",
-              U64FMT(n), U64FMT(need), t, U64FMT(tokens_), U64FMT(rate_));
+              "(tokens %lld rate %llu)",
+              U64FMT(n), U64FMT(need), t, I64FMT(tokens_), U64FMT(rate_));
     return t;
 }
 
