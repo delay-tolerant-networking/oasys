@@ -32,6 +32,7 @@
 #include "../debug/DebugUtils.h"
 #include "../debug/Log.h"
 #include "../util/Singleton.h"
+#include "../util/Time.h"
 #include "MsgQueue.h"
 #include "OnOffNotifier.h"
 #include "Thread.h"
@@ -204,6 +205,14 @@ public:
     void schedule_at(struct timeval *when)
     {
         TimerSystem::instance()->schedule_at(when, this);
+    }
+    
+    void schedule_at(const Time& when)
+    {
+        struct timeval tv;
+        tv.tv_sec  = when.sec_;
+        tv.tv_usec = when.usec_;
+        TimerSystem::instance()->schedule_at(&tv, this);
     }
     
     void schedule_in(int milliseconds)
