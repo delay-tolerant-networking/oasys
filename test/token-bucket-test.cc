@@ -47,7 +47,7 @@ DECLARE_TEST(Fast) {
     TokenBucket t("/test/tokenbucket", 100, rate);
 
     CHECK_EQUAL(t.tokens(), 100);
-    CHECK_EQUAL(t.time_to_fill(), 0);
+    CHECK_EQUAL(t.time_to_fill().in_milliseconds(), 0);
     
     // try_to_drain at a constant rate for a while
     for (int i = 0; i < 1000; ++ i) {
@@ -59,13 +59,13 @@ DECLARE_TEST(Fast) {
     safe_usleep(1000000);
     t.update();
     CHECK_EQUAL(t.tokens(), 100);
-    CHECK_EQUAL(t.time_to_fill(), 0);
+    CHECK_EQUAL(t.time_to_fill().in_milliseconds(), 0);
 
     // make sure it doesn't over-fill
     safe_usleep(1000000);
     t.update();
     CHECK_EQUAL(t.tokens(), 100);
-    CHECK_EQUAL(t.time_to_fill(), 0);
+    CHECK_EQUAL(t.time_to_fill().in_milliseconds(), 0);
     
     // fully try_to_drain the bucket
     CHECK(t.try_to_drain(100));
@@ -111,7 +111,7 @@ DECLARE_TEST(Slow) {
     TokenBucket t("/test/tokenbucket", 1, 1);
     CHECK_EQUAL(t.tokens(), 1);
     CHECK(t.try_to_drain(1));
-    CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 1);
+    CHECK_EQUAL((t.time_to_fill().in_milliseconds() + 500) / 1000, 1);
     CHECK(! t.try_to_drain(1));
     
     // fully empty the bucket
@@ -145,37 +145,37 @@ DECLARE_TEST(TimeToFill) {
 
     safe_usleep(0);
 
-    CHECK_EQUAL(t.time_to_fill(), 0);
+    CHECK_EQUAL(t.time_to_fill().in_milliseconds(), 0);
 
     CHECK(t.try_to_drain(5000));
-    CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 5);
+    CHECK_EQUAL((t.time_to_fill().in_milliseconds() + 500) / 1000, 5);
 
     safe_usleep(1000000);
-    CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 4);
+    CHECK_EQUAL((t.time_to_fill().in_milliseconds() + 500) / 1000, 4);
 
     safe_usleep(1000000);
-    CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 3);
+    CHECK_EQUAL((t.time_to_fill().in_milliseconds() + 500) / 1000, 3);
 
     CHECK(t.try_to_drain(1000));
-    CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 4);
+    CHECK_EQUAL((t.time_to_fill().in_milliseconds() + 500) / 1000, 4);
     safe_usleep(5000000);
 
-    CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 0);
+    CHECK_EQUAL((t.time_to_fill().in_milliseconds() + 500) / 1000, 0);
     CHECK_EQUAL(t.tokens(), 10000);
 
     DO(t.drain(20000));
     CHECK_EQUAL(t.tokens(), -10000);
-    CHECK_EQUAL((t.time_to_fill() + 500) / 1000, 20);
+    CHECK_EQUAL((t.time_to_fill().in_milliseconds() + 500) / 1000, 20);
     
     DO(t.set_rate(100000));
     safe_usleep(0);
     DO(t.empty());
 
-    u_int32_t ms = t.time_to_fill();
+    u_int32_t ms = t.time_to_fill().in_milliseconds();
     CHECK_EQUAL(ms, 100);
     safe_usleep(101000);
 
-    CHECK_EQUAL(t.time_to_fill(), 0);
+    CHECK_EQUAL(t.time_to_fill().in_milliseconds(), 0);
 
     return UNIT_TEST_PASSED;
 }

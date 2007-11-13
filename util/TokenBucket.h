@@ -62,16 +62,15 @@ public:
     void update();
 
     /**
-     * Return the amount of time (in millseconds) until the bucket
-     * will be full again.
+     * Return the amount of time until the bucket will be full again.
      */
-    u_int32_t time_to_fill();
+    Time time_to_fill();
 
     /**
      * Return the amount of time (in millseconds) until the bucket
      * has at least n tokens in it.
      */
-    u_int32_t time_to_level(int64_t n);
+    Time time_to_level(int64_t n);
 
     /// @{ Accessors
     u_int64_t depth()  const { return depth_; }
@@ -80,8 +79,8 @@ public:
     /// @}
 
     /// @{ Setters
-    void set_depth(int64_t depth) { depth_ = depth; update(); }
-    void set_rate(int64_t rate)   { rate_  = rate;  update(); }
+    void set_depth(u_int64_t depth) { depth_ = depth; update(); }
+    void set_rate(u_int64_t rate)   { rate_  = rate;  update(); }
     /// @}
 
     /**

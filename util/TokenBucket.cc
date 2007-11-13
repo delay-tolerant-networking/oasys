@@ -102,7 +102,7 @@ TokenBucket::try_to_drain(u_int64_t length)
 }
 
 //----------------------------------------------------------------------
-u_int32_t
+Time
 TokenBucket::time_to_level(int64_t n)
 {
     update();
@@ -111,18 +111,20 @@ TokenBucket::time_to_level(int64_t n)
     if (n > tokens_) {
         need = n - tokens_;
     }
-    
-    u_int32_t t = (need * 1000) / rate_;
+
+    Time t(need / rate_,
+           ((need * 1000000) / rate_) % 1000000);
     
     log_debug("time_to_level(%lld): "
-              "%lld more tokens will arrive in %u msecs "
+              "%lld more tokens will arrive in %u.%u "
               "(tokens %lld rate %llu)",
-              U64FMT(n), U64FMT(need), t, I64FMT(tokens_), U64FMT(rate_));
+              U64FMT(n), U64FMT(need), t.sec_, t.usec_,
+              I64FMT(tokens_), U64FMT(rate_));
     return t;
 }
 
 //----------------------------------------------------------------------
-u_int32_t
+Time
 TokenBucket::time_to_fill()
 {
     return time_to_level(depth_);
