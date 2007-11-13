@@ -180,12 +180,12 @@ TimerSystem::pop_timer(const struct timeval& now)
     ASSERT(next_timer->pending_);
     next_timer->pending_ = 0;
 
-    int late = TIMEVAL_DIFF_MSEC(now, next_timer->when());
-    if (late > 2000) {
-        log_warn("timer thread running slow -- timer is %d msecs late", late);
-    }
-        
     if (! next_timer->cancelled_) {
+        int late = TIMEVAL_DIFF_MSEC(now, next_timer->when());
+        if (late > 2000) {
+            log_warn("timer thread running slow -- timer is %d msecs late", late);
+        }
+        
         log_debug("popping timer %p at %u.%u", next_timer,
                   (u_int)now.tv_sec, (u_int)now.tv_usec);
         next_timer->timeout(now);
@@ -240,6 +240,14 @@ TimerSystem::run_expired_timers()
         }
 
         Timer* next_timer = timers_.top();
+
+        // if the next timer is cancelled, pop it immediately,
+        // regardless of whether it's time has come or not
+        if (next_timer->cancelled()) {
+            pop_timer(now);
+            continue;
+        }
+        
         if (TIMEVAL_LT(now, next_timer->when_)) {
             int diff_ms;
 
@@ -271,12 +279,18 @@ TimerSystem::run_expired_timers()
             // time to pop, but still not at the right time. in this
             // case case we don't return 0, but fall through to pop
             // the timer after adjusting the "current time"
-            if (diff_ms != 0) {
-                log_debug("new timeout %d", diff_ms);
-                return diff_ms;
-            } else {
+            if (diff_ms == 0) {
                 log_debug("sub-millisecond difference found, falling through");
                 now = next_timer->when_;
+            } else {
+                log_debug("next timer due at %u.%u, now %u.%u -- "
+                          "new timeout %d",
+                          (u_int)next_timer->when_.tv_sec,
+                          (u_int)next_timer->when_.tv_usec,
+                          (u_int)now.tv_sec,
+                          (u_int)now.tv_usec,
+                          diff_ms);
+                return diff_ms;
             }
         }
         pop_timer(now);
