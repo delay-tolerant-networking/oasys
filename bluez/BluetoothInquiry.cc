@@ -31,12 +31,9 @@
 namespace oasys {
 
 BluetoothInquiry::BluetoothInquiry(const char * logbase)
-    : Logger("BluetoothInquiry", logbase),
-      num_responses_i_(-1),
-      pos_(0),
-      flags_(0L)
+    : Logger("BluetoothInquiry", logbase)
 {
-    memset(&info_[0],0,sizeof(inquiry_info)*BT_INQ_NUM_RESP);
+    reset();
 }
 
 BluetoothInquiry::~BluetoothInquiry()
