@@ -221,7 +221,7 @@ register_service(const char *service_name)
                *proto_list = 0,
                *access_proto_list = 0;
     sdp_data_t *channel = 0;
-    int err = 0;
+    int err = -1;
 
     // memset(0) happens within sdp_record_alloc()
     sdp_record_t *record = sdp_record_alloc();
