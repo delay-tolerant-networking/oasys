@@ -51,31 +51,6 @@ public:
         accept_timeout_ = ms;
     }
 
-
-    int rc_bind() {
-        int res = -1;
-        for (channel_ = 1; channel_ <= 30; channel_++) {
-            if ((res = bind()) != 0) {
-
-                // something is borked
-                if (errno != EADDRINUSE) {
-                    log_err("error binding to %s:%d: %s",
-                            bd2str(local_addr_), channel_, strerror(errno));
-                    if (errno == EBADFD) close();
-                    return res;
-                }
-            } else {
-
-                // bind succeeded
-                return res;
-            }
-
-        }
-
-        log_err("Scanned all local RFCOMM channels but unable to bind to %s",
-                bd2str(local_addr_));
-        return -1;
-    }
 };
 
 } // namespace oasys
