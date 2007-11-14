@@ -155,6 +155,28 @@ BluetoothServerThread::run()
 
         accepted(fd, addr, channel);
     }
+
+    log_debug("server thread %p exiting",this);
+}
+
+void
+BluetoothServerThread::stop()
+{
+    set_should_stop();
+
+    if (! is_stopped()) {
+        interrupt_from_io();
+
+        // wait for 10 seconds (i.e. 20 sleep periods)
+        for (int i = 0; i < 20; i++) {
+            if (is_stopped())
+                return;
+
+            usleep(500000);
+        }
+
+        log_err("bluetooth server thread didn't die after 10 seconds");
+    }
 }
 
 int

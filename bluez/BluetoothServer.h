@@ -90,6 +90,12 @@ public:
     void run();
 
     /**
+     * Stop the thread by posting on the notifier, which causes it to 
+     * wake up from poll and then exit
+     */
+    void stop();
+
+    /**
      * @brief Bind to an address, open the channel for listening and
      * start the thread.
      *
