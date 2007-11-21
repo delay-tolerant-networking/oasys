@@ -166,6 +166,11 @@ public:
         buf_->set_len(len);
     }
 
+    /**
+     * Clear the whole buffer.
+     */
+    void clear() { buf_->clear(); }
+
 private:
     mutable ExpandableBuffer* buf_;
     bool    own_buf_;
