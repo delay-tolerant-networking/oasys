@@ -27,6 +27,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <sys/types.h>
 
 // Though hash_set was part of std:: in the 2.9x gcc series, it's been
 // moved to ext/__gnu_cxx:: in 3.x

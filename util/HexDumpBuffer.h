@@ -19,6 +19,7 @@
 #define _OASYS_HEX_DUMP_BUFFER_H_
 
 #include <string>
+#include <sys/types.h>
 
 #include "ExpandableBuffer.h"
 
