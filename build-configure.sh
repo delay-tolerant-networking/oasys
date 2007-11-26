@@ -25,8 +25,6 @@
 # dependencies change. In particular, all output files are cross-platform
 # and are therefore checked into CVS.
 
-trap 'rm -f aclocal.m4 ; exit 0' 0 1 2 3 13 15
-
 echo "build-configure: building aclocal.m4..."
 rm -f aclocal.m4
 cat aclocal/*.ac > aclocal.m4
