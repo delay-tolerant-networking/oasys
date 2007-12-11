@@ -352,6 +352,47 @@ protected:
 };
 
 /**
+ * Option class for bandwidth options, such as "10bps", "10kbps",
+ * "50mbps", etc.
+ */
+class RateOpt : public Opt {
+public:
+    /**
+     * Basic constructor.
+     *
+     * @param opt     the option string
+     * @param valp    pointer to the value
+     * @param valdesc short description for the value 
+     * @param desc    descriptive string
+     * @param setp    optional pointer to indicate whether or not
+                      the option was set
+     */
+    RateOpt(const char* opt, u_int64_t* valp,
+            const char* valdesc = "", const char* desc = "",
+            bool* setp = NULL);
+    
+    /**
+     * Alternative constructor with both short and long options,
+     * suitable for getopt calls.
+     *
+     * @param shortopt  short option character
+     * @param longopt   long option string
+     * @param valp      pointer to the value
+     * @param valdesc short description for the value 
+     * @param desc      descriptive string
+     * @param setp      optional pointer to indicate whether or not
+                        the option was set
+     */
+    RateOpt(char shortopt, const char* longopt, u_int64_t* valp,
+            const char* valdesc = "", const char* desc = "",
+            bool* setp = NULL);
+    
+protected:
+    int set(const char* val, size_t len);
+    void get(StringBuffer* buf);
+};
+
+/**
  * Double option class.
  */
 class DoubleOpt : public Opt {

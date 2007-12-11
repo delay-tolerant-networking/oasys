@@ -218,6 +218,39 @@ DECLARE_TEST(DoubleOptTest) {
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(RateOptTest) {
+    u_int64_t val;
+    RateOpt opt("opt", &val);
+
+    TEST_VALID("0", 0);
+    TEST_VALID("0bps", 0);
+    TEST_VALID("0kbps", 0);
+    TEST_VALID("0mbps", 0);
+    TEST_VALID("0gbps", 0);
+
+    TEST_VALID("1", 1);
+    TEST_VALID("1kbps", 1000);
+    TEST_VALID("1mbps", 1000000);
+    TEST_VALID2("1gbps", 1000000000ULL, "1000000000");
+
+    TEST_VALID("5kbps", 5000);
+    TEST_VALID("5mbps", 5000000);
+    TEST_VALID2("5gbps", 5000000000ULL, "5000000000");
+
+    TEST_VALID2("18446744073709551615",
+                18446744073709551615ULL,
+                "18446744073709551615");
+    
+    TEST_INVALID("0.1");
+    TEST_INVALID("0.1kbps");
+    TEST_INVALID("");
+    TEST_INVALID("bps");
+    TEST_INVALID("kbps");
+    TEST_INVALID("mbps");
+    TEST_INVALID("gbps");
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TESTER(OptionsTester) {
     ADD_TEST(BoolOptTest);
     ADD_TEST(IntOptTest);
@@ -227,6 +260,7 @@ DECLARE_TESTER(OptionsTester) {
     ADD_TEST(UInt8OptTest);
     ADD_TEST(SizeOptTest);
     ADD_TEST(DoubleOptTest);
+    ADD_TEST(RateOptTest);
 }
 
 DECLARE_TEST_FILE(OptionsTester, "Options Tester");

@@ -386,6 +386,63 @@ SizeOpt::get(StringBuffer* buf)
 }
 
 //----------------------------------------------------------------------
+RateOpt::RateOpt(const char* opt, u_int64_t* valp,
+                 const char* valdesc, const char* desc, bool* setp)
+    : Opt(0, opt, valp, setp, true, valdesc, desc)
+{
+}
+
+//----------------------------------------------------------------------
+RateOpt::RateOpt(char shortopt, const char* longopt, u_int64_t* valp,
+                 const char* valdesc, const char* desc, bool* setp)
+    : Opt(shortopt, longopt, valp, setp, true, valdesc, desc)
+{
+}
+
+//----------------------------------------------------------------------
+int
+RateOpt::set(const char* val, size_t len)
+{
+    u_int64_t newval;
+    char* endptr = 0;
+
+    newval = strtoull(val, &endptr, 0);
+
+    if (endptr == val || len == 0)
+        return -1;
+
+    if (endptr != (val + len))
+    {
+        size_t unitlen = len - (endptr - val);
+        if (!strncasecmp(endptr, "bps", unitlen)) {
+            // nothing to change
+        } else if (!strncasecmp(endptr, "kbps", unitlen)) {
+            newval *= 1000;
+        } else if (!strncasecmp(endptr, "mbps", unitlen)) {
+            newval *= 1000000;
+        } else if (!strncasecmp(endptr, "gbps", unitlen)) {
+            newval *= 1000000000LL;
+        } else {
+            return -1;
+        }
+    }
+    
+    *((u_int64_t*)valp_) = newval;
+    
+    if (setp_)
+        *setp_ = true;
+    
+    return 0;
+}
+
+//----------------------------------------------------------------------
+void
+RateOpt::get(StringBuffer* buf)
+{
+    buf->appendf("%llu", *(u_int64_t*)valp_);
+}
+
+//----------------------------------------------------------------------
 DoubleOpt::DoubleOpt(const char* opt, double* valp,
                      const char* valdesc, const char* desc, bool* setp)
     : Opt(0, opt, valp, setp, true, valdesc, desc)
