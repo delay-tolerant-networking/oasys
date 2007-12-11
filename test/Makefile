@@ -32,6 +32,7 @@ TESTS += \
 	memory-store-test			\
 	msg-queue-test				\
 	open-fd-cache-test                      \
+	options-test				\
 	optparser-test				\
 	regex-test				\
 	sample-test				\
@@ -72,7 +73,6 @@ OLD_TESTS :=					\
 	md5-test				\
 	memory-test				\
 	mutex-test				\
-	options-test				\
 	tcp-socket-test				\
 	tcp-timeout-read-test			\
 	tcp-writeall-test			\

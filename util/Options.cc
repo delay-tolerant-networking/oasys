@@ -126,6 +126,9 @@ IntOpt::set(const char* val, size_t len)
     int newval;
     char* endptr = 0;
 
+    if (len == 0)
+        return -1;
+    
     newval = strtol(val, &endptr, 0);
     if (endptr != (val + len))
         return -1;
@@ -166,6 +169,9 @@ UIntOpt::set(const char* val, size_t len)
     u_int newval;
     char* endptr = 0;
 
+    if (len == 0)
+        return -1;
+    
     newval = strtoul(val, &endptr, 0);
     if (endptr != (val + len))
         return -1;
@@ -205,6 +211,9 @@ UInt64Opt::set(const char* val, size_t len)
 {
     u_int64_t newval;
     char* endptr = 0;
+    
+    if (len == 0)
+        return -1;
     
     newval = strtoull(val, &endptr, 0);
     if (endptr != (val + len))
@@ -246,6 +255,9 @@ UInt16Opt::set(const char* val, size_t len)
     u_int newval;
     char* endptr = 0;
 
+    if (len == 0)
+        return -1;
+    
     newval = strtoul(val, &endptr, 0);
     if (endptr != (val + len))
         return -1;
@@ -289,11 +301,14 @@ UInt8Opt::set(const char* val, size_t len)
     u_int newval;
     char* endptr = 0;
 
+    if (len == 0)
+        return -1;
+    
     newval = strtoul(val, &endptr, 0);
     if (endptr != (val + len))
         return -1;
 
-    if (newval > 65535)
+    if (newval > 255)
         return -1;
 
     *((u_int8_t*)valp_) = (u_int8_t)newval;
@@ -332,7 +347,13 @@ SizeOpt::set(const char* val, size_t len)
     u_int64_t newval;
     char* endptr = 0;
 
+    if (len == 0)
+        return -1;
+    
     newval = strtoull(val, &endptr, 0);
+
+    if (endptr == val)
+        return -1;
 
     if (endptr != (val + len))
     {
@@ -340,10 +361,10 @@ SizeOpt::set(const char* val, size_t len)
             return -1;
 
         switch (*endptr) {
-        case 'B': break;
-        case 'K': newval *= 1024; break;
-        case 'M': newval *= 1024*1024; break;
-        case 'G': newval *= 1024*1024*1024; break;
+        case 'B': case 'b': break;
+        case 'K': case 'k': newval *= 1024; break;
+        case 'M': case 'm': newval *= 1048576; break;
+        case 'G': case 'g': newval *= 1073741824; break;
         default:
             return -1;
         }
@@ -361,7 +382,7 @@ SizeOpt::set(const char* val, size_t len)
 void
 SizeOpt::get(StringBuffer* buf)
 {
-    buf->appendf("%u", *(u_int*)valp_);
+    buf->appendf("%llu", *(u_int64_t*)valp_);
 }
 
 //----------------------------------------------------------------------
@@ -385,6 +406,9 @@ DoubleOpt::set(const char* val, size_t len)
     double newval;
     char* endptr = 0;
 
+    if (len == 0)
+        return -1;
+    
     newval = strtod(val, &endptr);
     if (endptr != (val + len))
         return -1;

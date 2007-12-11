@@ -41,6 +41,7 @@ class StringBuffer;
 class Opt {
     friend class Getopt;
     friend class OptParser;
+    friend class OptTester;
     friend class TclCommand;
 
 public:
