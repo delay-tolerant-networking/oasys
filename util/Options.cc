@@ -382,7 +382,7 @@ SizeOpt::set(const char* val, size_t len)
 void
 SizeOpt::get(StringBuffer* buf)
 {
-    buf->appendf("%llu", *(u_int64_t*)valp_);
+    buf->appendf("%llu", U64FMT((*(u_int64_t*)valp_)));
 }
 
 //----------------------------------------------------------------------
@@ -439,7 +439,7 @@ RateOpt::set(const char* val, size_t len)
 void
 RateOpt::get(StringBuffer* buf)
 {
-    buf->appendf("%llu", *(u_int64_t*)valp_);
+    buf->appendf("%llu", U64FMT((*(u_int64_t*)valp_)));
 }
 
 //----------------------------------------------------------------------
