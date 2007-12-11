@@ -151,10 +151,6 @@ DECLARE_TEST(InvalidArgStr) {
 
     CHECK(p.parse("size=100X") == false);
     CHECK(p.parse("size=") == false);
-    CHECK(p.parse("size=100b") == false);
-    CHECK(p.parse("size=100m") == false);
-    CHECK(p.parse("size=100k") == false);
-    CHECK(p.parse("size=100g") == false);
 
     return UNIT_TEST_PASSED;
 }
