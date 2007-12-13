@@ -360,7 +360,7 @@ public:
                   new_ent->pin_count_,
                   cache_map_.size());
 
-        cache_map_[key] = new_ent;
+        cache_map_.insert(typename CacheMap::value_type(key, new_ent));
         helper_.put(key, val);
 
         return true;

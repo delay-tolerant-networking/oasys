@@ -172,7 +172,8 @@ public:
                   new_ent->pin_count_,
                   (u_int)open_fds_map_.size());
 
-        open_fds_map_[key] = new_ent;
+        
+        open_fds_map_.insert(typename FdMap::value_type(key, new_ent));
 
         return fd;
     }
