@@ -373,32 +373,56 @@ installbin: installdirs
 	done
 
 installinclude: installdirs
-	for f in *.h */*.h */*.tcc ; do \
-	    ($(INSTALL_PROGRAM) -c $$f $(DESTDIR)$(includedir)/oasys/$$f) ; \
+	for f in $(SRCDIR)/*.h ; do \
+	    ($(INSTALL_PROGRAM) -c $$f $(DESTDIR)$(includedir)/oasys) ; \
 	done
 
+	for dir in $(INCDIRS) ; do \
+        for f in $(SRCDIR)/$$dir/*.h ; do \
+	    $(INSTALL_PROGRAM) -c $$f $(DESTDIR)$(includedir)/oasys/$$dir ; \
+	done \
+	done
+
+	for dir in $(INCDIRS) ; do \
+        if test ! -z "`ls $(SRCDIR)/$$dir/*.tcc 2>/dev/null`" ; then \
+	for f in $(SRCDIR)/$$dir/*.tcc ; do \
+	    $(INSTALL_PROGRAM) -c $$f $(DESTDIR)$(includedir)/oasys/$$dir ; \
+	done \
+	fi \
+	done
+
+	cp -rp $(SRCDIR)/ext $(DESTDIR)$(includedir)/oasys
+
 installlib: installdirs
+	[ $(DESTDIR) = . ] || \
 	[ x$(SHLIBS) = x ] || \
 	for lib in lib/liboasys-$(OASYS_VERSION).$(SHLIB_EXT) \
 	           lib/liboasyscompat-$(OASYS_VERSION).$(SHLIB_EXT) ; do \
 	    ($(INSTALL_PROGRAM) $$lib $(DESTDIR)$(libdir)) ; \
 	done
 
+	[ $(DESTDIR) = . ] || \
 	for lib in liboasys liboasyscompat ; do \
 		(cd $(DESTDIR)$(libdir) && rm -f $$lib.$(SHLIB_EXT) && \
 		 ln -s $$lib-$(OASYS_VERSION).$(SHLIB_EXT) $$lib.$(SHLIB_EXT)) \
 	done
 
 installdata: installdirs
-	for f in Rules.make.in System.make oasys-version.dat ; do \
+	for f in $(SRCDIR)/Rules.make.in \
+		 System.make \
+		 $(SRCDIR)/oasys-version.dat ; do \
 	    ($(INSTALL_PROGRAM) $$f $(DESTDIR)$(datadir)/oasys) ; \
         done
 
-	for f in aclocal/* ; do \
+	for f in $(SRCDIR)/aclocal/* ; do \
 	    ($(INSTALL_PROGRAM) $$f $(DESTDIR)$(datadir)/oasys/aclocal) ; \
 	done
 
-	for f in tools/* ; do \
+	for f in $(SRCDIR)/tools/subst-version \
+	         $(SRCDIR)/tools/extract-version \
+	         $(SRCDIR)/tools/bump-version \
+	         $(SRCDIR)/tools/print-leaked-refs \
+	         ; do \
 	    ($(INSTALL_PROGRAM) $$f $(DESTDIR)$(datadir)/oasys/tools) ; \
 	done
 
