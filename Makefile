@@ -377,6 +377,10 @@ installinclude: installdirs
 	    ($(INSTALL_PROGRAM) -c $$f $(DESTDIR)$(includedir)/oasys) ; \
 	done
 
+	for f in $(BUILDDIR)/*.h ; do \
+	    ($(INSTALL_PROGRAM) -c $$f $(DESTDIR)$(includedir)/oasys) ; \
+	done
+
 	for dir in $(INCDIRS) ; do \
         for f in $(SRCDIR)/$$dir/*.h ; do \
 	    $(INSTALL_PROGRAM) -c $$f $(DESTDIR)$(includedir)/oasys/$$dir ; \
