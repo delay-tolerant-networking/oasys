@@ -36,7 +36,7 @@ OASYS_VERSION  = @OASYS_VERSION@
 #
 # Include system settings
 #
-include $(OASYS_ETCDIR)/System.make
+include $(BUILDDIR)/System.make
 
 #
 # Compiler flags
