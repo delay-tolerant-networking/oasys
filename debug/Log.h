@@ -171,8 +171,14 @@ public:
      * logging system.
      */
     static Log *instance() {
-        __log_assert(instance_ != 0, "Log::init not called yet",
+        __log_assert(shutdown_ == false,
+                     "Logging can't be used after shutdown",
                      __FILE__, __LINE__);
+        
+        __log_assert((inited_ == true) && (instance_ != NULL),
+                     "Log::init not called yet",
+                     __FILE__, __LINE__);
+
         return instance_; 
     }
 
@@ -367,6 +373,7 @@ private:
     static void sort_rules(RuleList* rule_list);
 
     static bool inited_;	///< Flag to ensure one-time intialization
+    static bool shutdown_;	///< Flag to mark whether we've shut down
     std::string logfile_;	///< Log output file (- for stdout)
     int logfd_;			///< Output file descriptor
     bool stdio_redirected_;	///< Flag to redirect std{out,err}

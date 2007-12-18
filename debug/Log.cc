@@ -76,6 +76,7 @@ level2str_t log_levelnames[] =
 
 Log* Log::instance_ = NULL;
 bool Log::inited_   = false;
+bool Log::shutdown_ = false;
 bool Log::__debug_no_panic_on_overflow = false;
 
 Log::Log()
@@ -101,6 +102,7 @@ Log::do_init(const char* logfile, log_level_t defaultlvl,
 {
     ASSERT(instance_ == NULL);
     ASSERT(!inited_);
+    ASSERT(!shutdown_);
 
     // Open the output file descriptor
     logfile_.assign(logfile);
@@ -148,7 +150,7 @@ Log::shutdown()
 {
     delete instance_;
     instance_ = NULL;
-    inited_ = false;
+    shutdown_ = true;
 }
 
 void
@@ -584,6 +586,7 @@ Log::vlogf(const char* path, log_level_t level,
            const char* fmt, va_list ap)
 {
     ASSERT(inited_);
+    ASSERT(!shutdown_);
 
     char pathbuf[LOG_MAX_PATHLEN];
 
@@ -683,6 +686,7 @@ Log::log_multiline(const char* path, log_level_t level,
                    const char* msg)
 {
     ASSERT(inited_);
+    ASSERT(!shutdown_);
 
     char pathbuf[LOG_MAX_PATHLEN];
 
