@@ -63,16 +63,16 @@ public:
     int reopen(int flags, int mode = 0);
 
     /// Check if the file descriptor is open
-    bool is_open() { return fd_ != -1; }
+    bool is_open() const { return fd_ != -1; }
 
     /// Path accessor
-    const char* path() { return path_.c_str(); }
+    const char* path() const { return path_.c_str(); }
 
     /// Path accessor
-    const std::string& path_str() { return path_; }
+    const std::string& path_str() const { return path_; }
 
     /// Path accessor
-    size_t path_len() { return path_.length(); }
+    size_t path_len() const { return path_.length(); }
 
 protected:
     /// Path to the file
