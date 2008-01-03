@@ -38,7 +38,7 @@ public:
     void set_fd(int fd) { fd_ = fd; }
 
     //! Accessor for the file descriptor
-    int fd() { return fd_; }
+    int fd() const { return fd_; }
 
     //! @{ Virtual from IOClient
     virtual int read(char* bp, size_t len);
