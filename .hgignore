@@ -1,5 +1,40 @@
 syntax: glob
 
+# defaults from CVS manual
+RCS
+SCCS
+CVS
+CVS.adm
+RCSLOG
+cvslog.*
+tags
+TAGS
+.make.state
+.nse_depinfo
+*~
+#*
+.#*
+,*
+_$*
+*$
+*.old
+*.bak
+*.BAK
+*.orig
+*.rej
+.del-*
+*.a
+*.olb
+*.o
+*.obj
+*.so
+*.exe
+*.Z
+*.elc
+*.ln
+core
+
+# other good stuff
 .gdb_history
 .glimpse_*
 Rules.make
@@ -12,10 +47,7 @@ config.status
 configure.scan
 autom4te.cache
 *.d
-*.o
-*.a
 *.dylib
-*.so
 test/*-test
 tools/md5chunks
 tools/oasys_tclsh
