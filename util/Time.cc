@@ -119,6 +119,13 @@ Time::elapsed_ms() const
 {
     Time t;
     t.get_time();
+    
+    // jward - I keep seeing operator-= blow an assert because t is somehow
+    // less than the original time (bug in linux's gettimeofday()?). We'll
+    // just assume that means not much (==0) time has passed.
+    if (t < *this)
+        return 0;
+    
     t -= *this;
     return t.in_milliseconds();
 }
