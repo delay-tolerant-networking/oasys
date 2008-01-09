@@ -93,6 +93,12 @@ public:
     void stop();
 
     /**
+     * handler to do subclass-specific shutdown, e.g. free resources. 
+     * Called after thread is stopped. 
+     */
+    virtual void shutdown_hook() { /* nothing */ }
+
+    /**
      * @brief Bind to an address, open the port for listening and
      * start the thread.
      *

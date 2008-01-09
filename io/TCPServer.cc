@@ -177,21 +177,29 @@ TCPServerThread::run()
 void
 TCPServerThread::stop()
 {
-    set_should_stop();
+    bool finished = false;
     
-    if (! is_stopped()) {
+    set_should_stop();
+
+    if (is_stopped()) {
+        finished = true;
+    } else {
         interrupt_from_io();
 
         // wait for 10 seconds (i.e. 20 sleep periods)
         for (int i = 0; i < 20; ++i) {
-            if (is_stopped())
-                return;
-            
+            if ((finished = is_stopped()))
+                break;
             usleep(500000);
         }
-        
-        log_err("tcp server thread didn't die after 10 seconds");
     }
+
+    if (!finished) {
+        log_err("tcp server thread didn't die after 10 seconds");
+    } else {
+        // call subclass-specific shutdown hook
+        shutdown_hook();
+    } 
 }
 
 //----------------------------------------------------------------------
