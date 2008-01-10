@@ -18,6 +18,7 @@
 #  include <oasys-config.h>
 #endif
 
+#include <sstream>
 #include <ctype.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -616,6 +617,112 @@ Log::gen_prefix(char* buf, size_t buflen,
     return prefix_len;
 }
 
+
+std::string
+Log::gen_prefix(const std::string& path, log_level_t level,
+                const char* classname, const void* obj) const
+{
+    std::vector<char> prefix_buf(LOG_MAX_LINELEN, '\0');
+    size_t prefix_len;
+    while ((prefix_len = this->gen_prefix(
+                &prefix_buf[0], prefix_buf.size(), path.c_str(), level,
+                classname, obj))
+           >= prefix_buf.size())
+    {
+        prefix_buf.resize(prefix_len + 1, '\0');
+    }
+    ASSERT(prefix_buf.size() > prefix_len);
+    return std::string(&prefix_buf[0]);
+}
+
+
+int
+Log::log(const std::string& path, log_level_t level,
+         const char* classname, const void* obj,
+         const std::string& msg, bool prefixEachLine)
+{
+    ASSERT(inited_);
+    int rval = 0;
+
+    // bail if we're not going to output the line
+    if (!log_enabled(level, path.c_str()) &&
+        (classname == NULL || !log_enabled(level, classname)))
+    {
+        return rval;
+    }
+
+    // generate the log entry prefix
+    std::string prefix(this->gen_prefix(path, level, classname, obj));
+
+    // dump the message to the log file
+    if (prefixEachLine)
+    {
+        std::istringstream is(msg);
+        std::string line;
+
+        // lock the log file so that all lines appear next to each
+        // other (the lock is reentrant, so this won't cause a
+        // deadlock in dumpToFile())
+        output_lock_->lock("Log::log");
+        while (std::getline(is, line))
+        {
+            rval = this->dumpToFile(prefix + line + '\n');
+        }
+        output_lock_->unlock();
+    }
+    else
+    {
+        if (msg[msg.size() - 1] != '\n')
+            rval = this->dumpToFile(prefix + msg + '\n');
+        else
+            rval = this->dumpToFile(prefix + msg);
+    }
+
+    return rval;
+}
+
+
+int
+Log::dumpToFile(const std::string& data)
+{
+    return this->dumpToFile(data.data(), data.size());
+}
+
+
+int
+Log::dumpToFile(const char* data, size_t size)
+{
+    if (!data || size == 0)
+        return 0;
+
+#ifdef CHECK_NON_PRINTABLE
+    // make sure there are no special bytes in the log entry string
+    for (size_t i = 0; i < size; ++i)
+    {
+        ASSERT((data[i] == '\n') ||
+               ((data[i] >= 32) && (data[i] <= 126)));
+    }
+#endif
+
+    const int save_errno = errno;
+    
+    // do the write, making sure to drain the buffer. since stdout was
+    // set to nonblocking, the spin lock prevents other threads from
+    // jumping in here
+    output_lock_->lock("Log::dumpToFile");
+    int ret = IO::writeall(logfd_, data, size);
+    output_lock_->unlock();
+    
+    ASSERTF(ret == static_cast<int>(size),
+            "unexpected return from IO::writeall (got %d, expected %zu): %s",
+            ret, size, strerror(errno));
+
+    errno = save_errno;
+    
+    return static_cast<int>(size);
+}
+
+
 int
 Log::vlogf(const char* path, log_level_t level,
            const char* classname, const void* obj,
@@ -624,18 +731,14 @@ Log::vlogf(const char* path, log_level_t level,
     ASSERT(inited_);
     ASSERT(!shutdown_);
 
-    char pathbuf[LOG_MAX_PATHLEN];
+    if ((path == NULL) || (fmt == NULL))
+        return -1;
 
-    // try to catch crashes due to buffer overflow with some guard
-    // bytes at the end
-    static const char guard[] = "[guard]";
-    char buf[LOG_MAX_LINELEN + sizeof(guard)];
-    memcpy(&buf[LOG_MAX_LINELEN], guard, sizeof(guard));
-    char* ptr = buf;
+    char pathbuf[LOG_MAX_PATHLEN];
 
     /* Make sure that paths that don't start with a slash still show up. */
     if (*path != '/') {
-        snprintf(pathbuf, sizeof pathbuf, "/%s", path);
+        snprintf(pathbuf, sizeof(pathbuf), "/%s", path);
         path = pathbuf;
     }
 
@@ -646,74 +749,114 @@ Log::vlogf(const char* path, log_level_t level,
         return 0;
     }
     
-    size_t buflen = LOG_MAX_LINELEN - 1; /* Save a character for newline. */
-    size_t len;
+    // try to catch crashes due to buffer overflow with some guard
+    // bytes at the end
+    static const char guard[] = "[guard]";
+
+    // fixed buffer that should be big enough to handle most cases.
+    // The extra byte is for a final newline (added if one is not
+    // provided by the caller).
+    ASSERT(LOG_MAX_LINELEN >= 0);
+    char buf_fixed[LOG_MAX_LINELEN + 1 + sizeof(guard)];
+
+    // buf is a pointer to a buffer that will contain the log entry
+    char* buf = buf_fixed;
+
+    // the buffer will be incrementally filled; ptr keeps track of
+    // where we are in the buffer at the moment
+    char* ptr = buf;
+
+    // buflen is the amount of buffer space we have remaining.  it is
+    // initialized to LOG_MAX_LINELEN and not LOG_MAX_LINELEN+1 (as in
+    // the declaration of buf_fixed above) so that there is room for a
+    // trailing newline in case the user didn't include one.
+    size_t buflen = LOG_MAX_LINELEN;
+
+    // guard_location is where the buffer overflow guard can be found
+    char* guard_location = &buf[sizeof(buf_fixed) - sizeof(guard)];
+
+    // set the guard
+    memcpy(guard_location, guard, sizeof(guard));
 
     // generate the log prefix
-    len = gen_prefix(buf, buflen, path, level, classname, obj);
-    buflen -= len;
-    ptr += len;
+    size_t prefix_len = gen_prefix(buf, buflen, path, level, classname, obj);
+
+    if (prefix_len < buflen) {
+        // set ptr to the location of the null terminator
+        ptr += prefix_len;
+        // decrement the amount of space we have left in buf
+        buflen -= prefix_len;
+    } else {
+        // prefix was truncated because buf isn't big enough
+
+        // prevent undefined behavior by not incrementing ptr beyond
+        // one past the end of buf
+        ptr += buflen;
+        // keep buflen from wrapping around, which might result in a
+        // buffer overflow in the call to vsnprintf below
+        buflen = 0;
+    }
     
     // generate the log string
-    len = log_vsnprintf(ptr, buflen, fmt, ap);
+    size_t data_len = log_vsnprintf(ptr, buflen, fmt, ap);
 
-    if (len >= buflen) {
-        // handle truncated lines -- note that the last char in the
-        // buffer is free since we reserved it for the newline
-        const char* trunc = "... (truncated)\n";
-        len = strlen(trunc);
-        strncpy(&buf[LOG_MAX_LINELEN - len - 1], trunc, len + 1);
-        buflen = LOG_MAX_LINELEN - 1;
-        buf[LOG_MAX_LINELEN - 1] = '\0';
-
+    if (data_len < buflen) {
+        ptr += data_len;
+        buflen -= data_len;
     } else {
-        // make sure there's a trailing newline
-        buflen -= len;
-        ptr += len;
-        ASSERT(ptr <= (buf + LOG_MAX_LINELEN - 2));
-        
-        if (ptr[-1] != '\n') {
-            *ptr++ = '\n';
-            *ptr = 0;
-        }
-        
-        buflen = ptr - buf;
+            // not enough room in the buffer for the whole log entry, so
+            // truncate the line
+
+            // is there room to copy anything?
+            if (LOG_MAX_LINELEN > 0) {
+                // yes
+
+                // string that lets the user know that the line was
+                // truncated
+                static const char* trunc = "... (truncated)";
+
+                // how much of the string to copy
+                size_t chars_to_copy = (LOG_MAX_LINELEN > sizeof(trunc)) ?
+                    sizeof(trunc) : LOG_MAX_LINELEN;
+
+                // copy the string
+                memcpy(&buf[LOG_MAX_LINELEN - chars_to_copy], trunc,
+                       chars_to_copy - 1);
+
+                // make sure that ptr is pointing to the end of the
+                // log entry buffer
+                ptr = &buf[LOG_MAX_LINELEN - 1];
+
+                // make sure that it's null terminated
+                *ptr = '\0';
+
+            } else {
+                // no room to copy anything
+                ptr = buf;
+            }
     }
 
+    // make sure there's a trailing newline
+    if ((ptr > buf) && (ptr[-1] != '\n')) {
+        // it is safe to add this trailing newline since an extra byte
+        // was added to the size of buf specifically for this purpose.
+        *ptr++ = '\n';
+    }
+    // make sure the string is null-terminated
+    *ptr = '\0';
+
 #ifndef NDEBUG
-    if (memcmp(&buf[LOG_MAX_LINELEN], guard, sizeof(guard)) != 0) {
+    // check for buffer overflow
+    if (memcmp(guard_location, guard, sizeof(guard)) != 0) {
         if (__debug_no_panic_on_overflow) {
             return -1;
         }
         
         PANIC("logf buffer overflow");
     }
-
 #endif
 
-#ifdef CHECK_NON_PRINTABLE
-    for (u_int i = 0; i < buflen; ++i) {
-        ASSERT(buf[i] == '\n' ||
-               (buf[i] >= 32 && buf[i] <= 126));
-    }
-#endif
-
-    int save_errno = errno;
-    
-    // do the write, making sure to drain the buffer. since stdout was
-    // set to nonblocking, the spin lock prevents other threads from
-    // jumping in here
-    output_lock_->lock("Log::vlogf");
-    int ret = IO::writeall(logfd_, buf, buflen);
-    output_lock_->unlock();
-    
-    ASSERTF(ret == (int)buflen,
-            "unexpected return from IO::writeall (got %d, expected %zu): %s",
-            ret, buflen, strerror(errno));
-
-    errno = save_errno;
-    
-    return buflen;
+    return this->dumpToFile(buf, ptr - buf);
 };
 
 int

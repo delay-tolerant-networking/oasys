@@ -1,4 +1,4 @@
-/*
+/* -*-C++-*-
  *    Copyright 2004-2006 Intel Corporation
  * 
  *    Licensed under the Apache License, Version 2.0 (the "License");
@@ -162,6 +162,12 @@ public:
     }
 
     /**
+     * @brief Logs a message without formatting.
+     */
+    int log(log_level_t level, const std::string& message,
+            bool prefixEachLine = false) const;
+
+    /**
      * @return current logpath
      */
     const char* logpath() { return logpath_; }
@@ -225,6 +231,15 @@ Logger::logf(const char* logpath, log_level_t level,
                                      fmt, ap);
     va_end(ap);
     return ret;
+}
+
+//----------------------------------------------------------------------
+inline int
+Logger::log(log_level_t level, const std::string& message,
+            bool prefixEachLine) const
+{
+    return Log::instance()->log(logpath_, level, classname_, this,
+                                message, prefixEachLine);
 }
 
 
