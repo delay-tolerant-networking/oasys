@@ -492,14 +492,24 @@ Log::log_level(const char *path)
 size_t
 Log::gen_prefix(char* buf, size_t buflen, 
                 const char* path, log_level_t level,
-                const char* classname, const void* obj)
+                const char* classname, const void* obj) const
 {
+    // this function can be called with a null buffer if buflen is 0.
+    // In this case, this function does nothing except return the
+    // number of characters (not including the null terminator) that
+    // *would* be written if buflen was big enough.
+    ASSERT(buf || (buflen == 0));
+
+    // the length of the log entry prefix (not including the null
+    // terminator), assuming buflen is big enough (the return value)
+    size_t prefix_len = 0;
+
     size_t len;
     char *ptr = buf;
 
-    char* color_begin = "";
-    char* color_end   = "";
-    char* color_level = "";
+    const char* color_begin = "";
+    const char* color_end   = "";
+    const char* color_level = "";
     
     if (output_flags_ & OUTPUT_COLOR) {
         color_begin = "\033[33m";
@@ -513,16 +523,27 @@ Log::gen_prefix(char* buf, size_t buflen,
         len = snprintf(ptr, buflen, "%s[", color_begin);
     }
     
-    buflen -= len;
+    // advance the would-be size appropriately
+    prefix_len += len;
+    // advance ptr (and decrement buflen) only by the number of
+    // characters that were written -- not by the number that *would*
+    // have been written.  This keeps buflen from wrapping around and
+    // prevents undefined behavior by incrementing ptr beyond one past
+    // the length of the buffer.  You will see this pattern throughout
+    // the remainder of this function.
+    if (len > buflen) len = buflen;
     ptr += len;
+    buflen -= len;
     
     if (output_flags_ & OUTPUT_TIME) {
         Time t;
         t.get_time();
         len = snprintf(ptr, buflen, "%u.%06u ", t.sec_, t.usec_);
         
-        buflen -= len;
+        prefix_len += len;
+        if (len > buflen) len = buflen;
         ptr += len;
+        buflen -= len;
     }
 
     if (output_flags_ & OUTPUT_PATH)
@@ -532,8 +553,11 @@ Log::gen_prefix(char* buf, size_t buflen,
         } else {
             len = snprintf(ptr, buflen, "%s ", path);
         }
-        buflen -= len;
+        
+        prefix_len += len;
+        if (len > buflen) len = buflen;
         ptr += len;
+        buflen -= len;
     }
     
     if (output_flags_ & OUTPUT_CLASSNAME)
@@ -545,15 +569,21 @@ Log::gen_prefix(char* buf, size_t buflen,
             len = snprintf(ptr, buflen, "%s ",
                            classname ? classname : "(No_Class)");
         }
-        buflen -= len;
+        
+        prefix_len += len;
+        if (len > buflen) len = buflen;
         ptr += len;
+        buflen -= len;
     }
     
     if ((output_flags_ & OUTPUT_OBJ) && (obj != NULL))
     {
         len = snprintf(ptr, buflen, "%p ", obj);
-        buflen -= len;
+        
+        prefix_len += len;
+        if (len > buflen) len = buflen;
         ptr += len;
+        buflen -= len;
     }
 
     if (output_flags_ & OUTPUT_LEVEL)
@@ -569,15 +599,21 @@ Log::gen_prefix(char* buf, size_t buflen,
                            level2str(level),
                            color_begin);
         }
-        buflen -= len;
+        
+        prefix_len += len;
+        if (len > buflen) len = buflen;
         ptr += len;
+        buflen -= len;
     }
 
     len = snprintf(ptr, buflen, "]%s ", color_end);
-    buflen -= len;
-    ptr    += len;
     
-    return ptr - buf;
+    prefix_len += len;
+    if (len > buflen) len = buflen;
+    ptr += len;
+    buflen -= len;
+    
+    return prefix_len;
 }
 
 int

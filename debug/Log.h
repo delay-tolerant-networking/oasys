@@ -1,4 +1,4 @@
-/*
+/* -*-C++-*-
  *    Copyright 2004-2006 Intel Corporation
  * 
  *    Licensed under the Apache License, Version 2.0 (the "License");
@@ -356,11 +356,39 @@ private:
     /**
      * Generate the log prefix.
      *
-     * @return The length of the prefix string.
+     * @param[out] buf the buffer to fill with the log entry prefix.
+     * This may be the null pointer if @p buflen is 0.  If @p buflen
+     * is non-zero, @p buf will always be null-terminated -- even if
+     * it is not large enough to hold the whole prefix.
+     *
+     * @param[in] buflen no more than this number of characters will
+     * be written to @p buf (including the trailing null character).
+     * This may be zero.  If zero, @p buf may be the null pointer.
+     *
+     * @param[in] path the log path to use (used in the log entry
+     * prefix and for checking path-specific log levels)
+     *
+     * @param[in] level the importance/severity of the message
+     *
+     * @param[in] classname name of the class of the object that is
+     * logging (used for checking classname-specific log levels).  Can
+     * be NULL if not applicable.
+     *
+     * @param[in] obj Pointer to print in the log entry prefix (if
+     * that feature is enabled).  May be NULL if not applicable.
+     *
+     * @return If @p buflen is big enough to hold the whole log entry
+     * prefix (including the null terminating character), this returns
+     * the number of characters written (not including the null
+     * terminator).  If @p buflen is NOT big enough to hold the whole
+     * log entry prefix (including the null terminator), then this
+     * returns the number of characters that would have been written
+     * (not including the null terminator) had @p buflen been big
+     * enough.
      */
     size_t gen_prefix(char* buf, size_t buflen,
                       const char* path, log_level_t level,
-                      const char* classname, const void* obj);
+                      const char* classname, const void* obj) const;
 
     /**
      * Find a rule given a path.
