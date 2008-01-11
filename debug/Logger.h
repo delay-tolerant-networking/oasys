@@ -193,19 +193,27 @@ Logger::Logger(const char* classname, const char* fmt, ...)
 inline void
 Logger::vlogpathf(const char* fmt, va_list ap)
 {
-    // print to a temporary buffer
-    char logpath[LOG_MAX_PATHLEN];
-    log_vsnprintf(logpath, sizeof(logpath), fmt, ap);
+    if (fmt[0] == '/')
+    {
+        // handle the common case where fmt starts with '/'
+        log_vsnprintf(logpath_, sizeof(logpath_), fmt, ap);
+    }
+    else
+    {
+        // print to a temporary buffer
+        char tmp[LOG_MAX_PATHLEN];
+        log_vsnprintf(tmp, sizeof(tmp), fmt, ap);
 
-    // determine whether the temporary buffer begins with a '/'
-    fmt = "%s";
-    if (logpath[0] != '/')
-        fmt = "/%s";
+        // determine whether the temporary buffer begins with a '/'
+        fmt = "%s";
+        if (tmp[0] != '/')
+            fmt = "/%s";
 
-    // copy the temporary buffer to its final location, prepending
-    // with a '/' as appropriate
-    snprintf(logpath_, sizeof(logpath_), fmt, logpath);
-
+        // copy the temporary buffer to its final location, prepending
+        // with a '/' as appropriate
+        snprintf(logpath_, sizeof(logpath_), fmt, tmp);
+    }
+    
     // update the length of the logpath_
     baselen_ = strlen(logpath_);
 }

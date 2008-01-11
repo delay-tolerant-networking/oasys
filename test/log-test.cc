@@ -519,6 +519,16 @@ DECLARE_TEST(FloatingPointTest) {
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(LogpathTest) {
+    CHECK_EQUALSTR(Logger("Class", "/foo").logpath(), "/foo");
+    CHECK_EQUALSTR(Logger("Class", "foo").logpath(),  "/foo");
+    CHECK_EQUALSTR(Logger("Class", "/%s", "foo").logpath(),  "/foo");
+    CHECK_EQUALSTR(Logger("Class", "%s", "foo").logpath(),  "/foo");
+    CHECK_EQUALSTR(Logger("Class", "%s", "/foo").logpath(),  "/foo");
+
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TEST(Fini) {
     CHECK(f1->unlink() == 0);
     CHECK(f2->unlink() == 0);
@@ -542,6 +552,7 @@ DECLARE_TESTER(LogTest) {
     ADD_TEST(ReparseTest);
     ADD_TEST(ErrnoTest);
     ADD_TEST(FloatingPointTest);
+    ADD_TEST(LogpathTest);
     ADD_TEST(Fini);
 #endif
 }
