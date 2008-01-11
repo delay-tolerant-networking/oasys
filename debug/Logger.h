@@ -63,11 +63,23 @@ public:
     /**
      * Constructor that initializes the logpath with a printf style
      * format string.
+     *
+     * @param classname Constant class name string. WARNING: the
+     * string contents are not copied, so the caller must ensure that
+     * it remains valid for the lifetime of the Logger object.
+     *
+     * @param fmt Format string to format the log path.
      */
     inline Logger(const char* classname, const char* fmt, ...) PRINTFLIKE(3, 4);
 
     /**
      * Constructor that initializes to a constant std::string.
+     *
+     * @param classname Constant class name string. WARNING: the
+     * string contents are not copied, so the caller must ensure that
+     * it remains valid for the lifetime of the Logger object.
+     *
+     * @param logpath The logpath string.
      */
     Logger(const char* classname, const std::string& logpath)
         : classname_(classname)
