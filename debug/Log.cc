@@ -498,14 +498,24 @@ Log::log_level(const char *path)
 size_t
 Log::gen_prefix(char* buf, size_t buflen, 
                 const char* path, log_level_t level,
-                const char* classname, const void* obj)
+                const char* classname, const void* obj) const
 {
+    // this function can be called with a null buffer if buflen is 0.
+    // In this case, this function does nothing except return the
+    // number of characters (not including the null terminator) that
+    // *would* be written if buflen was big enough.
+    ASSERT(buf || (buflen == 0));
+
+    // the length of the log entry prefix (not including the null
+    // terminator), assuming buflen is big enough (the return value)
+    size_t prefix_len = 0;
+
     size_t len;
     char *ptr = buf;
 
-    char* color_begin = "";
-    char* color_end   = "";
-    char* color_level = "";
+    const char* color_begin = "";
+    const char* color_end   = "";
+    const char* color_level = "";
     
     if (output_flags_ & OUTPUT_COLOR) {
         color_begin = "\033[33m";
@@ -519,16 +529,27 @@ Log::gen_prefix(char* buf, size_t buflen,
         len = snprintf(ptr, buflen, "%s[", color_begin);
     }
     
-    buflen -= len;
+    // advance the would-be size appropriately
+    prefix_len += len;
+    // advance ptr (and decrement buflen) only by the number of
+    // characters that were written -- not by the number that *would*
+    // have been written.  This keeps buflen from wrapping around and
+    // prevents undefined behavior by incrementing ptr beyond one past
+    // the length of the buffer.  You will see this pattern throughout
+    // the remainder of this function.
+    if (len > buflen) len = buflen;
     ptr += len;
+    buflen -= len;
     
     if (output_flags_ & OUTPUT_TIME) {
         Time t;
         t.get_time();
         len = snprintf(ptr, buflen, "%u.%06u ", t.sec_, t.usec_);
         
-        buflen -= len;
+        prefix_len += len;
+        if (len > buflen) len = buflen;
         ptr += len;
+        buflen -= len;
     }
 
     if (output_flags_ & OUTPUT_PATH)
@@ -538,8 +559,11 @@ Log::gen_prefix(char* buf, size_t buflen,
         } else {
             len = snprintf(ptr, buflen, "%s ", path);
         }
-        buflen -= len;
+        
+        prefix_len += len;
+        if (len > buflen) len = buflen;
         ptr += len;
+        buflen -= len;
     }
     
     if (output_flags_ & OUTPUT_CLASSNAME)
@@ -551,15 +575,21 @@ Log::gen_prefix(char* buf, size_t buflen,
             len = snprintf(ptr, buflen, "%s ",
                            classname ? classname : "(No_Class)");
         }
-        buflen -= len;
+        
+        prefix_len += len;
+        if (len > buflen) len = buflen;
         ptr += len;
+        buflen -= len;
     }
     
     if ((output_flags_ & OUTPUT_OBJ) && (obj != NULL))
     {
         len = snprintf(ptr, buflen, "%p ", obj);
-        buflen -= len;
+        
+        prefix_len += len;
+        if (len > buflen) len = buflen;
         ptr += len;
+        buflen -= len;
     }
 
     if (output_flags_ & OUTPUT_LEVEL)
@@ -575,15 +605,21 @@ Log::gen_prefix(char* buf, size_t buflen,
                            level2str(level),
                            color_begin);
         }
-        buflen -= len;
+        
+        prefix_len += len;
+        if (len > buflen) len = buflen;
         ptr += len;
+        buflen -= len;
     }
 
     len = snprintf(ptr, buflen, "]%s ", color_end);
-    buflen -= len;
-    ptr    += len;
     
-    return ptr - buf;
+    prefix_len += len;
+    if (len > buflen) len = buflen;
+    ptr += len;
+    buflen -= len;
+    
+    return prefix_len;
 }
 
 int
@@ -594,18 +630,14 @@ Log::vlogf(const char* path, log_level_t level,
     ASSERT(inited_);
     ASSERT(!shutdown_);
 
-    char pathbuf[LOG_MAX_PATHLEN];
+    if ((path == NULL) || (fmt == NULL))
+        return -1;
 
-    // try to catch crashes due to buffer overflow with some guard
-    // bytes at the end
-    static const char guard[] = "[guard]";
-    char buf[LOG_MAX_LINELEN + sizeof(guard)];
-    memcpy(&buf[LOG_MAX_LINELEN], guard, sizeof(guard));
-    char* ptr = buf;
+    char pathbuf[LOG_MAX_PATHLEN];
 
     /* Make sure that paths that don't start with a slash still show up. */
     if (*path != '/') {
-        snprintf(pathbuf, sizeof pathbuf, "/%s", path);
+        snprintf(pathbuf, sizeof(pathbuf), "/%s", path);
         path = pathbuf;
     }
 
@@ -616,74 +648,140 @@ Log::vlogf(const char* path, log_level_t level,
         return 0;
     }
     
-    size_t buflen = LOG_MAX_LINELEN - 1; /* Save a character for newline. */
-    size_t len;
+    // try to catch crashes due to buffer overflow with some guard
+    // bytes at the end
+    static const char guard[] = "[guard]";
+
+    // fixed buffer that should be big enough to handle most cases.
+    // The extra byte is for a final newline (added if one is not
+    // provided by the caller).
+    ASSERT(LOG_MAX_LINELEN >= 0);
+    char buf_fixed[LOG_MAX_LINELEN + 1 + sizeof(guard)];
+
+    // buf is a pointer to a buffer that will contain the log entry
+    char* buf = buf_fixed;
+
+    // the buffer will be incrementally filled; ptr keeps track of
+    // where we are in the buffer at the moment
+    char* ptr = buf;
+
+    // buflen is the amount of buffer space we have remaining.  it is
+    // initialized to LOG_MAX_LINELEN and not LOG_MAX_LINELEN+1 (as in
+    // the declaration of buf_fixed above) so that there is room for a
+    // trailing newline in case the user didn't include one.
+    size_t buflen = LOG_MAX_LINELEN;
+
+    // guard_location is where the buffer overflow guard can be found
+    char* guard_location = &buf[sizeof(buf_fixed) - sizeof(guard)];
+
+    // set the guard
+    memcpy(guard_location, guard, sizeof(guard));
 
     // generate the log prefix
-    len = gen_prefix(buf, buflen, path, level, classname, obj);
-    buflen -= len;
-    ptr += len;
+    size_t prefix_len = gen_prefix(buf, buflen, path, level, classname, obj);
+
+    if (prefix_len < buflen) {
+        // set ptr to the location of the null terminator
+        ptr += prefix_len;
+        // decrement the amount of space we have left in buf
+        buflen -= prefix_len;
+    } else {
+        // prefix was truncated because buf isn't big enough
+
+        // prevent undefined behavior by not incrementing ptr beyond
+        // one past the end of buf
+        ptr += buflen;
+        // keep buflen from wrapping around, which might result in a
+        // buffer overflow in the call to vsnprintf below
+        buflen = 0;
+    }
     
     // generate the log string
-    len = log_vsnprintf(ptr, buflen, fmt, ap);
+    size_t data_len = log_vsnprintf(ptr, buflen, fmt, ap);
 
-    if (len >= buflen) {
-        // handle truncated lines -- note that the last char in the
-        // buffer is free since we reserved it for the newline
-        const char* trunc = "... (truncated)\n";
-        len = strlen(trunc);
-        strncpy(&buf[LOG_MAX_LINELEN - len - 1], trunc, len + 1);
-        buflen = LOG_MAX_LINELEN - 1;
-        buf[LOG_MAX_LINELEN - 1] = '\0';
-
+    if (data_len < buflen) {
+        ptr += data_len;
+        buflen -= data_len;
     } else {
-        // make sure there's a trailing newline
-        buflen -= len;
-        ptr += len;
-        ASSERT(ptr <= (buf + LOG_MAX_LINELEN - 2));
-        
-        if (ptr[-1] != '\n') {
-            *ptr++ = '\n';
-            *ptr = 0;
-        }
-        
-        buflen = ptr - buf;
+            // not enough room in the buffer for the whole log entry, so
+            // truncate the line
+
+            // is there room to copy anything?
+            if (LOG_MAX_LINELEN > 0) {
+                // yes
+
+                // string that lets the user know that the line was
+                // truncated
+                static const char* trunc = "... (truncated)";
+
+                // how much of the string to copy
+                size_t chars_to_copy = (LOG_MAX_LINELEN > sizeof(trunc)) ?
+                    sizeof(trunc) : LOG_MAX_LINELEN;
+
+                // copy the string
+                memcpy(&buf[LOG_MAX_LINELEN - chars_to_copy], trunc,
+                       chars_to_copy - 1);
+
+                // make sure that ptr is pointing to the end of the
+                // log entry buffer
+                ptr = &buf[LOG_MAX_LINELEN - 1];
+
+                // make sure that it's null terminated
+                *ptr = '\0';
+
+            } else {
+                // no room to copy anything
+                ptr = buf;
+            }
     }
 
+    // make sure there's a trailing newline
+    if ((ptr > buf) && (ptr[-1] != '\n')) {
+        // it is safe to add this trailing newline since an extra byte
+        // was added to the size of buf specifically for this purpose.
+        *ptr++ = '\n';
+    }
+    // make sure the string is null-terminated
+    *ptr = '\0';
+
 #ifndef NDEBUG
-    if (memcmp(&buf[LOG_MAX_LINELEN], guard, sizeof(guard)) != 0) {
+    // check for buffer overflow
+    if (memcmp(guard_location, guard, sizeof(guard)) != 0) {
         if (__debug_no_panic_on_overflow) {
             return -1;
         }
         
         PANIC("logf buffer overflow");
     }
-
 #endif
 
+    const size_t size = ptr - buf;
+    const char* data = buf;
+
 #ifdef CHECK_NON_PRINTABLE
-    for (u_int i = 0; i < buflen; ++i) {
-        ASSERT(buf[i] == '\n' ||
-               (buf[i] >= 32 && buf[i] <= 126));
+    // make sure there are no special bytes in the log entry string
+    for (size_t i = 0; i < size; ++i) {
+        ASSERT((data[i] == '\n') ||
+               ((data[i] >= 32) && (data[i] <= 126)));
     }
 #endif
 
-    int save_errno = errno;
+    const int save_errno = errno;
     
     // do the write, making sure to drain the buffer. since stdout was
     // set to nonblocking, the spin lock prevents other threads from
     // jumping in here
     output_lock_->lock("Log::vlogf");
-    int ret = IO::writeall(logfd_, buf, buflen);
+    int ret = IO::writeall(logfd_, data, size);
     output_lock_->unlock();
     
-    ASSERTF(ret == (int)buflen,
+    ASSERTF(ret == static_cast<int>(size),
             "unexpected return from IO::writeall (got %d, expected %zu): %s",
-            ret, buflen, strerror(errno));
+            ret, size, strerror(errno));
 
     errno = save_errno;
     
-    return buflen;
+    return static_cast<int>(size);
 };
 
 int
