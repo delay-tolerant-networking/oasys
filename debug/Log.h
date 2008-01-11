@@ -355,7 +355,7 @@ protected:
      *
      * @return the number of bytes written to the log file
      */
-    int dumpToFile(const char* data, size_t size);
+    int output(const char* data, size_t size);
 
     /**
      * @brief Outputs @p data to the log file
@@ -364,7 +364,7 @@ protected:
      *
      * @return the number of bytes written to the log file
      */
-    int dumpToFile(const std::string& data);
+    int output(const std::string& data);
 
 private:
     /**
