@@ -642,6 +642,8 @@ Log::log(const std::string& path, log_level_t level,
          const std::string& msg, bool prefixEachLine)
 {
     ASSERT(inited_);
+    ASSERT(!shutdown_);
+
     int rval = 0;
 
     // bail if we're not going to output the line
