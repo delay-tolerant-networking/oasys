@@ -664,20 +664,20 @@ Log::log(const std::string& path, log_level_t level,
 
         // lock the log file so that all lines appear next to each
         // other (the lock is reentrant, so this won't cause a
-        // deadlock in dumpToFile())
+        // deadlock in output())
         output_lock_->lock("Log::log");
         while (std::getline(is, line))
         {
-            rval = this->dumpToFile(prefix + line + '\n');
+            rval = this->output(prefix + line + '\n');
         }
         output_lock_->unlock();
     }
     else
     {
         if (msg[msg.size() - 1] != '\n')
-            rval = this->dumpToFile(prefix + msg + '\n');
+            rval = this->output(prefix + msg + '\n');
         else
-            rval = this->dumpToFile(prefix + msg);
+            rval = this->output(prefix + msg);
     }
 
     return rval;
@@ -685,14 +685,14 @@ Log::log(const std::string& path, log_level_t level,
 
 
 int
-Log::dumpToFile(const std::string& data)
+Log::output(const std::string& data)
 {
-    return this->dumpToFile(data.data(), data.size());
+    return this->output(data.data(), data.size());
 }
 
 
 int
-Log::dumpToFile(const char* data, size_t size)
+Log::output(const char* data, size_t size)
 {
     if (!data || size == 0)
         return 0;
@@ -711,7 +711,7 @@ Log::dumpToFile(const char* data, size_t size)
     // do the write, making sure to drain the buffer. since stdout was
     // set to nonblocking, the spin lock prevents other threads from
     // jumping in here
-    output_lock_->lock("Log::dumpToFile");
+    output_lock_->lock("Log::output");
     int ret = IO::writeall(logfd_, data, size);
     output_lock_->unlock();
     
@@ -858,7 +858,7 @@ Log::vlogf(const char* path, log_level_t level,
     }
 #endif
 
-    return this->dumpToFile(buf, ptr - buf);
+    return this->output(buf, ptr - buf);
 };
 
 int
