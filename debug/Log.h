@@ -97,6 +97,7 @@
 #include <sys/time.h>
 #include <string>
 #include <vector>
+#include <sys/uio.h>
 
 #if defined(__GNUC__)
 # define PRINTFLIKE(fmt, arg) __attribute__((format (printf, fmt, arg)))
@@ -347,24 +348,13 @@ protected:
     /**
      * @brief Outputs @p data to the log file
      *
-     * @param[in] data Pointer to the first byte to write to the log
-     * file
+     * @param[in] iov Pointer to a vector of data/len iovec pairs.
      *
-     * @param[in] size The number of bytes (starting at @p data) to
-     * write to the log file
+     * @param[in] iovcnt Number of iovecs.
      *
-     * @return the number of bytes written to the log file
+     * @return the number of bytes written to the output
      */
-    int output(const char* data, size_t size);
-
-    /**
-     * @brief Outputs @p data to the log file
-     *
-     * @param[in] data string to write to the log file
-     *
-     * @return the number of bytes written to the log file
-     */
-    int output(const std::string& data);
+    int output(const struct iovec* iov, int iovcnt);
 
 private:
     /**

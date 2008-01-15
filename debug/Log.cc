@@ -28,6 +28,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include <algorithm>
+#include <limits.h>
 
 #include "DebugUtils.h"
 #include "Log.h"
@@ -680,56 +681,101 @@ Log::log(const std::string& path, log_level_t level,
         return rval;
     }
 
-    // generate the log entry prefix
-    std::string prefix(this->gen_prefix(path, level, classname, obj));
+    // generate the log entry prefix into a buffer. in the unexpected
+    // case where it's not big enough, we'll just output what we can
+    // which will make the line ugly but it won't crash, and it 
+    // avoids unnecessary memory allocation
+    char prefix[1024];
+    size_t prefix_len = this->gen_prefix(prefix, sizeof(prefix),
+                                         path.c_str(), level, classname,
+                                         obj);
 
     // dump the message to the log file
     if (prefix_each_line)
     {
-        std::istringstream is(msg);
-        std::string line;
-
         // lock the log file so that all lines appear next to each
         // other (the lock is reentrant, so this won't cause a
         // deadlock in output())
         output_lock_->lock("Log::log");
-        while (std::getline(is, line))
+
+        size_t beg = 0;
+        size_t end;
+
+        struct iovec iov[IOV_MAX];
+        int iovcnt = 0;
+
+        // this function must be called with a trailing newline or
+        // else the parsing code won't work properly
+        ASSERT(msg[msg.length() - 1] == '\n');
+        
+        while ((end = msg.find('\n', beg)) != std::string::npos)
         {
-            rval = this->output(prefix + line + '\n');
+            iov[iovcnt].iov_base = prefix;
+            iov[iovcnt].iov_len  = prefix_len;
+            iovcnt++;
+            
+            iov[iovcnt].iov_base = const_cast<char*>(msg.data() + beg);
+            iov[iovcnt].iov_len  = end + 1 - beg;
+            iovcnt++;
+
+            beg = end + 1;
+            
+            // if we hit the maximum number of iovecs (which is
+            // doubtful), output what we've accumulated and start again
+            STATIC_ASSERT(IOV_MAX % 2 == 0, IOV_MAX_must_be_multiple_of_2);
+            
+            if (iovcnt == IOV_MAX) {
+                rval += this->output(iov, iovcnt);
+                iovcnt = 0;
+            }
         }
+
+        // output what's in the iovecs and unlock
+        rval += this->output(iov, iovcnt);
+        
         output_lock_->unlock();
     }
     else
     {
-        if (msg[msg.size() - 1] != '\n')
-            rval = this->output(prefix + msg + '\n');
-        else
-            rval = this->output(prefix + msg);
+        struct iovec iov[3];
+        int iovcnt;
+        iov[0].iov_base = prefix;
+        iov[0].iov_len  = prefix_len;
+        iov[1].iov_base = const_cast<char*>(msg.data());
+        iov[1].iov_len  = msg.length();
+
+        if (msg[msg.size() - 1] == '\n') {
+            iovcnt = 2;
+        } else {
+            iov[2].iov_base = const_cast<char*>("\n");
+            iov[2].iov_len  = 1;
+            iovcnt = 3;
+        }
+
+        rval = this->output(iov, iovcnt);
     }
 
     return rval;
 }
 
-
-int
-Log::output(const std::string& data)
-{
-    return this->output(data.data(), data.size());
-}
-
 //----------------------------------------------------------------------
 int
-Log::output(const char* data, size_t size)
+Log::output(const struct iovec* iov, int iovcnt)
 {
-    if (!data || size == 0)
-        return 0;
-
 #ifdef CHECK_NON_PRINTABLE
-    // make sure there are no special bytes in the log entry string
-    for (size_t i = 0; i < size; ++i)
-    {
-        ASSERT((data[i] == '\n') ||
-               ((data[i] >= 32) && (data[i] <= 126)));
+    for (int i = 0; i < iovcnt; ++i) {
+        void* data  = iov->iov_base;
+        size_t size = iov->iov_len;
+        
+        if (!data || size == 0)
+            return 0;
+        
+        // make sure there are no special bytes in the log entry string
+        for (size_t i = 0; i < size; ++i)
+        {
+            ASSERT((data[i] == '\n') ||
+                   ((data[i] >= 32) && (data[i] <= 126)));
+        }
     }
 #endif
 
@@ -739,16 +785,18 @@ Log::output(const char* data, size_t size)
     // set to nonblocking, the spin lock prevents other threads from
     // jumping in here
     output_lock_->lock("Log::output");
-    int ret = IO::writeall(logfd_, data, size);
+    int ret = IO::writevall(logfd_, iov, iovcnt);
     output_lock_->unlock();
-    
-    ASSERTF(ret == static_cast<int>(size),
-            "unexpected return from IO::writeall (got %d, expected %zu): %s",
-            ret, size, strerror(errno));
 
+    int size = IO::iovec_size(iov, iovcnt);
+    (void)size;
+    ASSERTF(ret == size,
+            "unexpected return from IO::writevall (got %d, expected %d): %s",
+            ret, size, strerror(errno));
+    
     errno = save_errno;
     
-    return static_cast<int>(size);
+    return size;
 }
 
 //----------------------------------------------------------------------
@@ -886,7 +934,10 @@ Log::vlogf(const char* path, log_level_t level,
     }
 #endif
 
-    return this->output(buf, ptr - buf);
+    struct iovec iov;
+    iov.iov_base = buf;
+    iov.iov_len  = ptr - buf;
+    return this->output(&iov, 1);
 };
 
 //----------------------------------------------------------------------
