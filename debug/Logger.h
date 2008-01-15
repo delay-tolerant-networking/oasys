@@ -63,11 +63,23 @@ public:
     /**
      * Constructor that initializes the logpath with a printf style
      * format string.
+     *
+     * @param classname Constant class name string. WARNING: the
+     * string contents are not copied, so the caller must ensure that
+     * it remains valid for the lifetime of the Logger object.
+     *
+     * @param fmt Format string to format the log path.
      */
     inline Logger(const char* classname, const char* fmt, ...) PRINTFLIKE(3, 4);
 
     /**
      * Constructor that initializes to a constant std::string.
+     *
+     * @param classname Constant class name string. WARNING: the
+     * string contents are not copied, so the caller must ensure that
+     * it remains valid for the lifetime of the Logger object.
+     *
+     * @param logpath The logpath string.
      */
     Logger(const char* classname, const std::string& logpath)
         : classname_(classname)
@@ -76,7 +88,20 @@ public:
     }
 
     /**
-     * Format function for logpath_.
+     * @brief Format function for logpath_.
+     *
+     * A forward slash ('/') is automatically prepended to the logpath
+     * if the result of applying @p ap to @p fmt does not begin with
+     * '/'.
+     */
+    void vlogpathf(const char* fmt, va_list ap);
+
+    /**
+     * @brief Format function for logpath_.
+     *
+     * A forward slash ('/') is automatically prepended to the logpath
+     * if the result of applying the arguments to @p fmt does not
+     * begin with '/'.
      */
     inline void logpathf(const char* fmt, ...) PRINTFLIKE(2, 3);
 
@@ -99,13 +124,7 @@ public:
      */
     void set_logpath(const char* logpath)
     {
-        if (logpath == 0) {
-            strncpy(logpath_, "/", sizeof(logpath_));
-            baselen_ = 1;
-        } else {
-            strncpy(logpath_, logpath, sizeof(logpath_));
-            baselen_ = strlen(logpath);
-        }
+        this->logpathf("%s", logpath);
     }
 
     /**
@@ -170,7 +189,7 @@ public:
     /**
      * @return current logpath
      */
-    const char* logpath() { return logpath_; }
+    const char* logpath() const { return logpath_; }
 
 protected:
     const char* classname_;
@@ -184,8 +203,36 @@ Logger::Logger(const char* classname, const char* fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    log_vsnprintf(logpath_, sizeof(logpath_), fmt, ap);
+    this->vlogpathf(fmt, ap);
     va_end(ap);
+}
+
+//----------------------------------------------------------------------
+inline void
+Logger::vlogpathf(const char* fmt, va_list ap)
+{
+    if (fmt[0] == '/')
+    {
+        // handle the common case where fmt starts with '/'
+        log_vsnprintf(logpath_, sizeof(logpath_), fmt, ap);
+    }
+    else
+    {
+        // print to a temporary buffer
+        char tmp[LOG_MAX_PATHLEN];
+        log_vsnprintf(tmp, sizeof(tmp), fmt, ap);
+
+        // determine whether the temporary buffer begins with a '/'
+        fmt = "%s";
+        if (tmp[0] != '/')
+            fmt = "/%s";
+
+        // copy the temporary buffer to its final location, prepending
+        // with a '/' as appropriate
+        snprintf(logpath_, sizeof(logpath_), fmt, tmp);
+    }
+    
+    // update the length of the logpath_
     baselen_ = strlen(logpath_);
 }
 
@@ -195,7 +242,7 @@ Logger::logpathf(const char* fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    log_vsnprintf(logpath_, sizeof(logpath_), fmt, ap);
+    this->vlogpathf(fmt, ap);
     va_end(ap);
 }
 
@@ -207,6 +254,7 @@ Logger::logpath_appendf(const char* fmt, ...)
     va_start(ap, fmt);
     log_vsnprintf(&logpath_[baselen_], sizeof(logpath_) - baselen_, fmt, ap);
     va_end(ap);
+    // baselen_ is not updated here on purpose
 }
 
 //----------------------------------------------------------------------

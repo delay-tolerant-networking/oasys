@@ -358,6 +358,12 @@ Log::Rule *
 Log::find_rule(const char *path)
 {
     ASSERT(inited_);
+
+    /// \todo What if path is NULL?  Is the following appropriate?
+    /*
+    if (!path)
+        return NULL;
+    */
     
     /*
      * The rules are stored in decreasing path lengths, so the first
