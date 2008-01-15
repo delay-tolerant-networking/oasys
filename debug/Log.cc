@@ -645,7 +645,7 @@ Log::gen_prefix(const std::string& path, log_level_t level,
 int
 Log::log(const std::string& path, log_level_t level,
          const char* classname, const void* obj,
-         const std::string& msg, bool prefixEachLine)
+         const std::string& msg, bool prefix_each_line)
 {
     ASSERT(inited_);
     ASSERT(!shutdown_);
@@ -663,7 +663,7 @@ Log::log(const std::string& path, log_level_t level,
     std::string prefix(this->gen_prefix(path, level, classname, obj));
 
     // dump the message to the log file
-    if (prefixEachLine)
+    if (prefix_each_line)
     {
         std::istringstream is(msg);
         std::string line;

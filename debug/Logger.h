@@ -184,7 +184,7 @@ public:
      * @brief Logs a message without formatting.
      */
     int log(log_level_t level, const std::string& message,
-            bool prefixEachLine = false) const;
+            bool prefix_each_line = false) const;
 
     /**
      * @return current logpath
@@ -284,10 +284,10 @@ Logger::logf(const char* logpath, log_level_t level,
 //----------------------------------------------------------------------
 inline int
 Logger::log(log_level_t level, const std::string& message,
-            bool prefixEachLine) const
+            bool prefix_each_line) const
 {
     return Log::instance()->log(logpath_, level, classname_, this,
-                                message, prefixEachLine);
+                                message, prefix_each_line);
 }
 
 

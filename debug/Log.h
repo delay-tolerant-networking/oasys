@@ -228,14 +228,14 @@ public:
      *
      * @param[in] msg the message to log
      *
-     * @param[in] prefixEachLine whether to add a prefix to each line
+     * @param[in] prefix_each_line whether to add a prefix to each line
      * in @p msg (like log_multiline())
      *
      * @return the number of bytes written to the log file
      */
     int log(const std::string& path, log_level_t level,
             const char* classname, const void* obj,
-            const std::string& msg, bool prefixEachLine = false);
+            const std::string& msg, bool prefix_each_line = false);
 
     /**
      * @brief Core logging function that is the guts of the
@@ -546,16 +546,16 @@ log_multiline(const char* path, log_level_t level, const char* msg)
  *
  * @param[in] msg the message to log
  *
- * @param[in] prefixEachLine whether to add a prefix to each line in
+ * @param[in] prefix_each_line whether to add a prefix to each line in
  * @p msg (like log_multiline())
  *
  * @return the number of bytes written to the log file
  */
 inline int
 log(const std::string& path, log_level_t level, const std::string& msg,
-    bool prefixEachLine = false)
+    bool prefix_each_line = false)
 {
-    return Log::instance()->log(path, level, NULL, NULL, msg, prefixEachLine);
+    return Log::instance()->log(path, level, NULL, NULL, msg, prefix_each_line);
 }
 
 /**
