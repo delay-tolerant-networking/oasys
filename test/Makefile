@@ -28,6 +28,7 @@ TESTS += \
 	io-basic-test				\
 	iterator-test				\
 	log-test				\
+	log-profile-test			\
 	marshal-test				\
 	memory-store-test			\
 	msg-queue-test				\
