@@ -48,6 +48,7 @@ namespace oasys {
 #undef ASSERT
 #define ASSERT(x) __log_assert(x, #x, __FILE__, __LINE__)
 
+//----------------------------------------------------------------------
 void
 __log_assert(bool x, const char* what, const char* file, int line)
 {
@@ -60,6 +61,7 @@ __log_assert(bool x, const char* what, const char* file, int line)
     }
 }
 
+//----------------------------------------------------------------------
 level2str_t log_levelnames[] =
 {
     { "debug",   LOG_DEBUG },
@@ -80,6 +82,7 @@ bool Log::inited_   = false;
 bool Log::shutdown_ = false;
 bool Log::__debug_no_panic_on_overflow = false;
 
+//----------------------------------------------------------------------
 Log::Log()
     : output_flags_(OUTPUT_PATH | OUTPUT_TIME | OUTPUT_LEVEL),
       logfd_(-1),
@@ -89,6 +92,7 @@ Log::Log()
     rule_list_   = &rule_lists_[1];
 }
 
+//----------------------------------------------------------------------
 void
 Log::init(const char* logfile, log_level_t defaultlvl,
           const char* prefix, const char* debug_path)
@@ -97,6 +101,7 @@ Log::init(const char* logfile, log_level_t defaultlvl,
     log->do_init(logfile, defaultlvl, prefix, debug_path);
 }
 
+//----------------------------------------------------------------------
 void
 Log::do_init(const char* logfile, log_level_t defaultlvl,
              const char* prefix, const char *debug_path)
@@ -138,6 +143,7 @@ Log::do_init(const char* logfile, log_level_t defaultlvl,
     instance_ = this;
 }
 
+//----------------------------------------------------------------------
 Log::~Log()
 {
     close(logfd_);
@@ -146,6 +152,7 @@ Log::~Log()
     delete output_lock_;
 }
 
+//----------------------------------------------------------------------
 void
 Log::shutdown()
 {
@@ -154,6 +161,7 @@ Log::shutdown()
     shutdown_ = true;
 }
 
+//----------------------------------------------------------------------
 void
 Log::parse_debug_file(const char* debug_path)
 {
@@ -307,6 +315,7 @@ Log::parse_debug_file(const char* debug_path)
     rule_list_ = new_rule_list;
 }
 
+//----------------------------------------------------------------------
 bool
 Log::rule_compare(const Rule& rule1, const Rule& rule2)
 {
@@ -320,6 +329,7 @@ Log::rule_compare(const Rule& rule1, const Rule& rule2)
     return false;
 }
 
+//----------------------------------------------------------------------
 void
 Log::sort_rules(RuleList* rule_list)
 {
@@ -342,6 +352,7 @@ Log::sort_rules(RuleList* rule_list)
 #endif // NDEBUG
 }
 
+//----------------------------------------------------------------------
 void
 Log::dump_rules(StringBuffer* buf)
 {
@@ -354,6 +365,7 @@ Log::dump_rules(StringBuffer* buf)
     }
 }
 
+//----------------------------------------------------------------------
 Log::Rule *
 Log::find_rule(const char *path)
 {
@@ -405,6 +417,7 @@ Log::find_rule(const char *path)
     return NULL; // no match :-(
 }
 
+//----------------------------------------------------------------------
 void
 Log::redirect_stdio()
 {
@@ -422,6 +435,7 @@ Log::redirect_stdio()
     }
 }
 
+//----------------------------------------------------------------------
 void
 Log::rotate()
 {
@@ -456,6 +470,7 @@ Log::rotate()
     output_lock_->unlock();
 }
 
+//----------------------------------------------------------------------
 static void
 rotate_handler(int sig)
 {
@@ -463,6 +478,7 @@ rotate_handler(int sig)
     Log::instance()->rotate();
 }
 
+//----------------------------------------------------------------------
 void
 Log::add_rotate_handler(int sig)
 {
@@ -470,6 +486,7 @@ Log::add_rotate_handler(int sig)
     TimerSystem::instance()->add_sighandler(sig, rotate_handler);
 }
 
+//----------------------------------------------------------------------
 static RETSIGTYPE
 reparse_handler(int sig)
 {
@@ -477,6 +494,7 @@ reparse_handler(int sig)
     Log::instance()->parse_debug_file();
 }
 
+//----------------------------------------------------------------------
 void
 Log::add_reparse_handler(int sig)
 {
@@ -484,6 +502,7 @@ Log::add_reparse_handler(int sig)
     TimerSystem::instance()->add_sighandler(sig, reparse_handler);
 }
 
+//----------------------------------------------------------------------
 log_level_t
 Log::log_level(const char *path)
 {
@@ -496,6 +515,7 @@ Log::log_level(const char *path)
     }
 }
 
+//----------------------------------------------------------------------
 size_t
 Log::gen_prefix(char* buf, size_t buflen, 
                 const char* path, log_level_t level,
@@ -624,6 +644,7 @@ Log::gen_prefix(char* buf, size_t buflen,
 }
 
 
+//----------------------------------------------------------------------
 std::string
 Log::gen_prefix(const std::string& path, log_level_t level,
                 const char* classname, const void* obj) const
@@ -641,7 +662,7 @@ Log::gen_prefix(const std::string& path, log_level_t level,
     return std::string(&prefix_buf[0]);
 }
 
-
+//----------------------------------------------------------------------
 int
 Log::log(const std::string& path, log_level_t level,
          const char* classname, const void* obj,
@@ -696,7 +717,7 @@ Log::output(const std::string& data)
     return this->output(data.data(), data.size());
 }
 
-
+//----------------------------------------------------------------------
 int
 Log::output(const char* data, size_t size)
 {
@@ -730,7 +751,7 @@ Log::output(const char* data, size_t size)
     return static_cast<int>(size);
 }
 
-
+//----------------------------------------------------------------------
 int
 Log::vlogf(const char* path, log_level_t level,
            const char* classname, const void* obj,
@@ -800,6 +821,7 @@ Log::vlogf(const char* path, log_level_t level,
         // prevent undefined behavior by not incrementing ptr beyond
         // one past the end of buf
         ptr += buflen;
+
         // keep buflen from wrapping around, which might result in a
         // buffer overflow in the call to vsnprintf below
         buflen = 0;
@@ -812,36 +834,36 @@ Log::vlogf(const char* path, log_level_t level,
         ptr += data_len;
         buflen -= data_len;
     } else {
-            // not enough room in the buffer for the whole log entry, so
-            // truncate the line
+        // not enough room in the buffer for the whole log entry, so
+        // truncate the line
 
-            // is there room to copy anything?
-            if (LOG_MAX_LINELEN > 0) {
-                // yes
+        // is there room to copy anything?
+        if (LOG_MAX_LINELEN > 0) {
+            // yes
 
-                // string that lets the user know that the line was
-                // truncated
-                static const char* trunc = "... (truncated)";
+            // string that lets the user know that the line was
+            // truncated
+            static const char* trunc = "... (truncated)";
 
-                // how much of the string to copy
-                size_t chars_to_copy = (LOG_MAX_LINELEN > sizeof(trunc)) ?
-                    sizeof(trunc) : LOG_MAX_LINELEN;
+            // how much of the string to copy
+            size_t chars_to_copy = (LOG_MAX_LINELEN > sizeof(trunc)) ?
+                                   sizeof(trunc) : LOG_MAX_LINELEN;
 
-                // copy the string
-                memcpy(&buf[LOG_MAX_LINELEN - chars_to_copy], trunc,
-                       chars_to_copy - 1);
+            // copy the string
+            memcpy(&buf[LOG_MAX_LINELEN - chars_to_copy], trunc,
+                   chars_to_copy - 1);
 
-                // make sure that ptr is pointing to the end of the
-                // log entry buffer
-                ptr = &buf[LOG_MAX_LINELEN - 1];
+            // make sure that ptr is pointing to the end of the
+            // log entry buffer
+            ptr = &buf[LOG_MAX_LINELEN - 1];
 
-                // make sure that it's null terminated
-                *ptr = '\0';
+            // make sure that it's null terminated
+            *ptr = '\0';
 
-            } else {
-                // no room to copy anything
-                ptr = buf;
-            }
+        } else {
+            // no room to copy anything
+            ptr = buf;
+        }
     }
 
     // make sure there's a trailing newline
@@ -867,6 +889,7 @@ Log::vlogf(const char* path, log_level_t level,
     return this->output(buf, ptr - buf);
 };
 
+//----------------------------------------------------------------------
 int
 Log::log_multiline(const char* path, log_level_t level, 
                    const char* classname, const void* obj,
