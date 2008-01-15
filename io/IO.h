@@ -210,7 +210,7 @@ struct IO {
     /**
      * @return total bytes in the iovec to be written
      */
-    static size_t iovec_size(struct iovec* iov, int num) {
+    static size_t iovec_size(const struct iovec* iov, int num) {
         size_t size = 0;
         for (int i=0; i<num; ++i) {
             size += iov[i].iov_len;
