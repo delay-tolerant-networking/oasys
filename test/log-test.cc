@@ -529,6 +529,23 @@ DECLARE_TEST(LogpathTest) {
     return UNIT_TEST_PASSED;
 }
 
+DECLARE_TEST(MultilineTest) {
+    StringBuffer buf;
+
+    size_t len1 = log_always_p("/test", "line %4d", 1);
+    int count = 2000;
+    for (int i = 0; i < count; ++i) {
+        buf.appendf("line %4d\n", i);
+    }
+
+    CHECK_EQUAL(buf.length(), count * 10);
+    CHECK_EQUAL(log_multiline("/test", LOG_ALWAYS, buf.c_str()),
+                count * len1);
+
+    return UNIT_TEST_PASSED;
+}
+
+
 DECLARE_TEST(Fini) {
     CHECK(f1->unlink() == 0);
     CHECK(f2->unlink() == 0);
@@ -553,6 +570,7 @@ DECLARE_TESTER(LogTest) {
     ADD_TEST(ErrnoTest);
     ADD_TEST(FloatingPointTest);
     ADD_TEST(LogpathTest);
+    ADD_TEST(MultilineTest);
     ADD_TEST(Fini);
 #endif
 }
