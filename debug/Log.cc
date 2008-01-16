@@ -644,25 +644,6 @@ Log::gen_prefix(char* buf, size_t buflen,
     return prefix_len;
 }
 
-
-//----------------------------------------------------------------------
-std::string
-Log::gen_prefix(const std::string& path, log_level_t level,
-                const char* classname, const void* obj) const
-{
-    std::vector<char> prefix_buf(LOG_MAX_LINELEN, '\0');
-    size_t prefix_len;
-    while ((prefix_len = this->gen_prefix(
-                &prefix_buf[0], prefix_buf.size(), path.c_str(), level,
-                classname, obj))
-           >= prefix_buf.size())
-    {
-        prefix_buf.resize(prefix_len + 1, '\0');
-    }
-    ASSERT(prefix_buf.size() > prefix_len);
-    return std::string(&prefix_buf[0]);
-}
-
 //----------------------------------------------------------------------
 int
 Log::log(const std::string& path, log_level_t level,

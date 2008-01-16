@@ -445,27 +445,6 @@ private:
                       const char* classname, const void* obj) const;
 
     /**
-     * @brief Generates a log entry prefix and returns it in string
-     * form.
-     *
-     * @param[in] path the log path to use (used in the log entry
-     * prefix and for checking path-specific log levels)
-     *
-     * @param[in] level the importance/severity of the message
-     *
-     * @param[in] classname name of the class of the object that is
-     * logging (used for checking classname-specific log levels).  Can
-     * be NULL if not applicable.
-     *
-     * @param[in] obj Pointer to print in the log entry prefix (if
-     * that feature is enabled).  May be NULL if not applicable.
-     *
-     * @return A string holding the log entry prefix
-     */
-    std::string gen_prefix(const std::string& path, log_level_t level,
-                           const char* classname, const void* obj) const;
-
-    /**
      * Find a rule given a path.
      */
     Rule *find_rule(const char *path);
