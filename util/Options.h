@@ -608,6 +608,57 @@ protected:
     int set(const char* val, size_t len);
     void get(StringBuffer* buf);
     Case* cases_;
+    bool is_bitflag_;
+};
+
+/**
+ * BitFlagOpt is a subclass of EnumOpt used for options that are bit
+ * flags, hence can be set multiple times.
+ */
+class BitFlagOpt : public EnumOpt {
+public:
+    typedef EnumOpt::Case Case;
+    
+    /**
+     * Basic constructor.
+     *
+     * @param opt     option string
+     * @param cases   pointer to the array of cases
+     * @param valp    pointer to the value
+     * @param valdesc short description for the value 
+     * @param desc    descriptive string
+     * @param setp    optional pointer to indicate whether or not
+                      the option was set
+     */
+    BitFlagOpt(const char* opt, Case* cases, int* valp,
+               const char* valdesc = "", const char* desc = "",
+               bool* setp = NULL)
+        : EnumOpt(opt, cases, valp, valdesc, desc, setp)
+    {
+        is_bitflag_ = true;
+    }
+       
+    /**
+     * Alternative constructor with both short and long options,
+     * suitable for getopt calls.
+     *
+     * @param shortopt  short option character
+     * @param longopt   long option string
+     * @param cases     pointer to the array of cases
+     * @param valp      pointer to the value
+     * @param valdesc 	short description for the value 
+     * @param desc      descriptive string
+     * @param setp      optional pointer to indicate whether or not
+                        the option was set
+     */
+    BitFlagOpt(char shortopt, const char* longopt,
+               Case* cases, int* valp,
+               const char* valdesc = "", const char* desc = "",
+               bool* setp = NULL)
+        : EnumOpt(shortopt, longopt, cases, valp, valdesc, desc, setp)
+    {
+        is_bitflag_ = true;
+    }
 };
 
 #ifdef OASYS_BLUETOOTH_ENABLED

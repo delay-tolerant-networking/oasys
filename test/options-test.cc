@@ -251,6 +251,50 @@ DECLARE_TEST(RateOptTest) {
     return UNIT_TEST_PASSED;
 }
 
+oasys::EnumOpt::Case EnumOptCases[] = {
+    {"a", 1},
+    {"b", 2},
+    {"c", 4},
+    {0, 0}
+};
+
+DECLARE_TEST(EnumOptTest) {
+    int val = 0;
+    EnumOpt opt("opt", EnumOptCases, &val);
+    TEST_VALID2("a", 1, "a");
+    TEST_VALID2("b", 2, "b");
+    TEST_VALID2("c", 4, "c");
+
+    TEST_VALID2("A", 1, "a");
+    TEST_VALID2("B", 2, "b");
+    TEST_VALID2("C", 4, "c");
+
+    TEST_INVALID("");
+    TEST_INVALID("d");
+
+    return UNIT_TEST_PASSED;
+}
+
+DECLARE_TEST(BitFlagOptTest) {
+    int val = 0;
+    BitFlagOpt opt("opt", EnumOptCases, &val);
+    TEST_VALID2("a", 1, "a");
+    val = 0;
+    TEST_VALID2("b", 2, "b");
+    val = 0;
+    TEST_VALID2("c", 4, "c");
+    val = 0;
+    
+    TEST_VALID2("a", 1, "a");
+    TEST_VALID2("b", 3, "ab");
+    TEST_VALID2("c", 7, "abc");
+
+    TEST_INVALID("");
+    TEST_INVALID("d");
+
+    return UNIT_TEST_PASSED;
+}
+
 DECLARE_TESTER(OptionsTester) {
     ADD_TEST(BoolOptTest);
     ADD_TEST(IntOptTest);
@@ -261,6 +305,8 @@ DECLARE_TESTER(OptionsTester) {
     ADD_TEST(SizeOptTest);
     ADD_TEST(DoubleOptTest);
     ADD_TEST(RateOptTest);
+    ADD_TEST(EnumOptTest);
+    ADD_TEST(BitFlagOptTest);
 }
 
 DECLARE_TEST_FILE(OptionsTester, "Options Tester");

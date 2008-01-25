@@ -603,7 +603,9 @@ InAddrOpt::get(StringBuffer* buf)
 //----------------------------------------------------------------------
 EnumOpt::EnumOpt(const char* opt, Case* cases, int* valp,
                  const char* valdesc, const char* desc, bool* setp)
-    : Opt(0, opt, valp, setp, true, valdesc, desc), cases_(cases)
+    : Opt(0, opt, valp, setp, true, valdesc, desc),
+      cases_(cases),
+      is_bitflag_(false)
 {
 }
 
@@ -612,7 +614,8 @@ EnumOpt::EnumOpt(char shortopt, const char* longopt,
                  Case* cases, int* valp,
                  const char* valdesc, const char* desc, bool* setp)
     : Opt(shortopt, longopt, valp, setp, true, valdesc, desc), 
-      cases_(cases)
+      cases_(cases),
+      is_bitflag_(false)
 {
 }
 
@@ -628,7 +631,11 @@ EnumOpt::set(const char* val, size_t len)
     {
         if (!strcasecmp(cases_[i].key, val)) {
 
-            (*(int*)valp_) = cases_[i].val;
+            if (is_bitflag_) {
+                (*(int*)valp_) |= cases_[i].val;
+            } else {
+                (*(int*)valp_) = cases_[i].val;
+            }
             
             if (setp_)
                 *setp_ = true;
@@ -649,9 +656,14 @@ EnumOpt::get(StringBuffer* buf)
 
     while (cases_[i].key != 0)
     {
-        if ((*(int*)valp_) == cases_[i].val) {
+        int val = (*(int*)valp_);
+
+        if (val == cases_[i].val ||
+            (is_bitflag_ && (val & cases_[i].val)))
+        {
             buf->append(cases_[i].key);
-            return;
+            if (! is_bitflag_)
+                return;
         }
         ++i;
     }
