@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <errno.h>
 
+#include "../compat/inttypes.h"
 #include "../debug/FatalSignals.h"
 #include "../debug/Log.h"
 #include "../io/PrettyPrintBuffer.h"
