@@ -25,6 +25,7 @@ core
 .glimpse_*
 *.d
 *.dylib
+*.dSYM
 autoscan.log
 config.cache
 config.log
@@ -36,6 +37,7 @@ autom4te.cache
 Rules.make
 System.make
 oasys-config.h
+doc/doxygen/*
 test/*-test
 tools/md5chunks
 tools/oasys_tclsh
