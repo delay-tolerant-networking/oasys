@@ -23,7 +23,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-
+#
 ## --------------------- ##
 ## M4sh Initialization.  ##
 ## --------------------- ##
@@ -716,6 +716,8 @@ INCFLAGS
 OASYS_INCDIR
 OASYS_LIBDIR
 OASYS_ETCDIR
+OASYS_LDFLAGS
+OASYS_COMPAT_LDFLAGS
 OASYS_VERSION
 EXTLIB_CFLAGS
 EXTLIB_LDFLAGS
@@ -9800,6 +9802,26 @@ INCFLAGS="-I\$(SRCDIR)/ext"
 
     OASYS_VERSION=`$OASYS_ETCDIR/tools/extract-version $OASYS_ETCDIR/oasys-version.dat version`
 
+    #
+    # By default, oasys apps link statically to make it easier when
+    # linking with a source directory.
+    #
+
+    if test -f $OASYS_LIBDIR/liboasys-$OASYS_VERSION.a ; then
+	OASYS_LDFLAGS="$OASYS_LIBDIR/liboasys-$OASYS_VERSION.a"
+	OASYS_COMPAT_LDFLAGS="$OASYS_LIBDIR/liboasyscompat-$OASYS_VERSION.a"
+
+    elif $ac_oasysdir = /usr ; then
+	OASYS_LDFLAGS="-loasys-$OASYS_VERSION"
+	OASYS_COMPAT_LDFLAGS="-loasyscompat-$OASYS_VERSION"
+
+    else
+	OASYS_LDFLAGS="-L$OASYS_LIBDIR -loasys-$OASYS_VERSION"
+	OASYS_COMPAT_LDFLAGS="-L$OASYS_LIBDIR -loasyscompat-$OASYS_VERSION"
+    fi
+
+
+
 
 
 
@@ -10524,6 +10546,8 @@ INCFLAGS!$INCFLAGS$ac_delim
 OASYS_INCDIR!$OASYS_INCDIR$ac_delim
 OASYS_LIBDIR!$OASYS_LIBDIR$ac_delim
 OASYS_ETCDIR!$OASYS_ETCDIR$ac_delim
+OASYS_LDFLAGS!$OASYS_LDFLAGS$ac_delim
+OASYS_COMPAT_LDFLAGS!$OASYS_COMPAT_LDFLAGS$ac_delim
 OASYS_VERSION!$OASYS_VERSION$ac_delim
 EXTLIB_CFLAGS!$EXTLIB_CFLAGS$ac_delim
 EXTLIB_LDFLAGS!$EXTLIB_LDFLAGS$ac_delim
@@ -10534,7 +10558,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 91; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 93; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
