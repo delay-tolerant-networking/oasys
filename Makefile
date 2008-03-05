@@ -334,16 +334,16 @@ lib/%.$(SHLIB_EXT): lib/%-$(OASYS_VERSION).$(SHLIB_EXT)
 
 # Rules for linking tools
 tools/md5chunks: tools/md5chunks.o $(LIBFILES)
-	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) $(OASYS_LDFLAGS)
+	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) $(OASYS_LDFLAGS) $(EXTLIB_LDFLAGS)
 
 tools/oasys_tclsh: tools/oasys_tclsh.o $(LIBFILES)
-	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) $(OASYS_LDFLAGS)
+	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) $(OASYS_LDFLAGS) $(EXTLIB_LDFLAGS)
 
 tools/proc-watcher: tools/proc-watcher.o
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS)
 
 tools/zsize: tools/zsize.o $(LIBFILES)
-	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) $(OASYS_LDFLAGS)
+	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) $(OASYS_LDFLAGS) $(EXTLIB_LDFLAGS)
 
 #
 # Installation rules
