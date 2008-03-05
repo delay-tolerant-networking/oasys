@@ -27,8 +27,12 @@ where debian_version is the release name (i.e. sarge/etch) of the
 target system:
 
 reprepro -b <repository_dir> includedeb <debian_version> \
-	 liboasys1-<version>_<arch>.deb
+	 liboasys-<version>_<arch>.deb
+
+reprepro -b <repository_dir> includedeb <debian_version> \
+	 liboasys-dev-<version>_<arch>.deb
+
 reprepro -b <repository_dir> -S contrib -P optional \
-	 includedsc <debian_version> liboasys_-<version>.dsc
+	 includedsc <debian_version> liboasys_<version>.dsc
 
 
