@@ -9811,7 +9811,7 @@ INCFLAGS="-I\$(SRCDIR)/ext"
 	OASYS_LDFLAGS="$OASYS_LIBDIR/liboasys-$OASYS_VERSION.a"
 	OASYS_COMPAT_LDFLAGS="$OASYS_LIBDIR/liboasyscompat-$OASYS_VERSION.a"
 
-    elif $ac_oasysdir = /usr ; then
+    elif test $ac_oasysdir = /usr ; then
 	OASYS_LDFLAGS="-loasys-$OASYS_VERSION"
 	OASYS_COMPAT_LDFLAGS="-loasyscompat-$OASYS_VERSION"
 
