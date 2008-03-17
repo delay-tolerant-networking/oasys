@@ -45,3 +45,6 @@ tools/oasys_tclsh
 tools/proc-watcher
 tools/zsize
 build*
+include*
+share*
+
