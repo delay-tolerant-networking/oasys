@@ -10,5 +10,3 @@ Build / Installation:
 ./configure
 make
 
-Note: there is (at present) no install script or make target, as 
-oasys is designed to be statically linked into an application.
