@@ -9793,6 +9793,8 @@ INCFLAGS="-I\$(SRCDIR)/ext"
 
 
 
+
+
     #
     # XXX/demmer is there a better way to make the paths absolute??
     #
@@ -9838,6 +9840,13 @@ ac_config_files="$ac_config_files Rules.make"
 
 ac_config_files="$ac_config_files System.make"
 
+
+
+rm -rf include share
+mkdir include
+mkdir share
+ln -s $SRCDIR include/oasys
+ln -s $SRCDIR share/oasys
 
 if test ! $SRCDIR = `pwd` ; then
 

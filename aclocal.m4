@@ -1545,41 +1545,37 @@ dnl
 dnl AC_OASYS_CONFIG [major] [minor]
 dnl
 AC_DEFUN(AC_OASYS_CONFIG, [
+    rm -f oasys
+
     ac_oasysver_major=$1
     ac_oasysver_minor=$2
-    ac_oasysdir=../oasys
+    ac_oasysdir=
 
     AC_ARG_WITH(oasys,
         AC_HELP_STRING([--with-oasys=DIR],
-    		   [location of an oasys installation (default ../oasys)]),
+    		   [location of an oasys installation (default ../oasys or /usr)]),
         ac_oasysdir=$withval) 
 
     AC_MSG_CHECKING([for an oasys installation (version $ac_oasysver_major.$ac_oasysver_minor or better)])
 
-    if test "$ac_oasysdir" = ../oasys -a ! -d ../oasys ; then
-        ac_oasysdir=/usr
+    if test "$ac_oasysdir" = "" ; then
+       if test -d ../oasys ; then
+          ac_oasysdir=../oasys
+       else
+          ac_oasysdir=/usr
+       fi
     fi
 
     #
-    # Check if the oasys directory is a source directory or an
-    # installation by probing for the oasys-version.h file and 
-    # setting the other paths accordingly.
-    # 
-    # When we're done, OASYS_INCDIR points to the parent directory
-    # containing the oasys header files or the source directory itself
-    # with a symlink (oasys -> .), OASYS_LIBDIR points to the
-    # directory where the libraries are. OASYS_ETCDIR points to where
-    # the various scripts are.
+    # Set the oasys paths properly. OASYS_INCDIR points to the parent
+    # directory containing the oasys header files or the source
+    # directory itself with a symlink (include/oasys -> .),
+    # OASYS_LIBDIR points to the directory where the libraries are.
+    # OASYS_ETCDIR points to where the various scripts are.
     #
-    if test -f $ac_oasysdir/oasys-version.h ; then
-        OASYS_INCDIR="$ac_oasysdir"
-        OASYS_LIBDIR="$ac_oasysdir/lib"
-        OASYS_ETCDIR="$ac_oasysdir"
-    else
-        OASYS_INCDIR="$ac_oasysdir/include"
-        OASYS_LIBDIR="$ac_oasysdir/lib"
-        OASYS_ETCDIR="$ac_oasysdir/share/oasys"
-    fi
+    OASYS_INCDIR="$ac_oasysdir/include"
+    OASYS_LIBDIR="$ac_oasysdir/lib"
+    OASYS_ETCDIR="$ac_oasysdir/share/oasys"
 
     if test ! -d $OASYS_INCDIR ; then
        AC_MSG_ERROR(nonexistent oasys include directory $OASYS_INCDIR)
@@ -1606,7 +1602,6 @@ AC_DEFUN(AC_OASYS_CONFIG, [
     #
     # Check the settings to make sure that we can build a program.
     #
-
     ac_save_CFLAGS=$CFLAGS
     CFLAGS="$CFLAGS -I$OASYS_INCDIR"
     
@@ -1632,6 +1627,11 @@ AC_DEFUN(AC_OASYS_CONFIG, [
           AC_MSG_RESULT([no])
 	  AC_MSG_ERROR([can't find compatible oasys install (version $ac_oasysver_major.$ac_oasysver_minor or better) at $ac_oasysdir])
       ])
+
+    #
+    # Create a symlink to the oasys directory for the test scripts
+    #
+    ln -s $ac_oasysdir oasys
 
     CFLAGS=$ac_save_CFLAGS
     LDFLAGS=$ac_save_LDFLAGS

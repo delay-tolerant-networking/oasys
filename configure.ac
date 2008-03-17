@@ -131,10 +131,28 @@ mkdir -p $OASYS_LIBDIR
 INCFLAGS="-I\$(SRCDIR)/ext"
 AC_SUBST(INCFLAGS)
 
+dnl
+dnl Add a hook to create a symlink to .
+dnl
+
+
 AC_OASYS_SUBST_CONFIG
 
 AC_CONFIG_FILES([Rules.make])
 AC_CONFIG_FILES([System.make])
+
+dnl
+dnl Add directories 'include' and 'share', each containing a symlink
+dnl called 'oasys' pointing to the source directory so that the
+dnl include path works properly when using the --with-oasys configure
+dnl option to point to a source directory or a build directory.
+dnl
+
+rm -rf include share
+mkdir include
+mkdir share
+ln -s $SRCDIR include/oasys
+ln -s $SRCDIR share/oasys
 
 if test ! $SRCDIR = `pwd` ; then
    AC_SUBST([SUBDIR])
