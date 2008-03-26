@@ -44,7 +44,7 @@ Daemonizer::daemonize(bool wait_for_notify)
 
     if (wait_for_notify) {
         if (pipe(pipe_) != 0) {
-            fprintf(stderr, "error creating pipe for daemonize process: %s",
+            fprintf(stderr, "error creating pipe for daemonize process: %s\n",
                     strerror(errno));
             exit(1);
         }
@@ -52,7 +52,7 @@ Daemonizer::daemonize(bool wait_for_notify)
 
     pid_t pid = fork();
     if (pid == -1) {
-        fprintf(stderr, "error forking daemon process: %s",
+        fprintf(stderr, "error forking daemon process: %s\n",
                 strerror(errno));
         exit(1);
     }
@@ -70,7 +70,7 @@ Daemonizer::daemonize(bool wait_for_notify)
         int status;
         int count = read(pipe_[0], &status, sizeof(status));
         if (count != sizeof(status)) {
-            fprintf(stderr, "error reading from daemon pipe: %s",
+            fprintf(stderr, "error reading from daemon pipe: %s\n",
                     strerror(errno));
             exit(1);
         }
