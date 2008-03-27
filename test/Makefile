@@ -92,18 +92,18 @@ BINFILES += $(TESTS)
 #
 test/%test: test/%test.cc lib/liboasys.a
 	@mkdir -p test
-	$(CXX) $(CXXFLAGS) $< -o $@ $(LDFLAGS) $(OASYS_LDFLAGS)
+	$(CXX) $(CXXFLAGS) $< -o $@ $(LDFLAGS) $(OASYS_LDFLAGS_STATIC) $(EXTLIB_LDFLAGS)
 
 test/%Test: test/%Test.cc lib/liboasys.a
 	@mkdir -p test
-	$(CXX) $(CXXFLAGS) $< -o $@ $(LDFLAGS) $(OASYS_LDFLAGS)
+	$(CXX) $(CXXFLAGS) $< -o $@ $(LDFLAGS) $(OASYS_LDFLAGS_STATIC) $(EXTLIB_LDFLAGS)
 
 #
 # Override rules for stack-trace-test to disable the cast-align warnings
 #
 test/stack-trace-test: test/stack-trace-test.cc lib/liboasys.a
 	@mkdir -p test
-	$(CXX) $(CXXFLAGS) $< -o $@ -Wno-cast-align $(LDFLAGS) $(OASYS_LDFLAGS)
+	$(CXX) $(CXXFLAGS) $< -o $@ -Wno-cast-align $(LDFLAGS) $(OASYS_LDFLAGS_STATIC) $(EXTLIB_LDFLAGS)
 
 #
 # special rules for the smtp support scripts used in cases where

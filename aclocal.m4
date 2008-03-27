@@ -1649,8 +1649,10 @@ AC_DEFUN(AC_OASYS_SUBST_CONFIG, [
 
     #
     # By default, oasys apps link statically to make it easier when
-    # linking with a source directory.
+    # linking with a source directory, and for building the test apps
+    # that are part of the library itself.
     #
+    OASYS_LDFLAGS_STATIC="$OASYS_LIBDIR/liboasys-$OASYS_VERSION.a"
 
     if test -f $OASYS_LIBDIR/liboasys-$OASYS_VERSION.a ; then
 	OASYS_LDFLAGS="$OASYS_LIBDIR/liboasys-$OASYS_VERSION.a"
@@ -1669,6 +1671,7 @@ AC_DEFUN(AC_OASYS_SUBST_CONFIG, [
     AC_SUBST(OASYS_LIBDIR)
     AC_SUBST(OASYS_ETCDIR)
     AC_SUBST(OASYS_LDFLAGS)
+    AC_SUBST(OASYS_LDFLAGS_STATIC)
     AC_SUBST(OASYS_COMPAT_LDFLAGS)
     AC_SUBST(OASYS_VERSION)
 
