@@ -266,7 +266,7 @@ IPSocket::configure()
         // Force remote addr to match multicast (class D)
         // 224.0.0.0 - 239.255.255.255
         in_addr_t mcast_addr = inet_addr("224.0.0.0");
-        if (mcast_addr & remote_addr_ != mcast_addr) {
+        if ((mcast_addr & remote_addr_) != mcast_addr) {
             logf(LOG_WARN, "multicast option set on non-multicast address: "
                            "%s",intoa(remote_addr_));
             return;
