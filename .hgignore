@@ -4,11 +4,7 @@ syntax: glob
 tags
 TAGS
 *~
-#*
-.#*
-,*
-_$*
-*$
+\.\#*
 .del-*
 *.a
 *.olb
