@@ -254,17 +254,14 @@ StreamUnserialize::process(const char* name, u_int64_t* i)
         return;
     }
     
-    u_int64_t high = (buf[0] << 24) | 
-                     (buf[1] << 16) | 
-                     (buf[2] << 8)  | 
-                     (buf[3] << 0);
-
-    u_int64_t low  = (buf[4] << 24) | 
-                     (buf[5] << 16) | 
-                     (buf[6] << 8)  | 
-                     (buf[7] << 0);
-    
-    *i = (high << 32) | low;
+    *i = (((u_int64_t)buf[0]) << 56) |
+         (((u_int64_t)buf[1]) << 48) |
+         (((u_int64_t)buf[2]) << 40) |
+         (((u_int64_t)buf[3]) << 32) |
+         (((u_int64_t)buf[4]) << 24) |
+         (((u_int64_t)buf[5]) << 16) |
+         (((u_int64_t)buf[6]) << 8) |
+         (((u_int64_t)buf[7]));
 }
 
 //------------------------------------------------------------------
