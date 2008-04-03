@@ -66,7 +66,7 @@ FatalSignals::cancel()
 void
 FatalSignals::handler(int sig)
 {
-    char* signame = "";
+    const char* signame = "";
     switch(sig) {
 #define FATAL(_s) case _s: signame = #_s; break;
 
