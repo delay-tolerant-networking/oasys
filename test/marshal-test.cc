@@ -40,6 +40,7 @@ public:
         e(56789),
         u(INT_MAX),
         u64(18446744073709551615ULL), // copy of ULLONG_MAX since it's non-standard
+        u64alt(123456789012345ULL),        // test for unexpected sign extension
         s1("hello")
     {
         memset(s2, 0, sizeof(s2));
@@ -70,6 +71,7 @@ public:
         e(0),
         u(0),
         u64(0),
+        u64alt(0),
         s1(""),
         const_len(0x99),
         nullterm_len(0x99),
@@ -91,6 +93,7 @@ public:
         action->process("e", &e);
         action->process("u", &u);
         action->process("u64", &u64);
+        action->process("u64alt", &u64alt);
         action->process("s1", &s1);
         action->process("s2", s2, sizeof(s2));
 
@@ -130,6 +133,7 @@ public:
     short     e;
     u_int32_t u;
     u_int64_t u64;
+    u_int64_t u64alt;
     string    s1;
     char      s2[32];
 
@@ -181,6 +185,8 @@ DECLARE_TEST(Compare) {
     CHECK_EQUAL(o1.d, o2.d);
     CHECK_EQUAL(o1.e, o2.e);
     CHECK_EQUAL(o1.u, o2.u);
+    CHECK_EQUAL_U64(o1.u64, o2.u64);
+    CHECK_EQUAL_U64(o1.u64alt, o2.u64alt);
     CHECK_EQUALSTR(o1.s1.c_str(), o2.s1.c_str());
     CHECK_EQUALSTRN(o1.s2, o2.s2, 32);
     
