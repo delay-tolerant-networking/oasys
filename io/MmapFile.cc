@@ -65,8 +65,8 @@ MmapFile::map(const char* filename, int prot, int flags,
     f.logpathf("%s/file", logpath_);
 
     int open_flags = 0;
-    if (flags & PROT_READ)  open_flags |= O_RDONLY;
-    if (flags & PROT_WRITE) open_flags |= O_WRONLY;
+    if (prot & PROT_READ)  open_flags |= O_RDONLY;
+    if (prot & PROT_WRITE) open_flags |= O_WRONLY;
 
     int err;
     int fd = f.open(filename, open_flags, &err);
@@ -79,8 +79,8 @@ MmapFile::map(const char* filename, int prot, int flags,
     len_ = len;
     ptr_ = mmap(0, len, prot, flags, fd, offset);
     if (ptr_ == (void*)-1) {
-        log_err("error in mmap of file '%s': %s",
-                filename, strerror(errno));
+        log_err("error in mmap of file '%s' (len %zu offset %llu): %s",
+                filename, len, U64FMT(offset), strerror(errno));
         ptr_ = NULL;
         len_ = 0;
         return NULL;
