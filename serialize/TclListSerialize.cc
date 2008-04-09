@@ -36,12 +36,26 @@ TclListSerialize::~TclListSerialize()
 {
 }
 
+#if TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 4
+void
+TclListSerialize::process(const char* name, u_int64_t* i)
+{
+    // support for 64 bit ints is only available in tcl 8.4 and
+    // beyond, so we just use a normal int and possibly lose precision
+    Tcl_ListObjAppendElement(interp_, list_obj_, Tcl_NewStringObj(name, -1));
+    Tcl_ListObjAppendElement(interp_, list_obj_, Tcl_NewIntObj(*i));
+}
+
+#else
+
 void
 TclListSerialize::process(const char* name, u_int64_t* i)
 {
     Tcl_ListObjAppendElement(interp_, list_obj_, Tcl_NewStringObj(name, -1));
     Tcl_ListObjAppendElement(interp_, list_obj_, Tcl_NewWideIntObj(*i));
 }
+
+#endif
 
 void
 TclListSerialize::process(const char* name, u_int32_t* i)
