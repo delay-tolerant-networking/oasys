@@ -183,8 +183,7 @@ BerkeleyDBStore::init(const StorageConfig& cfg)
 
     if (cfg.db_txn_) {
         err = dbenv_->set_flags(dbenv_,
-                                DB_AUTO_COMMIT |
-                                DB_LOG_AUTOREMOVE, // every operation is a tx
+                                DB_AUTO_COMMIT, // every operation is a tx
                                 1);
         if (err != 0) 
         {
@@ -841,7 +840,7 @@ BerkeleyDBTable::size() const
 
     stats.ptr = 0;
     
-#if ((DB_VERSION_MAJOR == 4) && (DB_VERSION_MINOR == 2))
+#if ((DB_VERSION_MAJOR == 4) && (DB_VERSION_MINOR <= 2))
     err = db_->stat(db_, &stats.ptr, flags);
 #else
     err = db_->stat(db_, NO_TX, &stats.ptr, flags);
