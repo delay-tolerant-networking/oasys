@@ -19,7 +19,7 @@ using namespace oasys;
 int
 main(int argc, char* const argv[])
 {
-    const char* LOG = "/zlibsize";
+    const char* LOG = "/zsize";
     
     std::string filename = "";
     u_int       len    = 0;
@@ -49,15 +49,23 @@ main(int argc, char* const argv[])
         len = FileUtils::size(filename.c_str());
     }
 
-    MmapFile mm("/zlibsize/mmap");
-    const u_char* src = (const u_char*)mm.map(filename.c_str(), PROT_READ, 0,
+    MmapFile mm("/zsize/mmap");
+    const u_char* src = (const u_char*)mm.map(filename.c_str(),
+                                              PROT_READ,
+                                              MAP_FILE | MAP_PRIVATE,
                                               len, offset);
     if (src == NULL) {
-        log_err_p(LOG, "error mmap'ing file: %s", strerror(errno));
+        log_err_p(LOG, "error mmap'ing file '%s' (len %u offset %u): %s",
+                  filename.c_str(), len, offset, strerror(errno));
         exit(1);
     }
 
+#if OASYS_ZLIB_HAS_COMPRESSBOUND
     unsigned long zlen = compressBound(len);
+#else
+    unsigned long zlen = len;
+#endif
+    
     void* dst = malloc(zlen);
     log_debug_p(LOG, "calling compress on %lu byte buffer: src len %u",
                 zlen, len);
