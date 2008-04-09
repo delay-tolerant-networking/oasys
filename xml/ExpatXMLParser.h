@@ -27,6 +27,11 @@
 #include "XMLParser.h"
 #include "debug/Logger.h"
 
+// for compatibility with old versions of expat
+#ifndef XMLCALL
+#define XMLCALL
+#endif
+
 namespace oasys {
 
 class XMLDocument;
