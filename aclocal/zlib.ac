@@ -36,10 +36,11 @@ AC_DEFUN(AC_CONFIG_ZLIB, [
         AC_MSG_RESULT($ac_use_zlib)
 
         dnl
-        dnl Look for the compress() function in libz
+        dnl Look for the compress() and compressBound() functions in libz
         dnl
         AC_EXTLIB_PREPARE
         AC_SEARCH_LIBS(compress, z, ac_has_libz="yes") 
+        AC_SEARCH_LIBS(compressBound, z, ac_zlib_has_compressBound="yes") 
         AC_EXTLIB_SAVE
 
         dnl
@@ -54,6 +55,11 @@ AC_DEFUN(AC_CONFIG_ZLIB, [
           AC_DEFINE(OASYS_ZLIB_ENABLED, 1,
               [whether zlib support is enabled])
           AC_MSG_RESULT(yes)
+
+	  if test "$ac_zlib_has_compressBound" = yes ; then
+	      AC_DEFINE(OASYS_ZLIB_HAS_COMPRESS_BOUND, 1,
+                  [whether zlib contains compressBound])
+	  fi
 
 	elif test "$ac_use_zlib" = "try" ; then
           AC_MSG_RESULT(no)

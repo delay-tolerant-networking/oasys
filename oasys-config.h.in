@@ -126,6 +126,9 @@
 /* whether zlib support is enabled */
 #undef OASYS_ZLIB_ENABLED
 
+/* whether zlib contains compressBound */
+#undef OASYS_ZLIB_HAS_COMPRESS_BOUND
+
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
