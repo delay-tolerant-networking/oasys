@@ -172,15 +172,11 @@ public:
      * logging system.
      */
     static Log *instance() {
-        __log_assert(shutdown_ == false,
-                     "Logging can't be used after shutdown",
-                     __FILE__, __LINE__);
-        
-        __log_assert((inited_ == true) && (instance_ != NULL),
+        __log_assert((inited_ == true),
                      "Log::init not called yet",
                      __FILE__, __LINE__);
 
-        return instance_; 
+        return &instance_; 
     }
 
     /**
@@ -211,7 +207,7 @@ public:
      * Shut down the logging system.
      */
     static void shutdown();
-    
+
     /**
      * @brief Basic unformatted logging function.
      *
@@ -331,7 +327,6 @@ protected:
     friend class LogCommand;
     
     Log();
-    virtual ~Log();
 
     /**
      * Initialize logging, should be called exactly once from the
@@ -343,7 +338,7 @@ protected:
     /**
      * Singleton instance of the Logging system
      */
-    static Log* instance_;
+    static Log instance_;
 
     /**
      * @brief Outputs @p data to the log file
@@ -372,7 +367,11 @@ private:
         log_level_t level_;
     };
 
-    
+
+    /**
+     * Shutdown implementation.
+     */
+    void fini();
 
     /**
      * Sorting function for log rules. The rules are stored in
@@ -448,11 +447,6 @@ private:
      * Find a rule given a path.
      */
     Rule *find_rule(const char *path);
-
-    /**
-     * Sort a rules list.
-     */
-    static void sort_rules(RuleList* rule_list);
 
     static bool inited_;	///< Flag to ensure one-time intialization
     static bool shutdown_;	///< Flag to mark whether we've shut down

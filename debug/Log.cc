@@ -78,7 +78,7 @@ level2str_t log_levelnames[] =
     { NULL,      LOG_INVALID }
 };
 
-Log* Log::instance_ = NULL;
+Log  Log::instance_;
 bool Log::inited_   = false;
 bool Log::shutdown_ = false;
 bool Log::__debug_no_panic_on_overflow = false;
@@ -98,8 +98,7 @@ void
 Log::init(const char* logfile, log_level_t defaultlvl,
           const char* prefix, const char* debug_path)
 {
-    Log* log = new Log();
-    log->do_init(logfile, defaultlvl, prefix, debug_path);
+    instance_.do_init(logfile, defaultlvl, prefix, debug_path);
 }
 
 //----------------------------------------------------------------------
@@ -107,7 +106,6 @@ void
 Log::do_init(const char* logfile, log_level_t defaultlvl,
              const char* prefix, const char *debug_path)
 {
-    ASSERT(instance_ == NULL);
     ASSERT(!inited_);
     ASSERT(!shutdown_);
 
@@ -115,6 +113,8 @@ Log::do_init(const char* logfile, log_level_t defaultlvl,
     logfile_.assign(logfile);
     if (logfile_.compare("-") == 0) {
         logfd_ = 1; // stdout
+    } else if (logfile_.compare("--") == 0) {
+        logfd_ = 2; // stderr
     } else {
         logfd_ = open(logfile_.c_str(), O_CREAT | O_WRONLY | O_APPEND,
                       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
@@ -141,14 +141,18 @@ Log::do_init(const char* logfile, log_level_t defaultlvl,
     parse_debug_file(debug_path);
 
     inited_ = true;
-    instance_ = this;
 }
 
 //----------------------------------------------------------------------
-Log::~Log()
+void
+Log::fini()
 {
+    log_debug_p("/log", "shutting down");
     close(logfd_);
     logfd_ = -1;
+
+    rule_lists_[0].clear();
+    rule_lists_[1].clear();
 
     delete output_lock_;
 }
@@ -157,8 +161,15 @@ Log::~Log()
 void
 Log::shutdown()
 {
-    delete instance_;
-    instance_ = NULL;
+    if (!inited_) {
+        return;
+    }
+            
+    if (shutdown_) {
+        return;
+    }
+    
+    instance_.fini();
     shutdown_ = true;
 }
 
@@ -306,8 +317,6 @@ Log::parse_debug_file(const char* debug_path)
     
     fclose(fp);
 
-    sort_rules(new_rule_list);
-
     if (inited_) {
         logf("/log", LOG_ALWAYS, "reparsed debug file... found %d rules",
              (int)new_rule_list->size());
@@ -328,29 +337,6 @@ Log::rule_compare(const Rule& rule1, const Rule& rule2)
         return true;
 
     return false;
-}
-
-//----------------------------------------------------------------------
-void
-Log::sort_rules(RuleList* rule_list)
-{
-    // Now that it's been parsed, sort the list based on the length
-    // and the level (if the lengths are equal)
-    std::sort(rule_list->begin(), rule_list->end(), Log::rule_compare);
-
-#ifndef NDEBUG
-    // Sanity assertion
-    if (rule_list->size() > 0) {
-        RuleList::iterator itr;
-        Rule* prev = 0;
-        for (itr = rule_list->begin(); itr != rule_list->end(); ++itr) {
-            if (prev != 0) {
-                ASSERT(prev->path_.length() >= itr->path_.length());
-                prev = &(*itr);
-            }
-        }
-    }
-#endif // NDEBUG
 }
 
 //----------------------------------------------------------------------
@@ -391,16 +377,12 @@ Log::find_rule(const char *path)
     {
         rule = &(*iter);
 
-        if (rule->path_.length() > pathlen) {
-            continue; // can't be a match
-        }
-
         const char* rule_path = rule->path_.data();
         size_t rulelen = rule->path_.length();
+
+        if (rulelen > pathlen) continue;
         
-        size_t minlen = (pathlen < rulelen) ? pathlen : rulelen;
-        
-        if (strncmp(rule_path, path, minlen) == 0) 
+        if (strncmp(rule_path, path, rulelen) == 0) 
         {
             return rule; // match!
         }
@@ -651,7 +633,10 @@ Log::log(const std::string& path, log_level_t level,
          const std::string& msg, bool prefix_each_line)
 {
     ASSERT(inited_);
-    ASSERT(!shutdown_);
+
+    if (shutdown_) {
+        return -1;
+    }
 
     int rval = 0;
 
@@ -743,6 +728,10 @@ Log::log(const std::string& path, log_level_t level,
 int
 Log::output(const struct iovec* iov, int iovcnt)
 {
+    if (shutdown_) {
+        return -1;
+    }
+    
 #ifdef CHECK_NON_PRINTABLE
     for (int i = 0; i < iovcnt; ++i) {
         void* data  = iov->iov_base;
@@ -771,9 +760,15 @@ Log::output(const struct iovec* iov, int iovcnt)
 
     int size = IO::iovec_size(iov, iovcnt);
     (void)size;
-    ASSERTF(ret == size,
-            "unexpected return from IO::writevall (got %d, expected %d): %s",
-            ret, size, strerror(errno));
+    if (ret != size) {
+        volatile static bool output_error_printed = false;
+        if (! output_error_printed) {
+            output_error_printed = true;
+            fprintf(stderr,
+                    "Log system output error writing data (wrote %d/%d): %s\n",
+                    ret, size, strerror(errno));
+        }
+    }
     
     errno = save_errno;
     
@@ -787,7 +782,10 @@ Log::vlogf(const char* path, log_level_t level,
            const char* fmt, va_list ap)
 {
     ASSERT(inited_);
-    ASSERT(!shutdown_);
+
+    if (shutdown_) {
+        return -1;
+    }
 
     if ((path == NULL) || (fmt == NULL))
         return -1;
