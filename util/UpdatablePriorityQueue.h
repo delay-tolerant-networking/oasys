@@ -49,6 +49,7 @@ public:
         {
             if ((*i) == __x) {
                 this->update(i);
+                return;
             }
         }
     }
