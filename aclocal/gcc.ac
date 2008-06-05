@@ -373,27 +373,6 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
 	 	       [additional options to pass to the linker]),
                        EXTRA_LDFLAGS=$withval)
     AC_SUBST(EXTRA_LDFLAGS)
-
-    AC_CACHE_CHECK([whether gcc accepts -Wno-long-double (Apple OSX only)],
-	           oasys_cv_prog_gcc_w_no_long_double, [
-        CPPFLAGS="$CPPFLAGS -Wno-long-double"
-	AC_LINK_IFELSE(
-	  AC_LANG_PROGRAM(
-	    [],
-            [/* nothing */]
-	  ),
-          [ 
-              oasys_cv_prog_gcc_w_no_long_double=yes
-          ],
-          [
-              oasys_cv_prog_gcc_w_no_long_double=no
-          ])
-        CPPFLAGS=$CPPFLAGS_save
-    ])
-
-    if test $oasys_cv_prog_gcc_w_no_long_double = yes ; then
-        CPPFLAGS="$CPPFLAGS -Wno-long-double"
-    fi
 ])
 
 dnl
