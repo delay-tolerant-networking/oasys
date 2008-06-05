@@ -78,7 +78,7 @@ level2str_t log_levelnames[] =
     { NULL,      LOG_INVALID }
 };
 
-Log  Log::instance_;
+Log* Log::instance_;
 bool Log::inited_   = false;
 bool Log::shutdown_ = false;
 bool Log::__debug_no_panic_on_overflow = false;
@@ -98,7 +98,8 @@ void
 Log::init(const char* logfile, log_level_t defaultlvl,
           const char* prefix, const char* debug_path)
 {
-    instance_.do_init(logfile, defaultlvl, prefix, debug_path);
+    instance_ = new Log();
+    instance_->do_init(logfile, defaultlvl, prefix, debug_path);
 }
 
 //----------------------------------------------------------------------
@@ -169,7 +170,7 @@ Log::shutdown()
         return;
     }
     
-    instance_.fini();
+    instance_->fini();
     shutdown_ = true;
 }
 

@@ -176,7 +176,7 @@ public:
                      "Log::init not called yet",
                      __FILE__, __LINE__);
 
-        return &instance_; 
+        return instance_; 
     }
 
     /**
@@ -338,7 +338,7 @@ protected:
     /**
      * Singleton instance of the Logging system
      */
-    static Log instance_;
+    static Log* instance_;
 
     /**
      * @brief Outputs @p data to the log file
