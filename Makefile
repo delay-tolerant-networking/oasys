@@ -298,7 +298,9 @@ Rules.make: $(SRCDIR)/Rules.make.in $(SRCDIR)/configure
 #
 # Make sure the clean rule knows about which files need cleaning
 #
-CFGFILES := Rules.make oasys-config.h config.cache
+CFGFILES := Rules.make oasys-config.h config.cache config.log config.status \
+	    include/oasys share/oasys
+CFGDIRS  := include share
 
 $(SRCDIR)/Rules.make.in:
 	@echo SRCDIR: $(SRCDIR)
