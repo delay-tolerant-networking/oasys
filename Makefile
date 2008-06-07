@@ -197,6 +197,7 @@ TOOLS	:= \
 	tools/md5chunks				\
 	tools/oasys_tclsh			\
 	tools/proc-watcher			\
+	tools/randfile				\
 	tools/zsize				\
 
 all: checkconfigure libs $(TOOLS)
@@ -343,6 +344,9 @@ tools/oasys_tclsh: tools/oasys_tclsh.o $(LIBFILES)
 
 tools/proc-watcher: tools/proc-watcher.o
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS)
+
+tools/randfile: tools/randfile.o
+	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) $(OASYS_LDFLAGS)  $(EXTLIB_LDFLAGS)
 
 tools/zsize: tools/zsize.o $(LIBFILES)
 	$(CXX) $(CFLAGS) $< -o $@ $(LDFLAGS) $(OASYS_LDFLAGS) $(EXTLIB_LDFLAGS)

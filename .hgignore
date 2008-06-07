@@ -39,6 +39,7 @@ tools/hexdump
 tools/md5chunks
 tools/oasys_tclsh
 tools/proc-watcher
+tools/randfile
 tools/zsize
 build*
 include*
