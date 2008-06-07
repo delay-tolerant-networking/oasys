@@ -2,6 +2,7 @@
 #  include <oasys-config.h>
 #endif
 
+#include <fcntl.h>
 #include <sys/errno.h>
 
 #include "../debug/Log.h"
@@ -20,8 +21,9 @@ public:
     int main(int argc, char* argv[]);
 
 protected:
-    u_int64_t length_;
-    bool      ascii_;
+    u_int64_t   length_;
+    bool        ascii_;
+    std::string output_;
 };
 
 void
@@ -29,10 +31,12 @@ RandFile::fill_options()
 {
     length_ = 0;
     ascii_  = false;
+    output_ = "-";
     
     fill_default_options(0);
     opts_.addopt(new SizeOpt('L', "length", &length_));
-    opts_.addopt(new BoolOpt('A', "ascii",  &ascii_));
+    opts_.addopt(new BoolOpt('A', "ascii", &ascii_));
+    opts_.addopt(new StringOpt('O', "output", &output_));
 }
 
 int
@@ -42,6 +46,19 @@ RandFile::main(int argc, char* argv[])
     logfile_  = "--"; // stderr
     
     init_app(argc, argv);
+    
+    int fd;
+    if (output_ == "-") {
+        fd = 1;
+    } else {
+        fd = open(output_.c_str(), O_CREAT | O_WRONLY, 0644);
+        if (fd < 1) {
+            log_err_p("/randfile", "error opening output file '%s': %s",
+                      output_.c_str(), strerror(errno));
+            exit(1);
+        }
+    }
+    
     ByteGenerator g(random_seed_);
 
     char buf[512];
@@ -64,7 +81,7 @@ RandFile::main(int argc, char* argv[])
 
         output_len = std::min(output_len, length_);
 
-        if (::write(1, output, output_len) != (int)output_len) {
+        if (::write(fd, output, output_len) != (int)output_len) {
             fprintf(stderr, "error writing output: %s", strerror(errno));
             exit(1);
         }
