@@ -602,6 +602,10 @@ TclCommand::cmd_set(int objc, Tcl_Obj** objv, Tcl_Interp* interp)
                     Tcl_GetStringFromObj(objv[0], 0), var, val);
             return TCL_ERROR;
         }
+
+        if (validate(var, val, opt) != 0) {
+            return TCL_ERROR;
+        }
     }
 
     StaticStringBuffer<256> buf;
@@ -609,6 +613,16 @@ TclCommand::cmd_set(int objc, Tcl_Obj** objv, Tcl_Interp* interp)
     set_result(buf.c_str());
 
     return TCL_OK;
+}
+
+//----------------------------------------------------------------------
+int
+TclCommand::validate(const char* var, const char* val, Opt* opt)
+{
+    (void)var;
+    (void)val;
+    (void)opt;
+    return 0;
 }
 
 //----------------------------------------------------------------------

@@ -311,6 +311,13 @@ public:
      * @return 0 on success, -1 on error
      */
     virtual int cmd_set(int objc, Tcl_Obj** objv, Tcl_Interp* interp);
+
+    /**
+     * Validation hook for the "set" command".
+     *
+     * @return 0 on success, -1 on error
+     */
+    virtual int validate(const char* var, const char* val, Opt* opt);
     
     /** 
      * Get the name of the module.
