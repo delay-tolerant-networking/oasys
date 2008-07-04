@@ -169,7 +169,7 @@ public:
     /*!
      * Constructor.
      */
-    Cache(const char*        logpath, 
+    Cache(const std::string& logpath, 
           const _CacheHelper helper,
           bool               reorder_on_access = true)
         : Logger("Cache", logpath),
