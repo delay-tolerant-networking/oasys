@@ -18,6 +18,7 @@
 #  include <oasys-config.h>
 #endif
 
+#include <algorithm>
 #include <cstdarg>
 
 #include "InitSequencer.h"

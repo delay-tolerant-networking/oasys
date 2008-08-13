@@ -18,7 +18,8 @@
 #  include <oasys-config.h>
 #endif
 
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
 #include <unistd.h>
 
 #ifdef HAVE_GETOPT_LONG
