@@ -20,8 +20,8 @@
 
 #ifdef OASYS_BLUETOOTH_ENABLED
 
-#include <errno.h>
-#include <stdlib.h>
+#include <cerrno>
+#include <cstdlib>
 #include <sys/types.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>

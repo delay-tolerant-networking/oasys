@@ -23,7 +23,7 @@
 
 #ifdef OASYS_BLUETOOTH_ENABLED
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <sys/types.h>
 #include <sys/socket.h>
 

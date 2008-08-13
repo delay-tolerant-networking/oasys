@@ -20,7 +20,7 @@
 
 #ifdef OASYS_BLUETOOTH_ENABLED
 
-#include <errno.h>
+#include <cerrno>
 #include "BluetoothSocket.h"
 
 namespace oasys {

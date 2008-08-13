@@ -25,7 +25,7 @@
 #include "Bluetooth.h"
 #include "BluetoothSDP.h"
 
-#include <errno.h>
+#include <cerrno>
 extern int errno;
 
 namespace oasys {
