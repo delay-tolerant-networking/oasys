@@ -112,7 +112,7 @@ gethostbyname(const char* name, in_addr_t* addr)
     int h_err;
 
     
-#if defined(__sun__) // solaris has different args
+#if defined(__sun__) || defined(__QNXNTO__) // Solaris and QNX v6.x have different arguments
     if (::gethostbyname_r(name, &h, buf, sizeof(buf), &h_err) < 0) {
         logf("/oasys/net", LOG_ERR, "error return from gethostbyname_r(%s): %s",
              name, strerror(h_err));
