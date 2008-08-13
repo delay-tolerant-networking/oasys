@@ -4,7 +4,7 @@
 
 #if OASYS_ZLIB_ENABLED
 
-#include <sys/errno.h>
+#include <cerrno>
 #include <zlib.h>
 
 #include "../debug/Log.h"
@@ -13,6 +13,9 @@
 #include "../util/Getopt.h"
 #include "../util/MD5.h"
 
+#if !defined(MAP_FILE)
+#  define MAP_FILE 0
+#endif
 
 using namespace oasys;
 
