@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <sys/poll.h>
 #include <sys/types.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <sys/mman.h>
 
 #include "IO.h"
@@ -34,7 +34,11 @@
 
 namespace oasys {
 
+#if defined(_SC_PAGESIZE)
+static int page_size = sysconf(_SC_PAGESIZE);
+#else
 static int page_size = ::getpagesize();
+#endif
 
 //----------------------------------------------------------------------------
 //! Small helper class which is a copy-on-write iovec and also handle
