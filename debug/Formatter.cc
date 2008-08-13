@@ -17,7 +17,9 @@
 #ifdef HAVE_CONFIG_H
 #  include <oasys-config.h>
 #endif
-#include <stdarg.h>
+
+#include <cstdarg>
+#include <cstring>
 #include <memory.h>
 #include "Formatter.h"
 

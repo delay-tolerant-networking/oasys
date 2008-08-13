@@ -20,8 +20,8 @@
 
 #include "MmapFile.h"
 
+#include <cerrno>
 #include <fcntl.h>
-#include <sys/errno.h>
 
 #include "FileIOClient.h"
 #include "FileUtils.h"
