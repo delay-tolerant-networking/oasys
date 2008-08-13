@@ -93,7 +93,7 @@ Getopt::getopt(const char* progname, int argc, char* const argv[],
         }
 
         if (opt->longopt_) {
-            long_opts[i].name = opt->longopt_;
+            long_opts[i].name = const_cast<char*>(opt->longopt_);
             long_opts[i].has_arg = opt->needval_;
         } else {
             // ignore this slot
