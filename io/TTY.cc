@@ -18,6 +18,8 @@
 #  include <oasys-config.h>
 #endif
 
+#include "../compat/cfsetspeed.h"
+#include "../compat/cfmakeraw.h"
 #include "TTY.h"
 
 namespace oasys {
