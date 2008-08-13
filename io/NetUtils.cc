@@ -45,10 +45,14 @@
 #include "debug/DebugUtils.h"
 #include "debug/Log.h"
 #include "thread/SpinLock.h"
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 #include <sys/socket.h>
 #include <netdb.h>
+
+#ifndef INADDR_NONE
+#  define INADDR_NONE ((unsigned long int) -1)
+#endif
 
 namespace oasys {
 
