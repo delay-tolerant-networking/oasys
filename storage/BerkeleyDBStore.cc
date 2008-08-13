@@ -940,8 +940,8 @@ BerkeleyDBIterator::next()
 {
     ASSERT(valid_);
 
-    bzero(&key_,  sizeof(key_));
-    bzero(&data_, sizeof(data_));
+    memset(&key_, 0, sizeof(key_));
+    memset(&data_, 0, sizeof(data_));
 
     int err = cur_->c_get(cur_, key_.dbt(), data_.dbt(), DB_NEXT);
 
