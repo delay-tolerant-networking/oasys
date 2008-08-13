@@ -15,6 +15,12 @@
 /* Define to 1 if you have the <bluetooth/bluetooth.h> header file. */
 #undef HAVE_BLUETOOTH_BLUETOOTH_H
 
+/* Define to 1 if you have the `cfmakeraw' function. */
+#undef HAVE_CFMAKERAW
+
+/* Define to 1 if you have the `cfsetspeed' function. */
+#undef HAVE_CFSETSPEED
+
 /* Define to 1 if you have the <err.h> header file. */
 #undef HAVE_ERR_H
 
@@ -27,19 +33,19 @@
 /* Define to 1 if you have the `getaddrinfo' function. */
 #undef HAVE_GETADDRINFO
 
-/* Define to 1 if you have the `gethostbyname' function. */
+/* wether gethostbyname exists */
 #undef HAVE_GETHOSTBYNAME
 
-/* Define to 1 if you have the `gethostbyname_r' function. */
+/* wether gethostbyname_r exists */
 #undef HAVE_GETHOSTBYNAME_R
 
 /* Define to 1 if you have the `getopt_long' function. */
 #undef HAVE_GETOPT_LONG
 
-/* Define to 1 if you have the `inet_aton' function. */
+/* wether inet_aton exists */
 #undef HAVE_INET_ATON
 
-/* Define to 1 if you have the `inet_pton' function. */
+/* wether inet_pton exists */
 #undef HAVE_INET_PTON
 
 /* Define to 1 if you have the <inttypes.h> header file. */
@@ -51,13 +57,13 @@
 /* whether pthread_setspecific is defined */
 #undef HAVE_PTHREAD_SETSPECIFIC
 
-/* Define to 1 if you have the `pthread_yield' function. */
+/* wether pthread_yield exists */
 #undef HAVE_PTHREAD_YIELD
 
 /* Define to 1 if the system has the type `ptrdiff_t'. */
 #undef HAVE_PTRDIFF_T
 
-/* Define to 1 if you have the `sched_yield' function. */
+/* wether sched_yield exists */
 #undef HAVE_SCHED_YIELD
 
 /* Define to 1 if you have the <stdint.h> header file. */

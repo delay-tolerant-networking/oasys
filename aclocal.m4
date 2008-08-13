@@ -2019,8 +2019,13 @@ AC_DEFUN(AC_OASYS_SYSTEM_LIBRARIES, [
     AC_SEARCH_LIBS(pthread_create, pthread, [], 
       AC_MSG_ERROR([can't find required library function (pthread_create)]))
 
-    AC_CHECK_FUNC(pthread_yield, [], [AC_SEARCH_LIBS(sched_yield, rt, [],
-      AC_MSG_ERROR([can't find required library function (pthread_yield or sched_yield)]))])
+    AC_SEARCH_LIBS(pthread_yield, [rt pthread],
+                   AC_DEFINE_UNQUOTED(HAVE_PTHREAD_YIELD, 1, [wether pthread_yield exists]),
+                   [])
+
+    AC_SEARCH_LIBS(sched_yield, [rt],
+                   AC_DEFINE_UNQUOTED(HAVE_SCHED_YIELD, 1, [wether sched_yield exists]),
+                   [])
 
     AC_SEARCH_LIBS(pthread_setspecific, pthread, 
                    AC_DEFINE_UNQUOTED(HAVE_PTHREAD_SETSPECIFIC, 1, 
@@ -2030,11 +2035,24 @@ AC_DEFUN(AC_OASYS_SYSTEM_LIBRARIES, [
     AC_SEARCH_LIBS(socket, socket, [],
       AC_MSG_ERROR([can't find required library function (socket)]))
 
-    AC_SEARCH_LIBS(gethostbyname, nsl, [],
-      AC_MSG_ERROR([can't find required library function (gethostbyname)]))
+    AC_SEARCH_LIBS(gethostbyname, [socket nsl xnet],
+                   AC_DEFINE_UNQUOTED(HAVE_GETHOSTBYNAME, 1, [wether gethostbyname exists]),
+                   [])
+
+    AC_SEARCH_LIBS(gethostbyname_r, [socket nsl],
+                   AC_DEFINE_UNQUOTED(HAVE_GETHOSTBYNAME_R, 1, [wether gethostbyname_r exists]),
+                   [])
 
     AC_SEARCH_LIBS(xdr_int, rpc, [],
       AC_MSG_ERROR([can't find required library function (xdr_int)]))
+
+    AC_SEARCH_LIBS(inet_aton, [nsl resolv socket],
+                   AC_DEFINE_UNQUOTED(HAVE_INET_ATON, 1, [wether inet_aton exists]),
+                   [])
+
+    AC_SEARCH_LIBS(inet_pton, [nsl resolv socket],
+                   AC_DEFINE_UNQUOTED(HAVE_INET_PTON, 1, [wether inet_pton exists]),
+                   [])
 
     AC_EXTLIB_SAVE
 ])
@@ -2084,7 +2102,7 @@ dnl Checks for library functions.
 dnl -------------------------------------------------------------------------
 AC_DEFUN(AC_OASYS_SYSTEM_FUNCTIONS, [
     # XXX/demmer get rid of me
-    AC_CHECK_FUNCS([fdatasync getaddrinfo gethostbyname gethostbyname_r getopt_long inet_aton inet_pton pthread_yield sched_yield])
+    AC_CHECK_FUNCS([fdatasync getaddrinfo getopt_long cfmakeraw cfsetspeed])
 ])                                
 
 dnl -------------------------------------------------------------------------
