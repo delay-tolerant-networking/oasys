@@ -31,6 +31,7 @@
 #include "util/StringBuffer.h"
 #include "util/Random.h"
 #include "storage/StorageConfig.h"
+#include "storage/DurableStore.h"
 #include "serialize/TypeShims.h"
 
 using namespace oasys;
