@@ -23,7 +23,7 @@
 
 namespace oasys {
 
-typedef enum uri_parse_err_t {
+enum uri_parse_err_t {
     URI_PARSE_OK,             /* valid URI */
     URI_PARSE_NO_URI,         /* no URI in object */
     URI_PARSE_NO_SEP,         /* missing seperator char ':' */
