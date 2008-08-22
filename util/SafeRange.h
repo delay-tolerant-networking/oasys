@@ -17,6 +17,8 @@
 #ifndef __SAFERANGE_H__
 #define __SAFERANGE_H__
 
+#include <cstddef>
+
 namespace oasys {
 
 /*!
