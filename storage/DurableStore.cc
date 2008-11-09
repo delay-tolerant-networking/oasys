@@ -18,7 +18,7 @@
 #  include <oasys-config.h>
 #endif
 
-#include <sys/errno.h>
+#include <cerrno>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>

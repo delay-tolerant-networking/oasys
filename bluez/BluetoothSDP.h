@@ -25,9 +25,9 @@
 
 #include "../debug/Log.h"
 
-#include <stdio.h>
-#include <errno.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cerrno>
+#include <cstdlib>
 
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/sdp.h>

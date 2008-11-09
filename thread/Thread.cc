@@ -135,7 +135,9 @@ GlobalThreadInit::GlobalThreadInit()
     sigemptyset(&Thread::interrupt_sigset_);
     sigaddset(&Thread::interrupt_sigset_, Thread::INTERRUPT_SIG);
     signal(Thread::INTERRUPT_SIG, Thread::interrupt_signal);
+#  if !defined(__QNXNTO__) // QNX v6.x declares but does not define siginterrupt.
     siginterrupt(Thread::INTERRUPT_SIG, 1);
+#  endif
 #endif
 
 #ifdef OASYS_DEBUG_LOCKING_ENABLED

@@ -186,7 +186,7 @@ public:
     /// Initialize an empty key with the DB_DBT_REALLOC flag
     DBTRef()
     {
-        bzero(&dbt_, sizeof(dbt_));
+        memset(&dbt_, 0, sizeof(dbt_));
         dbt_.flags = DB_DBT_REALLOC;
     }
 
@@ -194,7 +194,7 @@ public:
     /// DB_DBT_USERMEM flag
     DBTRef(void* data, size_t size)
     {
-        bzero(&dbt_, sizeof(dbt_));
+        memset(&dbt_, 0, sizeof(dbt_));
         dbt_.data  = data;
         dbt_.size  = size;
         dbt_.flags = DB_DBT_USERMEM;

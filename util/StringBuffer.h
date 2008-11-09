@@ -18,6 +18,7 @@
 #ifndef _OASYS_STRING_BUFFER_H_
 #define _OASYS_STRING_BUFFER_H_
 
+#include "../compat/inttypes.h"
 #include <algorithm>
 
 #include "../debug/Log.h" 	// for PRINTFLIKE macro

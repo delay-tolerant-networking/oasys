@@ -22,8 +22,9 @@
  * Utilities and stl typedefs for basic_string.
  */
 
-#include <ctype.h>
-#include <string>
+#include <cctype>
+#include <cstring>
+#include <climits>
 #include <vector>
 #include <set>
 #include <map>

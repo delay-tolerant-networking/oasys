@@ -22,7 +22,7 @@
 
 #include "Bluetooth.h"
 #include "RFCOMMClient.h"
-#include <errno.h>
+#include <cerrno>
 
 extern int errno;
 

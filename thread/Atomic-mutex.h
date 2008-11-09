@@ -27,6 +27,7 @@
  * performance.
  */
 
+#include "../compat/inttypes.h"
 #include "../debug/DebugUtils.h"
 #include "../util/Singleton.h"
 

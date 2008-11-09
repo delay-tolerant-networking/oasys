@@ -40,6 +40,16 @@
 #include "util/Glob.h"
 #include "util/Time.h"
 
+#ifndef IOV_MAX
+# if defined(_XOPEN_IOV_MAX)
+#  define       IOV_MAX         _XOPEN_IOV_MAX
+# elif defined(DEF_IOV_MAX)
+#  define       IOV_MAX         DEF_IOV_MAX
+# else
+#  define       IOV_MAX         16
+# endif
+#endif
+
 /**
  * Namespace for the oasys library of system support classes.
  */

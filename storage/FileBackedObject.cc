@@ -4,11 +4,11 @@
 
 #include "FileBackedObject.h"
 
+#include <cerrno>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/errno.h>
 
 #include "../debug/DebugUtils.h"
 #include "../io/FileIOClient.h"

@@ -27,6 +27,8 @@ COMPAT_SRCS :=					\
 	compat/inet_aton.c			\
 	compat/rpc_compat.c			\
 	compat/xdr_int64_compat.c		\
+	compat/cfmakeraw.c			\
+	compat/cfsetspeed.c			\
 
 COMPAT_EXTLIB_SRCS :=				\
 	compat/editline_compat.c		\

@@ -18,10 +18,11 @@
 #  include <oasys-config.h>
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cerrno>
+#include <climits>
 #include <unistd.h>
-#include <errno.h>
 #include <sys/time.h>
 #include <sys/poll.h>
 

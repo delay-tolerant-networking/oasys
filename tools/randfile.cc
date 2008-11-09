@@ -2,8 +2,8 @@
 #  include <oasys-config.h>
 #endif
 
+#include <cerrno>
 #include <fcntl.h>
-#include <sys/errno.h>
 
 #include "../debug/Log.h"
 #include "../io/FileUtils.h"

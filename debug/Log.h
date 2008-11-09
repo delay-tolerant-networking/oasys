@@ -89,14 +89,15 @@
  *             default SSSSS.uuuuuu
  */
 
-#include <stdarg.h>
-#include <stdio.h>
+#include <cstdarg>
+#include <cstdio>
 #include <iostream> /* see http://mailman.dtnrg.org/pipermail/dtn-users/2007-January/000448.html */
-#include <string.h>
+#include <cstring>
 #include <unistd.h>
 #include <sys/time.h>
 #include <string>
 #include <vector>
+#include <strings.h>
 #include <sys/uio.h>
 
 #if defined(__GNUC__)

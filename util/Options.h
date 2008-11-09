@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include "../compat/inet_aton.h"
+#include "../compat/inttypes.h"
 
 #ifdef OASYS_BLUETOOTH_ENABLED
 #include <bluetooth/bluetooth.h>

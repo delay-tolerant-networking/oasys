@@ -129,8 +129,18 @@ FileUtils::rm_all_from_dir(const char* path, bool recursive)
 
         std::string ent_name(path);
         ent_name = ent_name + "/" + ent->d_name;
-        
-        if (recursive && ent->d_type == DT_DIR) {
+
+        bool is_dir = false;
+
+#if defined(DT_DIR)
+        is_dir = (ent->d_type == DT_DIR);
+#else
+        struct stat ss;
+        stat(ent->d_name, &ss);
+        is_dir = S_ISDIR(ss.st_mode);
+#endif
+
+        if (recursive && is_dir) {
             rm_all_from_dir(ent_name.c_str(), true);
             rmdir(ent_name.c_str());
         }

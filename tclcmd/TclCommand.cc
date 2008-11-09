@@ -18,6 +18,7 @@
 #  include <oasys-config.h>
 #endif
 
+#include <climits>
 #include "TclCommand.h"
 #include "DebugCommand.h"
 #include "GettimeofdayCommand.h"

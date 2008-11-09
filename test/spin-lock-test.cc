@@ -30,7 +30,7 @@
 
 using namespace oasys;
 
-SpinLock lock;
+SpinLock slock;
 SpinLock lock2;
 volatile int nspins = 0;
 volatile int total  = 0;
@@ -123,15 +123,15 @@ test(const char* what, SpinLock* lock1, SpinLock* lock2, int n)
 }
 
 DECLARE_TEST(SharedLockQuick) {
-    return test("shared", &lock, &lock, 100);
+    return test("shared", &slock, &slock, 100);
 }
 
 DECLARE_TEST(SharedLock) {
-    return test("shared", &lock, &lock, 10000000);
+    return test("shared", &slock, &slock, 10000000);
 }
 
 DECLARE_TEST(SeparateLock) {
-    return test("shared", &lock, &lock2, 10000000);
+    return test("shared", &slock, &lock2, 10000000);
 }
     
 DECLARE_TEST(NoLock) {

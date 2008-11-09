@@ -24,7 +24,7 @@
 #include "BluetoothServer.h"
 #include "debug/Log.h"
 
-#include <errno.h>
+#include <cerrno>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
