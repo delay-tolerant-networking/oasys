@@ -18,6 +18,8 @@
 #  include <oasys-config.h>
 #endif
 
+#include <cstring>
+
 #include "OptParser.h"
 
 namespace oasys {

@@ -20,6 +20,7 @@
 
 #include <cstdlib>
 #include <cstdio>
+#include <cstring>
 #include <unistd.h>
 
 #ifdef HAVE_GETOPT_LONG
