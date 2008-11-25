@@ -48,12 +48,12 @@ TclCommandList*   TclCommandInterp::auto_reg_ = NULL;
 
 //----------------------------------------------------------------------
 TclCommandInterp::TclCommandInterp(const char* logpath)
-    : Logger("TclCommandInterp", logpath)
+    : Logger("TclCommandInterp", "%s", logpath)
 {}
 
 //----------------------------------------------------------------------
 int
-TclCommandInterp::do_init(char* argv0, bool no_default_cmds)
+TclCommandInterp::do_init(const char* argv0, bool no_default_cmds)
 {
     interp_ = Tcl_CreateInterp();
     lock_   = new SpinLock();
@@ -140,7 +140,7 @@ TclCommandInterp::shutdown()
 
 //----------------------------------------------------------------------
 int
-TclCommandInterp::init(char* argv0,
+TclCommandInterp::init(const char* argv0,
                        const char* logpath,
                        bool no_default_cmds)
 {

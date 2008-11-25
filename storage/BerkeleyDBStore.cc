@@ -73,7 +73,7 @@ BerkeleyDBStore::~BerkeleyDBStore()
 
     if (busy)
     {
-        log_err(err_str.c_str());
+        log_err("%s", err_str.c_str());
     }
 
     if (deadlock_timer_) {

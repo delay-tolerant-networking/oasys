@@ -37,8 +37,24 @@
 #include <hash_map>
 #define _std std
 #else
+/* Note that these classes are now deprecated, we'll need to rewrite */
+/* the code at some point to use the new standard classes. In the */
+/* meantime, quiet the warnings. */
+
+/* undefine __DEPRECATED and remember it was set*/
+#ifdef __DEPRECATED
+# define __DEPRECATED_save
+# undef __DEPRECATED
+#endif
+
 #include <ext/hash_set>
 #include <ext/hash_map>
+
+/* re-define __DEPRECATED if it was set */
+#ifdef __DEPRECATED_save
+# define __DEPRECATED
+#endif
+
 #define _std __gnu_cxx
 #endif
 

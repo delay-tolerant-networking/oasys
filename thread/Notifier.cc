@@ -28,7 +28,7 @@
 namespace oasys {
 
 Notifier::Notifier(const char* logpath, bool quiet)
-    : Logger("Notifier", logpath), 
+    : Logger("Notifier", "%s", logpath), 
       count_(0),
       quiet_(quiet),
       busy_notifiers_(0)

@@ -18,7 +18,22 @@
 #define __CACHE_H__
 
 #include <map>
+
+/* Note that these classes are now deprecated, we'll need to rewrite */
+/* the code at some point to use the new standard classes. In the */
+/* meantime, quiet the warnings. */
+/* undefine __DEPRECATED and remember it was set*/
+#ifdef __DEPRECATED
+# define __DEPRECATED_save
+# undef __DEPRECATED
+#endif
+
 #include <ext/hash_map>
+
+/* re-define __DEPRECATED if it was set */
+#ifdef __DEPRECATED_save
+# define __DEPRECATED
+#endif
 
 #include "../debug/InlineFormatter.h"
 #include "../debug/Logger.h"

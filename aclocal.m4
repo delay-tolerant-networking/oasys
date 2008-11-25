@@ -250,7 +250,7 @@ dnl
 dnl Main macro for finding a usable db installation 
 dnl
 AC_DEFUN(AC_CONFIG_DB, [
-    ac_dbvers='4.6 4.5 4.4 4.3 4.2 4.1'
+    ac_dbvers='4.7 4.6 4.5 4.4 4.3 4.2 4.1'
     ac_dbdir='yes'
 
     AC_ARG_WITH(db,
@@ -749,15 +749,11 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_VERSION, [
     dnl Figure out the version and set version-specific options
     dnl
     AC_CACHE_CHECK(for the version of the GNU C compiler, oasys_cv_prog_gccver, [
-      oasys_cv_prog_gccver=`$CC --version | head -n 1`
-      oasys_cv_prog_gccver=`echo $oasys_cv_prog_gccver | sed 's/.*gcc.*(GCC) //'`
-      oasys_cv_prog_gccver=`echo $oasys_cv_prog_gccver | sed 's/ .*//'`
+      oasys_cv_prog_gccver=`$CC -dumpversion | cut -d. -f1-2`
     ])      
 
     AC_CACHE_CHECK(for the version of the GNU C++ compiler, oasys_cv_prog_gxxver, [
-      oasys_cv_prog_gxxver=`$CXX --version | head -n 1`
-      oasys_cv_prog_gxxver=`echo $oasys_cv_prog_gxxver | sed 's/.*g++.*(GCC) //'`
-      oasys_cv_prog_gxxver=`echo $oasys_cv_prog_gxxver | sed 's/ .*//'`
+      oasys_cv_prog_gxxver=`$CXX -dumpversion | cut -d. -f1-2`
     ])
 
     if test $oasys_cv_prog_gccver != $oasys_cv_prog_gxxver ; then

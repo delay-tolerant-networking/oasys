@@ -26,7 +26,7 @@ namespace oasys {
 RateLimitedSocket::RateLimitedSocket(const char* logpath,
                                      u_int32_t rate,
                                      IPSocket* socket)
-    : Logger("RateLimitedSocket", logpath),
+    : Logger("RateLimitedSocket", "%s", logpath),
       bucket_(logpath, rate, 65535 * 8 /* max udp packet */),
       socket_(socket)
 {

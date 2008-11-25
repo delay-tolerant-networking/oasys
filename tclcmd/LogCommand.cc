@@ -87,7 +87,7 @@ LogCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
         return TCL_ERROR;
     }
     
-    logf(argv[1], level, argv[3]);
+    logf(argv[1], level, "%s", argv[3]);
 
     return TCL_OK;
 }

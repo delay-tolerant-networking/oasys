@@ -25,7 +25,7 @@ namespace oasys {
 //----------------------------------------------------------------------
 RefCountedObject::RefCountedObject(const char* logpath)
     : refcount_(0),
-      logger_("RefCountedObject", logpath)
+      logger_("RefCountedObject", "%s", logpath)
 {
 }
 

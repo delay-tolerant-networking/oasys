@@ -27,7 +27,7 @@ namespace oasys {
 App::App(const char* classname,
          const char* name,
          const char* version)
-    : Logger(classname, name),
+    : Logger(classname, "%s", name),
       name_(name),
       version_(version),
       extra_usage_(""),

@@ -32,7 +32,7 @@ namespace oasys {
 
 //----------------------------------------------------------------------------
 OnOffNotifier::OnOffNotifier(const char* logpath, bool quiet)
-    : Logger("OnOffNotifier", (logpath == 0) ? "" : logpath), 
+    : Logger("OnOffNotifier", "%s", (logpath == 0) ? "" : logpath), 
       waiter_(false),
       quiet_(quiet),
       active_(false)

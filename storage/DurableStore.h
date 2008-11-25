@@ -101,7 +101,7 @@ public:
      * must be called before it can be used.
      */
     DurableStore(const char* logpath)
-        : Logger("DurableStore", logpath), impl_(0)
+        : Logger("DurableStore", "%s", logpath), impl_(0)
     { 
     }
 

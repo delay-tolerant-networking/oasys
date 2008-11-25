@@ -39,7 +39,7 @@
 namespace oasys {
 
 IPSocket::IPSocket(int socktype, const char* logbase)
-    : Logger("IPSocket", logbase)
+    : Logger("IPSocket", "%s", logbase)
 {
     state_       = INIT;
     local_addr_  = INADDR_ANY;

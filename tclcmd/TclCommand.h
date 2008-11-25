@@ -66,7 +66,7 @@ public:
     /**
      * Initialize the interpreter instance.
      */
-    static int init(char* objv0,
+    static int init(const char* objv0,
                     const char* logpath = "/command",
                     bool no_default_cmds = false);
 
@@ -229,7 +229,7 @@ protected:
     /**
      * Do all of the actual initialization.
      */
-    int do_init(char* objv0, bool no_default_cmds);
+    int do_init(const char* objv0, bool no_default_cmds);
     
     /**
      * Destructor to clean up and finalize.

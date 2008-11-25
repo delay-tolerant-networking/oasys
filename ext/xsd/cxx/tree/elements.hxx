@@ -596,7 +596,8 @@ namespace xsd
             //
             assert (size != 0);
 
-            for ( ;i < size && !a_.isSameNode (nl.item (i)); ++i);
+            for ( ;i < size && !a_.isSameNode (nl.item (i)); ++i)
+		;
 
             // a_ should be in the list.
             //

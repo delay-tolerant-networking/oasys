@@ -57,7 +57,8 @@ namespace xsd
 
           for (; next_element_ != 0 &&
                  next_element_->getNodeType () != DOMNode::ELEMENT_NODE;
-               next_element_ = next_element_->getNextSibling ());
+               next_element_ = next_element_->getNextSibling ())
+	       ;
         }
       }
     }

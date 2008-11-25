@@ -30,7 +30,7 @@ namespace oasys {
 
 //----------------------------------------------------------------------
 MmapFile::MmapFile(const char* logpath)
-    : Logger("MmapFile", logpath),
+    : Logger("MmapFile", "%s", logpath),
       ptr_(NULL),
       len_(0)
 {

@@ -52,7 +52,7 @@ FileUtils::readable(const char* path, const char* log)
         return false;
     }
 
-    if (st.st_mode & S_IRUSR == 0) {
+    if ((st.st_mode & S_IRUSR) == 0) {
         logf(log, LOG_DEBUG,
              "FileUtils::readable(%s): no readable permissions", path);
         return false;

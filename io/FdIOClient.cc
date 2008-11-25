@@ -26,7 +26,7 @@ namespace oasys {
 
 FdIOClient::FdIOClient(int fd, Notifier* intr, const char* logpath)
     : IOHandlerBase(intr), 
-      Logger("FdIOClient", logpath), 
+      Logger("FdIOClient", "%s", logpath), 
       fd_(fd)
 {}
 

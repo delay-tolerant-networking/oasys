@@ -34,7 +34,7 @@ _InternalKeyDurableTableClass::InternalKeyDurableTable(const char* classname,
                                                        const char* logpath,
                                                        const char* datatype,
                                                        const char* table_name)
-    : Logger(classname, logpath),
+    : Logger(classname, "%s", logpath),
       datatype_(datatype), table_name_(table_name)
 {
 }

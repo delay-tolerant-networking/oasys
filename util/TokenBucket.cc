@@ -26,7 +26,7 @@ namespace oasys {
 TokenBucket::TokenBucket(const char* logpath,
                          u_int64_t   depth,   /* in bits */
                          u_int64_t   rate     /* in seconds */)
-    : Logger("TokenBucket", logpath),
+    : Logger("TokenBucket", "%s", logpath),
       depth_(depth),
       rate_(rate),
       tokens_(depth) // initialize full

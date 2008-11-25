@@ -859,7 +859,7 @@ IO::rwdata(
     ASSERT(! ((op == READV || op == WRITEV) && 
               (iov == 0 || flags != 0 || args != 0)));
     ASSERT(! ((op == RECV  || op == SEND) && 
-              (iovcnt != 1 | args != 0)));
+              (iovcnt != 1 || args != 0)));
     ASSERT(! ((op == RECVFROM || op == SENDTO)  && 
               (iovcnt != 1 || args == 0)));
     ASSERT(! ((op == RECVMSG || op == SENDMSG) && 

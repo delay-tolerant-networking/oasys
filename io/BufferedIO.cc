@@ -35,7 +35,7 @@ namespace oasys {
 #define DEFAULT_BUFSIZE 1024
 
 BufferedInput::BufferedInput(IOClient* client, const char* logbase)
-    : Logger("BufferedInput", logbase),
+    : Logger("BufferedInput", "%s", logbase),
       client_(client),
       buf_(DEFAULT_BUFSIZE),
       seen_eof_(false)
@@ -221,7 +221,7 @@ BufferedInput::internal_read(size_t len, int timeout_ms)
     bool done;
     do {
         done = pretty.next_str(&s);
-        log_debug(s.c_str());
+        log_debug("%s", s.c_str());
     } while(!done);
 #else
     log_debug("internal_read %zu (timeout %d): cc=%d ret %d",
@@ -266,7 +266,7 @@ BufferedInput::find_nl(const char* nl)
  **************************************************************************/
 BufferedOutput::BufferedOutput(IOClient* client, 
                                const char* logbase)
-    : Logger("BufferedOutput", logbase),
+    : Logger("BufferedOutput", "%s", logbase),
       client_(client),
       buf_(DEFAULT_BUFSIZE), 
       flush_limit_(DEFAULT_FLUSH_LIMIT)
@@ -367,7 +367,7 @@ BufferedOutput::flush()
         bool done;
         do {
             done = pretty.next_str(&s);
-            log_debug(s.c_str());
+            log_debug("%s", s.c_str());
         } while(!done);
 
 #else
