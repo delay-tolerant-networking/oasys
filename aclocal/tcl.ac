@@ -22,7 +22,7 @@ dnl
 dnl Main macro for finding a usable tcl installation 
 dnl
 AC_DEFUN(AC_CONFIG_TCL, [
-    ac_tclvers='8.4 8.3'
+    ac_tclvers='8.5 8.4 8.3'
     ac_tcldir='system'
 
     AC_ARG_WITH(tcl,
