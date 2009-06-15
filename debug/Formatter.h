@@ -31,6 +31,22 @@ namespace oasys {
  * This class is intended to be used with a modified implementation of
  * snprintf/vsnprintf, defined in Formatter.cc.
  *
+ *********************************************************************
+ * WARNING!!!  USERS BEWARE
+ *
+ * Because of the horrible hack used to implement this which goes back
+ * and forth between C++ and C and then back to C++...
+ * ANY CLASS WHICH INHERITS FROM THIS CLASS **MUST** DECLARE THIS CLASS
+ * FIRST IN ITS INHERITANCE LIST.
+ *
+ * If this is done, a pointer to a class instance will look like a
+ * pointer to a Formatter data structure when accessed from C.
+ *
+ * If this is not adhered to, the cast to Formatter* in
+ * formatter_format will not work and generally the test for
+ * FORMAT_MAGIC will fail.
+ *********************************************************************
+ *
  * The modification implements a special control code combination of
  * '*%p' that triggers a call to Formatter::format(), called on the
  * object pointer passed in the vararg list.
@@ -110,9 +126,10 @@ Formatter::assert_valid(const Formatter* obj)
     // usually just used in logging output.
     if (obj->format_magic_ != FORMAT_MAGIC) 
     {
-        fprintf(stderr, 
-                "Formatter object invalid -- maybe need a cast "
-                "to Formatter.");
+        fprintf(stderr,
+                "Formatter object invalid -- check that Formatter is "
+                "the *first* class in inheritance list of class using"
+		"the Formatter::format function!!");
         StackTrace::print_current_trace(false);
         oasys_break();
 
