@@ -59,7 +59,7 @@ AC_DEFUN(AC_CONFIG_DB, [
 
     AC_ARG_WITH(dbver,
         AC_HELP_STRING([--with-dbver=VERSION],
-    		   Berkeley DB versions to try (default 4.5-4.2)),
+    		   Berkeley DB versions to try (default 4.7-4.2)),
         ac_dbvers=$withval)
 
     dnl

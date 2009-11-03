@@ -148,11 +148,11 @@ dnl include path works properly when using the --with-oasys configure
 dnl option to point to a source directory or a build directory.
 dnl
 
-rm -rf include share
-mkdir include
-mkdir share
-ln -s $SRCDIR include/oasys
-ln -s $SRCDIR share/oasys
+#rm -rf include share
+#mkdir include
+#mkdir share
+#ln -s $SRCDIR include/oasys
+#ln -s $SRCDIR share/oasys
 
 if test ! $SRCDIR = `pwd` ; then
    AC_SUBST([SUBDIR])
@@ -162,4 +162,5 @@ fi
 AC_OUTPUT
 
 make buildopts
+
 

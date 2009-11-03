@@ -302,9 +302,7 @@ Rules.make: $(SRCDIR)/Rules.make.in $(SRCDIR)/configure
 # Make sure the clean rule knows about which files need cleaning
 #
 CFGFILES := Rules.make oasys-config.h config.cache config.log config.status \
-	    include/oasys share/oasys
-CFGDIRS  := include share
-
+CFGDIRS  := 
 $(SRCDIR)/Rules.make.in:
 	@echo SRCDIR: $(SRCDIR)
 	@echo error -- Makefile did not set SRCDIR properly
@@ -447,10 +445,6 @@ TESTS := $(patsubst %,test/%,$(TESTS))
 TESTFILES := $(patsubst %,test/%,$(TESTFILES))
 test tests: all $(TESTS) $(TESTFILES)
 
-# run tests
-.PHONY: check
-check:
-	cd test; tclsh UnitTest.tcl
 
 # tags
 .PHONY: tag tags

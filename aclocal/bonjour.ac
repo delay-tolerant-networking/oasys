@@ -18,7 +18,26 @@ dnl
 dnl Autoconf support for configuring whether Apple's Bonjour stack is 
 dnl available on the system
 dnl
+AC_DEFUN(AC_BONJOUR_HELP, [
+cat <<EOF
 
+Configure error with bonjour...
+
+The default is to try to compile in bonjour support and
+if development headers and libraries are not present
+proceed. You appear to have stated '[$ac_use_bonjour]' 
+when asked whether bonjour support should be enabled
+Can't find the required development headers (dns_sd.h) or 
+function (DNSServiceRegister) in dns_sd of the Avahi 
+Apple Bonjour library. 
+
+
+If you do not want bonjour support at all, you can specify
+--without-bonjour.
+
+
+EOF
+])
 AC_DEFUN(AC_CONFIG_BONJOUR, [
 
     AC_ARG_WITH(bonjour,
@@ -32,16 +51,18 @@ AC_DEFUN(AC_CONFIG_BONJOUR, [
 
     AC_MSG_CHECKING([whether bonjour support should be enabled])
 
-    if test "$ac_use_bonjour" = "no"; then
-        AC_MSG_RESULT(no)
 
-    else
-        AC_MSG_RESULT($ac_use_bonjour)
+	if test "$ac_use_bonjour" = "no"; then
+	AC_MSG_RESULT(no)
+
+	else
+	AC_MSG_RESULT($ac_use_bonjour)
 	
 	dnl look for the library and the header
 	AC_EXTLIB_PREPARE
-        AC_CHECK_HEADERS([dns_sd.h], ac_has_bonjour_h=yes)
-        AC_SEARCH_LIBS(DNSServiceRegister, dns_sd, ac_has_bonjour_lib=yes)
+	AC_MSG_CHECKING([searching for the bonjour library development headers])
+        AC_CHECK_HEADERS([dns_sd.h], ac_has_bonjour_h=yes, AC_MSG_RESULT(bonjour header not found))
+        AC_SEARCH_LIBS(DNSServiceRegister, dns_sd, ac_has_bonjour_lib=yes, AC_MSG_RESULT(function not found in bonjour library))
 	AC_EXTLIB_SAVE
 
 	dnl print the result
@@ -55,7 +76,8 @@ AC_DEFUN(AC_CONFIG_BONJOUR, [
           AC_MSG_RESULT(no)
 
         else
-          AC_MSG_ERROR([can't find bonjour headers or library])
+	AC_BONJOUR_HELP
+          AC_MSG_ERROR([can't find the required development headers for the Avahi Apple Bonjour library])
         fi
     fi
 ])

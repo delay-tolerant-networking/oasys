@@ -41,6 +41,9 @@ AC_DEFUN(AC_CONFIG_XERCES, [
     if test "$ac_with_xerces_c" = no; then
         AC_MSG_RESULT([no])
         XERCES_C_ENABLED=0
+	echo ""
+	AC_MSG_NOTICE([Proceeding without xerces-c support as requested])
+	echo ""
     else
 
     dnl

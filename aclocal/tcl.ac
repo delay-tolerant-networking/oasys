@@ -37,14 +37,14 @@ AC_DEFUN(AC_CONFIG_TCL, [
 
     AC_ARG_WITH(tclver,
         AC_HELP_STRING([--with-tclver=VERSION],
-    		   [tcl version to use (default 8.4 or 8.3)]),
+    		   [tcl version to use (default 8.5 - 8.3)]),
         ac_tclvers=$withval)
 
     dnl
     dnl We don't accept --without-tcl
     dnl
     if test $ac_tcldir = no ; then
-       AC_MSG_ERROR([cannot configure without tcl])
+       AC_MSG_ERROR([tcl MUST be installed to configure])
     fi
 
     dnl
@@ -52,9 +52,9 @@ AC_DEFUN(AC_CONFIG_TCL, [
     dnl
     AC_EXTLIB_PREPARE
     AC_SEARCH_LIBS(pow, m, [],
-      AC_MSG_ERROR([can't find required library function (pow)]))
+      AC_MSG_ERROR([can't find standard C library function (pow) required by tcl]))
     AC_SEARCH_LIBS(dlopen, dl, [],
-      AC_MSG_ERROR([can't find required library function (dlopen)]))
+      AC_MSG_ERROR([can't find standard library function (dlopen) required by tcl]))
     AC_EXTLIB_SAVE
 
     dnl
@@ -62,8 +62,8 @@ AC_DEFUN(AC_CONFIG_TCL, [
     dnl specified something with --with-tcl, in which case we force 
     dnl it to redo the checks (i.e. ignore the cached values).
     dnl
-    if test $ac_tcldir = system -a ! x$oasys_cv_path_tcl_h = x ; then
-        echo "checking for tcl installation... (cached) $oasys_cv_path_tcl_h/tcl.h, $oasys_cv_path_tcl_lib -l$oasys_cv_lib_tcl"
+    if test $ac_tcldir = system -a ! x$oasys_cv_path_tcl_h = x ; then \
+	echo "checking for tcl installation... (cached) $oasys_cv_path_tcl_h/tcl.h, $oasys_cv_path_tcl_lib -l$oasys_cv_lib_tcl"
     else
         AC_FIND_TCL
     fi
@@ -99,9 +99,9 @@ AC_DEFUN(AC_FIND_TCL, [
         ac_tcldir=system
         ac_tclincdirs="/usr/include /usr/local/include"
 	for ac_tclver in $ac_tclvers ; do
-           ac_tclincdirs="$ac_tclincdirs /usr/include/tcl$ac_tclver"
-           ac_tclincdirs="$ac_tclincdirs /usr/local/include/tcl$ac_tclver"
-        done
+           ac_tclincdirs="$ac_tclincdirs /usr/include/tcl$ac_tclver /usr/local/include/tcl$ac_tclver"
+           ac_tclincdirs="$ac_tclincdirs"
+       done
         ac_tcllibdirs="/usr/lib /usr/local/lib"
     else
         ac_tclincdirs=$ac_tcldir/include
@@ -203,6 +203,6 @@ AC_DEFUN(AC_FIND_TCL, [
     LIBS="$ac_save_LIBS"
 
     if test x$oasys_cv_path_tcl_h = x ; then
-        AC_MSG_ERROR([can't find usable tcl.h])
+        AC_MSG_ERROR([Please install the tcl development files headers and libraries. Can't find usable tcl.h ])
     fi
 ])

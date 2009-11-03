@@ -53,13 +53,17 @@ AC_DEFUN(AC_CONFIG_MYSQL, [
        AC_DEFINE_UNQUOTED(LIBMYSQLD_ENABLED, 1, 
            [whether the mysql embedded server is enabled])
 
-       AC_SEARCH_LIBS(request_init, wrap, [], 
+	AC_MSG_CHECKING([for mysql external dependencies.: checking for request_init() in libwrap])
+	AC_SEARCH_LIBS(request_init, wrap, [], 
                       AC_MSG_ERROR([can't find request_init() in libwrap]))
-       AC_SEARCH_LIBS(exp, m, [],
+	AC_MSG_CHECKING([for mysql external dependencies.: checking for exp() in libm])
+	AC_SEARCH_LIBS(exp, m, [],
                       AC_MSG_ERROR([can't find exp() in libm]))
-       AC_SEARCH_LIBS(crypt, crypt, [],
+	AC_MSG_CHECKING([for mysql external dependencies.: checking for crypt() in libcrypt])
+	AC_SEARCH_LIBS(crypt, crypt, [],
                       AC_MSG_ERROR([can't find crypt() in libcrypt]))
-       AC_SEARCH_LIBS(compress, z, [],
+	AC_MSG_CHECKING([for mysql external dependencies.: checking for compress() in libz])
+	AC_SEARCH_LIBS(compress, z, [],
                       AC_MSG_ERROR([can't find compress() in libz]))
     fi
 
