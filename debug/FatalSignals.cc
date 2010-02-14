@@ -117,8 +117,8 @@ FatalSignals::handler(int sig)
                 {
                     ThreadId_t thread_id = ids[i]->thread_id();
                     fprintf(stderr,
-                            "fatal handler sending signal to thread %u\n",
-                            (u_int)thread_id);
+                            "fatal handler sending signal to thread %p\n",
+                            (void*)thread_id);
                     pthread_kill(thread_id, sig);
                     sleep(1);
                 }
