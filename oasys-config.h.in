@@ -27,9 +27,6 @@
 /* Define to 1 if you have the <execinfo.h> header file. */
 #undef HAVE_EXECINFO_H
 
-/* Define to 1 if you have the `fdatasync' function. */
-#undef HAVE_FDATASYNC
-
 /* Define to 1 if you have the `getaddrinfo' function. */
 #undef HAVE_GETADDRINFO
 
@@ -101,6 +98,12 @@
 
 /* Define to 1 if the system has the type `u_int32_t'. */
 #undef HAVE_U_INT32_T
+
+/* whether xdr_u_int64_t exists */
+#undef HAVE_XDR_U_INT64_T
+
+/* whether xdr_u_quad_t exists */
+#undef HAVE_XDR_U_QUAD_T
 
 /* whether berkeley db storage support is enabled */
 #undef LIBDB_ENABLED
