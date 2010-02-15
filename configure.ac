@@ -77,13 +77,6 @@ BUILDDIR=$builddir
 AC_SUBST([BUILDDIR])
 
 # -------------------------------------------------------------------------
-# Pull in the checks for gcc and system dependencies
-# -------------------------------------------------------------------------
-AC_OASYS_CONFIG_GCC
-AC_OASYS_CONFIG_SYSTEM
-AC_OASYS_CONFIG_ATOMIC
-
-# -------------------------------------------------------------------------
 # Dump the autoconf cache now to try to avoid redundant checks
 # -------------------------------------------------------------------------
 AC_CACHE_SAVE
@@ -102,6 +95,13 @@ AC_CONFIG_TCLREADLINE
 AC_CONFIG_ZLIB
 AC_CONFIG_XSD
 AC_CONFIG_STORAGE
+
+# -------------------------------------------------------------------------
+# Pull in the checks for gcc and system dependencies
+# -------------------------------------------------------------------------
+AC_OASYS_CONFIG_GCC
+AC_OASYS_CONFIG_SYSTEM
+AC_OASYS_CONFIG_ATOMIC
 
 # -------------------------------------------------------------------------
 # Output
