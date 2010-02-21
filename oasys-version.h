@@ -18,9 +18,9 @@
 #define _OASYS_VERSION_H_
 
 #define OASYS_VERSION_MAJOR	1
-#define OASYS_VERSION_MINOR	3
+#define OASYS_VERSION_MINOR	4
 #define OASYS_VERSION_PATCH	0
-#define OASYS_VERSION_STRING	"OASYS Library version 1.3.0"
+#define OASYS_VERSION_STRING	"OASYS Library version 1.4.0"
 
 extern const char* oasys_version;
 

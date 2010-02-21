@@ -5496,7 +5496,7 @@ $as_echo "try" >&6; }
 $as_echo "yes" >&6; }
     fi
 
-                if test $BUILD_SYSTEM = 'CYGWIN' ; then
+                if test "$BUILD_SYSTEM" = 'CYGWIN' ; then
         TCLREADLINE_ENABLED=0
     else
 
