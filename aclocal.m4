@@ -62,6 +62,79 @@ AC_DEFUN(AC_OASYS_CONFIG_ATOMIC, [
 ])
 
 dnl
+dnl    Copyright 2008 Darren Long, darren.long@mac.com
+dnl    Copyright 2007 Intel Corporation
+dnl 
+dnl    Licensed under the Apache License, Version 2.0 (the "License");
+dnl    you may not use this file except in compliance with the License.
+dnl    You may obtain a copy of the License at
+dnl 
+dnl        http://www.apache.org/licenses/LICENSE-2.0
+dnl 
+dnl    Unless required by applicable law or agreed to in writing, software
+dnl    distributed under the License is distributed on an "AS IS" BASIS,
+dnl    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+dnl    See the License for the specific language governing permissions and
+dnl    limitations under the License.
+dnl
+
+dnl 
+dnl Autoconf support for configuring whether ax25 stack is 
+dnl available on the system
+dnl
+
+AC_DEFUN(AC_CONFIG_AX25, [
+
+    AC_ARG_WITH(ax25,
+      [AC_HELP_STRING([--with-ax25],
+                      [compile in ax25 support (default try)])],
+      [ac_use_ax25=$withval],
+      [ac_use_ax25=try])
+    
+    ac_has_ax25_lib="no"
+    ac_has_axconfig_h="no"
+    ac_has_ax25_h="no"
+    ac_has_axlib_h="no"
+
+    AC_MSG_CHECKING([whether ax25 support should be enabled])
+
+    if test "$ac_use_ax25" = "no"; then
+        AC_MSG_RESULT(no)
+
+    else
+        AC_MSG_RESULT($ac_use_ax25)
+	
+	dnl look for the library and the headers
+	AC_EXTLIB_PREPARE
+        AC_CHECK_HEADERS([netax25/ax25.h], ac_has_ax25_h=yes)
+        AC_CHECK_HEADERS([netax25/axlib.h], ac_has_axlib_h=yes)
+        AC_CHECK_HEADERS([netax25/axconfig.h], ac_has_axconfig_h=yes, [],
+     	[#if HAVE_NETAX25_AX25_H
+     	# include <netax25/ax25.h>
+     	#endif
+     	#if HAVE_NETAX25_AXLIB_H
+     	# include <netax25/axlib.h>
+     	#endif
+     	])       
+        AC_SEARCH_LIBS(ax25_config_load_ports, ax25, ac_has_ax25_lib=yes)
+	AC_EXTLIB_SAVE
+
+	dnl print the result
+        AC_MSG_CHECKING([whether ax25 support was found])
+        if test "$ac_has_ax25_lib" = yes -a "$ac_has_axconfig_h" = yes -a "$ac_has_ax25_h" = yes -a "$ac_has_axlib_h" = yes ; then
+          AC_DEFINE(OASYS_AX25_ENABLED, 1,
+              [whether ax25 support is enabled])
+          AC_MSG_RESULT(yes)
+
+	elif test "$ac_use_ax25" = "try" ; then
+          AC_MSG_RESULT(no)
+
+        else
+          AC_MSG_ERROR([can't find ax25 headers or library])
+        fi
+    fi
+])
+dnl
 dnl    Copyright 2006 Intel Corporation
 dnl 
 dnl    Licensed under the Apache License, Version 2.0 (the "License");
@@ -1468,39 +1541,6 @@ AC_DEFUN(AC_OASYS_FIND_MYSQL, [
         AC_MSG_ERROR([can't find usable mysql library])
     fi
 ])
-
-dnl
-dnl Check if oasys has support for the given feature. Returns result
-dnl in ac_oasys_supports_result.
-dnl
-AC_DEFUN(AC_OASYS_SUPPORTS, [
-    AC_MSG_CHECKING(whether oasys is configured with $1)
-
-    if test x$cv_oasys_supports_$1 != x ; then
-        ac_oasys_supports_result=$cv_oasys_supports_$1
-        AC_MSG_RESULT($ac_oasys_supports_result (cached))
-    else
-
-    ac_save_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS -I$OASYS_INCDIR"
-    AC_LINK_IFELSE(
-      AC_LANG_PROGRAM(
-        [
-            #include <oasys/oasys-config.h>
-            #ifndef $1
-            #error $1 not configured
-            #endif
-        ], [] ),
-      ac_oasys_supports_result=yes,
-      ac_oasys_supports_result=no)
-
-    cv_oasys_supports_$1=$ac_oasys_supports_result
-    
-    AC_MSG_RESULT([$ac_oasys_supports_result])
-    CPPFLAGS=$ac_save_CPPFLAGS
-
-    fi
-])
 dnl
 dnl    Copyright 2007 Intel Corporation
 dnl 
@@ -1699,6 +1739,39 @@ AC_DEFUN(AC_OASYS_SUBST_CONFIG, [
 
     AC_SUBST(SYS_EXTLIB_CFLAGS)
     AC_SUBST(SYS_EXTLIB_LDFLAGS)
+])
+
+dnl
+dnl Check if oasys has support for the given feature. Returns result
+dnl in ac_oasys_supports_result.
+dnl
+AC_DEFUN(AC_OASYS_SUPPORTS, [
+    AC_MSG_CHECKING(whether oasys is configured with $1)
+
+    if test x$cv_oasys_supports_$1 != x ; then
+        ac_oasys_supports_result=$cv_oasys_supports_$1
+        AC_MSG_RESULT($ac_oasys_supports_result (cached))
+    else
+
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS -I$OASYS_INCDIR"
+    AC_LINK_IFELSE(
+      AC_LANG_PROGRAM(
+        [
+            #include <oasys/oasys-config.h>
+            #ifndef $1
+            #error $1 not configured
+            #endif
+        ], [] ),
+      ac_oasys_supports_result=yes,
+      ac_oasys_supports_result=no)
+
+    cv_oasys_supports_$1=$ac_oasys_supports_result
+    
+    AC_MSG_RESULT([$ac_oasys_supports_result])
+    CPPFLAGS=$ac_save_CPPFLAGS
+
+    fi
 ])
 dnl
 dnl    Copyright 2005-2006 Intel Corporation

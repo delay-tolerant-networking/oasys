@@ -95,6 +95,7 @@ AC_CONFIG_TCLREADLINE
 AC_CONFIG_ZLIB
 AC_CONFIG_XSD
 AC_CONFIG_STORAGE
+AC_CONFIG_AX25
 
 # -------------------------------------------------------------------------
 # Pull in the checks for gcc and system dependencies

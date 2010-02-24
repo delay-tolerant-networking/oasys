@@ -51,6 +51,15 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* Define to 1 if you have the <netax25/ax25.h> header file. */
+#undef HAVE_NETAX25_AX25_H
+
+/* Define to 1 if you have the <netax25/axconfig.h> header file. */
+#undef HAVE_NETAX25_AXCONFIG_H
+
+/* Define to 1 if you have the <netax25/axlib.h> header file. */
+#undef HAVE_NETAX25_AXLIB_H
+
 /* whether pthread_setspecific is defined */
 #undef HAVE_PTHREAD_SETSPECIFIC
 
@@ -123,6 +132,9 @@
 /* whether non-atomic "atomic" routines are enabled */
 #undef OASYS_ATOMIC_NONATOMIC
 
+/* whether ax25 support is enabled */
+#undef OASYS_AX25_ENABLED
+
 /* whether bluetooth support is enabled */
 #undef OASYS_BLUETOOTH_ENABLED
 
@@ -152,9 +164,6 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
-
-/* Define to the home page for this package. */
-#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION

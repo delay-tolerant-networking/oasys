@@ -59,6 +59,12 @@ IO_SRCS :=					\
 	io/TTY.cc				\
 	io/UDPClient.cc				\
 
+AX25_SRCS :=				\
+	ax25/AX25Socket.cc			\
+	ax25/AX25Client.cc			\
+	ax25/AX25ConnectedModeClient.cc	\
+	ax25/AX25ConnectedModeServer.cc	\
+
 BLUEZ_SRCS :=					\
 	bluez/Bluetooth.cc			\
 	bluez/BluetoothSDP.cc			\
@@ -175,6 +181,7 @@ SRCS := \
 	$(COMPAT_EXTLIB_SRCS)			\
 	$(DEBUG_SRCS) 				\
 	$(IO_SRCS) 				\
+	$(AX25_SRCS)			\
 	$(BLUEZ_SRCS) 				\
 	$(MEMORY_SRCS)                          \
 	$(SERIALIZE_SRCS)			\
