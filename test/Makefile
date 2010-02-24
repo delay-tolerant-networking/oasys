@@ -15,6 +15,7 @@
 #
 
 TESTS += \
+	ax25-test				\
 	atomic-test				\
 	base16-test				\
 	berkeley-db-test			\
