@@ -18,6 +18,8 @@
 #ifndef _OASYS_ATOMIC_MIPS_H_
 #define _OASYS_ATOMIC_MIPS_H_
 
+#include <sys/types.h>
+
 namespace oasys {
 
 /**
