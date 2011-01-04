@@ -15,7 +15,6 @@
 #
 
 TESTS += \
-	ax25-test				\
 	atomic-test				\
 	base16-test				\
 	berkeley-db-test			\
@@ -58,6 +57,13 @@ TESTS += \
 	uri-test				\
 	util-test				\
 	xml-test				\
+	
+#
+# Tests that need to be explicitly enable (add them above yourself)
+#
+## ax25-test - you should edit the source first and set callsigns appropriately!
+DISABLED_TESTS += \
+	ax25-test				\
 
 #
 # Tests that need to be fixed
