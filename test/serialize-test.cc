@@ -18,6 +18,7 @@
 #  include <oasys-config.h>
 #endif
 
+#include <limits.h>
 #include <iostream>
 #include <debug/DebugUtils.h>
 

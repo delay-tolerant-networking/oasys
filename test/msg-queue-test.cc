@@ -18,6 +18,7 @@
 #  include <oasys-config.h>
 #endif
 
+#include <limits.h>
 #include "thread/Thread.h"
 #include "thread/MsgQueue.h"
 #include "util/UnitTest.h"
