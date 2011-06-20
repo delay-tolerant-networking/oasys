@@ -27,8 +27,8 @@
 #include <map>
 #include <db.h>
 
-#if DB_VERSION_MAJOR != 4
-#error "must use Berkeley DB major version 4"
+#if (DB_VERSION_MAJOR != 4) && (DB_VERSION_MAJOR != 5)
+#error "must use Berkeley DB major version 4 or 5"
 #endif
 
 #include "../debug/Logger.h"
@@ -99,7 +99,7 @@ private:
     /// DB internal error log callback (unfortunately, the function
     /// signature changed between 4.2 and 4.3)
 
-#if DB_VERSION_MINOR >= 3
+#if (DB_VERSION_MINOR >= 3) || (DB_VERSION_MAJOR >= 5)
     static void db_errcall(const DB_ENV* dbenv,
                            const char* errpfx,
                            const char* msg);

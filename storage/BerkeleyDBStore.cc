@@ -512,7 +512,7 @@ BerkeleyDBStore::release_table(const std::string& table)
 }
 
 //----------------------------------------------------------------------------
-#if DB_VERSION_MINOR >= 3
+#if (DB_VERSION_MINOR >= 3) || (DB_VERSION_MAJOR >= 5)
 void
 BerkeleyDBStore::db_errcall(const DB_ENV* dbenv,
                             const char* errpfx,
