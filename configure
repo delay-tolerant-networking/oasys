@@ -8347,7 +8347,7 @@ $as_echo "$pic" >&6; }
 
        if [ $pic = yes ] ; then
 
-           for shopt in -shared "-dynamiclib -single_module" ; do
+           for shopt in -shared "-shared -fPIC" "-dynamiclib -single_module" ; do
              { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler can link a dynamic library with $shopt" >&5
 $as_echo_n "checking whether the compiler can link a dynamic library with $shopt... " >&6; }
 	     LDFLAGS="$shopt $ac_save_LDFLAGS"
@@ -8374,6 +8374,8 @@ $as_echo "$shlink" >&6; }
 $as_echo_n "checking extension for dynamic libraries... " >&6; }
 		 		 if [ "$shopt" = "-dynamiclib -single_module" ] ; then
                      SHLIB_EXT=dylib
+		 elif [ "$shopt" = "-shared -fPIC" ] ; then
+                     SHLIB_EXT=so
                  elif [ $shopt = -shared ] ; then
                      SHLIB_EXT=so
                  else

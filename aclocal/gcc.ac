@@ -307,7 +307,7 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
 
        if [[ $pic = yes ]] ; then
            
-           for shopt in -shared "-dynamiclib -single_module" ; do
+           for shopt in -shared "-shared -fPIC" "-dynamiclib -single_module" ; do
              AC_MSG_CHECKING([whether the compiler can link a dynamic library with $shopt])
 	     LDFLAGS="$shopt $ac_save_LDFLAGS"
              AC_LINK_IFELSE([void myfunc() {}], [shlink=yes], [shlink=no])
@@ -322,6 +322,8 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
 		 dnl XXX/demmer this could be done in some better way but I don't know how
 		 if [[ "$shopt" = "-dynamiclib -single_module" ]] ; then
                      SHLIB_EXT=dylib
+		 elif [[ "$shopt" = "-shared -fPIC" ]] ; then
+                     SHLIB_EXT=so
                  elif [[ $shopt = -shared ]] ; then
                      SHLIB_EXT=so
                  else
