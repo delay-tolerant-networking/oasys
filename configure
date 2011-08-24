@@ -6073,7 +6073,7 @@ $as_echo "$as_me:    Use --with-xsd-tool=(name) to specify the location of this 
 
 
 
-    ac_dbvers='5.1 4.8 4.7 4.6 4.5 4.4 4.3 4.2 4.1'
+    ac_dbvers='5.2 5.1 4.8 4.7 4.6 4.5 4.4 4.3 4.2 4.1'
     ac_dbdir='yes'
 
 
