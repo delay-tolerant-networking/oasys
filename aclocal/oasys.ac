@@ -81,17 +81,18 @@ AC_DEFUN(AC_OASYS_CONFIG, [
 	    OASYS_LIBDIR="$ac_oasysdir/lib"
 	    OASYS_ETCDIR="$ac_oasysdir/share/oasys"
 	fi
-    	if test -d oasys ; then
-	    	rm -rf oasys
-	fi
-	    mkdir oasys oasys/include
-	    OASYS_INCDIR="oasys/include"
-	    OASYS_LIBDIR="oasys/lib"
-	    OASYS_ETCDIR="oasys/share"
-	    ln -s ../../$ac_oasysdir $OASYS_INCDIR
-	    ln -s ../$ac_oasysdir/lib $OASYS_LIBDIR
-	    ln -s ../$ac_oasysdir $OASYS_ETCDIR
     fi
+        if test -d oasys ; then
+                rm -rf oasys
+        fi
+            mkdir -p oasys/include
+            OASYS_DIR="oasys/include/oasys"
+            OASYS_INCDIR="oasys/include"
+            OASYS_LIBDIR="oasys/lib"
+            OASYS_ETCDIR="oasys/share"
+            ln -s ../../$ac_oasysdir $OASYS_DIR
+            ln -s ../$ac_oasysdir/lib $OASYS_LIBDIR
+            ln -s ../$ac_oasysdir $OASYS_ETCDIR
 
     #
     if test ! -d $OASYS_INCDIR ; then echo ""
@@ -130,7 +131,7 @@ AC_DEFUN(AC_OASYS_CONFIG, [
     AC_LINK_IFELSE(
 	AC_LANG_PROGRAM(
     [
-	#include <oasys/oasys-version.h>
+	#include "oasys/oasys-version.h"
 	#if (OASYS_VERSION_MAJOR != ${ac_oasysver_major}) || \
             (OASYS_VERSION_MINOR <  ${ac_oasysver_minor})
 	#error incorrect oasys version (wanted ${ac_oasysver_major}.${ac_oasysver_minor})
