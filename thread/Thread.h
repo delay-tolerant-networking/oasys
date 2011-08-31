@@ -252,6 +252,11 @@ public:
     }
 #endif
 
+    /*
+     * The name of the thread.
+     */
+    const char * threadName() { return((char *) name_); }
+
 protected:
 #ifdef __win32__
     //! Declare a current Thread* in thread local storage

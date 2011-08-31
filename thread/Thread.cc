@@ -153,13 +153,14 @@ Thread::start()
     // check if the creation barrier is enabled
     if (start_barrier_enabled_) 
     {
-        log_debug_p("/thread", "delaying start of thread %p due to barrier",
-                    this);
+        log_debug_p("/thread", "delaying start of thread %p [%s] due to barrier",
+                    this, name_);
         threads_in_barrier_.push_back(this);
         return;
     }
 
-    log_debug_p("/thread", "starting thread %p", this);
+    log_debug_p("/thread", "starting thread %p [%s]",
+                this, name_);
 
 #ifdef __win32__
 
@@ -207,7 +208,10 @@ Thread::start()
     }
 
 #endif // __win32__
-        setup_in_progress_ = false;
+    setup_in_progress_ = false;
+
+    log_debug_p("/thread", "started thread: [ %08X -- %s]",
+                thread_id_, name_);
 }
 
 //----------------------------------------------------------------------------
@@ -256,7 +260,8 @@ Thread::interrupt()
 #ifdef __win32__
     NOTIMPLEMENTED;
 #else
-    log_debug_p("/thread", "interrupting thread %p", this);
+    log_debug_p("/thread", "interrupting thread %p [%s]",
+                this, name_);
     kill(INTERRUPT_SIG);
 #endif
 }

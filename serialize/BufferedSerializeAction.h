@@ -18,6 +18,7 @@
 #define __BUFFEREDSERIALIZEACTION_H__
 
 #include "Serialize.h"
+#include "../debug/Log.h"
 
 namespace oasys {
 
@@ -28,7 +29,7 @@ class ExpandableBuffer;
  * Common base class for Marshal and Unmarshal that manages the flat
  * buffer.
  */
-class BufferedSerializeAction : public SerializeAction {
+class BufferedSerializeAction : public SerializeAction, public Logger {
 public:
     /**
      * Constructor with a fixed-length buffer.

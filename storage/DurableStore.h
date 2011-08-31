@@ -19,7 +19,9 @@
 #define __OASYS_DURABLE_STORE_H__
 
 #include <list>
+#include <stack>
 #include <string>
+
 
 #include "../debug/Log.h"
 #include "../debug/DebugUtils.h"
@@ -34,6 +36,7 @@
 #include "../util/LRUList.h"
 #include "../util/StringUtils.h"
 #include "../util/ScratchBuffer.h"
+#include "../util/Singleton.h"
 
 #include "DurableStoreKey.h"
 
@@ -94,15 +97,20 @@ enum DurableStoreFlags_t {
 /**
  * Interface for the generic datastore.
  */
-class DurableStore : public Logger {
+class DurableStore : public Logger,
+                     public oasys::Singleton<DurableStore, false>
+{
 public:
     /*!
      * Initialize the DurableStore object. Note that create_store()
      * must be called before it can be used.
      */
     DurableStore(const char* logpath)
-        : Logger("DurableStore", "%s", logpath), impl_(0)
+        : Logger("DurableStore", "%s", logpath), open_txid_(NULL),
+          haveSeenTransaction(false), impl_(0)
     { 
+        log_debug("DurableStore instantiated (%p)", this);
+        set_instance(this);
     }
 
     /*!
@@ -123,6 +131,34 @@ public:
     //! Return the implementation pointer.
     DurableStoreImpl* impl() { return impl_; }
 
+    /*
+     * Begin a transaction in the underlying database system.
+     * 
+     * There can be at most one open transaction at a time.
+     */
+    int beginTransaction(void **txid = NULL);
+
+    /*
+     * End a transaction.
+     *
+     * There can be at most one open transaction at a time.
+     */
+    int endTransaction();
+
+    /*
+     * @return true if a transaction is open, otherwise false
+     */
+    int isTransactionOpen() {
+        if ( transaction_lock_.is_locked() ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    void * getOpenTransaction() {
+        return open_txid_;
+    }
     /**
      * Get a new handle on a single-type table.
      *
@@ -189,7 +225,35 @@ public:
      */
     std::string get_info() const;
 
+    /**
+     * Called to cause the next transaction closure to be durable.
+     */
+    void make_transaction_durable();
+
 private:
+    friend class oasys::Singleton<DurableStore, false>;
+
+    /*
+     * Serialize all transactionalized database accesses, whether
+     * the underlying database mechanism actually supports
+     * transactions or not.
+     */
+    SpinLock transaction_lock_;
+
+    /*
+     * Pointer to handle to open transaction or NULL if none open.
+     */
+    void *open_txid_;
+    pthread_t transactionThread;
+    bool haveSeenTransaction;
+
+    bool durably_close_next_transaction_; // Durably save state at next
+                                          // transaction close.
+    int num_nondurable_transactions_;     // Number of non-durable transactions
+                                          // since last durable save.
+    int max_nondurable_transactions_;     // Maximum allowed # of non-durable
+                                          // transactions.
+
     /**
      * Typedef for the list of objects passed to the implementation to
      * initialize the table.
@@ -202,6 +266,8 @@ private:
     DurableStoreImpl*    impl_;		///< the storage implementation
 
     std::string clean_shutdown_file_;	///< path to the special shutdown file
+
+
 };
 
 #include "DurableStore.tcc"

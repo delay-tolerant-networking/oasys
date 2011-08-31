@@ -35,6 +35,7 @@ BufferedSerializeAction::BufferedSerializeAction(
     int       options)
 
     : SerializeAction(action, context, options),
+      Logger("BufferedSerializeAction", "/dtn/serialize/BufferedSerializeAction"),
       expandable_buf_(NULL),
       buf_(buf), length_(length), offset_(0)
 {
@@ -47,6 +48,7 @@ BufferedSerializeAction::BufferedSerializeAction(
     int               options)
 
     : SerializeAction(action, context, options),
+      Logger("BufferedSerializeAction", "/dtn/serialize/BufferedSerializeAction"),
       expandable_buf_(buf),
       buf_(NULL), length_(0), offset_(0)
 {
@@ -91,6 +93,7 @@ BufferedSerializeAction::next_slice(size_t length)
     }
     
     if (offset_ + length > length_) {
+        log_warn("serialization buffer not large enough");
         signal_error();
         return NULL;
     }

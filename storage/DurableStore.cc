@@ -21,16 +21,21 @@
 #include <cerrno>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <fcntl.h>
 
 #include "DurableStore.h"
 #include "ExternalDurableStore.h"
 #include "BerkeleyDBStore.h"
+#include "ODBCStore.h"
 #include "FileSystemStore.h"
 #include "MemoryStore.h"
 #include "StorageConfig.h"
 
 namespace oasys {
+
+template <>
+DurableStore* Singleton<DurableStore, false>::instance_ = NULL;
 
 DurableStore::~DurableStore()
 { 
@@ -59,6 +64,10 @@ DurableStore::create_store(const StorageConfig& config,
 {
     ASSERT(impl_ == NULL);
     
+    durably_close_next_transaction_ = false;
+    num_nondurable_transactions_ = 0;
+    max_nondurable_transactions_ = config.max_nondurable_transactions_;
+
     if (0) {} // symmetry
 
     // filesystem store
@@ -78,6 +87,14 @@ DurableStore::create_store(const StorageConfig& config,
     else if (config.type_ == "berkeleydb")
     {
         impl_ = new BerkeleyDBStore(logpath_);
+    }
+#endif
+
+#if LIBODBC_ENABLED
+    else if (config.type_ == "odbc")
+    {
+        impl_ = new ODBCDBStore(logpath_);
+        log_debug("impl_ set to new SQLiteDBStore");
     }
 #endif
 
@@ -139,6 +156,84 @@ DurableStore::create_store(const StorageConfig& config,
 }
 
 //----------------------------------------------------------------------------
+int
+DurableStore::beginTransaction(void **txid) {
+     int ret;
+
+//     if (transaction_lock_.is_locked_by_me()) {
+//         log_debug("DurableStore::beginTransaction called while holding lock.");
+//         if (txid!=NULL ) {
+//             *txid = open_txid_;
+//         }
+//         return(0);
+//     } else {
+//         log_debug("DurableStore::beginTransaction taking transaction lock.");
+//         transaction_lock_.lock("beginTransaction");
+//     }
+
+     if (impl_!=NULL) {
+        if ( open_txid_ ) {
+            log_debug("DurableStore::beginTransaction called with Tx already open.");
+            if (txid!=NULL ) {
+                *txid = open_txid_;
+            }
+            return(0);
+        } else {
+            ret = impl_->beginTransaction(&open_txid_);
+            if ( ret==DS_ERR ) {
+                log_warn("error in beginTransaction; releasing lock and DS_ERR");
+                // transaction_lock_.unlock();
+                return(DS_ERR);
+            } else {
+                if (txid!=NULL) {
+                    *txid=open_txid_;
+                }
+                return(0);
+            }
+        }
+    } else {
+        log_info("DurableStore::beginTransaction - impl_ is NULL.");
+        return(-2);
+    }
+}
+
+//----------------------------------------------------------------------------
+int
+DurableStore::endTransaction() {
+    int ret;
+
+//    ASSERT(transaction_lock_.is_locked_by_me());
+
+    log_debug("DurableStore::endTransaction - durable (%d/%d).",
+    		  num_nondurable_transactions_, max_nondurable_transactions_);
+
+    if (++num_nondurable_transactions_>max_nondurable_transactions_) {
+    	durably_close_next_transaction_ = true;
+    }
+
+    if (impl_!=NULL) {
+        ret = impl_->endTransaction(open_txid_, durably_close_next_transaction_);
+        open_txid_ = NULL;
+        log_debug("DurableStore::endTransaction - releasing transaction lock.");
+        // transaction_lock_.unlock();
+    	if (durably_close_next_transaction_) {
+    		log_debug("DurableStore::endTransaction -- resetting durable count.");
+    		durably_close_next_transaction_ = false;
+    		num_nondurable_transactions_ = 0;
+    	}
+        if ( ret==0 ) {
+        	return(ret);
+        } else {
+        	return(-3);
+        }
+    } else {
+    	log_info("DurableStore::endTransaction - impl_ is NULL.");
+       	durably_close_next_transaction_ = false;
+        return(-2);
+    }
+}
+
+//----------------------------------------------------------------------------
 int 
 DurableStore::get_table(StaticTypedDurableTable** table, 
                         std::string               table_name,
@@ -176,4 +271,10 @@ DurableStore::get_info() const
     return impl_->get_info();
 }
 
+//----------------------------------------------------------------------------
+void
+DurableStore::make_transaction_durable()
+{
+	durably_close_next_transaction_ = true;
+}
 } // namespace oasys

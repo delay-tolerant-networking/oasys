@@ -71,6 +71,7 @@ STORAGE_SRCS :=					\
 	storage/DurableStoreImpl.cc		\
 	storage/FileSystemStore.cc		\
 	storage/MemoryStore.cc                  \
+        storage/ODBCStore.cc                    \
 
 TCLCMD_SRCS :=					\
 	tclcmd/ConsoleCommand.cc		\

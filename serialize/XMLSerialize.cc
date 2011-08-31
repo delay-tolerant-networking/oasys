@@ -111,7 +111,7 @@ XMLMarshal::process(const char *name, u_char *bp, u_int32_t len)
     XMLByte *estr = xercesc::Base64::encode(bp, len, &elen);
     current_node_->add_attr(std::string(name),
         std::string(reinterpret_cast<char *>(estr), elen));
-    xercesc::XMLString::release(&estr);
+    xercesc::XMLString::release((char **) &estr);
 #else
     (void) name;
     (void) bp;
@@ -131,7 +131,7 @@ XMLMarshal::process(const char*            name,
     XMLByte *estr = xercesc::Base64::encode(carrier->buf(), *lenp, &elen);
     current_node_->add_attr(std::string(name),
                             std::string(reinterpret_cast<char *>(estr), elen));
-    xercesc::XMLString::release(&estr);
+    xercesc::XMLString::release((char **) &estr);
 #else
     (void) name;
     (void) carrier;

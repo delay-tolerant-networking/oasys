@@ -143,7 +143,7 @@ SingleTypeDurableTable<_DataType>::put(const SerializableObject& key,
     
     return ret;
 }
-    
+
 //----------------------------------------------------------------------------
 template <typename _BaseType, typename _Collection>
 inline int

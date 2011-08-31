@@ -213,6 +213,49 @@ BerkeleyDBStore::init(const StorageConfig& cfg)
 }
 
 //----------------------------------------------------------------------------
+void *
+BerkeleyDBStore::beginTransaction()
+{
+    DB_TXN *txid;
+    u_int32_t flags = 0x0;
+    int ret;
+
+    log_debug("fooDBStore::beginTransaction.");
+
+    ret = dbenv_->txn_begin(dbenv_, NULL, &txid, flags);
+    if ( ret!=0 ) {
+        if ( ret==DB_RUNRECOVERY ) {
+            PANIC("RUN DB Recovery on fooDB.");
+        }
+        return((void *) NULL);
+    }
+
+    return((void *) txid);
+}
+
+//----------------------------------------------------------------------------
+int
+BerkeleyDBStore::endTransaction(void *txid)
+{
+    int ret;
+    u_int32_t flags = 0x0;
+    DB_TXN *txp = (DB_TXN *) txid;
+
+    log_debug("fooDBStore::endTransaction");
+
+    ret = txp->commit(txp, flags);
+
+    return 0;
+}
+
+//----------------------------------------------------------------------------
+void *
+BerkeleyDBStore::getUnderlying()
+{
+    return((void*) dbenv_);
+}
+
+//----------------------------------------------------------------------------
 int
 BerkeleyDBStore::get_table(DurableTableImpl** table,
                            const std::string& name,

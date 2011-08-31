@@ -39,7 +39,10 @@ struct StorageConfig {
     bool        tidy_;          ///< Prune out the database on init
     int         tidy_wait_;     ///< Seconds to wait before tidying
     bool        leave_clean_file_;///< Leave a .ds_clean file on clean shutdown
-
+    bool		auto_commit_;   ///< True if database auto-commit (if supported) is on
+    int         max_nondurable_transactions_; // Maximum number of non-durable
+                                              // transactions before trying to close
+                                              // and save durably.
     // Filesystem DB Specific options
     int         fs_fd_cache_size_; ///< If > 0, then this # of open
                                    /// fds will be cached
@@ -76,6 +79,9 @@ struct StorageConfig {
         tidy_(false),
         tidy_wait_(3),
         leave_clean_file_(true),
+
+        auto_commit_(true),
+        max_nondurable_transactions_(0),
 
         fs_fd_cache_size_(0),
 

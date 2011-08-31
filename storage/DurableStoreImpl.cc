@@ -30,6 +30,42 @@
 
 namespace oasys {
 
+int
+DurableStoreImpl::beginTransaction(void **txid)
+{
+	(void) txid;
+
+    log_warn("DurableStoreImpl::beginTransaction not implemented.");
+    /*
+     * Even if the underlying implementation doens't support transactions,
+     * we track the number of open transactions so that
+     * developing against non-transactionalized databases has a lower
+     * risk of breaking transactionalized ones.
+     */
+    return(DS_ERR);
+}
+
+int
+DurableStoreImpl::endTransaction(void *txid, bool be_durable)
+{
+	(void) be_durable;
+    log_warn("DurableStoreImpl::endTransaction not implemented.");
+    /*
+     * Even if the underlying implementation doens't support transactions,
+     * we track the number of open transactions so that
+     * developing against non-transactionalized databases has a lower
+     * risk of breaking transactionalized ones.
+     */
+    return(DS_ERR);
+}
+
+void *
+DurableStoreImpl::getUnderlying()
+{
+    log_warn("DurableStoreImpl::getUnderlying not implemented.");
+    return(NULL);
+}
+
 void
 DurableStoreImpl::prune_db_dir(const char* dir, int tidy_wait)
 {

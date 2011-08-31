@@ -96,6 +96,7 @@ AC_CONFIG_ZLIB
 AC_CONFIG_XSD
 AC_CONFIG_STORAGE
 AC_CONFIG_AX25
+AC_CONFIG_ODBC
 
 # -------------------------------------------------------------------------
 # Pull in the checks for gcc and system dependencies

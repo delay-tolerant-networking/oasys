@@ -65,6 +65,14 @@ public:
     //! Initialize BerkeleyDBStore
     int init(const StorageConfig& cfg);
 
+    //! Primitive support for transactions (assumes ALL
+    //! transactionalized accesses are single-threaded).
+    void* beginTransaction();
+    int   endTransaction(void *txid);
+
+    //! Allow access to the underlying DB implementation
+    void* getUnderlying();
+
     int get_table(DurableTableImpl** table,
                   const std::string& name,
                   int                flags,

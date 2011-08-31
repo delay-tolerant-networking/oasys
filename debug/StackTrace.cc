@@ -25,7 +25,27 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <execinfo.h>
+
 namespace oasys {
+
+void
+StackTrace::print_trace_2(bool in_sighanlder)
+{
+    char buf[1024];
+    void *trace[32];
+    char **messages = (char**) NULL;
+    int i, trace_size=0;
+
+    trace_size = backtrace(trace, 32);
+    messages = backtrace_symbols(trace, trace_size);
+    strcpy(buf, "[bt] Execution path:\n");
+    write(2, buf, strlen(buf));
+    for ( i=0; i<trace_size; i++ ) {
+        sprintf(buf, "[bt] %s\n", messages[i]);
+        write(2, buf, strlen(buf));
+    }
+}
 
 void
 StackTrace::print_current_trace(bool in_sighandler)

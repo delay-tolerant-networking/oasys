@@ -216,6 +216,16 @@ IPSocket::connect(in_addr_t remote_addr, u_int16_t remote_port)
 void
 IPSocket::configure()
 {
+    logf(LOG_DEBUG, "IPSocket::configure");
+    logf(LOG_DEBUG, "    params.reuseaddr_: %d", params_.reuseaddr_);
+    logf(LOG_DEBUG, "    params.reuseport_: %d", params_.reuseport_);
+    logf(LOG_DEBUG, "    params.broadcast_: %d", params_.broadcast_);
+    logf(LOG_DEBUG, "    params.multicast_: %d", params_.multicast_);
+    logf(LOG_DEBUG, "    local_addr_      : %d", local_addr_);
+    logf(LOG_DEBUG, "    remote_addr_     : %d", remote_addr_);
+    logf(LOG_DEBUG, "    local_port_      : %d", local_port_);
+    logf(LOG_DEBUG, "    remote_port_     : %d", remote_port_);
+
     if (params_.reuseaddr_) {
         int y = 1;
         logf(LOG_DEBUG, "setting SO_REUSEADDR");
@@ -284,6 +294,8 @@ IPSocket::configure()
         {
             logf(LOG_WARN, "error setting multicast options: %s",
                            strerror(errno));
+            logf(LOG_WARN, "local_addr_   : %s", intoa(local_addr_));
+            logf(LOG_WARN, "remote_addr_  : %s", intoa(remote_addr_));
         }
 
         // set TTL on outbound packets

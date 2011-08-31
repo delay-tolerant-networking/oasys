@@ -61,6 +61,27 @@ public:
                           PrototypeVector&   prototypes) = 0;
 
     /**
+     * Begin a transaction.  If the implementation doesn't support
+     * transactions, then a simple counter of unmatched calls to
+     * beginTransaction is implemented by this base class.
+     */
+    virtual int beginTransaction(void **txid);
+
+    /*
+     * end an ongoing transaction, identified by txid if the
+     * database implementation wants such an ID.  If be_durable
+     * is true, durably save (e.g. to disk) storage state.
+     */
+    virtual int endTransaction(void *txid, bool be_durable = false);
+
+    /*
+     * Return a pointer to the 'Base' of the underlying database
+     * implementation.  For BekeleyDB, for example, this would be
+     * a pointer to the DB_ENV
+     */
+    virtual void *getUnderlying();
+
+    /**
      * Hook to remove a table (by name) from the data store.
      */
     virtual int del_table(const std::string& db_name) = 0;
@@ -96,6 +117,7 @@ protected:
      */
     void prune_db_dir(const char* db_dir,
                       int         tidy_wait);
+
 };
 
 //----------------------------------------------------------------------------
@@ -171,7 +193,7 @@ public:
     /**
      * Return the name of this table.
      */
-    const char* name() { return table_name_.c_str(); }
+    const char* name() const { return table_name_.c_str(); }
 
 protected:
     /**

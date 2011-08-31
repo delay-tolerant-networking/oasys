@@ -371,6 +371,7 @@ Unmarshal::process(const char*            name,
 
         if (c == 0)
         {
+            logf(log_, LOG_WARN, "Unmarshal::process error");
             signal_error();
             return;
         }

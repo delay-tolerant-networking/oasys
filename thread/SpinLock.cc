@@ -38,7 +38,11 @@ SpinLock::lock(const char* lock_user)
         lock_count_.value++;
 
 #if OASYS_DEBUG_LOCKING_ENABLED
-        Thread::lock_debugger()->add_lock(this);
+        // Thread::lock_debugger()->add_lock(this);
+        if (Thread::lock_debugger() != NULL ) {
+            Thread::lock_debugger()->add_lock(this);  // Only do this if the calling
+                                                      // thread is an oasys thread.
+        }
 #endif
 
         return 0;
@@ -72,7 +76,10 @@ SpinLock::lock(const char* lock_user)
     lock_holder_name_ = lock_user;
 
 #if OASYS_DEBUG_LOCKING_ENABLED
-    Thread::lock_debugger()->add_lock(this);
+    if (Thread::lock_debugger() != NULL ) {
+        Thread::lock_debugger()->add_lock(this);  // Only do this if the calling
+                                                  // thread is an oasys thread.
+    }
 #endif
 
     return 0;
@@ -87,14 +94,22 @@ SpinLock::unlock()
         lock_count_.value--;
 
 #if OASYS_DEBUG_LOCKING_ENABLED
-        Thread::lock_debugger()->remove_lock(this);
+        // Thread::lock_debugger()->remove_lock(this);
+        if (Thread::lock_debugger() != NULL ) {
+            Thread::lock_debugger()->remove_lock(this);  // Only do this if the calling
+                                                         // thread is an oasys thread.
+        }
 #endif
 
         return 0;
     }
 
 #if OASYS_DEBUG_LOCKING_ENABLED
-    Thread::lock_debugger()->remove_lock(this);
+    // Thread::lock_debugger()->remove_lock(this);
+    if (Thread::lock_debugger() != NULL ) {
+        Thread::lock_debugger()->remove_lock(this);   // Only do this if the calling
+                                                      // thread is an oasys thread.
+    }
 #endif
 
     lock_holder_      = 0;
@@ -130,7 +145,11 @@ SpinLock::try_lock(const char* lock_user)
         lock_holder_name_ = lock_user;
 
 #ifdef OASYS_DEBUG_LOCKING_ENABLED
-        Thread::lock_debugger()->add_lock(this);
+        // Thread::lock_debugger()->add_lock(this);
+        if (Thread::lock_debugger() != NULL ) {
+            Thread::lock_debugger()->add_lock(this);  // Only do this if the calling
+                                                      // thread is an oasys thread.
+        }
 #endif
         
         return 0; // success        

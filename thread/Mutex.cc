@@ -91,7 +91,10 @@ Mutex::lock(const char* lock_user)
     int err = pthread_mutex_lock(&mutex_);
 
 #if OASYS_DEBUG_LOCKING_ENABLED
-    Thread::lock_debugger()->add_lock(this);
+    if (Thread::lock_debugger() != NULL ) {
+        Thread::lock_debugger()->add_lock(this); // Only do this if the calling
+                                                 // thread is an oasys thread.
+    }
 #endif
 
     if (err != 0) {
@@ -122,7 +125,10 @@ Mutex::unlock()
     int err = pthread_mutex_unlock(&mutex_);
 
 #if OASYS_DEBUG_LOCKING_ENABLED
-    Thread::lock_debugger()->remove_lock(this);
+    if (Thread::lock_debugger() != NULL ) {
+        Thread::lock_debugger()->remove_lock(this); // Only do this if the calling
+                                                 // thread is an oasys thread.
+    }
 #endif
     
     if (err != 0) {
@@ -150,7 +156,10 @@ Mutex::try_lock(const char* lock_user)
     }
 
 #if OASYS_DEBUG_LOCKING_ENABLED
-    Thread::lock_debugger()->add_lock(this);
+    if (Thread::lock_debugger() != NULL ) {
+        Thread::lock_debugger()->add_lock(this); // Only do this if the calling
+                                                 // thread is an oasys thread.
+    }
 #endif
 
     ++lock_count_.value;

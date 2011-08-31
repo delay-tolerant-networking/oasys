@@ -178,6 +178,24 @@ public:
         return fd;
     }
 
+    /*
+     * Sync a particular fd to disk.
+     */
+    void sync(const _Key& key)
+    {
+        ScopeLock l(&lock_, "OpenFdCache::close");
+
+        typename FdMap::iterator i = open_fds_map_.find(key);
+
+        if (i == open_fds_map_.end())
+        {
+        	log_warn("sync failed; Key not found");
+            return;
+        }
+
+        fsync(i->second->fd_);
+    }
+
     /*!
      * Close a file fd and remove it from the cache.
      */

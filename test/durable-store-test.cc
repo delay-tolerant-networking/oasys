@@ -445,6 +445,144 @@ DECLARE_TEST(SingleTypeIterator) {
     return UNIT_TEST_PASSED;    
 }
 
+DECLARE_TEST(KeithMulti) {
+    g_config->tidy_         = true;
+    DurableStore* store;
+
+    store = new DurableStore("/test_storage");
+    CHECK(store->create_store(*g_config) == 0);
+
+    StringDurableTable* table1;
+    StringDurableTable* table2;
+    static const int num_objs = 10;
+     
+    CHECK(store->get_table(&table1, "test1", DS_CREATE | DS_EXCL) == 0);
+    CHECK(store->get_table(&table2, "test2", DS_CREATE | DS_EXCL) == 0);
+    
+    for(int i=0; i<num_objs; ++i) {
+        StaticStringBuffer<256> buf;
+        buf.appendf("data%d", i);
+        StringShim data(buf.c_str());
+        
+        CHECK(table1->put(IntShim(i), &data, DS_CREATE | DS_EXCL) == 0);
+        CHECK(table2->put(IntShim(i), &data, DS_CREATE | DS_EXCL) == 0);
+    }
+
+    DurableIterator* iter = table1->itr();
+
+    std::bitset<num_objs> found1;
+    while(iter->next() == 0) {
+        StaticStringBuffer<256> buf;
+
+        Builder b; // XXX/demmer can't use temporary ??
+        StringShim *val;
+        IntShim key(b);
+        bool thing;
+	int ret;
+        
+        iter->get_key(&key);
+        CHECK(found1[key.value()] == false);
+        found1.set(key.value());
+
+        //
+        buf.appendf("data%d", key.value());
+        ret = table1->get(IntShim(key.value()), &val, &thing);
+        CHECK(strcmp(val->value().c_str(), buf.c_str())==0);
+    }
+
+    found1.flip();
+    CHECK(!found1.any());
+    delete_z(iter); 
+
+    //
+    //
+    iter = table2->itr();
+
+    std::bitset<num_objs> found2;
+    while(iter->next() == 0) {
+        StaticStringBuffer<256> buf;
+
+        Builder b; // XXX/demmer can't use temporary ??
+        StringShim *val;
+        IntShim key(b);
+        bool thing;
+	int ret;
+        
+        iter->get_key(&key);
+        CHECK(found2[key.value()] == false);
+        found2.set(key.value());
+
+        //
+        buf.appendf("data%d", key.value());
+        ret = table2->get(IntShim(key.value()), &val, &thing);
+        CHECK(strcmp(val->value().c_str(), buf.c_str())==0);
+    }
+
+    found2.flip();
+    CHECK(!found2.any());
+
+    delete_z(iter); 
+    delete_z(table1);
+    delete_z(table2);
+    DEL_DS_STORE(store);
+
+    return UNIT_TEST_PASSED;    
+}
+
+DECLARE_TEST(SingleTypeIteratorAndGet) {
+    g_config->tidy_         = true;
+    DurableStore* store;
+
+    store = new DurableStore("/test_storage");
+    CHECK(store->create_store(*g_config) == 0);
+
+    StringDurableTable* table;
+    static const int num_objs = 100;
+     
+    CHECK(store->get_table(&table, "test", DS_CREATE | DS_EXCL) == 0);
+    
+    for(int i=0; i<num_objs; ++i) {
+        StaticStringBuffer<256> buf;
+        buf.appendf("data%d", i);
+        StringShim data(buf.c_str());
+        
+        CHECK(table->put(IntShim(i), &data, DS_CREATE | DS_EXCL) == 0);
+    }
+
+    DurableIterator* iter = table->itr();
+
+    std::bitset<num_objs> found;
+    while(iter->next() == 0) {
+        StaticStringBuffer<256> buf;
+
+        Builder b; // XXX/demmer can't use temporary ??
+        StringShim *val;
+        IntShim key(b);
+        bool thing;
+	int ret;
+        
+        iter->get_key(&key);
+        CHECK(found[key.value()] == false);
+        found.set(key.value());
+
+        //
+        printf("Read key value %d\n", key.value());
+        buf.appendf("data%d", key.value());
+        ret = table->get(IntShim(key.value()), &val, &thing);
+        printf("ret(%d) val(%s)\n", ret, val->value().c_str());
+        CHECK(strcmp(val->value().c_str(), buf.c_str())==0);
+    }
+
+    found.flip();
+    CHECK(!found.any());
+
+    delete_z(iter); 
+    delete_z(table);
+    DEL_DS_STORE(store);
+
+    return UNIT_TEST_PASSED;    
+}
+
 DECLARE_TEST(MultiType) {
     g_config->tidy_         = true;
     DurableStore* store;

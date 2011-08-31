@@ -154,8 +154,8 @@ Notifier::wait(SpinLock* lock, int timeout, bool drain_the_pipe)
     waiter_ = true;
 
     if (!quiet_) {
-        log_debug("attempting to wait on %p, count = %d", 
-                  this, count_);
+        log_debug("attempting to wait on %p, timeout %d, count = %d", 
+                  this, timeout, count_);
     }
     
     if (lock)

@@ -24,6 +24,7 @@ namespace oasys {
 class StackTrace {
 public:
     /// Print the current stack trace
+    static void print_trace_2(bool in_sighandler);
     static void print_current_trace(bool in_sighandler);
 
     /// Print a stack trace to stderr

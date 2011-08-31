@@ -1,0 +1,46 @@
+dnl
+dnl    Copyright 2011 Alex McMahon, alex.mcmahon@cs.tcd.ie
+dnl    Copyright 2011 Trinity Collage Dublin
+dnl 
+dnl    Licensed under the Apache License, Version 2.0 (the "License");
+dnl    you may not use this file except in compliance with the License.
+dnl    You may obtain a copy of the License at
+dnl 
+dnl        http://www.apache.org/licenses/LICENSE-2.0
+dnl 
+dnl    Unless required by applicable law or agreed to in writing, software
+dnl    distributed under the License is distributed on an "AS IS" BASIS,
+dnl    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+dnl    See the License for the specific language governing permissions and
+dnl    limitations under the License.
+dnl
+
+dnl 
+dnl Autoconf support for configuring whether odbc stack is 
+dnl available on the system
+dnl
+
+AC_DEFUN(AC_CONFIG_ODBC, [
+
+    AC_ARG_WITH(odbc,
+      [AC_HELP_STRING([--with-odbc],
+                      [compile in odbc support (default try)])],
+      [ac_use_odbc=$withval],
+      [ac_use_odbc=try])
+    
+    ac_has_odbc_h="no"
+
+    AC_MSG_CHECKING([whether odbc support should be enabled])
+
+    if test "$ac_use_odbc" = "no"; then
+        AC_MSG_RESULT(no)
+
+    else
+        AC_MSG_RESULT($ac_use_odbc)
+          AC_DEFINE(OASYS_ODBC_ENABLED, 1,
+              [whether odbc support is enabled])
+          AC_MSG_RESULT(yes)
+
+    fi
+])
+
