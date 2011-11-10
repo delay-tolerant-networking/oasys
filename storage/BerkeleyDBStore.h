@@ -67,8 +67,8 @@ public:
 
     //! Primitive support for transactions (assumes ALL
     //! transactionalized accesses are single-threaded).
-    void* beginTransaction();
-    int   endTransaction(void *txid);
+    int   beginTransaction(void **txid);
+    int   endTransaction(void *txid, bool be_durable);
 
     //! Allow access to the underlying DB implementation
     void* getUnderlying();

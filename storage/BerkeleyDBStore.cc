@@ -213,35 +213,42 @@ BerkeleyDBStore::init(const StorageConfig& cfg)
 }
 
 //----------------------------------------------------------------------------
-void *
-BerkeleyDBStore::beginTransaction()
+int
+BerkeleyDBStore::beginTransaction(void **txid)
 {
-    DB_TXN *txid;
+    DB_TXN *txid_local;
     u_int32_t flags = 0x0;
     int ret;
 
-    log_debug("fooDBStore::beginTransaction.");
+    log_debug("BerkeleyDBStore::beginTransaction.");
 
-    ret = dbenv_->txn_begin(dbenv_, NULL, &txid, flags);
+    ret = dbenv_->txn_begin(dbenv_, NULL, &txid_local, flags);
     if ( ret!=0 ) {
         if ( ret==DB_RUNRECOVERY ) {
             PANIC("RUN DB Recovery on fooDB.");
         }
-        return((void *) NULL);
+        return(DS_ERR);
+    }
+    if ( txid != NULL ) {
+        *txid = (void *)txid_local;
     }
 
-    return((void *) txid);
+    return 0;
 }
 
 //----------------------------------------------------------------------------
 int
-BerkeleyDBStore::endTransaction(void *txid)
+BerkeleyDBStore::endTransaction(void *txid, bool be_durable)
 {
     int ret;
     u_int32_t flags = 0x0;
     DB_TXN *txp = (DB_TXN *) txid;
 
-    log_debug("fooDBStore::endTransaction");
+    log_debug("BerkeleyDBStore::endTransaction");
+
+    if ( be_durable ) {
+    	log_debug("BerkeleyDBStore::endTransaction called with be_durable TRUE");
+    }
 
     ret = txp->commit(txp, flags);
 
