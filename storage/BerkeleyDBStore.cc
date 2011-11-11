@@ -222,6 +222,7 @@ BerkeleyDBStore::beginTransaction(void **txid)
 
     log_debug("BerkeleyDBStore::beginTransaction.");
 
+#if 0
     ret = dbenv_->txn_begin(dbenv_, NULL, &txid_local, flags);
     if ( ret!=0 ) {
         if ( ret==DB_RUNRECOVERY ) {
@@ -232,6 +233,13 @@ BerkeleyDBStore::beginTransaction(void **txid)
     if ( txid != NULL ) {
         *txid = (void *)txid_local;
     }
+#else
+    if ( txid != NULL) {
+        txid_local = (DB_TXN *)(*txid);
+	flags = 0x0;
+	ret = 0;
+    }
+#endif
 
     return 0;
 }
@@ -244,15 +252,21 @@ BerkeleyDBStore::endTransaction(void *txid, bool be_durable)
     u_int32_t flags = 0x0;
     DB_TXN *txp = (DB_TXN *) txid;
 
-    log_debug("BerkeleyDBStore::endTransaction");
+    log_debug("BerkeleyDBStore::endTransaction: txid = %p", txid);
 
     if ( be_durable ) {
     	log_debug("BerkeleyDBStore::endTransaction called with be_durable TRUE");
     }
 
+#if 0
     ret = txp->commit(txp, flags);
+#else
+    flags = 0x0;
+    txp = (DB_TXN *) txid;
+    ret = 0;
+#endif
 
-    return 0;
+    return ret;
 }
 
 //----------------------------------------------------------------------------

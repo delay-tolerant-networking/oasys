@@ -171,6 +171,8 @@ DurableStore::beginTransaction(void **txid) {
 //         transaction_lock_.lock("beginTransaction");
 //     }
 
+     log_debug("DurableStore::beginTransaction entered");
+
      if (impl_!=NULL) {
         if ( open_txid_ ) {
             log_debug("DurableStore::beginTransaction called with Tx already open.");
@@ -179,6 +181,8 @@ DurableStore::beginTransaction(void **txid) {
             }
             return(0);
         } else {
+	    tx_counter_++;
+	    log_info("DurableStore::beginTransaction calling implementation beginTransaction for transaction %u", tx_counter_);
             ret = impl_->beginTransaction(&open_txid_);
             if ( ret==DS_ERR ) {
                 log_warn("error in beginTransaction; releasing lock and DS_ERR");
@@ -212,6 +216,7 @@ DurableStore::endTransaction() {
     }
 
     if (impl_!=NULL) {
+	log_info("DurableStore::endTransaction calling implementation endTransaction for transaction %u", tx_counter_);
         ret = impl_->endTransaction(open_txid_, durably_close_next_transaction_);
         open_txid_ = NULL;
         log_debug("DurableStore::endTransaction - releasing transaction lock.");

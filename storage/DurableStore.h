@@ -107,7 +107,7 @@ public:
      */
     DurableStore(const char* logpath)
         : Logger("DurableStore", "%s", logpath), open_txid_(NULL),
-          haveSeenTransaction(false), impl_(0)
+          haveSeenTransaction(false), tx_counter_(0), impl_(0)
     { 
         log_debug("DurableStore instantiated (%p)", this);
         set_instance(this);
@@ -246,6 +246,7 @@ private:
     void *open_txid_;
     pthread_t transactionThread;
     bool haveSeenTransaction;
+    unsigned int tx_counter_;		  // Counter for transactions executed
 
     bool durably_close_next_transaction_; // Durably save state at next
                                           // transaction close.
