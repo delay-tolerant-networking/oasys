@@ -1,5 +1,7 @@
 /*
  *    Copyright 2004-2006 Intel Corporation
+ *    Copyright 2011 Mitre Corporation
+ *    Copyright 2011 Trinity College Dublin
  * 
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -19,79 +21,108 @@
 //##########################################################
 //
 //  This module is a vanilla ODBC implementation (cloned from BerkeleyDBStore.cc)
-//  as a DB accessor within OASYS.  It currently uses a SQLite RDBMS but can 
-//  be switch to any ODBC-compliant RDBMS (see "TODO:  NONSTANDARD ODBCR" for any
-//  logic that is currently SQLite specific and would need to be modified to comply
-//  with the new RDBMS.
+//  as a DB accessor within OASYS.  This module contains common code which should
+//  be usable with any ODBC driver manager and most ODBC database drivers.
+//  The initial version has been tested with SQLite 3 (version 3.3.x) and
+//  MySQL (version 5.1.x).
 //
-//  Required Software on Linux box to run: (tested on SOSCOE SDE 10.7.1 machine)
-//   unixODBC  ("rpm -q unixODBC" ==> unixODBC-2.2.11-7.1)
-//   SQLite    ("rpm -q sqlite"   ==> sqlite-3.3.6-2)
-//   SQLite ODBC libs (libsqlite3odbc-0.83.so - download from http://www.ch-werner.de/sqliteodbc/)
-//    ## ODBC Driver already in SOSCOE /vobs/fcsc_dataStore/src/COTS/sqlitelibs/i686-rhel-5.3-se/sqlite-3.4.2/lib/libsqlite3odbc-0.86.so
-//
-//  NOTE: built on DTN/OASYS libs of 2010/12/17 for SOSCOE w/ customized API
-//
-//  Required OASYS storage files (../oasys_20101217_for_SOSCOE/storage/):
-//    ODBCDBStore.h
-//    ODBCDBStore.cc   NOTE: need to modify init() to also CREATE TABLE for all VRL router schema tables!!!
-//    SQLite_DTN_and_VRL_schema.ddl   NOTE: need to add CREATE TABLE for all VRL router schema tables!!!
-//
-//  Modified OASYS storage files (../oasys_20101217_for_SOSCOE/storage/):
-//    DurableStore.cc
-//      #include "ODBCDBStore.h"
-//  
-//      else if (config.type_ == "sqlitedb")
+//  The main class in this module (ODBCDBStore) acts as a base class for database
+//  specific classes that are instantiated according to the database engine that
+//  will be specified in the configuration file of the DTN2 daemon that is started.
+//  By convention the storage types to be specified in the 'storage set type' commmand
+//  will be odbc-<xxx> (e.g., odbc-sqlite, odbc-mysql).  If new database engines are
+//  supported,  it is necessary to write a derived class such as
+//     class ODBCDBFooSQLnew: public ODBCDBStore { ... }
+//  with new files ODBCFooSQLnew.h and ODBCFooSQLnew.h
+//  and put a new section into DurableStore.cc to allow the new storage type
+//  (odbc-foosqlnew) to be used in programs.  The extra code in DurableStore.cc
+//  looks something like:
+//      #include "ODBCFooSQLnew.h"
+//      ....
+//      else if (config.type_ == "odbc-foosqlnew")
 //      {
-//          impl_ = new ODBCDBStore(logpath_);
-//          log_debug("impl_ set to new ODBCDBStore");
+//          impl_ = new ODBCDBFooSQLnew(logpath_);
+//          log_debug("impl_ set to new ODBCDBFooSQLnew");
 //      }
+//      ....
 //
-//  Required OASYS test files (../oasys_20101217_for_SOSCOE/storage/):
+//  The derived classes typically need to implement a single constructor and
+//  destructor, plus the init function.  Two large chunks of common code that
+//  are typically used in setting up the connection and creating the database
+//  tables are encapsulated in the functions 'connect_to_database' and
+//  'create_tables'.  It is possible that certain database drivers may have
+//  peculiarities that require special purpose code that may have to be
+//  provided by overriding the functions in this module, but the two initial
+//  implementations work with the generic code.
+//
+//  In order to use this software and an ODBC-interfaced database, the platform
+//  must include an ODBC driver manager.  The software has been initially tested
+//  the ODBC driver manager unixODBC (http://www.unixodbc.org/) on Linux. In
+//  priniciple it should also be an alternative ODBC driver manager (such as
+//  iODBC (http://www.iodbc.org/).  The ODBC driver manager should support at
+//  least version 3.51 of ODBC.  For ODBC reference manual see MSDN (previously
+//  Microsoft Developer Network) web site - (as of November 2011) at
+//      http://msdn.microsoft.com/en-us/library/ms710252%28v=VS.85%29.aspx
+//
+//  The code has been tested with:
+//     unixODBC  versions 2.2.11 (Ubuntu 10.04 LTS and Red Hat) and 2.3.0 (Gentoo)
+//  It requires the development headers to be installed to provide:
+//     sql.h, sqlext.h, sqltypes.h, and sqlucode.h
+//  and the shared library
+//     libodbc.so
+//
+//  It may be helpful to install the tool and library 'odbcinst' which comes as a
+//  separate package.  This is particularly useful for determining where the odbc
+//  initialization files are located (the location has apparently altered between
+//  versions 2.2.11 (system odbc.ini and odbc.inst in /etc) and version 2.3.0 (in
+//  /etc/unixODBC).  The relevant command is:
+//     odbcinst -v -j
+//
+//  Additionally there are some GUI tools available to assist with
+//  configuring unixODBC. These can be downloaded from
+//     http://unixodbc-gui-qt.svn.sourceforge.net/
+//  This appears not to be available as a precompiled package for
+//  Debian/Ubuntu (and does not compile entirely cleanly as of
+//  November 2011.)
+//
+//  See the relevant derived classes for documentation of the required libraries
+//  and the setting up of the odbc.ini and odbcinst.ini files for the particular
+//  database engine.  Note that root access will normally be required to set up the
+//  system initialization files.
+//  WARNING: This version of the code does not currently inspect the user ODBC
+//  initialization file (default ~/.odbc.ini).  This may be fixed in a later
+//  version.
+//
+//  A significant part of the database specific code is likely to be the treatment
+//  of options and properties in the odbc.ini DSN section that are unique to the
+//  particular database.
+//
+//  When using ODBC the interpretation of the storage parameters is slightly altered.
+//  The 'dbname' storage parameter is used to identify the Data Source Name (DSN)
+//  configured into the odbc.ini file.  For file based storage, the name and location
+//  of the database storage will typically be defined as one of the the properties of
+//  the specified DSN rather than being associated with the 'dbdir' storage parameter.
+//  However the 'dbdir' parameter is still needed because the startup/shutdown system
+//  can, on request, store a 'clean shutdown' indicator by creating the file .ds_clean
+//  in the directory specified in 'dbdir'.   Hence 'dbdir' is still (just) relevant.
+//
+//  The following storage configuration items are particularly relevant -others are
+//  interpreted as for other types of storage:
+//     storage set type odbc-<engine type> # Selects the storage type as usual
+//     storage set dbname <DSN> # Selects a Data Source Name (DSN) in odbc.ini
+//     storage set dbdir <full directory path name> # Used only to store the .ds_clean file.
+//     storage set payloaddir <full directory path name> # Bundle payload files location
+//                                                       # used as for other storage types
+//     storage set
+//  TODO: Fix up test cases.
+//  Required OASYS test files:
 //     sqlite-db-test.cc
 //
-//  Modified OASYS test files (../oasys_20101217_for_SOSCOE/storage/):
+//  Modified OASYS test files:
 //     Makefile:  add "sqlite-db-test" to TESTS list
 //
-//  Modified OASYS files (../oasys_20101217_for_SOSCOE/):
-//     Sources.mk:  add "storage/ODBCDBStore.cc" to STORAGE_SRCS list
-//     Rules.make:  add " -lodbc" to end of OASYS_LDFLAGS and OASYS_LDFLAGS_STATIC
-//     Makefile:    add "storage/ODBCDBStore.cc" to STORAGE_SRCS list
-//     
-//  Modifications to ODBC configuration files (requires root access):
-//    $ODBCSYSINI/odbcinst.ini:  add new section if SQLite ODBC lib *.so not already existing
-//    NOTE: ODBC Driver should already be in SOSCOE odbcinst.ini
-//  
-//      [SQLite]
-//      Description = SQLite ODBC Driver
-//      Driver          = /home0/groberts/SQLiteODBC/libsqlite3odbc-0.83.so
-//      Setup           = /home0/groberts/SQLiteODBC/libsqlite3odbc-0.83.so
-//      UsageCount  = 1
-//  
-//    $ODBCSYSINI/odbc.ini:  add new sections for OASYS test DB
-//
-//      [test]
-//      Description     = SQLite
-//      Driver          = SQLite
-//      Database        = <fullPath to OASYS 10201217 dir tree>/test/output/sqlite-db-test/sqlite-db-test/test
-//      Timeout         = 100000
-//      StepAPI         = No
-//      NoWCHAR         = No
-//      LongNames       = No
-//
-//    $ODBCSYSINI/odbc.ini:  add new sections for DTN test/prod DB
-//
-//      [<config DB name for DTN DB>]
-//      Description     = SQLite
-//      Driver          = SQLite
-//      Database        = <fullPath to DTN 10201217 config DB directory>/test/output/sqlite-db-test/sqlite-db-test/test
-//      Timeout         = 100000
-//      StepAPI         = No
-//      NoWCHAR         = No
-//
-//  Creation of SQLite DB for DTN production: 
-//  NOTE: should disable or not use configuration tidy/prune or any dynamic DB creation due to data loss!!
-//
+//  NOTE: should disable or not use configuration tidy/prune or any dynamic DB creation
+//  due to data loss!!
 //  
 //##########################################################
 
@@ -132,9 +163,17 @@ namespace oasys
 const
     std::string
 ODBCDBStore::META_TABLE_NAME("META_DATA_TABLES");
+
+/// Initialization of list of names of 'DTN standard' tables in ODC databases
+/// which have two columns (the_key, the_data).
+const
+odbc_table_name_t
+ODBCDBStore::odbc_table_name_list[] =
+    { "bundles", "prophet", "links", "registrations", NULL };
+
 //----------------------------------------------------------------------------
-ODBCDBStore::ODBCDBStore(const char *logpath):
-DurableStoreImpl("ODBCDBStore", logpath),
+ODBCDBStore::ODBCDBStore(const char* derived_classname, const char *logpath):
+DurableStoreImpl(derived_classname, logpath),
 init_(false),
 auto_commit_(true),
 serializeAll(true)
@@ -146,7 +185,7 @@ serializeAll(true)
 //----------------------------------------------------------------------------
 ODBCDBStore::~ODBCDBStore()
 {
-    log_debug("destructor enter.");
+    log_debug("ODBCDBStore destructor enter.");
     StringBuffer err_str;
 
     err_str.append("Tables still open at deletion time: ");
@@ -181,7 +220,7 @@ ODBCDBStore::~ODBCDBStore()
 
     dbenv_ = 0;
     log_info("db closed");
-    log_debug("destructor exit.");
+    log_debug("ODBCDBStore destructor exit.");
 }
 
 //----------------------------------------------------------------------------
@@ -232,11 +271,16 @@ ODBCDBStore::endTransaction(void *txid, bool be_durable)
 
         log_debug("endTransaction enter durable section");
 
+        if (dbenv_->m_hdbc == NULL) {
+        	log_debug("endTrabsaction called with dbenv_->m_hdbc NULL - skipping SQLEndTran.");
+        	return(DS_ERR);
+        }
+
         ret = SQLEndTran(SQL_HANDLE_DBC, dbenv_->m_hdbc, SQL_COMMIT);
 
         if (!SQL_SUCCEEDED(sqlRC) && (ret != SQL_NO_DATA))
         {
-            log_crit("ERROR:  endTransaction – SQLEndTran failed");       //glr
+            log_crit("ERROR:  endTransaction: SQLEndTran failed");       //glr
             return(DS_ERR);
         }
     }
@@ -249,533 +293,6 @@ ODBCDBStore::getUnderlying()
 {
     log_debug("getUnderlying enter.");
     return ((void *) dbenv_);
-}
-
-int
-ODBCDBStore::parseOdbcIni(const char *dbName, char *fullPath, char*schemaPath)
-{
-    FILE *f;
-    char odbciniFilename[1000];
-    char *oneLine;
-    char *tok;
-    size_t lineLen;
-
-    char odbcDatabaseIdentifier[500];
-    char section_start = '[';
-    char section_end = ']';
-    bool foundDatabase = false;
-
-    sprintf(odbcDatabaseIdentifier, "%c%s%c", section_start, dbName, section_end);
-    fullPath[0] = '\0';
-    schemaPath[0] = '\0';
-
-    if ( getenv("ODBCSYSINI")==NULL ) {
-        sprintf(odbciniFilename, "/etc/%s", "odbc.ini");
-    } else {
-        sprintf(odbciniFilename, "%s/%s", getenv("ODBCSYSINI"), "odbc.ini");
-    }
-
-    f = fopen(odbciniFilename, "r");
-    if (f == NULL)
-    {
-        log_debug("Can't open odbc.ini file (%s) for reading", odbciniFilename);
-        return (-1);
-    }
-
-    oneLine = (char *) malloc(1000);
-    while (getline(&oneLine, &lineLen, f) > 0)
-    {
-        tok = strtok(oneLine, " \t\n");
-        if ( tok==NULL ) {
-        	// Blank line after we've found a database gets us out.
-        	if (foundDatabase) {
-        		break;
-        	}
-        	continue;
-        }
-
-        if ( !foundDatabase && (strstr(tok, odbcDatabaseIdentifier)!=NULL) )
-        {
-            log_debug("Found Database %s", odbcDatabaseIdentifier);
-            foundDatabase = true;
-            continue;
-        } else if ( foundDatabase && strcmp(tok, "Database")==0) {
-            // Call strtok twice more, once to get the '=', then once
-            // to get the database string.
-            tok = strtok(NULL, " \t\n");
-            tok = strtok(NULL, " \t\n");
-            log_debug("Found database (%s) and path(%s) in odbc.ini file (%s).",
-                      dbName, tok, odbciniFilename);
-            strcpy(fullPath, tok);
-		} else if ( foundDatabase && strcmp(tok, "SchemaCreationFile")==0) {
-			// Call strtok twice more, once to get the '=', then once
-			// to get the database schema creation file name.
-			tok = strtok(NULL, " \t\n");
-			tok = strtok(NULL, " \t\n");
-			log_debug("Found schema creation file (%s) for database (%s) in odbc.ini file (%s).",
-					  tok, dbName, odbciniFilename);
-			strcpy(schemaPath, tok);
-		}
-    }
-    free(oneLine);
-    fclose(f);
-
-    if (foundDatabase) {
-    	return(0);
-    }
-
-    return (-1);
-}
-
-int
-ODBCDBStore::init(const StorageConfig & cfg)
-{
-    int ret;
-
-    log_debug("init entry.");
-    dbenv_ = &base_dbenv_;      //glr
-
-    std::string dbdir = cfg.dbdir_;
-    //FileUtils::abspath(&dbdir);
-
-    db_name_ = cfg.dbname_;
-    sharefile_ = cfg.db_sharefile_;
-
-    char database_fullpath[500] = "";
-    char database_dir[500] = "";
-    char database_schema_fullpath[500] = "";
-
-    // For ODBC, the cfg.dbname_ refers to the name of the database as defined
-    // in the odbc.ini file (i.e. the name inside square brackets, e.g. [DTN]).
-    // This code parses the odbc.ini file looking for the given database name,
-    // then uses the 'Database =' entry from the odbc.ini file to determine
-    // the location of the actual database file.
-    //
-    // Note that for odbc-based storage methods, the cfg.dbdir_ variable IS
-    // IGNORED
-
-    // Parse the odbc.ini file to find the database name; copy the full path to
-    // the database file into database_fullpath
-    //sprintf(sys_command, "%s%s%s",
-    //        section_start, cfg.dbname_.c_str(), section_end);
-    ret = parseOdbcIni(cfg.dbname_.c_str(), database_fullpath, database_schema_fullpath);
-
-    if ( ret!=0 ) {
-        log_crit
-            ("ODBCDBStore::init can't find DTN2 database SECTION ('[%s]') in odbcini file (%s/%s)",
-             cfg.dbname_.c_str(), getenv("ODBCSYSINI"), "odbc.ini");
-        return DS_ERR;
-    }
-    char *c;
-    strcpy(database_dir, database_fullpath);
-    c = rindex(database_dir, '/');
-    *c = '\0';
-    dbdir = database_dir;
-
-    // XXX/bowei need to expose options if needed later
-    if (cfg.tidy_)
-    {
-        log_crit("init WARNING:  tidy/prune DB dir %s will delete all DB files, i.e., all DTN and VRL DB tables/data",  //glr
-                 dbdir.c_str());
-        prune_db_dir(dbdir.c_str(), cfg.tidy_wait_);
-    }
-
-    bool force_schema_creation = false;
-#if 1
-    bool db_dir_exists;
-    int err = check_db_dir(dbdir.c_str(), &db_dir_exists);
-    if (err != 0)
-    {
-        log_crit("init  ERROR:  CHECK failed on DB dir %s so exit!",     //glr
-                 dbdir.c_str());
-        return DS_ERR;
-    }
-    if (!db_dir_exists)
-    {
-        log_crit("init  WARNING:  DB dir %s does not exist SO WILL CREATE which means all prior data has been lost!",    //glr
-                 dbdir.c_str());
-        if (cfg.init_)
-        {
-            if (create_db_dir(dbdir.c_str()) != 0)
-            {
-                return DS_ERR;
-            }
-            force_schema_creation = true;
-        } else {
-            log_crit
-                ("init  DB dir %s does not exist and not told to create!",
-                 dbdir.c_str());
-            return DS_ERR;
-        }
-    }
-#endif
-//glr --- added
-
-    log_debug("init - Verify Env info for DB Alias=%s\n", db_name_.c_str());
-
-	// ODBC automatically creates DB file on SQLConnect so check file first
-	if (1)
-	{
-		struct stat statBuf;
-		log_info
-			("init - about to check if ODBC DB file %s exists and is non-empty.\n",
-			 database_fullpath);
-		if (stat(database_fullpath, &statBuf) == 0)
-		{
-			if (statBuf.st_size == 0)
-			{
-				log_crit
-					("init - ODBC DB file %s exists but IS EMPTY so continue and CREATE DB SCHEMA",
-					 database_fullpath);
-				force_schema_creation = true;
-			} else {
-				log_info
-					("init - ODBC DB file is ready for access");
-			}
-		} else {
-			log_info
-				("init - ODBC DB file %s DOES NOT EXIST or does not permit access so continue and CREATE DB SCHEMA",
-				 database_fullpath);
-			force_schema_creation = true;
-		}
-	}
-
-    log_info("init initializing db name=%s (%s), dir=%s",
-             db_name_.c_str(), sharefile_ ? "shared" : "not shared",
-             dbdir.c_str());
-
-    dbenv_->m_henv = SQL_NULL_HENV;
-    dbenv_->m_hdbc = SQL_NULL_HDBC;
-
-    // Allocate the ODBC environment handle for SQL
-    if ((sqlRC =
-         SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE,
-                        &(base_dbenv_.m_henv))) != SQL_SUCCESS
-        && sqlRC != SQL_SUCCESS_WITH_INFO)
-    {
-        log_crit
-            ("init ERROR: Failed to allocate environment handle");
-        return DS_ERR;
-    }
-    // set ODBC environment: ODBC version
-    if ((sqlRC =
-         SQLSetEnvAttr(dbenv_->m_henv, SQL_ATTR_ODBC_VERSION,
-                       (void *) SQL_OV_ODBC3, 0)) != SQL_SUCCESS
-        && sqlRC != SQL_SUCCESS_WITH_INFO)
-    {
-        log_crit("ERROR: Failed to set OBDC Version for data server");
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-        return DS_ERR;
-    }
-    log_debug("init - Set ODBC Version success");
-
-    // allocate the ODBC Connection handle
-    if ((sqlRC =
-         SQLAllocHandle(SQL_HANDLE_DBC, dbenv_->m_henv,
-                        &(base_dbenv_.m_hdbc))) != SQL_SUCCESS
-        && sqlRC != SQL_SUCCESS_WITH_INFO)
-    {
-        log_crit
-            ("init ERROR: Failed to allocate ODBC Connection handle");
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-        return DS_ERR;
-    }
-
-    if (dbenv_->m_hdbc == SQL_NULL_HDBC)
-    {
-        log_crit
-            ("init ERROR: Allocated ODBC Connection Handle is null");
-        return DS_ERR;
-    }
-    log_info
-        ("init Allocated ODBC Connection Handle successully");
-
-    // set ODBC Connection attributes: login timeout
-     if ((sqlRC =
-          SQLSetConnectAttr(dbenv_->m_hdbc, SQL_ATTR_LOGIN_TIMEOUT,
-                            (SQLPOINTER) 10,
-                            SQL_IS_UINTEGER)) != SQL_SUCCESS
-         && sqlRC != SQL_SUCCESS_WITH_INFO)
-     {
-         log_crit("init ERROR: Failed to set DB Connect timeout");
-         SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-         SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-         return DS_ERR;
-     }
-     log_info("init Set DB Connection timeout success");
-
-     // set ODBC Connection attributes: auto-commit
-     // if max_nondurable_transactions is >0, auto_commit is OFF;
-     if (cfg.auto_commit_==false) {
-    	 auto_commit_ = false;
-         if ((sqlRC =
-               SQLSetConnectAttr(dbenv_->m_hdbc,
-                                 SQL_ATTR_AUTOCOMMIT,
-                                 SQL_AUTOCOMMIT_OFF,
-                                 SQL_IS_UINTEGER)) != SQL_SUCCESS
-              && sqlRC != SQL_SUCCESS_WITH_INFO)
-          {
-              log_crit("init ERROR: Failed to set DB auto-commit");
-              SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-              SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-              return DS_ERR;
-          }
-          log_info("init Set DB auto-commit success max_nondurable_transactions(%d)",
-        		   cfg.max_nondurable_transactions_);
-     }
-
-    sqlRC = SQLConnect(dbenv_->m_hdbc,
-                       (SQLCHAR *) db_name_.c_str(),
-                       SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS);
-    if (!SQL_SUCCEEDED(sqlRC))
-    {
-        log_crit
-            ("init Failed to SQLConnect to <%s> with NULL login/pswd",
-             db_name_.c_str());
-        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-        return DS_ERR;
-    }
-    log_debug
-        ("init Connect to DB <%s> success w/NULL login/pswd (per odbc.ini and odbcinst.ini)",
-         db_name_.c_str());
-
-    log_info
-        ("init For ODBC, AutoCommit is always ON until suspended by 'BEGIN TRANSACTION'");
-
-    dbenv_->hstmt = SQL_NULL_HSTMT;
-    if ((sqlRC =
-         SQLAllocHandle(SQL_HANDLE_STMT, dbenv_->m_hdbc,
-                        &(dbenv_->hstmt))) != SQL_SUCCESS
-        && (sqlRC != SQL_SUCCESS_WITH_INFO))
-    {
-        log_crit
-            ("init ERROR: Failed to allocate Statement handle");
-        SQLDisconnect(dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-        return DS_ERR;
-    }
-
-    if (dbenv_->hstmt == SQL_NULL_HSTMT)
-    {
-        log_crit
-            ("init ERROR: Statement handle is null so skip statement");
-        SQLDisconnect(dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-        return DS_ERR;
-    }
-
-    dbenv_->trans_hstmt = SQL_NULL_HSTMT;
-    if ((sqlRC =
-         SQLAllocHandle(SQL_HANDLE_STMT, dbenv_->m_hdbc,
-                        &(dbenv_->trans_hstmt))) != SQL_SUCCESS
-        && (sqlRC != SQL_SUCCESS_WITH_INFO))
-    {
-        log_crit
-            ("init ERROR: Failed to allocate Trans Statement handle");
-        SQLDisconnect(dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-        return DS_ERR;
-    }
-
-    if (dbenv_->trans_hstmt == SQL_NULL_HSTMT)
-    {
-        log_crit
-            ("init ERROR: Trans Statement handle is null so skip statement");
-        //SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-        SQLDisconnect(dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-        return DS_ERR;
-    }
-
-    if (force_schema_creation)
-    {
-        log_crit
-            ("init WARNING:  new DB dir %s SO MUST CREATE new DB Schema for DTN (globals, bundles & registrations; links & prophet unused/uncreated) and VRL",
-             dbdir.c_str());
-
-        if ( strlen(database_schema_fullpath)>0 ) {
-        	char schema_creation_string[1024];
-            log_info
-                ("init: sourcing odbc schema creation file (%s) in addition to regular DTN tables",
-                 database_schema_fullpath);
-            sprintf(schema_creation_string, "echo '.read %s' | sqlite3 %s",
-        		    database_schema_fullpath, database_fullpath);
-
-            system(schema_creation_string);
-        }
-
-        /* Execute the query to create each table - in ODBC BLOB has datatype affinity NONE so any datatype may be stored */
-        sqlRC =
-            SQLExecDirect(dbenv_->hstmt,
-                          (SQLCHAR *)
-                          "CREATE TABLE globals(the_key varchar(100) primary key, the_data blob(1000000))",
-                          SQL_NTS);
-        if (!SQL_SUCCEEDED(sqlRC) && sqlRC != SQL_NO_DATA)
-        {
-            log_crit("init ERROR: - unable to SQLExecDirect 'CREATE TABLE globals (%d)", sqlRC); //glr
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-            SQLDisconnect(dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-            return DS_ERR;
-        }
-        sqlRC =
-            SQLExecDirect(dbenv_->hstmt,
-                          (SQLCHAR *)
-                          "CREATE TABLE bundles(the_key unsigned integer primary key, the_data blob(1000000))",
-                          SQL_NTS);
-        if (!SQL_SUCCEEDED(sqlRC) && sqlRC != SQL_NO_DATA)
-        {
-            log_crit("ERROR:  init - unable to SQLExecDirect 'CREATE TABLE bundles (%d)", sqlRC);        //glr
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-            SQLDisconnect(dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-            return DS_ERR;
-        }
-        sqlRC =
-            SQLExecDirect(dbenv_->hstmt,
-                          (SQLCHAR *)
-                          "CREATE TABLE prophet(the_key unsigned integer primary key, the_data blob(1000000))",
-                          SQL_NTS);
-        // if ( !SQL_SUCCEEDED(sqlRC) )
-        if (!SQL_SUCCEEDED(sqlRC) && sqlRC != SQL_NO_DATA)
-        {
-            log_crit("ERROR:  init - unable to SQLExecDirect 'CREATE TABLE prophet(%d)", sqlRC); //glr
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-            SQLDisconnect(dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-            return DS_ERR;
-        }
-        sqlRC =
-            SQLExecDirect(dbenv_->hstmt,
-                          (SQLCHAR *)
-                          "CREATE TABLE links(the_key unsigned integer primary key, the_data blob(1000000))",
-                          SQL_NTS);
-        // if ( !SQL_SUCCEEDED(sqlRC) )
-        if (!SQL_SUCCEEDED(sqlRC) && sqlRC != SQL_NO_DATA)
-        {
-            log_crit("ERROR:  init - unable to SQLExecDirect 'CREATE TABLE links(%d)", sqlRC);   //glr
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-            SQLDisconnect(dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-            return DS_ERR;
-        }
-
-        /* Execute the query to create META_DATA table */
-        sqlRC =
-            SQLExecDirect(dbenv_->hstmt,
-                          (SQLCHAR *)
-                          "CREATE TABLE registrations(the_key unsigned integer primary key, the_data blob(1000000))",
-                          SQL_NTS);
-        // if ( !SQL_SUCCEEDED(sqlRC) )
-        if (!SQL_SUCCEEDED(sqlRC) && sqlRC != SQL_NO_DATA)
-        {
-            log_crit("ERROR:  init - unable to SQLExecDirect 'CREATE TABLE registrations (%d)", sqlRC);  //glr
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-            SQLDisconnect(dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-            return DS_ERR;
-        }
-
-        /* Execute the query to create META_DATA table */
-        char my_SQL_str[500];
-        snprintf(my_SQL_str, 500,
-                 "CREATE TABLE %s (the_table varchar(128))",
-                 META_TABLE_NAME.c_str());
-        sqlRC = SQLExecDirect(dbenv_->hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
-        // if ( !SQL_SUCCEEDED(sqlRC) )
-        if (!SQL_SUCCEEDED(sqlRC) && sqlRC != SQL_NO_DATA)
-        {
-            log_crit
-                ("init ERROR: - unable to SQLExecDirect 'CREATE TABLE META_TABLE (%d)",
-                 sqlRC);
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-            SQLDisconnect(dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-            return DS_ERR;
-        }
-
-        /* Load the META_DATA table */
-        snprintf(my_SQL_str, 500, "INSERT INTO %s values('globals')",
-                 META_TABLE_NAME.c_str());
-        sqlRC = SQLExecDirect(dbenv_->hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
-        if (!SQL_SUCCEEDED(sqlRC))
-        {
-            log_crit
-                ("init ERROR: - unable to SQLExecDirect 'insert into META_TABLE - globals (%d)",
-                 sqlRC);
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-            SQLDisconnect(dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-            return DS_ERR;
-        }
-
-        snprintf(my_SQL_str, 500, "INSERT INTO %s values('bundles')",
-                 META_TABLE_NAME.c_str());
-        sqlRC = SQLExecDirect(dbenv_->hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
-        if (!SQL_SUCCEEDED(sqlRC))
-        {
-            log_crit
-                ("init ERROR: - unable to SQLExecDirect 'insert into META_TABLE - bundles (%d)",
-                 sqlRC);
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-            SQLDisconnect(dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-            return DS_ERR;
-        }
-
-        snprintf(my_SQL_str, 500, "INSERT INTO %s values('registrations')",
-                 META_TABLE_NAME.c_str());
-        sqlRC = SQLExecDirect(dbenv_->hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
-        if (!SQL_SUCCEEDED(sqlRC))
-        {
-            log_crit
-                ("init ERROR: - unable to SQLExecDirect 'insert into META_TABLE - registrations");
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-            SQLDisconnect(dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-            return DS_ERR;
-        }
-
-        // Commit these changes to disk.
-        endTransaction(NULL, true);
-    }
-
-    if (cfg.db_lockdetect_ != 0)
-    {
-        deadlock_timer_ =
-            new DeadlockTimer(logpath_, dbenv_, cfg.db_lockdetect_);
-        deadlock_timer_->reschedule();
-    } else {
-        deadlock_timer_ = NULL;
-    }
-
-    init_ = true;
-
-    log_debug("init exit.");
-    return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -797,11 +314,11 @@ ODBCDBStore::get_table(DurableTableImpl ** table,
 
     if (flags & DS_CREATE)
     {
-        log_debug("get_table DB_CREATE on");
+        log_debug("get_table DS_CREATE on");
 
         if (flags & DS_EXCL)
         {
-            log_debug("get_table DB_EXCL on");
+            log_debug("get_table DS_EXCL on");
         }
     }
 
@@ -826,9 +343,9 @@ ODBCDBStore::get_table(DurableTableImpl ** table,
         if (flags & DS_CREATE)
         {
             log_debug
-                ("get_table DB_CREATE is ON so CREATE w/ default Unsigned Int key and Blob data");
+                ("get_table DS_CREATE is ON so CREATE w/ default Unsigned Int key and Blob data");
             snprintf(my_SQL_str, 500,
-                     "CREATE TABLE %s(the_key unsigned integer primary key, the_data blob(1000000))",
+                     "CREATE TABLE %s(the_key integer unsigned primary key, the_data blob(1000000))",
                      dbenv_->table_name);
             sqlRC =
                 SQLExecDirect(dbenv_->hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
@@ -848,7 +365,7 @@ ODBCDBStore::get_table(DurableTableImpl ** table,
             }
         } else {
             log_debug
-                ("get_table DB_CREATE is OFF so return DS_NOTFOUND");
+                ("get_table DS_CREATE is OFF so return DS_NOTFOUND");
             return DS_NOTFOUND; //glr - added to match  if (err == ENOENT)
         }
     } else {
@@ -859,7 +376,7 @@ ODBCDBStore::get_table(DurableTableImpl ** table,
             if (flags & DS_EXCL)
             {
                 log_debug
-                    ("get_table DB_CREATE and DB_EXCL are ON and TABLE ALREADY EXISTS so return DS_EXISTS");
+                    ("get_table DS_CREATE and DS_EXCL are ON and TABLE ALREADY EXISTS so return DS_EXISTS");
                 return DS_EXISTS;       //glr - added to match  if (err == EEXIST)
             }
         }
@@ -1056,6 +573,287 @@ ODBCDBStore::DeadlockTimer::timeout(const struct timeval &now)
         ("DeadlockTimer::timeout SO reschedule (SHOULD NEVER HAPPEN - ODBC has SQL_BUSY return not lock_detect)");
 
     reschedule();
+}
+
+//----------------------------------------------------------------------------
+// Common pieces of initialization code.
+// Factored out of specific driver classes.
+DurableStoreResult_t
+ODBCDBStore::connect_to_database(const StorageConfig & cfg)
+{
+
+    dbenv_->m_henv = SQL_NULL_HENV;
+    dbenv_->m_hdbc = SQL_NULL_HDBC;
+
+    // Allocate the ODBC environment handle for SQL
+    if ((sqlRC =
+         SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE,
+                        &(base_dbenv_.m_henv))) != SQL_SUCCESS
+        && sqlRC != SQL_SUCCESS_WITH_INFO)
+    {
+        log_crit
+            ("connect_to_database: ERROR: Failed to allocate environment handle");
+        return DS_ERR;
+    }
+    // set ODBC environment: ODBC version
+    if ((sqlRC =
+         SQLSetEnvAttr(dbenv_->m_henv, SQL_ATTR_ODBC_VERSION,
+                       (void *) SQL_OV_ODBC3, 0)) != SQL_SUCCESS
+        && sqlRC != SQL_SUCCESS_WITH_INFO)
+    {
+        log_crit("connect_to_database: ERROR: Failed to set OBDC Version for data server");
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        return DS_ERR;
+    }
+    log_debug("init - Set ODBC Version success");
+
+    // allocate the ODBC Connection handle
+    if ((sqlRC =
+         SQLAllocHandle(SQL_HANDLE_DBC, dbenv_->m_henv,
+                        &(base_dbenv_.m_hdbc))) != SQL_SUCCESS
+        && sqlRC != SQL_SUCCESS_WITH_INFO)
+    {
+        log_crit
+            ("connect_to_database: ERROR: Failed to allocate ODBC Connection handle");
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        return DS_ERR;
+    }
+
+    if (dbenv_->m_hdbc == SQL_NULL_HDBC)
+    {
+        log_crit
+            ("connect_to_database: ERROR: Allocated ODBC Connection Handle is null");
+        return DS_ERR;
+    }
+    log_info
+        ("connect_to_database: Allocated ODBC Connection Handle successfully");
+
+    // set ODBC Connection attributes: login timeout
+     if ((sqlRC =
+          SQLSetConnectAttr(dbenv_->m_hdbc, SQL_ATTR_LOGIN_TIMEOUT,
+                            (SQLPOINTER) 10,
+                            SQL_IS_UINTEGER)) != SQL_SUCCESS
+         && sqlRC != SQL_SUCCESS_WITH_INFO)
+     {
+         log_crit("connect_to_database: ERROR: Failed to set DB Connect timeout");
+         SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
+         SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+         return DS_ERR;
+     }
+     log_info("connect_to_database: Set DB Connection timeout success");
+
+     // set ODBC Connection attributes: auto-commit
+     // if max_nondurable_transactions is >0, auto_commit is OFF;
+     if (cfg.auto_commit_==false) {
+    	 auto_commit_ = false;
+         if ((sqlRC =
+               SQLSetConnectAttr(dbenv_->m_hdbc,
+                                 SQL_ATTR_AUTOCOMMIT,
+                                 SQL_AUTOCOMMIT_OFF,
+                                 SQL_IS_UINTEGER)) != SQL_SUCCESS
+              && sqlRC != SQL_SUCCESS_WITH_INFO)
+          {
+              log_crit("connect_to_database: ERROR: Failed to set DB auto-commit");
+              SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
+              SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+              return DS_ERR;
+          }
+          log_info("connect_to_database: Set DB auto-commit success max_nondurable_transactions(%d)",
+        		   cfg.max_nondurable_transactions_);
+     }
+
+    sqlRC = SQLConnect(dbenv_->m_hdbc,
+                       (SQLCHAR *) db_name_.c_str(),
+                       SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS);
+    if (!SQL_SUCCEEDED(sqlRC))
+    {
+        log_crit
+            ("connect_to_database: Failed to SQLConnect to <%s> with NULL login/pswd",
+             db_name_.c_str());
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        return DS_ERR;
+    }
+    log_debug
+        ("connect_to_database: Connect to DB <%s> success w/NULL login/pswd (per odbc.ini and odbcinst.ini)",
+         db_name_.c_str());
+
+    log_info
+        ("connect_to_database: For ODBC, AutoCommit is always ON until suspended by 'BEGIN TRANSACTION'");
+
+    dbenv_->hstmt = SQL_NULL_HSTMT;
+    if ((sqlRC =
+         SQLAllocHandle(SQL_HANDLE_STMT, dbenv_->m_hdbc,
+                        &(dbenv_->hstmt))) != SQL_SUCCESS
+        && (sqlRC != SQL_SUCCESS_WITH_INFO))
+    {
+        log_crit
+            ("connect_to_database: ERROR: Failed to allocate Statement handle");
+        SQLDisconnect(dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        return DS_ERR;
+    }
+
+    if (dbenv_->hstmt == SQL_NULL_HSTMT)
+    {
+        log_crit
+            ("connect_to_database: ERROR: Statement handle is null so skip statement");
+        SQLDisconnect(dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        return DS_ERR;
+    }
+
+    dbenv_->trans_hstmt = SQL_NULL_HSTMT;
+    if ((sqlRC =
+         SQLAllocHandle(SQL_HANDLE_STMT, dbenv_->m_hdbc,
+                        &(dbenv_->trans_hstmt))) != SQL_SUCCESS
+        && (sqlRC != SQL_SUCCESS_WITH_INFO))
+    {
+        log_crit
+            ("connect_to_database: ERROR: Failed to allocate Trans Statement handle");
+        SQLDisconnect(dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        return DS_ERR;
+    }
+
+    if (dbenv_->trans_hstmt == SQL_NULL_HSTMT)
+    {
+        log_crit
+            ("connect_to_database: ERROR: Trans Statement handle is null so skip statement");
+        //SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
+        SQLDisconnect(dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        return DS_ERR;
+    }
+    log_debug("connect_to_database: ODBC Main statement and Trans statement handles successfully allocated.");
+    return DS_OK;
+}
+
+//----------------------------------------------------------------------------
+DurableStoreResult_t
+ODBCDBStore::create_tables()
+{
+    char sql_cmd[500];
+    /* Execute the SQL to create each table - in ODBC BLOB has datatype affinity NONE so any datatype may be stored */
+    log_debug("create_tables enter");
+
+    snprintf(sql_cmd, 500,
+        	 "CREATE TABLE globals(the_key integer unsigned primary key, the_data blob(1000000))");
+	sqlRC =
+        SQLExecDirect(dbenv_->hstmt,
+                      (SQLCHAR *)sql_cmd,
+                      SQL_NTS);
+    if (!SQL_SUCCEEDED(sqlRC) && sqlRC != SQL_NO_DATA)
+    {
+        log_crit("create_tables: ERROR: - unable to SQLExecDirect '%s' (%d)",
+        		 sql_cmd, sqlRC);
+        SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
+        SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
+        SQLDisconnect(dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        return DS_ERR;
+    }
+    log_debug("Globals Table created successfully.");
+
+    // Create 'DTN standard tables'.  These all have the same layout.
+    // Column 1: Name: the_key; Data type: integer unsigned; Attributes: primary key
+    // Column 2: Name: the_data; Data type: blob; Attributes: Max size: 1000000 octets (1 million)
+    odbc_table_name_t const* table_name_p;
+    table_name_p = &odbc_table_name_list[0];
+    while (*table_name_p != NULL) {
+    	snprintf(sql_cmd, 500,
+    			 "CREATE TABLE %s(the_key integer unsigned primary key, the_data blob(1000000))",
+    			 *table_name_p);
+        sqlRC =
+            SQLExecDirect(dbenv_->hstmt,
+                          (SQLCHAR *)sql_cmd,
+                          SQL_NTS);
+        if (!SQL_SUCCEEDED(sqlRC) && sqlRC != SQL_NO_DATA)
+        {
+            log_crit("create_tables: ERROR:  unable to SQLExecDirect '%s' (%d)",
+            		 sql_cmd, sqlRC);
+            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
+            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
+            SQLDisconnect(dbenv_->m_hdbc);
+            SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
+            SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+            return DS_ERR;
+        }
+        log_debug("%s table created successfully.", *table_name_p);
+        table_name_p++;
+    }
+
+    /* Execute the query to create META_DATA table */
+    snprintf(sql_cmd, 500,
+             "CREATE TABLE %s (the_table varchar(128))",
+             META_TABLE_NAME.c_str());
+    sqlRC = SQLExecDirect(dbenv_->hstmt, (SQLCHAR *)sql_cmd, SQL_NTS);
+    // if ( !SQL_SUCCEEDED(sqlRC) )
+    if (!SQL_SUCCEEDED(sqlRC) && sqlRC != SQL_NO_DATA)
+    {
+        log_crit
+            ("create_tables: ERROR: unable to SQLExecDirect '%s' (%d)",
+             sql_cmd, sqlRC);
+        SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
+        SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
+        SQLDisconnect(dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        return DS_ERR;
+    }
+
+    /* Load the META_DATA table */
+    snprintf(sql_cmd, 500, "INSERT INTO %s values('globals')",
+             META_TABLE_NAME.c_str());
+    sqlRC = SQLExecDirect(dbenv_->hstmt, (SQLCHAR *)sql_cmd, SQL_NTS);
+    if (!SQL_SUCCEEDED(sqlRC))
+    {
+        log_crit
+            ("init ERROR: - unable to SQLExecDirect '%s' (%d)",
+             sql_cmd, sqlRC);
+        SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
+        SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
+        SQLDisconnect(dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        return DS_ERR;
+    }
+
+    table_name_p = &odbc_table_name_list[0];
+    while (*table_name_p != NULL) {
+    	snprintf(sql_cmd, 500,
+    			 "INSERT INTO %s values('%s')",
+    			 META_TABLE_NAME.c_str(), *table_name_p);
+        sqlRC =
+            SQLExecDirect(dbenv_->hstmt,
+                          (SQLCHAR *)sql_cmd,
+                          SQL_NTS);
+        if (!SQL_SUCCEEDED(sqlRC) && sqlRC != SQL_NO_DATA)
+        {
+            log_crit
+                ("create_tables: ERROR: unable to SQLExecDirect '%s' (%d)",
+                 sql_cmd, sqlRC);
+            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
+            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
+            SQLDisconnect(dbenv_->m_hdbc);
+            SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
+            SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+            return DS_ERR;
+        }
+        table_name_p++;
+    }
+    log_debug("create_tables: META_DATA table successfully populated.");
+
+    // Commit these changes to disk.
+    endTransaction(NULL, true);
+    log_debug("create_tables exit - tables created successfully.");
+    return DS_OK;
+
 }
 
 /******************************************************************************
@@ -1569,37 +1367,57 @@ ODBCDBTable::put(const SerializableObject & key,
     SQLLEN user_data_size;
     char my_SQL_str[500];
     int insert_sqlcode;
+    bool row_exists = false;
+    bool create_new_row = false;
 
     if ( strcmp(name(), "globals")==0 ) {
-        log_debug ("put on globals table");
+        log_debug ("put on globals table - flags %x", flags);
     } else {
         log_debug
-            ("put insert  Key(reverse byte order) unsignedInt=%u int=%d plus size=%d",
-             realKey(k.data), *((u_int32_t *)k.data), k.size);
+            ("put insert  Key(reverse byte order) unsignedInt=%u int=%d plus size=%d - flags %x",
+             realKey(k.data), *((u_int32_t *)k.data), k.size, flags);
     }
-    
-    // if the caller does not want to create new entries, first do a
-    // db get to see if the key already exists
-    if ((flags & DS_CREATE) == 0)
+
+    //check if PK row already exists
+    if ( strcmp( name(), "globals") == 0 ) {
+        char myString[100];
+        memset(myString, '\0', 100);
+        memcpy(myString, ((char *) k.data) + 4, k.size - sizeof(int));
+        log_debug
+            ("put checking if Key (len and string) len=%d string=%s plus size=%d exists in globals table",
+             *((u_int32_t *)k.data), myString, k.size);
+    }
+    else
     {
         log_debug
-            ("put DS_CREATE is OFF so check PK prior existance");
-        //check if PK row already exists
-        int err = key_exists(k.data, k.size);
-        if (err == DS_NOTFOUND)
-        {
-            log_debug("put return DS_NOTFOUND per key_exists");
-            return DS_NOTFOUND;
-        }
-        if (err == DS_ERR)
-        {
-            log_debug("put return DS_ERR per key_exists");
-            return DS_ERR;
-        }
-    } else {
-        log_debug
-            ("put DS_CREATE is ON so create new entry if needed");
-    }                         //end if (DB_CREATE) - check prior PK existance
+            ("put checking if Key (reverse byte order) unsignedInt=%u int=%d plus size=%d exists in %s table",
+             realKey(k.data), *((u_int32_t *)k.data), k.size, name());
+    }
+    int err = key_exists(k. data, k.size);
+    if (err == DS_ERR)
+    {
+        log_debug("put return DS_ERR per key_exists");
+        return DS_ERR;
+    }
+    row_exists = (err != DS_NOTFOUND);
+
+    // Determine what to do next - depends on flags
+    if ( row_exists ) {
+    	if ( flags & DS_EXCL ) {
+    		log_debug("put attempting to update existing row when DS_EXCL set: aborting.");
+    		return DS_EXISTS;
+    	}
+    	log_debug("put will update existing row as DS_EXCL not set.");
+    }
+    else
+    {
+    	if ( ! flags & DS_CREATE ) {
+    		log_debug("put attempting to update a row that does not exist without DS_CREATE set. Aborting." );
+    		return DS_NOTFOUND;
+    	}
+    	log_debug("put will create new row as DS_CREATE is set and row is not present.");
+    	create_new_row = true;
+    }
 
     // figure out the size of the data
     MarshalSize sizer(Serialize::CONTEXT_LOCAL);
@@ -1651,89 +1469,75 @@ ODBCDBTable::put(const SerializableObject & key,
         log_err("put error serializing data object");
         return DS_ERR;
     }
-//glr added - always do insert with NULL the_data blob (followed by update - easier since PUT() supports both)
-    log_debug("put inserting NULL the_data blob into table row");
-    snprintf(my_SQL_str, 500, "INSERT INTO %s values(?, NULL)", name());
 
-    sql_ret = SQLFreeStmt(hstmt, SQL_CLOSE);       //close for later reuse
-    if (!SQL_SUCCEEDED(sql_ret))
-    {
-        log_crit("ERROR:  ::put insert - failed Statement Handle SQL_CLOSE");      //glr
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
-    }
+    // Check if need to insert a new row -
+    if ( create_new_row ) {
+        log_debug("put inserting the_data blob with NULL value into new table row");
+        snprintf(my_SQL_str, 500, "INSERT INTO %s values(?, NULL)", name());
 
-    sql_ret = SQLPrepare(hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
-
-    if (!SQL_SUCCEEDED(sql_ret))
-    {
-        log_err("put insert SQLPrepare error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
-        return DS_ERR;
-    }
-
-    if (strcmp(name(), "globals") == 0)
-    {
-        char myString[100];
-        memset(myString, '\0', 100);
-        memcpy(myString, ((char *) k.data) + 4, k.size - sizeof(int));
-#if 0
-        log_debug
-            ("put insert  Key(len and string) len=%d string=%s plus size=%d",
-             (int) k.data, (char *) k.data + 4, k.size);
-        sql_ret =
-            SQLBindParameter(db_->hstmt, 1, SQL_PARAM_INPUT, SQL_C_DEFAULT,
-                             SQL_CHAR, 0, 0, (char *) k.data + 4, 0, NULL);
-#else
-        log_debug
-            ("put insert  Key(len and string) len=%d string=%s plus size=%d",
-             *((u_int32_t *)k.data), myString, k.size);
-        sql_ret =
-            SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_DEFAULT,
-                             SQL_CHAR, 0, 0, myString, 0, NULL);
-#endif
-    } else {
-        log_debug
-            ("put insert  Key(reverse byte order) unsignedInt=%u int=%d plus size=%d",
-             realKey(k.data), *((u_int32_t *)k.data), k.size);
-        sql_ret =
-            SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_ULONG,
-                             SQL_INTEGER, 0, 0, k.data, 0, NULL);
-    }
-
-    if (!SQL_SUCCEEDED(sql_ret))
-    {
-        log_err("put insert SQLBindParameter error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
-        return DS_ERR;
-    }
-
-    insert_sqlcode = 0;
-    sql_ret = SQLExecute(hstmt);
-
-    if (!SQL_SUCCEEDED(sql_ret))
-    {                           //need to capture internal SQLCODE from SQLError for processing Duplicate PK
-        log_debug("put insert SQLExecute error %d", sql_ret);
-        insert_sqlcode = print_error(db_->m_henv, db_->m_hdbc, hstmt);
-    } else {
-        log_debug("put insert SQLExecute succeeded");
-    }
-
-//TODO:  NONSTANDARD ODBC - would need to be changed to specific RDBMS handling of duplicate PK on INSERT
-    if ((sql_ret == SQLITE_DB_CONSTRAINT) || (insert_sqlcode == 19))    //SQLite returning on Duplicate Key???
-    {
-        log_debug
-            ("put insert SQLExecute CONSTRAINT VIOLATION - duplicate PK");
-        if (flags & DS_EXCL)
+        sql_ret = SQLFreeStmt(hstmt, SQL_CLOSE);       //close for later reuse
+        if (!SQL_SUCCEEDED(sql_ret))
         {
-            log_debug
-                ("put  insert - PK exists and DS_EXCL set so return DB_EXISTS");
-            return DS_EXISTS;
+            log_crit("ERROR:  ::put insert - failed Statement Handle SQL_CLOSE");      //glr
+            print_error(db_->m_henv, db_->m_hdbc, hstmt);
         }
-        log_debug
-            ("put  insert PK exists but DS_EXCL is off so CONTINUE w/ update");
-    } else if (!SQL_SUCCEEDED(sql_ret))
-    {
-        return DS_ERR;
+
+        sql_ret = SQLPrepare(hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
+
+        if (!SQL_SUCCEEDED(sql_ret))
+        {
+            log_err("put insert SQLPrepare error %d", sql_ret);
+            print_error(db_->m_henv, db_->m_hdbc, hstmt);
+            return DS_ERR;
+        }
+
+        if (strcmp(name(), "globals") == 0)
+        {
+            char myString[100];
+            memset(myString, '\0', 100);
+            memcpy(myString, ((char *) k.data) + 4, k.size - sizeof(int));
+    #if 0
+            log_debug
+                ("put insert  Key(len and string) len=%d string=%s plus size=%d",
+                 (int) k.data, (char *) k.data + 4, k.size);
+            sql_ret =
+                SQLBindParameter(db_->hstmt, 1, SQL_PARAM_INPUT, SQL_C_DEFAULT,
+                                 SQL_CHAR, 0, 0, (char *) k.data + 4, 0, NULL);
+    #else
+            log_debug
+                ("put insert  Key(len and string) len=%d string=%s plus size=%d",
+                 *((u_int32_t *)k.data), myString, k.size);
+            sql_ret =
+                SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_DEFAULT,
+                                 SQL_CHAR, 0, 0, myString, 0, NULL);
+    #endif
+        } else {
+            log_debug
+                ("put insert  Key(reverse byte order) unsignedInt=%u int=%d plus size=%d",
+                 realKey(k.data), *((u_int32_t *)k.data), k.size);
+            sql_ret =
+                SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_ULONG,
+                                 SQL_INTEGER, 0, 0, k.data, 0, NULL);
+        }
+
+        if (!SQL_SUCCEEDED(sql_ret))
+        {
+            log_err("put insert SQLBindParameter error %d", sql_ret);
+            print_error(db_->m_henv, db_->m_hdbc, hstmt);
+            return DS_ERR;
+        }
+
+        insert_sqlcode = 0;
+        sql_ret = SQLExecute(hstmt);
+
+        if (!SQL_SUCCEEDED(sql_ret))
+        {                           //need to capture internal SQLCODE from SQLError for processing Duplicate PK
+            log_debug("put insert SQLExecute error %d", sql_ret);
+            insert_sqlcode = print_error(db_->m_henv, db_->m_hdbc, hstmt);
+            return DS_ERR;
+        } else {
+            log_debug("put insert SQLExecute succeeded");
+        }
     }
 
 //glr added - after insert, now do update of the_data blob (update is easier since PUT() supports both)
@@ -2133,11 +1937,14 @@ ODBCDBIterator::ODBCDBIterator(ODBCDBTable* t):
     cur_ = t->iterator_hstmt;
     strcpy(cur_table_name, t->name());
 
+    //TODO Elwyn: Why do we need the data here?  Only interested in iterating over keys.
     log_debug
-        ("constructor SELECT the_key,the_data FROM %s (unqualified)", t->name());
+    ("constructor SELECT the_key FROM %s (unqualified)", t->name());
+    //("constructor SELECT the_key,the_data FROM %s (unqualified)", t->name());
 
     char my_SQL_str[500];
-    snprintf(my_SQL_str, 500, "SELECT the_key,the_data FROM %s", t->name());
+    snprintf(my_SQL_str, 500, "SELECT the_key FROM %s", t->name());
+    //snprintf(my_SQL_str, 500, "SELECT the_key,the_data FROM %s", t->name());
 
     // was:
     //sql_ret = SQLFreeStmt(t->db_->hstmt, SQL_CLOSE);    //close from any prior use
@@ -2165,7 +1972,7 @@ ODBCDBIterator::ODBCDBIterator(ODBCDBTable* t):
                        MAX_GLOBALS_KEY_LEN, NULL);
     } else {
         sql_ret =
-            SQLBindCol(cur_, 1, SQL_C_LONG, &bound_key_int, 0, NULL);
+            SQLBindCol(cur_, 1, SQL_C_ULONG, &bound_key_int, 0, NULL);
     }
 
     if (!SQL_SUCCEEDED(sql_ret))
@@ -2176,40 +1983,17 @@ ODBCDBIterator::ODBCDBIterator(ODBCDBTable* t):
         return;
     }
 
-    if ((bound_data_char_ptr = (char *) malloc(DATA_MAX_SIZE)) == NULL)
-    {
-        log_err("constructor malloc(DATA_MAX_SIZE) error");
-        return;
-    }
-
-    sql_ret =
-        SQLBindCol(cur_, 2, SQL_C_BINARY, bound_data_char_ptr,
-                   DATA_MAX_SIZE, &bound_data_size);
-
-    if (!SQL_SUCCEEDED(sql_ret))
-    {
-        log_err("constructor SQLBindCol error %d", sql_ret);
-        t->print_error(t->db_->m_henv, t->db_->m_hdbc, cur_);
-        free(bound_data_char_ptr);
-        bound_data_char_ptr = NULL;
-        return;
-    }
-
     sql_ret = SQLExecute(cur_);
 
     if (sql_ret == SQL_NO_DATA_FOUND)
     {
         log_debug("constructor SQLExecute NO_DATA_FOUND");
-        free(bound_data_char_ptr);
-        bound_data_char_ptr = NULL;
         return;
     }
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_err("constructor SQLExecute error %d", sql_ret);
         t->print_error(t->db_->m_henv, t->db_->m_hdbc, cur_);
-        free(bound_data_char_ptr);
-        bound_data_char_ptr = NULL;
         return;
     }
 
@@ -2225,9 +2009,6 @@ ODBCDBIterator::~ODBCDBIterator()
 
     SQLRETURN sql_ret;
     valid_ = false;
-
-    free(bound_data_char_ptr);
-    bound_data_char_ptr = NULL;
 
     sql_ret = SQLFreeStmt(cur_, SQL_CLOSE);     //close from any prior use
     if (!SQL_SUCCEEDED(sql_ret))
@@ -2258,8 +2039,6 @@ ODBCDBIterator::next()
     memset(&data_, 0, sizeof(data_));
     memset(bound_key_string, 0, sizeof(bound_key_string));
     bound_key_int = 0;
-    memset(bound_data_char_ptr, 0, DATA_MAX_SIZE);
-    bound_data_size = 0;
 
     sql_ret = SQLFetch(cur_);
 
@@ -2274,13 +2053,6 @@ ODBCDBIterator::next()
         valid_ = false;
         return DS_ERR;
     }
-
-    if (bound_data_size == SQL_NULL_DATA)
-    {
-        log_err
-            ("next SQLFetch SQL_NULL_DATA on data column - allow and continue");
-    }
-
     if (strcmp(cur_table_name, "globals") == 0)
     {
         key_.data = (void *) bound_key_string;
@@ -2294,12 +2066,6 @@ ODBCDBIterator::next()
             ("next  Key(reverse byte order) unsignedInt=%u int=%d plus size=%d",
              *((int *)key_.data), *((u_int32_t *) key_.data), key_.size);
     }
-    data_.data = (void *) bound_data_char_ptr;
-    data_.size = bound_data_size;
-    log_debug
-        ("next first 8-bytes of DATA=%x08 plus size=%d",
-         *((u_int32_t*) data_.data), data_.size);
-
     log_debug("next - exit.");
     return 0;
 }

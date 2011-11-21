@@ -1,5 +1,7 @@
 /*
  *    Copyright 2004-2006 Intel Corporation
+ *    Copyright 2011 Mitre Corporation
+ *    Copyright 2011 Trinity College Dublin
  * 
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -45,10 +47,7 @@
 #include "DurableStore.h"
 
 #define DATA_MAX_SIZE (1 * 1024 * 1024) //1M - increase this and table create for larger buffers
-#define SQLITE_DB_CONSTRAINT  19        // Abort due to contraint violation
-//glr copied from /usr/include/db4/db.h - BerkeleyDB constants
-#define DB_CREATE             0x0000001 /* Create file as necessary. */
-#define DB_EXCL               0x0001000 /* Exclusive open (O_EXCL). */
+//#define SQLITE_DB_CONSTRAINT  19        // Abort due to contraint violation
 
 struct ODBC_dbenv               //glr
 {
@@ -77,7 +76,13 @@ struct __my_dbt
     u_int32_t flags;
 };
 
-
+/// List of names of 'DTN standard' tables in ODC databases
+/// which have two columns (the_key, the_data).
+typedef char* odbc_table_name_t;
+#if 0
+static odbc_table_name_t odbc_table_name_list[] =
+    { "bundles", "prophet", "links", "registrations", NULL };
+#endif
 namespace oasys
 {
 
@@ -88,94 +93,110 @@ namespace oasys
     class StorageConfig;
 
 /**
- * Interface for the generic datastore
+ * Interface for the generic ODBC datastore
+ * Caters for any number of different types of database engine using
+ * a ODBC driver manager, the relevant ODBC driver for the selected
+ * database engine.
  */
 class ODBCDBStore:public DurableStoreImpl
 {
     friend class ODBCDBTable;
     friend class ODBCDBIterator;
 
-  public:
-      ODBCDBStore (const char *logpath);
+    public:
+        ODBCDBStore (const char* derived_classname, const char *logpath);
 
-    // Can't copy or =, don't implement these
-      ODBCDBStore & operator= (const ODBCDBStore &);
-      ODBCDBStore (const ODBCDBStore &);
+        // Can't copy or =, don't implement these
+        ODBCDBStore & operator= (const ODBCDBStore &);
+        ODBCDBStore (const ODBCDBStore &);
 
-     ~ODBCDBStore ();
+        ~ODBCDBStore ();
 
-    //! @{ Virtual from DurableStoreImpl
-    //! Initialize ODBCDBStore
-    int init (const StorageConfig & cfg);
+        //! @{ Virtual from DurableStoreImpl
+        //! Initialize derivative class - must be implemented in derived
+        //! classes for dpecific database engines.
+        // int init (const StorageConfig & cfg);
 
-    int get_table (DurableTableImpl ** table,
-                   const std::string & name,
-                   int flags, PrototypeVector & prototypes);
+        int get_table (DurableTableImpl ** table,
+                       const std::string & name,
+                       int flags, PrototypeVector & prototypes);
 
-    int del_table (const std::string & name);
-    int get_table_names (StringVector * names);
-    std::string get_info () const;
+        int del_table (const std::string & name);
+        int get_table_names (StringVector * names);
+        std::string get_info () const;
 
-    int beginTransaction (void **txid);
-    int endTransaction (void *txid, bool be_durable);
-    void *getUnderlying ();
+        int beginTransaction (void **txid);
+        int endTransaction (void *txid, bool be_durable);
+        void *getUnderlying ();
 
-    /// @}
+        /// @}
 
-  private:
-    bool init_;           //!< Initialized?
-    std::string db_name_; ///< Name of the database file
+    protected:
+        //! @{ Common pieces of initialization code.
+        //! Factored out of specific driver classes.
+        DurableStoreResult_t connect_to_database(const StorageConfig & cfg);
+        DurableStoreResult_t create_tables();
 
-    ODBC_dbenv *dbenv_;     ///< database environment for all tables
-    ODBC_dbenv base_dbenv_; //glr
-    bool sharefile_;        ///< share a single db file
-    bool auto_commit_;       /// True if auto-commit is on
-    bool serializeAll;            // Serialize all access across all tables
-    SpinLock serialization_lock_; // For serializing all access to all tables
-    
+        /// @}
 
-    int parseOdbcIni(const char *dbName, char *fullPath, char *schemaPath);
+        bool init_;             ///< Initialized?
+        std::string db_name_;   ///< Data source name (overload purpose of dbname in StorageConfig)
+        ODBC_dbenv *dbenv_;     ///< database environment for all tables
+        ODBC_dbenv base_dbenv_; //glr
+        bool sharefile_;        ///< share a single db file
+        bool auto_commit_;       /// True if auto-commit is on
+        SQLRETURN sqlRC;        //glr
+        RefCountMap ref_count_; ///< Ref. count for open tables.
 
-    SQLRETURN sqlRC;        //glr
+        /// Id that represents the metatable of tables
+        static const std::string META_TABLE_NAME;
 
-    SpinLock ref_count_lock_;
-    RefCountMap ref_count_; ///< Ref. count for open tables.
+        /// List of names of 'DTN standard' tables in ODC databases
+        /// which have two columns (the_key, the_data).
+        static const odbc_table_name_t odbc_table_name_list[];
 
-    /// Id that represents the metatable of tables
-    static const std::string META_TABLE_NAME;
+        /**
+         * Timer class used to periodically check for deadlocks.
+         */
+        class DeadlockTimer:public oasys::Timer, public oasys::Logger
+        {
+            public:
+                DeadlockTimer (const char *logbase, ODBC_dbenv * dbenv,
+                               int
+                               frequency):Logger ("ODBCDBStore::DeadlockTimer",
+                                                  "%s/%s", logbase,
+                                                  "deadlock_timer"), dbenv_ (dbenv),
+                frequency_ (frequency) { }
 
-    /// Get meta-table
-    int get_meta_table (ODBCDBTable ** table);
+                void reschedule ();
+                virtual void timeout (const struct timeval &now);
 
-    /// @{ Changes the ref count on the tables, used by
-    /// ODBCDBTable
-    int acquire_table (const std::string & table);
-    int release_table (const std::string & table);
-    /// @}
+            protected:
+                ODBC_dbenv * dbenv_;
+                int frequency_;
+        };
+
+        DeadlockTimer *deadlock_timer_;
+    private:
+
+       bool serializeAll;            // Serialize all access across all tables
+       SpinLock serialization_lock_; // For serializing all access to all tables
 
 
-    /**
-     * Timer class used to periodically check for deadlocks.
-     */
-    class DeadlockTimer:public oasys::Timer, public oasys::Logger
-    {
-      public:
-        DeadlockTimer (const char *logbase, ODBC_dbenv * dbenv,
-                       int
-                       frequency):Logger ("ODBCDBStore::DeadlockTimer",
-                                          "%s/%s", logbase,
-                                          "deadlock_timer"), dbenv_ (dbenv),
-        frequency_ (frequency) { }
+       // int parseOdbcIni(const char *dbName, char *fullPath, char *schemaPath);
 
-        void reschedule ();
-        virtual void timeout (const struct timeval &now);
 
-      protected:
-          ODBC_dbenv * dbenv_;
-          int frequency_;
-    };
+       SpinLock ref_count_lock_;
 
-    DeadlockTimer *deadlock_timer_;
+       /// Get meta-table
+       int get_meta_table (ODBCDBTable ** table);
+
+       /// @{ Changes the ref count on the tables, used by
+       /// ODBCDBTable
+       int acquire_table (const std::string & table);
+       int release_table (const std::string & table);
+       /// @}
+
 };
 
 /**
@@ -187,12 +208,10 @@ class ODBCDBTable:public DurableTableImpl, public Logger
     friend class ODBCDBStore;
     friend class ODBCDBIterator;
 
-  public:
-     ~ODBCDBTable ();
-
-    /// @{ virtual from DurableTableImpl
-    int get (const SerializableObject & key, SerializableObject * data);
-
+    public:
+        ~ODBCDBTable ();
+        /// @{ virtual from DurableTableImpl
+        int get (const SerializableObject & key, SerializableObject * data);
         int get (const SerializableObject & key,
                  SerializableObject ** data,
                  TypeCollection::Allocator_t allocator);
@@ -212,7 +231,7 @@ class ODBCDBTable:public DurableTableImpl, public Logger
         DurableIterator *itr ();
         /// @}
 
-      private:
+    private:
         ODBC_dbenv * db_;       //glr
         int db_type_;           //glr
         ODBCDBStore *store_;
@@ -240,26 +259,27 @@ class ODBCDBTable:public DurableTableImpl, public Logger
 
         /// Whether a specific key exists in the table.
         int key_exists (const void *key, size_t key_len);
-    };
+        /**
+         * Create an iterator for table t. These should not be called
+         * except by ODBCDBTable.
+         */
+};
 
 /**
  * Iterator class for ODBC DB tables.
  */
-    class ODBCDBIterator:public DurableIterator, public Logger
-    {
-        friend class ODBCDBTable;
+class ODBCDBIterator:public DurableIterator, public Logger
+{
+    friend class ODBCDBTable;
 
-      private:
-    /**
-     * Create an iterator for table t. These should not be called
-     * except by ODBCDBTable.
-     */
-          ODBCDBIterator (ODBCDBTable * t);
+    private:
 
-          ODBCDBTable* myTable;
+        ODBCDBIterator (ODBCDBTable * t);
 
-      public:
-          virtual ~ ODBCDBIterator ();
+        ODBCDBTable* myTable;
+
+    public:
+        virtual ~ ODBCDBIterator ();
 
         /// @{ Obtain the raw byte representations of the key and data.
         // Buffers are only valid until the next invocation of the
@@ -273,8 +293,8 @@ class ODBCDBTable:public DurableTableImpl, public Logger
         int get_key (SerializableObject * key);
         /// @}
 
-      protected:
-          SQLHSTMT cur_;        // current stmt handle which controls current cursor
+    protected:
+        SQLHSTMT cur_;        // current stmt handle which controls current cursor
         char cur_table_name[128];
         bool valid_;            ///< Status of the iterator
 
@@ -283,12 +303,10 @@ class ODBCDBTable:public DurableTableImpl, public Logger
 #define MAX_GLOBALS_KEY_LEN 11  //for "global_key" string
         char bound_key_string[MAX_GLOBALS_KEY_LEN];
         SQLINTEGER bound_key_int;       //long int
-        char *bound_data_char_ptr;
-        SQLLEN bound_data_size;
-    };
+};
 
 };                              // namespace oasys
 
-#endif // LIBDB_ENABLED
+#endif // LIBODBC_ENABLED
 
 #endif //__ODBC_TABLE_STORE_H__

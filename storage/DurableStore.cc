@@ -27,6 +27,8 @@
 #include "DurableStore.h"
 #include "ExternalDurableStore.h"
 #include "BerkeleyDBStore.h"
+#include "ODBCMySQL.h"
+#include "ODBCSQLite.h"
 #include "ODBCStore.h"
 #include "FileSystemStore.h"
 #include "MemoryStore.h"
@@ -91,10 +93,15 @@ DurableStore::create_store(const StorageConfig& config,
 #endif
 
 #if LIBODBC_ENABLED
-    else if (config.type_ == "odbc")
+    else if (config.type_ == "odbc-sqlite")
     {
-        impl_ = new ODBCDBStore(logpath_);
-        log_debug("impl_ set to new SQLiteDBStore");
+        impl_ = new ODBCDBSQLite(logpath_);
+        log_debug("impl_ set to new ODBCDBSQLite");
+    }
+    else if (config.type_ == "odbc-mysql")
+    {
+        impl_ = new ODBCDBMySQL(logpath_);
+        log_debug("impl_ set to new ODBCDBMySQL");
     }
 #endif
 
