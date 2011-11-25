@@ -164,13 +164,6 @@ const
     std::string
 ODBCDBStore::META_TABLE_NAME("META_DATA_TABLES");
 
-/// Initialization of list of names of 'DTN standard' tables in ODC databases
-/// which have two columns (the_key, the_data).
-const
-odbc_table_name_t
-ODBCDBStore::odbc_table_name_list[] =
-    { "bundles", "prophet", "links", "registrations", NULL };
-
 //----------------------------------------------------------------------------
 ODBCDBStore::ODBCDBStore(const char* derived_classname, const char *logpath):
 DurableStoreImpl(derived_classname, logpath),
@@ -257,7 +250,7 @@ ODBCDBStore::beginTransaction(void **txid)
     if ( txid!=NULL ) {
         *txid = (void*) dbenv_->m_hdbc;
     }
-    return 0;
+    return DS_OK;
 }
 
 int
@@ -272,7 +265,7 @@ ODBCDBStore::endTransaction(void *txid, bool be_durable)
         log_debug("endTransaction enter durable section");
 
         if (dbenv_->m_hdbc == NULL) {
-        	log_debug("endTrabsaction called with dbenv_->m_hdbc NULL - skipping SQLEndTran.");
+        	log_debug("endTransaction called with dbenv_->m_hdbc NULL - skipping SQLEndTran.");
         	return(DS_ERR);
         }
 
@@ -285,7 +278,7 @@ ODBCDBStore::endTransaction(void *txid, bool be_durable)
         }
     }
 
-    return 0;
+    return DS_OK;
 }
 
 void *
@@ -337,12 +330,10 @@ ODBCDBStore::get_table(DurableTableImpl ** table,
     sqlRC = SQLExecDirect(dbenv_->hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
     if (!SQL_SUCCEEDED(sqlRC))
     {
-        log_crit
-            ("ERROR:  get_table - failed Select count(*)");
-
         if (flags & DS_CREATE)
         {
-            log_debug
+            log_info("Creation of table %s in progress.", dbenv_->table_name);
+        	log_debug
                 ("get_table DS_CREATE is ON so CREATE w/ default Unsigned Int key and Blob data");
             snprintf(my_SQL_str, 500,
                      "CREATE TABLE %s(the_key integer unsigned primary key, the_data blob(1000000))",
@@ -364,9 +355,9 @@ ODBCDBStore::get_table(DurableTableImpl ** table,
                 return DS_ERR;
             }
         } else {
-            log_debug
-                ("get_table DS_CREATE is OFF so return DS_NOTFOUND");
-            return DS_NOTFOUND; //glr - added to match  if (err == ENOENT)
+            log_crit
+                ("get_table Table %s is missing and creation was not requested.", dbenv_->table_name);
+            return DS_NOTFOUND;
         }
     } else {
         log_debug
@@ -735,58 +726,15 @@ ODBCDBStore::connect_to_database(const StorageConfig & cfg)
 
 //----------------------------------------------------------------------------
 DurableStoreResult_t
-ODBCDBStore::create_tables()
+ODBCDBStore::create_aux_tables()
 {
     char sql_cmd[500];
-    /* Execute the SQL to create each table - in ODBC BLOB has datatype affinity NONE so any datatype may be stored */
-    log_debug("create_tables enter");
-
-    snprintf(sql_cmd, 500,
-        	 "CREATE TABLE globals(the_key integer unsigned primary key, the_data blob(1000000))");
-	sqlRC =
-        SQLExecDirect(dbenv_->hstmt,
-                      (SQLCHAR *)sql_cmd,
-                      SQL_NTS);
-    if (!SQL_SUCCEEDED(sqlRC) && sqlRC != SQL_NO_DATA)
-    {
-        log_crit("create_tables: ERROR: - unable to SQLExecDirect '%s' (%d)",
-        		 sql_cmd, sqlRC);
-        SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
-        SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-        SQLDisconnect(dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-        return DS_ERR;
-    }
-    log_debug("Globals Table created successfully.");
-
-    // Create 'DTN standard tables'.  These all have the same layout.
-    // Column 1: Name: the_key; Data type: integer unsigned; Attributes: primary key
-    // Column 2: Name: the_data; Data type: blob; Attributes: Max size: 1000000 octets (1 million)
-    odbc_table_name_t const* table_name_p;
-    table_name_p = &odbc_table_name_list[0];
-    while (*table_name_p != NULL) {
-    	snprintf(sql_cmd, 500,
-    			 "CREATE TABLE %s(the_key integer unsigned primary key, the_data blob(1000000))",
-    			 *table_name_p);
-        sqlRC =
-            SQLExecDirect(dbenv_->hstmt,
-                          (SQLCHAR *)sql_cmd,
-                          SQL_NTS);
-        if (!SQL_SUCCEEDED(sqlRC) && sqlRC != SQL_NO_DATA)
-        {
-            log_crit("create_tables: ERROR:  unable to SQLExecDirect '%s' (%d)",
-            		 sql_cmd, sqlRC);
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-            SQLDisconnect(dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-            return DS_ERR;
-        }
-        log_debug("%s table created successfully.", *table_name_p);
-        table_name_p++;
-    }
+    /** Execute the SQL to create any auxiliary tables needed
+     *  Currently the only auxiliary table used is the META_DATA_TABLE
+     *  which contains a list of the storage tables that are automatically
+     *  created by calls of get_table if they are not present at startup.
+     */
+    log_debug("create_aux_tables enter");
 
     /* Execute the query to create META_DATA table */
     snprintf(sql_cmd, 500,
@@ -806,52 +754,8 @@ ODBCDBStore::create_tables()
         SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
         return DS_ERR;
     }
-
-    /* Load the META_DATA table */
-    snprintf(sql_cmd, 500, "INSERT INTO %s values('globals')",
-             META_TABLE_NAME.c_str());
-    sqlRC = SQLExecDirect(dbenv_->hstmt, (SQLCHAR *)sql_cmd, SQL_NTS);
-    if (!SQL_SUCCEEDED(sqlRC))
-    {
-        log_crit
-            ("init ERROR: - unable to SQLExecDirect '%s' (%d)",
-             sql_cmd, sqlRC);
-        SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
-        SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-        SQLDisconnect(dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-        return DS_ERR;
-    }
-
-    table_name_p = &odbc_table_name_list[0];
-    while (*table_name_p != NULL) {
-    	snprintf(sql_cmd, 500,
-    			 "INSERT INTO %s values('%s')",
-    			 META_TABLE_NAME.c_str(), *table_name_p);
-        sqlRC =
-            SQLExecDirect(dbenv_->hstmt,
-                          (SQLCHAR *)sql_cmd,
-                          SQL_NTS);
-        if (!SQL_SUCCEEDED(sqlRC) && sqlRC != SQL_NO_DATA)
-        {
-            log_crit
-                ("create_tables: ERROR: unable to SQLExecDirect '%s' (%d)",
-                 sql_cmd, sqlRC);
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
-            SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-            SQLDisconnect(dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-            SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-            return DS_ERR;
-        }
-        table_name_p++;
-    }
-    log_debug("create_tables: META_DATA table successfully populated.");
-
-    // Commit these changes to disk.
-    endTransaction(NULL, true);
-    log_debug("create_tables exit - tables created successfully.");
+    log_debug("%s table successfully created.", META_TABLE_NAME.c_str());
+    log_debug("create_aux_tables exit - table(s) created successfully.");
     return DS_OK;
 
 }

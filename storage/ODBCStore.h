@@ -76,13 +76,6 @@ struct __my_dbt
     u_int32_t flags;
 };
 
-/// List of names of 'DTN standard' tables in ODC databases
-/// which have two columns (the_key, the_data).
-typedef char* odbc_table_name_t;
-#if 0
-static odbc_table_name_t odbc_table_name_list[] =
-    { "bundles", "prophet", "links", "registrations", NULL };
-#endif
 namespace oasys
 {
 
@@ -135,7 +128,7 @@ class ODBCDBStore:public DurableStoreImpl
         //! @{ Common pieces of initialization code.
         //! Factored out of specific driver classes.
         DurableStoreResult_t connect_to_database(const StorageConfig & cfg);
-        DurableStoreResult_t create_tables();
+        DurableStoreResult_t create_aux_tables();
 
         /// @}
 
@@ -150,10 +143,6 @@ class ODBCDBStore:public DurableStoreImpl
 
         /// Id that represents the metatable of tables
         static const std::string META_TABLE_NAME;
-
-        /// List of names of 'DTN standard' tables in ODC databases
-        /// which have two columns (the_key, the_data).
-        static const odbc_table_name_t odbc_table_name_list[];
 
         /**
          * Timer class used to periodically check for deadlocks.

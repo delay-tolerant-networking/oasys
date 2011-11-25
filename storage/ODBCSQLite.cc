@@ -449,8 +449,9 @@ ODBCDBSQLite::init(const StorageConfig & cfg)
             system(schema_creation_string);
         }
 
-        // Create main tables
-        ret = create_tables();
+        // Create auxiliary tables - main storage tables are created automatically
+        // when ODBCDBTable instances are created for specific tables with DS_CREATE true.
+        ret = create_aux_tables();
         if ( ret != DS_OK ) {
         	return ret;
         }

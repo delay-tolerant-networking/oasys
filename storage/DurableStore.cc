@@ -159,13 +159,15 @@ DurableStore::create_store(const StorageConfig& config,
         }
     }
     
-    return 0;
+    return DS_OK;
 }
 
 //----------------------------------------------------------------------------
 int
 DurableStore::beginTransaction(void **txid) {
-     int ret;
+    int ret;
+
+    ASSERT(impl_ != NULL);
 
 //     if (transaction_lock_.is_locked_by_me()) {
 //         log_debug("DurableStore::beginTransaction called while holding lock.");
@@ -178,34 +180,30 @@ DurableStore::beginTransaction(void **txid) {
 //         transaction_lock_.lock("beginTransaction");
 //     }
 
-     log_debug("DurableStore::beginTransaction entered");
+    log_debug("DurableStore::beginTransaction entered");
 
-     if (impl_!=NULL) {
-        if ( open_txid_ ) {
-            log_debug("DurableStore::beginTransaction called with Tx already open.");
-            if (txid!=NULL ) {
-                *txid = open_txid_;
-            }
-            return(0);
-        } else {
+    if ( open_txid_ ) {
+        log_debug("DurableStore::beginTransaction called with Tx already open.");
+        if (txid!=NULL ) {
+            *txid = open_txid_;
+        }
+        return(DS_OK);
+    } else {
 	    tx_counter_++;
 	    log_info("DurableStore::beginTransaction calling implementation beginTransaction for transaction %u", tx_counter_);
-            ret = impl_->beginTransaction(&open_txid_);
-            if ( ret==DS_ERR ) {
-                log_warn("error in beginTransaction; releasing lock and DS_ERR");
-                // transaction_lock_.unlock();
-                return(DS_ERR);
-            } else {
-                if (txid!=NULL) {
-                    *txid=open_txid_;
-                }
-                return(0);
+        ret = impl_->beginTransaction(&open_txid_);
+        if ( ret==DS_ERR ) {
+            log_warn("error in beginTransaction; releasing lock and DS_ERR");
+            // transaction_lock_.unlock();
+            return(DS_ERR);
+        } else {
+            if (txid!=NULL) {
+                *txid=open_txid_;
             }
+            return(DS_OK);
         }
-    } else {
-        log_info("DurableStore::beginTransaction - impl_ is NULL.");
-        return(-2);
     }
+
 }
 
 //----------------------------------------------------------------------------
@@ -213,6 +211,7 @@ int
 DurableStore::endTransaction() {
     int ret;
 
+    ASSERT(impl_ != NULL);
 //    ASSERT(transaction_lock_.is_locked_by_me());
 
     log_debug("DurableStore::endTransaction - durable (%d/%d).",
@@ -222,27 +221,21 @@ DurableStore::endTransaction() {
     	durably_close_next_transaction_ = true;
     }
 
-    if (impl_!=NULL) {
-	log_info("DurableStore::endTransaction calling implementation endTransaction for transaction %u", tx_counter_);
-        ret = impl_->endTransaction(open_txid_, durably_close_next_transaction_);
-        open_txid_ = NULL;
-        log_debug("DurableStore::endTransaction - releasing transaction lock.");
-        // transaction_lock_.unlock();
-    	if (durably_close_next_transaction_) {
-    		log_debug("DurableStore::endTransaction -- resetting durable count.");
-    		durably_close_next_transaction_ = false;
-    		num_nondurable_transactions_ = 0;
-    	}
-        if ( ret==0 ) {
-        	return(ret);
-        } else {
-        	return(-3);
-        }
+    ret = impl_->endTransaction(open_txid_, durably_close_next_transaction_);
+    open_txid_ = NULL;
+    log_debug("DurableStore::endTransaction - releasing transaction lock.");
+    // transaction_lock_.unlock();
+	if (durably_close_next_transaction_) {
+		log_debug("DurableStore::endTransaction -- resetting durable count.");
+		durably_close_next_transaction_ = false;
+		num_nondurable_transactions_ = 0;
+	}
+    if ( ret == DS_OK ) {
+    	return(ret);
     } else {
-    	log_info("DurableStore::endTransaction - impl_ is NULL.");
-       	durably_close_next_transaction_ = false;
-        return(-2);
+    	return(DS_BUSY);  //  Elwyn: Why not DS_ERR??
     }
+
 }
 
 //----------------------------------------------------------------------------
@@ -252,6 +245,7 @@ DurableStore::get_table(StaticTypedDurableTable** table,
                         int                       flags,
                         DurableObjectCache<SerializableObject>* cache)
 {
+    ASSERT(impl_ != NULL);
     ASSERT(cache == 0); // no cache for now
 
     // XXX/bowei -- can't support tables that require 
@@ -272,6 +266,7 @@ DurableStore::get_table(StaticTypedDurableTable** table,
 int
 DurableStore::get_table_names(StringVector* table_names)
 {
+    ASSERT(impl_ == NULL);
     int err = impl_->get_table_names(table_names);
     return err;
 }
@@ -280,6 +275,7 @@ DurableStore::get_table_names(StringVector* table_names)
 std::string
 DurableStore::get_info() const
 {
+    ASSERT(impl_ == NULL);
     return impl_->get_info();
 }
 

@@ -131,10 +131,13 @@ public:
     //! Return the implementation pointer.
     DurableStoreImpl* impl() { return impl_; }
 
-    /*
+    /**
      * Begin a transaction in the underlying database system.
      * 
      * There can be at most one open transaction at a time.
+     *
+     * @param txid       Output of implementation handle for created transaction
+     * @return
      */
     int beginTransaction(void **txid = NULL);
 

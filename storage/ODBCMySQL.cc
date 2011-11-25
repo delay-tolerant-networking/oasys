@@ -445,7 +445,12 @@ ODBCDBMySQL::init(const StorageConfig & cfg)
         log_crit("init WARNING:  tidy/prune will delete all tables from selected database (%s).",
         		database_name );
 
-        // Iterate through existing tables deleting them (globals and META_DATA last).
+        // TODO: Iterate through existing tables deleting them (globals and META_DATA last).
+        // force_schema_creation = true;
+    }
+
+    if (cfg.init_) {
+    	force_schema_creation = true;
     }
 
     if (force_schema_creation)
@@ -465,8 +470,9 @@ ODBCDBMySQL::init(const StorageConfig & cfg)
             system(schema_creation_string);
         }
 
-        // Create main tables
-        ret = create_tables();
+        // Create auxiliary tables - main storage tables are created automatically
+        // when ODBCDBTable instances are created for specific tables with DS_CREATE true.
+        ret = create_aux_tables();
         if ( ret != DS_OK ) {
         	return ret;
         }
