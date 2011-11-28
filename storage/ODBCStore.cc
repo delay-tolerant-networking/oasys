@@ -171,7 +171,7 @@ init_(false),
 auto_commit_(true),
 serializeAll(true)
 {
-    logpath_appendf("/ODBCDBStore");
+    logpath_appendf("/ODBCDBStore/%s", derived_classname);
     log_debug("constructor enter/exit.");
 }
 
@@ -221,8 +221,8 @@ ODBCDBStore::~ODBCDBStore()
 int
 ODBCDBStore::beginTransaction(void **txid)
 {
-	if (!auto_commit_) {
-		log_debug("beginTransaction -- AUTOCOMMIT is OFF, returning");
+	if (auto_commit_) {
+		log_debug("beginTransaction -- AUTOCOMMIT is ON, returning");
 	} else {
 	    log_debug("ODBCDBStore::beginTransaction enter.");
 	}

@@ -148,17 +148,15 @@ public:
      */
     int endTransaction();
 
-    /*
+    /**
      * @return true if a transaction is open, otherwise false
+     * transaction_lock_.is_locked
      */
-    int isTransactionOpen() {
-        if ( transaction_lock_.is_locked() ) {
-            return true;
-        } else {
-            return false;
-        }
-    }
+    int isTransactionOpen();
 
+    /**
+     * @return implementation transaction handle (??should this be public??)
+     */
     void * getOpenTransaction() {
         return open_txid_;
     }

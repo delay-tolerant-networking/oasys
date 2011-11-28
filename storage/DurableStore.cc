@@ -66,6 +66,7 @@ DurableStore::create_store(const StorageConfig& config,
 {
     ASSERT(impl_ == NULL);
     
+    log_debug("At beginning of DurableStore::create_store: open_txid_ = %p.", open_txid_ );
     durably_close_next_transaction_ = false;
     num_nondurable_transactions_ = 0;
     max_nondurable_transactions_ = config.max_nondurable_transactions_;
@@ -158,6 +159,7 @@ DurableStore::create_store(const StorageConfig& config,
             }
         }
     }
+    log_debug("At end of DurableStore::create_store: open_txid_ = %p.", open_txid_ );
     
     return DS_OK;
 }
@@ -219,6 +221,7 @@ DurableStore::endTransaction() {
 
     if (++num_nondurable_transactions_>max_nondurable_transactions_) {
     	durably_close_next_transaction_ = true;
+    	log_debug("DurableStore::EndTranaction: Committing this time.");
     }
 
     ret = impl_->endTransaction(open_txid_, durably_close_next_transaction_);
@@ -236,6 +239,18 @@ DurableStore::endTransaction() {
     	return(DS_BUSY);  //  Elwyn: Why not DS_ERR??
     }
 
+}
+
+//----------------------------------------------------------------------------
+int
+DurableStore::isTransactionOpen() {
+	if ( open_txid_ != NULL ) {
+		log_debug("DurableStore::isTransactionOpen returning true.");
+        return true;
+    } else {
+		log_debug("DurableStore::isTransactionOpen returning false.");
+        return false;
+    }
 }
 
 //----------------------------------------------------------------------------

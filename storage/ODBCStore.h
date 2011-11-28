@@ -107,7 +107,7 @@ class ODBCDBStore:public DurableStoreImpl
 
         //! @{ Virtual from DurableStoreImpl
         //! Initialize derivative class - must be implemented in derived
-        //! classes for dpecific database engines.
+        //! classes for specific database engines.
         // int init (const StorageConfig & cfg);
 
         int get_table (DurableTableImpl ** table,
