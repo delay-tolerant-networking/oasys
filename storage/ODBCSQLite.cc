@@ -29,23 +29,24 @@
 //  locating the file used to store the SQLite database and, when required,
 //  initializing tha directory where it is to be stored.  If the database file
 //  doesn't exist when the connection is opened, the file is created (provided
-//  the directory exists. (This differs from the client-server case where the
-//  database has to be created and a user set up before the database can be
-//  accessed by ODBC).
+//  the directory exists). Note that this differs from the client-server case
+//  wherethe database has to be created and a user set up before the database
+//  can be accessed by ODBC.
 //
 //
-//  Required Software on Linux box to run: (tested on SOSCOE SDE 10.7.1 machine)
-//   unixODBC  ("rpm -q unixODBC" ==> unixODBC-2.2.11-7.1)
-//   SQLite    ("rpm -q sqlite"   ==> sqlite-3.3.6-2)
-//   SQLite ODBC libs (libsqlite3odbc-0.83.so - download from http://www.ch-werner.de/sqliteodbc/)
+//  Required Software on Linux box to run:
+//   unixODBC
+//   SQLite
+//   SQLite ODBC libs (libsqlite3odbc-0.83.so -
+//                     download from http://www.ch-werner.de/sqliteodbc/)
 //
 //  Ubuntu packages are available for Release 10.04 LTS for all these components
-//  although the versions are marginally different
+//  although the versions are marginally different across releases and distributions:
 //   unixODBC   ==> 2.2.11-21
 //   SQLite     ==> 3.3.6
 //   SQLiteODBC ==> 0.80
 //
-//  Required OASYS storage files (../oasys_20101217_for_SOSCOE/storage/):
+//  Required OASYS storage files:
 //    ODBCStore.h
 //    ODBCSQLite.h
 //    ODBCStore.cc
@@ -55,8 +56,11 @@
 //  NOTE: need to add CREATE TABLE for all VRL router schema tables!!!
 //
 //  Modified OASYS storage files:
-//    DurableStore.cc
-//      #include "ODBCSQLite.h"
+//    Insertions into DurableStore.cc to instantiate ODBCDBSQLite as the storage
+//    implementation:
+//     #include "ODBCSQLite.h"
+//
+//     ...
 //  
 //      else if (config.type_ == "odbc-sqlite")
 //      {
@@ -67,8 +71,19 @@
 //  Required OASYS test files:
 //     sqlite-db-test.cc
 //
-//  Modified OASYS test files:
-//     Makefile:  add "sqlite-db-test" to TESTS list
+//  When using ODBC the interpretation of the storage parameters is slightly
+//  altered.
+//  - The 'type' is set to 'odbc-sqlite' for a SQLite database accessed via ODBC.
+//  - The 'dbname' storage parameter is used to identify the Data Source Name (DSN)
+//    configured into the odbc.ini file. In the case of SQLite, the full path name
+//    of the database file to be used is defined in the DSN specification, along
+//    with necessary parameters especially the connection timeout.
+//  - The 'dbdir' parameter is still needed because the startup/shutdown system
+//    can, on request, store a 'clean shutdown' indicator by creating the
+//    file .ds_clean in the directory specified in 'dbdir'.   Hence 'dbdir' is
+//    still (just) relevant.
+//  - The storage payloaddir *is* still used to store the payload files which
+//    are not held in the database.
 //
 //  Modifications to ODBC configuration files (requires root access):
 //    $ODBCSYSINI/odbcinst.ini:  add new section if MySQL ODBC lib *.so
@@ -93,20 +108,20 @@
 //
 //  
 //      [SQLite3]
-//      Description     = SQLite3 ODBC Driver
-//      Driver          = <installation directory for sqlite odbc driver>/libsqlite3odbc-0.83.so
-//      Setup           = <installation directory for sqlite odbc driver>/libsqlite3odbc-0.83.so
-//      UsageCount  = 1
+//      Description  = SQLite3 ODBC Driver
+//      Driver       = <installation directory for sqlite odbc driver>/libsqlite3odbc-0.83.so
+//      Setup        = <installation directory for sqlite odbc driver>/libsqlite3odbc-0.83.so
+//      UsageCount   = 1
 //  
 //    $ODBCSYSINI/odbc.ini:  add new DSN sections for DTN test/production DB as necessary
 //
 //      [<config DB name for DTN DB>]
-//      Description     = SQLite database storage DSN for DTN2
-//      Driver          = SQLite3
-//      Database        = <fullPath to DB directory>/<SQLite database file name>
-//      Timeout         = 100000
-//      StepAPI         = No
-//      NoWCHAR         = No
+//      Description   = SQLite database storage DSN for DTN2
+//      Driver        = SQLite3
+//      Database      = <fullPath to DB directory>/<SQLite database file name>
+//      Timeout       = 100000
+//      StepAPI       = No
+//      NoWCHAR       = No
 //
 //  NOTE: should disable or not use configuration tidy/prune or any dynamic DB
 //  creation due to data loss!!

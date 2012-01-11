@@ -42,20 +42,41 @@
 //  Ubuntu packages are available for Release 10.04 LTS for all these components
 //
 //
-//  Modified OASYS storage files (../oasys_20101217_for_SOSCOE/storage/):
-//    DurableStore.cc
-//      #include "ODBCDBStore.h"
+//  Modified OASYS storage files:
+//    Insertions into DurableStore.cc to instantiate ODBCDBMySQL as the storage
+//    implementation:
+//    #include "ODBCMySQL.h"
+//
+//      ...
 //  
+//    #ifdef LIBODBC_ENABLED
+//      ...
 //      else if (config.type_ == "odbc-mysql")
 //      {
 //          impl_ = new ODBCDBMySQL(logpath_);
 //          log_debug("impl_ set to new ODBCDBMySQL");
 //      }
+//     ...
+//    #endif
 //
 //
 // TODO: Add test stuff for MySQL
 //  Required OASYS test files:
 //     mysql-db-test.cc
+//
+//  When using ODBC the interpretation of the storage parameters is slightly
+//  altered.
+//  - The 'type' is set to 'odbc-mysql' for a MySQL database accessed via ODBC.
+//  - The 'dbname' storage parameter is used to identify the Data Source Name (DSN)
+//    configured into the odbc.ini file. In the case of MySQL, the database to be
+//    used is defined in the DSN specification, along with necessary parameters
+//    to allow access to that database via the MySQL client interface.
+//  - The 'dbdir' parameter is still needed because the startup/shutdown system
+//    can, on request, store a 'clean shutdown' indicator by creating the
+//    file .ds_clean in the directory specified in 'dbdir'.   Hence 'dbdir' is
+//    still (just) relevant.
+//  - The storage payloaddir *is* still used to store the payload files which
+//    are not held in the database.
 //
 //  Modifications to ODBC configuration files (requires root access):
 //    $ODBCSYSINI/odbcinst.ini:  add new section if MySQL ODBC lib *.so
@@ -85,22 +106,25 @@
 //      Driver          = <installation directory>/lib/libmyodbc5.so
 //      Description     = Driver for connecting to MySQL database server
 //      Threading       = 0
-
 //  
 //    $ODBCSYSINI/odbc.ini:  add new sections for DTN2 DSN(s).  A newly created
 //      MySQL server always contains an empty 'test' database.  It is necessary
-//      (or at least desirable) to create a user (e.g., dtn_user) who will be
+//      (or at least desirable) to create a user (e.g., dtn_user) that will be
 //      used to access the DTN2 database(s).  The user needs to be created and
 //      given a password and relevant privileges for the database (ALL privileges
 //      is probably OK). If the user is created before the database, it may be
 //      necessary to explicitly grant privileges for the database even if the user
 //      was given privileges for all databases previously, using the mysql command
-//       line interface,00 thus:
+//       line interface, thus:
 //        mysql -u root -p
-//        Password: <Root user password>
+//        Password: <Root database user password>
 //         SQL> CREATE USER "dtn_user"@"localhost" IDENTIFIED BY "<password>";
 //         SQL> CREATE DATABASE dtn_test;
 //         SQL> GRANT ALL ON dtn_test.* TO "dtn_user"@"localhost" IDENTIFIED BY "<password>";
+//
+//      If using a version of the MySQL database before 5.1.6 and defining TRIGGERS
+//      on the database, it is also necessary to give the use the SUPER privilege, thus:
+//         SQL> GRANT SUPER ON dtn_test.* TO "dtn_user"@"localhost" IDENTIFIED BY "<password>";
 //
 //      Note that it is advisable to make database names from the character set
 //      [0-9a-zA-Z$_].  Using other characters (especially - and /) requires the
@@ -136,22 +160,16 @@
 //      OPTION       = 3
 //      SOCKET       =
 //
-//      After much investigation and experiment, it appears that the
-//      keywords and the section names in both odbc.ini and odbcinst.ini
-//      should be case insensitive.  unixODBC uses strcasecmp to check for
-//      equality of section names and property names. However the values
-//      of properties *are* case sensitive and spaces other than round
-//      the '=' are preserved.
+//    After much investigation and experiment, it appears that the
+//    keywords and the section names in both odbc.ini and odbcinst.ini
+//    should be case insensitive.  unixODBC uses strcasecmp to check for
+//    equality of section names and property names. However the values
+//    of properties *are* case sensitive and spaces other than round
+//    the '=' are preserved.
 //
-//      The odbc.ini parsing code ignores all blank lines and comment lines
-//      starting with ';' or '#'.  Section and property names are case insensitive.
-//      Property lines may have trailing comments starting with ; or #.
-//
-//      For MySQL databases, the storage dbdir parameter is irrelevant.
-//      The storage dbname parameter identifies the ODBC DSN entry in
-//      odbc.ini that will be used to access the database.
-//      However the storage payloaddir *is* still used to store the
-//      payload files which are not held in the database.
+//    The odbc.ini parsing code now ignores all blank lines and comment lines
+//    starting with ';' or '#'.  Section and property names are case insensitive.
+//    Property lines may have trailing comments starting with ; or #.
 //
 //  
 //##########################################################
