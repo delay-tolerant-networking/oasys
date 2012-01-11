@@ -19,9 +19,9 @@
 #  include <oasys-config.h>
 #endif
 
-#include <oasys/debug/DebugUtils.h>
-#include <oasys/debug/Logger.h>
-#include <oasys/serialize/Serialize.h>
+#include "../debug/DebugUtils.h"
+#include "../debug/Logger.h"
+#include "../serialize/Serialize.h"
 
 #include "StoreDetail.h"
 
