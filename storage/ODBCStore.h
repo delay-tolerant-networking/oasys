@@ -26,18 +26,18 @@
 
 #if LIBODBC_ENABLED
 
-#include <stdio.h>              //glr
-#include <stdlib.h>             //glr
-#include <string.h>             //glr
-#include <sys/time.h>           //glr
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
 
 #include <map>
 
-//glr includes for standard ODBC headers typically in /usr/include
-#include <sql.h>                //glr
-#include <sqlext.h>             //glr
-#include <sqltypes.h>           //glr
-#include <sqlucode.h>           //glr
+// includes for standard ODBC headers typically in /usr/include
+#include <sql.h>
+#include <sqlext.h>
+#include <sqltypes.h>
+#include <sqlucode.h>
 
 #include "../debug/Logger.h"
 #include "../thread/Mutex.h"
@@ -49,9 +49,9 @@
 #define DATA_MAX_SIZE (1 * 1024 * 1024) //1M - increase this and table create for larger buffers
 //#define SQLITE_DB_CONSTRAINT  19        // Abort due to contraint violation
 
-struct ODBC_dbenv               //glr
+struct ODBC_dbenv
 {
-//glr standard ODBC DB handles (environment, database connection, statement)
+// standard ODBC DB handles (environment, database connection, statement)
     SQLHENV m_henv;
     SQLHDBC m_hdbc;
     SQLHSTMT hstmt;
@@ -61,7 +61,7 @@ struct ODBC_dbenv               //glr
 };
 
 struct __my_dbt
-{                               //glr struct borrowed from Berkeley DB's /usr/include/db4/db.h
+{                               // struct borrowed from Berkeley DB's /usr/include/db4/db.h
     void *data;                 /* Key/data */
     u_int32_t size;             /* key/data length */
 #ifndef DB_DBT_MALLOC
@@ -117,10 +117,11 @@ class ODBCDBStore:public DurableStoreImpl
         int del_table (const std::string & name);
         int get_table_names (StringVector * names);
         std::string get_info () const;
+        bool aux_tables_available();
 
-        int beginTransaction (void **txid);
-        int endTransaction (void *txid, bool be_durable);
-        void *getUnderlying ();
+        int begin_transaction (void **txid);
+        int end_transaction (void *txid, bool be_durable);
+        void *get_underlying ();
 
         /// @}
 
@@ -128,21 +129,26 @@ class ODBCDBStore:public DurableStoreImpl
         //! @{ Common pieces of initialization code.
         //! Factored out of specific driver classes.
         DurableStoreResult_t connect_to_database(const StorageConfig & cfg);
+        DurableStoreResult_t set_odbc_auto_commit_mode();
         DurableStoreResult_t create_aux_tables();
 
         /// @}
 
         bool init_;             ///< Initialized?
-        std::string db_name_;   ///< Data source name (overload purpose of dbname in StorageConfig)
+        std::string dsn_name_;   ///< Data source name (overload purpose of dbname in StorageConfig)
         ODBC_dbenv *dbenv_;     ///< database environment for all tables
-        ODBC_dbenv base_dbenv_; //glr
+        ODBC_dbenv base_dbenv_;
         bool sharefile_;        ///< share a single db file
         bool auto_commit_;       /// True if auto-commit is on
-        SQLRETURN sqlRC;        //glr
+        SQLRETURN sqlRC;
         RefCountMap ref_count_; ///< Ref. count for open tables.
+        bool aux_tables_available_; ///< True if implemented and configured
 
         /// Id that represents the metatable of tables
         static const std::string META_TABLE_NAME;
+
+        /// Id that represents the ODBC DSN configuration file name
+        static const std::string ODBC_INI_FILE_NAME;
 
         /**
          * Timer class used to periodically check for deadlocks.
@@ -168,7 +174,7 @@ class ODBCDBStore:public DurableStoreImpl
         DeadlockTimer *deadlock_timer_;
     private:
 
-       bool serializeAll;            // Serialize all access across all tables
+       bool serialize_all_;            // Serialize all access across all tables
        SpinLock serialization_lock_; // For serializing all access to all tables
 
 
@@ -221,9 +227,17 @@ class ODBCDBTable:public DurableTableImpl, public Logger
         /// @}
 
     private:
-        ODBC_dbenv * db_;       //glr
-        int db_type_;           //glr
+        bool is_aux_table() { return is_aux_table_; }
+
+        ODBC_dbenv * db_;
+        int db_type_;
         ODBCDBStore *store_;
+        bool is_aux_table_;		///< If this is set the table is not one of the
+								///< standard set with a serialized blob.  On put
+								///< and get the data item will be a pointer to a
+								///< class instance derived from StoreDetail and the
+								///< SQL has to be constructed dynamically from the
+								///< vector of descriptors in the data item.
 
         // Lock to ensure that only one thread accessed a particular
         // table at a time.  There is a single SQLHSTMT per table
@@ -244,7 +258,8 @@ class ODBCDBTable:public DurableTableImpl, public Logger
         ODBCDBTable (const char *logpath,
                        ODBCDBStore * store,
                        const std::string & table_name,
-                       bool multitype, ODBC_dbenv * db, int type);
+                       bool multitype, ODBC_dbenv * db, int type,
+                       bool is_aux_table = false);
 
         /// Whether a specific key exists in the table.
         int key_exists (const void *key, size_t key_len);

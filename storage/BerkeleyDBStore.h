@@ -67,11 +67,11 @@ public:
 
     //! Primitive support for transactions (assumes ALL
     //! transactionalized accesses are single-threaded).
-    int   beginTransaction(void **txid);
-    int   endTransaction(void *txid, bool be_durable);
+    int   begin_transaction(void **txid);
+    int   end_transaction(void *txid, bool be_durable);
 
     //! Allow access to the underlying DB implementation
-    void* getUnderlying();
+    void* get_underlying();
 
     int get_table(DurableTableImpl** table,
                   const std::string& name,

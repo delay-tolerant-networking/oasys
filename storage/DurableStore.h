@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-
+
 #ifndef __OASYS_DURABLE_STORE_H__
 #define __OASYS_DURABLE_STORE_H__
 
@@ -81,6 +81,9 @@ enum DurableStoreFlags_t {
     // Berkeley DB Specific flags
     DS_HASH      = 1 << 10,
     DS_BTREE     = 1 << 11,
+
+    // ODBC Specific flags
+    DS_AUX_TABLE = 1 << 12,
 };
 
 // Pull in the various related class definitions (and template class
@@ -107,7 +110,7 @@ public:
      */
     DurableStore(const char* logpath)
         : Logger("DurableStore", "%s", logpath), open_txid_(NULL),
-          haveSeenTransaction(false), tx_counter_(0), impl_(0)
+          have_seen_transaction_(false), tx_counter_(0), impl_(0)
     { 
         log_debug("DurableStore instantiated (%p)", this);
         set_instance(this);
@@ -131,6 +134,13 @@ public:
     //! Return the implementation pointer.
     DurableStoreImpl* impl() { return impl_; }
 
+    /*!
+     * Function to do any additional storage initialization once tables have been
+     * set up.  May be empty.  Useful if any inter-table connections (such as
+     * SQL triggers need to be added).
+     */
+    int create_finalize(const StorageConfig& config);
+
     /**
      * Begin a transaction in the underlying database system.
      * 
@@ -139,25 +149,25 @@ public:
      * @param txid       Output of implementation handle for created transaction
      * @return
      */
-    int beginTransaction(void **txid = NULL);
+    int begin_transaction(void **txid = NULL);
 
     /*
      * End a transaction.
      *
      * There can be at most one open transaction at a time.
      */
-    int endTransaction();
+    int end_transaction();
 
     /**
      * @return true if a transaction is open, otherwise false
      * transaction_lock_.is_locked
      */
-    int isTransactionOpen();
+    int is_transaction_open();
 
     /**
      * @return implementation transaction handle (??should this be public??)
      */
-    void * getOpenTransaction() {
+    void * get_open_transaction() {
         return open_txid_;
     }
     /**
@@ -231,6 +241,15 @@ public:
      */
     void make_transaction_durable();
 
+    /**
+     * Indicates if auxiliary tables are available and configured for use
+     * Depends on type of storage (only implemented in ODBC/SQL currently) and
+     * configuration setting of odbc_use_aux_tables.
+     *
+     * @return true or false (logical and of flags)
+     */
+    bool aux_tables_available();
+
 private:
     friend class oasys::Singleton<DurableStore, false>;
 
@@ -246,7 +265,7 @@ private:
      */
     void *open_txid_;
     pthread_t transactionThread;
-    bool haveSeenTransaction;
+    bool have_seen_transaction_;
     unsigned int tx_counter_;		  // Counter for transactions executed
 
     bool durably_close_next_transaction_; // Durably save state at next

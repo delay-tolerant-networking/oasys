@@ -58,9 +58,11 @@ public:
     virtual ~InternalKeyDurableTable();
     
     /**
-     * Real initialization method.
+     * Real initialization methods.
      */
     int do_init(const StorageConfig& cfg,
+                DurableStore*        store);
+    int do_init_aux(const StorageConfig& cfg,
                 DurableStore*        store);
 
     /**

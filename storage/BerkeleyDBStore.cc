@@ -214,13 +214,13 @@ BerkeleyDBStore::init(const StorageConfig& cfg)
 
 //----------------------------------------------------------------------------
 int
-BerkeleyDBStore::beginTransaction(void **txid)
+BerkeleyDBStore::begin_transaction(void **txid)
 {
     DB_TXN *txid_local;
     u_int32_t flags = 0x0;
     int ret;
 
-    log_debug("BerkeleyDBStore::beginTransaction.");
+    log_debug("BerkeleyDBStore::begin_transaction.");
 
 #if 0
     ret = dbenv_->txn_begin(dbenv_, NULL, &txid_local, flags);
@@ -246,16 +246,16 @@ BerkeleyDBStore::beginTransaction(void **txid)
 
 //----------------------------------------------------------------------------
 int
-BerkeleyDBStore::endTransaction(void *txid, bool be_durable)
+BerkeleyDBStore::end_transaction(void *txid, bool be_durable)
 {
     int ret;
     u_int32_t flags = 0x0;
     DB_TXN *txp = (DB_TXN *) txid;
 
-    log_debug("BerkeleyDBStore::endTransaction: txid = %p", txid);
+    log_debug("BerkeleyDBStore::end_transaction: txid = %p", txid);
 
     if ( be_durable ) {
-    	log_debug("BerkeleyDBStore::endTransaction called with be_durable TRUE");
+    	log_debug("BerkeleyDBStore::end_transaction called with be_durable TRUE");
     }
 
 #if 0
@@ -271,7 +271,7 @@ BerkeleyDBStore::endTransaction(void *txid, bool be_durable)
 
 //----------------------------------------------------------------------------
 void *
-BerkeleyDBStore::getUnderlying()
+BerkeleyDBStore::get_underlying()
 {
     return((void*) dbenv_);
 }

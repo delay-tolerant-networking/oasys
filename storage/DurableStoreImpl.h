@@ -50,6 +50,13 @@ public:
      */
     virtual int init(const StorageConfig& config) = 0;
 
+    /*!
+     * Function to do any additional storage initialization once tables have been
+     * set up.  May be empty.  Useful if any inter-table connections (such as
+     * SQL triggers need to be added).  Default does nothing.
+     */
+    virtual int create_finalize(const StorageConfig& config) { (void)config; return 0; }
+
     /**
      * Hook to get or create the implementation-specific components of
      * a durable table.
@@ -63,23 +70,23 @@ public:
     /**
      * Begin a transaction.  If the implementation doesn't support
      * transactions, then a simple counter of unmatched calls to
-     * beginTransaction is implemented by this base class.
+     * begin_transaction is implemented by this base class.
      */
-    virtual int beginTransaction(void **txid);
+    virtual int begin_transaction(void **txid);
 
     /*
      * end an ongoing transaction, identified by txid if the
      * database implementation wants such an ID.  If be_durable
      * is true, durably save (e.g. to disk) storage state.
      */
-    virtual int endTransaction(void *txid, bool be_durable = false);
+    virtual int end_transaction(void *txid, bool be_durable = false);
 
     /*
      * Return a pointer to the 'Base' of the underlying database
      * implementation.  For BekeleyDB, for example, this would be
      * a pointer to the DB_ENV
      */
-    virtual void *getUnderlying();
+    virtual void *get_underlying();
 
     /**
      * Hook to remove a table (by name) from the data store.
@@ -96,6 +103,15 @@ public:
      */
     virtual std::string get_info() const = 0;
     
+    /**
+     * Indicates if auxiliary tables are available and configured for use
+     * Depends on type of storage (only implemented in ODBC/SQL currently) and
+     * configuration setting of odbc_use_aux_tables.
+     *
+     * @return true or false (logical and of flags)
+     */
+    virtual bool aux_tables_available();
+
 protected:
 
     /**

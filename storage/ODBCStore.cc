@@ -24,7 +24,7 @@
 //  as a DB accessor within OASYS.  This module contains common code which should
 //  be usable with any ODBC driver manager and most ODBC database drivers.
 //  The initial version has been tested with SQLite 3 (version 3.3.x) and
-//  MySQL (version 5.1.x).
+//  MySQL (version 5.1.x - and also Version 5.0.70).
 //
 //  The main class in this module (ODBCDBStore) acts as a base class for database
 //  specific classes that are instantiated according to the database engine that
@@ -58,9 +58,9 @@
 //  In order to use this software and an ODBC-interfaced database, the platform
 //  must include an ODBC driver manager.  The software has been initially tested
 //  the ODBC driver manager unixODBC (http://www.unixodbc.org/) on Linux. In
-//  priniciple it should also be an alternative ODBC driver manager (such as
-//  iODBC (http://www.iodbc.org/).  The ODBC driver manager should support at
-//  least version 3.51 of ODBC.  For ODBC reference manual see MSDN (previously
+//  principle it should also be possible to use an alternative ODBC driver manager
+//  (such as iODBC - http://www.iodbc.org/).  The ODBC driver manager should support
+//  at least version 3.51 of ODBC.  For ODBC reference manual see MSDN (previously
 //  Microsoft Developer Network) web site - (as of November 2011) at
 //      http://msdn.microsoft.com/en-us/library/ms710252%28v=VS.85%29.aspx
 //
@@ -102,6 +102,8 @@
 //  configured into the odbc.ini file.  For file based storage, the name and location
 //  of the database storage will typically be defined as one of the the properties of
 //  the specified DSN rather than being associated with the 'dbdir' storage parameter.
+//  For client-server implementations, the name of the database in the server will
+//  typically be defined as one of the properties of the specified DSN.
 //  However the 'dbdir' parameter is still needed because the startup/shutdown system
 //  can, on request, store a 'clean shutdown' indicator by creating the file .ds_clean
 //  in the directory specified in 'dbdir'.   Hence 'dbdir' is still (just) relevant.
@@ -113,7 +115,7 @@
 //     storage set dbdir <full directory path name> # Used only to store the .ds_clean file.
 //     storage set payloaddir <full directory path name> # Bundle payload files location
 //                                                       # used as for other storage types
-//     storage set
+//
 //  TODO: Fix up test cases.
 //  Required OASYS test files:
 //     sqlite-db-test.cc
@@ -147,6 +149,7 @@
 
 #include "ODBCStore.h"
 #include "StorageConfig.h"
+#include "StoreDetail.h"
 #include "util/InitSequencer.h"
 
 #if LIBODBC_ENABLED
@@ -155,21 +158,72 @@
 
 namespace oasys
 {
+
+// Map from StoreDetail column types to ODBC C types.
+static SQLSMALLINT odbc_col_c_type_map[] = {
+		/* DK_CHAR	= 0, */	SQL_C_CHAR,			///< Character fields
+		/* DK_SHORT, */		SQL_C_SSHORT,		///< Signed 16 bit integer fields
+		/* DK_USHORT, */	SQL_C_USHORT,		///< Unsigned 16 bit integer fields
+		/* DK_LONG, */		SQL_C_SLONG,		///< Signed 32 bit integer fields
+		/* DK_ULONG, */		SQL_C_ULONG,		///< Unsigned 32 bit integer fields
+		/* DK_LONG_LONG, */	SQL_C_SBIGINT,		///< Signed 64 bit integer fields
+		/* DK_ULONG_LONG, */SQL_C_UBIGINT,		///< Unsigned 64 bit integer fields
+		/* DK_FLOAT, */		SQL_C_FLOAT,		///< Single precision floating point fields
+		/* DK_DOUBLE, */	SQL_C_DOUBLE,		///< Double precision floating point fields
+		/* DK_DATETIME, */	SQL_C_TYPE_DATE,	///< Date/Time fields
+		/* DK_VARCHAR, */	SQL_C_BINARY,		///< Variable width character fields
+		/* DK_BLOB */		SQL_C_BINARY		///< Opaque data fields
+};
+// Map from StoreDetail column types to ODBC SQL column types.
+static SQLSMALLINT odbc_col_sql_type_map[] = {
+		/* DK_CHAR	= 0, */	SQL_CHAR,			///< Character fields
+		/* DK_SHORT, */		SQL_SMALLINT,		///< Signed 16 bit integer fields
+		/* DK_USHORT, */	SQL_SMALLINT,		///< Unsigned 16 bit integer fields
+		/* DK_LONG, */		SQL_INTEGER,		///< Signed 32 bit integer fields
+		/* DK_ULONG, */		SQL_INTEGER,		///< Unsigned 32 bit integer fields
+		/* DK_LONG_LONG, */	SQL_BIGINT,			///< Signed 64 bit integer fields
+		/* DK_ULONG_LONG, */SQL_BIGINT,			///< Unsigned 64 bit integer fields
+		/* DK_FLOAT, */		SQL_FLOAT,			///< Single precision floating point fields
+		/* DK_DOUBLE, */	SQL_DOUBLE,			///< Double precision floating point fields
+		/* DK_DATETIME, */	SQL_TYPE_DATE,		///< Date/Time fields
+		/* DK_VARCHAR, */	SQL_VARCHAR,		///< Variable width character fields
+		/* DK_BLOB */		SQL_LONGVARBINARY	///< Opaque data fields
+};
+#if 0
+// Map from StoreDetail column types to SQL column specifications.
+// At present we don't create the auxiliary table programmatically so these mappings aren't used.
+static const char * odbc_col_sql_spec_map[] = {
+		/* DK_CHAR	= 0, */	"CHAR",				///< Character fields
+		/* DK_SHORT, */		"SMALLINT",			///< Signed 16 bit integer fields
+		/* DK_USHORT, */	"SMALLINT UNSIGNED",///< Unsigned 16 bit integer fields
+		/* DK_LONG, */		"INTEGER",			///< Signed 32 bit integer fields
+		/* DK_ULONG, */		"INTEGER UNSIGNED",	///< Unsigned 32 bit integer fields
+		/* DK_LONG_LONG, */	"BIGINT",			///< Signed 64 bit integer fields
+		/* DK_ULONG_LONG, */"BIGINT UNSIGNED",	///< Unsigned 64 bit integer fields
+		/* DK_FLOAT, */		"FLOAT",			///< Single precision floating point fields
+		/* DK_DOUBLE, */	"DOUBLE",			///< Double precision floating point fields
+		/* DK_DATETIME, */	"DATE",				///< Date/Time fields
+		/* DK_VARCHAR, */	"VARCHAR",			///< Variable width character fields
+		/* DK_BLOB */		"BLOB"				///< Opaque data fields
+};
+#endif
+
 /******************************************************************************
  *
  * ODBCDBStore
  *
  *****************************************************************************/
 const
-    std::string
-ODBCDBStore::META_TABLE_NAME("META_DATA_TABLES");
+std::string	ODBCDBStore::META_TABLE_NAME("META_DATA_TABLES");
+const
+std::string ODBCDBStore::ODBC_INI_FILE_NAME("odbc.ini");
 
 //----------------------------------------------------------------------------
 ODBCDBStore::ODBCDBStore(const char* derived_classname, const char *logpath):
 DurableStoreImpl(derived_classname, logpath),
 init_(false),
 auto_commit_(true),
-serializeAll(true)
+serialize_all_(true)
 {
     logpath_appendf("/ODBCDBStore/%s", derived_classname);
     log_debug("constructor enter/exit.");
@@ -203,7 +257,7 @@ ODBCDBStore::~ODBCDBStore()
     {
         deadlock_timer_->cancel();
     }
-    endTransaction(NULL, true);
+    end_transaction(NULL, true);
 
     SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
     SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
@@ -217,14 +271,19 @@ ODBCDBStore::~ODBCDBStore()
 }
 
 //----------------------------------------------------------------------------
-
+// BEWARE: To start a transaction, different databases support various forms of
+// command:
+//   MySQL:		START TRANSACTION or BEGIN but not BEGIN TRANSACTION
+//   SQLite:	BEGIN or BEGIN TRANSACTION but not START TRANSACTION
+// So this routine uses BEGIN that seems to be supported by most.
 int
-ODBCDBStore::beginTransaction(void **txid)
+ODBCDBStore::begin_transaction(void **txid)
 {
 	if (auto_commit_) {
-		log_debug("beginTransaction -- AUTOCOMMIT is ON, returning");
+		log_debug("begin_transaction -- AUTOCOMMIT is ON, returning");
+		return DS_OK;
 	} else {
-	    log_debug("ODBCDBStore::beginTransaction enter.");
+	    log_debug("ODBCDBStore::begin_transaction enter.");
 	}
 
     SQLRETURN ret;
@@ -232,48 +291,70 @@ ODBCDBStore::beginTransaction(void **txid)
     ret = SQLFreeStmt(dbenv_->trans_hstmt, SQL_CLOSE);  //close from any prior use
     if (!SQL_SUCCEEDED(ret))
     {
-        log_crit("ERROR:  beginTransaction - failed Statement Handle SQL_CLOSE");        //glr
+        log_crit("ERROR: begin_transaction - failed Statement Handle SQL_CLOSE");
         return(DS_ERR);
     }
 
     ret =
         SQLExecDirect(dbenv_->trans_hstmt,
-                      (SQLCHAR *) "BEGIN TRANSACTION",
+                      (SQLCHAR *) "BEGIN",
                       SQL_NTS);
-    if (!SQL_SUCCEEDED(sqlRC) && (ret != SQL_NO_DATA))
+    if (!SQL_SUCCEEDED(ret) && (ret != SQL_NO_DATA))
     {
-        log_crit("ERROR(%d):  beginTransaction - unable to SQLExecDirect 'BEGIN TRANSACTION'", ret);      //glr
+        log_crit("ERROR: begin_transaction - SQLExecDirect for 'BEGIN' failed - ret %d", ret);
         return (DS_ERR);
     }
 
-    log_debug("ODBCDBStore::beginTransaction exit.");
+    log_debug("ODBCDBStore::begin_transaction exit.");
     if ( txid!=NULL ) {
+    	log_debug("begin_transaction: setting txid.");
         *txid = (void*) dbenv_->m_hdbc;
     }
     return DS_OK;
 }
 
+//----------------------------------------------------------------------------
+// NOTE: This routine initially used SQLEndTran but that did not work with SQLite
+// for reasons that are not clear - probably because of the NoTxn issue discussed
+// in ODBCMySQL.cc.
 int
-ODBCDBStore::endTransaction(void *txid, bool be_durable)
+ODBCDBStore::end_transaction(void *txid, bool be_durable)
 {
     (void) txid;
+
+	if (auto_commit_) {
+		log_debug("end_transaction -- AUTOCOMMIT is ON, returning");
+		return DS_OK;
+	} else {
+	    log_debug("ODBCDBStore::end_transaction enter.");
+	}
 
     if (be_durable)
     {
         SQLRETURN ret;
 
-        log_debug("endTransaction enter durable section");
+        log_debug("end_transaction enter durable section");
 
         if (dbenv_->m_hdbc == NULL) {
-        	log_debug("endTransaction called with dbenv_->m_hdbc NULL - skipping SQLEndTran.");
+        	log_debug("end_transaction called with dbenv_->m_hdbc NULL - skipping SQLEndTran.");
         	return(DS_ERR);
         }
 
-        ret = SQLEndTran(SQL_HANDLE_DBC, dbenv_->m_hdbc, SQL_COMMIT);
-
-        if (!SQL_SUCCEEDED(sqlRC) && (ret != SQL_NO_DATA))
+        ret = SQLFreeStmt(dbenv_->trans_hstmt, SQL_CLOSE);  //close from any prior use
+        if (!SQL_SUCCEEDED(ret))
         {
-            log_crit("ERROR:  endTransaction: SQLEndTran failed");       //glr
+            log_crit("ERROR: end_transaction - failed Statement Handle SQL_CLOSE");
+            return(DS_ERR);
+        }
+
+        ret =
+            SQLExecDirect(dbenv_->trans_hstmt,
+                          (SQLCHAR *) "COMMIT",
+                          SQL_NTS);
+
+        if (!SQL_SUCCEEDED(ret) && (ret != SQL_NO_DATA))
+        {
+            log_crit("ERROR: end_transaction: SQLExecDirect for COMMIT failed -ret %d", ret);
             return(DS_ERR);
         }
     }
@@ -281,10 +362,11 @@ ODBCDBStore::endTransaction(void *txid, bool be_durable)
     return DS_OK;
 }
 
+//----------------------------------------------------------------------------
 void *
-ODBCDBStore::getUnderlying()
+ODBCDBStore::get_underlying()
 {
-    log_debug("getUnderlying enter.");
+    log_debug("get_underlying enter.");
     return ((void *) dbenv_);
 }
 
@@ -299,7 +381,7 @@ ODBCDBStore::get_table(DurableTableImpl ** table,
 
     u_int32_t db_flags;
 
-    int db_type = 0;            //glr
+    int db_type = 0;
 
     ASSERT(init_);
 
@@ -315,7 +397,7 @@ ODBCDBStore::get_table(DurableTableImpl ** table,
         }
     }
 
-    strcpy(dbenv_->table_name, name.c_str());   //glr - save current table
+    strcpy(dbenv_->table_name, name.c_str());   // save current table
 
     log_debug("get_table check if table exists in schema");
     char my_SQL_str[500];
@@ -324,12 +406,15 @@ ODBCDBStore::get_table(DurableTableImpl ** table,
     sqlRC = SQLFreeStmt(dbenv_->hstmt, SQL_CLOSE);      //close from any prior use
     if (!SQL_SUCCEEDED(sqlRC))
     {
-        log_crit("ERROR:  get_table - failed Statement Handle SQL_CLOSE");       //glr
+        log_crit("ERROR:  get_table - failed Statement Handle SQL_CLOSE"); 
     }
 
     sqlRC = SQLExecDirect(dbenv_->hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
     if (!SQL_SUCCEEDED(sqlRC))
     {
+    	if (flags &DS_AUX_TABLE) {
+    		PANIC("Should not be trying to create aux table %s.", dbenv_->table_name);
+    	}
         if (flags & DS_CREATE)
         {
             log_info("Creation of table %s in progress.", dbenv_->table_name);
@@ -340,10 +425,10 @@ ODBCDBStore::get_table(DurableTableImpl ** table,
                      dbenv_->table_name);
             sqlRC =
                 SQLExecDirect(dbenv_->hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
-            if (!SQL_SUCCEEDED(sqlRC))
+            if (!(SQL_SUCCEEDED(sqlRC) || (sqlRC == SQL_NO_DATA)))
             {
-                log_crit("ERROR:  get_table - failed CREATE table %s", dbenv_->table_name);      //glr
-                return DS_ERR;
+                log_crit("ERROR:  get_table - failed CREATE table %s - ret %d", dbenv_->table_name, sqlRC);
+                return  DS_ERR;
             }
             snprintf(my_SQL_str, 500, "INSERT INTO %s values('%s')",
                      META_TABLE_NAME.c_str(), dbenv_->table_name);
@@ -351,7 +436,7 @@ ODBCDBStore::get_table(DurableTableImpl ** table,
                 SQLExecDirect(dbenv_->hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
             if (!SQL_SUCCEEDED(sqlRC))
             {
-                log_crit("ERROR:  get_table - failed table %s insert into META_DATA", dbenv_->table_name);       //glr
+                log_crit("ERROR:  get_table - failed table %s insert into META_DATA", dbenv_->table_name);
                 return DS_ERR;
             }
         } else {
@@ -368,7 +453,7 @@ ODBCDBStore::get_table(DurableTableImpl ** table,
             {
                 log_debug
                     ("get_table DS_CREATE and DS_EXCL are ON and TABLE ALREADY EXISTS so return DS_EXISTS");
-                return DS_EXISTS;       //glr - added to match  if (err == EEXIST)
+                return DS_EXISTS;       // added to match  if (err == EEXIST)
             }
         }
     }
@@ -377,7 +462,7 @@ ODBCDBStore::get_table(DurableTableImpl ** table,
 
     *table =
         new ODBCDBTable(logpath_, this, name, (flags & DS_MULTITYPE),
-                          dbenv_, db_type);
+                          dbenv_, db_type, (flags & DS_AUX_TABLE));
 
     log_debug("get_table exit.");
     return 0;
@@ -406,7 +491,7 @@ ODBCDBStore::del_table(const std::string & name)
     sqlRC = SQLFreeStmt(dbenv_->hstmt, SQL_CLOSE);      //close from any prior use
     if (!SQL_SUCCEEDED(sqlRC))
     {
-        log_crit("ERROR:  del_table - failed Statement Handle SQL_CLOSE");       //glr
+        log_crit("ERROR:  del_table - failed Statement Handle SQL_CLOSE");
     }
 
     snprintf(sqlstr, 500, "DROP TABLE %s", name.c_str());
@@ -416,7 +501,7 @@ ODBCDBStore::del_table(const std::string & name)
         return DS_NOTFOUND;
     } else if (!SQL_SUCCEEDED(sqlRC))
     {
-        log_crit("ERROR:  del_table - unable to SQLExecDirect 'DROP TABLE %s'", name.c_str());   //glr
+        log_crit("ERROR:  del_table - unable to SQLExecDirect 'DROP TABLE %s'", name.c_str());
         return DS_ERR;
     }
 
@@ -442,7 +527,7 @@ ODBCDBStore::get_table_names(StringVector * names)
     sql_ret = SQLFreeStmt(dbenv_->hstmt, SQL_CLOSE);    //close from any prior use
     if (!SQL_SUCCEEDED(sql_ret))
     {
-        log_crit("ERROR:  get_table_names - failed Statement Handle SQL_CLOSE"); //glr
+        log_crit("ERROR:  get_table_names - failed Statement Handle SQL_CLOSE");
     }
 
     sql_ret = SQLPrepare(dbenv_->hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
@@ -495,11 +580,12 @@ ODBCDBStore::get_table_names(StringVector * names)
     sql_ret = SQLFreeStmt(dbenv_->hstmt, SQL_CLOSE);    //close from any prior use
     if (!SQL_SUCCEEDED(sql_ret))
     {
-        log_crit("ERROR:  get_table_names - failed Statement Handle SQL_CLOSE"); //glr
+        log_crit("ERROR:  get_table_names - failed Statement Handle SQL_CLOSE");
+        return DS_ERR;
     }
 
     log_debug("get_table_names exit.");
-    return 0;
+    return DS_OK;
 }
 
 //----------------------------------------------------------------------------
@@ -511,7 +597,12 @@ std::string ODBCDBStore::get_info()const
     return "ODBCDB";
 }
 
-
+//----------------------------------------------------------------------------
+bool
+ODBCDBStore::aux_tables_available()
+{
+	return aux_tables_available_;
+}
 //----------------------------------------------------------------------------
 int
 ODBCDBStore::acquire_table(const std::string & table)
@@ -633,41 +724,22 @@ ODBCDBStore::connect_to_database(const StorageConfig & cfg)
      }
      log_info("connect_to_database: Set DB Connection timeout success");
 
-     // set ODBC Connection attributes: auto-commit
-     // if max_nondurable_transactions is >0, auto_commit is OFF;
-     if (cfg.auto_commit_==false) {
-    	 auto_commit_ = false;
-         if ((sqlRC =
-               SQLSetConnectAttr(dbenv_->m_hdbc,
-                                 SQL_ATTR_AUTOCOMMIT,
-                                 SQL_AUTOCOMMIT_OFF,
-                                 SQL_IS_UINTEGER)) != SQL_SUCCESS
-              && sqlRC != SQL_SUCCESS_WITH_INFO)
-          {
-              log_crit("connect_to_database: ERROR: Failed to set DB auto-commit");
-              SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-              SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
-              return DS_ERR;
-          }
-          log_info("connect_to_database: Set DB auto-commit success max_nondurable_transactions(%d)",
-        		   cfg.max_nondurable_transactions_);
-     }
 
     sqlRC = SQLConnect(dbenv_->m_hdbc,
-                       (SQLCHAR *) db_name_.c_str(),
+                       (SQLCHAR *) cfg.dbname_.c_str(),
                        SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS);
     if (!SQL_SUCCEEDED(sqlRC))
     {
         log_crit
             ("connect_to_database: Failed to SQLConnect to <%s> with NULL login/pswd",
-             db_name_.c_str());
+             cfg.dbname_.c_str());
         SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
         SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
         return DS_ERR;
     }
     log_debug
         ("connect_to_database: Connect to DB <%s> success w/NULL login/pswd (per odbc.ini and odbcinst.ini)",
-         db_name_.c_str());
+         cfg.dbname_.c_str());
 
     log_info
         ("connect_to_database: For ODBC, AutoCommit is always ON until suspended by 'BEGIN TRANSACTION'");
@@ -725,6 +797,52 @@ ODBCDBStore::connect_to_database(const StorageConfig & cfg)
 }
 
 //----------------------------------------------------------------------------
+// Set ODBC Connection attributes to match requested configuration: auto-commit
+// Configuration setting has been copied into auto_commit_ private variable
+// in the init routine.
+// SQL databases typically start new sessions in auto-commit mode (certainly true for
+// MySQL and SQLite). If the user configures the use of transactions, which involves
+// turning off auto-commit mode (storage set auto_commit false), then the ODBC connection
+// has to have the mode set correctly.  Unfortunately there is a problem here when using
+// SQLite.  If the database schema is being initialized, the mechanism potentially
+// involves sourcing a couple of external files with SQL commands directly into the
+// database rather than through the ODBC connection. Since both connections are trying
+// to write to the database to create new tables and triggers, SQLite doesn't like this.
+// (See http://www.sqlite.org/faq.html#q5.) It isn't a problem if auto-commit is on,
+// because every command is a separate transaction.  As originally written, the init
+// routine in this class intended to build the database as one transaction and commit
+// it when finished.  In practice this doesn't really help with robustness as intended
+// because the DROP TABLE and CREATE TABLE (and corresponding trigger commands) terminate
+// transactions anyway.  The upshot of all this is that turning off auto-commit needs
+// to be postponed until database schema initialization (if happening) has occurred.
+// Calling this routine in create_finalize() is a good plan.
+//
+//
+DurableStoreResult_t
+ODBCDBStore::set_odbc_auto_commit_mode()
+{
+     // Configuration value is  in auto_commit_ by now
+     if ( ! auto_commit_ )
+     {
+         if ((sqlRC =
+               SQLSetConnectAttr(dbenv_->m_hdbc,
+                                 SQL_ATTR_AUTOCOMMIT,
+                                 SQL_AUTOCOMMIT_OFF,
+                                 SQL_IS_UINTEGER)) != SQL_SUCCESS
+              && sqlRC != SQL_SUCCESS_WITH_INFO)
+          {
+              log_crit("connect_to_database: ERROR: Failed to set DB auto-commit");
+              SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
+              SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+              return DS_ERR;
+          }
+          log_info("connect_to_database: ODBC auto-commit disabled successfully - now in transaction mode.");
+     }
+     return DS_OK;
+
+}
+
+//----------------------------------------------------------------------------
 DurableStoreResult_t
 ODBCDBStore::create_aux_tables()
 {
@@ -768,13 +886,15 @@ ODBCDBStore::create_aux_tables()
 ODBCDBTable::ODBCDBTable(const char *logpath,
                              ODBCDBStore * store,
                              const std::string & table_name,
-                             bool multitype, ODBC_dbenv * db, int db_type):
+                             bool multitype, ODBC_dbenv * db, int db_type,
+                             bool is_aux_table):
 DurableTableImpl(table_name, multitype),
 Logger("ODBCDBTable", "%s/%s", logpath, table_name.c_str()),
 //Logger("ODBCDBTable", "/dtn/storage/ODBCDBTable/"+table_name),
 db_(db),
 db_type_(db_type),
-store_(store)
+store_(store),
+is_aux_table_(is_aux_table)
 {
     SQLRETURN sqlRC;
 
@@ -845,7 +965,7 @@ ODBCDBTable::get(const SerializableObject & key, SerializableObject * data)
 {
     log_debug("get enter.");
     ASSERTF(!multitype_, "single-type get called for multi-type table");
-    if ( store_->serializeAll && !(store_->serialization_lock_.is_locked_by_me()) ) {
+    if ( store_->serialize_all_ && !(store_->serialization_lock_.is_locked_by_me()) ) {
         ScopeLock sl(&store_->serialization_lock_, "Access by get()");
     }
     ScopeLock l(&lock_, "Access by get()");
@@ -853,6 +973,12 @@ ODBCDBTable::get(const SerializableObject & key, SerializableObject * data)
     ScratchBuffer < u_char *, 256 > key_buf;
     size_t key_buf_len = flatten(key, &key_buf);
     ASSERT(key_buf_len != 0);
+
+    // Variables used for auxiliary tables
+	StoreDetail				*data_detail;		///< Infomation about data to be retrieved
+	StoreDetail::iterator	iter;				///< Iterator used to go through columns
+	int						col_cnt = 0;		///< Set to column count
+	SQLLEN *				user_data_sizes;	///< Dynamically allocated array of places to put column data lengths
 
     __my_dbt k;
     memset(&k, 0, sizeof(k));
@@ -863,18 +989,37 @@ ODBCDBTable::get(const SerializableObject & key, SerializableObject * data)
 
     SQLRETURN sql_ret;
     char *tmp = NULL;
-    SQLLEN user_data_size;
 
     log_debug("get  Table=%s", name());
     char my_SQL_str[500];
-    snprintf(my_SQL_str, 500, "SELECT the_data FROM %s WHERE the_key = ?",
-             name());
+    if (is_aux_table()){
+    	// Check that we have a vector of descriptors to work with
+    	data_detail = dynamic_cast<StoreDetail *>(data);
+    	ASSERT(data_detail != NULL);
+    	char col_list[400];
+    	*col_list = '\0';
+    	for (iter = data_detail->begin();
+    			iter != data_detail->end(); ++iter) {
+    		// Add separator text for columns after the first
+    		if (*col_list != '\0') {
+        		strcat(col_list, ", ");
+    		}
+    		strcat(col_list, (*iter)->column_name());
+    		col_cnt++;
+    	}
+    	snprintf(my_SQL_str, 500, "SELECT %s FROM %s WHERE the_key = ?",
+    			 col_list, name());
+
+    } else {
+        snprintf(my_SQL_str, 500, "SELECT the_data FROM %s WHERE the_key = ?",
+                 name());
+    }
 
     //sql_ret = SQLFreeStmt(db_->hstmt, SQL_CLOSE);       //close from any prior use
     sql_ret = SQLFreeStmt(hstmt, SQL_CLOSE);       //close from any prior use
     if (!SQL_SUCCEEDED(sql_ret))
     {
-        log_crit("ERROR:  get - failed Statement Handle SQL_CLOSE");     //glr
+        log_crit("ERROR:  get - failed Statement Handle SQL_CLOSE");
         print_error(db_->m_henv, db_->m_hdbc, hstmt);
     }
 
@@ -908,6 +1053,7 @@ ODBCDBTable::get(const SerializableObject & key, SerializableObject * data)
                              SQL_CHAR, 0, 0, myString, 0, NULL);
 #endif
     } else {
+    	// The key is the same for all other tables apart from 'globals'.
         log_debug
             ("get  Key(reverse byte order) unsignedInt=%u int=%d plus size=%d",
              realKey(k.data), *((u_int32_t*) k.data), k.size);
@@ -923,23 +1069,50 @@ ODBCDBTable::get(const SerializableObject & key, SerializableObject * data)
         return DS_ERR;
     }
 
-    if ((tmp = (char *) malloc(DATA_MAX_SIZE)) == NULL)
-    {
-        log_err("get malloc(DATA_MAX_SIZE) error");
-        return DS_ERR;
-    }
+    if (is_aux_table()){
+    	int col_no = 1;
+    	user_data_sizes = new SQLLEN[col_cnt];
 
-    sql_ret =
-        SQLBindCol(hstmt, 1, SQL_C_BINARY, tmp, DATA_MAX_SIZE,
-                   &user_data_size);
+    	for (iter = data_detail->begin();
+    			iter != data_detail->end(); ++iter) {
+            sql_ret =
+                SQLBindCol(hstmt, col_no,
+                		   odbc_col_c_type_map[(*iter)->column_type()],
+                		   (*iter)->data_ptr(),
+                		   (*iter)->data_size(),
+                           &user_data_sizes[col_no - 1]);
 
-    if (!SQL_SUCCEEDED(sql_ret))
-    {
-        log_err("get SQLBindCol error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
-        free(tmp);
-        tmp = NULL;
-        return DS_ERR;
+            if (!SQL_SUCCEEDED(sql_ret))
+            {
+                log_err("get SQLBindCol error %d at column %d", sql_ret, col_no);
+                print_error(db_->m_henv, db_->m_hdbc, hstmt);
+                delete user_data_sizes;
+                return DS_ERR;
+            }
+            col_no++;
+    	}
+    } else {
+    	// Allocate space for a big blob - the whole serialized data for the object
+        if ((tmp = (char *) malloc(DATA_MAX_SIZE)) == NULL)
+        {
+            log_err("get malloc(DATA_MAX_SIZE) error");
+            return DS_ERR;
+        }
+        user_data_sizes = new SQLLEN[1];
+
+        sql_ret =
+            SQLBindCol(hstmt, 1, SQL_C_BINARY, tmp, DATA_MAX_SIZE,
+                       &user_data_sizes[0]);
+
+        if (!SQL_SUCCEEDED(sql_ret))
+        {
+            log_err("get SQLBindCol error %d", sql_ret);
+            print_error(db_->m_henv, db_->m_hdbc, hstmt);
+            free(tmp);
+            tmp = NULL;
+            delete user_data_sizes;
+            return DS_ERR;
+        }
     }
 
     sql_ret = SQLExecute(hstmt);
@@ -947,8 +1120,9 @@ ODBCDBTable::get(const SerializableObject & key, SerializableObject * data)
     if (sql_ret == SQL_NO_DATA_FOUND)
     {
         log_debug("get SQLExecute NO_DATA_FOUND");
-        free(tmp);
+        if (tmp != NULL) free(tmp);
         tmp = NULL;
+        delete user_data_sizes;
         return DS_NOTFOUND;
     }
     switch(sql_ret) {
@@ -961,8 +1135,9 @@ ODBCDBTable::get(const SerializableObject & key, SerializableObject * data)
     default:
         log_debug("get SQLExecute error %d", sql_ret);
         print_error(db_->m_henv, db_->m_hdbc, hstmt);
-        free(tmp);
+        if (tmp != NULL) free(tmp);
         tmp = NULL;
+        delete user_data_sizes;
         return DS_ERR;
     }
 
@@ -971,49 +1146,74 @@ ODBCDBTable::get(const SerializableObject & key, SerializableObject * data)
     if (sql_ret == SQL_NO_DATA_FOUND)
     {
         log_debug("get SQLFetch NO_DATA_FOUND");
-        free(tmp);
+        if (tmp != NULL) free(tmp);
         tmp = NULL;
+        delete user_data_sizes;
         return DS_NOTFOUND;
     }
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_err("get SQLFetch error %d", sql_ret);
         print_error(db_->m_henv, db_->m_hdbc, hstmt);
-        free(tmp);
+        if (tmp != NULL) free(tmp);
         tmp = NULL;
+        delete user_data_sizes;
         return DS_ERR;
     }
 
-    if (user_data_size == SQL_NULL_DATA)
-    {
-        log_err("get SQLFetch SQL_NULL_DATA");
-        free(tmp);
-        tmp = NULL;
-        return DS_ERR;
+    if (is_aux_table()){
+    	// Iterate through columns recording actual lengths for variable length items
+    	int col_no = 0;  // Start from 0 this time to ease array access
+    	detail_kind_t col_type;
+
+    	for (iter = data_detail->begin();
+    			iter != data_detail->end(); ++iter, col_no++) {
+    		if ( user_data_sizes[col_no] == SQL_NULL_DATA) {
+    			(*iter)->set_data_size(StoreDetailItem::SDI_NULL);
+    		} else {
+    			col_type = (*iter)->column_type();
+    			if ((col_type == DK_VARCHAR) || (col_type == DK_BLOB)) {
+    				// Insert actual size in length
+    				(*iter)->set_data_size(user_data_sizes[col_no]);
+    			}
+    		}
+    	}
+
+    } else {
+        if (user_data_sizes[0] == SQL_NULL_DATA)
+        {
+            log_err("get SQLFetch SQL_NULL_DATA");
+            if (tmp != NULL) free(tmp);
+            tmp = NULL;
+            delete user_data_sizes;
+            return DS_ERR;
+        }
+
+
+        d.data = (void *) tmp;
+        d.size = user_data_sizes[0];
+        log_debug("get first 8-bytes of DATA=%x08 plus size=%d",
+                  *((u_int32_t *) d.data), d.size);
+
+        u_char *bp = (u_char *) d.data;
+        size_t sz = d.size;
+
+        Unmarshal unmarshaller(Serialize::CONTEXT_LOCAL, bp, sz);
+
+        if (unmarshaller.action(data) != 0)
+        {
+            log_err("get: error unserializing data object");
+            if (tmp != NULL) free(tmp);
+            tmp = NULL;
+            delete user_data_sizes;
+            return DS_ERR;
+        }
+
     }
 
-
-    d.data = (void *) tmp;
-    d.size = user_data_size;
-    log_debug("get first 8-bytes of DATA=%x08 plus size=%d",
-              *((u_int32_t *) d.data), d.size);
-
-    u_char *bp = (u_char *) d.data;
-    size_t sz = d.size;
-
-    Unmarshal unmarshaller(Serialize::CONTEXT_LOCAL, bp, sz);
-
-    if (unmarshaller.action(data) != 0)
-    {
-        log_err("get: error unserializing data object");
-        free(tmp);
-        tmp = NULL;
-        return DS_ERR;
-    }
-
-    free(tmp);
+    if (tmp != NULL) free(tmp);
     tmp = NULL;
-    user_data_size = 0;
+    delete user_data_sizes;
     log_debug("ODBCDBStore::get exit.");
     return 0;
 }
@@ -1026,7 +1226,7 @@ ODBCDBTable::get(const SerializableObject & key,
 {
     log_debug("ODBCDBStore::get2 enter.");
     ASSERTF(multitype_, "multi-type get called for single-type table");
-    if ( store_->serializeAll && !store_->serialization_lock_.is_locked_by_me() ) {
+    if ( store_->serialize_all_ && !store_->serialization_lock_.is_locked_by_me() ) {
         ScopeLock sl(&store_->serialization_lock_, "Access by get()");
     }
     ScopeLock l(&lock_, "Access by get2()");
@@ -1038,7 +1238,7 @@ ODBCDBTable::get(const SerializableObject & key,
         log_err("get2 zero or too long key length");
         return DS_ERR;
     }
-//glr add (duplicated/copied from get() above)
+    // add (duplicated/copied from get() above)
     __my_dbt k;
     memset(&k, 0, sizeof(k));
     k.data = key_buf.buf();
@@ -1058,7 +1258,7 @@ ODBCDBTable::get(const SerializableObject & key,
     sql_ret = SQLFreeStmt(hstmt, SQL_CLOSE);       //close from any prior use
     if (!SQL_SUCCEEDED(sql_ret))
     {
-        log_crit("ERROR:  ODBCDBStore::get - failed Statement Handle SQL_CLOSE");     //glr
+        log_crit("ERROR:  ODBCDBStore::get - failed Statement Handle SQL_CLOSE");
         print_error(db_->m_henv, db_->m_hdbc, hstmt);
     }
 
@@ -1250,7 +1450,7 @@ ODBCDBTable::put(const SerializableObject & key,
                    const SerializableObject * data,
                    int flags)
 {
-    if ( store_->serializeAll && !store_->serialization_lock_.is_locked_by_me() ) {
+    if ( store_->serialize_all_ && !store_->serialization_lock_.is_locked_by_me() ) {
         ScopeLock sl(&store_->serialization_lock_, "Access by put()");
     }
     ScopeLock l(&lock_, "Access by put()");
@@ -1261,7 +1461,12 @@ ODBCDBTable::put(const SerializableObject & key,
     ScratchBuffer < u_char *, 256 > key_buf;
     size_t key_buf_len = flatten(key, &key_buf);
 
-    // flatten and fill in the key
+    // Variables used for auxiliary tables
+	StoreDetail			   *data_detail;		///< Infomation about data to be retrieved
+	StoreDetail::iterator	iter;				///< Iterator used to go through columns
+	int						col_cnt = 0;		///< Set to column count
+
+	// flatten and fill in the key
     __my_dbt k;
     memset(&k, 0, sizeof(k));
     k.data = key_buf.buf();
@@ -1275,11 +1480,11 @@ ODBCDBTable::put(const SerializableObject & key,
     bool create_new_row = false;
 
     if ( strcmp(name(), "globals")==0 ) {
-        log_debug ("put on globals table - flags %x", flags);
+        log_debug ("put to globals table: flags %x", flags);
     } else {
         log_debug
-            ("put insert  Key(reverse byte order) unsignedInt=%u int=%d plus size=%d - flags %x",
-             realKey(k.data), *((u_int32_t *)k.data), k.size, flags);
+            ("put insert to  %s table: Key(reverse byte order) unsignedInt=%u int=%d plus size=%d - flags %x",
+             name(), realKey(k.data), *((u_int32_t *)k.data), k.size, flags);
     }
 
     //check if PK row already exists
@@ -1308,70 +1513,30 @@ ODBCDBTable::put(const SerializableObject & key,
     // Determine what to do next - depends on flags
     if ( row_exists ) {
     	if ( flags & DS_EXCL ) {
-    		log_debug("put attempting to update existing row when DS_EXCL set: aborting.");
-    		return DS_EXISTS;
+    		if (is_aux_table()) {
+    			log_debug("put ignoring DS_EXCL flag for aux table");
+    		} else {
+    			log_debug("put attempting to update existing row when DS_EXCL set: aborting.");
+    			return DS_EXISTS;
+    		}
+    	} else {
+    		log_debug("put will update existing row as DS_EXCL not set.");
     	}
-    	log_debug("put will update existing row as DS_EXCL not set.");
     }
     else
     {
+    	if (is_aux_table()) {
+    		log_crit("put attempting to write into non-existent row in auxiliary table %s",
+    				name());
+    		log_debug("Rows in auxiliary table should only be created by triggers.");
+    		return DS_ERR;
+    	}
     	if ( ! flags & DS_CREATE ) {
     		log_debug("put attempting to update a row that does not exist without DS_CREATE set. Aborting." );
     		return DS_NOTFOUND;
     	}
     	log_debug("put will create new row as DS_CREATE is set and row is not present.");
     	create_new_row = true;
-    }
-
-    // figure out the size of the data
-    MarshalSize sizer(Serialize::CONTEXT_LOCAL);
-    if (sizer.action(data) != 0)
-    {
-        log_err("put error sizing data object");
-        return DS_ERR;
-    }
-    size_t object_sz = sizer.size();
-
-    // and the size of the type code (if multitype)
-    size_t typecode_sz = 0;
-    if (multitype_)
-    {
-        typecode_sz = MarshalSize::get_size(&typecode);
-    }
-    // XXX/demmer -- one little optimization would be to pass the
-    // calculated size out to the caller (the generic DurableTable),
-    // so we don't have to re-calculate it in the object cache code
-
-    log_debug
-        ("put serializing %zu byte object (plus %zu byte typecode)",
-         object_sz, typecode_sz);
-
-    ScratchBuffer < u_char *, 1024 > scratch;
-    u_char *buf = scratch.buf(typecode_sz + object_sz);
-    __my_dbt d;
-    memset(&d, 0, sizeof(d));
-    d.data = buf;
-    d.size = typecode_sz + object_sz;
-
-    // if we're a multitype table, marshal the type code
-    if (multitype_)
-    {
-        log_debug("marhaling type code");
-        Marshal typemarshal(Serialize::CONTEXT_LOCAL, buf, typecode_sz);
-        UIntShim type_shim(typecode);
-
-        if (typemarshal.action(&type_shim) != 0)
-        {
-            log_err("put error serializing type code");
-            return DS_ERR;
-        }
-    }
-
-    Marshal m(Serialize::CONTEXT_LOCAL, buf + typecode_sz, object_sz);
-    if (m.action(data) != 0)
-    {
-        log_err("put error serializing data object");
-        return DS_ERR;
     }
 
     // Check if need to insert a new row -
@@ -1382,7 +1547,7 @@ ODBCDBTable::put(const SerializableObject & key,
         sql_ret = SQLFreeStmt(hstmt, SQL_CLOSE);       //close for later reuse
         if (!SQL_SUCCEEDED(sql_ret))
         {
-            log_crit("ERROR:  ::put insert - failed Statement Handle SQL_CLOSE");      //glr
+            log_crit("ERROR:  ::put insert - failed Statement Handle SQL_CLOSE");
             print_error(db_->m_henv, db_->m_hdbc, hstmt);
         }
 
@@ -1444,15 +1609,91 @@ ODBCDBTable::put(const SerializableObject & key,
         }
     }
 
-//glr added - after insert, now do update of the_data blob (update is easier since PUT() supports both)
+    __my_dbt d;
+    if (!is_aux_table()){
+        // figure out the size of the data
+        MarshalSize sizer(Serialize::CONTEXT_LOCAL);
+        if (sizer.action(data) != 0)
+        {
+            log_err("put error sizing data object");
+            return DS_ERR;
+        }
+        size_t object_sz = sizer.size();
+
+        // and the size of the type code (if multitype)
+        size_t typecode_sz = 0;
+        if (multitype_)
+        {
+            typecode_sz = MarshalSize::get_size(&typecode);
+        }
+        // XXX/demmer -- one little optimization would be to pass the
+        // calculated size out to the caller (the generic DurableTable),
+        // so we don't have to re-calculate it in the object cache code
+
+        log_debug
+            ("put serializing %zu byte object (plus %zu byte typecode)",
+             object_sz, typecode_sz);
+
+        ScratchBuffer < u_char *, 1024 > scratch;
+        u_char *buf = scratch.buf(typecode_sz + object_sz);
+        memset(&d, 0, sizeof(d));
+        d.data = buf;
+        d.size = typecode_sz + object_sz;
+
+        // if we're a multitype table, marshal the type code
+        if (multitype_)
+        {
+            log_debug("marshaling type code");
+            Marshal typemarshal(Serialize::CONTEXT_LOCAL, buf, typecode_sz);
+            UIntShim type_shim(typecode);
+
+            if (typemarshal.action(&type_shim) != 0)
+            {
+                log_err("put error serializing type code");
+                return DS_ERR;
+            }
+        }
+
+        Marshal m(Serialize::CONTEXT_LOCAL, buf + typecode_sz, object_sz);
+        if (m.action(data) != 0)
+        {
+            log_err("put error serializing data object");
+            return DS_ERR;
+        }
+    }
+
+    // added - after insert, now do update of the_data blob (update is easier since PUT() supports both)
     log_debug("put update table row (real data this time)");
-    snprintf(my_SQL_str, 500,
-             "UPDATE %s SET the_data = ? WHERE the_key = ?", name());
+    if (is_aux_table()){
+    	// Check that we have a vector of descriptors to work with
+    	data_detail = dynamic_cast<StoreDetail *>(const_cast<SerializableObject *>(data));
+    	ASSERT(data_detail != NULL);
+    	char col_list[400];
+    	*col_list = '\0';
+    	for (iter = data_detail->begin();
+    			iter != data_detail->end(); ++iter) {
+    		// Add separator text for columns after the first
+    		if (*col_list != '\0'){
+        		strcat(col_list, " = ?, ");
+    		}
+    		strcat(col_list, (*iter)->column_name());
+    		col_cnt++;
+    	}
+    	// The generated SQL statement has to have (col_cnt + 1) parameters bound to it
+    	// This statement puts in the ' =  ?' for the last column.
+    	snprintf(my_SQL_str, 500, "UPDATE %s SET %s = ? WHERE the_key = ?",
+    			 name(), col_list);
+    	log_debug("put: SQL for aux table is '%s'.", my_SQL_str);
+
+    } else {
+        snprintf(my_SQL_str, 500,
+                 "UPDATE %s SET the_data = ? WHERE the_key = ?", name());
+    }
 
     sql_ret = SQLFreeStmt(hstmt, SQL_CLOSE);       //close for later reuse
     if (!SQL_SUCCEEDED(sql_ret))
     {
-        log_crit("ERROR:  ODBCDBStore::put update - failed Statement Handle SQL_CLOSE");      //glr
+        log_crit("ERROR:  ODBCDBStore::put update - failed Statement Handle SQL_CLOSE");
         print_error(db_->m_henv, db_->m_hdbc, hstmt);
     }
 
@@ -1465,41 +1706,90 @@ ODBCDBTable::put(const SerializableObject & key,
         return DS_ERR;
     }
 
-    user_data_size = d.size;
-    log_debug
-        ("put update first 8-bytes of DATA=%x08 plus size=%d",
-         *((u_int32_t* ) d.data), d.size);
-    sql_ret = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_BINARY, SQL_LONGVARBINARY, //glr SQL_BLOB,
-                               0, 0, d.data, 0, &user_data_size);
-    if (!SQL_SUCCEEDED(sql_ret))
-    {
-        log_err
-            ("put update SQLBindParameter DATA  error %d",
-             sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
-        return DS_ERR;
-    }
+	if (is_aux_table()) {
+		// For auxiliary tables bind the (col_cnt) parameters and the key to the SQL statement
+    	SQLUSMALLINT col_no = 1;
+    	detail_kind_t col_type;
 
-    if (strcmp(name(), "globals") == 0)
-    {
-        char myString[100];
-        memset(myString, '\0', 100);
-        memcpy(myString, ((char *) k.data) + 4, k.size - sizeof(int));
+    	for (iter = data_detail->begin();
+    			iter != data_detail->end(); ++iter, col_no++) {
+    		col_type = (*iter)->column_type();
+    		log_debug("put: bind parameter %s c_type %d size %d",
+    				  (*iter)->column_name(),
+    				  odbc_col_c_type_map[col_type],
+    				  *((*iter)->data_size_ptr()));
+            sql_ret = SQLBindParameter(hstmt, col_no, SQL_PARAM_INPUT,
+									   odbc_col_c_type_map[col_type],
+									   odbc_col_sql_type_map[col_type],
+									   0,
+									   0,
+					         		   (*iter)->data_ptr(),
+					         		   0,
+					         		   (SQLLEN *)((*iter)->data_size_ptr()));
+            if (!SQL_SUCCEEDED(sql_ret))
+            {
+                log_err
+                    ("put update SQLBindParameter %s:  error %d",
+                    		(*iter)->column_name(), sql_ret);
+                print_error(db_->m_henv, db_->m_hdbc, hstmt);
+                return DS_ERR;
+            }
+
+    	}
+        // Bind the key parameter
+    	log_debug("put aux table key col_no %d", col_no);
         sql_ret =
-            SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_DEFAULT,
-                             SQL_CHAR, 0, 0, (char *) myString, 0, NULL);
-    } else
-    {
-        sql_ret =
-            SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_ULONG,
+            SQLBindParameter(hstmt, col_no, SQL_PARAM_INPUT, SQL_C_ULONG,
                              SQL_INTEGER, 0, 0, k.data, 0, NULL);
-    }
-    if (!SQL_SUCCEEDED(sql_ret))
-    {
-        log_err("put update SQLBindParameter PK  error %d",
-                sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
-        return DS_ERR;
+
+        if (!SQL_SUCCEEDED(sql_ret))
+        {
+            log_err("put update SQLBindParameter PK:  error %d",
+                    sql_ret);
+            print_error(db_->m_henv, db_->m_hdbc, hstmt);
+            return DS_ERR;
+        }
+
+
+	} else {
+    	// Non-auxiliary tables - just insert serialized data as a BLOB
+        user_data_size = d.size;
+        log_debug
+            ("put update first 8-bytes of DATA=%x08 plus size=%d",
+             *((u_int32_t* ) d.data), d.size);
+        sql_ret = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_BINARY, SQL_LONGVARBINARY,
+                                   0, 0, d.data, 0, &user_data_size);
+        if (!SQL_SUCCEEDED(sql_ret))
+        {
+            log_err
+                ("put update SQLBindParameter DATA  error %d",
+                 sql_ret);
+            print_error(db_->m_henv, db_->m_hdbc, hstmt);
+            return DS_ERR;
+        }
+
+        if (strcmp(name(), "globals") == 0)
+        {
+            char myString[100];
+            memset(myString, '\0', 100);
+            memcpy(myString, ((char *) k.data) + 4, k.size - sizeof(int));
+            sql_ret =
+                SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_DEFAULT,
+                                 SQL_CHAR, 0, 0, (char *) myString, 0, NULL);
+        } else
+        {
+            sql_ret =
+                SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_ULONG,
+                                 SQL_INTEGER, 0, 0, k.data, 0, NULL);
+        }
+        if (!SQL_SUCCEEDED(sql_ret))
+        {
+            log_err("put update SQLBindParameter PK  error %d",
+                    sql_ret);
+            print_error(db_->m_henv, db_->m_hdbc, hstmt);
+            return DS_ERR;
+        }
+
     }
 
     sql_ret = SQLExecute(hstmt);
@@ -1511,7 +1801,7 @@ ODBCDBTable::put(const SerializableObject & key,
         break;
     case SQL_NO_DATA:
         log_debug
-            ("put update SQLExecute error %d (SQL_NO_DATA) - ignorning",
+            ("put update SQLExecute error %d (SQL_NO_DATA) - ignoring",
              sql_ret);
         break;
     default:
@@ -1540,7 +1830,7 @@ ODBCDBTable::del(const SerializableObject & key)
         log_err("del - zero or too long key length");
         return DS_ERR;
     }
-//glr add (duplicated/copied from get() above)
+    // add (duplicated/copied from get() above)
     __my_dbt k;
     memset(&k, 0, sizeof(k));
     k.data = key_buf;
@@ -1565,7 +1855,7 @@ ODBCDBTable::del(const SerializableObject & key)
     sql_ret = SQLFreeStmt(hstmt, SQL_CLOSE);       //close from any prior use
     if (!SQL_SUCCEEDED(sql_ret))
     {
-        log_crit("ERROR:  del - failed Statement Handle SQL_CLOSE");     //glr
+        log_crit("ERROR:  del - failed Statement Handle SQL_CLOSE");
         print_error(db_->m_henv, db_->m_hdbc, hstmt);
     }
 
@@ -1651,7 +1941,7 @@ ODBCDBTable::size() const
     sql_ret = SQLFreeStmt(hstmt, SQL_CLOSE);        //close from any prior use
     if (!SQL_SUCCEEDED(sql_ret))
     {
-        log_crit("ERROR:  ODBCDBStore::size - failed Statement Handle SQL_CLOSE");       //glr
+        log_crit("ERROR:  ODBCDBStore::size - failed Statement Handle SQL_CLOSE");
     }
 
     sql_ret = SQLPrepare(hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
@@ -1705,7 +1995,7 @@ ODBCDBTable::key_exists(const void *key, size_t key_len)
 {
     log_debug("key_exists enter thread(%08X)",(u_int32_t) pthread_self());
 
-//glr add - duplicate/copy from get()
+    // add - duplicate/copy from get()
     __my_dbt k;
     memset(&k, 0, sizeof(k));
     k.data = const_cast < void *>(key);
@@ -1722,7 +2012,7 @@ ODBCDBTable::key_exists(const void *key, size_t key_len)
     sql_ret = SQLFreeStmt(hstmt, SQL_CLOSE);       //close from any prior use
     if (!SQL_SUCCEEDED(sql_ret))
     {
-        log_crit("ERROR:  ODBCDBStore::get - failed Statement Handle SQL_CLOSE");     //glr
+        log_crit("ERROR:  ODBCDBStore::get - failed Statement Handle SQL_CLOSE");
         print_error(db_->m_henv, db_->m_hdbc, hstmt);
     }
 
@@ -1832,7 +2122,7 @@ ODBCDBIterator::ODBCDBIterator(ODBCDBTable* t):
     logpath_appendf("ODBCDBIterator/%s", t->name());
     myTable->iterator_lock_.lock("Iterator");
     log_debug("constructor enter.");
-    if ( t->store_->serializeAll ) {
+    if ( t->store_->serialize_all_ ) {
         t->store_->serialization_lock_.lock("Access by get()");
     }
 
@@ -1856,7 +2146,7 @@ ODBCDBIterator::ODBCDBIterator(ODBCDBTable* t):
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_crit("ERROR:  ODBCDBIterator(%s)::constructor - failed Statement Handle SQL_CLOSE",
-                 t->name());     //glr
+                 t->name());
         t->print_error(t->db_->m_henv, t->db_->m_hdbc, cur_);
     }
 
@@ -1917,10 +2207,10 @@ ODBCDBIterator::~ODBCDBIterator()
     sql_ret = SQLFreeStmt(cur_, SQL_CLOSE);     //close from any prior use
     if (!SQL_SUCCEEDED(sql_ret))
     {
-        log_crit("ERROR:  destructor - failed Statement Handle SQL_CLOSE");      //glr
+        log_crit("ERROR:  destructor - failed Statement Handle SQL_CLOSE");
     }
 
-    if ( myTable->store_->serializeAll ) {
+    if ( myTable->store_->serialize_all_ ) {
         myTable->store_->serialization_lock_.unlock();
     }
 

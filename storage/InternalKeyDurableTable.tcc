@@ -70,6 +70,29 @@ _InternalKeyDurableTableClass::do_init(const StorageConfig& cfg,
 
 //----------------------------------------------------------------------
 template <typename _ShimType, typename _KeyType, typename _DataType>
+inline int
+_InternalKeyDurableTableClass::do_init_aux(const StorageConfig& cfg,
+                                           DurableStore*        store)
+{
+    int flags = 0;
+    
+    flags |= DS_AUX_TABLE;
+
+    if (cfg.init_)
+        flags |= DS_CREATE;
+
+    int err = store->get_table(&table_, table_name_, flags);
+
+    if (err != 0) {
+        log_err("error initializing durable store");
+        return err;
+    }
+    
+    return 0;
+}
+
+//----------------------------------------------------------------------
+template <typename _ShimType, typename _KeyType, typename _DataType>
 inline bool
 _InternalKeyDurableTableClass::add(_DataType* data)
 {

@@ -64,6 +64,10 @@ struct StorageConfig {
     u_int16_t   server_port_;   ///< server port to connect to (on localhost)
     std::string schema_;        ///< xml schema for remote interface
 
+    // ODBC/SQL data store specific options
+    bool		odbc_use_aux_tables_; ///< Whether to use auxiliary tables
+    std::string odbc_schema_config_;  ///< Pathname for file with extra SQL to finalize schema, such as triggers, aux tables
+
     StorageConfig(
         const std::string& cmd,
         const std::string& type,
@@ -96,7 +100,11 @@ struct StorageConfig {
         db_lockdetect_(5000),
         db_sharefile_(false),
 
-        server_port_(0)
+        server_port_(0),
+
+        odbc_use_aux_tables_(false),
+        odbc_schema_config_("")
+
     {}
 };
 

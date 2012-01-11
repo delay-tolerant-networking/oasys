@@ -26,18 +26,18 @@
 
 #if LIBODBC_ENABLED
 
-#include <stdio.h>              //glr
-#include <stdlib.h>             //glr
-#include <string.h>             //glr
-#include <sys/time.h>           //glr
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
 
 #include <map>
 
-//glr includes for standard ODBC headers typically in /usr/include
-//#include <sql.h>                //glr
-//#include <sqlext.h>             //glr
-//#include <sqltypes.h>           //glr
-//#include <sqlucode.h>           //glr
+// includes for standard ODBC headers typically in /usr/include
+#include <sql.h>
+#include <sqlext.h>
+#include <sqltypes.h>
+#include <sqlucode.h>
 
 #include "../debug/Logger.h"
 
@@ -66,12 +66,22 @@ class ODBCDBSQLite: public ODBCDBStore
 
     //! @{ Virtual from DurableStoreImpl
     //! Initialize ODBCDBSQLite
-    int init (const StorageConfig & cfg);
+    int init (const StorageConfig& cfg);
+
+    //! Complete initialization (including addition of triggers)
+    int create_finalize(const StorageConfig& cfg);
+
+    //! Return string description
+    std::string get_info () const;
     /// @}
 
   private:
 
-    int parseOdbcIniSQLite(const char *dsnName, char *fullPath, char *schemaPath);
+    //! Parser for odbc.ini files - identifies DSN corresponding to dsn_name
+    //  and returns selected items from the DSN as output parameters.
+    int parse_odbc_ini_SQLite(const char *dsn_name, char *full_path,
+    		                 char *pre_schema_path, char *post_schema_path);
+    std::string schema_creation_command_;	///< Holds command to be run at end of initialisation.
 };
 
 

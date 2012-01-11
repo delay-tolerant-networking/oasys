@@ -31,11 +31,11 @@
 namespace oasys {
 
 int
-DurableStoreImpl::beginTransaction(void **txid)
+DurableStoreImpl::begin_transaction(void **txid)
 {
 	(void) txid;
 
-    log_warn("DurableStoreImpl::beginTransaction not implemented.");
+    log_warn("DurableStoreImpl::begin_transaction not implemented.");
     /*
      * Even if the underlying implementation doens't support transactions,
      * we track the number of open transactions so that
@@ -46,10 +46,11 @@ DurableStoreImpl::beginTransaction(void **txid)
 }
 
 int
-DurableStoreImpl::endTransaction(void *txid, bool be_durable)
+DurableStoreImpl::end_transaction(void *txid, bool be_durable)
 {
 	(void) be_durable;
-    log_warn("DurableStoreImpl::endTransaction not implemented.");
+	(void) txid;
+    log_warn("DurableStoreImpl::end_transaction not implemented.");
     /*
      * Even if the underlying implementation doens't support transactions,
      * we track the number of open transactions so that
@@ -60,9 +61,9 @@ DurableStoreImpl::endTransaction(void *txid, bool be_durable)
 }
 
 void *
-DurableStoreImpl::getUnderlying()
+DurableStoreImpl::get_underlying()
 {
-    log_warn("DurableStoreImpl::getUnderlying not implemented.");
+    log_warn("DurableStoreImpl::get_underlying not implemented.");
     return(NULL);
 }
 
@@ -125,6 +126,14 @@ DurableStoreImpl::create_db_dir(const char* db_dir)
         return DS_ERR;
     }
     return 0;
+}
+
+// Default implementation - auxiliary tables are not available unless specifically
+// implemented by derived class and enabled by configuration.
+bool
+DurableStoreImpl::aux_tables_available()
+{
+	return false;
 }
 
 int

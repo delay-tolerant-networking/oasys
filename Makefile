@@ -108,6 +108,7 @@ STORAGE_SRCS :=					\
 	storage/CheckedLog.cc			\
 	storage/DurableStore.cc                 \
 	storage/DurableStoreImpl.cc		\
+	storage/StoreDetail.cc			\
 	storage/FileBackedObject.cc		\
 	storage/FileBackedObjectStore.cc	\
 	storage/FileBackedObjectStream.cc	\
