@@ -1805,8 +1805,7 @@ ODBCDBTable::put(const SerializableObject & key,
              sql_ret);
         break;
     default:
-        log_debug("put update SQLExecute error %d", sql_ret);
-        log_err("Note: SQL_SUCCESS_WITH_INFO is: %d", SQL_SUCCESS_WITH_INFO);
+        log_err("put update: SQLExecute returned error code %d", sql_ret);
         print_error(db_->m_henv, db_->m_hdbc, hstmt);
         return DS_ERR;
     }
@@ -2331,10 +2330,10 @@ ODBCDBTable::print_error(SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt)
                     SQL_MAX_MESSAGE_LENGTH + 1, &length) == SQL_SUCCESS)
     {
         i++;
-        log_debug("**** ODBCDBTable::print_error (lvl=%d) *****", i);
-        log_debug("         SQLSTATE: %s", sqlstate);
-        log_debug("Native Error Code: %d", (int) sqlcode);
-        log_debug("          Message: %s", buffer);
+        log_err("**** ODBCDBTable::print_error (lvl=%d) *****", i);
+        log_err("         SQLSTATE: %s", sqlstate);
+        log_err("Native Error Code: %d", (int) sqlcode);
+        log_err("          Message: %s", buffer);
         if (i == 1)
         {
             first_sqlcode = (int) sqlcode;
