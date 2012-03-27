@@ -252,15 +252,17 @@ ODBCDBStore::~ODBCDBStore()
     {
         log_err("%s", err_str.c_str());
     }
-
+#if 0
     if (deadlock_timer_)
     {
         deadlock_timer_->cancel();
     }
+#endif
     end_transaction(NULL, true);
 
     SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
     SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
+    SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->idle_hstmt);
     SQLDisconnect(dbenv_->m_hdbc);
     SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
     SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
@@ -637,7 +639,7 @@ ODBCDBStore::release_table(const std::string & table)
     return ref_count_[table];
 }
 
-
+#if 0
 //----------------------------------------------------------------------------
 void
 ODBCDBStore::DeadlockTimer::reschedule()
@@ -656,6 +658,7 @@ ODBCDBStore::DeadlockTimer::timeout(const struct timeval &now)
 
     reschedule();
 }
+#endif
 
 //----------------------------------------------------------------------------
 // Common pieces of initialization code.
@@ -786,6 +789,30 @@ ODBCDBStore::connect_to_database(const StorageConfig & cfg)
     {
         log_crit
             ("connect_to_database: ERROR: Trans Statement handle is null so skip statement");
+        //SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
+        SQLDisconnect(dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        return DS_ERR;
+    }
+    dbenv_->idle_hstmt = SQL_NULL_HSTMT;
+    if ((sqlRC =
+         SQLAllocHandle(SQL_HANDLE_STMT, dbenv_->m_hdbc,
+                        &(dbenv_->idle_hstmt))) != SQL_SUCCESS
+        && (sqlRC != SQL_SUCCESS_WITH_INFO))
+    {
+        log_crit
+            ("connect_to_database: ERROR: Failed to allocate idle Statement handle");
+        SQLDisconnect(dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        return DS_ERR;
+    }
+
+    if (dbenv_->idle_hstmt == SQL_NULL_HSTMT)
+    {
+        log_crit
+            ("connect_to_database: ERROR: Idle Statement handle is null so skip statement");
         //SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
         SQLDisconnect(dbenv_->m_hdbc);
         SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);

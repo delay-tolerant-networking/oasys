@@ -79,6 +79,32 @@ class ODBCDBMySQL: public ODBCDBStore
     /// @}
 
   private:
+    /**
+     * Timer class used to periodically refresh the database connection .
+     */
+    class KeepAliveTimer:public oasys::Timer, public oasys::Logger
+    {
+        public:
+            KeepAliveTimer (const char *logbase, ODBC_dbenv * dbenv,
+                           int frequency):
+                        	   Logger ("ODBCDBMySql::KeepAliveTimer",
+                                       "%s/%s", logbase,
+                                       "keep_alive_timer"),
+                               dbenv_ (dbenv),
+            frequency_ (frequency*60000) { }
+
+            void reschedule ();
+            void timeout (const struct timeval &now);
+
+        protected:
+            ODBC_dbenv * dbenv_;
+            int frequency_;
+    };
+
+    KeepAliveTimer *keep_alive_timer_;
+
+
+  //private:
 
     //! Parser for odbc.ini files - identifies DSN corresponding to dsn_name
     //  and returns selected items from the DSN as output parameters.

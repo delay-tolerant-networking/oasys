@@ -705,7 +705,7 @@ ODBCDBSQLite::init(const StorageConfig & cfg)
     aux_tables_available_ = cfg.odbc_use_aux_tables_;
 
     log_debug("init: aux_tables_available = %s", aux_tables_available_ ? "true" : "false");
-
+#if 0
     if (cfg.db_lockdetect_ != 0)
     {
         deadlock_timer_ =
@@ -714,6 +714,7 @@ ODBCDBSQLite::init(const StorageConfig & cfg)
     } else {
         deadlock_timer_ = NULL;
     }
+#endif
 
     init_ = true;
 

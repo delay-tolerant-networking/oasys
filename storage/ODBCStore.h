@@ -56,6 +56,7 @@ struct ODBC_dbenv
     SQLHDBC m_hdbc;
     SQLHSTMT hstmt;
     SQLHSTMT trans_hstmt;
+    SQLHSTMT idle_hstmt;
     //SQLHSTMT iterator_hstmt;
     char table_name[128];
 };
@@ -149,7 +150,7 @@ class ODBCDBStore:public DurableStoreImpl
 
         /// Id that represents the ODBC DSN configuration file name
         static const std::string ODBC_INI_FILE_NAME;
-
+#if 0
         /**
          * Timer class used to periodically check for deadlocks.
          */
@@ -172,6 +173,7 @@ class ODBCDBStore:public DurableStoreImpl
         };
 
         DeadlockTimer *deadlock_timer_;
+#endif
     private:
 
        bool serialize_all_;            // Serialize all access across all tables
@@ -223,6 +225,10 @@ class ODBCDBTable:public DurableTableImpl, public Logger
 
         int print_error (SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt);
 
+        /**
+         * Create an iterator for table t. These should not be called
+         * except by ODBCDBTable.
+         */
         DurableIterator *itr ();
         /// @}
 
@@ -263,10 +269,6 @@ class ODBCDBTable:public DurableTableImpl, public Logger
 
         /// Whether a specific key exists in the table.
         int key_exists (const void *key, size_t key_len);
-        /**
-         * Create an iterator for table t. These should not be called
-         * except by ODBCDBTable.
-         */
 };
 
 /**

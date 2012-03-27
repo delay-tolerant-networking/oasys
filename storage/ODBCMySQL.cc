@@ -227,8 +227,14 @@ ODBCDBMySQL::ODBCDBMySQL(const char *logpath):
 //----------------------------------------------------------------------------
 ODBCDBMySQL::~ODBCDBMySQL()
 {
-    log_debug("ODBCMySQL destructor enter/exit.");
-    // All the action (clean shutdown of database) takes place in ODBCDBStore destructor
+    log_debug("ODBCMySQL destructor enter.");
+    if (keep_alive_timer_)
+    {
+    	keep_alive_timer_->cancel();
+    }
+
+    // All the rest of the action (clean shutdown of database) takes place in ODBCDBStore destructor
+    log_debug("ODBCMySQL destructor exit.");
 }
 
 //----------------------------------------------------------------------------
@@ -615,6 +621,7 @@ ODBCDBMySQL::init(const StorageConfig & cfg)
 
     log_debug("init: aux_tables_available = %s", aux_tables_available_ ? "true" : "false");
 
+#if 0
     if (cfg.db_lockdetect_ != 0)
     {
         deadlock_timer_ =
@@ -623,6 +630,11 @@ ODBCDBMySQL::init(const StorageConfig & cfg)
     } else {
         deadlock_timer_ = NULL;
     }
+#endif
+
+    keep_alive_timer_ =
+                new KeepAliveTimer(logpath_, dbenv_, 10);
+            keep_alive_timer_->reschedule();
 
     init_ = true;
 
@@ -668,6 +680,59 @@ ODBCDBMySQL::get_info()const
     return "ODBC driver with MySQL database";
 }
 
+//----------------------------------------------------------------------------
+void
+ODBCDBMySQL::KeepAliveTimer::reschedule()
+{
+    log_debug("KeepAliveTimer::rescheduling in %d msecs", frequency_);
+    schedule_in(frequency_);
+}
+
+//----------------------------------------------------------------------------
+void
+ODBCDBMySQL::KeepAliveTimer::timeout(const struct timeval &now)
+{
+    SQLRETURN ret;
+    char var_name[80];
+    char var_value[512];
+    SQLLEN len_name, len_value;
+
+    log_debug
+        ("KeepAliveTimer::timeout - requesting value of server variable 'flush' at time %s", ctime(&now.tv_sec));
+	ret = SQLFreeStmt(dbenv_->idle_hstmt, SQL_CLOSE);      //close from any prior use
+	if (!SQL_SUCCEEDED(ret))
+	{
+		log_warn("ERROR timeout - failed Statement Handle SQL_CLOSE");
+		goto resched;
+	}
+	ret = SQLBindCol(dbenv_->idle_hstmt, 1, SQL_C_BINARY, var_name, 80, &len_name);
+	if (!SQL_SUCCEEDED(ret))
+	{
+		log_err("get SQLBindCol error %d at column 1", ret);
+		//print_error(db_->m_henv, db_->m_hdbc, dbenv_->idle_hstmt);
+		goto resched;
+	}
+	ret = SQLBindCol(dbenv_->idle_hstmt, 2, SQL_C_BINARY, var_value, 80, &len_value);
+	if (!SQL_SUCCEEDED(ret))
+	{
+		log_err("get SQLBindCol error %d at column 1", ret);
+		//print_error(db_->m_henv, db_->m_hdbc, dbenv_->idle_hstmt);
+		goto resched;
+	}
+	log_debug("execing SQLEXECDirect");
+    ret = SQLExecDirect(dbenv_->idle_hstmt, (SQLCHAR *) "SHOW VARIABLES LIKE 'flush'", SQL_NTS);
+	if (!SQL_SUCCEEDED(ret))
+	{
+		log_warn("ERROR: timeout: Unable to access server variable 'flush'.");
+	}
+    ret = SQLFetch(dbenv_->idle_hstmt);
+    var_name[len_name]= '\0';
+    var_value[len_value] = '\0';
+    log_debug("Result: var_name %s, var_value %s", var_name, var_value);
+
+	resched:
+    reschedule();
+}
 //----------------------------------------------------------------------------
 
 }                               // namespace oasys
