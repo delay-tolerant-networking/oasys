@@ -41,6 +41,11 @@ public:
         a->process(name_.c_str(), &value_);
     }
 
+    // Used to indicate how big a field is needed for the key.
+    // Return is number of bytes needed where 0 means variable
+    //
+    static int shim_length() { return 1; }
+
     int8_t value() const { return value_; }
     void assign(int8_t value) { value_ = value; }
 
@@ -68,6 +73,11 @@ public:
         a->process(name_.c_str(), &value_);
     }
 
+    // Used to indicate how big a field is needed for the key.
+    // Return is number of bytes needed where 0 means variable
+    //
+    static int shim_length() { return sizeof(int32_t); }
+
     int32_t value() const { return value_; }
     void assign(int32_t value) { value_ = value; }
 
@@ -93,6 +103,11 @@ public:
     void serialize(SerializeAction* a) {
         a->process(name_.c_str(), &value_);
     }
+
+    // Used to indicate how big a field is needed for the key.
+    // Return is number of bytes needed where 0 means variable
+    //
+    static int shim_length() { return sizeof(u_int32_t); }
 
     u_int32_t value() const { return value_; }
     void assign(u_int32_t value) { value_ = value; }
@@ -124,6 +139,11 @@ public:
     void serialize(SerializeAction* a) {
         a->process(name_.c_str(), &str_);
     }
+
+    // Used to indicate how big a field is needed for the key.
+    // Return is number of bytes needed where 0 means variable
+    //
+    static int shim_length() { return 0; }
 
     const std::string& value() const { return str_; }
     void assign(const std::string& str) { str_.assign(str); }
@@ -183,6 +203,11 @@ public:
         free_mem_ = true;
     }
 
+    // Used to indicate how big a field is needed for the key.
+    // Return is number of bytes needed where 0 means variable
+    //
+    static int shim_length() { return 0; }
+
     const char* value() const { return str_; }
 
 private:
@@ -232,6 +257,11 @@ public:
         }
     }
  
+    // Used to indicate how big a field is needed for the key.
+    // Return is number of bytes needed where 0 means variable
+    //
+    static int shim_length() { return 0; }
+
     const char* value() const { return buf_; }
     char*       take_buf()    { own_buf_ = false; return buf_; }
     u_int32_t   size()  const { return size_; }

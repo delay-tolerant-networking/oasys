@@ -114,6 +114,22 @@ FileSystemStore::init(const StorageConfig& cfg)
 }
 
 //----------------------------------------------------------------------------
+int
+FileSystemStore::end_transaction(void *txid, bool be_durable)
+{
+    (void) txid;
+
+    log_debug("FileSystemStore::end_transaction %p enter.", txid);
+
+    if (be_durable)
+    {
+        fd_cache_->sync_all();
+    }
+
+    return DS_OK;
+}
+
+//----------------------------------------------------------------------------
 int 
 FileSystemStore::get_table(DurableTableImpl** table,
                            const std::string& name,

@@ -86,6 +86,21 @@ enum DurableStoreFlags_t {
     DS_AUX_TABLE = 1 << 12,
 };
 
+/*!
+ * Mask and shift for key length part of flags to the datastore functions.
+ * The key length is passed in as 8 bits starting from 1 << KEY_LEN_MASK.
+ */
+#define KEY_LEN_MASK (0xFF)
+#define KEY_LEN_SHIFT (16)
+
+/*!
+ * Maximum key length for variable length keys.  This allows for the serialization
+ * overhead used when flattening the key where it is a single type.  Might have to
+ * be altered if keys are more complex.
+ */
+#define KEY_VARBINARY_MAX (255)
+#define KEY_LEN_MAX ((KEY_VARBINARY_MAX) - 4)
+
 // Pull in the various related class definitions (and template class
 // implementations) after the above declarations
 #define  __OASYS_DURABLE_STORE_INTERNAL_HEADER__
@@ -113,7 +128,7 @@ public:
           have_seen_transaction_(false), tx_counter_(0), impl_(0)
     { 
         log_debug("DurableStore instantiated (%p)", this);
-        set_instance(this);
+		set_instance(this);
     }
 
     /*!

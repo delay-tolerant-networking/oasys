@@ -368,7 +368,7 @@ ODBCDBSQLite::init(const StorageConfig & cfg)
     int ret;
 
     log_debug("init entry.");
-    dbenv_ = &base_dbenv_;
+    //dbenv_ = &base_dbenv_;
 
     // Note that for ODBC-based storage methods, the cfg.dbdir_ variable is only
     // used to specify the directory used to store the clean exit recording file
@@ -608,14 +608,24 @@ ODBCDBSQLite::init(const StorageConfig & cfg)
 				snprintf(sql_string, 100, "drop table if exists %s",
                          iter->c_str());
 
-				sqlRC = SQLFreeStmt(dbenv_->hstmt, SQL_CLOSE);      //close from any prior use
+				/*!
+				 * Release any previously bound parameters and columns.
+				 */
+				sqlRC = SQLFreeStmt(dbenv_.hstmt, SQL_CLOSE);
 				if (!SQL_SUCCEEDED(sqlRC))
 				{
 					log_crit("ERROR:  int - tidy - failed Statement Handle SQL_CLOSE");
                     return DS_ERR;
 				}
 
-				sqlRC = SQLExecDirect(dbenv_->hstmt, (SQLCHAR *) sql_string, SQL_NTS);
+				sqlRC = SQLFreeStmt(dbenv_.hstmt, SQL_RESET_PARAMS);
+				if (!SQL_SUCCEEDED(sqlRC))
+				{
+					log_crit("ERROR:  int - tidy - failed Statement Handle SQL_RESET_PARAMS");
+                    return DS_ERR;
+				}
+
+				sqlRC = SQLExecDirect(dbenv_.hstmt, (SQLCHAR *) sql_string, SQL_NTS);
 				if (!(SQL_SUCCEEDED(sqlRC) || (sqlRC == SQL_NO_DATA))) {
 					log_crit("ERROR: init - tidy: Unable to drop table %s - ret %d", iter->c_str(), sqlRC);
                     return DS_ERR;

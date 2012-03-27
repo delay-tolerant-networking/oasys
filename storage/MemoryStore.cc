@@ -43,11 +43,13 @@ MemoryStore::MemoryStore(const char* logpath)
       init_(false)
 {}
 
+//----------------------------------------------------------------------------
 MemoryStore::~MemoryStore()
 {
     log_info("db closed");
 }
 
+//----------------------------------------------------------------------------
 int 
 MemoryStore::init(const StorageConfig& cfg)
 {
@@ -60,6 +62,7 @@ MemoryStore::init(const StorageConfig& cfg)
     return 0;
 }
 
+//----------------------------------------------------------------------------
 int
 MemoryStore::get_table(DurableTableImpl**  table,
                        const std::string&  name,
@@ -93,6 +96,7 @@ MemoryStore::get_table(DurableTableImpl**  table,
     return DS_OK;
 }
 
+//----------------------------------------------------------------------------
 int
 MemoryStore::del_table(const std::string& name)
 {
@@ -102,6 +106,7 @@ MemoryStore::del_table(const std::string& name)
     return 0;
 }
 
+//----------------------------------------------------------------------------
 int 
 MemoryStore::get_table_names(StringVector* names)
 {
@@ -137,10 +142,12 @@ MemoryTable::MemoryTable(const char* logpath, ItemMap* items,
 {
 }
 
+//----------------------------------------------------------------------------
 MemoryTable::~MemoryTable() 
 {
 }
 
+//----------------------------------------------------------------------------
 int 
 MemoryTable::get(const SerializableObject& key, 
                  SerializableObject*       data)
@@ -172,6 +179,7 @@ MemoryTable::get(const SerializableObject& key,
     return 0;
 }
 
+//----------------------------------------------------------------------------
 int
 MemoryTable::get(const SerializableObject&   key,
                  SerializableObject**        data,
@@ -210,6 +218,7 @@ MemoryTable::get(const SerializableObject&   key,
     return DS_OK;
 }
 
+//----------------------------------------------------------------------------
 int 
 MemoryTable::put(const SerializableObject& key,
                  TypeCollection::TypeCode_t typecode,
@@ -270,6 +279,7 @@ MemoryTable::put(const SerializableObject& key,
     return DS_OK;
 }
 
+//----------------------------------------------------------------------------
 int 
 MemoryTable::del(const SerializableObject& key)
 { 
@@ -293,12 +303,14 @@ MemoryTable::del(const SerializableObject& key)
     return DS_OK;
 }
 
+//----------------------------------------------------------------------------
 size_t
 MemoryTable::size() const
 {
     return items_->size();
 }
 
+//----------------------------------------------------------------------------
 DurableIterator*
 MemoryTable::itr()
 {
@@ -318,10 +330,12 @@ MemoryIterator::MemoryIterator(const char* logpath, MemoryTable* t)
     first_ = true;
 }
 
+//----------------------------------------------------------------------------
 MemoryIterator::~MemoryIterator()
 {
 }
 
+//----------------------------------------------------------------------------
 int
 MemoryIterator::next()
 {
@@ -339,6 +353,7 @@ MemoryIterator::next()
     return 0;
 }
 
+//----------------------------------------------------------------------------
 int
 MemoryIterator::get_key(SerializableObject* key)
 {

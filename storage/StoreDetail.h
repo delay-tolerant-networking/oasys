@@ -68,7 +68,7 @@ class StoreDetailItem
 					     detail_get_put_t		op = DGP_PUT );
 		~StoreDetailItem() {};
 		const char *		column_name()	{ return column_name_; }
-		const detail_kind_t	column_type()	{ return column_type_; }
+		detail_kind_t	column_type()	{ return column_type_; }
 		void *				data_ptr()		{ return data_ptr_; }
 		int32_t				data_size()		{ return data_size_; }
 		int32_t            *data_size_ptr() { return &data_size_; }

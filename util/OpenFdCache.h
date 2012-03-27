@@ -197,6 +197,22 @@ public:
     }
 
     /*!
+     * Close and release all of the cached fds.
+     */
+    void sync_all() {
+        ScopeLock l(&lock_, "OpenFdCache::sync_all");
+
+        log_debug("There were %u open fds upon sync_all.", open_fds_.size());
+
+        for (typename FdList::iterator i = open_fds_.begin();
+             i != open_fds_.end(); ++i)
+        {
+            log_debug("Syncing fd=%d", i->fd_);
+            fsync(i->fd_);
+        }
+    }
+
+    /*!
      * Close a file fd and remove it from the cache.
      */
     void close(const _Key& key) 

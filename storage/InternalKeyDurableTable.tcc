@@ -54,6 +54,10 @@ _InternalKeyDurableTableClass::do_init(const StorageConfig& cfg,
                                        DurableStore*        store)
 {
     int flags = 0;
+    int shim_length = _ShimType::shim_length();
+    ASSERT((shim_length & ~KEY_LEN_MASK) == 0);
+    flags = (shim_length & KEY_LEN_MASK) << KEY_LEN_SHIFT;
+    log_debug("shim_length for table %s is %d (shifted %x)", table_name_, shim_length, flags);
 
     if (cfg.init_)
         flags |= DS_CREATE;
@@ -75,6 +79,10 @@ _InternalKeyDurableTableClass::do_init_aux(const StorageConfig& cfg,
                                            DurableStore*        store)
 {
     int flags = 0;
+    int shim_length = _ShimType::shim_length();
+    ASSERT((shim_length & ~KEY_LEN_MASK) == 0);
+    flags = (shim_length & KEY_LEN_MASK) << KEY_LEN_SHIFT;
+    log_debug("shim_length for table %s is %d (shifted %x)", table_name_, shim_length, flags);
     
     flags |= DS_AUX_TABLE;
 

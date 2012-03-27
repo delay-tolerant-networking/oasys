@@ -252,22 +252,16 @@ ODBCDBStore::~ODBCDBStore()
     {
         log_err("%s", err_str.c_str());
     }
-#if 0
-    if (deadlock_timer_)
-    {
-        deadlock_timer_->cancel();
-    }
-#endif
     end_transaction(NULL, true);
 
-    SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
-    SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-    SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->idle_hstmt);
-    SQLDisconnect(dbenv_->m_hdbc);
-    SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-    SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+    SQLFreeHandle(SQL_HANDLE_STMT, dbenv_.trans_hstmt);
+    SQLFreeHandle(SQL_HANDLE_STMT, dbenv_.hstmt);
+    SQLFreeHandle(SQL_HANDLE_STMT, dbenv_.idle_hstmt);
+    SQLDisconnect(dbenv_.m_hdbc);
+    SQLFreeHandle(SQL_HANDLE_DBC, dbenv_.m_hdbc);
+    SQLFreeHandle(SQL_HANDLE_ENV, dbenv_.m_henv);
 
-    dbenv_ = 0;
+    //dbenv_ = 0;
     log_info("db closed");
     log_debug("ODBCDBStore destructor exit.");
 }
@@ -284,21 +278,34 @@ ODBCDBStore::begin_transaction(void **txid)
 	if (auto_commit_) {
 		log_debug("begin_transaction -- AUTOCOMMIT is ON, returning");
 		return DS_OK;
-	} else {
-	    log_debug("ODBCDBStore::begin_transaction enter.");
 	}
 
     SQLRETURN ret;
 
-    ret = SQLFreeStmt(dbenv_->trans_hstmt, SQL_CLOSE);  //close from any prior use
+    ScopeLockIf sl(&serialization_lock_, "Access by begin_transaction()", serialize_all_);
+
+    log_debug("ODBCDBStore::begin_transaction enter.");
+
+    /*!
+     * See the comment on first 'get' routine about needing both SQLFreeStmt calls.
+     * Probably overkill as trans_hstmt doesn't use parameters or columns.
+     */
+    ret = SQLFreeStmt(dbenv_.trans_hstmt, SQL_CLOSE);
     if (!SQL_SUCCEEDED(ret))
     {
         log_crit("ERROR: begin_transaction - failed Statement Handle SQL_CLOSE");
         return(DS_ERR);
     }
 
+    ret = SQLFreeStmt(dbenv_.trans_hstmt, SQL_RESET_PARAMS);
+    if (!SQL_SUCCEEDED(ret))
+    {
+        log_crit("ERROR: begin_transaction - failed Statement Handle SQL_RESET_PARAMS");
+        return(DS_ERR);
+    }
+
     ret =
-        SQLExecDirect(dbenv_->trans_hstmt,
+        SQLExecDirect(dbenv_.trans_hstmt,
                       (SQLCHAR *) "BEGIN",
                       SQL_NTS);
     if (!SQL_SUCCEEDED(ret) && (ret != SQL_NO_DATA))
@@ -310,7 +317,7 @@ ODBCDBStore::begin_transaction(void **txid)
     log_debug("ODBCDBStore::begin_transaction exit.");
     if ( txid!=NULL ) {
     	log_debug("begin_transaction: setting txid.");
-        *txid = (void*) dbenv_->m_hdbc;
+        *txid = (void*) dbenv_.m_hdbc;
     }
     return DS_OK;
 }
@@ -325,11 +332,13 @@ ODBCDBStore::end_transaction(void *txid, bool be_durable)
     (void) txid;
 
 	if (auto_commit_) {
-		log_debug("end_transaction -- AUTOCOMMIT is ON, returning");
+		log_debug("end_transaction %p -- AUTOCOMMIT is ON, returning", txid);
 		return DS_OK;
-	} else {
-	    log_debug("ODBCDBStore::end_transaction enter.");
 	}
+
+    ScopeLockIf sl(&serialization_lock_, "Access by end_transaction()", serialize_all_);
+
+    log_debug("ODBCDBStore::end_transaction %p enter.", txid);
 
     if (be_durable)
     {
@@ -337,20 +346,30 @@ ODBCDBStore::end_transaction(void *txid, bool be_durable)
 
         log_debug("end_transaction enter durable section");
 
-        if (dbenv_->m_hdbc == NULL) {
-        	log_debug("end_transaction called with dbenv_->m_hdbc NULL - skipping SQLEndTran.");
+        if (dbenv_.m_hdbc == NULL) {
+        	log_debug("end_transaction called with dbenv_.m_hdbc NULL - skipping SQLEndTran.");
         	return(DS_ERR);
         }
 
-        ret = SQLFreeStmt(dbenv_->trans_hstmt, SQL_CLOSE);  //close from any prior use
+        /*!
+         * See the comment on first 'get' routine about needing both SQLFreeStmt calls.
+         * Probably overkill as trans_hstmt doesn't use parameters or columns.
+         */
+        ret = SQLFreeStmt(dbenv_.trans_hstmt, SQL_CLOSE);
         if (!SQL_SUCCEEDED(ret))
         {
             log_crit("ERROR: end_transaction - failed Statement Handle SQL_CLOSE");
             return(DS_ERR);
         }
 
+        ret = SQLFreeStmt(dbenv_.trans_hstmt, SQL_RESET_PARAMS);
+        if (!SQL_SUCCEEDED(ret))
+        {
+            log_crit("ERROR: end_transaction - failed Statement Handle SQL_RESET_PARAMS");
+            return(DS_ERR);
+        }
         ret =
-            SQLExecDirect(dbenv_->trans_hstmt,
+            SQLExecDirect(dbenv_.trans_hstmt,
                           (SQLCHAR *) "COMMIT",
                           SQL_NTS);
 
@@ -369,7 +388,7 @@ void *
 ODBCDBStore::get_underlying()
 {
     log_debug("get_underlying enter.");
-    return ((void *) dbenv_);
+    return ((void *) &dbenv_);
 }
 
 //----------------------------------------------------------------------------
@@ -383,7 +402,7 @@ ODBCDBStore::get_table(DurableTableImpl ** table,
 
     u_int32_t db_flags;
 
-    int db_type = 0;
+    int key_size = (flags >> KEY_LEN_SHIFT) & KEY_LEN_MASK;
 
     ASSERT(init_);
 
@@ -399,51 +418,72 @@ ODBCDBStore::get_table(DurableTableImpl ** table,
         }
     }
 
-    strcpy(dbenv_->table_name, name.c_str());   // save current table
-
-    log_debug("get_table check if table exists in schema");
+    log_debug("get_table check if table %s exists in schema", name.c_str());
     char my_SQL_str[500];
-    snprintf(my_SQL_str, 500, "SELECT count(*) FROM %s", dbenv_->table_name);
+    snprintf(my_SQL_str, 500, "SELECT count(*) FROM %s", name.c_str());
 
-    sqlRC = SQLFreeStmt(dbenv_->hstmt, SQL_CLOSE);      //close from any prior use
+    /*!
+     * See the comment on first 'get' routine about needing both SQLFreeStmt calls.
+     * Probably overkill as trans_hstmt doesn't use parameters or columns.
+     */
+    sqlRC = SQLFreeStmt(dbenv_.hstmt, SQL_CLOSE);
     if (!SQL_SUCCEEDED(sqlRC))
     {
         log_crit("ERROR:  get_table - failed Statement Handle SQL_CLOSE"); 
     }
 
-    sqlRC = SQLExecDirect(dbenv_->hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
+    sqlRC = SQLFreeStmt(dbenv_.hstmt, SQL_RESET_PARAMS);
+    if (!SQL_SUCCEEDED(sqlRC))
+    {
+        log_crit("ERROR:  get_table - failed Statement Handle SQL_RESET_PARAMS");
+    }
+
+    sqlRC = SQLExecDirect(dbenv_.hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
     if (!SQL_SUCCEEDED(sqlRC))
     {
     	if (flags &DS_AUX_TABLE) {
-    		PANIC("Should not be trying to create aux table %s.", dbenv_->table_name);
+    		PANIC("Should not be trying to create aux table %s.", name.c_str());
     	}
         if (flags & DS_CREATE)
         {
-            log_info("Creation of table %s in progress.", dbenv_->table_name);
-        	log_debug
-                ("get_table DS_CREATE is ON so CREATE w/ default Unsigned Int key and Blob data");
-            snprintf(my_SQL_str, 500,
-                     "CREATE TABLE %s(the_key integer unsigned primary key, the_data blob(1000000))",
-                     dbenv_->table_name);
+            log_info("Creation of table %s in progress.", name.c_str());
+           if (key_size == 0)
+            {
+            	snprintf(my_SQL_str, 500,
+                     "CREATE TABLE %s(the_key VARBINARY(%d) PRIMARY KEY, the_data BLOB(1000000))",
+                     name.c_str(),
+                     KEY_VARBINARY_MAX);
+            	log_debug
+                    ("get_table DS_CREATE is ON and key_size is 0: CREATE VARBINARY key and Blob data");
+            } else {
+            	log_debug
+                    ("get_table DS_CREATE is ON and key_size is %d: CREATE BINARY key and Blob data",
+                     key_size);
+                snprintf(my_SQL_str, 500,
+                     "CREATE TABLE %s(the_key BINARY(%d) PRIMARY KEY, the_data BLOB(1000000))",
+                     name.c_str(),
+                     key_size);
+            }
+           log_debug("SQL: %s", my_SQL_str);
             sqlRC =
-                SQLExecDirect(dbenv_->hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
+                SQLExecDirect(dbenv_.hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
             if (!(SQL_SUCCEEDED(sqlRC) || (sqlRC == SQL_NO_DATA)))
             {
-                log_crit("ERROR:  get_table - failed CREATE table %s - ret %d", dbenv_->table_name, sqlRC);
+                log_crit("ERROR:  get_table - failed CREATE table %s - ret %d", name.c_str(), sqlRC);
                 return  DS_ERR;
             }
             snprintf(my_SQL_str, 500, "INSERT INTO %s values('%s')",
-                     META_TABLE_NAME.c_str(), dbenv_->table_name);
+                     META_TABLE_NAME.c_str(), name.c_str());
             sqlRC =
-                SQLExecDirect(dbenv_->hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
+                SQLExecDirect(dbenv_.hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
             if (!SQL_SUCCEEDED(sqlRC))
             {
-                log_crit("ERROR:  get_table - failed table %s insert into META_DATA", dbenv_->table_name);
+                log_crit("ERROR:  get_table - failed table %s insert into META_DATA", name.c_str());
                 return DS_ERR;
             }
         } else {
             log_crit
-                ("get_table Table %s is missing and creation was not requested.", dbenv_->table_name);
+                ("get_table Table %s is missing and creation was not requested.", name.c_str());
             return DS_NOTFOUND;
         }
     } else {
@@ -460,11 +500,11 @@ ODBCDBStore::get_table(DurableTableImpl ** table,
         }
     }
 
-    log_debug("get_table -- opened table %s of type %d", name.c_str(), db_type);
+    log_debug("get_table -- opened table %s", name.c_str());
 
     *table =
         new ODBCDBTable(logpath_, this, name, (flags & DS_MULTITYPE),
-                          dbenv_, db_type, (flags & DS_AUX_TABLE));
+                          &dbenv_, key_size, (flags & DS_AUX_TABLE));
 
     log_debug("get_table exit.");
     return 0;
@@ -490,14 +530,24 @@ ODBCDBStore::del_table(const std::string & name)
 
     log_info("del_table DROPPING table %s", name.c_str());
 
-    sqlRC = SQLFreeStmt(dbenv_->hstmt, SQL_CLOSE);      //close from any prior use
+    /*!
+     * See the comment on first 'get' routine about needing both SQLFreeStmt calls.
+     * Probably overkill as trans_hstmt doesn't use parameters or columns.
+     */
+    sqlRC = SQLFreeStmt(dbenv_.hstmt, SQL_CLOSE);
     if (!SQL_SUCCEEDED(sqlRC))
     {
         log_crit("ERROR:  del_table - failed Statement Handle SQL_CLOSE");
     }
 
+    sqlRC = SQLFreeStmt(dbenv_.hstmt, SQL_RESET_PARAMS);
+    if (!SQL_SUCCEEDED(sqlRC))
+    {
+        log_crit("ERROR:  del_table - failed Statement Handle SQL_RESET_PARAMS");
+    }
+
     snprintf(sqlstr, 500, "DROP TABLE %s", name.c_str());
-    sqlRC = SQLExecDirect(dbenv_->hstmt, (SQLCHAR *) sqlstr, SQL_NTS);
+    sqlRC = SQLExecDirect(dbenv_.hstmt, (SQLCHAR *) sqlstr, SQL_NTS);
     if (sqlRC == SQL_NO_DATA_FOUND)
     {
         return DS_NOTFOUND;
@@ -526,13 +576,22 @@ ODBCDBStore::get_table_names(StringVector * names)
     snprintf(my_SQL_str, 500, "SELECT the_table FROM %s",
              META_TABLE_NAME.c_str());
 
-    sql_ret = SQLFreeStmt(dbenv_->hstmt, SQL_CLOSE);    //close from any prior use
+    /*!
+     * See the comment on first 'get' routine about needing both SQLFreeStmt calls.
+     */
+    sql_ret = SQLFreeStmt(dbenv_.hstmt, SQL_CLOSE);
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_crit("ERROR:  get_table_names - failed Statement Handle SQL_CLOSE");
     }
 
-    sql_ret = SQLPrepare(dbenv_->hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
+    sql_ret = SQLFreeStmt(dbenv_.hstmt, SQL_RESET_PARAMS);
+    if (!SQL_SUCCEEDED(sql_ret))
+    {
+        log_crit("ERROR:  get_table_names - failed Statement Handle SQL_RESET_PARAMS");
+    }
+
+    sql_ret = SQLPrepare(dbenv_.hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
@@ -541,7 +600,7 @@ ODBCDBStore::get_table_names(StringVector * names)
     }
 
     sql_ret =
-        SQLBindCol(dbenv_->hstmt, 1, SQL_C_DEFAULT, the_table_name, 128, NULL);
+        SQLBindCol(dbenv_.hstmt, 1, SQL_C_DEFAULT, the_table_name, 128, NULL);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
@@ -549,7 +608,7 @@ ODBCDBStore::get_table_names(StringVector * names)
         return DS_ERR;
     }
 
-    sql_ret = SQLExecute(dbenv_->hstmt);
+    sql_ret = SQLExecute(dbenv_.hstmt);
 
     if (sql_ret == SQL_NO_DATA_FOUND)
     {
@@ -563,7 +622,7 @@ ODBCDBStore::get_table_names(StringVector * names)
     }
 
     names->clear();
-    while ((sql_ret = SQLFetch(dbenv_->hstmt)) == SQL_SUCCESS)
+    while ((sql_ret = SQLFetch(dbenv_.hstmt)) == SQL_SUCCESS)
     {
         log_debug("get_table_names fetched table <%s>",
                   the_table_name);
@@ -576,13 +635,6 @@ ODBCDBStore::get_table_names(StringVector * names)
     } else if (!SQL_SUCCEEDED(sql_ret))
     {
         log_err("get SQLFetch error %d", sql_ret);
-        return DS_ERR;
-    }
-
-    sql_ret = SQLFreeStmt(dbenv_->hstmt, SQL_CLOSE);    //close from any prior use
-    if (!SQL_SUCCEEDED(sql_ret))
-    {
-        log_crit("ERROR:  get_table_names - failed Statement Handle SQL_CLOSE");
         return DS_ERR;
     }
 
@@ -639,27 +691,6 @@ ODBCDBStore::release_table(const std::string & table)
     return ref_count_[table];
 }
 
-#if 0
-//----------------------------------------------------------------------------
-void
-ODBCDBStore::DeadlockTimer::reschedule()
-{
-    log_debug("DeadlockTimer::rescheduling in %d msecs", frequency_);
-    schedule_in(frequency_);
-}
-
-//----------------------------------------------------------------------------
-void
-ODBCDBStore::DeadlockTimer::timeout(const struct timeval &now)
-{
-    (void) now;
-    log_debug
-        ("DeadlockTimer::timeout SO reschedule (SHOULD NEVER HAPPEN - ODBC has SQL_BUSY return not lock_detect)");
-
-    reschedule();
-}
-#endif
-
 //----------------------------------------------------------------------------
 // Common pieces of initialization code.
 // Factored out of specific driver classes.
@@ -667,13 +698,13 @@ DurableStoreResult_t
 ODBCDBStore::connect_to_database(const StorageConfig & cfg)
 {
 
-    dbenv_->m_henv = SQL_NULL_HENV;
-    dbenv_->m_hdbc = SQL_NULL_HDBC;
+    dbenv_.m_henv = SQL_NULL_HENV;
+    dbenv_.m_hdbc = SQL_NULL_HDBC;
 
     // Allocate the ODBC environment handle for SQL
     if ((sqlRC =
          SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE,
-                        &(base_dbenv_.m_henv))) != SQL_SUCCESS
+                        &(dbenv_.m_henv))) != SQL_SUCCESS
         && sqlRC != SQL_SUCCESS_WITH_INFO)
     {
         log_crit
@@ -682,29 +713,29 @@ ODBCDBStore::connect_to_database(const StorageConfig & cfg)
     }
     // set ODBC environment: ODBC version
     if ((sqlRC =
-         SQLSetEnvAttr(dbenv_->m_henv, SQL_ATTR_ODBC_VERSION,
+         SQLSetEnvAttr(dbenv_.m_henv, SQL_ATTR_ODBC_VERSION,
                        (void *) SQL_OV_ODBC3, 0)) != SQL_SUCCESS
         && sqlRC != SQL_SUCCESS_WITH_INFO)
     {
         log_crit("connect_to_database: ERROR: Failed to set OBDC Version for data server");
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_.m_henv);
         return DS_ERR;
     }
     log_debug("init - Set ODBC Version success");
 
     // allocate the ODBC Connection handle
     if ((sqlRC =
-         SQLAllocHandle(SQL_HANDLE_DBC, dbenv_->m_henv,
-                        &(base_dbenv_.m_hdbc))) != SQL_SUCCESS
+         SQLAllocHandle(SQL_HANDLE_DBC, dbenv_.m_henv,
+                        &(dbenv_.m_hdbc))) != SQL_SUCCESS
         && sqlRC != SQL_SUCCESS_WITH_INFO)
     {
         log_crit
             ("connect_to_database: ERROR: Failed to allocate ODBC Connection handle");
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_.m_henv);
         return DS_ERR;
     }
 
-    if (dbenv_->m_hdbc == SQL_NULL_HDBC)
+    if (dbenv_.m_hdbc == SQL_NULL_HDBC)
     {
         log_crit
             ("connect_to_database: ERROR: Allocated ODBC Connection Handle is null");
@@ -715,20 +746,20 @@ ODBCDBStore::connect_to_database(const StorageConfig & cfg)
 
     // set ODBC Connection attributes: login timeout
      if ((sqlRC =
-          SQLSetConnectAttr(dbenv_->m_hdbc, SQL_ATTR_LOGIN_TIMEOUT,
+          SQLSetConnectAttr(dbenv_.m_hdbc, SQL_ATTR_LOGIN_TIMEOUT,
                             (SQLPOINTER) 10,
                             SQL_IS_UINTEGER)) != SQL_SUCCESS
          && sqlRC != SQL_SUCCESS_WITH_INFO)
      {
          log_crit("connect_to_database: ERROR: Failed to set DB Connect timeout");
-         SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-         SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+         SQLFreeHandle(SQL_HANDLE_DBC, dbenv_.m_hdbc);
+         SQLFreeHandle(SQL_HANDLE_ENV, dbenv_.m_henv);
          return DS_ERR;
      }
      log_info("connect_to_database: Set DB Connection timeout success");
 
 
-    sqlRC = SQLConnect(dbenv_->m_hdbc,
+    sqlRC = SQLConnect(dbenv_.m_hdbc,
                        (SQLCHAR *) cfg.dbname_.c_str(),
                        SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS);
     if (!SQL_SUCCEEDED(sqlRC))
@@ -736,8 +767,8 @@ ODBCDBStore::connect_to_database(const StorageConfig & cfg)
         log_crit
             ("connect_to_database: Failed to SQLConnect to <%s> with NULL login/pswd",
              cfg.dbname_.c_str());
-        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_.m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_.m_henv);
         return DS_ERR;
     }
     log_debug
@@ -747,76 +778,76 @@ ODBCDBStore::connect_to_database(const StorageConfig & cfg)
     log_info
         ("connect_to_database: For ODBC, AutoCommit is always ON until suspended by 'BEGIN TRANSACTION'");
 
-    dbenv_->hstmt = SQL_NULL_HSTMT;
+    dbenv_.hstmt = SQL_NULL_HSTMT;
     if ((sqlRC =
-         SQLAllocHandle(SQL_HANDLE_STMT, dbenv_->m_hdbc,
-                        &(dbenv_->hstmt))) != SQL_SUCCESS
+         SQLAllocHandle(SQL_HANDLE_STMT, dbenv_.m_hdbc,
+                        &(dbenv_.hstmt))) != SQL_SUCCESS
         && (sqlRC != SQL_SUCCESS_WITH_INFO))
     {
         log_crit
             ("connect_to_database: ERROR: Failed to allocate Statement handle");
-        SQLDisconnect(dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        SQLDisconnect(dbenv_.m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_.m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_.m_henv);
         return DS_ERR;
     }
 
-    if (dbenv_->hstmt == SQL_NULL_HSTMT)
+    if (dbenv_.hstmt == SQL_NULL_HSTMT)
     {
         log_crit
             ("connect_to_database: ERROR: Statement handle is null so skip statement");
-        SQLDisconnect(dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        SQLDisconnect(dbenv_.m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_.m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_.m_henv);
         return DS_ERR;
     }
 
-    dbenv_->trans_hstmt = SQL_NULL_HSTMT;
+    dbenv_.trans_hstmt = SQL_NULL_HSTMT;
     if ((sqlRC =
-         SQLAllocHandle(SQL_HANDLE_STMT, dbenv_->m_hdbc,
-                        &(dbenv_->trans_hstmt))) != SQL_SUCCESS
+         SQLAllocHandle(SQL_HANDLE_STMT, dbenv_.m_hdbc,
+                        &(dbenv_.trans_hstmt))) != SQL_SUCCESS
         && (sqlRC != SQL_SUCCESS_WITH_INFO))
     {
         log_crit
             ("connect_to_database: ERROR: Failed to allocate Trans Statement handle");
-        SQLDisconnect(dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        SQLDisconnect(dbenv_.m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_.m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_.m_henv);
         return DS_ERR;
     }
 
-    if (dbenv_->trans_hstmt == SQL_NULL_HSTMT)
+    if (dbenv_.trans_hstmt == SQL_NULL_HSTMT)
     {
         log_crit
             ("connect_to_database: ERROR: Trans Statement handle is null so skip statement");
-        //SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-        SQLDisconnect(dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        //SQLFreeHandle(SQL_HANDLE_STMT, dbenv_.hstmt);
+        SQLDisconnect(dbenv_.m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_.m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_.m_henv);
         return DS_ERR;
     }
-    dbenv_->idle_hstmt = SQL_NULL_HSTMT;
+    dbenv_.idle_hstmt = SQL_NULL_HSTMT;
     if ((sqlRC =
-         SQLAllocHandle(SQL_HANDLE_STMT, dbenv_->m_hdbc,
-                        &(dbenv_->idle_hstmt))) != SQL_SUCCESS
+         SQLAllocHandle(SQL_HANDLE_STMT, dbenv_.m_hdbc,
+                        &(dbenv_.idle_hstmt))) != SQL_SUCCESS
         && (sqlRC != SQL_SUCCESS_WITH_INFO))
     {
         log_crit
             ("connect_to_database: ERROR: Failed to allocate idle Statement handle");
-        SQLDisconnect(dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        SQLDisconnect(dbenv_.m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_.m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_.m_henv);
         return DS_ERR;
     }
 
-    if (dbenv_->idle_hstmt == SQL_NULL_HSTMT)
+    if (dbenv_.idle_hstmt == SQL_NULL_HSTMT)
     {
         log_crit
             ("connect_to_database: ERROR: Idle Statement handle is null so skip statement");
-        //SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-        SQLDisconnect(dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        //SQLFreeHandle(SQL_HANDLE_STMT, dbenv_.hstmt);
+        SQLDisconnect(dbenv_.m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_.m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_.m_henv);
         return DS_ERR;
     }
     log_debug("connect_to_database: ODBC Main statement and Trans statement handles successfully allocated.");
@@ -852,15 +883,15 @@ ODBCDBStore::set_odbc_auto_commit_mode()
      if ( ! auto_commit_ )
      {
          if ((sqlRC =
-               SQLSetConnectAttr(dbenv_->m_hdbc,
+               SQLSetConnectAttr(dbenv_.m_hdbc,
                                  SQL_ATTR_AUTOCOMMIT,
                                  SQL_AUTOCOMMIT_OFF,
                                  SQL_IS_UINTEGER)) != SQL_SUCCESS
               && sqlRC != SQL_SUCCESS_WITH_INFO)
           {
               log_crit("connect_to_database: ERROR: Failed to set DB auto-commit");
-              SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-              SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+              SQLFreeHandle(SQL_HANDLE_DBC, dbenv_.m_hdbc);
+              SQLFreeHandle(SQL_HANDLE_ENV, dbenv_.m_henv);
               return DS_ERR;
           }
           log_info("connect_to_database: ODBC auto-commit disabled successfully - now in transaction mode.");
@@ -885,18 +916,18 @@ ODBCDBStore::create_aux_tables()
     snprintf(sql_cmd, 500,
              "CREATE TABLE %s (the_table varchar(128))",
              META_TABLE_NAME.c_str());
-    sqlRC = SQLExecDirect(dbenv_->hstmt, (SQLCHAR *)sql_cmd, SQL_NTS);
+    sqlRC = SQLExecDirect(dbenv_.hstmt, (SQLCHAR *)sql_cmd, SQL_NTS);
     // if ( !SQL_SUCCEEDED(sqlRC) )
     if (!SQL_SUCCEEDED(sqlRC) && sqlRC != SQL_NO_DATA)
     {
         log_crit
             ("create_tables: ERROR: unable to SQLExecDirect '%s' (%d)",
              sql_cmd, sqlRC);
-        SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->trans_hstmt);
-        SQLFreeHandle(SQL_HANDLE_STMT, dbenv_->hstmt);
-        SQLDisconnect(dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_->m_hdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_->m_henv);
+        SQLFreeHandle(SQL_HANDLE_STMT, dbenv_.trans_hstmt);
+        SQLFreeHandle(SQL_HANDLE_STMT, dbenv_.hstmt);
+        SQLDisconnect(dbenv_.m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, dbenv_.m_hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, dbenv_.m_henv);
         return DS_ERR;
     }
     log_debug("%s table successfully created.", META_TABLE_NAME.c_str());
@@ -913,27 +944,26 @@ ODBCDBStore::create_aux_tables()
 ODBCDBTable::ODBCDBTable(const char *logpath,
                              ODBCDBStore * store,
                              const std::string & table_name,
-                             bool multitype, ODBC_dbenv * db, int db_type,
+                             bool multitype, ODBC_dbenv * db,
+                             int key_size,
                              bool is_aux_table):
 DurableTableImpl(table_name, multitype),
 Logger("ODBCDBTable", "%s/%s", logpath, table_name.c_str()),
-//Logger("ODBCDBTable", "/dtn/storage/ODBCDBTable/"+table_name),
 db_(db),
-db_type_(db_type),
 store_(store),
+key_size_(key_size),
 is_aux_table_(is_aux_table)
 {
     SQLRETURN sqlRC;
 
     log_debug("ODBCDBTable constructor for table %s", table_name.c_str());
-    //logpath_appendf("/ODBCDBTable/%s", table_name.c_str());
     log_debug("logpath is: <%s>", logpath);
     store_->acquire_table(table_name);
 
-    hstmt = SQL_NULL_HSTMT;
+    hstmt_ = SQL_NULL_HSTMT;
     if ((sqlRC =
          SQLAllocHandle(SQL_HANDLE_STMT, db_->m_hdbc,
-                        &hstmt)) != SQL_SUCCESS
+                        &hstmt_)) != SQL_SUCCESS
         && (sqlRC != SQL_SUCCESS_WITH_INFO))
     {
         log_crit
@@ -943,7 +973,7 @@ is_aux_table_(is_aux_table)
         SQLFreeHandle(SQL_HANDLE_ENV, db->m_henv);
     }
 
-    if (hstmt == SQL_NULL_HSTMT)
+    if (hstmt_ == SQL_NULL_HSTMT)
     {
         log_crit
             ("init ERROR: Statement handle is null so skip statement");
@@ -952,8 +982,8 @@ is_aux_table_(is_aux_table)
         SQLFreeHandle(SQL_HANDLE_ENV, db->m_henv);
     }
 
-    iterator_hstmt = SQL_NULL_HSTMT;
-    if ((sqlRC = SQLAllocHandle(SQL_HANDLE_STMT, db->m_hdbc, &(iterator_hstmt))) != SQL_SUCCESS
+    iterator_hstmt_ = SQL_NULL_HSTMT;
+    if ((sqlRC = SQLAllocHandle(SQL_HANDLE_STMT, db->m_hdbc, &(iterator_hstmt_))) != SQL_SUCCESS
        && sqlRC != SQL_SUCCESS_WITH_INFO)
     {
         log_crit("init ERROR: Failed to allocate Iterator Statement handle");
@@ -962,10 +992,9 @@ is_aux_table_(is_aux_table)
         SQLFreeHandle(SQL_HANDLE_ENV, db->m_henv);
     }
 
-    if (iterator_hstmt == SQL_NULL_HSTMT)
+    if (iterator_hstmt_ == SQL_NULL_HSTMT)
     {
         log_crit("init ERROR: Iterator Statement handle is null so skip statement");
-        //SQLFreeHandle(SQL_HANDLE_STMT, db->hstmt);
         SQLDisconnect(db->m_hdbc);
         SQLFreeHandle(SQL_HANDLE_DBC, db->m_hdbc);
         SQLFreeHandle(SQL_HANDLE_ENV, db->m_henv);
@@ -980,8 +1009,8 @@ ODBCDBTable::~ODBCDBTable()
     // only happen if no other instance of Db is around.
     store_->release_table(name());
 
-    // SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
-    // SQLFreeHandle(SQL_HANDLE_STMT, iterator_hstmt);
+    // SQLFreeHandle(SQL_HANDLE_STMT, hstmt_);
+    // SQLFreeHandle(SQL_HANDLE_STMT, iterator_hstmt_);
 
     log_debug("destructor");
 }
@@ -992,32 +1021,27 @@ ODBCDBTable::get(const SerializableObject & key, SerializableObject * data)
 {
     log_debug("get enter.");
     ASSERTF(!multitype_, "single-type get called for multi-type table");
-    if ( store_->serialize_all_ && !(store_->serialization_lock_.is_locked_by_me()) ) {
-        ScopeLock sl(&store_->serialization_lock_, "Access by get()");
-    }
+
+    ScopeLockIf sl(&store_->serialization_lock_,
+				   "Access by get()",
+				   store_->serialize_all_);
     ScopeLock l(&lock_, "Access by get()");
 
     ScratchBuffer < u_char *, 256 > key_buf;
-    size_t key_buf_len = flatten(key, &key_buf);
+    SQLLEN key_buf_len = flatten(key, &key_buf);
     ASSERT(key_buf_len != 0);
+    u_char * key_buf_ptr = key_buf.buf();
 
     // Variables used for auxiliary tables
-	StoreDetail				*data_detail;		///< Infomation about data to be retrieved
+	StoreDetail				*data_detail;		///< Information about data to be retrieved
 	StoreDetail::iterator	iter;				///< Iterator used to go through columns
 	int						col_cnt = 0;		///< Set to column count
 	SQLLEN *				user_data_sizes;	///< Dynamically allocated array of places to put column data lengths
 
-    __my_dbt k;
-    memset(&k, 0, sizeof(k));
-    k.data = key_buf.buf();
-    k.size = key_buf_len;
-    __my_dbt d;
-    memset(&d, 0, sizeof(d));
-
     SQLRETURN sql_ret;
-    char *tmp = NULL;
+    u_char *fetched_blob = NULL;
 
-    log_debug("get  Table=%s", name());
+    log_debug("get  Table=%s: key length %d", name(), (int)key_buf_len);
     char my_SQL_str[500];
     if (is_aux_table()){
     	// Check that we have a vector of descriptors to work with
@@ -1041,58 +1065,53 @@ ODBCDBTable::get(const SerializableObject & key, SerializableObject * data)
         snprintf(my_SQL_str, 500, "SELECT the_data FROM %s WHERE the_key = ?",
                  name());
     }
+    log_debug("get SQL command is '%s'", my_SQL_str);
 
-    //sql_ret = SQLFreeStmt(db_->hstmt, SQL_CLOSE);       //close from any prior use
-    sql_ret = SQLFreeStmt(hstmt, SQL_CLOSE);       //close from any prior use
+    /*!
+     * To fully free up the hstmt_ it is necessary to both unbind any preexisting
+     * bound output columns (SQL_CLOSE) and any preexisting bound parameters (SQL_RESET_PARAMETERS)
+     * This needs two calls to SQLFreeStmt (nicer if you could combine the options..).
+     * If this is not done and the last usage was a 'put' or 'get' with multiple
+     * parameters you run the risk of seeing random data in the bound parameters
+     * which have potentially recorded addresses which are no longer valid.  If
+     * you get an unexpected 'SQL_NEED_DATA' return from SQLExecute this is a
+     * possible (and *extremely* difficult to diagnose) problem.
+     */
+    sql_ret = SQLFreeStmt(hstmt_, SQL_CLOSE);       //close from any prior use
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_crit("ERROR:  get - failed Statement Handle SQL_CLOSE");
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
     }
 
-    sql_ret = SQLPrepare(hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
+    sql_ret = SQLFreeStmt(hstmt_, SQL_RESET_PARAMS);
+    if (!SQL_SUCCEEDED(sql_ret))
+    {
+        log_crit("ERROR:  get - failed Statement Handle SQL_RESET_PARAMS");
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
+    }
+
+    sql_ret = SQLPrepare(hstmt_, (SQLCHAR *) my_SQL_str, SQL_NTS);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_err("get SQLPrepare error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
         return DS_ERR;
     }
 
-    if (strcmp(name(), "globals") == 0)
-    {
-        char myString[100];
-        memset(myString, '\0', 100);
-        memcpy(myString, ((char *) k.data) + 4, k.size - sizeof(int));
-#if 0
-        log_debug
-            ("get  len=%d, Key+4 as string=<%s> (leading 4-bytes length) plus size=%d",
-             (int) k.data, (char *) k.data + 4, k.size);
-        sql_ret =
-            SQLBindParameter(db_->hstmt, 1, SQL_PARAM_INPUT, SQL_C_DEFAULT,
-                             SQL_CHAR, 0, 0, (char *) k.data + 4, 0, NULL);
-#else
-        log_debug
-            ("get  len=%d, Key+4 as string=<%s> (leading 4-bytes length) plus size=%d",
-             *((u_int32_t*) k.data), myString, k.size);
-        sql_ret =
-            SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_DEFAULT,
-                             SQL_CHAR, 0, 0, myString, 0, NULL);
-#endif
-    } else {
-    	// The key is the same for all other tables apart from 'globals'.
-        log_debug
-            ("get  Key(reverse byte order) unsignedInt=%u int=%d plus size=%d",
-             realKey(k.data), *((u_int32_t*) k.data), k.size);
-        sql_ret =
-            SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_ULONG,
-                             SQL_INTEGER, 0, 0, k.data, 0, NULL);
-    }
+    // Bind the key parameter
+ 	log_debug("get bind table key");
+
+    sql_ret =
+         SQLBindParameter(hstmt_, 1, SQL_PARAM_INPUT, SQL_C_BINARY,
+                          (key_size_ == 0) ? SQL_VARBINARY : SQL_BINARY,
+                          0, 0, key_buf_ptr, 0, &key_buf_len);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_err("get SQLBindParameter error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
         return DS_ERR;
     }
 
@@ -1103,7 +1122,7 @@ ODBCDBTable::get(const SerializableObject & key, SerializableObject * data)
     	for (iter = data_detail->begin();
     			iter != data_detail->end(); ++iter) {
             sql_ret =
-                SQLBindCol(hstmt, col_no,
+                SQLBindCol(hstmt_, col_no,
                 		   odbc_col_c_type_map[(*iter)->column_type()],
                 		   (*iter)->data_ptr(),
                 		   (*iter)->data_size(),
@@ -1112,43 +1131,45 @@ ODBCDBTable::get(const SerializableObject & key, SerializableObject * data)
             if (!SQL_SUCCEEDED(sql_ret))
             {
                 log_err("get SQLBindCol error %d at column %d", sql_ret, col_no);
-                print_error(db_->m_henv, db_->m_hdbc, hstmt);
+                print_error(db_->m_henv, db_->m_hdbc, hstmt_);
                 delete user_data_sizes;
                 return DS_ERR;
             }
             col_no++;
     	}
     } else {
+    	log_debug("get bind blob column");
     	// Allocate space for a big blob - the whole serialized data for the object
-        if ((tmp = (char *) malloc(DATA_MAX_SIZE)) == NULL)
+        if ((fetched_blob = (u_char *) malloc(DATA_MAX_SIZE)) == NULL)
         {
             log_err("get malloc(DATA_MAX_SIZE) error");
             return DS_ERR;
         }
         user_data_sizes = new SQLLEN[1];
+        user_data_sizes[0] = 0;
 
         sql_ret =
-            SQLBindCol(hstmt, 1, SQL_C_BINARY, tmp, DATA_MAX_SIZE,
+            SQLBindCol(hstmt_, 1, SQL_C_BINARY, fetched_blob, DATA_MAX_SIZE,
                        &user_data_sizes[0]);
 
         if (!SQL_SUCCEEDED(sql_ret))
         {
             log_err("get SQLBindCol error %d", sql_ret);
-            print_error(db_->m_henv, db_->m_hdbc, hstmt);
-            free(tmp);
-            tmp = NULL;
+            print_error(db_->m_henv, db_->m_hdbc, hstmt_);
+            free(fetched_blob);
+            fetched_blob = NULL;
             delete user_data_sizes;
             return DS_ERR;
         }
     }
 
-    sql_ret = SQLExecute(hstmt);
+    sql_ret = SQLExecute(hstmt_);
 
     if (sql_ret == SQL_NO_DATA_FOUND)
     {
         log_debug("get SQLExecute NO_DATA_FOUND");
-        if (tmp != NULL) free(tmp);
-        tmp = NULL;
+        if (fetched_blob != NULL) free(fetched_blob);
+        fetched_blob = NULL;
         delete user_data_sizes;
         return DS_NOTFOUND;
     }
@@ -1159,31 +1180,34 @@ ODBCDBTable::get(const SerializableObject & key, SerializableObject * data)
     case SQL_NO_DATA:
         log_debug("get SQLExecute returns SQL_NO_DATA after check");
         break;
+    case SQL_NEED_DATA:
+    	log_debug("get SQLExecute returns SQL_NEED_DATA");
+    	// Fall through
     default:
         log_debug("get SQLExecute error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
-        if (tmp != NULL) free(tmp);
-        tmp = NULL;
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
+        if (fetched_blob != NULL) free(fetched_blob);
+        fetched_blob = NULL;
         delete user_data_sizes;
         return DS_ERR;
     }
 
-    sql_ret = SQLFetch(hstmt);
+    sql_ret = SQLFetch(hstmt_);
 
     if (sql_ret == SQL_NO_DATA_FOUND)
     {
         log_debug("get SQLFetch NO_DATA_FOUND");
-        if (tmp != NULL) free(tmp);
-        tmp = NULL;
+        if (fetched_blob != NULL) free(fetched_blob);
+        fetched_blob = NULL;
         delete user_data_sizes;
         return DS_NOTFOUND;
     }
-    if (!SQL_SUCCEEDED(sql_ret))
+    if (!(SQL_SUCCEEDED(sql_ret) || (sql_ret == SQL_NEED_DATA)))
     {
         log_err("get SQLFetch error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
-        if (tmp != NULL) free(tmp);
-        tmp = NULL;
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
+        if (fetched_blob != NULL) free(fetched_blob);
+        fetched_blob = NULL;
         delete user_data_sizes;
         return DS_ERR;
     }
@@ -1210,36 +1234,30 @@ ODBCDBTable::get(const SerializableObject & key, SerializableObject * data)
         if (user_data_sizes[0] == SQL_NULL_DATA)
         {
             log_err("get SQLFetch SQL_NULL_DATA");
-            if (tmp != NULL) free(tmp);
-            tmp = NULL;
+            if (fetched_blob != NULL) free(fetched_blob);
+            fetched_blob = NULL;
             delete user_data_sizes;
             return DS_ERR;
         }
 
+        log_debug("get first 8-bytes of DATA=%x08 plus size=%ld",
+                  *((u_int32_t *) fetched_blob), user_data_sizes[0]);
 
-        d.data = (void *) tmp;
-        d.size = user_data_sizes[0];
-        log_debug("get first 8-bytes of DATA=%x08 plus size=%d",
-                  *((u_int32_t *) d.data), d.size);
-
-        u_char *bp = (u_char *) d.data;
-        size_t sz = d.size;
-
-        Unmarshal unmarshaller(Serialize::CONTEXT_LOCAL, bp, sz);
+        Unmarshal unmarshaller(Serialize::CONTEXT_LOCAL, fetched_blob, user_data_sizes[0]);
 
         if (unmarshaller.action(data) != 0)
         {
             log_err("get: error unserializing data object");
-            if (tmp != NULL) free(tmp);
-            tmp = NULL;
+            if (fetched_blob != NULL) free(fetched_blob);
+            fetched_blob = NULL;
             delete user_data_sizes;
             return DS_ERR;
         }
 
     }
 
-    if (tmp != NULL) free(tmp);
-    tmp = NULL;
+    if (fetched_blob != NULL) free(fetched_blob);
+    fetched_blob = NULL;
     delete user_data_sizes;
     log_debug("ODBCDBStore::get exit.");
     return 0;
@@ -1251,30 +1269,25 @@ ODBCDBTable::get(const SerializableObject & key,
                    SerializableObject ** data,
                    TypeCollection::Allocator_t allocator)
 {
-    log_debug("ODBCDBStore::get2 enter.");
     ASSERTF(multitype_, "multi-type get called for single-type table");
-    if ( store_->serialize_all_ && !store_->serialization_lock_.is_locked_by_me() ) {
-        ScopeLock sl(&store_->serialization_lock_, "Access by get()");
-    }
+    ScopeLockIf sl(&store_->serialization_lock_,
+				   "Access by get2()",
+				   store_->serialize_all_);
     ScopeLock l(&lock_, "Access by get2()");
 
+    log_debug("ODBCDBStore::get2 enter.");
+
     ScratchBuffer < u_char *, 256 > key_buf;
-    size_t key_buf_len = flatten(key, &key_buf);
+    SQLINTEGER key_buf_len = flatten(key, &key_buf);
     if (key_buf_len == 0)
     {
         log_err("get2 zero or too long key length");
         return DS_ERR;
     }
-    // add (duplicated/copied from get() above)
-    __my_dbt k;
-    memset(&k, 0, sizeof(k));
-    k.data = key_buf.buf();
-    k.size = key_buf_len;
-    __my_dbt d;
-    memset(&d, 0, sizeof(d));
+    u_char * key_buf_ptr = key_buf.buf();
 
     SQLRETURN sql_ret;
-    char *tmp = NULL;
+    u_char *fetched_blob = NULL;
     SQLLEN user_data_size;
 
     log_debug("get2  Table=%s", name());
@@ -1282,143 +1295,129 @@ ODBCDBTable::get(const SerializableObject & key,
     snprintf(my_SQL_str, 500, "SELECT the_data FROM %s WHERE the_key = ?",
              name());
 
-    sql_ret = SQLFreeStmt(hstmt, SQL_CLOSE);       //close from any prior use
+    /*!
+     * See the comment on first 'get' routine about needing both SQLFreeStmt calls.
+     */
+    sql_ret = SQLFreeStmt(hstmt_, SQL_CLOSE);
     if (!SQL_SUCCEEDED(sql_ret))
     {
-        log_crit("ERROR:  ODBCDBStore::get - failed Statement Handle SQL_CLOSE");
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        log_crit("ERROR:  ODBCDBStore::get2 - failed Statement Handle SQL_CLOSE");
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
     }
 
-    sql_ret = SQLPrepare(hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
+    sql_ret = SQLFreeStmt(hstmt_, SQL_RESET_PARAMS);
+    if (!SQL_SUCCEEDED(sql_ret))
+    {
+        log_crit("ERROR:  get2 - failed Statement Handle SQL_RESET_PARAMS");
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
+    }
+
+    sql_ret = SQLPrepare(hstmt_, (SQLCHAR *) my_SQL_str, SQL_NTS);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_err("get2 SQLPrepare error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
         return DS_ERR;
     }
 
-    if (strcmp(name(), "globals") == 0)
-    {
-        char myString[100];
-        memset(myString, '\0', 100);
-        memcpy(myString, ((char *) k.data) + 4, k.size - sizeof(int));
-#if 0
-        log_debug
-            ("get2  len=%d Key+4 as string=<%s> (leading 4-bytes length) plus size=%d",
-             (int) k.data, (char *) k.data + 4, k.size);
-        sql_ret =
-            SQLBindParameter(db_->hstmt, 1, SQL_PARAM_INPUT, SQL_C_DEFAULT,
-                             SQL_CHAR, 0, 0, (char *) k.data + 4, 0, NULL);
-#else
-        log_debug
-            ("get2  len=%d Key+4 as string=<%s> (leading 4-bytes length) plus size=%d",
-             *((u_int32_t *)k.data), myString, k.size);
-        sql_ret =
-            SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_DEFAULT,
-                             SQL_CHAR, 0, 0, myString, 0, NULL);
-#endif
-    } else {
-        log_debug
-            ("get2  Key(reverse byte order) unsignedInt=%u int=%d plus size=%d",
-             realKey(k.data), *((u_int32_t *)k.data), k.size);
-        sql_ret =
-            SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_ULONG,
-                             SQL_INTEGER, 0, 0, k.data, 0, NULL);
-    }
+    // Bind the key parameter
+ 	log_debug("get2 bind table key");
+    sql_ret =
+         SQLBindParameter(hstmt_, 1, SQL_PARAM_INPUT, SQL_C_BINARY,
+                          (key_size_ == 0) ? SQL_VARBINARY : SQL_BINARY,
+                          0, 0, key_buf_ptr, 0, &key_buf_len);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_err("get2 SQLBindParameter error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
         return DS_ERR;
     }
 
-    if ((tmp = (char *) malloc(DATA_MAX_SIZE)) == NULL)
+    if ((fetched_blob = (u_char *) malloc(DATA_MAX_SIZE)) == NULL)
     {
         log_err("get2 malloc(DATA_MAX_SIZE) error");
         return DS_ERR;
     }
 
     sql_ret =
-        SQLBindCol(hstmt, 1, SQL_C_BINARY, tmp, DATA_MAX_SIZE,
+        SQLBindCol(hstmt_, 1, SQL_C_BINARY, fetched_blob, DATA_MAX_SIZE,
                    &user_data_size);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_err("get2 SQLBindCol error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
-        free(tmp);
-        tmp = NULL;
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
+        free(fetched_blob);
+        fetched_blob = NULL;
         return DS_ERR;
     }
 
-    sql_ret = SQLExecute(hstmt);
+    sql_ret = SQLExecute(hstmt_);
 
     if (sql_ret == SQL_NO_DATA_FOUND)
     {
         log_debug("get2 SQLExecute NO_DATA_FOUND");
-        free(tmp);
-        tmp = NULL;
+        free(fetched_blob);
+        fetched_blob = NULL;
         return DS_NOTFOUND;
     }
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_err("get2 SQLExecute error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
-        free(tmp);
-        tmp = NULL;
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
+        free(fetched_blob);
+        fetched_blob = NULL;
         return DS_ERR;
     }
 
-    sql_ret = SQLFetch(hstmt);
+    sql_ret = SQLFetch(hstmt_);
 
     if (sql_ret == SQL_NO_DATA_FOUND)
     {
         log_debug("get2 SQLFetch NO_DATA_FOUND");
-        free(tmp);
-        tmp = NULL;
+        free(fetched_blob);
+        fetched_blob = NULL;
         return DS_NOTFOUND;
     }
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_err("get2 SQLFetch error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
-        free(tmp);
-        tmp = NULL;
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
+        free(fetched_blob);
+        fetched_blob = NULL;
         return DS_ERR;
     }
 
     if (user_data_size == SQL_NULL_DATA)
     {
         log_err("get2 SQLFetch SQL_NULL_DATA");
-        free(tmp);
-        tmp = NULL;
+        free(fetched_blob);
+        fetched_blob = NULL;
         return DS_ERR;
     }
 
 
-    d.data = (void *) tmp;
-    d.size = user_data_size;
     log_debug
         ("get2 first 8-bytes of DATA=%x08 plus size=%d",
-         *((u_int32_t *)d.data), d.size);
+         *((u_int32_t *)fetched_blob), (int)user_data_size);
 
-    u_char *bp = (u_char *) d.data;
-    size_t sz = d.size;
+    u_char *bp = fetched_blob;
+    size_t sz = user_data_size;
 
     TypeCollection::TypeCode_t typecode;
     size_t typecode_sz = MarshalSize::get_size(&typecode);
 
     Builder b;
     UIntShim type_shim(b);
-    Unmarshal type_unmarshaller(Serialize::CONTEXT_LOCAL, bp, typecode_sz);
+    Unmarshal type_unmarshaller(Serialize::CONTEXT_LOCAL, fetched_blob, typecode_sz);
 
     if (type_unmarshaller.action(&type_shim) != 0)
     {
         log_err("ODBCDBStore::get2: error unserializing type code");
-        free(tmp);
-        tmp = NULL;
+        free(fetched_blob);
+        fetched_blob = NULL;
         return DS_ERR;
     }
 
@@ -1431,8 +1430,8 @@ ODBCDBTable::get(const SerializableObject & key,
     if (err != 0)
     {
         log_err("ODBCDBStore::get2: error in allocator");
-        free(tmp);
-        tmp = NULL;
+        free(fetched_blob);
+        fetched_blob = NULL;
         *data = NULL;
         return DS_ERR;
     }
@@ -1446,28 +1445,16 @@ ODBCDBTable::get(const SerializableObject & key,
         log_err("ODBCDBStore::get2: error unserializing data object");
         delete *data;
         *data = NULL;
-        free(tmp);
-        tmp = NULL;
+        free(fetched_blob);
+        fetched_blob = NULL;
         return DS_ERR;
     }
 
-    free(tmp);
-    tmp = NULL;
+    free(fetched_blob);
+    fetched_blob = NULL;
     user_data_size = 0;
     log_debug("ODBCDBStore::get2 exit.");
     return DS_OK;
-}
-
-//----------------------------------------------------------------------------
-int
-ODBCDBTable::realKey(void *p2)
-{
-    int ret = 0;
-    char *p = (char *) p2;
-    char *t = (char *) &ret;
-    t[0]=p[3]; t[1]=p[2]; t[2]=p[1]; t[3]=p[0];
-
-    return(ret);
 }
 
 //----------------------------------------------------------------------------
@@ -1477,65 +1464,45 @@ ODBCDBTable::put(const SerializableObject & key,
                    const SerializableObject * data,
                    int flags)
 {
-    if ( store_->serialize_all_ && !store_->serialization_lock_.is_locked_by_me() ) {
-        ScopeLock sl(&store_->serialization_lock_, "Access by put()");
-    }
+    ScopeLockIf sl(&store_->serialization_lock_,
+				   "Access by put()",
+				   store_->serialize_all_);
     ScopeLock l(&lock_, "Access by put()");
+
     log_debug("put thread(%08X) flags(%02X)",
               (unsigned int) pthread_self(),
               flags);
 
-    ScratchBuffer < u_char *, 256 > key_buf;
-    size_t key_buf_len = flatten(key, &key_buf);
-
     // Variables used for auxiliary tables
-	StoreDetail			   *data_detail;		///< Infomation about data to be retrieved
+	StoreDetail			   *data_detail;		///< Information about data to be retrieved
 	StoreDetail::iterator	iter;				///< Iterator used to go through columns
 	int						col_cnt = 0;		///< Set to column count
 
 	// flatten and fill in the key
-    __my_dbt k;
-    memset(&k, 0, sizeof(k));
-    k.data = key_buf.buf();
-    k.size = key_buf_len;
+    ScratchBuffer < u_char *, 256 > key_buf;
+    SQLLEN key_buf_len = flatten(key, &key_buf);
+    u_char * key_buf_ptr = key_buf.buf();
+
+    // Temporary buffer to store serialized data
+    ScratchBuffer < u_char *, 1024 > data_buf;
+    SQLLEN data_buf_len;
+    u_char *full_buf;
 
     SQLRETURN sql_ret;
-    SQLLEN user_data_size;
     char my_SQL_str[500];
     int insert_sqlcode;
     bool row_exists = false;
     bool create_new_row = false;
 
-    if ( strcmp(name(), "globals")==0 ) {
-        log_debug ("put to globals table: flags %x", flags);
-    } else {
-        log_debug
-            ("put insert to  %s table: Key(reverse byte order) unsignedInt=%u int=%d plus size=%d - flags %x",
-             name(), realKey(k.data), *((u_int32_t *)k.data), k.size, flags);
-    }
-
-    //check if PK row already exists
-    if ( strcmp( name(), "globals") == 0 ) {
-        char myString[100];
-        memset(myString, '\0', 100);
-        memcpy(myString, ((char *) k.data) + 4, k.size - sizeof(int));
-        log_debug
-            ("put checking if Key (len and string) len=%d string=%s plus size=%d exists in globals table",
-             *((u_int32_t *)k.data), myString, k.size);
-    }
-    else
-    {
-        log_debug
-            ("put checking if Key (reverse byte order) unsignedInt=%u int=%d plus size=%d exists in %s table",
-             realKey(k.data), *((u_int32_t *)k.data), k.size, name());
-    }
-    int err = key_exists(k. data, k.size);
+    log_debug("put checking if key size %d exists", (int)key_buf_len);
+    int err = key_exists(key_buf_ptr, key_buf_len);
     if (err == DS_ERR)
     {
         log_debug("put return DS_ERR per key_exists");
         return DS_ERR;
     }
     row_exists = (err != DS_NOTFOUND);
+    log_debug("row_exists: %s; err: %d", row_exists ? "true": "false", err);
 
     // Determine what to do next - depends on flags
     if ( row_exists ) {
@@ -1571,72 +1538,57 @@ ODBCDBTable::put(const SerializableObject & key,
         log_debug("put inserting the_data blob with NULL value into new table row");
         snprintf(my_SQL_str, 500, "INSERT INTO %s values(?, NULL)", name());
 
-        sql_ret = SQLFreeStmt(hstmt, SQL_CLOSE);       //close for later reuse
+        /*!
+         * See the comment on first 'get' routine about needing both SQLFreeStmt calls.
+         */
+        sql_ret = SQLFreeStmt(hstmt_, SQL_CLOSE);       //close for later reuse
         if (!SQL_SUCCEEDED(sql_ret))
         {
-            log_crit("ERROR:  ::put insert - failed Statement Handle SQL_CLOSE");
-            print_error(db_->m_henv, db_->m_hdbc, hstmt);
+            log_crit("ERROR:  put insert - failed Statement Handle SQL_CLOSE");
+            print_error(db_->m_henv, db_->m_hdbc, hstmt_);
         }
 
-        sql_ret = SQLPrepare(hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
+        sql_ret = SQLFreeStmt(hstmt_, SQL_RESET_PARAMS);
+        if (!SQL_SUCCEEDED(sql_ret))
+        {
+            log_crit("ERROR:  put insert - failed Statement Handle SQL_RESET_PARAMS");
+            print_error(db_->m_henv, db_->m_hdbc, hstmt_);
+        }
+
+        sql_ret = SQLPrepare(hstmt_, (SQLCHAR *) my_SQL_str, SQL_NTS);
 
         if (!SQL_SUCCEEDED(sql_ret))
         {
             log_err("put insert SQLPrepare error %d", sql_ret);
-            print_error(db_->m_henv, db_->m_hdbc, hstmt);
+            print_error(db_->m_henv, db_->m_hdbc, hstmt_);
             return DS_ERR;
         }
-
-        if (strcmp(name(), "globals") == 0)
-        {
-            char myString[100];
-            memset(myString, '\0', 100);
-            memcpy(myString, ((char *) k.data) + 4, k.size - sizeof(int));
-    #if 0
-            log_debug
-                ("put insert  Key(len and string) len=%d string=%s plus size=%d",
-                 (int) k.data, (char *) k.data + 4, k.size);
-            sql_ret =
-                SQLBindParameter(db_->hstmt, 1, SQL_PARAM_INPUT, SQL_C_DEFAULT,
-                                 SQL_CHAR, 0, 0, (char *) k.data + 4, 0, NULL);
-    #else
-            log_debug
-                ("put insert  Key(len and string) len=%d string=%s plus size=%d",
-                 *((u_int32_t *)k.data), myString, k.size);
-            sql_ret =
-                SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_DEFAULT,
-                                 SQL_CHAR, 0, 0, myString, 0, NULL);
-    #endif
-        } else {
-            log_debug
-                ("put insert  Key(reverse byte order) unsignedInt=%u int=%d plus size=%d",
-                 realKey(k.data), *((u_int32_t *)k.data), k.size);
-            sql_ret =
-                SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_ULONG,
-                                 SQL_INTEGER, 0, 0, k.data, 0, NULL);
-        }
+        sql_ret =
+                SQLBindParameter(hstmt_, 1, SQL_PARAM_INPUT, SQL_C_BINARY,
+                                 (key_size_ == 0) ? SQL_VARBINARY : SQL_BINARY,
+                                 0, 0, key_buf_ptr, 0, &key_buf_len);
 
         if (!SQL_SUCCEEDED(sql_ret))
         {
             log_err("put insert SQLBindParameter error %d", sql_ret);
-            print_error(db_->m_henv, db_->m_hdbc, hstmt);
+            print_error(db_->m_henv, db_->m_hdbc, hstmt_);
             return DS_ERR;
         }
 
         insert_sqlcode = 0;
-        sql_ret = SQLExecute(hstmt);
+        sql_ret = SQLExecute(hstmt_);
 
         if (!SQL_SUCCEEDED(sql_ret))
-        {                           //need to capture internal SQLCODE from SQLError for processing Duplicate PK
+        {
+        	//need to capture internal SQLCODE from SQLError for processing Duplicate PK
             log_debug("put insert SQLExecute error %d", sql_ret);
-            insert_sqlcode = print_error(db_->m_henv, db_->m_hdbc, hstmt);
+            insert_sqlcode = print_error(db_->m_henv, db_->m_hdbc, hstmt_);
             return DS_ERR;
         } else {
             log_debug("put insert SQLExecute succeeded");
         }
     }
 
-    __my_dbt d;
     if (!is_aux_table()){
         // figure out the size of the data
         MarshalSize sizer(Serialize::CONTEXT_LOCAL);
@@ -1661,17 +1613,14 @@ ODBCDBTable::put(const SerializableObject & key,
             ("put serializing %zu byte object (plus %zu byte typecode)",
              object_sz, typecode_sz);
 
-        ScratchBuffer < u_char *, 1024 > scratch;
-        u_char *buf = scratch.buf(typecode_sz + object_sz);
-        memset(&d, 0, sizeof(d));
-        d.data = buf;
-        d.size = typecode_sz + object_sz;
+        data_buf_len = typecode_sz + object_sz;
+        full_buf = data_buf.buf(data_buf_len);
 
         // if we're a multitype table, marshal the type code
         if (multitype_)
         {
             log_debug("marshaling type code");
-            Marshal typemarshal(Serialize::CONTEXT_LOCAL, buf, typecode_sz);
+            Marshal typemarshal(Serialize::CONTEXT_LOCAL, full_buf, typecode_sz);
             UIntShim type_shim(typecode);
 
             if (typemarshal.action(&type_shim) != 0)
@@ -1681,7 +1630,7 @@ ODBCDBTable::put(const SerializableObject & key,
             }
         }
 
-        Marshal m(Serialize::CONTEXT_LOCAL, buf + typecode_sz, object_sz);
+        Marshal m(Serialize::CONTEXT_LOCAL, full_buf + typecode_sz, object_sz);
         if (m.action(data) != 0)
         {
             log_err("put error serializing data object");
@@ -1717,19 +1666,29 @@ ODBCDBTable::put(const SerializableObject & key,
                  "UPDATE %s SET the_data = ? WHERE the_key = ?", name());
     }
 
-    sql_ret = SQLFreeStmt(hstmt, SQL_CLOSE);       //close for later reuse
+    /*!
+     * See the comment on first 'get' routine about needing both SQLFreeStmt calls.
+     */
+    sql_ret = SQLFreeStmt(hstmt_, SQL_CLOSE);       //close for later reuse
     if (!SQL_SUCCEEDED(sql_ret))
     {
-        log_crit("ERROR:  ODBCDBStore::put update - failed Statement Handle SQL_CLOSE");
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        log_crit("ERROR:  put update - failed Statement Handle SQL_CLOSE");
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
     }
 
-    sql_ret = SQLPrepare(hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
+    sql_ret = SQLFreeStmt(hstmt_, SQL_RESET_PARAMS);
+    if (!SQL_SUCCEEDED(sql_ret))
+    {
+        log_crit("ERROR:  put update - failed Statement Handle SQL_RESET_PARAMS");
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
+    }
+
+    sql_ret = SQLPrepare(hstmt_, (SQLCHAR *) my_SQL_str, SQL_NTS);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_err("put update SQLPrepare error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
         return DS_ERR;
     }
 
@@ -1745,7 +1704,7 @@ ODBCDBTable::put(const SerializableObject & key,
     				  (*iter)->column_name(),
     				  odbc_col_c_type_map[col_type],
     				  *((*iter)->data_size_ptr()));
-            sql_ret = SQLBindParameter(hstmt, col_no, SQL_PARAM_INPUT,
+            sql_ret = SQLBindParameter(hstmt_, col_no, SQL_PARAM_INPUT,
 									   odbc_col_c_type_map[col_type],
 									   odbc_col_sql_type_map[col_type],
 									   0,
@@ -1758,7 +1717,7 @@ ODBCDBTable::put(const SerializableObject & key,
                 log_err
                     ("put update SQLBindParameter %s:  error %d",
                     		(*iter)->column_name(), sql_ret);
-                print_error(db_->m_henv, db_->m_hdbc, hstmt);
+                print_error(db_->m_henv, db_->m_hdbc, hstmt_);
                 return DS_ERR;
             }
 
@@ -1766,60 +1725,53 @@ ODBCDBTable::put(const SerializableObject & key,
         // Bind the key parameter
     	log_debug("put aux table key col_no %d", col_no);
         sql_ret =
-            SQLBindParameter(hstmt, col_no, SQL_PARAM_INPUT, SQL_C_ULONG,
-                             SQL_INTEGER, 0, 0, k.data, 0, NULL);
+            SQLBindParameter(hstmt_, col_no, SQL_PARAM_INPUT, SQL_C_BINARY,
+                             (key_size_ == 0) ? SQL_VARBINARY : SQL_BINARY,
+                             0, 0, key_buf_ptr, 0, &key_buf_len);
 
         if (!SQL_SUCCEEDED(sql_ret))
         {
             log_err("put update SQLBindParameter PK:  error %d",
                     sql_ret);
-            print_error(db_->m_henv, db_->m_hdbc, hstmt);
+            print_error(db_->m_henv, db_->m_hdbc, hstmt_);
             return DS_ERR;
         }
 
 
 	} else {
     	// Non-auxiliary tables - just insert serialized data as a BLOB
-        user_data_size = d.size;
         log_debug
             ("put update first 8-bytes of DATA=%x08 plus size=%d",
-             *((u_int32_t* ) d.data), d.size);
-        sql_ret = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_BINARY, SQL_LONGVARBINARY,
-                                   0, 0, d.data, 0, &user_data_size);
+             *((u_int32_t* ) full_buf), (int)data_buf_len);
+        sql_ret = SQLBindParameter(hstmt_, 1, SQL_PARAM_INPUT, SQL_C_BINARY,
+								   SQL_LONGVARBINARY,
+                                   0, 0, full_buf, 0, &data_buf_len);
         if (!SQL_SUCCEEDED(sql_ret))
         {
             log_err
                 ("put update SQLBindParameter DATA  error %d",
                  sql_ret);
-            print_error(db_->m_henv, db_->m_hdbc, hstmt);
+            print_error(db_->m_henv, db_->m_hdbc, hstmt_);
             return DS_ERR;
         }
+        // Bind the key parameter
+    	log_debug("put standard table key");
+        sql_ret =
+            SQLBindParameter(hstmt_, 2, SQL_PARAM_INPUT, SQL_C_BINARY,
+                             (key_size_ == 0) ? SQL_VARBINARY : SQL_BINARY,
+                             0, 0, key_buf_ptr, 0, &key_buf_len);
 
-        if (strcmp(name(), "globals") == 0)
-        {
-            char myString[100];
-            memset(myString, '\0', 100);
-            memcpy(myString, ((char *) k.data) + 4, k.size - sizeof(int));
-            sql_ret =
-                SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_DEFAULT,
-                                 SQL_CHAR, 0, 0, (char *) myString, 0, NULL);
-        } else
-        {
-            sql_ret =
-                SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_ULONG,
-                                 SQL_INTEGER, 0, 0, k.data, 0, NULL);
-        }
         if (!SQL_SUCCEEDED(sql_ret))
         {
             log_err("put update SQLBindParameter PK  error %d",
                     sql_ret);
-            print_error(db_->m_henv, db_->m_hdbc, hstmt);
+            print_error(db_->m_henv, db_->m_hdbc, hstmt_);
             return DS_ERR;
         }
 
     }
 
-    sql_ret = SQLExecute(hstmt);
+    sql_ret = SQLExecute(hstmt_);
 
     switch (sql_ret)
     {
@@ -1833,7 +1785,7 @@ ODBCDBTable::put(const SerializableObject & key,
         break;
     default:
         log_err("put update: SQLExecute returned error code %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
         return DS_ERR;
     }
 
@@ -1845,27 +1797,26 @@ ODBCDBTable::put(const SerializableObject & key,
 int
 ODBCDBTable::del(const SerializableObject & key)
 {
+
+    ScopeLockIf sl(&store_->serialization_lock_,
+				   "Access by del()",
+				   store_->serialize_all_);
     ScopeLock l(&lock_, "Access by del()");
     log_debug("del enter thread(%08X).",(u_int32_t) pthread_self());
-    u_char key_buf[256];
-    size_t key_buf_len;
 
-    key_buf_len = flatten(key, key_buf, 256);
+    u_char key_buf[KEY_VARBINARY_MAX];
+    SQLINTEGER key_buf_len;
+
+    key_buf_len = flatten(key, key_buf, sizeof(key_buf));
     if (key_buf_len == 0)
     {
         log_err("del - zero or too long key length");
         return DS_ERR;
     }
-    // add (duplicated/copied from get() above)
-    __my_dbt k;
-    memset(&k, 0, sizeof(k));
-    k.data = key_buf;
-    k.size = key_buf_len;
-    __my_dbt d;
-    memset(&d, 0, sizeof(d));
+    u_char * key_buf_ptr = key_buf;
 
-//check if PK row already exists
-    int err = key_exists(k.data, k.size);
+    //check if PK row already exists
+    int err = key_exists(key_buf_ptr, key_buf_len);
     if (err == DS_NOTFOUND)
     {
         log_debug("::del return NO_DATA_FOUND per key_exists");
@@ -1878,60 +1829,47 @@ ODBCDBTable::del(const SerializableObject & key)
     char my_SQL_str[500];
     snprintf(my_SQL_str, 500, "DELETE FROM %s WHERE the_key = ?", name());
 
-    sql_ret = SQLFreeStmt(hstmt, SQL_CLOSE);       //close from any prior use
+    /*!
+     * See the comment on first 'get' routine about needing both SQLFreeStmt calls.
+     */
+    sql_ret = SQLFreeStmt(hstmt_, SQL_CLOSE);       //close from any prior use
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_crit("ERROR:  del - failed Statement Handle SQL_CLOSE");
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
     }
 
-    sql_ret = SQLPrepare(hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
+    sql_ret = SQLFreeStmt(hstmt_, SQL_RESET_PARAMS);
+    if (!SQL_SUCCEEDED(sql_ret))
+    {
+        log_crit("ERROR:  del - failed Statement Handle SQL_RESET_PARAMS");
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
+    }
+
+    sql_ret = SQLPrepare(hstmt_, (SQLCHAR *) my_SQL_str, SQL_NTS);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_err("del SQLPrepare error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
         return DS_ERR;
     }
 
-    if (strcmp(name(), "globals") == 0)
-    {
-        char myString[100];
-        memset(myString, '\0', 100);
-        memcpy(myString, ((char *) k.data) + 4, k.size - sizeof(int));
-#if 0
-        log_debug
-            ("del  len= %d, Key+4 as string=<%s> (leading 4-bytes length) plus size=%d",
-             (int) k.data, (char *) k.data + 4, k.size);
-        sql_ret =
-            SQLBindParameter(db_->hstmt, 1, SQL_PARAM_INPUT, SQL_C_DEFAULT,
-                             SQL_CHAR, 0, 0, (char *) k.data + 4, 0, NULL);
-#else
-        log_debug
-            ("del  len= %d, Key+4 as string=<%s> (leading 4-bytes length) plus size=%d",
-             *((u_int32_t *)k.data), myString, k.size);
-        sql_ret =
-            SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_DEFAULT,
-                             SQL_CHAR, 0, 0, myString, 0, NULL);
-#endif
-    } else
-    {
-        log_debug
-            ("del  Key(reverse byte order) unsignedInt=%u int=%d plus size=%d",
-             realKey(k.data), *((u_int32_t *)k.data), k.size);
-        sql_ret =
-            SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_ULONG,
-                             SQL_INTEGER, 0, 0, k.data, 0, NULL);
-    }
+    // Bind the key parameter
+ 	log_debug("del bind table key");
+    sql_ret =
+         SQLBindParameter(hstmt_, 1, SQL_PARAM_INPUT, SQL_C_BINARY,
+                          (key_size_ == 0) ? SQL_VARBINARY : SQL_BINARY,
+                          0, 0, key_buf, 0, &key_buf_len);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_err("del SQLBindParameter error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
         return DS_ERR;
     }
 
-    sql_ret = SQLExecute(hstmt);
+    sql_ret = SQLExecute(hstmt_);
 
     if (sql_ret == SQL_NO_DATA_FOUND)
     {
@@ -1942,7 +1880,7 @@ ODBCDBTable::del(const SerializableObject & key)
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_debug("del SQLExecute error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
         return DS_ERR;
     }
 
@@ -1964,13 +1902,22 @@ ODBCDBTable::size() const
     char my_SQL_str[500];
     snprintf(my_SQL_str, 500, "SELECT count(*) FROM %s", name());
 
-    sql_ret = SQLFreeStmt(hstmt, SQL_CLOSE);        //close from any prior use
+    /*!
+     * See the comment on first 'get' routine about needing both SQLFreeStmt calls.
+     */
+    sql_ret = SQLFreeStmt(hstmt_, SQL_CLOSE);        //close from any prior use
     if (!SQL_SUCCEEDED(sql_ret))
     {
-        log_crit("ERROR:  ODBCDBStore::size - failed Statement Handle SQL_CLOSE");
+        log_crit("ERROR:  size - failed Statement Handle SQL_CLOSE");
     }
 
-    sql_ret = SQLPrepare(hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
+    sql_ret = SQLFreeStmt(hstmt_, SQL_RESET_PARAMS);
+    if (!SQL_SUCCEEDED(sql_ret))
+    {
+        log_crit("ERROR:  size - failed Statement Handle SQL_RESET_PARAMS");
+    }
+
+    sql_ret = SQLPrepare(hstmt_, (SQLCHAR *) my_SQL_str, SQL_NTS);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
@@ -1978,7 +1925,7 @@ ODBCDBTable::size() const
         return DS_ERR;
     }
 
-    sql_ret = SQLBindCol(hstmt, 1, SQL_C_SLONG, &my_count, 0, NULL);
+    sql_ret = SQLBindCol(hstmt_, 1, SQL_C_SLONG, &my_count, 0, NULL);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
@@ -1986,7 +1933,7 @@ ODBCDBTable::size() const
         return DS_ERR;
     }
 
-    sql_ret = SQLExecute(hstmt);
+    sql_ret = SQLExecute(hstmt_);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
@@ -1994,7 +1941,7 @@ ODBCDBTable::size() const
         return DS_ERR;
     }
 
-    sql_ret = SQLFetch(hstmt);
+    sql_ret = SQLFetch(hstmt_);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
@@ -2021,84 +1968,65 @@ ODBCDBTable::key_exists(const void *key, size_t key_len)
 {
     log_debug("key_exists enter thread(%08X)",(u_int32_t) pthread_self());
 
-    // add - duplicate/copy from get()
-    __my_dbt k;
-    memset(&k, 0, sizeof(k));
-    k.data = const_cast < void *>(key);
-    k.size = key_len;
-
     SQLRETURN sql_ret;
     SQLINTEGER my_count;        //long int
+    SQLINTEGER sql_key_len = key_len;
 
     log_debug("key_exists.");
     char my_SQL_str[500];
     snprintf(my_SQL_str, 500, "SELECT count(*) FROM %s WHERE the_key = ?",
              name());
 
-    sql_ret = SQLFreeStmt(hstmt, SQL_CLOSE);       //close from any prior use
+    /*!
+     * See the comment on first 'get' routine about needing both SQLFreeStmt calls.
+     */
+    sql_ret = SQLFreeStmt(hstmt_, SQL_CLOSE);
     if (!SQL_SUCCEEDED(sql_ret))
     {
-        log_crit("ERROR:  ODBCDBStore::get - failed Statement Handle SQL_CLOSE");
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        log_crit("ERROR:  key_exists - failed Statement Handle SQL_CLOSE");
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
     }
 
-    sql_ret = SQLPrepare(hstmt, (SQLCHAR *) my_SQL_str, SQL_NTS);
+    sql_ret = SQLFreeStmt(hstmt_, SQL_RESET_PARAMS);
+    if (!SQL_SUCCEEDED(sql_ret))
+    {
+        log_crit("ERROR:  key_exists - failed Statement Handle SQL_RESET_PARAMS");
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
+    }
+
+    sql_ret = SQLPrepare(hstmt_, (SQLCHAR *) my_SQL_str, SQL_NTS);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_err("key_exists SQLPrepare error %d",
                 sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
         return DS_ERR;
     }
-
-    if (strcmp(name(), "globals") == 0)
-    {
-        char myString[100];
-        memset(myString, '\0', 100);
-        memcpy(myString, ((char *) k.data) + 4, k.size - sizeof(int));
-#if 0
-        log_debug
-            ("key_exists  len=%d, Key+4 as string=<%s> (leading 4-bytes length) plus size=%d",
-             (int) k.data, (char *) k.data + 4, k.size);
-        sql_ret =
-            SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_DEFAULT,
-                             SQL_CHAR, 0, 0, (char *) k.data + 4, 0, NULL);
-#else
-        log_debug
-            ("key_exists  len=%d, Key+4 as string=<%s> (leading 4-bytes length) plus size=%d",
-             *((u_int32_t*) k.data), myString, k.size);
-        sql_ret =
-            SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_DEFAULT,
-                             SQL_CHAR, 0, 0, myString, 0, NULL);
-#endif
-    } else
-    {
-        log_debug
-            ("key_exists  Key(reverse byte order) unsignedInt=%u int=%d plus size=%d",
-             realKey(k.data), *((u_int32_t *)k.data), k.size);
-        sql_ret =
-            SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_ULONG,
-                             SQL_INTEGER, 0, 0, k.data, 0, NULL);
-    }
+    // Bind the key parameter
+ 	log_debug("key exists bind table key");
+    sql_ret =
+         SQLBindParameter(hstmt_, 1, SQL_PARAM_INPUT, SQL_C_BINARY,
+                          (key_size_ == 0) ? SQL_VARBINARY : SQL_BINARY,
+                          0, 0, const_cast < void *>(key), 0, &sql_key_len);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_err("key_exists SQLBindParameter error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
         return DS_ERR;
     }
 
-    sql_ret = SQLBindCol(hstmt, 1, SQL_C_SLONG, &my_count, 0, NULL);
+    sql_ret = SQLBindCol(hstmt_, 1, SQL_C_SLONG, &my_count, 0, NULL);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_err("key_exists SQLBindCol error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
         return DS_ERR;
     }
 
-    sql_ret = SQLExecute(hstmt);
+    sql_ret = SQLExecute(hstmt_);
 
     switch ( sql_ret ) {
     case SQL_SUCCESS:
@@ -2109,16 +2037,16 @@ ODBCDBTable::key_exists(const void *key, size_t key_len)
         break;
     default:
         log_err("key_exists SQLExecute error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
         return DS_ERR;
     }
 
-    sql_ret = SQLFetch(hstmt);
+    sql_ret = SQLFetch(hstmt_);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_err("key_exists SQLFetch error %d", sql_ret);
-        print_error(db_->m_henv, db_->m_hdbc, hstmt);
+        print_error(db_->m_henv, db_->m_hdbc, hstmt_);
         return DS_ERR;
     }
 
@@ -2133,6 +2061,33 @@ ODBCDBTable::key_exists(const void *key, size_t key_len)
     return 0;
 }
 
+//----------------------------------------------------------------------------
+int
+ODBCDBTable::print_error(SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt)
+{
+    SQLCHAR buffer[SQL_MAX_MESSAGE_LENGTH + 1];
+    SQLCHAR sqlstate[SQL_SQLSTATE_SIZE + 1];
+    SQLINTEGER sqlcode;
+    SQLSMALLINT length;
+    int i = 0;
+    int first_sqlcode = 0;
+    log_debug("print_error");
+
+    while (SQLError(henv, hdbc, hstmt, sqlstate, &sqlcode, buffer,
+                    SQL_MAX_MESSAGE_LENGTH + 1, &length) == SQL_SUCCESS)
+    {
+        i++;
+        log_err("**** ODBCDBTable::print_error (lvl=%d) *****", i);
+        log_err("         SQLSTATE: %s", sqlstate);
+        log_err("Native Error Code: %d", (int) sqlcode);
+        log_err("          Message: %s", buffer);
+        if (i == 1)
+        {
+            first_sqlcode = (int) sqlcode;
+        }
+    };
+    return first_sqlcode;
+}
 /******************************************************************************
  *
  * ODBCDBIterator
@@ -2143,35 +2098,43 @@ ODBCDBIterator::ODBCDBIterator(ODBCDBTable* t):
     cur_(0),
     valid_(false)
 {
-    myTable = t;
+    for_table_ = t;
 
     logpath_appendf("ODBCDBIterator/%s", t->name());
-    myTable->iterator_lock_.lock("Iterator");
-    log_debug("constructor enter.");
+    for_table_->iterator_lock_.lock("Iterator");
     if ( t->store_->serialize_all_ ) {
-        t->store_->serialization_lock_.lock("Access by get()");
+        t->store_->serialization_lock_.lock("Access by table iterator()");
     }
 
+    log_debug("iterator constructor enter.");
+
     SQLRETURN sql_ret;
-    //cur_ = t->db_->iterator_hstmt;
-    cur_ = t->iterator_hstmt;
-    strcpy(cur_table_name, t->name());
+    cur_ = t->iterator_hstmt_;
+    strcpy(cur_table_name_, t->name());
 
     //TODO Elwyn: Why do we need the data here?  Only interested in iterating over keys.
-    log_debug
-    ("constructor SELECT the_key FROM %s (unqualified)", t->name());
+    log_debug("constructor SELECT the_key FROM %s (unqualified)", t->name());
     //("constructor SELECT the_key,the_data FROM %s (unqualified)", t->name());
 
     char my_SQL_str[500];
     snprintf(my_SQL_str, 500, "SELECT the_key FROM %s", t->name());
     //snprintf(my_SQL_str, 500, "SELECT the_key,the_data FROM %s", t->name());
 
-    // was:
-    //sql_ret = SQLFreeStmt(t->db_->hstmt, SQL_CLOSE);    //close from any prior use
-    sql_ret = SQLFreeStmt(cur_, SQL_CLOSE);    //close from any prior use
+    /*!
+     * See the comment on first 'get' routine about needing both SQLFreeStmt calls.
+     */
+    sql_ret = SQLFreeStmt(cur_, SQL_CLOSE);
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_crit("ERROR:  ODBCDBIterator(%s)::constructor - failed Statement Handle SQL_CLOSE",
+                 t->name());
+        t->print_error(t->db_->m_henv, t->db_->m_hdbc, cur_);
+    }
+
+    sql_ret = SQLFreeStmt(cur_, SQL_RESET_PARAMS);
+    if (!SQL_SUCCEEDED(sql_ret))
+    {
+        log_crit("ERROR:  ODBCDBIterator(%s)::constructor - failed Statement Handle SQL_RESET_PARAMETERS",
                  t->name());
         t->print_error(t->db_->m_henv, t->db_->m_hdbc, cur_);
     }
@@ -2185,15 +2148,8 @@ ODBCDBIterator::ODBCDBIterator(ODBCDBTable* t):
         return;
     }
 
-    if (strcmp(t->name(), "globals") == 0)
-    {
-        sql_ret =
-            SQLBindCol(cur_, 1, SQL_C_CHAR, bound_key_string,
-                       MAX_GLOBALS_KEY_LEN, NULL);
-    } else {
-        sql_ret =
-            SQLBindCol(cur_, 1, SQL_C_ULONG, &bound_key_int, 0, NULL);
-    }
+    sql_ret =
+        SQLBindCol(cur_, 1, SQL_C_BINARY, &key_, KEY_VARBINARY_MAX, &key_len_);
 
     if (!SQL_SUCCEEDED(sql_ret))
     {
@@ -2230,17 +2186,28 @@ ODBCDBIterator::~ODBCDBIterator()
     SQLRETURN sql_ret;
     valid_ = false;
 
-    sql_ret = SQLFreeStmt(cur_, SQL_CLOSE);     //close from any prior use
+    /*!
+     * See the comment on first 'get' routine about needing both SQLFreeStmt calls.
+     */
+    sql_ret = SQLFreeStmt(cur_, SQL_CLOSE);
     if (!SQL_SUCCEEDED(sql_ret))
     {
         log_crit("ERROR:  destructor - failed Statement Handle SQL_CLOSE");
+        for_table_->print_error(for_table_->db_->m_henv, for_table_->db_->m_hdbc, cur_);
     }
 
-    if ( myTable->store_->serialize_all_ ) {
-        myTable->store_->serialization_lock_.unlock();
+    sql_ret = SQLFreeStmt(cur_, SQL_RESET_PARAMS);
+    if (!SQL_SUCCEEDED(sql_ret))
+    {
+        log_crit("ERROR:  destructor - failed Statement Handle SQL_RESET_PARAMS");
+        for_table_->print_error(for_table_->db_->m_henv, for_table_->db_->m_hdbc, cur_);
     }
 
-    myTable->iterator_lock_.unlock();
+    if ( for_table_->store_->serialize_all_ ) {
+        for_table_->store_->serialization_lock_.unlock();
+    }
+
+    for_table_->iterator_lock_.unlock();
     log_debug("destructor exit.");
 }
 
@@ -2251,14 +2218,11 @@ ODBCDBIterator::next()
     log_debug("next - enter cur_ is (%p) thread(%08X)",
               cur_, (u_int32_t) pthread_self());
     ASSERT(valid_);
-    ASSERT(myTable->iterator_lock_.is_locked_by_me());
+    ASSERT(for_table_->iterator_lock_.is_locked_by_me());
 
     SQLRETURN sql_ret;
-
     memset(&key_, 0, sizeof(key_));
-    memset(&data_, 0, sizeof(data_));
-    memset(bound_key_string, 0, sizeof(bound_key_string));
-    bound_key_int = 0;
+    key_len_ = 0;
 
     sql_ret = SQLFetch(cur_);
 
@@ -2273,19 +2237,22 @@ ODBCDBIterator::next()
         valid_ = false;
         return DS_ERR;
     }
-    if (strcmp(cur_table_name, "globals") == 0)
+    key_[key_len_] = '\0';
+    if (for_table_->get_key_size() == 0)
     {
-        key_.data = (void *) bound_key_string;
-        key_.size = strlen(bound_key_string);
-        log_debug("next global key=%s", bound_key_string);
+    	log_debug("next key (length %d): %s", (int)key_len_, &key_[4]);
     } else {
-        key_.data = &bound_key_int;
-        key_.size = sizeof(bound_key_int);
-        log_debug("next  bound key=%d", (unsigned int) bound_key_int);
-        log_debug
-            ("next  Key(reverse byte order) unsignedInt=%u int=%d plus size=%d",
-             *((int *)key_.data), *((u_int32_t *) key_.data), key_.size);
+    	// Assume only using 4 byte integers here
+    	if (key_len_ == 4)
+    	{
+    		log_debug("next key (unsigned integer): %u", reverse(key_));
+    	}
+    	else
+    	{
+    		log_debug("next (raw) key (length %d): %s", (int)key_len_, key_);
+    	}
     }
+
     log_debug("next - exit.");
     return 0;
 }
@@ -2296,9 +2263,10 @@ ODBCDBIterator::get_key(SerializableObject * key)
 {
     log_debug("get_key - enter.");
     ASSERT(key != NULL);
-    ASSERT(myTable->iterator_lock_.is_locked_by_me());
+    ASSERT(for_table_->iterator_lock_.is_locked_by_me());
+    log_debug("Unmarshal size: %d", (int)key_len_);
     oasys::Unmarshal un(oasys::Serialize::CONTEXT_LOCAL,
-                        static_cast < u_char * >(key_.data), key_.size);
+                        key_, key_len_);
 
     if (un.action(key) != 0)
     {
@@ -2315,61 +2283,31 @@ int
 ODBCDBIterator::raw_key(void **key, size_t * len)
 {
     log_debug("raw_key - enter.");
-    ASSERT(myTable->iterator_lock_.is_locked_by_me());
+    ASSERT(for_table_->iterator_lock_.is_locked_by_me());
     if (!valid_)
         return DS_ERR;
 
-    *key = key_.data;
-    *len = key_.size;
+    *key = key_;
+    *len = key_len_;
 
     log_debug("raw_key - exit.");
     return 0;
 }
 
 //----------------------------------------------------------------------------
-int
-ODBCDBIterator::raw_data(void **data, size_t * len)
+u_int32_t
+ODBCDBIterator::reverse(u_char* key_int)
 {
-    log_debug("raw_data - enter.");
-    ASSERT(myTable->iterator_lock_.is_locked_by_me());
-    if (!valid_)
-        return DS_ERR;
+	u_int32_t r;
+	u_char *rc = (u_char *)&r;
+	rc[0] = key_int[3];
+	rc[1] = key_int[2];
+	rc[2] = key_int[1];
+	rc[3] = key_int[0];
 
-    *data = data_.data;
-    *len = data_.size;
+	return r;
 
-    log_debug("raw_data - exit.");
-    return 0;
 }
-
-/*******************************************************************/
-int
-ODBCDBTable::print_error(SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt)
-{
-    SQLCHAR buffer[SQL_MAX_MESSAGE_LENGTH + 1];
-    SQLCHAR sqlstate[SQL_SQLSTATE_SIZE + 1];
-    SQLINTEGER sqlcode;
-    SQLSMALLINT length;
-    int i = 0;
-    int first_sqlcode = 0;
-
-    while (SQLError(henv, hdbc, hstmt, sqlstate, &sqlcode, buffer,
-                    SQL_MAX_MESSAGE_LENGTH + 1, &length) == SQL_SUCCESS)
-    {
-        i++;
-        log_err("**** ODBCDBTable::print_error (lvl=%d) *****", i);
-        log_err("         SQLSTATE: %s", sqlstate);
-        log_err("Native Error Code: %d", (int) sqlcode);
-        log_err("          Message: %s", buffer);
-        if (i == 1)
-        {
-            first_sqlcode = (int) sqlcode;
-        }
-    };
-    return first_sqlcode;
-}
-
-
 
 }                               // namespace oasys
 

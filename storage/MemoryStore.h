@@ -115,6 +115,10 @@ public:
     int del_table(const std::string& name);
     int get_table_names(StringVector* names);
     std::string get_info() const;
+
+    //! Memory Store doesn't do transactions, so
+    //! begin_transaction, end_transaction are not implemented.
+    //! get_underlying can't return anything useful either.
     /// @}
 
 private:

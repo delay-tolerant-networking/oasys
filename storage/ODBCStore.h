@@ -47,40 +47,32 @@
 #include "DurableStore.h"
 
 #define DATA_MAX_SIZE (1 * 1024 * 1024) //1M - increase this and table create for larger buffers
-//#define SQLITE_DB_CONSTRAINT  19        // Abort due to contraint violation
 
 struct ODBC_dbenv
 {
-// standard ODBC DB handles (environment, database connection, statement)
-    SQLHENV m_henv;
-    SQLHDBC m_hdbc;
-    SQLHSTMT hstmt;
-    SQLHSTMT trans_hstmt;
-    SQLHSTMT idle_hstmt;
-    //SQLHSTMT iterator_hstmt;
-    char table_name[128];
-};
-
-struct __my_dbt
-{                               // struct borrowed from Berkeley DB's /usr/include/db4/db.h
-    void *data;                 /* Key/data */
-    u_int32_t size;             /* key/data length */
-#ifndef DB_DBT_MALLOC
-#define DB_DBT_MALLOC           0x004   /* Return in malloc'd memory. */
-#endif
-#ifndef DB_DBT_REALLOC
-#define DB_DBT_REALLOC          0x010   /* Return in realloc'd memory. */
-#endif
-#ifndef DB_DBT_USERMEM
-#define DB_DBT_USERMEM          0x020   /* Return in user's memory. */
-#endif
-    u_int32_t flags;
+	/*!
+	 * Standard ODBC DB handles (environment, database connection, statement).
+	 * These items are common to all tables.  The environment and database connection
+	 * are allocated when the storage instance is initialized and the database connection
+	 * opened.  The statement handles are also allocated when the database connection
+	 * is opened and are used for operations outside individual tables, including:
+	 *  - hstmt: creating and dropping tables, getting all the table names
+	 *  - trans_hstmt: by begin_transaction and end_transation
+	 *  - idle_hstmt: by the keep_alive timer (where needed - currently only MySQL)
+	 * The individual tables allocate their own statement handles for operations within
+	 * that table.
+	 */
+    SQLHENV m_henv;				///< ODBC environment handle
+    SQLHDBC m_hdbc;				///< ODBC database connection handle
+    SQLHSTMT hstmt;				///< ODBC statement handle used for general table operations
+    SQLHSTMT trans_hstmt;		///< ODBC statement handle used for transaction control
+    SQLHSTMT idle_hstmt;		///< ODBC statement handle used for keep_alive timer where needed
 };
 
 namespace oasys
 {
 
-// forward decls
+// forward declarations
     class ODBCDBStore;
     class ODBCDBTable;
     class ODBCDBIteratorDBIterator;
@@ -135,45 +127,21 @@ class ODBCDBStore:public DurableStoreImpl
 
         /// @}
 
-        bool init_;             ///< Initialized?
-        std::string dsn_name_;   ///< Data source name (overload purpose of dbname in StorageConfig)
-        ODBC_dbenv *dbenv_;     ///< database environment for all tables
-        ODBC_dbenv base_dbenv_;
-        bool sharefile_;        ///< share a single db file
-        bool auto_commit_;       /// True if auto-commit is on
-        SQLRETURN sqlRC;
-        RefCountMap ref_count_; ///< Ref. count for open tables.
-        bool aux_tables_available_; ///< True if implemented and configured
+        bool init_;					///< Initialized?
+        std::string dsn_name_;		///< Data source name (overload purpose of dbname in StorageConfig)
+        ODBC_dbenv dbenv_;			///< database environment common to  all tables
+        bool sharefile_;			///< share a single db file
+        bool auto_commit_;			///< True if auto-commit is on
+        SQLRETURN sqlRC;			///< Return code from ODBC routines.
+        RefCountMap ref_count_;		///< Ref. count for open tables.
+        bool aux_tables_available_;	///< True if implemented and configured
 
         /// Id that represents the metatable of tables
         static const std::string META_TABLE_NAME;
 
         /// Id that represents the ODBC DSN configuration file name
         static const std::string ODBC_INI_FILE_NAME;
-#if 0
-        /**
-         * Timer class used to periodically check for deadlocks.
-         */
-        class DeadlockTimer:public oasys::Timer, public oasys::Logger
-        {
-            public:
-                DeadlockTimer (const char *logbase, ODBC_dbenv * dbenv,
-                               int
-                               frequency):Logger ("ODBCDBStore::DeadlockTimer",
-                                                  "%s/%s", logbase,
-                                                  "deadlock_timer"), dbenv_ (dbenv),
-                frequency_ (frequency) { }
 
-                void reschedule ();
-                virtual void timeout (const struct timeval &now);
-
-            protected:
-                ODBC_dbenv * dbenv_;
-                int frequency_;
-        };
-
-        DeadlockTimer *deadlock_timer_;
-#endif
     private:
 
        bool serialize_all_;            // Serialize all access across all tables
@@ -197,8 +165,142 @@ class ODBCDBStore:public DurableStoreImpl
 };
 
 /**
- * Object that encapsulates a single table. Multiple instances of
- * this object represent multiple uses of the same table.
+ * ODBCDBTable:
+ * Object that encapsulates a single table in an SQL database accessed through ODBC.
+ * It is instantiated once per table that is managed by Oasys.
+ *
+ * There are two types of table:
+ *  - standard ones intended to provide the persistent storage for objects that
+ *    are maintained in memory structures while a program that uses the Oasys
+ *    framework is active but need to be recreated from the persistent store after
+ *    the program is shutdown and then restarted.  It is not intended that this data
+ *    should be accessed by other programs or stored in a format that makes it easy
+ *    to inspect the values.  Accordingly these tables just have two columns:
+ *    the_key and the_data. This is partly a reflection of the original usage of the
+ *    Berkeley database (key, value) pair paradigm which was the original mainstay of
+ *    Oasys persistent data storage.
+ *		the_data is the serialized data pickled from what ever object is being
+ *				 made persistent. There is no external structure and reconstruction of
+ *				 the memory structure relies on Serialization functions of the memory
+ *				 objects. To ensure that the data can be reconstructed a mechanism
+ *				 needs to be provided that provides some assurance that a version of the
+ *				 database matches with a version of the (serialization processes of the)
+ *				 program.
+ *		the_key  is the 'flattened' serialized representation of whatever is the
+ *				 unique identifier for each object.  Depending on the type of object
+ *				 used for the key, the column may be constructed as a VARBINARY(255)
+ *				 or a BINARY(<n>).  The size to be used is passed in from the TypeShim
+ *				 class used for the key object using the shim_length function.  If this
+ *				 value is 0, a VARBINARY column is used because the keys are variable
+ *				 length (typically strings).  The other major sort used is integers of
+ *				 4 bytes.
+ *
+ *	 - auxiliary tables that are intended to make a subset of the data in one of the
+ *	   standard tables accessible to other programs by splitting out individual items
+ *	   into separate table columns.  How ever these tables should:
+ *	   (1) have a one-to-one correspondence of rows with the corresponding standard table
+ *	       and use a common key (the_key).  It is best that this constraint is maintained
+ *	       by means of database triggers which will create an auxiliary table row whenever
+ *	       a corresponding standard table row is created, and delete it again when the
+ *	       standard table row is deleted.  Accordingly the DurableStoreImpl put routine
+ *	       for auxiliary tables does *not* create rows - it is expected that they will
+ *	       already have been created - and the put implementation just has to write the
+ *	       data into the empty row.
+ *	   (2) be essentially write only as far as the generating program is concerned. It
+ *	       should never need to read the data back in again as all the information is in
+ *	       the standard table.  Correspondingly, any other program that accesses the
+ *	       auxiliary tables should treat them as read only and should not modify the
+ *	       data.  This restriction could be enforced by suitable use of database user ids
+ *	       with appropriate permissions.
+ *	    At present, the data schema for the auxiliary tables is not generated automatically
+ *	    although this could be contrived with some additional work.  The data objects given
+ *	    as parameters for the table put and get routines must be instances of a
+ *	    derived class of the StoreDetail class.  Such an instance contains a vector of
+ *	    StoreDetailItem instances that describe the data and the SQL column type. The SQL
+ *	    for selecting and updating rows in the auxiliary table is then generated
+ *	    automatically from the vector of StoreDetailItems. (Note it would probably be a good
+ *	    idea to cache the SQL statement, since it should always be the same, but it will
+ *	    still be necessary to bind the data referred to in the StoreDetailItem instances
+ *	    to the ODBC column descriptors using SqlBindCol (get case) or SQLBindParameter
+ *	    (put case).  The data schema for the auxiliary tables should currently be created
+ *	    by the pre- and post-creation scripts that are fed into the database when it is
+ *	    initialized or tidied.  Table and index creation would normally be in the pre-creation
+ *	    script and trigger creation in the post-creation script.  The column names and SQL
+ *	    data types have to be consistent between the creation scripts and the StoreDetailItem
+ *	    instances created by the calls of StoreDetail::add_detail that builds the instance
+ *	    vector in the constructor (or otherwise) of an instance of a class derived from
+ *	    StoreDetail.  StoreDetail derived classes are notionally SerializableObjects but
+ *	    this is a handy fiction that allows them to be passed to the methods of
+ *	    InternalKeyDurableTable instances.. see below for explanation.
+ *
+ *	    The process by which instances of ODBCDBTable corresponding to a specific database
+ *	    table are created, without Oasys being configured with names and allowing many different
+ *	    storage mechanisms to be encapsulated, is perhaps inevitably mind numbingly complex.
+ *
+ *	    The application program sees two sorts of thing:
+ *	    - a singleton instance of the DurableStore class.  Depending on the storage
+ *	      configuration this encapsulates an instance of an appropriate class derived
+ *	      from DurableStoreImpl.  For the ODBC/SQL cases this is a class derived from
+ *	      ODBCDBStore with a thin shim to handle initialization as it differs between
+ *	      SQL engines that provide an ODBC driver.  Currently this can either be
+ *	      ODBCDBMySQL or ODBCDBSQLite.  The key method is ODBCDBStore::get_table.
+ *	      Typically this singleton is created and initialized during application startup.
+ *	    - A set of instances of templated classes derived from InternalKeyDurableTable,
+ *	      one for each table to be managed.
+ *	      The constructor template for these classes accepts
+ *	      - a TypeShim class name that is a SerializableObject that encapsulates
+ *	      - the type of the actual key item used for the tables, and
+ *	      - the class name of a SerializableObject that encapsulates the data to be
+ *	        stored in the table.
+ *
+ *	    Standard tables are initialized by calling the InternalKeyDurableTable::do_init
+ *	    method which sets up some flags depending on whether initialization is expected
+ *	    or not and in turn calls the DurableStore::get_table method.  Here, the
+ *	    DurableStoreImpl::get_table routine in the configured storage class (such as
+ *	    ODBCDBSTORE) is called.  If initialization was requested this get_table creates
+ *	    the table.
+ *
+ *	    In all cases it instantiates a class derived from DurableTableImpl
+ *	    (such as ODBCDBTable seen here) that does the actual work of interfacing with
+ *	    the data storage sub-system and passes a pointer to it back to
+ *	    DurableTable::get_table.  There it is encapsulated in an instance of
+ *	    StaticTypedDurableTable.  A pointer to this is passed back to the do_init
+ *	    method in InternalKeyDurableTable where it is squirrelled up in the instance
+ *	    for later use when the various add, get update, delete, etc. methods are called.
+ *
+ *	    The InternalKeyDurableTable methods are just there to call an appropriate method
+ *	    in the DurableTable instance (put, get or del) which in turn calls the
+ *	    corresponding method in the DurableTableImpl instance (e.g., ODBCDBTable instance)
+ *	    that actually does the work.
+ *
+ *	    If the table to be created is an auxiliary table rather than a standard one,
+ *	    the do_init_aux routine is called in the InternalKeyDurableTable templated
+ *	    class instead of do_init.  This passes a flag down through the get_table call
+ *	    chain which
+ *	    (1) Suppresses standard table creation in the DurableStoreImpl::get_table method, and
+ *	    (2) Can be used to set a flag in the DurableTableImpl class instance that records
+ *	        that is *is* an auxiliary table.  This can then be used to modify the
+ *	        behaviour of the various methods in the DurableTableImpl (i.e., ODBCDBTable)
+ *	        instance according to whether the table is a standard or an auxiliary table.
+ *
+ *	    Finally, in order to control the SQL type of the_key column, the
+ *	    InternalKeyDurableTable do_init and do_init_aux methods call the shim_length
+ *	    static method in the ShimType used for the key field.  This either returns 0 if
+ *	    key is variable length, or the length in octets of the flattened key (e.g., 4 for
+ *	    an unsigned integer).  This number is incorporated into the flags parameter
+ *	    passed down through the get_table chain and onto the constructor of the
+ *	    DurableTableImpl instance.  This allows DurableTableImpl::get_table to specify
+ *	    the data type for the_key column (other databases can ignore it), and the database
+ *	    interaction routines can specify the correct local and database column types
+ *	    for the_key when accessing the database (again it can be ignored if it is of
+ *	    no consequence for other types of datastore).
+ *
+ *	    For the SQL databases, the_key columns are either BINARY(<n>) if the size is fixed
+ *	    or VARBINARY(255) if the size is varible.
+ *
+ *	    [Elwyn: I hope this goes some way to explain an extremely complex scheme.  It
+ *	    took me a considerable time to get my brain around the scheme and I still get lost
+ *	    sometimes after taking a break form this area.] -
  */
 class ODBCDBTable:public DurableTableImpl, public Logger
 {
@@ -212,8 +314,6 @@ class ODBCDBTable:public DurableTableImpl, public Logger
         int get (const SerializableObject & key,
                  SerializableObject ** data,
                  TypeCollection::Allocator_t allocator);
-
-        int realKey(void *k);
 
         int put (const SerializableObject & key,
                  TypeCollection::TypeCode_t typecode,
@@ -231,13 +331,18 @@ class ODBCDBTable:public DurableTableImpl, public Logger
          */
         DurableIterator *itr ();
         /// @}
+    protected:
+        /*!
+         * Access for key size needed in iterator.
+         */
+        int get_key_size() { return key_size_; }
 
     private:
         bool is_aux_table() { return is_aux_table_; }
 
-        ODBC_dbenv * db_;
-        int db_type_;
-        ODBCDBStore *store_;
+        ODBC_dbenv * db_;		///< ODBC environment and connection handles
+        ODBCDBStore *store_;	///< The ODBCDBStore instance that created this table
+        int key_size_;			///< The number of bytes in the key - if 0 then VARBINARY
         bool is_aux_table_;		///< If this is set the table is not one of the
 								///< standard set with a serialized blob.  On put
 								///< and get the data item will be a pointer to a
@@ -257,14 +362,16 @@ class ODBCDBTable:public DurableTableImpl, public Logger
         // there's only one SQLHSTMT per table to be used for iterators.
         SpinLock iterator_lock_;
 
-        SQLHSTMT hstmt;
-        SQLHSTMT iterator_hstmt;
+        SQLHSTMT hstmt_;
+        SQLHSTMT iterator_hstmt_;
         
         //! Only ODBCDBStore can create ODBCDBTables
         ODBCDBTable (const char *logpath,
                        ODBCDBStore * store,
                        const std::string & table_name,
-                       bool multitype, ODBC_dbenv * db, int type,
+                       bool multitype,
+                       ODBC_dbenv * db,
+                       int key_size,
                        bool is_aux_table = false);
 
         /// Whether a specific key exists in the table.
@@ -282,16 +389,18 @@ class ODBCDBIterator:public DurableIterator, public Logger
 
         ODBCDBIterator (ODBCDBTable * t);
 
-        ODBCDBTable* myTable;
+        ODBCDBTable* for_table_;
+
+        u_int32_t reverse(u_char *key_int);
 
     public:
         virtual ~ ODBCDBIterator ();
 
-        /// @{ Obtain the raw byte representations of the key and data.
+        /// @{ Obtain the raw byte representations of the key (and no longer the data).
         // Buffers are only valid until the next invocation of the
         // iterator.
         int raw_key (void **key, size_t * len);
-        int raw_data (void **data, size_t * len);
+        //int raw_data (void **data, size_t * len);
         /// @}
 
         /// @{ virtual from DurableIteratorImpl
@@ -301,17 +410,15 @@ class ODBCDBIterator:public DurableIterator, public Logger
 
     protected:
         SQLHSTMT cur_;        // current stmt handle which controls current cursor
-        char cur_table_name[128];
+        char cur_table_name_[128];
         bool valid_;            ///< Status of the iterator
 
-        __my_dbt key_;          ///< Current element key
-        __my_dbt data_;         ///< Current element data
-#define MAX_GLOBALS_KEY_LEN 11  //for "global_key" string
-        char bound_key_string[MAX_GLOBALS_KEY_LEN];
-        SQLINTEGER bound_key_int;       //long int
+        u_char key_[KEY_VARBINARY_MAX + 1];	///< Current element key - with guaranteed space for a nul.
+        SQLLEN key_len_;					///< Current key length
+        u_int32_t rev_key_;					///< reversed byte key when an integer
 };
 
-};                              // namespace oasys
+};     // namespace oasys
 
 #endif // LIBODBC_ENABLED
 

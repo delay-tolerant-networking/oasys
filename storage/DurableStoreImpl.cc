@@ -35,14 +35,14 @@ DurableStoreImpl::begin_transaction(void **txid)
 {
 	(void) txid;
 
-    log_warn("DurableStoreImpl::begin_transaction not implemented.");
+    log_debug("DurableStoreImpl::begin_transaction not implemented.");
     /*
      * Even if the underlying implementation doens't support transactions,
      * we track the number of open transactions so that
      * developing against non-transactionalized databases has a lower
      * risk of breaking transactionalized ones.
      */
-    return(DS_ERR);
+    return(DS_OK);
 }
 
 int
@@ -50,20 +50,20 @@ DurableStoreImpl::end_transaction(void *txid, bool be_durable)
 {
 	(void) be_durable;
 	(void) txid;
-    log_warn("DurableStoreImpl::end_transaction not implemented.");
+    log_debug("DurableStoreImpl::end_transaction not implemented.");
     /*
      * Even if the underlying implementation doens't support transactions,
      * we track the number of open transactions so that
      * developing against non-transactionalized databases has a lower
      * risk of breaking transactionalized ones.
      */
-    return(DS_ERR);
+    return(DS_OK);
 }
 
 void *
 DurableStoreImpl::get_underlying()
 {
-    log_warn("DurableStoreImpl::get_underlying not implemented.");
+    log_debug("DurableStoreImpl::get_underlying not implemented.");
     return(NULL);
 }
 

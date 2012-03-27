@@ -67,6 +67,13 @@ public:
     int del_table(const std::string& name);
     int get_table_names(StringVector* names);
     std::string get_info() const;
+
+    //! FileSystemStore doesn't really do transactions, so
+    //! begin_transaction is not implemented, but
+    //! end_transaction forces an fsync of all the open
+    //! file descriptors used for tables (in the cache_).
+    //! get_underlying can't return anything useful either.
+    int end_transaction (void *txid, bool be_durable);
     //! @}
 
 private:
