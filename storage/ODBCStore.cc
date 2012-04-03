@@ -1278,7 +1278,7 @@ ODBCDBTable::get(const SerializableObject & key,
     log_debug("ODBCDBStore::get2 enter.");
 
     ScratchBuffer < u_char *, 256 > key_buf;
-    SQLINTEGER key_buf_len = flatten(key, &key_buf);
+    SQLLEN key_buf_len = flatten(key, &key_buf);
     if (key_buf_len == 0)
     {
         log_err("get2 zero or too long key length");
@@ -1805,7 +1805,7 @@ ODBCDBTable::del(const SerializableObject & key)
     log_debug("del enter thread(%08X).",(u_int32_t) pthread_self());
 
     u_char key_buf[KEY_VARBINARY_MAX];
-    SQLINTEGER key_buf_len;
+    SQLLEN key_buf_len;
 
     key_buf_len = flatten(key, key_buf, sizeof(key_buf));
     if (key_buf_len == 0)
@@ -1970,7 +1970,7 @@ ODBCDBTable::key_exists(const void *key, size_t key_len)
 
     SQLRETURN sql_ret;
     SQLINTEGER my_count;        //long int
-    SQLINTEGER sql_key_len = key_len;
+    SQLLEN sql_key_len = key_len;
 
     log_debug("key_exists.");
     char my_SQL_str[500];
