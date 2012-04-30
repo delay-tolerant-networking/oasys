@@ -79,8 +79,7 @@ class ODBCDBSQLite: public ODBCDBStore
 
     //! Parser for odbc.ini files - identifies DSN corresponding to dsn_name
     //  and returns selected items from the DSN as output parameters.
-    int parse_odbc_ini_SQLite(const char *dsn_name, char *full_path,
-    		                 char *pre_schema_path, char *post_schema_path);
+    int parse_odbc_ini_SQLite(const char *dsn_name, char *full_path);
     std::string schema_creation_command_;	///< Holds command to be run at end of initialisation.
 };
 

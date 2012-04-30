@@ -142,13 +142,10 @@ class ODBCDBStore:public DurableStoreImpl
         /// Id that represents the ODBC DSN configuration file name
         static const std::string ODBC_INI_FILE_NAME;
 
+        bool serialize_all_;            // Serialize all access across all tables
+        SpinLock serialization_lock_; // For serializing all access to all tables
+
     private:
-
-       bool serialize_all_;            // Serialize all access across all tables
-       SpinLock serialization_lock_; // For serializing all access to all tables
-
-
-       // int parseOdbcIni(const char *dbName, char *fullPath, char *schemaPath);
 
 
        SpinLock ref_count_lock_;
@@ -395,14 +392,6 @@ class ODBCDBIterator:public DurableIterator, public Logger
 
     public:
         virtual ~ ODBCDBIterator ();
-
-        /// @{ Obtain the raw byte representations of the key (and no longer the data).
-        // Buffers are only valid until the next invocation of the
-        // iterator.
-        int raw_key (void **key, size_t * len);
-        //int raw_data (void **data, size_t * len);
-        /// @}
-
         /// @{ virtual from DurableIteratorImpl
         int next ();
         int get_key (SerializableObject * key);

@@ -246,14 +246,7 @@ private:
 
 public:
     virtual ~BerkeleyDBIterator();
-    
-    /// @{ Obtain the raw byte representations of the key and data.
-    // Buffers are only valid until the next invocation of the
-    // iterator.
-    int raw_key(void** key, size_t* len);
-    int raw_data(void** data, size_t* len);
-    /// @}
-    
+
     /// @{ virtual from DurableIteratorImpl
     int next();
     int get_key(SerializableObject* key);

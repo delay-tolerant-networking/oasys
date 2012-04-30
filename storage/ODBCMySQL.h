@@ -85,31 +85,36 @@ class ODBCDBMySQL: public ODBCDBStore
     class KeepAliveTimer:public oasys::Timer, public oasys::Logger
     {
         public:
-            KeepAliveTimer (const char *logbase, ODBC_dbenv * dbenv,
-                           int frequency):
+            KeepAliveTimer (const char *logbase,
+                    		ODBCDBMySQL * store,
+                            int frequency):
                         	   Logger ("ODBCDBMySql::KeepAliveTimer",
                                        "%s/%s", logbase,
                                        "keep_alive_timer"),
-                               dbenv_ (dbenv),
-            frequency_ (frequency*60000) { }
+                               store_(store),
+                               frequency_ (frequency*60000) { }
 
             void reschedule ();
             void timeout (const struct timeval &now);
 
         protected:
-            ODBC_dbenv * dbenv_;
+            ODBCDBMySQL * store_;
             int frequency_;
     };
 
     KeepAliveTimer *keep_alive_timer_;
+
+    // Execute non-intrusive database action to keep database
+    // connection open
+    void do_keepalive_transaction(void);
 
 
   //private:
 
     //! Parser for odbc.ini files - identifies DSN corresponding to dsn_name
     //  and returns selected items from the DSN as output parameters.
-    int parse_odbc_ini_MySQL(const char *dsn_name, char *database_name, char *user_name,
-						     char *password, char *pre_schema_path, char *post_schema_path);
+    int parse_odbc_ini_MySQL(const char *dsn_name, char *database_name,
+    						 char *user_name, char *password);
     std::string schema_creation_command_;	///< Holds command to be run at end of initialisation.
 
 };

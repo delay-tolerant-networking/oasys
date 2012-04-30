@@ -78,6 +78,21 @@
 //  - The storage payloaddir *is* still used to store the payload files which
 //    are not held in the database.
 //
+//  Two optional ODBC specific parameters may be defined (default empty string):
+//  - odbc_schema_pre_creation:		string with full path name of file of SQL
+//                              	commands run before main tables are created.
+//                              	Typically used to create auxiliary tables.
+//  - odbc_schema_post_creation: 	string with full path name of file of SQL
+//                              	commands run before main tables are created.
+//									Typically used to create triggers once all
+//									tables are in place.
+//
+// There is one additional ODBC/MySQL specific parameter:
+//  - odbc_mysql_keep_alive_interval:
+//									Specifies the interval in minutes beteen
+//									runs of the MySQL connection keep alive
+//									transaction. (Default 10 minutes).
+//
 //  Modifications to ODBC configuration files (requires root access):
 //    $ODBCSYSINI/odbcinst.ini:  add new section if MySQL ODBC lib *.so
 //    is not already extant.  The default for ODBCSYSINI seems to have
@@ -163,9 +178,6 @@
 //      Database     			= dtn_test
 //      OPTION       			= 3
 //      SOCKET      			 =
-//		; The following two entries are optional and specific to Oasys (not interpreted by ODBC)
-//      SchemaPreCreationFile	= <full path name of file of SQL commands run before tables created>
-//		SchemaPostCreationFile	= <full path name of file of SQL commands run immediately after tables created>
 //      ; You may also find the trace from unixODBC useful (although it didn't work for me with MySQL)...
 //      Trace                   = Yes
 //      TraceFile               = <full path name of some suitable scratch file>
@@ -247,23 +259,15 @@ ODBCDBMySQL::~ODBCDBMySQL()
 
 //  This code parses the odbc.ini file looking for the given DSN,
 //  then checks that there is a non-empty 'Database =' entry in the odbc.ini file.
-//  It also extracts the extension SchemaPre/PostCreationFile entries if present.
 //
 //  For MySQL this function serves to check that there is a DSN name of <dbname>
 //  in the odbc.ini file, that it contains a reasonably sensible database name
 //  (a warning is given if the name is not made up of characters from the set
-//  [0-9a-zA-Z$_], which otherwise could lead to issues with quoting being required),
-//  to find the name of the two possible SchemaPre/PostCreationFile(s) containing
-//  SQL that needs to be run, respectively, before or after the creation of the main
-//  tables.  These files allow other SQL tables to be created and cross-table functions
-//  (such as triggers) to be installed once all the tables have been set up.  This allows
-//  items such as auxiliary detail tables to be created more easily than using ODBC but
-//  effectively assumes that the Oasys code is running on the same server as the database.
+//  [0-9a-zA-Z$_], which otherwise could lead to issues with quoting being required).
 
 int
 ODBCDBMySQL::parse_odbc_ini_MySQL(const char *dsn_name, char *database_name,
-								  char *user_name, char *password,
-								  char *pre_schema_path, char *post_schema_path)
+								  char *user_name, char *password)
 {
     FILE *f;
     char odbc_ini_filename[1000];
@@ -281,8 +285,6 @@ ODBCDBMySQL::parse_odbc_ini_MySQL(const char *dsn_name, char *database_name,
     database_name[0] = '\0';
     user_name[0] ='\0';
     password[0] = '\0';
-    pre_schema_path[0] = '\0';
-    post_schema_path[0] = '\0';
 
     // TODO: (Elwyn) Some installations may use /etc/unixODBC to house the odbc.ini file.
     // Note that ODBCSYSINI is the name of the directory where the system odbc.ini
@@ -368,21 +370,6 @@ ODBCDBMySQL::parse_odbc_ini_MySQL(const char *dsn_name, char *database_name,
 					  dsn_name, odbc_ini_filename);
 			strcpy(password, tok);
 		}
-        // In the right section look for SchemaPre/PostCreationFile properties - again not case sensitive
-		else if ( found_dsn && ( strcasecmp(tok, "SchemaPreCreationFile") == 0 ) ) {
-			// See Database extraction above...
-			tok = strtok(NULL, " \t\n=;#");
-			log_debug("Found schema pre-creation file (%s) for DSN (%s) in odbc.ini file (%s).",
-					  tok, dsn_name, odbc_ini_filename);
-			strcpy(pre_schema_path, tok);
-		}
-		else if ( found_dsn && ( strcasecmp(tok, "SchemaPostCreationFile") == 0 ) ) {
-			// See Database extraction above...
-			tok = strtok(NULL, " \t\n=;#");
-			log_debug("Found schema post-creation file (%s) for DSN (%s) in odbc.ini file (%s).",
-					  tok, dsn_name, odbc_ini_filename);
-			strcpy(post_schema_path, tok);
-		}
     }
     free(one_line);
     fclose(f);
@@ -419,7 +406,6 @@ ODBCDBMySQL::init(const StorageConfig & cfg)
     int ret;
 
     log_debug("init entry.");
-    //dbenv_ = &base_dbenv_;
 
     // Note that for ODBC-based storage methods, the cfg.dbdir_ variable is only
     // used to specify the directory used to store the clean exit recording file
@@ -442,22 +428,17 @@ ODBCDBMySQL::init(const StorageConfig & cfg)
     bool force_schema_creation = false;
 
     char database_name[500] = "";
-    char database_pre_schema_path[500] = "";
-    char database_post_schema_path[500] = "";
     char database_username[100] = "";
     char database_password[100] = "";
 
     // Parse the odbc.ini file to find the database name, user mname, password and
     // path names of files with extra schema definition statements.
-    ret = parse_odbc_ini_MySQL(dsn_name_.c_str(), database_name, database_username,
-    		database_password, database_pre_schema_path, database_post_schema_path);
+    ret = parse_odbc_ini_MySQL(dsn_name_.c_str(), database_name,
+    						   database_username, database_password);
 
     if ( ret!=0 ) {
         return DS_ERR;
     }
-
-    // xxx Elwyn: Not sure what this was for.
-    //log_debug("init - Verify Env info for DB Alias=%s\n", dsn_name_.c_str());
 
 	// For MySQL the only way to test that the database exists is to connect to it.
     // It is not possible to connect to a database that doesn't exist.
@@ -575,6 +556,15 @@ ODBCDBMySQL::init(const StorageConfig & cfg)
         	return ret;
         }
         // Some schema work may be needed both before and after main tables are created.
+        // The full path names of the two possible odbc_schema_pre/post_creation files
+        // are specified in the storage configuration.  Each may contain SQL that needs
+        // to be run, respectively, before or after the creation of the main tables.
+        // These files allow other SQL tables to be created and cross-table functions
+        // (such as triggers) to be installed once all the tables have been set up.
+        // This allows items such as auxiliary detail tables to be created more easily
+        // than using ODBC but effectively assumes that the Oasys code is running on
+        // the same server as the database.
+        //
         // Fabricate a string containing a command to be run on the server machine
         // in each case. Run the pre table creation (if any) now.
         //
@@ -583,17 +573,18 @@ ODBCDBMySQL::init(const StorageConfig & cfg)
         // lines into active lines to handle delimiter change which is not wanted for
         // SQLite.  Shame they aren't the same!
         char schema_creation_string[1024];
-        if ( strlen(database_pre_schema_path) > 0 ) {
+        if ( cfg.odbc_schema_pre_creation_.length() > 0 ) {
             log_info("init: sourcing odbc schema pre table creation file (%s).",
-                 database_pre_schema_path);
-            if (access(database_pre_schema_path, R_OK) != 0) {
+            		cfg.odbc_schema_pre_creation_.c_str());
+            if (access(cfg.odbc_schema_pre_creation_.c_str(), R_OK) != 0) {
             	log_crit("Configured schema pre table creation file (%s) is not readable.",
-            			database_pre_schema_path);
+            			cfg.odbc_schema_pre_creation_.c_str());
             	return DS_ERR;
             }
 
             sprintf(schema_creation_string, "cat %s | tr -d '-' | mysql %s -u %s -p%s",
-            		database_pre_schema_path, database_name, database_username, database_password );
+            		cfg.odbc_schema_pre_creation_.c_str(), database_name,
+            		database_username, database_password );
             ret = system(schema_creation_string);
 
             // Check that the command actually ran and exited with a success code.
@@ -606,16 +597,17 @@ ODBCDBMySQL::init(const StorageConfig & cfg)
         // The command for post table creation is created and saved for execution by
         // create_finalize once the tables have been created.  This avoids having to
         // squirrel up all three parameters.
-        if ( strlen(database_post_schema_path) > 0 ) {
+        if ( cfg.odbc_schema_post_creation_.length() > 0 ) {
             log_info("init: checking odbc schema post table creation file (%s) to be sourced after creation",
-                 database_post_schema_path);
-            if (access(database_post_schema_path, R_OK) != 0) {
+            		cfg.odbc_schema_post_creation_.c_str());
+            if (access(cfg.odbc_schema_post_creation_.c_str(), R_OK) != 0) {
             	log_crit("Configured schema post table creation file (%s) is not readable.",
-            			database_post_schema_path);
+            			cfg.odbc_schema_post_creation_.c_str());
             	return DS_ERR;
             }
             sprintf(schema_creation_string, "cat %s | tr -d '-' | mysql %s -u %s -p%s",
-            		database_post_schema_path, database_name, database_username, database_password);
+            		cfg.odbc_schema_post_creation_.c_str(), database_name,
+            		database_username, database_password);
             schema_creation_command_ = std::string(schema_creation_string);
         }
     }
@@ -630,19 +622,9 @@ ODBCDBMySQL::init(const StorageConfig & cfg)
 
     log_debug("init: aux_tables_available = %s", aux_tables_available_ ? "true" : "false");
 
-#if 0
-    if (cfg.db_lockdetect_ != 0)
-    {
-        deadlock_timer_ =
-            new DeadlockTimer(logpath_, dbenv_, cfg.db_lockdetect_);
-        deadlock_timer_->reschedule();
-    } else {
-        deadlock_timer_ = NULL;
-    }
-#endif
-
     keep_alive_timer_ =
-                new KeepAliveTimer(logpath_, &dbenv_, 10);
+                new KeepAliveTimer(logpath_, this,
+                				   cfg.odbc_mysql_keep_alive_interval_);
             keep_alive_timer_->reschedule();
 
     init_ = true;
@@ -682,6 +664,51 @@ ODBCDBMySQL::create_finalize(const StorageConfig& cfg)
 
 }
 
+
+//----------------------------------------------------------------------------
+void
+ODBCDBMySQL::do_keepalive_transaction()
+{
+	SQLRETURN ret;
+	char var_name[80];
+	char var_value[512];
+	SQLLEN len_name, len_value;
+
+	ScopeLockIf sl(&serialization_lock_,
+				   "Access by KeepAliveTimer::timeout()",
+				   serialize_all_);
+
+	ret = SQLFreeStmt(dbenv_.idle_hstmt, SQL_CLOSE);      //close from any prior use
+	if (!SQL_SUCCEEDED(ret))
+	{
+		log_warn("ERROR timeout - failed Statement Handle SQL_CLOSE");
+		return;
+	}
+	ret = SQLBindCol(dbenv_.idle_hstmt, 1, SQL_C_BINARY, var_name, 80, &len_name);
+	if (!SQL_SUCCEEDED(ret))
+	{
+		log_err("get SQLBindCol error %d at column 1", ret);
+		return;
+	}
+	ret = SQLBindCol(dbenv_.idle_hstmt, 2, SQL_C_BINARY, var_value, 80, &len_value);
+	if (!SQL_SUCCEEDED(ret))
+	{
+		log_err("get SQLBindCol error %d at column 1", ret);
+		return;
+	}
+	log_debug("execing SQLEXECDirect");
+	ret = SQLExecDirect(dbenv_.idle_hstmt, (SQLCHAR *) "SHOW VARIABLES LIKE 'flush'", SQL_NTS);
+	if (!SQL_SUCCEEDED(ret))
+	{
+		log_warn("ERROR: timeout: Unable to access server variable 'flush'.");
+	}
+	ret = SQLFetch(dbenv_.idle_hstmt);
+	var_name[len_name]= '\0';
+	var_value[len_value] = '\0';
+	log_debug("Result: var_name %s, var_value %s", var_name, var_value);
+	return;
+}
+
 //----------------------------------------------------------------------------
 std::string
 ODBCDBMySQL::get_info()const
@@ -701,45 +728,9 @@ ODBCDBMySQL::KeepAliveTimer::reschedule()
 void
 ODBCDBMySQL::KeepAliveTimer::timeout(const struct timeval &now)
 {
-    SQLRETURN ret;
-    char var_name[80];
-    char var_value[512];
-    SQLLEN len_name, len_value;
-
-    log_debug
-        ("KeepAliveTimer::timeout - requesting value of server variable 'flush' at time %s", ctime(&now.tv_sec));
-	ret = SQLFreeStmt(dbenv_->idle_hstmt, SQL_CLOSE);      //close from any prior use
-	if (!SQL_SUCCEEDED(ret))
-	{
-		log_warn("ERROR timeout - failed Statement Handle SQL_CLOSE");
-		goto resched;
-	}
-	ret = SQLBindCol(dbenv_->idle_hstmt, 1, SQL_C_BINARY, var_name, 80, &len_name);
-	if (!SQL_SUCCEEDED(ret))
-	{
-		log_err("get SQLBindCol error %d at column 1", ret);
-		//print_error(db_->m_henv, db_->m_hdbc, dbenv_->idle_hstmt);
-		goto resched;
-	}
-	ret = SQLBindCol(dbenv_->idle_hstmt, 2, SQL_C_BINARY, var_value, 80, &len_value);
-	if (!SQL_SUCCEEDED(ret))
-	{
-		log_err("get SQLBindCol error %d at column 1", ret);
-		//print_error(db_->m_henv, db_->m_hdbc, dbenv_->idle_hstmt);
-		goto resched;
-	}
-	log_debug("execing SQLEXECDirect");
-    ret = SQLExecDirect(dbenv_->idle_hstmt, (SQLCHAR *) "SHOW VARIABLES LIKE 'flush'", SQL_NTS);
-	if (!SQL_SUCCEEDED(ret))
-	{
-		log_warn("ERROR: timeout: Unable to access server variable 'flush'.");
-	}
-    ret = SQLFetch(dbenv_->idle_hstmt);
-    var_name[len_name]= '\0';
-    var_value[len_value] = '\0';
-    log_debug("Result: var_name %s, var_value %s", var_name, var_value);
-
-	resched:
+	log_debug
+		("KeepAliveTimer::timeout - requesting value of server variable 'flush' at time %s", ctime(&now.tv_sec));
+    store_->do_keepalive_transaction();
     reschedule();
 }
 //----------------------------------------------------------------------------

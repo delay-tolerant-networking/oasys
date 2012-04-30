@@ -1038,30 +1038,6 @@ BerkeleyDBIterator::get_key(SerializableObject* key)
     return 0;
 }
 
-//----------------------------------------------------------------------------
-int 
-BerkeleyDBIterator::raw_key(void** key, size_t* len)
-{
-    if (!valid_) return DS_ERR;
-
-    *key = key_->data;
-    *len = key_->size;
-
-    return 0;
-}
-
-//----------------------------------------------------------------------------
-int 
-BerkeleyDBIterator::raw_data(void** data, size_t* len)
-{
-    if (!valid_) return DS_ERR;
-
-    *data = data_->data;
-    *len  = data_->size;
-
-    return 0;
-}
-
 } // namespace oasys
 
 #endif // LIBDB_ENABLED

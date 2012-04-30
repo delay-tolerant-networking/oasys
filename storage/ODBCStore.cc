@@ -2279,22 +2279,6 @@ ODBCDBIterator::get_key(SerializableObject * key)
 }
 
 //----------------------------------------------------------------------------
-int
-ODBCDBIterator::raw_key(void **key, size_t * len)
-{
-    log_debug("raw_key - enter.");
-    ASSERT(for_table_->iterator_lock_.is_locked_by_me());
-    if (!valid_)
-        return DS_ERR;
-
-    *key = key_;
-    *len = key_len_;
-
-    log_debug("raw_key - exit.");
-    return 0;
-}
-
-//----------------------------------------------------------------------------
 u_int32_t
 ODBCDBIterator::reverse(u_char* key_int)
 {

@@ -65,8 +65,16 @@ struct StorageConfig {
     std::string schema_;        ///< xml schema for remote interface
 
     // ODBC/SQL data store specific options
-    bool		odbc_use_aux_tables_; ///< Whether to use auxiliary tables
-    std::string odbc_schema_config_;  ///< Pathname for file with extra SQL to finalize schema, such as triggers, aux tables
+    bool		odbc_use_aux_tables_; 		///< Whether to use auxiliary tables
+    std::string odbc_schema_pre_creation_;	///< Pathname for file with extra SQL
+    								  	  	///< to initialize schema, such as
+    										///< definitions of aux tables.
+    std::string odbc_schema_post_creation_;	///< Pathname for file with extra SQL
+    								  	  	///< to finalize schema, such as
+    										///< definitions of triggers to be
+    										///< addded once all tables are in place.
+    u_int16_t	odbc_mysql_keep_alive_interval_;
+    								  	    ///< Keep alive timer interval (MySQL only)
 
     StorageConfig(
         const std::string& cmd,
@@ -103,7 +111,9 @@ struct StorageConfig {
         server_port_(0),
 
         odbc_use_aux_tables_(false),
-        odbc_schema_config_("")
+        odbc_schema_pre_creation_(""),
+        odbc_schema_post_creation_(""),
+        odbc_mysql_keep_alive_interval_(10)
 
     {}
 };

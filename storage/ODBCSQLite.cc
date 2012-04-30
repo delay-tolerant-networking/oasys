@@ -111,6 +111,15 @@
 //            his/her mind but this may not be visible if the log is
 //            redirected to a file.
 //
+//  Two optional ODBC specific parameters may be defined (default empty string):
+//  - odbc_schema_pre_creation:		string with full path name of file of SQL
+//                              	commands run before main tables are created.
+//                              	Typically used to create auxiliary tables.
+//  - odbc_schema_post_creation: 	string with full path name of file of SQL
+//                              	commands run before main tables are created.
+//									Typically used to create triggers once all
+//									tables are in place.
+//
 //  Modifications to system ODBC configuration files (requires root access):
 //    $ODBCSYSINI/odbcinst.ini:  add new section if MySQL ODBC lib *.so
 //    is not already extant.  The default for ODBCSYSINI seems to have
@@ -165,9 +174,6 @@
 //      ; sqliteodbc issuing its own BEGIN TRANSACTION immediately after every COMMIT.
 //      ; With 'NoTxn = Yes' you are in control and can issue BEGIN TRANSACTION as wanted.
 //      NoTxn                   = Yes
-//		; The following two entries are optional and specific to Oasys (not interpreted by ODBC)
-//      SchemaPreCreationFile	= <full path name of file of SQL commands run before tables created>
-//		SchemaPostCreationFile	= <full path name of file of SQL commands run immediately after tables created>
 //      ; You may also find the trace from unixODBC useful...
 //      Trace                   = Yes
 //      TraceFile               = <full path name of some suitable scratch file>
@@ -241,15 +247,9 @@ ODBCDBSQLite::~ODBCDBSQLite()
 //  It also extracts the extension SchemaPre/PostCreationFile entries if present.
 //
 //  For SQLite this function serves to check that there is a DSN name of <dbname>
-//  in the odbc.ini file, that it contains a database file path name, and
-//  to find the names of the two possible SchemaPre/PostCreationFile(s) containing
-//  SQL that needs to be run, respectively, before or after the creation of the main
-//  tables.  These files allow other SQL tables to be created and cross-table functions
-//  (such as triggers) to be installed once all the tables have been set up.  This allows
-//  items such as auxiliary detail tables to be created more easily than using ODBC.
+//  in the odbc.ini fileand that it contains a database file path name.
 int
-ODBCDBSQLite::parse_odbc_ini_SQLite(const char *dsn_name, char *full_path,
-		                            char *pre_schema_path, char *post_schema_path)
+ODBCDBSQLite::parse_odbc_ini_SQLite(const char *dsn_name, char *full_path)
 {
     FILE *f;
     char odbc_ini_filename[1000];
@@ -265,8 +265,6 @@ ODBCDBSQLite::parse_odbc_ini_SQLite(const char *dsn_name, char *full_path,
 
     sprintf(odbc_dsn_identifier, "%c%s%c", section_start, dsn_name, section_end);
     full_path[0] = '\0';
-    pre_schema_path[0] = '\0';
-    post_schema_path[0] = '\0';
 
     // TODO: (Elwyn) Some installations may use /etc/unixODBC to house the odbc.ini file.
     // Note that ODBCSYSINI is the name of the directory where the system odbc.ini
@@ -326,21 +324,6 @@ ODBCDBSQLite::parse_odbc_ini_SQLite(const char *dsn_name, char *full_path,
                       tok, odbc_ini_filename);
             strcpy(full_path, tok);
         }
-        // In the right section look for SchemaPre/PostCreationFile properties - again not case sensitive
-		else if ( found_dsn && ( strcasecmp(tok, "SchemaPreCreationFile") == 0 ) ) {
-			// See Database extraction above...
-			tok = strtok(NULL, " \t\n=;#");
-			log_debug("Found schema pre-creation file (%s) for DSN (%s) in odbc.ini file (%s).",
-					  tok, dsn_name, odbc_ini_filename);
-			strcpy(pre_schema_path, tok);
-		}
-		else if ( found_dsn && ( strcasecmp(tok, "SchemaPostCreationFile") == 0 ) ) {
-			// See Database extraction above...
-			tok = strtok(NULL, " \t\n=;#");
-			log_debug("Found schema post-creation file (%s) for DSN (%s) in odbc.ini file (%s).",
-					  tok, dsn_name, odbc_ini_filename);
-			strcpy(post_schema_path, tok);
-		}
     }
     free(one_line);
     fclose(f);
@@ -368,7 +351,6 @@ ODBCDBSQLite::init(const StorageConfig & cfg)
     int ret;
 
     log_debug("init entry.");
-    //dbenv_ = &base_dbenv_;
 
     // Note that for ODBC-based storage methods, the cfg.dbdir_ variable is only
     // used to specify the directory used to store the clean exit recording file
@@ -394,8 +376,6 @@ ODBCDBSQLite::init(const StorageConfig & cfg)
 
     char database_fullpath[500] = "";
     char database_dir[500] = "";
-    char database_pre_schema_path[500] = "";
-    char database_post_schema_path[500] = "";
 
     // For ODBC, the cfg.dbname_ refers to the Data Source Name (DSN) as defined
     // in the odbc.ini file (i.e. the section name inside square brackets, e.g. [DTN]),
@@ -409,8 +389,7 @@ ODBCDBSQLite::init(const StorageConfig & cfg)
     // Parse the odbc.ini file to find the database name; copy the full path to
     // the database file into database_fullpath and find the names of the extra schema
     // files if present.
-    ret = parse_odbc_ini_SQLite(dsn_name_.c_str(), database_fullpath,
-								database_pre_schema_path, database_post_schema_path);
+    ret = parse_odbc_ini_SQLite(dsn_name_.c_str(), database_fullpath);
     if ( ret!=0 ) {
         return DS_ERR;
     }
@@ -659,6 +638,15 @@ ODBCDBSQLite::init(const StorageConfig & cfg)
         	return ret;
         }
         // Some schema work may be needed both before and after main tables are created.
+        // The full path names of the two possible odbc_schema_pre/post_creation files
+        // are specified in the storage configuration.  Each may contain SQL that needs
+        // to be run, respectively, before or after the creation of the main tables.
+        // These files allow other SQL tables to be created and cross-table functions
+        // (such as triggers) to be installed once all the tables have been set up.
+        // This allows items such as auxiliary detail tables to be created more easily
+        // than using ODBC but effectively assumes that the Oasys code is running on
+        // the same server as the database.
+        //
         // Fabricate a string containing a command to be run on the server machine
         // in each case. Run the pre table creation (if any) now.
         //
@@ -667,16 +655,17 @@ ODBCDBSQLite::init(const StorageConfig & cfg)
         // of newlines in multi-line command input. It seems SQlite doesn't want this.
         // Shame they aren't the same!
         char schema_creation_string[1024];
-        if ( strlen(database_pre_schema_path) > 0 ) {
+        if ( cfg.odbc_schema_pre_creation_.length() > 0 ) {
             log_info("init: sourcing odbc schema pre table creation file (%s).",
-                 database_pre_schema_path);
-            if (access(database_pre_schema_path, R_OK) != 0) {
+            		cfg.odbc_schema_pre_creation_.c_str());
+            if (access(cfg.odbc_schema_pre_creation_.c_str(), R_OK) != 0) {
             	log_crit("Configured schema pre table creation file (%s) is not readable.",
-            			database_pre_schema_path);
+            			cfg.odbc_schema_pre_creation_.c_str());
             	return DS_ERR;
             }
+
             sprintf(schema_creation_string, "cat %s | tr -d '\\\\' | sqlite3 %s",
-            		database_pre_schema_path, database_fullpath);
+            		cfg.odbc_schema_pre_creation_.c_str(), database_fullpath);
 
             ret = system(schema_creation_string);
 
@@ -690,17 +679,17 @@ ODBCDBSQLite::init(const StorageConfig & cfg)
         // The command for post table creation is created and saved for execution by
         // create_finalize once the tables have been created.  This avoids having to
         // squirrel both parameters and know about sqlite3 later.
-        if ( strlen(database_post_schema_path) > 0 ) {
+        if ( cfg.odbc_schema_post_creation_.length() > 0 ) {
             log_info("init: checking odbc schema post table creation file (%s) to be sourced after creation",
-                 database_post_schema_path);
-            if (access(database_post_schema_path, R_OK) != 0) {
+            		cfg.odbc_schema_post_creation_.c_str());
+            if (access(cfg.odbc_schema_post_creation_.c_str(), R_OK) != 0) {
             	log_crit("Configured schema post table creation file (%s) is not readable.",
-            			database_post_schema_path);
+            			cfg.odbc_schema_post_creation_.c_str());
             	return DS_ERR;
             }
 
             sprintf(schema_creation_string, "cat %s | tr -d '\\\\' | sqlite3 %s",
-            		database_post_schema_path, database_fullpath);
+            		cfg.odbc_schema_post_creation_.c_str(), database_fullpath);
             schema_creation_command_ = std::string(schema_creation_string);
         }
 
@@ -715,17 +704,6 @@ ODBCDBSQLite::init(const StorageConfig & cfg)
     aux_tables_available_ = cfg.odbc_use_aux_tables_;
 
     log_debug("init: aux_tables_available = %s", aux_tables_available_ ? "true" : "false");
-#if 0
-    if (cfg.db_lockdetect_ != 0)
-    {
-        deadlock_timer_ =
-            new DeadlockTimer(logpath_, dbenv_, cfg.db_lockdetect_);
-        deadlock_timer_->reschedule();
-    } else {
-        deadlock_timer_ = NULL;
-    }
-#endif
-
     init_ = true;
 
     log_debug("init exit.");
