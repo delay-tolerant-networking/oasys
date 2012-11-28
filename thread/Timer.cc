@@ -57,6 +57,8 @@ TimerSystem::~TimerSystem()
         timers_.pop();
         delete t;
     }
+    delete system_lock_;
+    printf("Time system destructor run\n");
 }
 
 //----------------------------------------------------------------------

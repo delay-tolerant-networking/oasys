@@ -46,13 +46,16 @@ SingletonBase::SingletonBase()
 //----------------------------------------------------------------------
 SingletonBase::~SingletonBase()
 {
+//    printf("In ~SingletonBase\n");
 }
 
 //----------------------------------------------------------------------
 SingletonBase::Fini::~Fini()
 {
+//    printf("In ~Fini\n");
     if (getenv("OASYS_CLEANUP_SINGLETONS"))
     {
+//    printf("We're supposed to cleanup singletons\n");
         for (int i = SingletonBase::num_singletons_ - 1; i >= 0; --i)
         {
             log_debug_p("/debug",
@@ -60,6 +63,9 @@ SingletonBase::Fini::~Fini()
                         i, SingletonBase::all_singletons_[i]);
             
             delete SingletonBase::all_singletons_[i];
+            if(SingletonBase::all_singletons_[i] != NULL) {
+                delete SingletonBase::all_singletons_[i];
+            }
         }
     }
 
