@@ -275,6 +275,7 @@ private:
     uri_parse_err_t validate_query() const;
     uri_parse_err_t validate_fragment() const;
     uri_parse_err_t validate_ip_literal(const std::string& host) const;
+    uri_parse_err_t validate_eth_literal(const std::string& host) const;
  
     /**
      * Normalize the URI to the standard format as described in RFC 3986

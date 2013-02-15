@@ -231,9 +231,14 @@ URI::parse_authority()
             }
             host_end++; // include '[' character
         } else {
-            host_end = authority.find(':', curr_pos);
-            if (host_end == std::string::npos) {
+            // Special case for ethernet uri
+            if(this->scheme() == "eth") {
                 host_end = authority.length();
+            } else {
+                host_end = authority.find(':', curr_pos);
+                if (host_end == std::string::npos) {
+                    host_end = authority.length();
+                }
             }
         }
 
@@ -416,6 +421,11 @@ URI::validate_host() const
     if (host.at(0) == '[') {
         ASSERT(host.at(host.length() - 1) == ']');
         return validate_ip_literal(host.substr(1, host.length() - 2));
+    }
+
+    // check for ethernet literal
+    if(this->scheme() == "eth") {
+        return validate_eth_literal(host);
     }
 
     // check for valid characters
@@ -866,6 +876,29 @@ URI::validate_path() const
         log_debug_p(URI_LOG, "URI:validate_path: "
                     "invalid character in path component %c", c);
         return URI_PARSE_BAD_PATH;
+    }
+
+    return URI_PARSE_OK;
+}
+
+//----------------------------------------------------------------------
+uri_parse_err_t URI::validate_eth_literal(const std::string& host) const
+{
+    if(host.length() != 17) {
+        log_debug_p(URI_LOG, "URI::validate_eth_literal: bad host");
+        return URI_PARSE_BAD_HOST;
+    }
+
+    for(int i = 0; i < host.length(); i++) {
+        if((i + 1) % 3) {
+            if(is_hexdig(host.at(i)))
+                continue;
+        } else {
+            if(host.at(i) == ':')
+                continue;
+        }
+
+        return URI_PARSE_BAD_HOST;
     }
 
     return URI_PARSE_OK;
