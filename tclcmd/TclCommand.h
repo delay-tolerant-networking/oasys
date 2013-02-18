@@ -32,6 +32,16 @@
 #include "../util/Singleton.h"
 #include "../util/StringBuffer.h"
 
+/**
+ * Workaround for older tcl versions
+ */
+#ifndef HAVE_TCL_GETERRORLINE
+static inline int Tcl_GetErrorLine(Tcl_Interp *interp)
+{
+    return interp->errorLine;
+}
+#endif
+
 namespace oasys {
 
 // forward decls

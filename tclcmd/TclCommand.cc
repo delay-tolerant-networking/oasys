@@ -70,7 +70,7 @@ TclCommandInterp::do_init(const char* argv0, bool no_default_cmds)
     if (Tcl_Init(interp_) != TCL_OK) {
         StringBuffer err("initialization problem calling Tcl_Init: %s\n"
                          "(this is not a fatal error, continuing initialization...)\n\n",
-                         interp_->result);
+                         Tcl_GetStringResult(interp_));
         log_multiline(LOG_WARN, err.c_str());
     }
 
@@ -99,7 +99,7 @@ TclCommandInterp::do_init(const char* argv0, bool no_default_cmds)
     // overwrite the string value)
     char* cmd = strdup(INIT_COMMAND);
     if (Tcl_Eval(interp_, cmd) != TCL_OK) {
-        log_err("error in init commands: \"%s\"", interp_->result);
+        log_err("error in init commands: \"%s\"", Tcl_GetStringResult(interp_));
         return TCL_ERROR;
     }
     free(cmd);
@@ -163,7 +163,7 @@ TclCommandInterp::exec_file(const char* file)
     
     if (err != TCL_OK) {
         logf(LOG_ERR, "error: line %d: '%s':\n%s",
-             interp_->errorLine, Tcl_GetStringResult(interp_),
+             Tcl_GetErrorLine(interp_), Tcl_GetStringResult(interp_),
              Tcl_GetVar(interp_, "errorInfo", TCL_GLOBAL_ONLY));
     }
     
@@ -193,7 +193,7 @@ TclCommandInterp::exec_command(const char* command)
     
     if (err != TCL_OK) {
         logf(LOG_ERR, "error: line %d: '%s':\n%s",
-             interp_->errorLine, Tcl_GetStringResult(interp_),
+             Tcl_GetErrorLine(interp_), Tcl_GetStringResult(interp_),
              Tcl_GetVar(interp_, "errorInfo", TCL_GLOBAL_ONLY));
     }
     
@@ -211,7 +211,7 @@ TclCommandInterp::exec_command(int objc, Tcl_Obj** objv)
     
     if (err != TCL_OK) {
         logf(LOG_ERR, "error: line %d: '%s':\n%s",
-             interp_->errorLine, Tcl_GetStringResult(interp_),
+             Tcl_GetErrorLine(interp_), Tcl_GetStringResult(interp_),
              Tcl_GetVar(interp_, "errorInfo", TCL_GLOBAL_ONLY));
     }
     
@@ -225,7 +225,7 @@ TclCommandInterp::set_command_logpath()
     StringBuffer cmd("set command_logpath %s", logpath());
     if (Tcl_Eval(interp_, const_cast<char*>(cmd.c_str())) != TCL_OK) {
         log_err("tcl error setting command_logpath: \"%s\"",
-                interp_->result);
+                Tcl_GetStringResult(interp_));
     }
 }
 
@@ -240,7 +240,7 @@ TclCommandInterp::command_server(const char* prompt,
     
     if (Tcl_Eval(interp_, const_cast<char*>(cmd.c_str())) != TCL_OK) {
         log_err("tcl error starting command_server: \"%s\"",
-                interp_->result);
+                Tcl_GetStringResult(interp_));
     }
 }
 
@@ -256,7 +256,7 @@ TclCommandInterp::command_loop(const char* prompt)
 #endif
     
     if (Tcl_Eval(interp_, const_cast<char*>(cmd.c_str())) != TCL_OK) {
-        log_err("tcl error in command_loop: \"%s\"", interp_->result);
+        log_err("tcl error in command_loop: \"%s\"", Tcl_GetStringResult(interp_));
     }
 }
 
@@ -266,7 +266,7 @@ TclCommandInterp::event_loop()
 {
     set_command_logpath();
     if (Tcl_Eval(interp_, "event_loop") != TCL_OK) {
-        log_err("tcl error in event_loop: \"%s\"", interp_->result);
+        log_err("tcl error in event_loop: \"%s\"", Tcl_GetStringResult(interp_));
     }
 }
 
@@ -275,7 +275,7 @@ void
 TclCommandInterp::exit_event_loop()
 {
     if (Tcl_Eval(interp_, "exit_event_loop") != TCL_OK) {
-        log_err("tcl error in event_loop: \"%s\"", interp_->result);
+        log_err("tcl error in event_loop: \"%s\"", Tcl_GetStringResult(interp_));
     }
 }
 

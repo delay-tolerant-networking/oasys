@@ -99,6 +99,9 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
+/* Define if Tcl has Tcl_GetErrorLine function. */
+#undef HAVE_TCL_GETERRORLINE
+
 /* Define to 1 if the system has the type `uint32_t'. */
 #undef HAVE_UINT32_T
 
