@@ -2,8 +2,6 @@
 #  include <oasys-config.h>
 #endif
 
-#include <ext/rope>
-
 #include "StreamSerialize.h"
 
 #include "../util/Pointers.h"

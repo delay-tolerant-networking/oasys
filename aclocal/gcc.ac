@@ -365,6 +365,13 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_OPTS, [
                        EXTRA_CFLAGS=$withval)
     AC_SUBST(EXTRA_CFLAGS)
 
+    EXTRA_CXXFLAGS=""
+    AC_ARG_WITH(extra-cxxflags,
+        AC_HELP_STRING([--with-extra-cxxflags=?],
+                [additional options to pass to the compiler]),
+                        EXTRA_CXXFLAGS=$withval)
+    AC_SUBST(EXTRA_CXXFLAGS)
+
     EXTRA_LDFLAGS=""
     AC_ARG_WITH(extra-ldflags,
         AC_HELP_STRING([--with-extra-ldflags=?],

@@ -27,35 +27,33 @@
 #include <climits>
 #include <vector>
 #include <set>
+#include <string>
 #include <map>
 #include <sys/types.h>
 
-// Though hash_set was part of std:: in the 2.9x gcc series, it's been
-// moved to ext/__gnu_cxx:: in 3.x
-#if (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)
-#include <hash_set>
-#include <hash_map>
-#define _std std
-#else
-/* Note that these classes are now deprecated, we'll need to rewrite */
-/* the code at some point to use the new standard classes. In the */
-/* meantime, quiet the warnings. */
-
-/* undefine __DEPRECATED and remember it was set*/
-#ifdef __DEPRECATED
-# define __DEPRECATED_save
-# undef __DEPRECATED
-#endif
+#if __cplusplus < 201103L
+/* No C++11 support detected. Use deprecated classes instead.
+ * NOTE: The headers below probably contain #warning directives.
+ */
 
 #include <ext/hash_set>
 #include <ext/hash_map>
 
-/* re-define __DEPRECATED if it was set */
-#ifdef __DEPRECATED_save
-# define __DEPRECATED
-#endif
-
 #define _std __gnu_cxx
+#define unordered_set hash_set
+#define unordered_map hash_map
+
+#else
+/* We have C++11 support, use the standard classes instead
+ */
+#include <unordered_set>
+#include <unordered_map>
+
+#define _std std
+
+// For std::hash 
+#include <functional>
+
 #endif
 
 namespace oasys {
@@ -64,12 +62,19 @@ namespace oasys {
 /**
  * Hashing function class for std::strings.
  */
+#if __cplusplus < 201103L
 struct StringHash {
     size_t operator()(const std::string& str) const
     {
         return _std::__stl_hash_string(str.c_str());
     }
 };
+#else
+// C++11 provides us with std::hash class which implements hashing
+// so just inherit from it.
+struct StringHash : public std::hash<std::string> {};
+
+#endif
 
 //----------------------------------------------------------------------------
 /**
@@ -134,7 +139,7 @@ template <class _Type> class StringMultiMap :
  * A StringHashSet is a hash set with std::string members.
  */
 class StringHashSet :
-        public _std::hash_set<std::string, StringHash, StringEquals> {
+        public _std::unordered_set<std::string, StringHash, StringEquals> {
 public:
     void dump(const char* log) const;
 };
@@ -144,7 +149,7 @@ public:
  * A StringHashMap is a hash map with std::string keys.
  */
 template <class _Type> class StringHashMap :
-    public _std::hash_map<std::string, _Type, StringHash, StringEquals> {
+    public _std::unordered_map<std::string, _Type, StringHash, StringEquals> {
 };
 
 //----------------------------------------------------------------------------
