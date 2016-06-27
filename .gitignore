@@ -4,6 +4,7 @@
 *.d
 *.dylib
 *.dSYM
+*.so
 autoscan.log
 config.cache
 config.log
