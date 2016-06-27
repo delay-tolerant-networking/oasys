@@ -1,21 +1,3 @@
-syntax: glob
-
-# some defaults pulled from the CVS manual then modified
-tags
-TAGS
-*~
-\.\#*
-.del-*
-*.a
-*.olb
-*.o
-*.obj
-*.so
-*.exe
-*.elc
-*.ln
-core
-
 # other good defaults
 .gdb_history
 .glimpse_*
@@ -44,4 +26,3 @@ tools/zsize
 build*
 include*
 share*
-
