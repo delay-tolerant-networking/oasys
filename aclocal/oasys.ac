@@ -64,25 +64,38 @@ AC_DEFUN(AC_OASYS_CONFIG, [
 
     AC_MSG_CHECKING([for an oasys installation (version $ac_oasysver_major.$ac_oasysver_minor or better)])
 
-    ac_oasysdir_ver=`find .. -maxdepth 1 -type d -name $ac_oasysdir_ver_base.* | tail -1`
+    # if --with-oasys was not specified then look for the fallback locations
+    # which are ../oasys.<major>.<minor>.* and ../oasys
+    if test "$ac_oasysdir" = ""; then
+      ac_oasysdir_ver=`find .. -maxdepth 1 -type d -name $ac_oasysdir_ver_base.* | tail -1`
 
-    if test -d "$ac_oasysdir_ver" ; then
-      ac_oasysdir=$ac_oasysdir_ver
+      if test -d "$ac_oasysdir_ver" ; then
+        ac_oasysdir=$ac_oasysdir_ver
    
-    elif test -d ../oasys ; then
-      ac_oasysdir=../oasys
-      ac_oasysdir_ver=$ac_oasysdir 
+      elif test -d ../oasys ; then
+        ac_oasysdir=../oasys
+        ac_oasysdir_ver=$ac_oasysdir 
+      fi
     fi
 
-    if test -d "$ac_oasysdir_ver" ; then
+    
+    if test -d "$ac_oasysdir" ; then
       mkdir oasys oasys/include
       OASYS_INCDIR="oasys/include"
       OASYS_LIBDIR="oasys/lib"
       OASYS_ETCDIR="oasys/share"
-      ln -s ../../$ac_oasysdir $OASYS_INCDIR
-      ln -s ../$ac_oasysdir/lib $OASYS_LIBDIR
-      ln -s ../$ac_oasysdir $OASYS_ETCDIR
-
+      if test "${ac_oasysdir:0:1}" = "/" ; then
+        # we have an absolute path
+        # assume this is an installed instance and not a source directory
+        ln -s $ac_oasysdir/include/oasys $OASYS_INCDIR/oasys
+        ln -s $ac_oasysdir/lib $OASYS_LIBDIR
+        ln -s $ac_oasysdir/share/oasys $OASYS_ETCDIR
+      else
+        # relative path to source directory
+        ln -s ../../$ac_oasysdir $OASYS_INCDIR/oasys
+        ln -s ../$ac_oasysdir/lib $OASYS_LIBDIR
+        ln -s ../$ac_oasysdir $OASYS_ETCDIR
+      fi
     else
       if test "$ac_oasysdir" = "" ; then
         ac_oasysdir=/usr

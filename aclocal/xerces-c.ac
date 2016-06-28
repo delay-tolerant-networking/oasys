@@ -71,7 +71,7 @@ AC_DEFUN(AC_CONFIG_XERCES, [
                 AC_LANG([C++])
                 CPPFLAGS="-I$ac_xerces_inst_dir/include"
                 LDFLAGS="-L$ac_xerces_inst_dir/lib"
-                LIBS="-lxerces-c"
+                LIBS="-lxerces-c $LIBS"
 
                 AC_LINK_IFELSE(
                     AC_LANG_PROGRAM(

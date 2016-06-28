@@ -1,22 +1,5 @@
 /*
- *    Copyright 2006 Intel Corporation
- * 
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- * 
- *        http://www.apache.org/licenses/LICENSE-2.0
- * 
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
-
-/*
- *    Modifications made to this file by the patch file oasys_mfs-33289-1.patch
- *    are Copyright 2015 United States Government as represented by NASA
+ *    Copyright 2015 United States Government as represented by NASA
  *       Marshall Space Flight Center. All Rights Reserved.
  *
  *    Released under the NASA Open Source Software Agreement version 1.3;
@@ -36,53 +19,54 @@
 #  include <oasys-config.h>
 #endif
 
-#include "TokenBucket.h"
+#include "TokenBucketLeaky.h"
 
 namespace oasys {
 
 //----------------------------------------------------------------------
-TokenBucket::TokenBucket(const char* logpath,
-                         u_int64_t   depth,   /* in bits */
-                         u_int64_t   rate     /* in seconds */)
-    : Logger("TokenBucket", "%s", logpath),
-      depth_(depth),
-      rate_(rate),
-      tokens_(depth) // initialize full
+TokenBucketLeaky::TokenBucketLeaky(const char* logpath,
+                                   u_int64_t   depth,   /* in bits */
+                                   u_int64_t   rate     /* in seconds */)
+    : TokenBucket(logpath,depth,rate)
 {
+    // overrides
+    tokens_ = 0;
+
     log_debug("initialized token bucket with depth %llu and rate %llu",
               U64FMT(depth_), U64FMT(rate_));
     last_update_.get_time();
 }
-
 //----------------------------------------------------------------------
 void
-TokenBucket::update()
+TokenBucketLeaky::update()
 {
     Time now;
     now.get_time();
 
     // time sometimes jumps backwards!!
+    int ctr = 0;
     while (now < last_update_) {
         now.get_time();
+        ++ctr;
     }
 
-    if (tokens_ == (int64_t)depth_) {
-        log_debug("update: bucket already full, nothing to update");
+    if (tokens_ == (int64_t)0) {
+        log_debug("update: bucket already empty, nothing to update");
         last_update_ = now;
         return;
     }
 
     u_int32_t elapsed = (now - last_update_).in_microseconds();
-    u_int64_t new_tokens = (rate_ * elapsed) / 1000000;
+    int64_t new_tokens = (rate_ * elapsed) / 1000000;
 
-    if (new_tokens != 0) {
-        if ((tokens_ + new_tokens) > depth_) {
-            new_tokens = depth_ - tokens_;
+    if (new_tokens > 0) {
+        if ((int64_t) new_tokens > tokens_) { // will tokens go negative?
+            new_tokens = tokens_;
         }
 
-        log_debug("update: filling %llu/%lld spent tokens after %u microseconds",
-                  U64FMT(new_tokens), I64FMT(depth_ - tokens_), elapsed);
-        tokens_ += new_tokens;
+        log_debug("update: leaking %lld/%lld spent tokens after %u microseconds",
+                  I64FMT(-new_tokens), I64FMT(tokens_), elapsed);
+        tokens_ -= new_tokens;
         last_update_ = now;
         
     } else {
@@ -90,43 +74,39 @@ TokenBucket::update()
         // time isn't enough to fill even a single token. in this
         // case, we leave last_update_ to where it was before,
         // otherwise we might starve the bucket.
-        log_debug("update: %u microseconds elapsed not enough to fill any tokens (rate: %u)",
-                  elapsed, rate_);
+        log_debug("update: %u milliseconds elapsed not enough to fill any tokens",
+                  elapsed);
     }
 }
 
 //----------------------------------------------------------------------
 bool
-TokenBucket::drain(u_int64_t length, bool only_if_enough)
+TokenBucketLeaky::drain(u_int64_t length, bool only_if_enough) // should be fill since we are leaky
 {
     update();
 
-    bool enough = (tokens_ < 0) ? false : (length <= (u_int64_t)tokens_);
+    bool enough = (tokens_ > 0) ? false : true;     // ((u_int64_t)tokens_ == 0);
 
-    log_debug("drain: draining %llu/%lld tokens from bucket",
+    log_debug("drain: filling %llu/%lld tokens into bucket",
               U64FMT(length), I64FMT(tokens_));
 
     if (enough || !only_if_enough) {
-        tokens_ -= length;
+        tokens_ += length;
     }
 
-    if (only_if_enough) {
-        ASSERT(tokens_ >= 0);
-    }
-    
     return enough;
 }
 
 //----------------------------------------------------------------------
 bool
-TokenBucket::try_to_drain(u_int64_t length)
+TokenBucketLeaky::try_to_drain(u_int64_t length)
 {
     return drain(length, true);
 }
 
 //----------------------------------------------------------------------
 Time
-TokenBucket::time_to_level(int64_t n)
+TokenBucketLeaky::time_to_level(int64_t n)
 {
     update();
 
@@ -148,14 +128,14 @@ TokenBucket::time_to_level(int64_t n)
 
 //----------------------------------------------------------------------
 Time
-TokenBucket::time_to_fill()
+TokenBucketLeaky::time_to_fill()  // should be drain since we are leaky
 {
-    return time_to_level(depth_);
+    return time_to_level(0);
 }
 
 //----------------------------------------------------------------------
 void
-TokenBucket::empty()
+TokenBucketLeaky::empty()
 {
     tokens_      = 0;
     last_update_.get_time();

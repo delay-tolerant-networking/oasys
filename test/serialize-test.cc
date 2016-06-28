@@ -14,6 +14,24 @@
  *    limitations under the License.
  */
 
+/*
+ *    Modifications made to this file by the patch file oasys_mfs-33289-1.patch
+ *    are Copyright 2015 United States Government as represented by NASA
+ *       Marshall Space Flight Center. All Rights Reserved.
+ *
+ *    Released under the NASA Open Source Software Agreement version 1.3;
+ *    You may obtain a copy of the Agreement at:
+ * 
+ *        http://ti.arc.nasa.gov/opensource/nosa/
+ * 
+ *    The subject software is provided "AS IS" WITHOUT ANY WARRANTY of any kind,
+ *    either expressed, implied or statutory and this agreement does not,
+ *    in any manner, constitute an endorsement by government agency of any
+ *    results, designs or products resulting from use of the subject software.
+ *    See the Agreement for the specific language governing permissions and
+ *    limitations.
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <oasys-config.h>
 #endif
@@ -98,11 +116,11 @@ int CompareTest(bool crc) {
     sizer.action(&o1);
 
     oasys::Marshal v(Serialize::CONTEXT_NETWORK, buf, LEN, crc);
-    v.logpath("/marshal-test");
+    v.set_logpath("/marshal-test");
     v.action(&o1);
     
     oasys::Unmarshal uv(Serialize::CONTEXT_NETWORK, buf, sizer.size(), crc);
-    uv.logpath("/marshal-test");
+    uv.set_logpath("/marshal-test");
     uv.action(&o2);
 
     ASSERT(o1.equals(o2));

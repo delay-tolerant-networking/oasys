@@ -128,6 +128,25 @@ proc command_process {input output} {
 	return
     }
 
+	global display_error_stack
+	if {$line == "display_error_stack"} {
+		set display_error_stack 1
+		puts $output "\ndisplay_error_stack enabled"
+    	if {! $tell_encode($output)} {
+			puts -nonewline $output $command_prompt
+    	}
+    	flush $output
+		return
+	} elseif {$line == "no_display_error_stack"} {
+		set display_error_stack 0
+		puts $output "\ndisplay_error_stack disabled"
+    	if {! $tell_encode($output)} {
+			puts -nonewline $output $command_prompt
+    	}
+		flush $output
+		return
+    }
+
     if {$tell_encode($output)} {
 	# if we're in tell encoding mode, decode the message
 
@@ -152,17 +171,20 @@ proc command_process {input output} {
     command_log debug "executing command $command($input)"
     if {[catch {uplevel \#0 $command($input)} result]} {
         command_log debug "error result is $result"
-	if {$result == "exit_command"} {
-	    if {$input == "stdin"} {
-		set event_loop_wait 1
-		return
-	    } else {
-		real_exit
-	    }
-	}
-	global errorInfo
-	set result "error: $result\nwhile executing\n$errorInfo"
-	set cmd_error 1
+		if {$result == "exit_command"} {
+		    if {$input == "stdin"} {
+				set event_loop_wait 1
+				return
+		    } else {
+				real_exit
+		    }
+		}
+
+	    if {$display_error_stack == 1} {
+		  	global errorInfo
+			set result "error: $result\n\nwhile executing\n$errorInfo\n"
+		}
+		set cmd_error 1
     }
     command_log debug "result is $result"
     set command($input) ""
@@ -185,6 +207,7 @@ proc command_process {input output} {
 #
 proc simple_command_loop {prompt} {
     global command command_prompt forever tell_encode
+    global display_error_stack
     set command_prompt "$prompt"
     
     puts -nonewline $command_prompt
@@ -193,6 +216,7 @@ proc simple_command_loop {prompt} {
     set command(stdin)      ""
     set tell_encode(stdout) 0
     set event_loop_wait        0
+    set display_error_stack 0
     fileevent stdin readable "command_process stdin stdout"
 
     vwait event_loop_wait

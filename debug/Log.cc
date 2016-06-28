@@ -14,6 +14,24 @@
  *    limitations under the License.
  */
 
+/*
+ *    Modifications made to this file by the patch file oasys_mfs-33289-1.patch
+ *    are Copyright 2015 United States Government as represented by NASA
+ *       Marshall Space Flight Center. All Rights Reserved.
+ *
+ *    Released under the NASA Open Source Software Agreement version 1.3;
+ *    You may obtain a copy of the Agreement at:
+ * 
+ *        http://ti.arc.nasa.gov/opensource/nosa/
+ * 
+ *    The subject software is provided "AS IS" WITHOUT ANY WARRANTY of any kind,
+ *    either expressed, implied or statutory and this agreement does not,
+ *    in any manner, constitute an endorsement by government agency of any
+ *    results, designs or products resulting from use of the subject software.
+ *    See the Agreement for the specific language governing permissions and
+ *    limitations.
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <oasys-config.h>
 #endif
@@ -97,6 +115,7 @@ bool Log::__debug_no_panic_on_overflow = false;
 Log::Log()
     : output_flags_(OUTPUT_PATH | OUTPUT_TIME | OUTPUT_LEVEL),
       logfd_(-1),
+      stdio_redirected_(false),
       default_threshold_(LOG_DEFAULT_THRESHOLD)
 {
     output_lock_ = new SpinLock();
@@ -166,6 +185,7 @@ Log::fini()
     rule_lists_[1].clear();
 
     delete output_lock_;
+    delete this;
 }
 
 //----------------------------------------------------------------------
@@ -181,6 +201,7 @@ Log::shutdown()
     }
     
     instance_->fini();
+    instance_ = NULL;
     shutdown_ = true;
 }
 
@@ -507,6 +528,22 @@ Log::log_level(const char *path)
     } else {
         return default_threshold_;
     }
+}
+
+//----------------------------------------------------------------------
+bool
+Log::set_loglevel(log_level_t defaultlvl)
+{
+#ifdef NDEBUG
+    if (defaultlvl == LOG_DEBUG) {
+        fprintf(stderr, "WARNING: default log level debug invalid for "
+                "non-debugging build\n");
+        return false;
+    }
+#endif
+    
+    default_threshold_ = defaultlvl;
+    return true;
 }
 
 //----------------------------------------------------------------------

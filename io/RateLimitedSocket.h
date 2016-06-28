@@ -14,6 +14,24 @@
  *    limitations under the License.
  */
 
+/*
+ *    Modifications made to this file by the patch file oasys_mfs-33289-1.patch
+ *    are Copyright 2015 United States Government as represented by NASA
+ *       Marshall Space Flight Center. All Rights Reserved.
+ *
+ *    Released under the NASA Open Source Software Agreement version 1.3;
+ *    You may obtain a copy of the Agreement at:
+ * 
+ *        http://ti.arc.nasa.gov/opensource/nosa/
+ * 
+ *    The subject software is provided "AS IS" WITHOUT ANY WARRANTY of any kind,
+ *    either expressed, implied or statutory and this agreement does not,
+ *    in any manner, constitute an endorsement by government agency of any
+ *    results, designs or products resulting from use of the subject software.
+ *    See the Agreement for the specific language governing permissions and
+ *    limitations.
+ */
+
 #ifndef _OASYS_RATE_LIMITED_SOCKET_H_
 #define _OASYS_RATE_LIMITED_SOCKET_H_
 
@@ -23,6 +41,7 @@
 #include "IPSocket.h"
 #include "../debug/Log.h"
 #include "../util/TokenBucket.h"
+#include "../util/TokenBucketLeaky.h"
 
 namespace oasys {
 
@@ -34,13 +53,28 @@ namespace oasys {
  * Note that the rate is configured in bits per second.
  */
 class RateLimitedSocket : public Logger {
+
 public:
+
+enum BUCKET_TYPE {
+    STANDARD    = 0,    ///  non leaky algorithm
+    LEAKY       = 1,   ///  leaky algorithm
+    UNKNOWN     = 2
+};
+
     /**
      * Constructor.
      */
     RateLimitedSocket(const char* logpath,
-                      u_int32_t rate,
-                      IPSocket* socket = NULL);
+                      u_int32_t   rate,
+                      u_int32_t   depth,
+                      BUCKET_TYPE bucket_type,
+                      IPSocket*   socket = NULL);
+
+    /**
+     * Destructor
+     */
+    ~RateLimitedSocket();
 
     /**
      * Send the given data on the socket iff the rate controller
@@ -50,7 +84,7 @@ public:
      * for the given number of bytes, the return from IPSocket::send
      * if there is space.
      */
-    int send(const char* bp, size_t len, int flags);
+    int send(const char* bp, size_t len, int flags, bool wait_till_sent);
 
     /**
      * Send the given data on the socket iff the rate controller
@@ -61,11 +95,11 @@ public:
      * if there is space.
      */
     int sendto(char* bp, size_t len, int flags,
-               in_addr_t addr, u_int16_t port);
+               in_addr_t addr, u_int16_t port, bool wait_till_sent);
     
     
     /// @{ Accessors
-    TokenBucket* bucket() { return &bucket_; }
+    TokenBucket* bucket() { return bucket_; }
     IPSocket*    socket() { return socket_; }
     /// @}
 
@@ -74,8 +108,9 @@ public:
     /// @}
     
 protected:
-    TokenBucket bucket_;
-    IPSocket*   socket_;
+    BUCKET_TYPE  bucket_type_;
+    TokenBucket* bucket_;
+    IPSocket*    socket_;
 };
 
 } // namespace oasys

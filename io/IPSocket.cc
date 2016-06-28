@@ -64,6 +64,7 @@ IPSocket::IPSocket(int socktype, int sock,
     local_port_  = 0;
     remote_addr_ = remote_addr;
     remote_port_ = remote_port;
+    logfd_       = false;
     
     configure();
 }

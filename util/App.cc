@@ -14,8 +14,28 @@
  *    limitations under the License.
  */
 
+/*
+ *    Modifications made to this file by the patch file oasys_mfs-33289-1.patch
+ *    are Copyright 2015 United States Government as represented by NASA
+ *       Marshall Space Flight Center. All Rights Reserved.
+ *
+ *    Released under the NASA Open Source Software Agreement version 1.3;
+ *    You may obtain a copy of the Agreement at:
+ * 
+ *        http://ti.arc.nasa.gov/opensource/nosa/
+ * 
+ *    The subject software is provided "AS IS" WITHOUT ANY WARRANTY of any kind,
+ *    either expressed, implied or statutory and this agreement does not,
+ *    in any manner, constitute an endorsement by government agency of any
+ *    results, designs or products resulting from use of the subject software.
+ *    See the Agreement for the specific language governing permissions and
+ *    limitations.
+ */
+
 #include <oasys-config.h>
 #include <signal.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #include "App.h"
 #include "Random.h"
@@ -33,6 +53,8 @@ App::App(const char* classname,
       extra_usage_(""),
       random_seed_(0),
       random_seed_set_(false),
+      niceness_(0),
+      niceness_set_(false),
       print_version_(false),
       loglevelstr_(""),
       loglevel_(LOG_DEFAULT_THRESHOLD),
@@ -64,6 +86,13 @@ App::init_app(int argc, char* const argv[])
     }
     
     validate_options(argc, argv, remainder);
+
+    if (niceness_set_)
+    {   
+        printf("Process niceness is set to %d\n",niceness_);
+        fflush(stdout);
+        setpriority(PRIO_PROCESS, getpid(), niceness_);
+    }
 
     init_log();
     init_signals();
@@ -112,6 +141,10 @@ App::fill_default_options(int flags)
     opts_.addopt(
         new IntOpt('s', "seed", &random_seed_, "<seed>",
                           "random number generator seed", &random_seed_set_));
+
+    opts_.addopt(
+        new IntOpt('N', "niceness", &niceness_, "<niceness>",
+                        "Setting the niceness range from -19 to 20", &niceness_set_));
 
     if (flags & DAEMONIZE_OPT) {
         opts_.addopt(

@@ -1,22 +1,5 @@
 /*
- *    Copyright 2006 Intel Corporation
- * 
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- * 
- *        http://www.apache.org/licenses/LICENSE-2.0
- * 
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
-
-/*
- *    Modifications made to this file by the patch file oasys_mfs-33289-1.patch
- *    are Copyright 2015 United States Government as represented by NASA
+ *    Copyright 2015 United States Government as represented by NASA
  *       Marshall Space Flight Center. All Rights Reserved.
  *
  *    Released under the NASA Open Source Software Agreement version 1.3;
@@ -32,28 +15,30 @@
  *    limitations.
  */
 
-#ifndef _OASYS_TOKEN_BUCKET_H_
-#define _OASYS_TOKEN_BUCKET_H_
+#ifndef _OASYS_TOKEN_BUCKET_LEAKY_H_
+#define _OASYS_TOKEN_BUCKET_LEAKY_H_
 
 #include "Time.h"
+
 #include "../debug/Logger.h"
+#include "TokenBucket.h"
 
 namespace oasys {
 
 /**
- * A basic token bucket implementation.
+ * A basic leaky bucket implementation.
  */
-class TokenBucket : public Logger {
+class TokenBucketLeaky : public TokenBucket {
 
 public:
     /**
      * Constructor that takes the initial depth and rate parameters.
      */
-    TokenBucket(const char* logpath,
-                u_int64_t   depth,   /* in tokens */
-                u_int64_t   rate     /* in tokens per second */);
+    TokenBucketLeaky(const char* logpath,
+                     u_int64_t   depth,
+                     u_int64_t   rate     /* in tokens per second */);
 
-    virtual ~TokenBucket(void) { }
+    virtual  ~TokenBucketLeaky(void){ };
     /**
      * Drains the specified amount from the bucket. If only_if_enough
      * is set, this will only drain the amount if the bucket has
@@ -92,29 +77,14 @@ public:
      */
     virtual Time time_to_level(int64_t n);
 
-    /// @{ Accessors
-    virtual u_int64_t depth()  const { return depth_; }
-    virtual u_int64_t rate()   const { return rate_; }
-    virtual int64_t   tokens() const { return tokens_; }
-    /// @}
-
-    /// @{ Setters
-    virtual void set_depth(u_int64_t depth) { depth_ = depth; update(); }
-    virtual void set_rate(u_int64_t rate)   { rate_  = rate;  update(); }
-    /// @}
-
     /**
      * Empty the bucket.
      */
     virtual void empty();
     
 protected:
-    u_int64_t depth_;
-    u_int64_t rate_;
-    int64_t   tokens_;
-    Time      last_update_;
 };
 
 } // namespace oasys
 
-#endif /* _OASYS_TOKEN_BUCKET_H_ */
+#endif /* _OASYS_TOKEN_BUCKET_LEAKY_H_ */

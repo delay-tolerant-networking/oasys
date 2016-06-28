@@ -43,7 +43,6 @@ TESTS += \
 	sparse-array-test			\
 	sparse-bitmap-test			\
 	spin-lock-test				\
-        sqlite-db-test                          \
 	stack-trace-test			\
 	static-buffer-test			\
 	stream-serialize-test			\

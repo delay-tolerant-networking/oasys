@@ -15,6 +15,24 @@
  */
 
 
+/*
+ *    Modifications made to this file by the patch file oasys_mfs-33289-1.patch
+ *    are Copyright 2015 United States Government as represented by NASA
+ *       Marshall Space Flight Center. All Rights Reserved.
+ *
+ *    Released under the NASA Open Source Software Agreement version 1.3;
+ *    You may obtain a copy of the Agreement at:
+ * 
+ *        http://ti.arc.nasa.gov/opensource/nosa/
+ * 
+ *    The subject software is provided "AS IS" WITHOUT ANY WARRANTY of any kind,
+ *    either expressed, implied or statutory and this agreement does not,
+ *    in any manner, constitute an endorsement by government agency of any
+ *    results, designs or products resulting from use of the subject software.
+ *    See the Agreement for the specific language governing permissions and
+ *    limitations.
+ */
+
 #ifndef OASYS_TIMER_H
 #define OASYS_TIMER_H
 
@@ -96,7 +114,9 @@ public:
 
 /**
  * The main Timer system implementation that needs to be driven by a
- * thread, such as the TimerThread class defined below.
+ * thread, such as the TimerThread class defined below. A thread to
+ * clean out cancelled timers can also be invoked, such as the
+ * TimerReaperThread class defined below.
  */
 class TimerSystem : public Singleton<TimerSystem>,
                     public Logger {
@@ -124,6 +144,12 @@ public:
     int run_expired_timers();
 
     /**
+     * Check to see if cancelled timers are accumulating
+     * and if so swap timer queues and get rid of them.
+     */
+    void check_cancelled_timers();
+
+    /**
      * Accessor for the notifier that indicates if another thread put
      * a timer on the queue.
      */
@@ -133,6 +159,16 @@ public:
      * Return a count of the number of pending timers.
      */
     size_t num_pending_timers();
+
+    /**
+     * Set flag to stop processing
+     */
+    virtual void shutdown();
+
+    /**
+     * Method to cancel and remove all timers while shutting down
+     */
+    virtual void cancel_all_timers();
 
 private:
     friend class Singleton<TimerSystem>;
@@ -147,18 +183,37 @@ private:
     bool 	    signals_[NSIG];	///< which signals have fired
     bool	    sigfired_;		///< boolean to check if any fired
 
+    bool            should_stop_;       ///< boolean flag to signal shutdown
     SpinLock*  system_lock_;
+    SpinLock*  cancel_lock_;
     OnOffNotifier notifier_;
-    TimerQueue timers_;
+    TimerQueue* timers_;      ///< pointer to current active queue
+    TimerQueue* old_timers_;  ///< pointer to queue contaning old cancelled timers
+    TimerQueue timer_q1_;     ///< one of two timer queues that can be active
+    TimerQueue timer_q2_;     ///< one of two timer queues that can be active
     u_int32_t   seqno_;       ///< seqno used to break ties
     size_t      num_cancelled_; ///< needed for accurate pending_timer count
+    size_t      old_num_cancelled_; ///< needed for accurate pending_timer count
 
     TimerSystem();
     virtual ~TimerSystem();
     
-    void pop_timer(const struct timeval& now);
+    //dz debug void pop_timer(const struct timeval& now);
+    void process_popped_timer(const struct timeval& now, Timer* next_timer);
+
     void handle_signals();
 
+    /**
+     * Reinserts a timer into the main timer queue. 
+     */
+    void reinsert_timer(Timer* timer);
+
+    /**
+     * Logs and possibly deletes cancelled timers 
+     * while processing the old_timers_ queue.
+     */
+    void process_old_cancelled_timer(Timer* timer, 
+                                     const struct timeval& now);
 };
 
 /**
@@ -168,11 +223,43 @@ class TimerThread : public Thread {
 public:
     static void init();
 
+    static TimerThread* instance() { return instance_; }
+
+    /**
+     * Do shutdown processing
+     */
+    virtual void shutdown();
+
 private:
-    TimerThread() : Thread("TimerThread") {}
+    TimerThread() : Thread("TimerThread", Thread::DELETE_ON_EXIT) {}
+
     void run();
     
     static TimerThread* instance_;
+};
+
+/**
+ * A simple thread class that cleans up cancelled Timers.
+ * #define allows conditional compilation in dtn2.
+ */
+#define HAVE_TIMER_REAPER_THREAD
+class TimerReaperThread : public Thread {
+public:
+    static void init();
+
+    static TimerReaperThread* instance() { return instance_; }
+
+    /**
+     * Do shutdown processing
+     */
+    virtual void shutdown() { set_should_stop(); }
+
+private:
+    TimerReaperThread() : Thread("TimerReaperThread", Thread::DELETE_ON_EXIT) {}
+
+    void run();
+    
+    static TimerReaperThread* instance_;
 };
 
 /**
@@ -249,7 +336,7 @@ public:
 protected:
     friend class TimerSystem;
     friend class TimerCompare;
-    
+
     struct timeval when_;	  ///< When the timer should fire
     bool           pending_;	  ///< Is the timer currently pending
     bool           cancelled_;	  ///< Is this timer cancelled

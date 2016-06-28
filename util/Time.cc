@@ -14,6 +14,24 @@
  *    limitations under the License.
  */
 
+/*
+ *    Modifications made to this file by the patch file oasys_mfs-33289-1.patch
+ *    are Copyright 2015 United States Government as represented by NASA
+ *       Marshall Space Flight Center. All Rights Reserved.
+ *
+ *    Released under the NASA Open Source Software Agreement version 1.3;
+ *    You may obtain a copy of the Agreement at:
+ * 
+ *        http://ti.arc.nasa.gov/opensource/nosa/
+ * 
+ *    The subject software is provided "AS IS" WITHOUT ANY WARRANTY of any kind,
+ *    either expressed, implied or statutory and this agreement does not,
+ *    in any manner, constitute an endorsement by government agency of any
+ *    results, designs or products resulting from use of the subject software.
+ *    See the Agreement for the specific language governing permissions and
+ *    limitations.
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <oasys-config.h>
 #endif
@@ -123,7 +141,7 @@ Time::elapsed_ms() const
     // jward - I keep seeing operator-= blow an assert because t is somehow
     // less than the original time (bug in linux's gettimeofday()?). We'll
     // just assume that means not much (==0) time has passed.
-    if (t < *this)
+    if (t <= *this )
         return 0;
     
     t -= *this;
@@ -155,15 +173,23 @@ Time&
 Time::operator-=(const Time& t)
 {
     // a precondition for this fn to be correct is (*this >= t)
-    ASSERT(*this >= t);
-    
-    if (usec_ < t.usec_) {
-        usec_ += 1000000;
-        sec_  -= 1;
+    //XXX/dz - Several instances where successive calls to time 
+    //         can return the same time so changing to return
+    //         zero if t >= this
+    //ASSERT(*this >= t);
+    if (t >= *this) {
+        sec_  = 0;
+        usec_ = 0;
+    } else {
+        if (usec_ < t.usec_) {
+            usec_ += 1000000;
+            sec_  -= 1;
+        }
+
+        sec_  -= t.sec_;
+        usec_ -= t.usec_;
     }
 
-    sec_  -= t.sec_;
-    usec_ -= t.usec_;
     return *this;
 }
 
@@ -172,7 +198,7 @@ Time
 Time::operator-(const Time& t) const
 {
     // a precondition for this fn to be correct is (*this >= t)
-    ASSERT(*this >= t);
+    //XXX/dz - see above operator-    ASSERT(*this >= t);
     
     Time t2(*this);
     t2 -= t;

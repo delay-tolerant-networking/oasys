@@ -878,7 +878,7 @@ AC_DEFUN(AC_OASYS_CONFIG_GCC_VERSION, [
 	# For 3.2 and beyond, use auto-dependency flags. 
 	# Note that for m4 to output a '$' requires the '@S|@' heinosity below.
 	#
-	3.*|4.*)
+	3.*|4.*|5.*)
 	    DEPFLAGS=['-MMD -MP -MT "@S|@*.o @S|@*.E"']
 	    ;;
 	#
@@ -1550,6 +1550,39 @@ AC_DEFUN(AC_OASYS_FIND_MYSQL, [
         AC_MSG_ERROR([can't find usable mysql library])
     fi
 ])
+
+dnl
+dnl Check if oasys has support for the given feature. Returns result
+dnl in ac_oasys_supports_result.
+dnl
+AC_DEFUN(AC_OASYS_SUPPORTS, [
+    AC_MSG_CHECKING(whether oasys is configured with $1)
+
+    if test x$cv_oasys_supports_$1 != x ; then
+        ac_oasys_supports_result=$cv_oasys_supports_$1
+        AC_MSG_RESULT($ac_oasys_supports_result (cached))
+    else
+
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS -I$OASYS_INCDIR"
+    AC_LINK_IFELSE(
+      AC_LANG_PROGRAM(
+        [
+            #include <oasys/oasys-config.h>
+            #ifndef $1
+            #error $1 not configured
+            #endif
+        ], [] ),
+      ac_oasys_supports_result=yes,
+      ac_oasys_supports_result=no)
+
+    cv_oasys_supports_$1=$ac_oasys_supports_result
+    
+    AC_MSG_RESULT([$ac_oasys_supports_result])
+    CPPFLAGS=$ac_save_CPPFLAGS
+
+    fi
+])
 dnl
 dnl    Copyright 2007 Intel Corporation
 dnl 
@@ -1616,25 +1649,38 @@ AC_DEFUN(AC_OASYS_CONFIG, [
 
     AC_MSG_CHECKING([for an oasys installation (version $ac_oasysver_major.$ac_oasysver_minor or better)])
 
-    ac_oasysdir_ver=`find .. -maxdepth 1 -type d -name $ac_oasysdir_ver_base.* | tail -1`
+    # if --with-oasys was not specified then look for the fallback locations
+    # which are ../oasys.<major>.<minor>.* and ../oasys
+    if test "$ac_oasysdir" = ""; then
+      ac_oasysdir_ver=`find .. -maxdepth 1 -type d -name $ac_oasysdir_ver_base.* | tail -1`
 
-    if test -d "$ac_oasysdir_ver" ; then
-      ac_oasysdir=$ac_oasysdir_ver
+      if test -d "$ac_oasysdir_ver" ; then
+        ac_oasysdir=$ac_oasysdir_ver
    
-    elif test -d ../oasys ; then
-      ac_oasysdir=../oasys
-      ac_oasysdir_ver=$ac_oasysdir 
+      elif test -d ../oasys ; then
+        ac_oasysdir=../oasys
+        ac_oasysdir_ver=$ac_oasysdir 
+      fi
     fi
 
-    if test -d "$ac_oasysdir_ver" ; then
+    
+    if test -d "$ac_oasysdir" ; then
       mkdir oasys oasys/include
       OASYS_INCDIR="oasys/include"
       OASYS_LIBDIR="oasys/lib"
       OASYS_ETCDIR="oasys/share"
-      ln -s ../../$ac_oasysdir $OASYS_INCDIR
-      ln -s ../$ac_oasysdir/lib $OASYS_LIBDIR
-      ln -s ../$ac_oasysdir $OASYS_ETCDIR
-
+      if test "${ac_oasysdir:0:1}" = "/" ; then
+        # we have an absolute path
+        # assume this is an installed instance and not a source directory
+        ln -s $ac_oasysdir/include/oasys $OASYS_INCDIR/oasys
+        ln -s $ac_oasysdir/lib $OASYS_LIBDIR
+        ln -s $ac_oasysdir/share/oasys $OASYS_ETCDIR
+      else
+        # relative path to source directory
+        ln -s ../../$ac_oasysdir $OASYS_INCDIR/oasys
+        ln -s ../$ac_oasysdir/lib $OASYS_LIBDIR
+        ln -s ../$ac_oasysdir $OASYS_ETCDIR
+      fi
     else
       if test "$ac_oasysdir" = "" ; then
         ac_oasysdir=/usr
@@ -1746,39 +1792,6 @@ AC_DEFUN(AC_OASYS_SUBST_CONFIG, [
 
     AC_SUBST(SYS_EXTLIB_CFLAGS)
     AC_SUBST(SYS_EXTLIB_LDFLAGS)
-])
-
-dnl
-dnl Check if oasys has support for the given feature. Returns result
-dnl in ac_oasys_supports_result.
-dnl
-AC_DEFUN(AC_OASYS_SUPPORTS, [
-    AC_MSG_CHECKING(whether oasys is configured with $1)
-
-    if test x$cv_oasys_supports_$1 != x ; then
-        ac_oasys_supports_result=$cv_oasys_supports_$1
-        AC_MSG_RESULT($ac_oasys_supports_result (cached))
-    else
-
-    ac_save_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS -I$OASYS_INCDIR"
-    AC_LINK_IFELSE(
-      AC_LANG_PROGRAM(
-        [
-            #include <oasys/oasys-config.h>
-            #ifndef $1
-            #error $1 not configured
-            #endif
-        ], [] ),
-      ac_oasys_supports_result=yes,
-      ac_oasys_supports_result=no)
-
-    cv_oasys_supports_$1=$ac_oasys_supports_result
-    
-    AC_MSG_RESULT([$ac_oasys_supports_result])
-    CPPFLAGS=$ac_save_CPPFLAGS
-
-    fi
 ])
 dnl
 dnl    Copyright 2011 Alex McMahon, alex.mcmahon@cs.tcd.ie
@@ -2853,7 +2866,7 @@ AC_DEFUN(AC_CONFIG_XERCES, [
                 AC_LANG([C++])
                 CPPFLAGS="-I$ac_xerces_inst_dir/include"
                 LDFLAGS="-L$ac_xerces_inst_dir/lib"
-                LIBS="-lxerces-c"
+                LIBS="-lxerces-c $LIBS"
 
                 AC_LINK_IFELSE(
                     AC_LANG_PROGRAM(

@@ -5424,7 +5424,7 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
                 CPPFLAGS="-I$ac_xerces_inst_dir/include"
                 LDFLAGS="-L$ac_xerces_inst_dir/lib"
-                LIBS="-lxerces-c"
+                LIBS="-lxerces-c $LIBS"
 
                 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -8265,7 +8265,7 @@ $as_echo "$oasys_cv_prog_gxxver" >&6; }
 	# For 3.2 and beyond, use auto-dependency flags.
 	# Note that for m4 to output a '$' requires the '$' heinosity below.
 	#
-	3.*|4.*)
+	3.*|4.*|5.*)
 	    DEPFLAGS='-MMD -MP -MT "$*.o $*.E"'
 	    ;;
 	#

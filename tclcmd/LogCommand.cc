@@ -14,6 +14,24 @@
  *    limitations under the License.
  */
 
+/*
+ *    Modifications made to this file by the patch file oasys_mfs-33289-1.patch
+ *    are Copyright 2015 United States Government as represented by NASA
+ *       Marshall Space Flight Center. All Rights Reserved.
+ *
+ *    Released under the NASA Open Source Software Agreement version 1.3;
+ *    You may obtain a copy of the Agreement at:
+ * 
+ *        http://ti.arc.nasa.gov/opensource/nosa/
+ * 
+ *    The subject software is provided "AS IS" WITHOUT ANY WARRANTY of any kind,
+ *    either expressed, implied or statutory and this agreement does not,
+ *    in any manner, constitute an endorsement by government agency of any
+ *    results, designs or products resulting from use of the subject software.
+ *    See the Agreement for the specific language governing permissions and
+ *    limitations.
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <oasys-config.h>
 #endif
@@ -38,6 +56,11 @@ LogCommand::LogCommand()
     add_to_help("rotate", "Rotate the log file");
     add_to_help("dump_rules", "Show log filter rules");
     add_to_help("reparse", "Reparse the rules file");
+#ifdef NDEBUG
+    add_to_help("loglevel <level>", "Set default logging level (info, notice, warn, err, crit)");
+#else
+    add_to_help("loglevel <level>", "Set default logging level (debug, info, notice, warn, err, crit)");
+#endif
 }
 
 int
@@ -50,6 +73,30 @@ LogCommand::exec(int argc, const char** argv, Tcl_Interp* interp)
         Log::instance()->set_prefix(argv[2]);
         logf("/log", LOG_DEBUG, "set logging prefix to '%s'", argv[2]);
         return TCL_OK;
+    }
+
+    // log prefix <string>
+    if (!strcmp(argv[1], "loglevel")) {
+        if (argc == 2) {
+            resultf("default log level: %s", level2str(Log::instance()->log_level("")));
+            return TCL_OK;
+        } else if (argc == 3 && !strcmp(argv[1], "loglevel")) {
+            log_level_t level = str2level(argv[2]);
+            if (level == LOG_INVALID) {
+                resultf("invalid log level %s", argv[2]);
+                return TCL_ERROR;
+            }
+            if (Log::instance()->set_loglevel(level)) {
+                logf("/log", LOG_DEBUG, "set default log level to '%s'", argv[2]);
+            } else {
+                resultf("error setting log level %s", argv[2]);
+                return TCL_ERROR;
+            }
+            return TCL_OK;
+        } else {
+            wrong_num_args(argc, argv, 1, 2, 3);
+            return TCL_ERROR;
+        }
     }
 
     // log rotate
